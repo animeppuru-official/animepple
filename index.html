@@ -39,7 +39,7 @@
     .bnav-create .bnav-icon { background:var(--red); border-radius:50%; width:2.4rem; height:2.4rem; display:grid; place-items:center; font-size:1.2rem; }
 
     /* ── SEARCH OVERLAY ── */
-    .search-overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(4,12,8,.97); overflow-y:auto; padding:1rem; }
+    .search-overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(4,12,8,.97); overflow-y:auto; padding:.75rem; }
     .search-overlay.open { display:block; }
     .search-close { background:none; border:1px solid var(--line); color:var(--muted); border-radius:10px; padding:.4rem .8rem; cursor:pointer; margin-bottom:.8rem; font-size:.9rem; }
     .search-field { display:flex; gap:.5rem; margin-bottom:.9rem; }
@@ -48,7 +48,7 @@
     .filter-label { font-size:.78rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin:.8rem 0 .4rem; }
     .filter-box { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:.75rem; margin-bottom:.6rem; }
     .filter-box h3 { margin:0 0 .55rem; font-size:.88rem; }
-    .sl-row { display:grid; grid-template-columns:6.5rem 1fr 1.8rem; gap:.4rem; align-items:center; margin-bottom:.3rem; }
+    .sl-row { display:grid; grid-template-columns:4.5rem 1fr 1.8rem; gap:.4rem; align-items:center; margin-bottom:.3rem; }
     .sl-row span { font-size:.77rem; color:#b8d8c6; }
     .sl-row input[type="range"] { accent-color:var(--brand2); width:100%; }
     .sl-row output { font-size:.77rem; text-align:right; color:#dff0e6; }
@@ -95,6 +95,10 @@
     /* ── HSCROLL ── */
     .hscroll { display:flex; gap:.65rem; overflow-x:auto; padding:0 1rem .75rem; scroll-snap-type:x mandatory; scrollbar-width:none; }
     .hscroll::-webkit-scrollbar { display:none; }
+    .scroll-arrow { position:absolute; top:50%; transform:translateY(-60%); background:rgba(7,21,13,.85); border:1px solid var(--line); color:var(--brand); font-size:1.6rem; width:32px; height:48px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; padding:0; line-height:1; }
+    .scroll-arrow-l { left:2px; }
+    .scroll-arrow-r { right:2px; }
+    .scroll-arrow:active { background:var(--card2); }
     .hcard { flex:0 0 clamp(140px,42vw,175px); scroll-snap-align:start; background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; }
     .hcard-thumb { width:100%; aspect-ratio:3/4; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
     .hcard-thumb img { width:100%; height:100%; object-fit:cover; }
@@ -347,7 +351,7 @@
       .search-bar { max-width:1200px; margin:0 auto; padding:.8rem 2rem; }
       .filter-toggle-bar { max-width:1200px; margin:0 auto; padding:.6rem 2rem; }
       .filter-panel { max-width:1200px; margin:0 auto; padding:.75rem 2rem; }
-      .filter-panel .sl-row { grid-template-columns:8rem 1fr 2rem; }
+      .filter-panel .sl-row { grid-template-columns:5rem 1fr 2rem; }
       .result-meta { max-width:1200px; margin:0 auto; padding:.65rem 2rem; }
       .result-grid {
         grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
@@ -378,14 +382,14 @@
       .filter-panel {
         display:block !important;
         position:sticky; top:60px;
-        float:left; width:260px;
+        float:left; width:300px;
         max-height:calc(100vh - 70px); overflow-y:auto;
         border-bottom:none; border-right:1px solid var(--line);
-        padding:.75rem 1.2rem;
+        padding:.75rem 1.5rem;
       }
       #page-search .result-meta,
       #page-search .result-grid,
-      #page-search .ad-wrap { margin-left:260px; }
+      #page-search .ad-wrap { margin-left:300px; }
     }
 
     /* ════════════════════════════ */
@@ -484,13 +488,21 @@
       <small id="pickupTimer">— 後に更新</small>
     </div>
   </section>
-  <div class="hscroll" id="pickupScroll"></div>
+  <div style="position:relative;">
+    <div class="hscroll" id="pickupScroll"></div>
+    <button class="scroll-arrow scroll-arrow-l" onclick="document.getElementById('pickupScroll').scrollBy({left:-220,behavior:'smooth'})">‹</button>
+    <button class="scroll-arrow scroll-arrow-r" onclick="document.getElementById('pickupScroll').scrollBy({left:220,behavior:'smooth'})">›</button>
+  </div>
 
   <!-- 今季アニメ -->
   <section class="sec" style="margin-top:1rem;">
     <div class="sec-head"><h2>📺 今季アニメ</h2><small id="seasonLabel">—</small></div>
   </section>
-  <div class="hscroll" id="seasonScroll"></div>
+  <div style="position:relative;">
+    <div class="hscroll" id="seasonScroll"></div>
+    <button class="scroll-arrow scroll-arrow-l" onclick="document.getElementById('seasonScroll').scrollBy({left:-220,behavior:'smooth'})">‹</button>
+    <button class="scroll-arrow scroll-arrow-r" onclick="document.getElementById('seasonScroll').scrollBy({left:220,behavior:'smooth'})">›</button>
+  </div>
 
   <section class="sec" style="margin-top:.8rem;">
     <div class="sec-head"><h2>おすすめ作品</h2><small>レビューが多い順</small></div>
@@ -544,6 +556,25 @@
     <div class="ad-label">このアニメを観る</div>
     <div id="affiliateLinks"></div>
   </div>
+
+  <!-- マスターグラフ -->
+  <section class="reviews-section" id="masterGraphSection" style="display:none;">
+    <div class="reviews-head">
+      <h2 style="margin:0 0 .4rem;">みんなの評価グラフ</h2>
+      <p id="masterGraphMeta" style="margin:0;font-size:.78rem;color:var(--muted);"></p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.6rem;">
+      <div>
+        <p style="font-size:.78rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">作品の完成度</p>
+        <canvas id="masterChartA" width="300" height="220" style="width:100%;border-radius:12px;background:#09201b;display:block;"></canvas>
+      </div>
+      <div>
+        <p style="font-size:.78rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">感情・雰囲気</p>
+        <canvas id="masterChartB" width="300" height="220" style="width:100%;border-radius:12px;background:#09201b;display:block;"></canvas>
+      </div>
+    </div>
+  </section>
+
   <section class="reviews-section">
     <div class="reviews-head">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
@@ -755,7 +786,7 @@
     if (seed) { nav('anime', pageId); return; }
     // なければKitsuから取得して保存
     try {
-      const url = `https://kitsu.io/api/edge/anime/${kitsuId}?fields[anime]=titles,posterImage,synopsis,startDate,episodeCount,subtype,canonicalTitle`;
+      const url = `https://kitsu.io/api/edge/anime/${kitsuId}?fields[anime]=titles,posterImage,synopsis,startDate,episodeCount,episodeLength,subtype,canonicalTitle`;
       const res = await fetch(url, { headers: { 'Accept': 'application/vnd.api+json' } });
       const json = await res.json();
       const a = json.data.attributes;
@@ -824,14 +855,32 @@
     const w=canvas.width,h=canvas.height,cx=w/2,cy=h/2;
     const radius=Math.min(w,h)*0.34,max=10,count=labels.length;
     ctx.clearRect(0,0,w,h);
-    for (let ring=1;ring<=4;ring++) {
+
+    // リング：0,3,5,7,10の5段階
+    const rings=[3,5,7,10];
+    rings.forEach(val=>{
+      const r=radius*val/max;
       ctx.beginPath();
       for (let i=0;i<count;i++) {
-        const a=(-Math.PI/2)+(Math.PI*2*i)/count,r=(radius*ring)/4;
+        const a=(-Math.PI/2)+(Math.PI*2*i)/count;
         i===0?ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
       }
-      ctx.closePath(); ctx.strokeStyle='rgba(140,198,160,0.25)'; ctx.stroke();
-    }
+      ctx.closePath();
+      ctx.strokeStyle=val===10?'rgba(140,198,160,0.4)':'rgba(140,198,160,0.2)';
+      ctx.lineWidth=val===10?1.2:0.8; ctx.stroke(); ctx.lineWidth=1;
+
+      // 真上の軸に目盛り数字を表示
+      const labelAngle=-Math.PI/2;
+      const lx=cx+Math.cos(labelAngle)*r;
+      const ly=cy+Math.sin(labelAngle)*r;
+      ctx.font='bold 8px sans-serif';
+      ctx.fillStyle='rgba(180,220,190,0.75)';
+      ctx.textAlign='center';
+      ctx.textBaseline='bottom';
+      ctx.fillText(String(val), lx, ly-1);
+    });
+
+    // 軸線とラベル
     for (let i=0;i<count;i++) {
       const a=(-Math.PI/2)+(Math.PI*2*i)/count;
       ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a)*radius,cy+Math.sin(a)*radius);
@@ -841,6 +890,8 @@
       ctx.textAlign=lx>=cx?'left':'right'; ctx.textBaseline='middle';
       ctx.fillText(`${labels[i]} ${values[i]||0}`,lx,ly);
     }
+
+    // データポリゴン
     ctx.beginPath();
     for (let i=0;i<count;i++) {
       const a=(-Math.PI/2)+(Math.PI*2*i)/count,r=(radius*(values[i]||0))/max;
@@ -855,7 +906,15 @@
   ════════════════════════════ */
   function buildSliders(containerId, labels, store, prefix) {
     const el=document.getElementById(containerId); if(!el) return;
-    el.innerHTML=labels.map(label=>`
+    // 一番上に目盛り1本だけ
+    const ruler = `<div style="display:flex;justify-content:space-between;padding:0 0 4px 0;margin-left:4.5rem;margin-right:1.8rem;padding-right:.4rem;">
+      <span style="font-size:.65rem;color:rgba(140,198,160,.6);">0</span>
+      <span style="font-size:.65rem;color:rgba(140,198,160,.6);">3</span>
+      <span style="font-size:.65rem;color:rgba(140,198,160,.6);">5</span>
+      <span style="font-size:.65rem;color:rgba(140,198,160,.6);">7</span>
+      <span style="font-size:.65rem;color:rgba(140,198,160,.6);">10</span>
+    </div>`;
+    el.innerHTML = ruler + labels.map(label=>`
       <div class="sl-row">
         <span>${label}</span>
         <input type="range" min="0" max="10" step="1" value="${store[label]||0}" data-key="${label}" id="${prefix}-${label}" />
@@ -910,16 +969,15 @@
   function getPickupItems(all) {
     const INTERVAL_MS = 30 * 60 * 1000;
     const slot = Math.floor(Date.now() / INTERVAL_MS);
-    const reviewed = all.filter(a => reviewCount(a.id) > 0);
     const totalReviews = getReviews().length;
     const threshold = totalReviews * 0.5;
-    // レビュー数がthreshold未満の作品。レビューがまだ少ない段階はreviewedをそのまま使う
-    const candidates = reviewed.length > 0
-      ? reviewed.filter(a => reviewCount(a.id) < Math.max(threshold, 1))
-      : all;
-    // レビューが0件なら全作品からピックアップ
+
+    // レビュー数が全体の50%未満の作品を候補に
+    const candidates = all.filter(a => reviewCount(a.id) < Math.max(threshold, 1));
     const pool = candidates.length >= 4 ? candidates : all;
-    // slotをシードにした疑似シャッフル（同じslotなら同じ並び）
+
+    if (pool.length === 0) return []; // Kitsuから別途取得
+
     const seeded = [...pool].sort((a,b) => {
       const ha = Math.sin(slot * 9301 + a.id.charCodeAt(0) * 49297) * 233280;
       const hb = Math.sin(slot * 9301 + b.id.charCodeAt(0) * 49297) * 233280;
@@ -1092,6 +1150,29 @@
     return page.titleEn || page.title || '';
   }
 
+  function renderMasterGraph(id) {
+    const reviews = validReviews(id);
+    const section = document.getElementById('masterGraphSection');
+    const meta = document.getElementById('masterGraphMeta');
+    if (!reviews.length) { if(section) section.style.display='none'; return; }
+    if (section) section.style.display='';
+    if (meta) meta.textContent = `有効レビュー ${reviews.length}件の平均`;
+
+    const avgA = axisA.map(k => {
+      const sum = reviews.reduce((a,r)=>a+Number(r.chartA&&r.chartA[k]||0),0);
+      return Math.round(sum/reviews.length*10)/10;
+    });
+    const avgB = axisB.map(k => {
+      const sum = reviews.reduce((a,r)=>a+Number(r.chartB&&r.chartB[k]||0),0);
+      return Math.round(sum/reviews.length*10)/10;
+    });
+
+    const caA = document.getElementById('masterChartA');
+    const caB = document.getElementById('masterChartB');
+    if (caA) drawRadar(caA, axisA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a');
+    if (caB) drawRadar(caB, axisB, avgB, 'rgba(255,153,153,0.38)', '#ff8888');
+  }
+
   function renderAnimePage(id) {
     const all=getAll(), page=all.find(p=>p.id===id);
     if (!page) {
@@ -1103,7 +1184,13 @@
       document.getElementById('reviewList').innerHTML=''; return;
     }
     document.getElementById('animeTitle').textContent=getTitle(page);
-    document.getElementById('animeMeta').textContent=page.meta||'';
+    // 種別・放送年・話数を組み合わせて表示
+    const metaParts = [
+      page.meta || '',
+      page.year ? page.year+'年' : '',
+      page.episodes ? page.episodes+'話' : ''
+    ].filter(Boolean);
+    document.getElementById('animeMeta').textContent=metaParts.join(' · ');
     document.getElementById('animeDesc').textContent=page.description||'';
     document.getElementById('goReviewBtn').style.display='';
     document.getElementById('deletePageBtn').style.display='none';
@@ -1118,6 +1205,7 @@
       nav('home');
     };
     renderAffiliateLinks();
+    renderMasterGraph(id);
     renderReviewList(id);
   }
 
@@ -1180,6 +1268,7 @@
         const target=validReviews(id)[idx];
         if(!target) return;
         sj(REVIEW_KEY,allRevs.filter(r=>!(r.animeId===target.animeId&&r.createdAt===target.createdAt)));
+        renderMasterGraph(id);
         renderReviewList(id);
       };
     });
@@ -1358,7 +1447,7 @@
     let kitsuResults = [];
     if (q) {
       try {
-        const url = `https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(srSearchState.q)}&page[limit]=20&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
+        const url = `https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(srSearchState.q)}&page[limit]=40&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,episodeCount`;
         const res = await fetch(url, { headers: { 'Accept': 'application/vnd.api+json' } });
         const json = await res.json();
         const existingIds = new Set(list.map(row=>row.anime.kitsuId||'').filter(Boolean));
@@ -1411,10 +1500,10 @@
     panel.classList.toggle('open'); arrow.textContent=panel.classList.contains('open')?'▲':'▼';
   };
 
-  function doSrSearch(){
+  async function doSrSearch(){
     srSearchState.q=document.getElementById('srQuery').value.trim();
     srSearchState.sort=document.getElementById('srSortSelect').value;
-    renderSearch();
+    await renderSearch().catch(console.error);
   }
   document.getElementById('srSearchBtn').onclick=doSrSearch;
   document.getElementById('srApplyBtn').onclick=doSrSearch;
