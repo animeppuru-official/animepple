@@ -807,14 +807,10 @@
     </div>
     <div class="form-section">
       <h2>投稿情報</h2>
-      <div class="form-field" id="reviewUserNameField">
-        <label>ユーザー名（ゲスト）</label>
-        <input id="reviewUserName" placeholder="例: りんご太郎" maxlength="40" />
-      </div>
-      <div class="form-field" id="reviewUserNameLoggedIn" style="display:none;">
-        <label>投稿者</label>
+      <div id="reviewUserNameLoggedIn" style="display:none;">
         <div id="reviewUserNameDisplay" style="padding:.5rem 0;font-weight:700;color:#dff0e6;font-size:.95rem;"></div>
       </div>
+      <input id="reviewUserName" type="hidden" value="ゲスト" />
       <div class="form-field">
         <label>タグ（最大10個）</label>
         <div class="tag-input-wrap">
