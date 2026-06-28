@@ -1394,7 +1394,7 @@
      POPULAR PAGE
   ════════════════════════════ */
   const popState = { sort:'popular', yearFrom:null, yearTo:null, page:0, items:[], loading:false };
-  const POP_PAGE_SIZE = 24;
+  const POP_PAGE_SIZE = 20;
   const CURRENT_YEAR = new Date().getFullYear();
   const YEAR_LIST = Array.from({length: CURRENT_YEAR - 1959}, (_,i) => CURRENT_YEAR - i);
 
@@ -1434,7 +1434,7 @@
 
   // Kitsuから人気作品を取得（userCount降順）
   async function fetchKitsuPopular(pageOffset=0, yearFrom=null, yearTo=null) {
-    let url = `https://kitsu.io/api/edge/anime?sort=-userCount&page[limit]=${POP_PAGE_SIZE}&page[offset]=${pageOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`;
+    let url = `https://kitsu.io/api/edge/anime?sort=-userCount&page[limit]=20&page[offset]=${pageOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`;
     if(yearFrom) url += `&filter[seasonYear]=${yearFrom}`;
     const res = await fetch(url, { headers:{'Accept':'application/vnd.api+json'} });
     const json = await res.json();
@@ -1523,15 +1523,20 @@
         withPv.sort((a,b)=>b.pv-a.pv);
         items = withPv.slice(popState.page*POP_PAGE_SIZE, (popState.page+1)*POP_PAGE_SIZE);
       } else if(sort==='year') {
-        // 年代範囲でKitsuから取得
         const from = popState.yearFrom || 2000;
         const to   = popState.yearTo   || CURRENT_YEAR;
-        // yearFromをbaseに取得してyearToでfilter
-        const fetched = await fetchKitsuPopular(popState.page * POP_PAGE_SIZE, from);
-        items = fetched.filter(a=> {
-          const y = Number(a.year);
-          return y >= from && y <= to;
-        });
+        // 各年を並行取得してまとめる（最大10年分）
+        const years = [];
+        for(let y=from; y<=Math.min(to, from+9); y++) years.push(y);
+        const results = await Promise.allSettled(
+          years.map(y => fetchKitsuPopular(0, y))
+        );
+        const all = results.flatMap(r => r.status==='fulfilled' ? r.value : []);
+        // 重複除去してuserCount降順
+        const seen = new Set();
+        items = all.filter(a=>{ if(seen.has(a.id)) return false; seen.add(a.id); return true; })
+                   .sort((a,b)=>b.userCount-a.userCount)
+                   .slice(popState.page*POP_PAGE_SIZE, (popState.page+1)*POP_PAGE_SIZE);
       }
 
       if(reset) popState.items = items;
