@@ -28,7 +28,7 @@
     .hdr-right { display:flex; align-items:center; gap:.5rem; }
     .hdr-search-btn { width:34px; height:34px; border-radius:50%; background:var(--card2); border:1px solid var(--line); display:grid; place-items:center; cursor:pointer; font-size:.95rem; }
     .hdr-create { display:none; }
-    .back-btn { padding:.4rem .75rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); font-size:.85rem; white-space:nowrap; cursor:pointer; }
+    .back-btn { padding:.4rem .75rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); font-size:.85rem; white-space:nowrap; cursor:pointer; color:#fff; }
 
     /* ── BOTTOM NAV ── */
     .bnav { position:fixed; bottom:0; left:0; right:0; z-index:100; background:rgba(7,21,13,.95); backdrop-filter:blur(10px); border-top:1px solid var(--line); display:flex; justify-content:space-around; padding:.5rem 0 max(.5rem,env(safe-area-inset-bottom)); }
@@ -265,6 +265,87 @@
       .sl-row { grid-template-columns: 3.8rem 1fr 1.6rem; gap:.3rem; }
     }
 
+    /* ══ AFFILIATE ══ */
+    .af-section { padding:.9rem 1rem; border-bottom:1px solid var(--line); }
+    .af-section-label { font-size:.72rem; color:var(--muted); font-weight:600; letter-spacing:.05em; margin-bottom:.6rem; }
+    .af-stream-list { display:flex; flex-direction:column; gap:.5rem; }
+    .af-stream-item {
+      display:flex; align-items:center; gap:.75rem;
+      background:var(--card2); border:1px solid var(--line);
+      border-radius:12px; padding:.65rem .9rem;
+      text-decoration:none; color:inherit;
+      transition:border-color .15s;
+    }
+    .af-stream-item:hover { border-color:var(--brand); }
+    .af-stream-icon { font-size:1.4rem; flex:0 0 auto; }
+    .af-stream-body { flex:1; min-width:0; }
+    .af-stream-name { font-size:.88rem; font-weight:700; color:#dff0e6; }
+    .af-stream-sub  { font-size:.72rem; color:var(--muted); margin-top:.1rem; }
+    .af-stream-cta  { flex:0 0 auto; padding:.35rem .8rem; border-radius:999px; background:var(--brand); color:#0c2015; font-size:.75rem; font-weight:700; white-space:nowrap; }
+    .af-stream-badge { flex:0 0 auto; font-size:.65rem; padding:.15rem .45rem; border-radius:999px; background:rgba(94,201,122,.15); border:1px solid #3d8a56; color:#8fe5ab; }
+    /* グッズ */
+    .af-goods-list { display:flex; flex-direction:column; gap:.5rem; }
+    .af-goods-item {
+      display:flex; align-items:center; gap:.75rem;
+      background:var(--card2); border:1px solid var(--line);
+      border-radius:12px; padding:.65rem .9rem;
+      text-decoration:none; color:inherit;
+    }
+    .af-goods-item:hover { border-color:#f0a050; }
+    .af-goods-icon { font-size:1.3rem; flex:0 0 auto; }
+    .af-goods-body { flex:1; min-width:0; }
+    .af-goods-name { font-size:.88rem; font-weight:700; color:#dff0e6; }
+    .af-goods-sub  { font-size:.72rem; color:var(--muted); margin-top:.1rem; }
+    .af-goods-cta  { flex:0 0 auto; padding:.35rem .8rem; border-radius:999px; background:#f0a050; color:#1a0800; font-size:.75rem; font-weight:700; white-space:nowrap; }
+    /* PA-API実装後グッズカード */
+    .af-goods-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem; }
+    .af-goods-card { background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:.5rem; text-align:center; }
+    .af-goods-card img { width:100%; aspect-ratio:1; object-fit:contain; border-radius:6px; }
+    .af-goods-card-name { font-size:.7rem; color:#c8e6d4; margin-top:.3rem; line-height:1.3; }
+    .af-goods-card-price { font-size:.8rem; font-weight:700; color:#f0a050; margin-top:.2rem; }
+
+    /* ══ WORLD STATS ══ */
+    .world-period-tabs { display:flex; gap:.4rem; margin-top:.35rem; flex-wrap:wrap; }
+    .world-tab { padding:.25rem .7rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); font-size:.75rem; cursor:pointer; }
+    .world-tab.active { background:var(--brand); color:#0c2015; font-weight:700; border-color:var(--brand); }
+    .world-country-list { display:flex; flex-wrap:wrap; gap:.5rem; }
+    .world-country-item { display:flex; align-items:center; gap:.3rem; background:var(--card2); border-radius:8px; padding:.3rem .6rem; }
+    .world-country-flag { font-size:1.2rem; line-height:1; }
+    .world-country-body { display:flex; flex-direction:column; }
+    .world-country-name { font-size:.68rem; color:var(--muted); line-height:1.2; }
+    .world-country-count { font-size:.88rem; font-weight:700; color:var(--brand); line-height:1.2; }
+
+    /* ══ POPULAR PAGE ══ */
+    .pop-sort-bar { position:sticky; top:52px; z-index:10; background:var(--bg); border-bottom:1px solid var(--line); }
+    .pop-sort-tabs { display:flex; gap:0; overflow-x:auto; scrollbar-width:none; padding:.4rem .75rem; gap:.4rem; }
+    .pop-sort-tabs::-webkit-scrollbar { display:none; }
+    .pop-sort-tab { flex:0 0 auto; padding:.4rem .85rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); font-size:.8rem; cursor:pointer; white-space:nowrap; }
+    .pop-sort-tab.active { background:var(--brand); color:#0c2015; font-weight:700; border-color:var(--brand); }
+
+    /* 年代ドラムロール */
+    .pop-year-picker { background:var(--card); border-bottom:1px solid var(--line); padding:.75rem; }
+    .pop-year-picker-inner { display:flex; align-items:center; justify-content:center; gap:1rem; }
+    .pop-drum-wrap { display:flex; flex-direction:column; align-items:center; gap:.3rem; }
+    .pop-drum-label { font-size:.72rem; color:var(--muted); }
+    .pop-drum {
+      height:120px; width:90px; overflow-y:scroll; scroll-snap-type:y mandatory;
+      scrollbar-width:none; border:1px solid var(--line); border-radius:10px;
+      background:rgba(255,255,255,.03); position:relative;
+    }
+    .pop-drum::-webkit-scrollbar { display:none; }
+    .pop-drum-item {
+      height:40px; display:flex; align-items:center; justify-content:center;
+      scroll-snap-align:center; font-size:.95rem; color:var(--muted); cursor:pointer;
+    }
+    .pop-drum-item.selected { color:var(--brand); font-weight:700; font-size:1.05rem; }
+    .pop-drum-sep { font-size:1.2rem; color:var(--muted); margin-top:1.5rem; }
+    .pop-year-apply { padding:.45rem 1.1rem; border-radius:999px; background:var(--brand); color:#0c2015; font-weight:700; border:none; cursor:pointer; font-size:.85rem; margin-top:1.5rem; }
+
+    .pop-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.75rem; padding:.75rem; }
+    @media (min-width:640px) { .pop-grid { grid-template-columns:repeat(3,1fr); } }
+    @media (min-width:960px) { .pop-grid { grid-template-columns:repeat(4,1fr); padding:.75rem 2rem; } }
+    .pop-load-btn { padding:.6rem 2rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; font-size:.85rem; }
+
     /* ── LANGUAGE SELECTOR ── */
     .lang-current-btn { padding:.38rem .65rem; border-radius:8px; background:var(--card2); border:1px solid var(--line); display:inline-flex; align-items:center; gap:.3rem; cursor:pointer; font-size:.78rem; font-weight:700; color:var(--brand); white-space:nowrap; }
     .lang-overlay { display:none; position:fixed; inset:0; z-index:300; background:rgba(2,8,5,.97); overflow-y:auto; padding:1.2rem 1rem; }
@@ -421,7 +502,19 @@
 
     /* ════════════════════════════ */
     .footer { padding:1.2rem 1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.78rem; text-align:center; margin-top:1rem; }
+    .legal-link { background:none; border:none; color:var(--brand); font-size:.78rem; cursor:pointer; text-decoration:underline; padding:0; }
+    .legal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .legal-modal { background:var(--card); border:1px solid var(--line); border-radius:16px; width:100%; max-width:640px; max-height:85vh; display:flex; flex-direction:column; }
+    .legal-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.2rem; border-bottom:1px solid var(--line); }
+    .legal-modal-header h2 { margin:0; font-size:1rem; color:#dff0e6; }
+    .legal-close { background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer; padding:.2rem .5rem; }
+    .legal-modal-body { overflow-y:auto; padding:1.2rem; font-size:.82rem; line-height:1.8; color:#c8e6d4; }
+    .legal-modal-body h3 { font-size:.88rem; color:#dff0e6; margin:1.2rem 0 .4rem; }
+    .legal-modal-body p { margin:.3rem 0; }
+    .legal-modal-body .legal-date { font-size:.75rem; color:var(--muted); margin-bottom:1rem; }
   </style>
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -557,7 +650,25 @@
     <div class="sec-head"><h2>すべての作品</h2><small id="allCount">—</small></div>
     <div class="grid2" id="allGrid"></div>
   </section>
-  <footer class="footer">© アニメップル · All rights reserved.</footer>
+  <footer class="footer">
+    <div style="margin-bottom:.5rem;">
+      <button class="legal-link" onclick="openLegal('terms')">利用規約</button>
+      <span style="margin:0 .4rem;">·</span>
+      <button class="legal-link" onclick="openLegal('privacy')">プライバシーポリシー</button>
+    </div>
+    <div>© アニメップル · All rights reserved.</div>
+  </footer>
+
+  <!-- 利用規約・プライバシーポリシー モーダル -->
+  <div class="legal-overlay" id="legalOverlay" style="display:none;">
+    <div class="legal-modal">
+      <div class="legal-modal-header">
+        <h2 id="legalTitle"></h2>
+        <button class="legal-close" onclick="closeLegal()">✕</button>
+      </div>
+      <div class="legal-modal-body" id="legalBody"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════
@@ -566,7 +677,7 @@
 <div class="page" id="page-anime">
   <header class="hdr">
     <div class="hdr-inner">
-      <button class="back-btn" onclick="nav('home')">← 戻る</button>
+      <button class="back-btn" onclick="navBack()">← 戻る</button>
       <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
     </div>
   </header>
@@ -583,15 +694,33 @@
       </div>
     </div>
   </div>
-  <!-- ▼▼▼ 広告③：作品ページ内アフィリエイト ▼▼▼
-       本番: adRenderAffiliate() がAnimeIDを元にサービス別リンクを動的生成
-       差し替え: AD_CONFIG.affiliate[] のURLをアフィリエイトURLに変更 -->
-  <div class="ad-wrap" id="adAnimePage">
-    <div class="ad-label">このアニメを観る</div>
-    <div id="affiliateLinks"></div>
+  <!-- 配信サービス -->
+  <div class="af-section" id="afStreamSection">
+    <div class="af-section-label">▶ このアニメを観る</div>
+    <div id="afStreamLinks"></div>
+  </div>
+
+  <!-- グッズ・関連商品 -->
+  <div class="af-section" id="afGoodsSection">
+    <div class="af-section-label">🛍 グッズ・関連商品</div>
+    <div id="afGoodsLinks"></div>
   </div>
 
   <!-- マスターグラフ -->
+  <!-- 世界の反応 -->
+  <section class="reviews-section" id="worldStatsSection" style="display:none;">
+    <div class="reviews-head">
+      <h2 style="margin:0 0 .25rem;">🌍 世界の反応</h2>
+      <div class="world-period-tabs" id="worldPeriodTabs">
+        <button class="world-tab active" data-period="all">全期間</button>
+        <button class="world-tab" data-period="month">今月</button>
+        <button class="world-tab" data-period="year">今年</button>
+        <button class="world-tab" data-period="day">今日</button>
+      </div>
+    </div>
+    <div id="worldStatsContent" style="margin-top:.6rem;"></div>
+  </section>
+
   <section class="reviews-section" id="masterGraphSection" style="display:none;">
     <div class="reviews-head">
       <h2 style="margin:0 0 .4rem;">みんなの評価グラフ</h2>
@@ -600,11 +729,11 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.6rem;">
       <div>
         <p style="font-size:.78rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">作品の完成度</p>
-        <canvas id="masterChartA" width="300" height="220" style="width:100%;border-radius:12px;background:#09201b;display:block;"></canvas>
+        <canvas id="masterChartA" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
       </div>
       <div>
         <p style="font-size:.78rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">感情・雰囲気</p>
-        <canvas id="masterChartB" width="300" height="220" style="width:100%;border-radius:12px;background:#09201b;display:block;"></canvas>
+        <canvas id="masterChartB" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
       </div>
     </div>
   </section>
@@ -676,6 +805,51 @@
 <!-- ═══════════════════════════════════
      PAGE: SEARCH RESULTS
 ═══════════════════════════════════ -->
+<div class="page" id="page-popular">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" onclick="navBack()">← 戻る</button>
+      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+    </div>
+  </header>
+
+  <!-- ソートバー -->
+  <div class="pop-sort-bar">
+    <div class="pop-sort-tabs" id="popSortTabs">
+      <button class="pop-sort-tab active" data-sort="popular">🔥 人気順</button>
+      <button class="pop-sort-tab" data-sort="reviews">💬 レビュー順</button>
+      <button class="pop-sort-tab" data-sort="pv_day">📈 今日</button>
+      <button class="pop-sort-tab" data-sort="pv_week">週間</button>
+      <button class="pop-sort-tab" data-sort="pv_month">月間</button>
+      <button class="pop-sort-tab" data-sort="pv_year">年間</button>
+      <button class="pop-sort-tab" data-sort="pv_all">全期間</button>
+      <button class="pop-sort-tab" data-sort="year">📅 年代</button>
+    </div>
+  </div>
+
+  <!-- 年代ピッカー（年代ソート時のみ表示） -->
+  <div class="pop-year-picker" id="popYearPicker" style="display:none;">
+    <div class="pop-year-picker-inner">
+      <div class="pop-drum-wrap">
+        <div class="pop-drum-label">開始年</div>
+        <div class="pop-drum" id="popDrumFrom"></div>
+      </div>
+      <span class="pop-drum-sep">〜</span>
+      <div class="pop-drum-wrap">
+        <div class="pop-drum-label">終了年</div>
+        <div class="pop-drum" id="popDrumTo"></div>
+      </div>
+      <button class="pop-year-apply" id="popYearApply">適用</button>
+    </div>
+  </div>
+
+  <div class="result-meta" id="popResultMeta"></div>
+  <div class="pop-grid" id="popGrid"></div>
+  <div id="popLoadMore" style="text-align:center;padding:1rem;display:none;">
+    <button class="pop-load-btn" id="popLoadBtn">もっと見る</button>
+  </div>
+</div>
+
 <div class="page" id="page-search">
   <header class="hdr">
     <div class="hdr-inner">
@@ -738,7 +912,7 @@
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
-  <button class="bnav-item" id="bnav-ranking" onclick="navSearch('','reviews_desc')"><span class="bnav-icon">🏆</span>人気</button>
+  <button class="bnav-item" id="bnav-ranking" onclick="navPopular()"><span class="bnav-icon">🏆</span>人気</button>
   <button class="bnav-item" id="bnav-mypage"><span class="bnav-icon">👤</span>マイページ</button>
 </nav>
 
@@ -747,6 +921,15 @@
   /* ════════════════════════════
      DATA & CONSTANTS
   ════════════════════════════ */
+  /* ════════════════════════════
+     SUPABASE 設定
+     切り替え: mode を 'supabase' に変更するだけ
+  ════════════════════════════ */
+  const DB_MODE = 'supabase'; // 'local' | 'supabase'
+  const SUPABASE_URL  = 'https://ofbjfiuayfhdkgertxyo.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYmpmaXVheWZoZGtnZXJ0eHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzAxOTIsImV4cCI6MjA5ODIwNjE5Mn0.atbMSoL6d_-F-RRomwfjWeKe1YOMZi-48tnPx--Etco';
+  const sb = (DB_MODE === 'supabase') ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+
   const STORAGE_KEY = "animepple-user-pages";
   const REVIEW_KEY  = "animepple-reviews";
   const DELETED_KEY = "animepple-deleted-seed-ids";
@@ -767,6 +950,34 @@
     return [...pj(STORAGE_KEY),...seedAnime.filter(s=>!d.has(s.id))];
   }
   function getReviews() { return pj(REVIEW_KEY); }
+
+  // Supabaseからレビューを非同期取得してLocalStorageにマージ
+  async function fetchRemoteReviews(animeId) {
+    if(DB_MODE !== 'supabase' || !sb) return;
+    try {
+      const { data, error } = await sb.from('reviews')
+        .select('*')
+        .eq('anime_id', animeId)
+        .order('created_at', { ascending: false });
+      if(error || !data) return;
+      // Supabaseのデータ形式をLocalStorage形式に変換してマージ
+      const remote = data.map(r=>({
+        animeId: r.anime_id,
+        username: r.username||'名無しのりんご',
+        chartA: r.chart_a||{},
+        chartB: r.chart_b||{},
+        tags: r.tags||[],
+        comment: r.comment||'',
+        createdAt: r.created_at,
+        fromSupabase: true,
+      }));
+      // LocalStorageのレビューと重複なくマージ
+      const local = pj(REVIEW_KEY).filter(r=>r.animeId===animeId&&!r.fromSupabase);
+      const merged = [...local, ...remote];
+      const all = pj(REVIEW_KEY).filter(r=>r.animeId!==animeId);
+      sj(REVIEW_KEY, [...merged, ...all]);
+    } catch(e) { console.warn('fetchRemoteReviews:', e); }
+  }
   function reviewCount(id) {
     // 有効レビュー（グラフ操作済み）のみカウント
     return getReviews().filter(r => {
@@ -782,24 +993,54 @@
   ════════════════════════════ */
   let currentPage = 'home';
   let currentAnimeId = null;
-  let prevPage = 'home';
+  let navHistory = []; // 履歴スタック
 
   function nav(page, animeId) {
+    // 検索オーバーレイが開いていたら閉じる
+    const overlay = document.getElementById('searchOverlay');
+    if(overlay && overlay.classList.contains('open')) {
+      overlay.classList.remove('open');
+    }
+    // 現在ページを履歴に積む（同じページへの連続遷移は積まない）
+    const last = navHistory[navHistory.length-1];
+    if(!last || last.page !== currentPage || last.animeId !== currentAnimeId) {
+      navHistory.push({ page: currentPage, animeId: currentAnimeId });
+    }
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('page-'+page).classList.add('active');
     window.scrollTo(0,0);
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     const ab = document.getElementById('bnav-'+page);
     if (ab) ab.classList.add('active');
-    prevPage = currentPage;
     currentPage = page;
+    currentAnimeId = animeId || null;
     if (page==='home')   renderHome().catch(console.error);
-    if (page==='anime'&&animeId)  { currentAnimeId=animeId; renderAnimePage(animeId); }
-    if (page==='review'&&animeId) { currentAnimeId=animeId; initReviewPage(animeId); }
+    if (page==='anime'&&animeId)  { renderAnimePage(animeId); }
+    if (page==='review'&&animeId) { initReviewPage(animeId); }
     if (page==='search') renderSearch().catch(console.error);
+    if (page==='popular') renderPopular().catch(console.error);
   }
   window.nav = nav;
-  function navBack() { nav(prevPage==='anime'?'home':prevPage); }
+  function navBack() {
+    const prev = navHistory.pop();
+    if(!prev || prev.page==='home') { nav('home'); return; }
+    // 履歴から戻る時はスタックに積まない
+    const overlay = document.getElementById('searchOverlay');
+    if(overlay) overlay.classList.remove('open');
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+prev.page).classList.add('active');
+    window.scrollTo(0,0);
+    document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+    const ab = document.getElementById('bnav-'+prev.page);
+    if(ab) ab.classList.add('active');
+    currentPage = prev.page;
+    currentAnimeId = prev.animeId || null;
+    if(prev.page==='home')   renderHome().catch(console.error);
+    if(prev.page==='anime'&&prev.animeId)  { renderAnimePage(prev.animeId); }
+    if(prev.page==='review'&&prev.animeId) { initReviewPage(prev.animeId); }
+    if(prev.page==='search') renderSearch().catch(console.error);
+    if(prev.page==='popular') renderPopular().catch(console.error);
+  }
   window.navBack = navBack;
   function navSearch(q,sort) {
     srSearchState.q=q||''; srSearchState.sort=sort||'relevance';
@@ -809,12 +1050,18 @@
   }
   window.navSearch = navSearch;
 
+  function navPopular() {
+    nav('popular');
+  }
+  window.navPopular = navPopular;
+
   // KitsuIDからページを自動生成してナビ
   async function navAnime(kitsuId) {
     const pageId = `kitsu-${kitsuId}`;
     // すでにLocalStorageにあればそのまま表示
     const existing = pj(STORAGE_KEY).find(p=>p.id===pageId);
-    if (existing) { nav('anime', pageId); return; }
+    // genresが未取得の古いキャッシュなら再取得する
+    if (existing && existing.genres !== undefined) { nav('anime', pageId); return; }
     // seedAnimeにあればそのまま
     const seed = seedAnime.find(p=>p.id===pageId);
     if (seed) { nav('anime', pageId); return; }
@@ -897,13 +1144,311 @@
         streaming,
       };
       const pages = pj(STORAGE_KEY);
-      if (!pages.find(p=>p.id===pageId)) { pages.unshift(page); sj(STORAGE_KEY, pages); }
+      const existIdx = pages.findIndex(p=>p.id===pageId); if(existIdx>=0) pages[existIdx]=page; else pages.unshift(page); sj(STORAGE_KEY, pages);
       nav('anime', pageId);
     } catch(e) {
       nav('anime', pageId); // エラーでもページに遷移
     }
   }
   window.navAnime = navAnime;
+
+  /* ════════════════════════════
+     PV STORE (LocalStorage → Supabase切り替え対応)
+     切り替え時はこのオブジェクトの実装だけ変える
+  ════════════════════════════ */
+  const pvStore = (() => {
+    // LocalStorageフォールバック
+    const KEY = 'animepple-pv-log';
+    function loadLocal() { try { return JSON.parse(localStorage.getItem(KEY)||'{}'); } catch{ return {}; } }
+    function saveLocal(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch{} }
+
+    return {
+      async increment(animeId) {
+        if(DB_MODE === 'supabase' && sb) {
+          const country = geoStore.getCountry() || null;
+          sb.from('pv_logs').insert({ anime_id: animeId, country_code: country }).then(()=>{});
+        }
+        // LocalStorageにも記録（オフライン対応）
+        const d = loadLocal();
+        if(!d[animeId]) d[animeId] = [];
+        d[animeId].push({ ts: Date.now() });
+        const cutoff = Date.now() - 365*24*60*60*1000;
+        d[animeId] = d[animeId].filter(e=>e.ts>cutoff);
+        saveLocal(d);
+      },
+      get(animeId, period) {
+        const d = loadLocal();
+        const log = d[animeId] || [];
+        const now = Date.now();
+        const ms = {day:86400000,week:604800000,month:2592000000,year:31536000000,all:Infinity}[period]??Infinity;
+        return log.filter(e=> ms===Infinity||(now-e.ts)<ms).length;
+      },
+      getAll(period) {
+        const d = loadLocal();
+        const result = {};
+        Object.keys(d).forEach(id => { result[id] = pvStore.get(id, period); });
+        return result;
+      }
+    };
+  })();
+
+  /* ════════════════════════════
+     GEO STORE (IPジオロケ → Supabase切り替え対応)
+     切り替え時はこのオブジェクトの実装だけ変える
+  ════════════════════════════ */
+  const geoStore = (() => {
+    const CACHE_KEY = 'animepple-country-cache';
+    const STATS_KEY = 'animepple-country-stats'; // {animeId: [{country, ts},...]}
+    let _country = null; // セッション内キャッシュ
+
+    // 国コード取得（IPジオロケ → navigator.languageフォールバック）
+    async function detectCountry() {
+      if(_country) return _country;
+      // LocalStorageキャッシュ（24時間）
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+        if(cached && cached.ts && (Date.now()-cached.ts)<86400000) {
+          _country = cached.code; return _country;
+        }
+      } catch{}
+      // ipapi.co で取得（商用無料枠：月1000req）
+      try {
+        const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
+        const json = await res.json();
+        if(json.country_code) {
+          _country = json.country_code;
+          localStorage.setItem(CACHE_KEY, JSON.stringify({code:_country, ts:Date.now()}));
+          return _country;
+        }
+      } catch{}
+      // フォールバック: navigator.language から推定（精度低）
+      const lang = navigator.language || '';
+      const map = { ja:'JP', en:'US', ko:'KR', zh:'CN', fr:'FR', de:'DE', es:'ES', pt:'BR', ar:'SA' };
+      _country = map[lang.slice(0,2)] || 'UN';
+      return _country;
+    }
+
+    function loadStats() { try { return JSON.parse(localStorage.getItem(STATS_KEY)||'{}'); } catch{ return {}; } }
+    function saveStats(d) { try { localStorage.setItem(STATS_KEY, JSON.stringify(d)); } catch{} }
+
+    return {
+      // PV記録時に国別データも記録
+      async record(animeId) {
+        const country = await detectCountry();
+        const d = loadStats();
+        if(!d[animeId]) d[animeId] = [];
+        d[animeId].push({ country, ts: Date.now() });
+        // 1年超を削除
+        const cutoff = Date.now() - 365*24*60*60*1000;
+        d[animeId] = d[animeId].filter(e=>e.ts>cutoff);
+        saveStats(d);
+        return country;
+      },
+      // 作品の国別PV集計 {JP:12, US:8, ...}
+      getCountryStats(animeId, period) {
+        const d = loadStats();
+        const log = d[animeId] || [];
+        const now = Date.now();
+        const ms = {day:86400000,week:604800000,month:2592000000,year:31536000000,all:Infinity}[period]??Infinity;
+        const filtered = log.filter(e=> ms===Infinity||(now-e.ts)<ms);
+        const counts = {};
+        filtered.forEach(e=>{ counts[e.country]=(counts[e.country]||0)+1; });
+        return counts;
+      },
+      // 管理者用：全作品の国別データをまとめて返す
+      getAllStats(period) {
+        const d = loadStats();
+        const result = {};
+        Object.keys(d).forEach(id=>{ result[id]=geoStore.getCountryStats(id,period); });
+        return result;
+      },
+      getCountry() { return _country; },
+      detectCountry,
+    };
+  })();
+
+  // 国コードから国旗絵文字
+  function countryFlag(code) {
+    if(!code||code.length!==2) return '🌐';
+    return String.fromCodePoint(...[...code.toUpperCase()].map(c=>127397+c.charCodeAt(0)));
+  }
+
+  // 国コードから国名（主要国）
+  const COUNTRY_NAMES = {
+    JP:'日本',US:'アメリカ',KR:'韓国',CN:'中国',TW:'台湾',BR:'ブラジル',FR:'フランス',
+    DE:'ドイツ',ES:'スペイン',MX:'メキシコ',IT:'イタリア',PH:'フィリピン',ID:'インドネシア',
+    TH:'タイ',VN:'ベトナム',IN:'インド',GB:'イギリス',CA:'カナダ',AU:'オーストラリア',
+    RU:'ロシア',SA:'サウジ',AR:'アルゼンチン',PL:'ポーランド',PT:'ポルトガル',UN:'不明',
+  };
+
+  /* ════════════════════════════
+     POPULAR PAGE
+  ════════════════════════════ */
+  const popState = { sort:'popular', yearFrom:null, yearTo:null, page:0, items:[], loading:false };
+  const POP_PAGE_SIZE = 24;
+  const CURRENT_YEAR = new Date().getFullYear();
+  const YEAR_LIST = Array.from({length: CURRENT_YEAR - 1959}, (_,i) => CURRENT_YEAR - i);
+
+  // ドラムロールUI構築
+  function buildDrum(elId, years, defaultYear) {
+    const el = document.getElementById(elId);
+    if(!el) return;
+    // 上下パディング用空要素
+    el.innerHTML = '<div class="pop-drum-item" style="pointer-events:none;"></div>'
+      + years.map(y=>`<div class="pop-drum-item" data-year="${y}">${y}</div>`).join('')
+      + '<div class="pop-drum-item" style="pointer-events:none;"></div>';
+
+    // 初期スクロール位置
+    const idx = years.indexOf(defaultYear);
+    if(idx>=0) setTimeout(()=>{ el.scrollTop = idx * 40; }, 50);
+
+    // スクロール終了後に選択年を更新
+    let timer;
+    el.addEventListener('scroll', ()=>{
+      clearTimeout(timer);
+      timer = setTimeout(()=>{
+        const i = Math.round(el.scrollTop / 40);
+        el.querySelectorAll('.pop-drum-item[data-year]').forEach((item,j)=>{
+          item.classList.toggle('selected', j===i);
+        });
+      }, 80);
+    });
+  }
+
+  function getDrumYear(elId) {
+    const el = document.getElementById(elId);
+    if(!el) return null;
+    const i = Math.round(el.scrollTop / 40);
+    const items = el.querySelectorAll('.pop-drum-item[data-year]');
+    return items[i] ? Number(items[i].dataset.year) : null;
+  }
+
+  // Kitsuから人気作品を取得（userCount降順）
+  async function fetchKitsuPopular(pageOffset=0, yearFrom=null, yearTo=null) {
+    let url = `https://kitsu.io/api/edge/anime?sort=-userCount&page[limit]=${POP_PAGE_SIZE}&page[offset]=${pageOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`;
+    if(yearFrom) url += `&filter[seasonYear]=${yearFrom}`;
+    const res = await fetch(url, { headers:{'Accept':'application/vnd.api+json'} });
+    const json = await res.json();
+    return (json.data||[]).map(item=>({
+      id: `kitsu-${item.id}`,
+      kitsuId: item.id,
+      title: item.attributes.titles?.ja_jp || item.attributes.canonicalTitle || '',
+      titleEn: item.attributes.canonicalTitle || '',
+      image: item.attributes.posterImage?.large || item.attributes.posterImage?.medium || '',
+      meta: item.attributes.subtype || '',
+      year: item.attributes.startDate ? item.attributes.startDate.slice(0,4) : '',
+      userCount: item.attributes.userCount || 0,
+    }));
+  }
+
+  async function renderPopular() {
+    // ソートタブのイベント（初回のみ）
+    const tabs = document.getElementById('popSortTabs');
+    if(tabs && !tabs.dataset.init) {
+      tabs.dataset.init = '1';
+      tabs.querySelectorAll('.pop-sort-tab').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          tabs.querySelectorAll('.pop-sort-tab').forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          popState.sort = btn.dataset.sort;
+          popState.page = 0;
+          popState.items = [];
+          // 年代ソート時はピッカー表示
+          const picker = document.getElementById('popYearPicker');
+          if(popState.sort==='year') {
+            picker.style.display='';
+            buildDrum('popDrumFrom', YEAR_LIST, popState.yearFrom||2010);
+            buildDrum('popDrumTo',   YEAR_LIST, popState.yearTo||CURRENT_YEAR);
+          } else {
+            picker.style.display='none';
+            loadPopularItems(true);
+          }
+        });
+      });
+      // 年代適用ボタン
+      document.getElementById('popYearApply').addEventListener('click', ()=>{
+        popState.yearFrom = getDrumYear('popDrumFrom');
+        popState.yearTo   = getDrumYear('popDrumTo');
+        if(popState.yearFrom && popState.yearTo && popState.yearFrom > popState.yearTo) {
+          [popState.yearFrom, popState.yearTo] = [popState.yearTo, popState.yearFrom];
+        }
+        popState.page = 0; popState.items = [];
+        loadPopularItems(true);
+      });
+      // もっと見るボタン
+      document.getElementById('popLoadBtn').addEventListener('click', ()=>{
+        popState.page++;
+        loadPopularItems(false);
+      });
+    }
+    loadPopularItems(true);
+  }
+
+  async function loadPopularItems(reset) {
+    if(popState.loading) return;
+    popState.loading = true;
+    const grid = document.getElementById('popGrid');
+    const meta = document.getElementById('popResultMeta');
+    const loadMore = document.getElementById('popLoadMore');
+    if(reset) { grid.innerHTML='<p style="color:var(--muted);padding:1rem;">読み込み中…</p>'; }
+
+    try {
+      const sort = popState.sort;
+      let items = [];
+
+      if(sort==='popular') {
+        // Kitsu userCount順
+        items = await fetchKitsuPopular(popState.page * POP_PAGE_SIZE);
+      } else if(sort==='reviews') {
+        // LocalStorageのレビュー数順
+        const all = getAll();
+        const withCount = all.map(a=>({...a, reviewCount: validReviews(a.id).length}));
+        withCount.sort((a,b)=>b.reviewCount-a.reviewCount);
+        items = withCount.slice(popState.page*POP_PAGE_SIZE, (popState.page+1)*POP_PAGE_SIZE);
+      } else if(sort.startsWith('pv_')) {
+        // PV期間別
+        const period = sort.replace('pv_','');
+        const pvMap = pvStore.getAll(period);
+        const all = getAll();
+        const withPv = all.map(a=>({...a, pv: pvMap[a.id]||0}));
+        withPv.sort((a,b)=>b.pv-a.pv);
+        items = withPv.slice(popState.page*POP_PAGE_SIZE, (popState.page+1)*POP_PAGE_SIZE);
+      } else if(sort==='year') {
+        // 年代範囲でKitsuから取得
+        const from = popState.yearFrom || 2000;
+        const to   = popState.yearTo   || CURRENT_YEAR;
+        // yearFromをbaseに取得してyearToでfilter
+        const fetched = await fetchKitsuPopular(popState.page * POP_PAGE_SIZE, from);
+        items = fetched.filter(a=> {
+          const y = Number(a.year);
+          return y >= from && y <= to;
+        });
+      }
+
+      if(reset) popState.items = items;
+      else popState.items = [...popState.items, ...items];
+
+      if(reset) grid.innerHTML='';
+      grid.innerHTML += popState.items.map(a=>`
+        <div class="gcard" onclick="${a.kitsuId?`navAnime('${a.kitsuId}')`:`nav('anime','${a.id}')`}">
+          <div class="gcard-img">${a.image?`<img src="${a.image}" alt="${a.title||a.titleEn}" loading="lazy" />`:'📺'}</div>
+          <div class="gcard-body">
+            <div class="gcard-title">${a.title||a.titleEn||a.titleEn}</div>
+            <div class="gcard-meta">${[a.meta,a.year?a.year+'年':''].filter(Boolean).join(' · ')}</div>
+          </div>
+        </div>
+      `).join('');
+
+      const label = {popular:'人気順',reviews:'レビュー数順',pv_day:'今日のPV',pv_week:'週間PV',pv_month:'月間PV',pv_year:'年間PV',pv_all:'全期間PV',year:'年代指定'}[sort]||'';
+      meta.textContent = `${label} · ${popState.items.length}件`;
+      loadMore.style.display = items.length >= POP_PAGE_SIZE ? '' : 'none';
+    } catch(e) {
+      console.error(e);
+      if(reset) grid.innerHTML='<p style="color:var(--muted);padding:1rem;">読み込みに失敗しました</p>';
+    }
+    popState.loading = false;
+  }
+  window.renderPopular = renderPopular;
 
   /* ════════════════════════════
      TAG CHIP BUILDER (reusable)
@@ -945,7 +1490,14 @@
   ════════════════════════════ */
   function drawRadar(canvas, labels, values, fill, stroke) {
     const ctx=canvas.getContext('2d'); if(!ctx) return;
-    const w=canvas.width,h=canvas.height,cx=w/2,cy=h/2;
+    // devicePixelRatio対応（Retina/高DPI画面でぼやけ防止）
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.clientWidth  || canvas.width;
+    const cssH = canvas.clientHeight || canvas.height;
+    canvas.width  = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    ctx.scale(dpr, dpr);
+    const w=cssW, h=cssH, cx=w/2, cy=h/2;
     const radius=Math.min(w,h)*0.34,max=10,count=labels.length;
     ctx.clearRect(0,0,w,h);
 
@@ -1009,14 +1561,19 @@
       const thumbR = 8;
       const trackLeft  = (iRect.left - wRect.left) + thumbR;
       const trackWidth = iRect.width - thumbR * 2;
-      canvas.width = Math.round(wRect.width);
+      const dpr = window.devicePixelRatio || 1;
+      const cssWidth = wRect.width;
+      canvas.width  = Math.round(cssWidth * dpr);
+      canvas.height = Math.round(18 * dpr);
+      canvas.style.height = '18px';
       const ctx = canvas.getContext('2d');
-      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0,0,cssWidth,18);
       const MARKS = [0,1,2,3,4,5,6,7,8,9,10];
       const LABELED = new Set([1,3,5,7,9]);
       MARKS.forEach(v=>{
         const x = trackLeft + (trackWidth * v / 10);
-        ctx.beginPath(); ctx.moveTo(x,10); ctx.lineTo(x,18);
+        ctx.beginPath(); ctx.moveTo(x,10); ctx.lineTo(x,17);
         ctx.strokeStyle='rgba(94,201,122,0.28)'; ctx.lineWidth=1; ctx.stroke();
         if(LABELED.has(v)){
           ctx.font='9px sans-serif';
@@ -1326,6 +1883,10 @@
       document.getElementById('deletePageBtn').style.display='none';
       document.getElementById('reviewList').innerHTML=''; return;
     }
+    // PV記録（国別データも同時記録）
+    pvStore.increment(id);
+    geoStore.record(id).catch(()=>{});
+
     document.getElementById('animeTitle').textContent=getTitle(page);
     // 種別・放送年・話数を組み合わせて表示
     const metaParts = [
@@ -1386,9 +1947,59 @@
       sj(REVIEW_KEY,getReviews().filter(r=>r.animeId!==id));
       nav('home');
     };
-    renderAffiliateLinks();
-    renderMasterGraph(id);
-    renderReviewList(id);
+    renderAffiliateLinks(page);
+    renderWorldStats(id);
+    // Supabaseからレビューを取得してからグラフ・一覧を描画
+    fetchRemoteReviews(id).then(()=>{
+      renderMasterGraph(id);
+      renderReviewList(id);
+    });
+  }
+
+  function renderWorldStats(id) {
+    const section = document.getElementById('worldStatsSection');
+    const content = document.getElementById('worldStatsContent');
+    const tabs = document.getElementById('worldPeriodTabs');
+    if(!section||!content||!tabs) return;
+
+    function draw(period) {
+      const stats = geoStore.getCountryStats(id, period);
+      const entries = Object.entries(stats).sort((a,b)=>b[1]-a[1]);
+      const total = entries.reduce((s,[,v])=>s+v,0);
+      if(!total) {
+        section.style.display='none'; return;
+      }
+      section.style.display='';
+      // 上位10か国まで表示
+      const top = entries.slice(0,10);
+      content.innerHTML = `
+        <p style="font-size:.72rem;color:var(--muted);margin:0 0 .5rem;">総PV: ${total}件</p>
+        <div class="world-country-list">
+          ${top.map(([code,count])=>`
+            <div class="world-country-item">
+              <span class="world-country-flag">${countryFlag(code)}</span>
+              <div class="world-country-body">
+                <span class="world-country-name">${COUNTRY_NAMES[code]||code}</span>
+                <span class="world-country-count">${count}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // タブのイベント（重複防止）
+    if(!tabs.dataset.wInit) {
+      tabs.dataset.wInit='1';
+      tabs.querySelectorAll('.world-tab').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          tabs.querySelectorAll('.world-tab').forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          draw(btn.dataset.period);
+        });
+      });
+    }
+    draw('all');
   }
 
   function renderReviewList(id) {
@@ -1523,7 +2134,35 @@
       comment:document.getElementById('reviewComment').value.trim(),
       createdAt:new Date().toISOString()
     };
+    // LocalStorageに保存
     const ex=getReviews(); ex.unshift(review); sj(REVIEW_KEY,ex);
+    // Supabaseに非同期保存
+    if(DB_MODE === 'supabase' && sb) {
+      (async()=>{
+        const page = getAll().find(p=>p.id===review.animeId);
+        if(page) {
+          await sb.from('anime_pages').upsert({
+            id: page.id, kitsu_id: page.kitsuId||null,
+            title: page.title||null, title_en: page.titleEn||null,
+            meta: page.meta||null, image_url: page.image||null,
+            description: page.description||null, year: page.year||null,
+            episodes: page.episodes||null,
+            genres: page.genres||[], categories: page.categories||[],
+            studios: page.studios||[], streaming: page.streaming||[],
+          }, { onConflict: 'id' });
+        }
+        const country = geoStore.getCountry() || null;
+        await sb.from('reviews').insert({
+          anime_id: review.animeId,
+          username: review.username||'名無しのりんご',
+          country_code: country,
+          chart_a: review.chartA||{},
+          chart_b: review.chartB||{},
+          tags: review.tags||[],
+          comment: review.comment||null,
+        });
+      })().catch(e=>console.warn('Supabase review save:', e));
+    }
     alert(t('reviewPosted'));
     nav('anime',currentAnimeId);
   };
@@ -1700,49 +2339,71 @@
      3. affiliate[].url をASPアフィリエイトURLに変更
      4. adClick() はクリック計測用。本番はGTM/GA4に差し替え可
   ════════════════════════════ */
-  const AD_CONFIG = {
-    // 'demo' = 擬似表示（現在）  |  'live' = 本番AdSense
-    mode: 'demo',
-
-    // ── AdSense設定（本番時に入力）──
-    adsense: {
-      clientId: 'ca-pub-XXXXXXXXXXXXXXXX', // ← AdSense発行のIDに変更
-      slots: {
-        homeBanner: '1111111111',           // ← 広告ユニットIDに変更
-        homeMid:    '2222222222',
-        animePage:  '3333333333',
-        search:     '4444444444',
-      }
+  /* ════════════════════════════
+     AFFILIATE CONFIG
+     ── 審査通過後にURLをASPアフィリエイトURLに差し替え ──
+     ── Amazon PA-API実装後はafGoods()内を差し替え ──
+  ════════════════════════════ */
+  const AFFILIATE = {
+    // 国別デフォルト配信サービス（Kitsuから取れない場合のフォールバック）
+    // url: 審査通過後にASPアフィリエイトURLに変更
+    streamByCountry: {
+      JP: [
+        { id:'danime',   icon:'▶',  name:'dアニメストア',        sub:'月440円〜 / 4,400作品以上',      cta:'無料で試す', url:'https://anime.dmkt-sp.jp/' },
+        { id:'unext',    icon:'🎬', name:'U-NEXT',               sub:'31日間無料 / アニメ見放題',       cta:'無料で試す', url:'https://video.unext.jp/' },
+        { id:'abema',    icon:'📺', name:'ABEMAプレミアム',       sub:'月960円 / 最速配信多数',         cta:'無料で試す', url:'https://abema.tv/' },
+        { id:'netflix',  icon:'🎥', name:'Netflix',              sub:'高画質 / オリジナル作品',         cta:'今すぐ登録', url:'https://www.netflix.com/jp/' },
+      ],
+      US: [
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'Largest anime library',           cta:'Try Free',   url:'https://www.crunchyroll.com/' },
+        { id:'funimation',  icon:'🎌', name:'Funimation',        sub:'Subbed & Dubbed anime',           cta:'Try Free',   url:'https://www.funimation.com/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime originals & more',          cta:'Join Now',   url:'https://www.netflix.com/' },
+        { id:'hidive',      icon:'▶',  name:'HIDIVE',            sub:'Simulcasts & exclusives',         cta:'Try Free',   url:'https://www.hidive.com/' },
+      ],
+      KR: [
+        { id:'laftel',   icon:'▶',  name:'라프텔',               sub:'월정액 애니메이션',               cta:'무료체험',   url:'https://laftel.net/' },
+        { id:'wavve',    icon:'📺', name:'wavve',                sub:'국내 최대 OTT',                   cta:'무료체험',   url:'https://www.wavve.com/' },
+        { id:'netflix',  icon:'🎥', name:'Netflix',              sub:'오리지널 & 인기 애니',            cta:'가입하기',   url:'https://www.netflix.com/kr/' },
+      ],
+      GB: [
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'Largest anime library',           cta:'Try Free',   url:'https://www.crunchyroll.com/gb/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime & originals',               cta:'Join Now',   url:'https://www.netflix.com/gb/' },
+        { id:'allblk',      icon:'▶',  name:'All4 / Channel 4', sub:'Free streaming',                  cta:'Watch Free', url:'https://www.channel4.com/' },
+      ],
+      FR: [
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'La plus grande bibliothèque',     cta:'Essai gratuit', url:'https://www.crunchyroll.com/fr/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime & originaux',               cta:"S'abonner",  url:'https://www.netflix.com/fr/' },
+        { id:'wakanim',     icon:'▶',  name:'Wakanim',           sub:'Simulcast & VOSTFR',              cta:'Essai gratuit', url:'https://www.wakanim.tv/' },
+      ],
+      DE: [
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'Größte Anime-Bibliothek',         cta:'Gratis testen', url:'https://www.crunchyroll.com/de/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime & Originale',               cta:'Jetzt starten', url:'https://www.netflix.com/de/' },
+        { id:'wakanim',     icon:'▶',  name:'Wakanim',           sub:'Simulcast auf Deutsch',           cta:'Gratis testen', url:'https://www.wakanim.tv/de/' },
+      ],
+      BR: [
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'Maior biblioteca de anime',       cta:'Teste grátis', url:'https://www.crunchyroll.com/pt-br/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime & originais',               cta:'Assinar',    url:'https://www.netflix.com/br/' },
+      ],
+      // デフォルト（未マッピング国）
+      DEFAULT: [
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'World\'s largest anime library',  cta:'Try Free',   url:'https://www.crunchyroll.com/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime & originals',               cta:'Join Now',   url:'https://www.netflix.com/' },
+      ],
     },
 
-    // ── アフィリエイトリンク設定（ASP登録後にURLを変更）──
-    affiliate: [
-      {
-        id: 'danime',
-        icon: '▶️',
-        name: 'dアニメストア',
-        sub: '月440円〜 / 4,400作品以上',
-        cta: '無料で試す',
-        // ↓ A8.net等で発行したアフィリエイトURLに差し替え
-        url: 'https://anime.dmkt-sp.jp/',
-      },
-      {
-        id: 'unext',
-        icon: '🎬',
-        name: 'U-NEXT',
-        sub: '31日間無料トライアル / アニメ見放題',
-        cta: '無料で試す',
-        url: 'https://video.unext.jp/',
-      },
-      {
-        id: 'prime',
-        icon: '🍿',
-        name: 'Amazonプライムビデオ',
-        sub: '30日間無料 / 人気アニメ見放題',
-        cta: '無料で試す',
-        url: 'https://www.amazon.co.jp/gp/video/storefront/',
-      },
-    ]
+    // Amazon国別ドメイン（グッズ検索URL用）
+    // tag: Amazonアソシエイト審査通過後に発行されたトラッキングIDを入力
+    amazonByCountry: {
+      JP: { domain:'amazon.co.jp',  tag:'XXXX-22' },
+      US: { domain:'amazon.com',    tag:'XXXX-20' },
+      GB: { domain:'amazon.co.uk',  tag:'XXXX-21' },
+      DE: { domain:'amazon.de',     tag:'XXXX-21' },
+      FR: { domain:'amazon.fr',     tag:'XXXX-21' },
+      BR: { domain:'amazon.com.br', tag:'XXXX-21' },
+      CA: { domain:'amazon.ca',     tag:'XXXX-20' },
+      AU: { domain:'amazon.com.au', tag:'XXXX-22' },
+      DEFAULT: { domain:'amazon.com', tag:'XXXX-20' },
+    },
   };
 
   // クリック計測（本番はGA4 gtag('event',...) に差し替え）
@@ -1752,23 +2413,79 @@
     // gtag('event','ad_click',{slot_id:slotId});
   }
 
-  // 作品ページ内アフィリエイトリンクを生成
-  function renderAffiliateLinks() {
-    const el = document.getElementById('affiliateLinks');
-    if (!el) return;
-    // 2件をランダムに表示（毎回同じだと飽きるため）
-    const shuffled = [...AD_CONFIG.affiliate].sort(()=>Math.random()-.5).slice(0,2);
-    el.innerHTML = shuffled.map(a=>`
-      <a class="ad-affiliate" href="${a.url}" target="_blank" rel="noopener noreferrer sponsored"
-         onclick="adClick('affiliate_${a.id}')">
-        <div class="ad-affiliate-icon">${a.icon}</div>
-        <div class="ad-affiliate-body">
-          <div class="ad-affiliate-title">${a.name}</div>
-          <div class="ad-affiliate-sub">${a.sub}</div>
+  // 配信サービスリンクを生成
+  function renderAffiliateLinks(page) {
+    renderStreamLinks(page);
+    renderGoodsLinks(page);
+  }
+
+  function renderStreamLinks(page) {
+    const el = document.getElementById('afStreamLinks');
+    const section = document.getElementById('afStreamSection');
+    if(!el||!section) return;
+
+    const country = geoStore.getCountry() || 'DEFAULT';
+    // Kitsuから取れた配信先を優先
+    let services = [];
+    if(page && page.streaming && page.streaming.length) {
+      // Kitsuの配信サービス名から既知サービスにマッチング
+      const kitsuNames = page.streaming.map(s=>s.name?.toLowerCase()||'');
+      const allServices = Object.values(AFFILIATE.streamByCountry).flat();
+      const matched = allServices.filter(s=>
+        kitsuNames.some(k=>k.includes(s.id)||s.id.includes(k.split(' ')[0].toLowerCase()))
+      );
+      // 重複除去
+      const seen = new Set();
+      services = matched.filter(s=>{ if(seen.has(s.id)) return false; seen.add(s.id); return true; });
+    }
+    // Kitsuで取れなければ国別デフォルトを使用
+    if(!services.length) {
+      services = AFFILIATE.streamByCountry[country] || AFFILIATE.streamByCountry.DEFAULT;
+    }
+
+    el.innerHTML = `<div class="af-stream-list">${services.slice(0,4).map(s=>`
+      <a class="af-stream-item" href="${s.url}" target="_blank" rel="noopener noreferrer sponsored"
+         onclick="adClick('stream_${s.id}')">
+        <div class="af-stream-icon">${s.icon}</div>
+        <div class="af-stream-body">
+          <div class="af-stream-name">${s.name}</div>
+          <div class="af-stream-sub">${s.sub}</div>
         </div>
-        <div class="ad-affiliate-cta">${a.cta}</div>
+        <div class="af-stream-cta">${s.cta}</div>
       </a>
-    `).join('<div style="height:.5rem;"></div>');
+    `).join('')}</div>`;
+    section.style.display = '';
+  }
+
+  function renderGoodsLinks(page) {
+    const el = document.getElementById('afGoodsLinks');
+    const section = document.getElementById('afGoodsSection');
+    if(!el||!section||!page) return;
+
+    const country = geoStore.getCountry() || 'DEFAULT';
+    const amz = AFFILIATE.amazonByCountry[country] || AFFILIATE.amazonByCountry.DEFAULT;
+    const searchTitle = encodeURIComponent((page.title||page.titleEn||'') + ' アニメ グッズ');
+    const searchEn    = encodeURIComponent((page.titleEn||page.title||'') + ' anime');
+
+    // Amazon検索リンク（審査不要、アソシエイトタグは審査後に有効化）
+    const amazonUrl = `https://www.${amz.domain}/s?k=${country==='JP'?searchTitle:searchEn}`;
+    // ※ PA-API実装後は以下URLにtagパラメータを追加:
+    // &tag=${amz.tag}
+
+    el.innerHTML = `<div class="af-goods-list">
+      <a class="af-goods-item" href="${amazonUrl}" target="_blank" rel="noopener noreferrer"
+         onclick="adClick('goods_amazon')">
+        <div class="af-goods-icon">📦</div>
+        <div class="af-goods-body">
+          <div class="af-goods-name">Amazon${country==='JP'?'.co.jp':'.com'}</div>
+          <div class="af-goods-sub">${page.title||page.titleEn} のグッズ・Blu-ray・書籍</div>
+        </div>
+        <div class="af-goods-cta" style="background:#f0a050;color:#1a0800;">商品を見る</div>
+      </a>
+      <!-- PA-API実装後: ここにグッズカードグリッドが入る -->
+      <!-- <div class="af-goods-grid" id="afGoodsGrid"></div> -->
+    </div>`;
+    section.style.display = '';
   }
 
   /* ════════════════════════════
@@ -2112,6 +2829,103 @@
   ════════════════════════════ */
   applyLang();
   renderHome().catch(console.error);
+  /* ════════════════════════════
+     LEGAL (利用規約・プライバシーポリシー)
+  ════════════════════════════ */
+  const LEGAL_CONTENT = {
+    terms: {
+      title: '利用規約',
+      body: `
+        <p class="legal-date">制定日：2025年1月1日　最終改定日：2025年6月27日</p>
+
+        <h3>第1条（はじめに）</h3>
+        <p>アニメップル（以下「本サービス」）は、アニメ作品のレビュー・可視化・発見を目的としたウェブサービスです。本サービスをご利用いただくことで、以下の利用規約（以下「本規約」）に同意いただいたものとみなします。</p>
+
+        <h3>第2条（サービスの内容）</h3>
+        <p>本サービスは、Kitsu APIを通じてアニメ情報を取得・表示し、ユーザーが12軸のレーダーチャートによるレビューを投稿・閲覧できる機能を提供します。</p>
+
+        <h3>第3条（禁止事項）</h3>
+        <p>以下の行為を禁止します。</p>
+        <p>・他者への誹謗中傷・差別的表現を含むレビューの投稿</p>
+        <p>・虚偽情報の投稿・スパム行為</p>
+        <p>・本サービスへの不正アクセス・過度な負荷をかける行為</p>
+        <p>・著作権等の知的財産権を侵害する行為</p>
+        <p>・その他、法令または公序良俗に反する行為</p>
+
+        <h3>第4条（免責事項）</h3>
+        <p>本サービスは現状有姿で提供されます。サービスの継続性・正確性・完全性について保証しません。本サービスの利用に起因する損害について、運営者は一切の責任を負いません。</p>
+        <p>本サービスに掲載されているアニメ情報はKitsu APIより取得しており、その正確性はKitsuに依存します。</p>
+
+        <h3>第5条（アフィリエイトについて）</h3>
+        <p>本サービスは、各種アフィリエイトプログラムに参加しています。本サービス内のリンクを経由してサービスに登録・購入された場合、運営者に報酬が発生することがあります。</p>
+
+        <h3>第6条（規約の変更）</h3>
+        <p>本規約は、サービスの変更・法令の改正等に伴い、予告なく変更することがあります。変更後の規約はサービス内に掲載した時点で効力を生じます。</p>
+
+        <h3>第7条（準拠法）</h3>
+        <p>本規約の解釈は日本法に準拠します。</p>
+      `
+    },
+    privacy: {
+      title: 'プライバシーポリシー',
+      body: `
+        <p class="legal-date">制定日：2025年1月1日　最終改定日：2025年6月27日</p>
+
+        <h3>1. 収集する情報</h3>
+        <p>本サービスは以下の情報を収集・利用します。</p>
+        <p>・<strong>IPアドレス（国情報のみ）</strong>：ipapi.co（外部API）を通じてアクセス元の国コードを取得します。個人を特定する情報は取得・保存しません。</p>
+        <p>・<strong>ブラウザのLocalStorage</strong>：レビューデータ・閲覧履歴・PVデータ・言語設定をお使いの端末内に保存します。サーバーには送信されません。</p>
+        <p>・<strong>アフィリエイトクリックログ</strong>：ブラウザのコンソールにのみ記録されます。外部への送信は行いません。</p>
+
+        <h3>2. 情報の利用目的</h3>
+        <p>・国別の閲覧統計（どの国からのアクセスが多いか）の集計</p>
+        <p>・お使いの端末へのレビューデータの保存・表示</p>
+        <p>・言語・表示設定の保持</p>
+
+        <h3>3. 第三者提供</h3>
+        <p>取得した個人情報を第三者に販売・提供することはありません。ただし以下の外部サービスを利用しています。</p>
+        <p>・<strong>Kitsu API</strong>（アニメ情報取得）：<a href="https://kitsu.io" target="_blank" style="color:var(--brand);">kitsu.io</a></p>
+        <p>・<strong>ipapi.co</strong>（国コード取得）：<a href="https://ipapi.co" target="_blank" style="color:var(--brand);">ipapi.co</a></p>
+
+        <h3>4. アフィリエイトプログラムについて</h3>
+        <p>本サービスは以下のアフィリエイトプログラムに参加しています。</p>
+        <p>・Amazonアソシエイト・プログラム</p>
+        <p>・その他、各動画配信サービスのアフィリエイトプログラム</p>
+        <p>これらのリンクを経由した際に、Cookieが設定される場合があります。詳細は各サービスのプライバシーポリシーをご確認ください。</p>
+
+        <h3>5. Cookieについて</h3>
+        <p>本サービス自体はCookieを使用しません。ただし、アフィリエイトリンク先のサービスがCookieを使用する場合があります。</p>
+
+        <h3>6. 今後の変更予定</h3>
+        <p>将来的にユーザーアカウント機能を追加する際は、メールアドレス等の収集について改めてご案内します。</p>
+
+        <h3>7. お問い合わせ</h3>
+        <p>本ポリシーに関するお問い合わせは、サービス内のSNSアカウントよりご連絡ください。</p>
+
+        <h3>8. ポリシーの変更</h3>
+        <p>本ポリシーはサービスの変更に伴い更新することがあります。重要な変更がある場合はサービス内でお知らせします。</p>
+      `
+    }
+  };
+
+  function openLegal(type) {
+    const data = LEGAL_CONTENT[type];
+    if(!data) return;
+    document.getElementById('legalTitle').textContent = data.title;
+    document.getElementById('legalBody').innerHTML = data.body;
+    const overlay = document.getElementById('legalOverlay');
+    overlay.style.display = 'flex';
+  }
+  function closeLegal() {
+    document.getElementById('legalOverlay').style.display = 'none';
+  }
+  // オーバーレイ外クリックで閉じる
+  document.getElementById('legalOverlay').addEventListener('click', e=>{
+    if(e.target.id==='legalOverlay') closeLegal();
+  });
+  window.openLegal = openLegal;
+  window.closeLegal = closeLegal;
+
   document.getElementById('bnav-home').classList.add('active');
 
 })();
