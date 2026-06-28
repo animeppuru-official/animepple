@@ -125,23 +125,23 @@
 
     /* ── AD SLOTS ── */
     /* 本番時はこのクラスのdisplay:noneを外してAdSenseコードを挿入 */
-    .ad-wrap { margin:1rem 1rem 0; }
-    .ad-label { font-size:.64rem; color:#4a7a5a; text-align:center; margin-bottom:.25rem; letter-spacing:.05em; text-transform:uppercase; }
+    .ad-wrap { margin:.5rem 1rem 0; }
+    .ad-label { font-size:.58rem; color:#3a6a4a; text-align:right; margin-bottom:.1rem; letter-spacing:.04em; text-transform:uppercase; }
     /* バナー型（ヒーロー下・横長） */
     .ad-banner {
-      width:100%; min-height:60px; border-radius:12px;
-      background:linear-gradient(135deg,#0e2a1a,#152e1f);
-      border:1px dashed #2d6040;
+      width:100%; border-radius:8px;
+      background:rgba(14,42,26,.6);
+      border:1px solid #243e2e;
       display:flex; align-items:center; justify-content:space-between;
-      padding:.65rem .9rem; gap:.7rem; cursor:pointer;
+      padding:.4rem .75rem; gap:.5rem; cursor:pointer;
       transition:background .15s;
     }
     .ad-banner:active { background:#122518; }
-    .ad-banner-logo { width:38px; height:38px; border-radius:8px; background:linear-gradient(140deg,#1a5e38,#0e3a22); display:grid; place-items:center; font-size:1.3rem; flex-shrink:0; }
+    .ad-banner-logo { width:28px; height:28px; border-radius:6px; background:rgba(30,90,60,.5); display:grid; place-items:center; font-size:1rem; flex-shrink:0; }
     .ad-banner-body { flex:1; min-width:0; }
-    .ad-banner-title { font-size:.88rem; font-weight:700; color:#e2f5e8; }
-    .ad-banner-sub { font-size:.73rem; color:#7db898; margin-top:.1rem; }
-    .ad-banner-cta { padding:.4rem .75rem; border-radius:999px; background:var(--red); color:#fff; font-size:.76rem; font-weight:800; white-space:nowrap; flex-shrink:0; }
+    .ad-banner-title { font-size:.8rem; font-weight:700; color:#c8e6d4; }
+    .ad-banner-sub { font-size:.68rem; color:#5a9a78; margin-top:0; }
+    .ad-banner-cta { padding:.28rem .6rem; border-radius:999px; background:var(--red); color:#fff; font-size:.7rem; font-weight:700; white-space:nowrap; flex-shrink:0; }
     /* 矩形型（コンテンツ間） */
     .ad-rect {
       width:100%; min-height:90px; border-radius:14px;
@@ -716,39 +716,16 @@
       <p class="anime-meta-text" id="animeMeta"></p>
       <div id="animeExtraInfo" style="margin-bottom:.7rem;"></div>
       <p class="anime-desc-text" id="animeDesc"></p>
-      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;">
+      <!-- ボタン：レビューする・レビューを見る・削除 -->
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.5rem;">
         <button class="review-btn" id="goReviewBtn">🍎 レビューする</button>
+        <button class="review-btn" id="goReviewListBtn" style="background:var(--card2);color:#dff0e6;border:1px solid var(--line);">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
         <button class="admin-btn" id="deletePageBtn">🗑 ページ削除</button>
       </div>
     </div>
   </div>
-  <!-- 配信サービス -->
-  <div class="af-section" id="afStreamSection">
-    <div class="af-section-label">▶ このアニメを観る</div>
-    <div id="afStreamLinks"></div>
-  </div>
-
-  <!-- グッズ・関連商品 -->
-  <div class="af-section" id="afGoodsSection">
-    <div class="af-section-label">🛍 グッズ・関連商品</div>
-    <div id="afGoodsLinks"></div>
-  </div>
 
   <!-- マスターグラフ -->
-  <!-- 世界の反応 -->
-  <section class="reviews-section" id="worldStatsSection" style="display:none;">
-    <div class="reviews-head">
-      <h2 style="margin:0 0 .25rem;">🌍 世界の反応</h2>
-      <div class="world-period-tabs" id="worldPeriodTabs">
-        <button class="world-tab active" data-period="all">全期間</button>
-        <button class="world-tab" data-period="month">今月</button>
-        <button class="world-tab" data-period="year">今年</button>
-        <button class="world-tab" data-period="day">今日</button>
-      </div>
-    </div>
-    <div id="worldStatsContent" style="margin-top:.6rem;"></div>
-  </section>
-
   <section class="reviews-section" id="masterGraphSection" style="display:none;">
     <div class="reviews-head">
       <h2 style="margin:0 0 .4rem;">みんなの評価グラフ</h2>
@@ -766,16 +743,44 @@
     </div>
   </section>
 
-  <section class="reviews-section">
-    <div class="reviews-head" style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
-      <div>
-        <h2 style="margin:0;">みんなのレビュー</h2>
-        <p id="animeReviewCount" style="margin:.2rem 0 0;font-size:.78rem;color:var(--muted);"></p>
+  <!-- 広告：グラフ直下（自然な流れ：見て気になった→観る？） -->
+  <div class="ad-wrap" id="adAnimeMid" style="display:none;">
+    <div class="ad-label">AD</div>
+    <div class="ad-banner" onclick="adClick('streaming_mid')">
+      <div class="ad-banner-logo">▶️</div>
+      <div class="ad-banner-body">
+        <div class="ad-banner-title">dアニメストア</div>
+        <div class="ad-banner-sub">4,000作品以上 月440円〜</div>
       </div>
-      <button class="review-btn" id="goReviewListBtn" style="background:var(--card2);color:#dff0e6;border:1px solid var(--line);">📋 レビューを見る</button>
+      <div class="ad-banner-cta">無料で試す</div>
     </div>
+  </div>
+
+  <!-- 世界の反応 -->
+  <section class="reviews-section" id="worldStatsSection" style="display:none;">
+    <div class="reviews-head">
+      <h2 style="margin:0 0 .25rem;">🌍 世界の反応</h2>
+      <div class="world-period-tabs" id="worldPeriodTabs">
+        <button class="world-tab active" data-period="all">全期間</button>
+        <button class="world-tab" data-period="month">今月</button>
+        <button class="world-tab" data-period="year">今年</button>
+        <button class="world-tab" data-period="day">今日</button>
+      </div>
+    </div>
+    <div id="worldStatsContent" style="margin-top:.6rem;"></div>
   </section>
-  </section>
+
+  <!-- 配信サービス -->
+  <div class="af-section" id="afStreamSection">
+    <div class="af-section-label">▶ このアニメを観る</div>
+    <div id="afStreamLinks"></div>
+  </div>
+
+  <!-- グッズ・関連商品 -->
+  <div class="af-section" id="afGoodsSection">
+    <div class="af-section-label">🛍 グッズ・関連商品</div>
+    <div id="afGoodsLinks"></div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════
@@ -1969,6 +1974,7 @@
   function renderMasterGraph(id) {
     const reviews = validReviews(id);
     const section = document.getElementById('masterGraphSection');
+    const adMid = document.getElementById('adAnimeMid');
     const meta = document.getElementById('masterGraphMeta');
     if (!reviews.length) { if(section) section.style.display='none'; return; }
     if (section) section.style.display='';
@@ -2092,6 +2098,7 @@
         section.style.display='none'; return;
       }
       section.style.display='';
+    if(adMid) adMid.style.display='';
       // 上位10か国まで表示
       const top = entries.slice(0,10);
       content.innerHTML = `
