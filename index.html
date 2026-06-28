@@ -807,9 +807,13 @@
     </div>
     <div class="form-section">
       <h2>投稿情報</h2>
-      <div class="form-field">
-        <label>ユーザー名</label>
+      <div class="form-field" id="reviewUserNameField">
+        <label>ユーザー名（ゲスト）</label>
         <input id="reviewUserName" placeholder="例: りんご太郎" maxlength="40" />
+      </div>
+      <div class="form-field" id="reviewUserNameLoggedIn" style="display:none;">
+        <label>投稿者</label>
+        <div id="reviewUserNameDisplay" style="padding:.5rem 0;font-weight:700;color:#dff0e6;font-size:.95rem;"></div>
       </div>
       <div class="form-field">
         <label>タグ（最大10個）</label>
@@ -2140,9 +2144,14 @@
       return `
         <article class="review-card">
           <div class="rc-head">
-            <div style="display:flex;flex-direction:column;gap:.1rem;">
-              <span class="rc-name">${rev.userName||'—'}</span>
-              <span style="font-size:.68rem;color:var(--muted);">${rev.createdAt?new Date(rev.createdAt).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'}):''}</span>
+            <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
+              <div style="width:32px;height:32px;border-radius:7px;background:${(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=rev.userName||'ゲスト';if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
+                ${(()=>{const name=rev.userName||'ゲスト';if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
+              </div>
+              <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
+                <span class="rc-name">${rev.userName||'ゲスト'}</span>
+                <span style="font-size:.68rem;color:var(--muted);">${rev.createdAt?new Date(rev.createdAt).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'}):''}</span>
+              </div>
             </div>
             <button class="rc-delete" data-rev-i="${i}">${t('btnDelete').replace('🗑 ','')}</button>
           </div>
@@ -2200,6 +2209,24 @@
   function initReviewPage(id) {
     const all=getAll(), p=all.find(x=>x.id===id);
     document.getElementById('reviewPageTitle').textContent=p?`🍎 ${p.title} — ${t('reviewFormTitle')}`:`🍎 ${t('reviewFormTitle')}`;
+    // ログイン状態でユーザー名欄を制御
+    (async()=>{
+      const guestField = document.getElementById('reviewUserNameField');
+      const loggedField = document.getElementById('reviewUserNameLoggedIn');
+      const display = document.getElementById('reviewUserNameDisplay');
+      if(_currentUser && sb) {
+        const { data } = await sb.from('profiles').select('username').eq('id', _currentUser.id).single();
+        const uname = data?.username || _currentUser.email.split('@')[0];
+        window._loggedInUsername = uname;
+        if(guestField) guestField.style.display = 'none';
+        if(loggedField) loggedField.style.display = '';
+        if(display) display.textContent = uname;
+      } else {
+        window._loggedInUsername = null;
+        if(guestField) guestField.style.display = '';
+        if(loggedField) loggedField.style.display = 'none';
+      }
+    })();
     // 初期値は全部MAX
     axisA.forEach((_,i)=>{vA[i]=10;});
     axisB.forEach((_,i)=>{vB[i]=10;});
@@ -2236,7 +2263,10 @@
     }
     const review={
       animeId:currentAnimeId,
-      userName:document.getElementById('reviewUserName').value.trim()||'名無しのりんご',
+      userName:(()=>{
+        if(_currentUser && window._loggedInUsername) return window._loggedInUsername;
+        return document.getElementById('reviewUserName').value.trim()||'ゲスト';
+      })(),
       tags:[...reviewTags],
       chartA:Object.fromEntries(axisA.map((k,i)=>[k,vA[i]])),
       chartB:Object.fromEntries(axisB.map((k,i)=>[k,vB[i]])),
