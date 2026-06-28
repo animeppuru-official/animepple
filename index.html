@@ -859,13 +859,8 @@
   <div class="pop-year-picker" id="popYearPicker" style="display:none;">
     <div class="pop-year-picker-inner">
       <div class="pop-drum-wrap">
-        <div class="pop-drum-label">開始年</div>
+        <div class="pop-drum-label">年代を選ぶ</div>
         <div class="pop-drum" id="popDrumFrom"></div>
-      </div>
-      <span class="pop-drum-sep">〜</span>
-      <div class="pop-drum-wrap">
-        <div class="pop-drum-label">終了年</div>
-        <div class="pop-drum" id="popDrumTo"></div>
       </div>
       <button class="pop-year-apply" id="popYearApply">適用</button>
     </div>
@@ -1467,7 +1462,6 @@
           if(popState.sort==='year') {
             picker.style.display='';
             buildDrum('popDrumFrom', YEAR_LIST, popState.yearFrom||2010);
-            buildDrum('popDrumTo',   YEAR_LIST, popState.yearTo||CURRENT_YEAR);
           } else {
             picker.style.display='none';
             loadPopularItems(true);
@@ -1477,10 +1471,7 @@
       // 年代適用ボタン
       document.getElementById('popYearApply').addEventListener('click', ()=>{
         popState.yearFrom = getDrumYear('popDrumFrom');
-        popState.yearTo   = getDrumYear('popDrumTo');
-        if(popState.yearFrom && popState.yearTo && popState.yearFrom > popState.yearTo) {
-          [popState.yearFrom, popState.yearTo] = [popState.yearTo, popState.yearFrom];
-        }
+        popState.yearTo   = popState.yearFrom;
         popState.page = 0; popState.items = [];
         loadPopularItems(true);
       });
@@ -1525,18 +1516,8 @@
       } else if(sort==='year') {
         const from = popState.yearFrom || 2000;
         const to   = popState.yearTo   || CURRENT_YEAR;
-        // 各年を並行取得してまとめる（最大10年分）
-        const years = [];
-        for(let y=from; y<=Math.min(to, from+9); y++) years.push(y);
-        const results = await Promise.allSettled(
-          years.map(y => fetchKitsuPopular(0, y))
-        );
-        const all = results.flatMap(r => r.status==='fulfilled' ? r.value : []);
-        // 重複除去してuserCount降順
-        const seen = new Set();
-        items = all.filter(a=>{ if(seen.has(a.id)) return false; seen.add(a.id); return true; })
-                   .sort((a,b)=>b.userCount-a.userCount)
-                   .slice(popState.page*POP_PAGE_SIZE, (popState.page+1)*POP_PAGE_SIZE);
+        // 指定年の作品を取得
+        items = await fetchKitsuPopular(popState.page * POP_PAGE_SIZE, from);
       }
 
       if(reset) popState.items = items;
