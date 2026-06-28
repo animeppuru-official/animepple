@@ -304,6 +304,34 @@
     .af-goods-card-name { font-size:.7rem; color:#c8e6d4; margin-top:.3rem; line-height:1.3; }
     .af-goods-card-price { font-size:.8rem; font-weight:700; color:#f0a050; margin-top:.2rem; }
 
+    /* ══ MY PAGE ══ */
+    .mypage-hero { display:flex; align-items:center; gap:1rem; padding:1.5rem 1rem 1rem; }
+    .mypage-avatar { width:60px; height:60px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .guest-avatar { background:var(--card2); border:1px solid var(--line); }
+    .user-avatar { background:var(--brand); color:#0c2015; font-size:1.5rem; font-weight:800; }
+    .mypage-info { flex:1; }
+    .mypage-name { font-size:1.1rem; font-weight:700; color:#dff0e6; margin:0 0 .2rem; }
+    .mypage-sub { font-size:.78rem; color:var(--muted); margin:0; }
+    .mypage-actions { padding:.5rem 1rem 1rem; display:flex; flex-direction:column; gap:.5rem; }
+    .mypage-btn-primary { width:100%; padding:.75rem; border-radius:12px; background:var(--brand); color:#0c2015; font-weight:700; border:none; cursor:pointer; font-size:.95rem; }
+    .mypage-btn-secondary { width:100%; padding:.7rem; border-radius:12px; background:transparent; color:var(--muted); border:1px solid var(--line); cursor:pointer; font-size:.9rem; }
+    .mypage-section { padding:1rem; border-top:1px solid var(--line); }
+    .mypage-section-title { font-size:.88rem; font-weight:700; color:#dff0e6; margin:0 0 .75rem; }
+
+    /* 認証モーダル */
+    .auth-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .auth-modal { background:var(--card); border:1px solid var(--line); border-radius:16px; width:100%; max-width:400px; }
+    .auth-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.2rem; border-bottom:1px solid var(--line); }
+    .auth-modal-header h2 { margin:0; font-size:1rem; color:#dff0e6; }
+    .auth-modal-body { padding:1.2rem; display:flex; flex-direction:column; gap:.75rem; }
+    .auth-field { display:flex; flex-direction:column; gap:.3rem; }
+    .auth-field label { font-size:.78rem; color:var(--muted); }
+    .auth-field input { padding:.65rem .9rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:#dff0e6; font-size:.9rem; }
+    .auth-field input:focus { outline:none; border-color:var(--brand); }
+    .auth-error { font-size:.78rem; color:#ff6b6b; margin:0; min-height:1rem; }
+    .auth-switch { font-size:.78rem; color:var(--muted); text-align:center; margin:0; }
+    .auth-switch button { background:none; border:none; color:var(--brand); cursor:pointer; text-decoration:underline; font-size:.78rem; }
+
     /* ══ WORLD STATS ══ */
     .world-period-tabs { display:flex; gap:.4rem; margin-top:.35rem; flex-wrap:wrap; }
     .world-tab { padding:.25rem .7rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); font-size:.75rem; cursor:pointer; }
@@ -907,13 +935,92 @@
 </div>
 
 <!-- ═══════════════════════════════════
+     MY PAGE
+═══════════════════════════════════ -->
+<div class="page" id="page-mypage">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+    </div>
+  </header>
+
+  <!-- ゲスト表示 -->
+  <div id="mypageGuest">
+    <div class="mypage-hero">
+      <div class="mypage-avatar guest-avatar">
+        <svg viewBox="0 0 40 40" width="60" height="60">
+          <circle cx="20" cy="15" r="9" fill="rgba(140,198,160,0.4)"/>
+          <ellipse cx="20" cy="36" rx="14" ry="9" fill="rgba(140,198,160,0.4)"/>
+        </svg>
+      </div>
+      <div class="mypage-info">
+        <p class="mypage-name">ゲスト</p>
+        <p class="mypage-sub">アカウントを作るとレビューが保存されます</p>
+      </div>
+    </div>
+    <div class="mypage-actions">
+      <button class="mypage-btn-primary" onclick="showAuthModal('register')">🍎 アカウントを作成</button>
+      <button class="mypage-btn-secondary" onclick="showAuthModal('login')">ログイン</button>
+    </div>
+  </div>
+
+  <!-- ログイン済み表示 -->
+  <div id="mypageUser" style="display:none;">
+    <div class="mypage-hero">
+      <div class="mypage-avatar user-avatar" id="mypageAvatarIcon">か</div>
+      <div class="mypage-info">
+        <p class="mypage-name" id="mypageUsername">ユーザー名</p>
+        <p class="mypage-sub" id="mypageEmail">email</p>
+      </div>
+    </div>
+    <div class="mypage-section">
+      <h3 class="mypage-section-title">📊 レビュー履歴</h3>
+      <div id="mypageReviewList"><p style="color:var(--muted);font-size:.85rem;">レビューはまだありません</p></div>
+    </div>
+    <div class="mypage-actions">
+      <button class="mypage-btn-secondary" onclick="signOut()">ログアウト</button>
+    </div>
+  </div>
+</div>
+
+<!-- 認証モーダル -->
+<div class="auth-overlay" id="authOverlay" style="display:none;">
+  <div class="auth-modal">
+    <div class="auth-modal-header">
+      <h2 id="authTitle">アカウントを作成</h2>
+      <button class="legal-close" onclick="closeAuthModal()">✕</button>
+    </div>
+    <div class="auth-modal-body">
+      <div class="auth-field">
+        <label>メールアドレス</label>
+        <input type="email" id="authEmail" placeholder="example@email.com" />
+      </div>
+      <div class="auth-field">
+        <label>パスワード</label>
+        <input type="password" id="authPassword" placeholder="6文字以上" />
+      </div>
+      <div class="auth-field" id="authUsernameField">
+        <label>ユーザー名</label>
+        <input type="text" id="authUsername" placeholder="例: りんご太郎" maxlength="20" />
+      </div>
+      <p class="auth-error" id="authError"></p>
+      <button class="mypage-btn-primary" id="authSubmitBtn" onclick="authSubmit()">作成する</button>
+      <p class="auth-switch" id="authSwitch">
+        すでにアカウントをお持ちですか？
+        <button onclick="showAuthModal('login')">ログイン</button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
   <button class="bnav-item" id="bnav-ranking" onclick="navPopular()"><span class="bnav-icon">🏆</span>人気</button>
-  <button class="bnav-item" id="bnav-mypage"><span class="bnav-icon">👤</span>マイページ</button>
+  <button class="bnav-item" id="bnav-mypage" onclick="nav('mypage')"><span class="bnav-icon">👤</span>マイページ</button>
 </nav>
 
 <script>
@@ -1019,6 +1126,7 @@
     if (page==='review'&&animeId) { initReviewPage(animeId); }
     if (page==='search') renderSearch().catch(console.error);
     if (page==='popular') renderPopular().catch(console.error);
+    if (page==='mypage') renderMypage();
   }
   window.nav = nav;
   function navBack() {
@@ -1040,6 +1148,7 @@
     if(prev.page==='review'&&prev.animeId) { initReviewPage(prev.animeId); }
     if(prev.page==='search') renderSearch().catch(console.error);
     if(prev.page==='popular') renderPopular().catch(console.error);
+    if(prev.page==='mypage') renderMypage();
   }
   window.navBack = navBack;
   function navSearch(q,sort) {
@@ -2925,6 +3034,148 @@
   });
   window.openLegal = openLegal;
   window.closeLegal = closeLegal;
+
+  /* ════════════════════════════
+     AUTH & MY PAGE
+  ════════════════════════════ */
+  let _authMode = 'register'; // 'register' | 'login'
+  let _currentUser = null;
+
+  // 起動時にセッション確認
+  async function initAuth() {
+    if(!sb) return;
+    const { data } = await sb.auth.getSession();
+    if(data?.session?.user) {
+      _currentUser = data.session.user;
+    }
+    // 認証状態変化を監視
+    sb.auth.onAuthStateChange((_event, session) => {
+      _currentUser = session?.user || null;
+      if(document.getElementById('page-mypage').classList.contains('active')) {
+        renderMypage();
+      }
+      // レビュー投稿者名をアカウント名で上書き
+    });
+  }
+  initAuth();
+
+  function showAuthModal(mode) {
+    _authMode = mode;
+    const title = document.getElementById('authTitle');
+    const btn = document.getElementById('authSubmitBtn');
+    const sw = document.getElementById('authSwitch');
+    const ufield = document.getElementById('authUsernameField');
+    document.getElementById('authError').textContent = '';
+    if(mode === 'register') {
+      title.textContent = 'アカウントを作成';
+      btn.textContent = '作成する';
+      ufield.style.display = '';
+      sw.innerHTML = `すでにアカウントをお持ちですか？<button onclick="showAuthModal('login')">ログイン</button>`;
+    } else {
+      title.textContent = 'ログイン';
+      btn.textContent = 'ログイン';
+      ufield.style.display = 'none';
+      sw.innerHTML = `アカウントがない方は<button onclick="showAuthModal('register')">新規登録</button>`;
+    }
+    document.getElementById('authOverlay').style.display = 'flex';
+  }
+  function closeAuthModal() {
+    document.getElementById('authOverlay').style.display = 'none';
+  }
+  document.getElementById('authOverlay').addEventListener('click', e=>{
+    if(e.target.id === 'authOverlay') closeAuthModal();
+  });
+
+  async function authSubmit() {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const username = document.getElementById('authUsername').value.trim();
+    const errEl = document.getElementById('authError');
+    errEl.textContent = '';
+    if(!email || !password) { errEl.textContent = 'メールとパスワードを入力してください'; return; }
+    if(_authMode === 'register' && !username) { errEl.textContent = 'ユーザー名を入力してください'; return; }
+
+    try {
+      if(_authMode === 'register') {
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if(error) { errEl.textContent = error.message; return; }
+        // profilesにusernameを保存
+        if(data.user) {
+          await sb.from('profiles').upsert({ id: data.user.id, username });
+          _currentUser = data.user;
+          _currentUser._username = username;
+        }
+      } else {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if(error) { errEl.textContent = 'メールかパスワードが違います'; return; }
+        _currentUser = data.user;
+      }
+      closeAuthModal();
+      renderMypage();
+    } catch(e) {
+      errEl.textContent = 'エラーが発生しました。もう一度お試しください。';
+    }
+  }
+
+  async function signOut() {
+    if(!sb) return;
+    await sb.auth.signOut();
+    _currentUser = null;
+    renderMypage();
+  }
+
+  async function renderMypage() {
+    const guest = document.getElementById('mypageGuest');
+    const user = document.getElementById('mypageUser');
+    if(!_currentUser) {
+      guest.style.display = '';
+      user.style.display = 'none';
+      return;
+    }
+    guest.style.display = 'none';
+    user.style.display = '';
+    // ユーザー名取得
+    let username = _currentUser._username || '';
+    if(!username && sb) {
+      const { data } = await sb.from('profiles').select('username').eq('id', _currentUser.id).single();
+      username = data?.username || _currentUser.email.split('@')[0];
+    }
+    document.getElementById('mypageUsername').textContent = username;
+    document.getElementById('mypageEmail').textContent = _currentUser.email;
+    // アイコン（イニシャル）
+    const initial = username.slice(0,1) || '?';
+    const avatar = document.getElementById('mypageAvatarIcon');
+    avatar.textContent = initial;
+    // アイコン色をユーザーIDからランダムに
+    const colors = ['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
+    const idx = _currentUser.id.charCodeAt(0) % colors.length;
+    avatar.style.background = colors[idx];
+    // レビュー一覧（Supabaseから取得）
+    if(sb) {
+      const { data: reviews } = await sb.from('reviews')
+        .select('*')
+        .eq('username', username)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      const listEl = document.getElementById('mypageReviewList');
+      if(reviews && reviews.length) {
+        listEl.innerHTML = reviews.map(r=>`
+          <div style="padding:.6rem 0;border-bottom:1px solid var(--line);">
+            <div style="font-size:.82rem;color:#dff0e6;">${r.anime_id.replace('kitsu-','作品ID: ')}</div>
+            <div style="font-size:.72rem;color:var(--muted);">${new Date(r.created_at).toLocaleDateString('ja-JP')}</div>
+          </div>
+        `).join('');
+      } else {
+        listEl.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">レビューはまだありません</p>';
+      }
+    }
+  }
+
+  window.showAuthModal = showAuthModal;
+  window.closeAuthModal = closeAuthModal;
+  window.authSubmit = authSubmit;
+  window.signOut = signOut;
+  window.renderMypage = renderMypage;
 
   document.getElementById('bnav-home').classList.add('active');
 
