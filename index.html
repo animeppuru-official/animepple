@@ -2201,6 +2201,7 @@
   const reviewTags=[];
   // グラフが動かされたかどうかのフラグ
   let chartMoved = false;
+  let _reviewStartTime = 0;
 
   function initReviewPage(id) {
     const all=getAll(), p=all.find(x=>x.id===id);
@@ -2227,6 +2228,7 @@
     axisA.forEach((_,i)=>{vA[i]=10;});
     axisB.forEach((_,i)=>{vB[i]=10;});
     chartMoved = false;
+    _reviewStartTime = Date.now();
     buildSliders('slidersA',getAxisA(),Object.fromEntries(getAxisA().map((k,i)=>[k,vA[i]])),'rv-a');
     buildSliders('slidersB',getAxisB(),Object.fromEntries(getAxisB().map((k,i)=>[k,vB[i]])),'rv-b');
     getAxisA().forEach((_,i)=>{
@@ -2252,22 +2254,30 @@
   }
 
   document.getElementById('submitReviewBtn').onclick=()=>{
-    // グラフを1軸も動かしていない場合はデータとして保存しない
-    if(!chartMoved){
-      alert(currentLang==='ja'?'グラフを動かしてからレビューを投稿してください。':'Please adjust at least one chart value before submitting.');
+    const comment = document.getElementById('reviewComment').value.trim();
+    const tags = [...reviewTags];
+    // スライダー未操作 + タグなし + コメントなし → 投稿不可
+    if(!chartMoved && tags.length===0 && !comment){
+      alert(currentLang==='ja'?'スライダー・タグ・コメントのいずれかを入力してください。':'Please adjust sliders, add tags, or write a comment.');
       return;
     }
+    // quality判定: スライダー操作あり + 滞在30秒以上
+    const elapsed = Date.now() - _reviewStartTime;
+    const isQuality = chartMoved && elapsed >= 30000;
+
     const review={
       animeId:currentAnimeId,
       userName:(()=>{
         if(_currentUser && window._loggedInUsername) return window._loggedInUsername;
         return document.getElementById('reviewUserName').value.trim()||'ゲスト';
       })(),
-      tags:[...reviewTags],
+      tags,
       chartA:Object.fromEntries(axisA.map((k,i)=>[k,vA[i]])),
       chartB:Object.fromEntries(axisB.map((k,i)=>[k,vB[i]])),
-      comment:document.getElementById('reviewComment').value.trim(),
-      createdAt:new Date().toISOString()
+      comment,
+      createdAt:new Date().toISOString(),
+      chartMoved,   // スライダー操作フラグ
+      quality: isQuality, // 高品質フラグ
     };
     // LocalStorageに保存
     const ex=getReviews(); ex.unshift(review); sj(REVIEW_KEY,ex);
@@ -2289,12 +2299,14 @@
         const country = geoStore.getCountry() || null;
         await sb.from('reviews').insert({
           anime_id: review.animeId,
-          username: review.username||'名無しのりんご',
+          username: review.userName||'ゲスト',
           country_code: country,
           chart_a: review.chartA||{},
           chart_b: review.chartB||{},
           tags: review.tags||[],
           comment: review.comment||null,
+          chart_moved: chartMoved,
+          quality: isQuality,
         });
       })().catch(e=>console.warn('Supabase review save:', e));
     }
@@ -2313,11 +2325,13 @@
   const srSearchState={q:'',sort:'relevance'};
   const srTagsActive=[];
 
-  // 有効レビュー（グラフが動かされたもの）だけを返す
+  // 有効レビュー（スライダーを動かしたもの）だけをグラフ・検索データに使う
   function validReviews(animeId) {
     return getReviews().filter(r => {
       if (r.animeId !== animeId) return false;
-      // chartA・chartBのどこか1軸でも10未満なら有効
+      // chartMovedフラグがあればそれを使う（新形式）
+      if(typeof r.chartMoved !== 'undefined') return r.chartMoved;
+      // 旧形式: chartA・chartBのどこか1軸でも10未満なら有効
       const aVals = axisA.map(k => Number(r.chartA&&r.chartA[k]||0));
       const bVals = axisB.map(k => Number(r.chartB&&r.chartB[k]||0));
       return aVals.some(v=>v<10) || bVals.some(v=>v<10);
