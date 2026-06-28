@@ -767,19 +767,38 @@
   </section>
 
   <section class="reviews-section">
-    <div class="reviews-head">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
+    <div class="reviews-head" style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
+      <div>
         <h2 style="margin:0;">みんなのレビュー</h2>
-        <select id="reviewSortSelect" style="padding:.32rem .6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:.78rem;">
-          <option value="newest">新しい順</option>
-          <option value="oldest">古い順</option>
-        </select>
+        <p id="animeReviewCount" style="margin:.2rem 0 0;font-size:.78rem;color:var(--muted);"></p>
       </div>
-      <p>グラフをタップするとコメントが開きます</p>
+      <button class="review-btn" id="goReviewListBtn" style="background:var(--card2);color:#dff0e6;border:1px solid var(--line);">📋 レビューを見る</button>
+    </div>
+  </section>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════
+     PAGE: REVIEWS LIST
+═══════════════════════════════════ -->
+<div class="page" id="page-reviews">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" onclick="navBack()" style="color:#fff;">← 戻る</button>
+      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+    </div>
+  </header>
+  <div style="padding:.75rem 1rem 0;">
+    <h2 id="reviewsListTitle" style="margin:0 0 .2rem;font-size:1rem;color:#dff0e6;"></h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+      <p id="reviewsListMeta" style="margin:0;font-size:.78rem;color:var(--muted);"></p>
+      <select id="reviewSortSelect" style="padding:.32rem .6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:.78rem;">
+        <option value="newest">新しい順</option>
+        <option value="oldest">古い順</option>
+      </select>
     </div>
     <div id="reviewList"></div>
-  </section>
-  </section>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════
@@ -1121,6 +1140,7 @@
     if (page==='review'&&animeId) { initReviewPage(animeId); }
     if (page==='search') renderSearch().catch(console.error);
     if (page==='popular') renderPopular().catch(console.error);
+    if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='mypage') renderMypage();
   }
   window.nav = nav;
@@ -1143,6 +1163,7 @@
     if(prev.page==='review'&&prev.animeId) { initReviewPage(prev.animeId); }
     if(prev.page==='search') renderSearch().catch(console.error);
     if(prev.page==='popular') renderPopular().catch(console.error);
+    if(prev.page==='reviews'&&prev.animeId) { currentAnimeId=prev.animeId; renderReviewsList(prev.animeId); }
     if(prev.page==='mypage') renderMypage();
   }
   window.navBack = navBack;
@@ -2044,11 +2065,17 @@
     };
     renderAffiliateLinks(page);
     renderWorldStats(id);
-    // Supabaseからレビューを取得してからグラフ・一覧を描画
+    // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
       renderMasterGraph(id);
-      renderReviewList(id);
+      // レビュー数をアニメページに表示
+      const reviews = validReviews(id);
+      const countEl = document.getElementById('animeReviewCount');
+      if(countEl) countEl.textContent = reviews.length ? `${reviews.length}件のレビュー` : 'まだレビューがありません';
     });
+    // 「レビューを見る」ボタン
+    const rlBtn = document.getElementById('goReviewListBtn');
+    if(rlBtn) rlBtn.onclick = ()=>nav('reviews', id);
   }
 
   function renderWorldStats(id) {
@@ -2194,19 +2221,16 @@
     document.getElementById('reviewPageTitle').textContent=p?`🍎 ${p.title} — ${t('reviewFormTitle')}`:`🍎 ${t('reviewFormTitle')}`;
     // ログイン状態でユーザー名欄を制御
     (async()=>{
-      const guestField = document.getElementById('reviewUserNameField');
       const loggedField = document.getElementById('reviewUserNameLoggedIn');
       const display = document.getElementById('reviewUserNameDisplay');
       if(_currentUser && sb) {
         const { data } = await sb.from('profiles').select('username').eq('id', _currentUser.id).single();
         const uname = data?.username || _currentUser.email.split('@')[0];
         window._loggedInUsername = uname;
-        if(guestField) guestField.style.display = 'none';
         if(loggedField) loggedField.style.display = '';
         if(display) display.textContent = uname;
       } else {
         window._loggedInUsername = null;
-        if(guestField) guestField.style.display = '';
         if(loggedField) loggedField.style.display = 'none';
       }
     })();
@@ -3060,6 +3084,33 @@
   });
   window.openLegal = openLegal;
   window.closeLegal = closeLegal;
+
+  /* ════════════════════════════
+     REVIEWS LIST PAGE
+  ════════════════════════════ */
+  function renderReviewsList(id) {
+    const all = getAll();
+    const page = all.find(p=>p.id===id);
+    // タイトル
+    const titleEl = document.getElementById('reviewsListTitle');
+    const metaEl = document.getElementById('reviewsListMeta');
+    if(titleEl) titleEl.textContent = page ? `${page.title||page.titleEn} のレビュー` : 'レビュー一覧';
+
+    // ソート・一覧描画（既存のrenderReviewListを流用）
+    fetchRemoteReviews(id).then(()=>{
+      renderReviewList(id);
+      const reviews = validReviews(id);
+      if(metaEl) metaEl.textContent = reviews.length ? `${reviews.length}件` : 'まだレビューがありません';
+    });
+
+    // ソート変更
+    const sortSel = document.getElementById('reviewSortSelect');
+    if(sortSel && !sortSel.dataset.rlInit) {
+      sortSel.dataset.rlInit = '1';
+      sortSel.addEventListener('change', ()=>{ renderReviewList(id); });
+    }
+  }
+  window.renderReviewsList = renderReviewsList;
 
   /* ════════════════════════════
      AUTH & MY PAGE
