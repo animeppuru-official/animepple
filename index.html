@@ -332,6 +332,13 @@
     .auth-switch { font-size:.78rem; color:var(--muted); text-align:center; margin:0; }
     .auth-switch button { background:none; border:none; color:var(--brand); cursor:pointer; text-decoration:underline; font-size:.78rem; }
 
+    /* ══ MASTER BREAKDOWN ══ */
+    .breakdown-item { display:flex; align-items:center; justify-content:space-between; padding:.25rem 0; border-bottom:1px solid rgba(255,255,255,.05); }
+    .breakdown-label { font-size:.8rem; color:var(--muted); }
+    .breakdown-bar-wrap { flex:1; margin:0 .6rem; height:4px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; }
+    .breakdown-bar { height:100%; border-radius:2px; }
+    .breakdown-val { font-size:.82rem; font-weight:700; color:#dff0e6; min-width:2rem; text-align:right; }
+
     /* ══ WORLD STATS ══ */
     .world-period-tabs { display:flex; gap:.4rem; margin-top:.35rem; flex-wrap:wrap; }
     .world-tab { padding:.25rem .7rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); font-size:.75rem; cursor:pointer; }
@@ -722,25 +729,36 @@
         <button class="review-btn" id="goReviewListBtn" style="background:var(--card2);color:#dff0e6;border:1px solid var(--line);">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
         <button class="admin-btn" id="deletePageBtn">🗑 ページ削除</button>
       </div>
+      <!-- ミニグラフ（ボタン下） -->
+      <div id="miniGraphSection" style="display:none;margin-top:.6rem;">
+        <p id="miniGraphMeta" style="font-size:.7rem;color:var(--muted);margin:0 0 .35rem;"></p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;">
+          <canvas id="miniChartA" style="width:100%;aspect-ratio:1;border-radius:8px;background:#09201b;display:block;"></canvas>
+          <canvas id="miniChartB" style="width:100%;aspect-ratio:1;border-radius:8px;background:#09201b;display:block;"></canvas>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- マスターグラフ -->
-  <section class="reviews-section" id="masterGraphSection" style="display:none;">
+  <section class="reviews-section" id="masterGraphSection" style="display:none;" hidden>
     <div class="reviews-head">
-      <h2 style="margin:0 0 .4rem;">みんなの評価グラフ</h2>
+      <h2 style="margin:0 0 .2rem;">みんなの評価グラフ</h2>
       <p id="masterGraphMeta" style="margin:0;font-size:.78rem;color:var(--muted);"></p>
     </div>
+    <!-- グラフ -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.6rem;">
       <div>
-        <p style="font-size:.78rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">作品の完成度</p>
+        <p style="font-size:.75rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">作品の完成度</p>
         <canvas id="masterChartA" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
       </div>
       <div>
-        <p style="font-size:.78rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">感情・雰囲気</p>
+        <p style="font-size:.75rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">感情・雰囲気</p>
         <canvas id="masterChartB" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
       </div>
     </div>
+    <!-- 内訳 -->
+    <div id="masterBreakdown" style="margin-top:.75rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem .75rem;"></div>
   </section>
 
   <!-- 広告：グラフ直下（自然な流れ：見て気になった→観る？） -->
@@ -1978,6 +1996,8 @@
     const meta = document.getElementById('masterGraphMeta');
     if (!reviews.length) { if(section) section.style.display='none'; return; }
     if (section) section.style.display='';
+    const _adMid = document.getElementById('adAnimeMid');
+    if(_adMid) _adMid.style.display='';
     if (meta) meta.textContent = `有効レビュー ${reviews.length}件の平均`;
 
     const avgA = axisA.map(k => {
@@ -1993,6 +2013,34 @@
     const caB = document.getElementById('masterChartB');
     if (caA) drawRadar(caA, axisA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a');
     if (caB) drawRadar(caB, axisB, avgB, 'rgba(255,153,153,0.38)', '#ff8888');
+
+    // ミニグラフ（ボタン下）
+    const miniSection = document.getElementById('miniGraphSection');
+    const miniMeta = document.getElementById('miniGraphMeta');
+    const miA = document.getElementById('miniChartA');
+    const miB = document.getElementById('miniChartB');
+    if(miniSection) miniSection.style.display='';
+    if(miniMeta) miniMeta.textContent=`有効レビュー ${reviews.length}件の平均`;
+    if(miA) drawRadar(miA, axisA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a');
+    if(miB) drawRadar(miB, axisB, avgB, 'rgba(255,153,153,0.38)', '#ff8888');
+
+    // 内訳表示
+    const breakdown = document.getElementById('masterBreakdown');
+    if(breakdown) {
+      const allAxes = [
+        ...axisA.map((k,i)=>({label:k, val:avgA[i], color:'#5ec97a'})),
+        ...axisB.map((k,i)=>({label:k, val:avgB[i], color:'#ff8888'})),
+      ];
+      breakdown.innerHTML = allAxes.map(({label,val,color})=>`
+        <div class="breakdown-item">
+          <span class="breakdown-label">${label}</span>
+          <div class="breakdown-bar-wrap">
+            <div class="breakdown-bar" style="width:${val*10}%;background:${color};"></div>
+          </div>
+          <span class="breakdown-val">${val}</span>
+        </div>
+      `).join('');
+    }
   }
 
   function renderAnimePage(id) {
@@ -2003,7 +2051,7 @@
       document.getElementById('animeDesc').textContent='トップに戻って別の作品を選んでください。';
       document.getElementById('goReviewBtn').style.display='none';
       document.getElementById('deletePageBtn').style.display='none';
-      document.getElementById('reviewList').innerHTML=''; return;
+      return;
     }
     // PV記録（国別データも同時記録）
     pvStore.increment(id);
@@ -2098,7 +2146,6 @@
         section.style.display='none'; return;
       }
       section.style.display='';
-    if(adMid) adMid.style.display='';
       // 上位10か国まで表示
       const top = entries.slice(0,10);
       content.innerHTML = `
