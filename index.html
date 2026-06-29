@@ -1803,19 +1803,45 @@
     return item.image?`<img src="${item.image}" alt="${item.title}" style="width:100%;height:100%;object-fit:cover;" />`:'';
   }
 
-  // ピックアップ：レビューが1件以上ある作品の中でレビュー総数の50%未満のものをランダム抽出
-  // 30分ごとに入れ替え（slot番号でシード固定）
-  function getPickupItems(all) {
+  // ピックアップ：Supabaseのanime_pagesから取得、レビュー数が全体の50%未満をランダム表示
+  async function getPickupItems() {
     const INTERVAL_MS = 30 * 60 * 1000;
     const slot = Math.floor(Date.now() / INTERVAL_MS);
-    const totalReviews = getReviews().length;
-    const threshold = totalReviews * 0.5;
+
+    let allPages = [];
+    if(DB_MODE === 'supabase' && sb) {
+      const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url,meta,genres');
+      if(data && data.length) {
+        allPages = data.map(p=>({
+          id: p.id,
+          title: p.title || p.title_en || '—',
+          image: p.image_url,
+          meta: p.meta || '',
+          genres: p.genres || [],
+        }));
+      }
+    }
+    // Supabaseにデータがなければローカルフォールバック
+    if(!allPages.length) allPages = getAll();
+    if(!allPages.length) return [];
+
+    // Supabaseからレビュー数を取得
+    let reviewCounts = {};
+    if(DB_MODE === 'supabase' && sb) {
+      const { data } = await sb.from('reviews').select('anime_id');
+      if(data) {
+        data.forEach(r=>{ reviewCounts[r.anime_id] = (reviewCounts[r.anime_id]||0)+1; });
+      }
+    } else {
+      getReviews().forEach(r=>{ reviewCounts[r.animeId] = (reviewCounts[r.animeId]||0)+1; });
+    }
+
+    const totalReviews = Object.values(reviewCounts).reduce((a,b)=>a+b,0);
+    const threshold = Math.max(totalReviews * 0.5, 1);
 
     // レビュー数が全体の50%未満の作品を候補に
-    const candidates = all.filter(a => reviewCount(a.id) < Math.max(threshold, 1));
-    const pool = candidates.length >= 4 ? candidates : all;
-
-    if (pool.length === 0) return []; // Kitsuから別途取得
+    const candidates = allPages.filter(a => (reviewCounts[a.id]||0) < threshold);
+    const pool = candidates.length >= 4 ? candidates : allPages;
 
     const seeded = [...pool].sort((a,b) => {
       const ha = Math.sin(slot * 9301 + a.id.charCodeAt(0) * 49297) * 233280;
@@ -1911,19 +1937,19 @@
 
   async function renderHome() {
     const all = getAll();
-    const pickupItems = getPickupItems(all);
 
-    // ピックアップ表示
-    document.getElementById('pickupScroll').innerHTML = pickupItems.map(item=>`
-      <div class="hcard" onclick="${item.kitsuId?`navAnime('${item.kitsuId}')`:`nav('anime','${item.id}')`}">
-        <div class="hcard-thumb">${thumbHtml(item)||'📺'}</div>
-        <div class="hcard-body">
-          <h3>${getTitle(item)}</h3>
-          <p>${item.meta}</p>
-          <span style="font-size:.66rem;color:#7fb898;">${tFn('reviewCount',reviewCount(item.id))}</span>
+    // ピックアップ（Supabaseから非同期取得）
+    getPickupItems().then(pickupItems=>{
+      document.getElementById('pickupScroll').innerHTML = pickupItems.length ? pickupItems.map(item=>`
+        <div class="hcard" onclick="nav('anime','${item.id}')">
+          <div class="hcard-thumb">${item.image?`<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" loading="lazy">`:'📺'}</div>
+          <div class="hcard-body">
+            <h3>${item.title}</h3>
+            <p>${item.meta}</p>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `).join('') : '<p style="color:var(--muted);padding:.5rem;">作品が増えると表示されます</p>';
+    });
 
     startPickupTimer();
     loadSeasonSection();
