@@ -2044,6 +2044,18 @@
   }
 
   function renderAnimePage(id) {
+    // ページ遷移時にキャンバスとミニグラフをリセット
+    ['miniChartA','miniChartB','masterChartA','masterChartB'].forEach(cid=>{
+      const c = document.getElementById(cid);
+      if(c) { const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
+    });
+    const mini = document.getElementById('miniGraphSection');
+    if(mini) mini.style.display='none';
+    const master = document.getElementById('masterGraphSection');
+    if(master) master.style.display='none';
+    const adMid = document.getElementById('adAnimeMid');
+    if(adMid) adMid.style.display='none';
+
     const all=getAll(), page=all.find(p=>p.id===id);
     if (!page) {
       document.getElementById('animeTitle').textContent='ページが見つかりません';
