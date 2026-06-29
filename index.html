@@ -181,17 +181,17 @@
     .reviews-section { padding:0 1rem; margin-top:.8rem; }
     .reviews-head h2 { margin:0 0 .2rem; font-size:1.05rem; font-weight:800; }
     .reviews-head p { margin:0 0 .65rem; color:var(--muted); font-size:.78rem; }
-    .review-card { background:var(--card2); border:1px solid var(--line); border-radius:14px; margin-bottom:.7rem; overflow:hidden; }
-    .rc-head { display:flex; justify-content:space-between; align-items:center; padding:.65rem .75rem .5rem; }
+    .review-card { background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+    #reviewList { display:grid; grid-template-columns:repeat(2,1fr); gap:.6rem; align-items:start; }
+    .rc-head { display:flex; justify-content:space-between; align-items:flex-start; padding:.65rem .75rem .5rem; }
     .rc-name { font-weight:700; font-size:.9rem; }
     .rc-delete { background:none; border:1px solid #5a3030; color:#ffa0a0; border-radius:8px; padding:.25rem .55rem; font-size:.72rem; cursor:pointer; }
     .rc-charts { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; padding:0 .65rem .65rem; }
     .rc-chart-label { font-size:.73rem; color:var(--muted); margin:0 0 .3rem; }
     .rc-canvas { width:100%; height:auto; border:1px solid var(--line); border-radius:10px; background:#09201b; display:block; }
     .rc-comment { border-top:1px solid var(--line); }
-    .rc-comment summary { padding:.55rem .75rem; cursor:pointer; color:#b8e8c8; font-size:.82rem; list-style:none; display:flex; align-items:center; gap:.4rem; }
-    .rc-comment summary::before { content:"▶"; font-size:.65rem; }
-    details[open] .rc-comment summary::before { content:"▼"; }
+    .rc-comment-btn { background:none; border:none; color:#b8e8c8; font-size:.82rem; padding:.55rem .75rem; cursor:pointer; display:block; width:100%; text-align:left; }
+    .rc-comment-text { margin:0; padding:.1rem .75rem .75rem; color:#d4edda; font-size:.86rem; line-height:1.6; }
     .rc-comment p { margin:0; padding:.1rem .75rem .75rem; color:#d4edda; font-size:.86rem; line-height:1.6; }
     .empty-msg { color:var(--muted); font-size:.88rem; padding:.5rem 0; }
 
@@ -303,6 +303,10 @@
     .af-goods-card img { width:100%; aspect-ratio:1; object-fit:contain; border-radius:6px; }
     .af-goods-card-name { font-size:.7rem; color:#c8e6d4; margin-top:.3rem; line-height:1.3; }
     .af-goods-card-price { font-size:.8rem; font-weight:700; color:#f0a050; margin-top:.2rem; }
+
+    /* ══ REVIEWS LIST FILTERS ══ */
+    .rl-tab, .rl-country { background:var(--card2); border:1px solid var(--line); color:var(--muted); border-radius:999px; padding:.25rem .65rem; font-size:.75rem; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+    .rl-tab.active, .rl-country.active { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
 
     /* ══ MY PAGE ══ */
     .mypage-hero { display:flex; align-items:center; gap:1rem; padding:1.5rem 1rem 1rem; }
@@ -481,7 +485,7 @@
       .reviews-section { padding:0 2rem; max-width:1200px; margin:1rem auto 0; }
 
       /* レビューカードを3列に */
-      #reviewList { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:.85rem; }
+      #reviewList { display:grid; grid-template-columns:repeat(2,1fr); gap:.85rem; align-items:start; }
       .review-card { margin-bottom:0; }
       .rc-charts { grid-template-columns:1fr 1fr; }
 
@@ -727,7 +731,7 @@
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.5rem;">
         <button class="review-btn" id="goReviewBtn">🍎 レビューする</button>
         <button class="review-btn" id="goReviewListBtn" style="background:var(--card2);color:#dff0e6;border:1px solid var(--line);">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
-        <button class="admin-btn" id="deletePageBtn">🗑 ページ削除</button>
+
       </div>
       <!-- ミニグラフ（ボタン下） -->
       <div id="miniGraphSection" style="display:none;margin-top:.6rem;">
@@ -811,15 +815,40 @@
       <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
     </div>
   </header>
-  <div style="padding:.75rem 1rem 0;">
-    <h2 id="reviewsListTitle" style="margin:0 0 .2rem;font-size:1rem;color:#dff0e6;"></h2>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+  <div style="position:sticky;top:52px;z-index:10;background:var(--bg);padding:.75rem 1rem .5rem;border-bottom:1px solid var(--line);">
+    <h2 id="reviewsListTitle" style="margin:0 0 .4rem;font-size:1rem;color:#dff0e6;"></h2>
+    <!-- 期間タブ -->
+    <div class="rl-period-tabs" id="rlPeriodTabs" style="display:flex;gap:.35rem;overflow-x:auto;padding-bottom:.35rem;scrollbar-width:none;">
+      <button class="rl-tab active" data-period="all">全期間</button>
+      <button class="rl-tab" data-period="year">今年</button>
+      <button class="rl-tab" data-period="month">今月</button>
+      <button class="rl-tab" data-period="week">今週</button>
+      <button class="rl-tab" data-period="day">今日</button>
+    </div>
+    <!-- 国フィルター -->
+    <div style="display:flex;gap:.3rem;overflow-x:auto;padding:.3rem 0;scrollbar-width:none;">
+      <button class="rl-country active" data-country="all">🌍 全て</button>
+      <button class="rl-country" data-country="JP">🇯🇵 JP</button>
+      <button class="rl-country" data-country="US">🇺🇸 US</button>
+      <button class="rl-country" data-country="KR">🇰🇷 KR</button>
+      <button class="rl-country" data-country="CN">🇨🇳 CN</button>
+      <button class="rl-country" data-country="TW">🇹🇼 TW</button>
+      <button class="rl-country" data-country="FR">🇫🇷 FR</button>
+      <button class="rl-country" data-country="DE">🇩🇪 DE</button>
+      <button class="rl-country" data-country="BR">🇧🇷 BR</button>
+      <button class="rl-country" data-country="GB">🇬🇧 GB</button>
+      <button class="rl-country" data-country="OTHER">🌐 その他</button>
+    </div>
+    <!-- ソート＋件数 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.3rem;">
       <p id="reviewsListMeta" style="margin:0;font-size:.78rem;color:var(--muted);"></p>
-      <select id="reviewSortSelect" style="padding:.32rem .6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:.78rem;">
+      <select id="reviewSortSelect" style="padding:.28rem .5rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:.75rem;">
         <option value="newest">新しい順</option>
         <option value="oldest">古い順</option>
       </select>
     </div>
+  </div>
+  <div style="padding:.75rem 1rem 0;">
     <div id="reviewList"></div>
   </div>
 </div>
@@ -1115,9 +1144,12 @@
         createdAt: r.created_at,
         fromSupabase: true,
       }));
-      // LocalStorageのレビューと重複なくマージ
+      // LocalStorageのレビューと重複なくマージ（Supabase優先、createdAtで重複除去）
       const local = pj(REVIEW_KEY).filter(r=>r.animeId===animeId&&!r.fromSupabase);
-      const merged = [...local, ...remote];
+      const remoteCreatedAts = new Set(remote.map(r=>r.createdAt));
+      // ローカルのうちSupabaseに同じcreatedAtがないものだけ残す
+      const localOnly = local.filter(r=>!remoteCreatedAts.has(r.createdAt));
+      const merged = [...localOnly, ...remote];
       const all = pj(REVIEW_KEY).filter(r=>r.animeId!==animeId);
       sj(REVIEW_KEY, [...merged, ...all]);
     } catch(e) { console.warn('fetchRemoteReviews:', e); }
@@ -1803,15 +1835,21 @@
     return item.image?`<img src="${item.image}" alt="${item.title}" style="width:100%;height:100%;object-fit:cover;" />`:'';
   }
 
-  // ピックアップ：Supabaseのanime_pagesから取得、レビュー数が全体の50%未満をランダム表示
+  // ピックアップ：
+  // Supabaseが100件未満 → Kitsuからランダム取得
+  // 100件以上 → Supabaseの中でレビュー50%未満をランダムピック
+  const PICKUP_THRESHOLD = 100;
+
   async function getPickupItems() {
     const INTERVAL_MS = 30 * 60 * 1000;
     const slot = Math.floor(Date.now() / INTERVAL_MS);
 
+    // Supabaseの件数確認
     let allPages = [];
     if(DB_MODE === 'supabase' && sb) {
-      const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url,meta,genres');
-      if(data && data.length) {
+      const { data, count } = await sb.from('anime_pages')
+        .select('id,title,title_en,image_url,meta,genres', { count: 'exact' });
+      if(data) {
         allPages = data.map(p=>({
           id: p.id,
           title: p.title || p.title_en || '—',
@@ -1820,30 +1858,44 @@
           genres: p.genres || [],
         }));
       }
+
+      // 100件未満ならKitsuからランダム取得
+      if(allPages.length < PICKUP_THRESHOLD) {
+        try {
+          const randomOffset = Math.floor((slot % 50)) * 20;
+          const res = await fetch(`https://kitsu.io/api/edge/anime?sort=-userCount&page[limit]=20&page[offset]=${randomOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`);
+          const json = await res.json();
+          if(json.data) {
+            return json.data.map(a=>({
+              id: `kitsu-${a.id}`,
+              title: a.attributes.canonicalTitle || '—',
+              image: a.attributes.posterImage?.small || '',
+              meta: a.attributes.subtype || '',
+            })).slice(0, 8);
+          }
+        } catch(e) { console.warn('Kitsu pickup:', e); }
+        return allPages.slice(0, 8);
+      }
     }
-    // Supabaseにデータがなければローカルフォールバック
+
+    // Supabase100件以上：レビュー50%未満をランダムピック
     if(!allPages.length) allPages = getAll();
     if(!allPages.length) return [];
 
-    // Supabaseからレビュー数を取得
     let reviewCounts = {};
     if(DB_MODE === 'supabase' && sb) {
       const { data } = await sb.from('reviews').select('anime_id');
-      if(data) {
-        data.forEach(r=>{ reviewCounts[r.anime_id] = (reviewCounts[r.anime_id]||0)+1; });
-      }
+      if(data) data.forEach(r=>{ reviewCounts[r.anime_id]=(reviewCounts[r.anime_id]||0)+1; });
     } else {
-      getReviews().forEach(r=>{ reviewCounts[r.animeId] = (reviewCounts[r.animeId]||0)+1; });
+      getReviews().forEach(r=>{ reviewCounts[r.animeId]=(reviewCounts[r.animeId]||0)+1; });
     }
 
     const totalReviews = Object.values(reviewCounts).reduce((a,b)=>a+b,0);
     const threshold = Math.max(totalReviews * 0.5, 1);
-
-    // レビュー数が全体の50%未満の作品を候補に
-    const candidates = allPages.filter(a => (reviewCounts[a.id]||0) < threshold);
+    const candidates = allPages.filter(a=>(reviewCounts[a.id]||0) < threshold);
     const pool = candidates.length >= 4 ? candidates : allPages;
 
-    const seeded = [...pool].sort((a,b) => {
+    const seeded = [...pool].sort((a,b)=>{
       const ha = Math.sin(slot * 9301 + a.id.charCodeAt(0) * 49297) * 233280;
       const hb = Math.sin(slot * 9301 + b.id.charCodeAt(0) * 49297) * 233280;
       return (ha - Math.floor(ha)) - (hb - Math.floor(hb));
@@ -1940,15 +1992,21 @@
 
     // ピックアップ（Supabaseから非同期取得）
     getPickupItems().then(pickupItems=>{
-      document.getElementById('pickupScroll').innerHTML = pickupItems.length ? pickupItems.map(item=>`
-        <div class="hcard" onclick="nav('anime','${item.id}')">
-          <div class="hcard-thumb">${item.image?`<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" loading="lazy">`:'📺'}</div>
+      document.getElementById('pickupScroll').innerHTML = pickupItems.length ? pickupItems.map(item=>{
+        const onclick = item.id.startsWith('kitsu-')
+          ? `navAnime('${item.id.replace('kitsu-','')}')` 
+          : `nav('anime','${item.id}')`;
+        const img = item.image
+          ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" loading="lazy">`
+          : '📺';
+        return `<div class="hcard" onclick="${onclick}">
+          <div class="hcard-thumb">${img}</div>
           <div class="hcard-body">
             <h3>${item.title}</h3>
             <p>${item.meta}</p>
           </div>
-        </div>
-      `).join('') : '<p style="color:var(--muted);padding:.5rem;">作品が増えると表示されます</p>';
+        </div>`;
+      }).join('') : '<p style="color:var(--muted);padding:.5rem;">作品が増えると表示されます</p>';
     });
 
     startPickupTimer();
@@ -2088,7 +2146,6 @@
       document.getElementById('animeMeta').textContent='';
       document.getElementById('animeDesc').textContent='トップに戻って別の作品を選んでください。';
       document.getElementById('goReviewBtn').style.display='none';
-      document.getElementById('deletePageBtn').style.display='none';
       return;
     }
     // PV記録（国別データも同時記録）
@@ -2144,26 +2201,18 @@
 
     document.getElementById('animeDesc').textContent=page.description||'';
     document.getElementById('goReviewBtn').style.display='';
-    document.getElementById('deletePageBtn').style.display='none';
     const thumb=document.getElementById('animeThumbHero');
     thumb.innerHTML=page.image?`<img src="${page.image}" alt="${page.title}" style="width:100%;height:100%;object-fit:cover;display:block;" />`:'画像未設定';
     document.getElementById('goReviewBtn').onclick=()=>nav('review',id);
-    document.getElementById('deletePageBtn').onclick=()=>{
-      if(!confirm(t('confirmDelete'))) return;
-      if(id.startsWith('user-')) sj(STORAGE_KEY,pj(STORAGE_KEY).filter(p=>p.id!==id));
-      else { const d=pj(DELETED_KEY); if(!d.includes(id)) d.push(id); sj(DELETED_KEY,d); }
-      sj(REVIEW_KEY,getReviews().filter(r=>r.animeId!==id));
-      nav('home');
-    };
     renderAffiliateLinks(page);
     renderWorldStats(id);
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
       renderMasterGraph(id);
-      // レビュー数をアニメページに表示
-      const reviews = validReviews(id);
+      // レビュー数をアニメページに表示（全レビュー）
+      const allReviews = getReviews().filter(r=>r.animeId===id);
       const countEl = document.getElementById('animeReviewCount');
-      if(countEl) countEl.textContent = reviews.length ? `${reviews.length}件のレビュー` : 'まだレビューがありません';
+      if(countEl) countEl.textContent = allReviews.length ? `${allReviews.length}件` : '';
     });
     // 「レビューを見る」ボタン
     const rlBtn = document.getElementById('goReviewListBtn');
@@ -2217,9 +2266,9 @@
   }
 
   function renderReviewList(id) {
-    let reviews=validReviews(id);
     const allRaw=getReviews().filter(r=>r.animeId===id);
-    const skipped=allRaw.length-reviews.length;
+    let reviews=allRaw; // 全レビューを表示（グラフ集計はvalidReviewsで別管理）
+    const skipped=0;
     const el=document.getElementById('reviewList');
     if (!reviews.length) { el.innerHTML=`<p class="empty-msg">${t('noReview')}</p>`; return; }
     // ソート
@@ -2254,17 +2303,17 @@
                 <span style="font-size:.68rem;color:var(--muted);">${rev.createdAt?new Date(rev.createdAt).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'}):''}</span>
               </div>
             </div>
-            <button class="rc-delete" data-rev-i="${i}">${t('btnDelete').replace('🗑 ','')}</button>
+
           </div>
           ${tags?`<div style="display:flex;flex-wrap:wrap;gap:.35rem;padding:0 .75rem .5rem;">${tags}</div>`:''}
           <div class="rc-charts">
             <div><p class="rc-chart-label">${t('chartATitle')}</p><canvas class="rc-canvas" data-ai="${i}" width="280" height="200"></canvas></div>
             <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-bi="${i}" width="280" height="200"></canvas></div>
           </div>
-          <details class="rc-comment">
-            <summary>${t('commentExpandLabel')}</summary>
-            <p>${(rev.comment||'—').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
-          </details>
+          <div class="rc-comment">
+            <button class="rc-comment-btn" data-ci="${i}">▶ コメントを見る</button>
+            <p class="rc-comment-text" style="display:none;">${(rev.comment||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+          </div>
         </article>
       `;
     }).join('') + (skipped>0?`<p style="font-size:.74rem;color:var(--muted);text-align:center;padding:.5rem 0;">${skipped}件のグラフ未操作レビューは集計から除外されています</p>`:'');
@@ -2273,6 +2322,20 @@
       const ca=el.querySelector(`[data-ai="${i}"]`),cb=el.querySelector(`[data-bi="${i}"]`);
       if(ca) drawRadar(ca,labA,labA.map((_,j)=>Number(rev.chartA&&rev.chartA[axisA[j]]||0)),'rgba(88,201,132,0.35)','#8fe5ab');
       if(cb) drawRadar(cb,labB,labB.map((_,j)=>Number(rev.chartB&&rev.chartB[axisB[j]]||0)),'rgba(255,153,153,0.32)','#ffaaaa');
+      // コメント表示ボタン（親要素内のpを直接参照）
+      const commentBtn = el.querySelector(`[data-ci="${i}"]`);
+      if(commentBtn) {
+        const commentText = commentBtn.nextElementSibling;
+        if(!commentText || !commentText.textContent.trim()) {
+          commentBtn.style.display='none';
+        } else {
+          commentBtn.onclick = ()=>{
+            const isOpen = commentText.style.display !== 'none';
+            commentText.style.display = isOpen ? 'none' : '';
+            commentBtn.textContent = (isOpen ? '▶ ' : '▼ ') + 'コメントを見る';
+          };
+        }
+      }
     });
     el.querySelectorAll('[data-rev-i]').forEach(btn=>{
       btn.onclick=()=>{
@@ -2381,10 +2444,8 @@
       chartMoved,   // スライダー操作フラグ
       quality: isQuality, // 高品質フラグ
     };
-    // LocalStorageに保存
-    const ex=getReviews(); ex.unshift(review); sj(REVIEW_KEY,ex);
-    // Supabaseに非同期保存
     if(DB_MODE === 'supabase' && sb) {
+      // Supabaseモード: Supabaseのみに保存、LocalStorageには保存しない
       (async()=>{
         const page = getAll().find(p=>p.id===review.animeId);
         if(page) {
@@ -2410,10 +2471,15 @@
           chart_moved: chartMoved,
           quality: isQuality,
         });
-      })().catch(e=>console.warn('Supabase review save:', e));
+        alert(t('reviewPosted'));
+        nav('anime',currentAnimeId);
+      })().catch(e=>{ console.warn('Supabase review save:', e); alert('保存に失敗しました。もう一度お試しください。'); });
+    } else {
+      // ローカルモード: LocalStorageに保存
+      const ex=getReviews(); ex.unshift(review); sj(REVIEW_KEY,ex);
+      alert(t('reviewPosted'));
+      nav('anime',currentAnimeId);
     }
-    alert(t('reviewPosted'));
-    nav('anime',currentAnimeId);
   };
 
   /* ════════════════════════════
@@ -3014,8 +3080,7 @@
     // 作品ページ
     const goReviewBtn = document.getElementById('goReviewBtn');
     if (goReviewBtn) goReviewBtn.textContent = t('btnReview');
-    const deletePageBtn = document.getElementById('deletePageBtn');
-    if (deletePageBtn) deletePageBtn.textContent = t('btnDelete');
+
     const watchLabel = document.querySelector('#adAnimePage .ad-label');
     if (watchLabel) watchLabel.textContent = t('watchOn');
     const reviewsHead = document.querySelector('.reviews-head h2');
@@ -3035,7 +3100,7 @@
 
     // フォームラベル
     const formLabels = document.querySelectorAll('#page-review .form-field label');
-    const labelKeys = ['labelUsername','labelTags','labelComment'];
+    const labelKeys = ['labelTags','labelComment'];
     formLabels.forEach((l,i) => { if(labelKeys[i]) l.textContent = t(labelKeys[i]); });
     const submitBtn = document.getElementById('submitReviewBtn');
     if (submitBtn) submitBtn.textContent = t('btnSubmit');
@@ -3180,27 +3245,146 @@
   /* ════════════════════════════
      REVIEWS LIST PAGE
   ════════════════════════════ */
+  // フィルター状態
+  let _rlPeriod = 'all';
+  let _rlCountry = 'all';
+
+  const KNOWN_COUNTRIES = ['JP','US','KR','CN','TW','FR','DE','BR','GB'];
+
+  function getReviewTime(r) {
+    // Supabase形式(created_at)とローカル形式(createdAt)両対応
+    const raw = r.created_at || r.createdAt || null;
+    if(!raw) return 0;
+    return new Date(raw).getTime();
+  }
+
+  function filterReviews(reviews) {
+    const now = Date.now();
+    const periodMs = {day:86400000,week:604800000,month:2592000000,year:31536000000,all:Infinity};
+    const ms = periodMs[_rlPeriod] ?? Infinity;
+    return reviews.filter(r=>{
+      // 期間フィルター
+      if(ms !== Infinity) {
+        const t = getReviewTime(r);
+        if(now - t > ms) return false;
+      }
+      // 国フィルター
+      if(_rlCountry !== 'all') {
+        const c = r.country_code || r.countryCode || null;
+        if(_rlCountry === 'OTHER') {
+          if(KNOWN_COUNTRIES.includes(c)) return false;
+        } else {
+          if(c !== _rlCountry) return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  function renderReviewsListFiltered(id) {
+    const allRevs = getReviews().filter(r=>r.animeId===id);
+    const filtered = filterReviews(allRevs);
+    const metaEl = document.getElementById('reviewsListMeta');
+    if(metaEl) metaEl.textContent = `${filtered.length}件`;
+    // renderReviewListをフィルター対応版で上書き的に呼び出す
+    const el = document.getElementById('reviewList');
+    if(!el) return;
+    if(!filtered.length) { el.innerHTML=`<p class="empty-msg">レビューがありません</p>`; return; }
+    const sortSel = document.getElementById('reviewSortSelect');
+    const sortVal = sortSel ? sortSel.value : 'newest';
+    const sorted = [...filtered].sort((a,b)=>{
+      return sortVal==='oldest'?getReviewTime(a)-getReviewTime(b):getReviewTime(b)-getReviewTime(a);
+    });
+    const labA=axisA, labB=axisB;
+    el.innerHTML = sorted.map((rev,i)=>{
+      const name = rev.userName||rev.username||'ゲスト';
+      const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
+      const iconBg = name==='ゲスト'?'rgba(140,198,160,0.2)':colors[name.charCodeAt(0)%colors.length];
+      const iconContent = name==='ゲスト'
+        ?'<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>'
+        :name.slice(0,1);
+      const tags = (rev.tags||[]).map(tg=>`<span class="tag-badge">${tg}</span>`).join('');
+      const dateStr = rev.createdAt||rev.created_at?new Date(rev.createdAt||rev.created_at).toLocaleDateString('ja-JP',{year:'numeric',month:'short',day:'numeric'}):'';
+      const flag = rev.country_code||rev.countryCode ? `<span style="font-size:.7rem;color:var(--muted);margin-left:.3rem;">${rev.country_code||rev.countryCode}</span>` : '';
+      return `<article class="review-card">
+        <div class="rc-head">
+          <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
+            <div style="width:32px;height:32px;border-radius:7px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+            <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
+              <span class="rc-name">${name}${flag}</span>
+              <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
+            </div>
+          </div>
+        </div>
+        ${tags?`<div style="display:flex;flex-wrap:wrap;gap:.35rem;padding:0 .75rem .5rem;">${tags}</div>`:''}
+        <div class="rc-charts">
+          <div><p class="rc-chart-label">作品の完成度</p><canvas class="rc-canvas" data-fai="${i}" width="280" height="200"></canvas></div>
+          <div><p class="rc-chart-label">感情・雰囲気</p><canvas class="rc-canvas" data-fbi="${i}" width="280" height="200"></canvas></div>
+        </div>
+        <div class="rc-comment">
+          <button class="rc-comment-btn" data-fci="${i}">▶ コメントを見る</button>
+          <p class="rc-comment-text" style="display:none;">${(rev.comment||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+        </div>
+      </article>`;
+    }).join('');
+    sorted.forEach((rev,i)=>{
+      const ca=el.querySelector(`[data-fai="${i}"]`),cb=el.querySelector(`[data-fbi="${i}"]`);
+      if(ca) drawRadar(ca,labA,labA.map((_,j)=>Number(rev.chartA&&rev.chartA[axisA[j]]||0)),'rgba(88,201,132,0.35)','#8fe5ab');
+      if(cb) drawRadar(cb,labB,labB.map((_,j)=>Number(rev.chartB&&rev.chartB[axisB[j]]||0)),'rgba(255,153,153,0.32)','#ffaaaa');
+      const btn=el.querySelector(`[data-fci="${i}"]`);
+      if(btn){
+        const txt=btn.nextElementSibling;
+        if(!txt||!txt.textContent.trim()){btn.style.display='none';}
+        else{btn.onclick=()=>{const o=txt.style.display!=='none';txt.style.display=o?'none':'';btn.textContent=(o?'▶ ':'▼ ')+'コメントを見る';};}
+      }
+    });
+  }
+
   function renderReviewsList(id) {
     const all = getAll();
     const page = all.find(p=>p.id===id);
-    // タイトル
     const titleEl = document.getElementById('reviewsListTitle');
-    const metaEl = document.getElementById('reviewsListMeta');
     if(titleEl) titleEl.textContent = page ? `${page.title||page.titleEn} のレビュー` : 'レビュー一覧';
 
-    // ソート・一覧描画（既存のrenderReviewListを流用）
-    fetchRemoteReviews(id).then(()=>{
-      renderReviewList(id);
-      const reviews = validReviews(id);
-      if(metaEl) metaEl.textContent = reviews.length ? `${reviews.length}件` : 'まだレビューがありません';
+    // フィルター状態リセット
+    _rlPeriod = 'all';
+    _rlCountry = 'all';
+
+    // 期間タブ
+    const periodTabs = document.getElementById('rlPeriodTabs');
+    if(periodTabs) {
+      periodTabs.querySelectorAll('.rl-tab').forEach(btn=>{
+        btn.classList.toggle('active', btn.dataset.period===_rlPeriod);
+        btn.onclick=()=>{
+          _rlPeriod=btn.dataset.period;
+          periodTabs.querySelectorAll('.rl-tab').forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          renderReviewsListFiltered(id);
+        };
+      });
+    }
+
+    // 国フィルター
+    document.querySelectorAll('.rl-country').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.country===_rlCountry);
+      btn.onclick=()=>{
+        _rlCountry=btn.dataset.country;
+        document.querySelectorAll('.rl-country').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        renderReviewsListFiltered(id);
+      };
     });
 
     // ソート変更
     const sortSel = document.getElementById('reviewSortSelect');
-    if(sortSel && !sortSel.dataset.rlInit) {
-      sortSel.dataset.rlInit = '1';
-      sortSel.addEventListener('change', ()=>{ renderReviewList(id); });
+    if(sortSel) {
+      const newSel = sortSel.cloneNode(true);
+      sortSel.parentNode.replaceChild(newSel, sortSel);
+      newSel.addEventListener('change', ()=>{ renderReviewsListFiltered(id); });
     }
+
+    // データ取得して描画
+    fetchRemoteReviews(id).then(()=>{ renderReviewsListFiltered(id); });
   }
   window.renderReviewsList = renderReviewsList;
 
