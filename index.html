@@ -3,7 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>アニメップル</title>
+  <title>アニメップル｜グラフでアニメの好みをドンピシャ検索</title>
+  <meta name="description" content="アニメップルは、みんなのレビューグラフでアニメの雰囲気・特徴を可視化し、自分の好みにドンピシャな作品を見つけられるアニメコミュニティです。" />
+
+  <!-- OGP -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="アニメップル｜グラフでアニメの好みをドンピシャ検索" />
+  <meta property="og:description" content="みんなのレビューグラフでアニメの雰囲気・特徴を可視化。自分の好みにドンピシャな作品が見つかるアニメコミュニティ。" />
+  <meta property="og:image" content="https://animeppuru-official.github.io/animepple/ogp.png" />
+  <meta property="og:url" content="https://animeppuru-official.github.io/animepple/" />
+  <meta property="og:site_name" content="アニメップル" />
+  <meta property="og:locale" content="ja_JP" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="アニメップル｜グラフでアニメの好みをドンピシャ検索" />
+  <meta name="twitter:description" content="みんなのレビューグラフでアニメの雰囲気・特徴を可視化。自分の好みにドンピシャな作品が見つかるアニメコミュニティ。" />
+  <meta name="twitter:image" content="https://animeppuru-official.github.io/animepple/ogp.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2307150d'/%3E%3Cpath d='M50 18c-15 0-27 11-27 25 0 12 8 21 19 24-1 3-3 6-6 8-1 1 0 2 1 2 7-1 13-4 17-9 14-2 23-12 23-25 0-14-12-25-27-25z' fill='%235ec97a'/%3E%3Ccircle cx='40' cy='42' r='4' fill='%2307150d'/%3E%3Ccircle cx='60' cy='42' r='4' fill='%2307150d'/%3E%3C/svg%3E" />
   <style>
     :root {
       --bg:#07150d; --card:#0e2219; --card2:#122a1e;
@@ -18,6 +37,7 @@
 
     /* ── PAGES ── */
     .page { display:none; min-height:100vh; padding-bottom:5rem; }
+    body.admin-fullpage .page { padding-bottom:0; }
     .page.active { display:block; }
 
     /* ── HEADER ── */
@@ -408,6 +428,17 @@
     .world-country-body { display:flex; flex-direction:column; }
     .world-country-name { font-size:.68rem; color:var(--muted); line-height:1.2; }
     .world-country-count { font-size:.88rem; font-weight:700; color:var(--brand); line-height:1.2; }
+    .world-vbar-wrap { position:relative; height:160px; padding:0 .5rem; }
+    .world-vbar-grid { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:space-between; pointer-events:none; }
+    .world-vbar-gridline { border-top:1px dashed rgba(255,255,255,.08); position:relative; }
+    .world-vbar-gridline span { position:absolute; left:-.3rem; top:-.55rem; transform:translateX(-100%); font-size:.6rem; color:var(--muted); }
+    .world-vbar-bars { position:relative; height:100%; display:flex; align-items:flex-end; justify-content:space-around; gap:.6rem; padding-top:.6rem; }
+    .world-vbar-col { display:flex; flex-direction:column; align-items:center; flex:1; height:100%; justify-content:flex-end; }
+    .world-vbar-count { font-size:.74rem; font-weight:700; color:var(--brand); margin-bottom:.25rem; }
+    .world-vbar-fill { width:100%; max-width:34px; border-radius:6px 6px 0 0; background:linear-gradient(180deg,var(--brand2),var(--brand)); transition:height .5s ease; min-height:3px; }
+    .world-vbar-label { display:flex; flex-direction:column; align-items:center; margin-top:.4rem; gap:.1rem; }
+    .world-vbar-label .world-country-flag { font-size:1.1rem; }
+    .world-vbar-label .world-country-name { font-size:.62rem; color:var(--muted); white-space:nowrap; }
 
     /* ══ POPULAR PAGE ══ */
     .pop-sort-bar { position:sticky; top:52px; z-index:10; background:var(--bg); border-bottom:1px solid var(--line); }
@@ -497,6 +528,8 @@
 
       /* 全ページにサイドナビ幅のオフセット */
       .page { padding-bottom:0; padding-left:200px; }
+      /* 管理者ページはフルページ表示（サイドナビなし） */
+      body.admin-fullpage .page { padding-left:0; }
 
       /* ヘッダー */
       .hdr-inner { max-width:1200px; margin:0 auto; padding:.7rem 2rem; }
@@ -1299,6 +1332,210 @@
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYmpmaXVheWZoZGtnZXJ0eHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzAxOTIsImV4cCI6MjA5ODIwNjE5Mn0.atbMSoL6d_-F-RRomwfjWeKe1YOMZi-48tnPx--Etco';
   const sb = (DB_MODE === 'supabase') ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
 
+  /* ════════════════════════════════════════════════════
+     DB アダプター層
+     将来Supabase以外のDBに乗り換える際は、この db オブジェクトの
+     中身だけを書き換えれば良い。呼び出し側（300箇所以上）は
+     一切変更不要。
+     現在の実装: Supabase
+  ════════════════════════════════════════════════════ */
+  const db = {
+    // ── 認証 ──
+    auth: {
+      async getSession() {
+        if(!sb) return null;
+        const { data } = await sb.auth.getSession();
+        return data?.session || null;
+      },
+      onAuthChange(callback) {
+        if(!sb) return;
+        sb.auth.onAuthStateChange((_event, session) => callback(session));
+      },
+      async signUp(email, password) {
+        if(!sb) return { user:null, error:'no db' };
+        const { data, error } = await sb.auth.signUp({ email, password });
+        return { user: data?.user||null, error };
+      },
+      async signIn(email, password) {
+        if(!sb) return { user:null, error:'no db' };
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        return { user: data?.user||null, error };
+      },
+      async signOut() {
+        if(!sb) return;
+        await sb.auth.signOut();
+      },
+    },
+
+    // ── プロフィール ──
+    profiles: {
+      async get(userId) {
+        if(!sb) return null;
+        const { data } = await sb.from('profiles').select('username,bio,favorite_genres').eq('id', userId).single();
+        return data;
+      },
+      async getUsername(userId) {
+        if(!sb) return null;
+        const { data } = await sb.from('profiles').select('username').eq('id', userId).single();
+        return data?.username || null;
+      },
+      async upsert(userId, fields) {
+        if(!sb) return;
+        await sb.from('profiles').upsert({ id: userId, ...fields });
+      },
+      async countAll() {
+        if(!sb) return 0;
+        const { count } = await sb.from('profiles').select('*', {count:'exact',head:true});
+        return count || 0;
+      },
+    },
+
+    // ── アニメページ ──
+    animePages: {
+      async upsert(page) {
+        if(!sb) return;
+        await sb.from('anime_pages').upsert(page, { onConflict: 'id' });
+      },
+      async getByIds(ids) {
+        if(!sb) return [];
+        const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url').in('id', ids);
+        return data || [];
+      },
+      async getAllTitles() {
+        if(!sb) return [];
+        const { data } = await sb.from('anime_pages').select('id,title,title_en');
+        return data || [];
+      },
+      async getAllWithLimit(limit) {
+        if(!sb) return { items:[], count:0 };
+        const { data, count } = await sb.from('anime_pages')
+          .select('id,title,title_en,image_url,meta,genres', { count: 'exact' })
+          .limit(limit||1000);
+        return { items: data||[], count: count||0 };
+      },
+      async countAll() {
+        if(!sb) return 0;
+        const { count } = await sb.from('anime_pages').select('*', {count:'exact',head:true});
+        return count || 0;
+      },
+    },
+
+    // ── レビュー ──
+    reviews: {
+      async getByAnimeId(animeId) {
+        if(!sb) return [];
+        const { data, error } = await sb.from('reviews')
+          .select('*')
+          .eq('anime_id', animeId)
+          .order('created_at', { ascending: false });
+        if(error) return [];
+        return data || [];
+      },
+      async getByUsername(username) {
+        if(!sb) return [];
+        const { data } = await sb.from('reviews')
+          .select('*')
+          .eq('username', username)
+          .order('created_at', { ascending: false });
+        return data || [];
+      },
+      async insert(review) {
+        if(!sb) return;
+        await sb.from('reviews').insert(review);
+      },
+      async getAllAnimeIds() {
+        if(!sb) return [];
+        const { data } = await sb.from('reviews').select('anime_id');
+        return data || [];
+      },
+      async getAllForCluster() {
+        if(!sb) return [];
+        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b');
+        return data || [];
+      },
+      async getRecent(limit) {
+        if(!sb) return [];
+        const { data } = await sb.from('reviews')
+          .select('anime_id, username, comment, created_at, chart_moved, quality')
+          .order('created_at', {ascending:false})
+          .limit(limit||20);
+        return data || [];
+      },
+      async countAll() {
+        if(!sb) return 0;
+        const { count } = await sb.from('reviews').select('*', {count:'exact',head:true});
+        return count || 0;
+      },
+    },
+
+    // ── PVログ ──
+    pvLogs: {
+      async insert(animeId, countryCode) {
+        if(!sb) return;
+        sb.from('pv_logs').insert({ anime_id: animeId, country_code: countryCode }).then(()=>{});
+      },
+      async getAllCountryCodes() {
+        if(!sb) return [];
+        const { data } = await sb.from('pv_logs').select('country_code');
+        return data || [];
+      },
+      async countAll() {
+        if(!sb) return 0;
+        const { count } = await sb.from('pv_logs').select('*', {count:'exact',head:true});
+        return count || 0;
+      },
+    },
+
+    // ── お気に入り ──
+    favorites: {
+      async isFavorited(userId, animeId) {
+        if(!sb) return false;
+        const { data } = await sb.from('favorites').select('id').eq('user_id', userId).eq('anime_id', animeId).maybeSingle();
+        return !!data;
+      },
+      async add(userId, animeId) {
+        if(!sb) return;
+        await sb.from('favorites').insert({ user_id: userId, anime_id: animeId });
+      },
+      async remove(userId, animeId) {
+        if(!sb) return;
+        await sb.from('favorites').delete().eq('user_id', userId).eq('anime_id', animeId);
+      },
+      async getByUser(userId) {
+        if(!sb) return [];
+        const { data } = await sb.from('favorites').select('anime_id').eq('user_id', userId).order('created_at',{ascending:false});
+        return data || [];
+      },
+    },
+  };
+
+  /* ════════════════════════════════════════════════════
+     アニメ情報APIアダプター層
+     将来Kitsu以外のAPI（AniList等）に乗り換える際は、この
+     animeApi オブジェクトの中身だけを書き換えれば良い。
+     呼び出し側（fetchKitsuPopular等の既存関数や各ページの
+     検索ロジック）は将来的にこの層を経由するよう移行できる。
+     現在の実装: Kitsu API
+  ════════════════════════════════════════════════════ */
+  const ANIME_API_BASE = 'https://kitsu.io/api/edge/anime';
+  const animeApi = {
+    // 生のfetch＋JSON取得だけを担う最小限の共通関数
+    async _fetchJson(url) {
+      const res = await fetch(url, { headers: { 'Accept': 'application/vnd.api+json' } });
+      return res.json();
+    },
+    // テキスト検索（キーワードでアニメを探す）
+    async searchByText(query, limit=20) {
+      const url = `${ANIME_API_BASE}?filter[text]=${encodeURIComponent(query)}&page[limit]=${limit}&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
+      return this._fetchJson(url);
+    },
+    // 人気順で取得（オフセット指定可）
+    async getPopular(offset=0, limit=20) {
+      const url = `${ANIME_API_BASE}?sort=-userCount&page[limit]=${limit}&page[offset]=${offset}&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
+      return this._fetchJson(url);
+    },
+  };
+
   const STORAGE_KEY = "animepple-user-pages";
   const REVIEW_KEY  = "animepple-reviews";
   const DELETED_KEY = "animepple-deleted-seed-ids";
@@ -1310,6 +1547,17 @@
   /* ════════════════════════════
      STORAGE
   ════════════════════════════ */
+  // XSS対策: ユーザー入力をHTMLに埋め込む前に必ずこれを通す
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function pj(key) {
     try { const r=localStorage.getItem(key); const p=r?JSON.parse(r):[]; return Array.isArray(p)?p:[]; } catch { return []; }
   }
@@ -1324,11 +1572,8 @@
   async function fetchRemoteReviews(animeId) {
     if(DB_MODE !== 'supabase' || !sb) return;
     try {
-      const { data, error } = await sb.from('reviews')
-        .select('*')
-        .eq('anime_id', animeId)
-        .order('created_at', { ascending: false });
-      if(error || !data) return;
+      const data = await db.reviews.getByAnimeId(animeId);
+      if(!data) return;
       // Supabaseのデータ形式をLocalStorage形式に変換してマージ
       const remote = data.map(r=>({
         animeId: r.anime_id,
@@ -1361,6 +1606,54 @@
     return `<span class="recruit-badge">📢 レビュー募集中</span>`;
   }
 
+  /* ════════════════════════════════════════════════════
+     アニメカード共通レンダラー
+     カードのHTML構造はここ1か所だけで定義する。
+     デザインを変えたいときはこの関数だけ直せば、
+     ホーム・人気・検索・ピックアップ・今季アニメ全部に反映される。
+
+     item: { id, kitsuId, title, titleEn, image, meta, year, ... }
+     opts: {
+       style: 'g' | 'h'          // 'g'=gcard(グリッド型) 'h'=hcard(横スクロール型)
+       badges: 配列（追加で出したいバッジHTML文字列の配列）
+       showReviewCount: true/false（レビュー数バッジを出すか）
+       showRecruitBadge: true/false（募集中バッジを出すか）
+       dummy: true/false（サンプル表示用、クリックでalertのみ）
+     }
+  ════════════════════════════════════════════════════ */
+  function renderAnimeCard(item, opts={}) {
+    const style = opts.style || 'g';
+    const onclick = opts.dummy
+      ? `alert('サンプルです')`
+      : (item.kitsuId ? `navAnime('${item.kitsuId}')` : `nav('anime','${item.id}')`);
+    const title = escapeHtml(item.title || item.titleEn || getTitle(item) || '—');
+    const meta = escapeHtml([item.meta, item.year ? item.year+'年' : ''].filter(Boolean).join(' · ') || item.meta || '');
+    const imgHtml = item.image
+      ? `<img src="${escapeHtml(item.image)}" alt="${title}" loading="lazy" style="${style==='h'?'width:100%;height:100%;object-fit:cover;border-radius:10px;':''}" />`
+      : (typeof thumbHtml==='function' ? (thumbHtml(item)||'📺') : '📺');
+
+    const badges = [];
+    if (opts.showReviewCount) badges.push(`<span class="badge">${tFn('reviewCount', item._reviewCount ?? reviewCount(item.id))}</span>`);
+    if (opts.badges) badges.push(...opts.badges);
+    if (opts.showRecruitBadge !== false && !opts.dummy) badges.push(recruitBadgeHtml(item.kitsuId?'kitsu-'+item.kitsuId:item.id));
+
+    if (style === 'h') {
+      return `<div class="hcard" onclick="${onclick}">
+        <div class="hcard-thumb"${opts.dummy?' style="opacity:.55;"':''}>${imgHtml}</div>
+        <div class="hcard-body">
+          <h3>${title}</h3>
+          <p>${meta}</p>
+          ${opts.dummy?'<span style="font-size:.66rem;color:#7a9a86;">※サンプル表示</span>':badges.join('')}
+        </div>
+      </div>`;
+    }
+    // gcard（デフォルト）
+    return `<div class="gcard" onclick="${onclick}">
+      <div class="gcard-thumb">${imgHtml}</div>
+      <div class="gcard-body"><h3>${title}</h3><p>${meta}</p>${badges.join('')}</div>
+    </div>`;
+  }
+
   /* ════════════════════════════
      ROUTING
   ════════════════════════════ */
@@ -1385,6 +1678,10 @@
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     const ab = document.getElementById('bnav-'+page);
     if (ab) ab.classList.add('active');
+    // 管理者ページはフルページ表示（ナビを隠す）
+    const globalNav = document.getElementById('globalBnav');
+    if (globalNav) globalNav.style.display = (page === 'admin') ? 'none' : '';
+    document.body.classList.toggle('admin-fullpage', page === 'admin');
     currentPage = page;
     currentAnimeId = animeId || null;
     if (page==='home')   renderHome().catch(console.error);
@@ -1409,6 +1706,9 @@
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     const ab = document.getElementById('bnav-'+prev.page);
     if(ab) ab.classList.add('active');
+    const globalNav = document.getElementById('globalBnav');
+    if (globalNav) globalNav.style.display = (prev.page === 'admin') ? 'none' : '';
+    document.body.classList.toggle('admin-fullpage', prev.page === 'admin');
     currentPage = prev.page;
     currentAnimeId = prev.animeId || null;
     if(prev.page==='home')   renderHome().catch(console.error);
@@ -1543,8 +1843,8 @@
     return {
       async increment(animeId) {
         if(DB_MODE === 'supabase' && sb) {
-          const country = geoStore.getCountry() || null;
-          sb.from('pv_logs').insert({ anime_id: animeId, country_code: country }).then(()=>{});
+          const country = await geoStore.detectCountry().catch(()=>null);
+          db.pvLogs.insert(animeId, country);
         }
         // LocalStorageにも記録（オフライン対応）
         const d = loadLocal();
@@ -1835,16 +2135,7 @@
       else popState.items = [...popState.items, ...items];
 
       if(reset) grid.innerHTML='';
-      grid.innerHTML += popState.items.map(a=>`
-        <div class="gcard" onclick="${a.kitsuId?`navAnime('${a.kitsuId}')`:`nav('anime','${a.id}')`}">
-          <div class="gcard-img">${a.image?`<img src="${a.image}" alt="${a.title||a.titleEn}" loading="lazy" />`:'📺'}</div>
-          <div class="gcard-body">
-            <div class="gcard-title">${a.title||a.titleEn||a.titleEn}</div>
-            <div class="gcard-meta">${[a.meta,a.year?a.year+'年':''].filter(Boolean).join(' · ')}</div>
-            ${recruitBadgeHtml(a.kitsuId?'kitsu-'+a.kitsuId:a.id)}
-          </div>
-        </div>
-      `).join('');
+      grid.innerHTML += popState.items.map(a=>renderAnimeCard(a, {style:'g'})).join('');
 
       const baseLabels = {popular:'人気順',reviews:'レビュー数順',year:'年代指定'};
       const periodLabels = {all:'全期間',day:'今日',week:'週間',month:'月間',year:'年間'};
@@ -2160,8 +2451,7 @@
     // Supabaseの件数確認
     let allPages = [];
     if(DB_MODE === 'supabase' && sb) {
-      const { data, count } = await sb.from('anime_pages')
-        .select('id,title,title_en,image_url,meta,genres', { count: 'exact' });
+      const { items: data, count } = await db.animePages.getAllWithLimit(2000);
       if(data) {
         allPages = data.map(p=>({
           id: p.id,
@@ -2197,7 +2487,7 @@
 
     let reviewCounts = {};
     if(DB_MODE === 'supabase' && sb) {
-      const { data } = await sb.from('reviews').select('anime_id');
+      const data = await db.reviews.getAllAnimeIds();
       if(data) data.forEach(r=>{ reviewCounts[r.anime_id]=(reviewCounts[r.anime_id]||0)+1; });
     } else {
       getReviews().forEach(r=>{ reviewCounts[r.animeId]=(reviewCounts[r.animeId]||0)+1; });
@@ -2287,16 +2577,10 @@
   function renderSeasonSection(items, label) {
     const el = document.getElementById('seasonLabel');
     if (el) el.textContent = label;
-    document.getElementById('seasonScroll').innerHTML = items.map(item=>`
-      <div class="hcard" onclick="${item.dummy?`alert('サンプルです')`:`navAnime('${item.id.replace('kitsu-','')}')`}">
-        <div class="hcard-thumb" style="${item.dummy?'opacity:.55;':''}">${thumbHtml(item)||'📺'}</div>
-        <div class="hcard-body">
-          <h3>${getTitle(item)}</h3>
-          <p>${item.meta}</p>
-          ${item.dummy?'<span style="font-size:.66rem;color:#7a9a86;">※サンプル表示</span>':recruitBadgeHtml(item.id)}
-        </div>
-      </div>
-    `).join('');
+    document.getElementById('seasonScroll').innerHTML = items.map(item=>{
+      const itemWithKitsuId = { ...item, kitsuId: item.kitsuId || item.id.replace('kitsu-','') };
+      return renderAnimeCard(itemWithKitsuId, { style:'h', dummy: item.dummy });
+    }).join('');
     initCarousel('seasonScroll','seasonDots',5);
   }
 
@@ -2388,20 +2672,8 @@
     // ピックアップ（Supabaseから非同期取得）
     getPickupItems().then(pickupItems=>{
       document.getElementById('pickupScroll').innerHTML = pickupItems.length ? pickupItems.map(item=>{
-        const onclick = item.id.startsWith('kitsu-')
-          ? `navAnime('${item.id.replace('kitsu-','')}')` 
-          : `nav('anime','${item.id}')`;
-        const img = item.image
-          ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" loading="lazy">`
-          : '📺';
-        return `<div class="hcard" onclick="${onclick}">
-          <div class="hcard-thumb">${img}</div>
-          <div class="hcard-body">
-            <h3>${item.title}</h3>
-            <p>${item.meta}</p>
-            ${recruitBadgeHtml(item.id)}
-          </div>
-        </div>`;
+        const itemWithKitsuId = { ...item, kitsuId: item.kitsuId || (item.id.startsWith('kitsu-') ? item.id.replace('kitsu-','') : null) };
+        return renderAnimeCard(itemWithKitsuId, { style:'h' });
       }).join('') : '<p style="color:var(--muted);padding:.5rem;">作品が増えると表示されます</p>';
       // HTML挿入後にカルーセル初期化
       initCarousel('pickupScroll','pickupDots',5);
@@ -2412,27 +2684,15 @@
 
     // おすすめ：LocalStorageのレビュー数順
     const byReview = [...all].sort((a,b)=>reviewCount(b.id)-reviewCount(a.id));
-    document.getElementById('recommendGrid').innerHTML = byReview.slice(0,8).map(item=>`
-      <div class="gcard" onclick="${item.kitsuId?`navAnime('${item.kitsuId}')`:`nav('anime','${item.id}')`}">
-        <div class="gcard-thumb">${thumbHtml(item)||''}</div>
-        <div class="gcard-body"><h3>${getTitle(item)}</h3><p>${item.meta}</p><span class="badge">${tFn('reviewCount',reviewCount(item.id))}</span>${recruitBadgeHtml(item.id)}</div>
-      </div>
-    `).join('');
+    document.getElementById('recommendGrid').innerHTML = byReview.slice(0,8).map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true})).join('');
 
     // すべての作品：まずローカルを表示してからKitsu人気作を追加
     document.getElementById('allCount').textContent = tFn('allCount', all.length);
-    document.getElementById('allGrid').innerHTML = all.map(item=>`
-      <div class="gcard" onclick="${item.kitsuId?`navAnime('${item.kitsuId}')`:`nav('anime','${item.id}')`}">
-        <div class="gcard-thumb">${thumbHtml(item)||''}</div>
-        <div class="gcard-body"><h3>${getTitle(item)}</h3><p>${item.meta}</p><span class="badge">${tFn('reviewCount',reviewCount(item.id))}</span>${recruitBadgeHtml(item.id)}</div>
-      </div>
-    `).join('');
+    document.getElementById('allGrid').innerHTML = all.map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true})).join('');
 
     // Kitsuから人気作を取得して「すべての作品」に追加
     try {
-      const url = `https://kitsu.io/api/edge/anime?sort=-userCount&page[limit]=20&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
-      const res = await fetch(url, { headers: { 'Accept': 'application/vnd.api+json' } });
-      const json = await res.json();
+      const json = await animeApi.getPopular(0, 20);
       const existingIds = new Set(all.map(a=>a.kitsuId||'').filter(Boolean));
       const kitsuItems = (json.data||[])
         .filter(item => !existingIds.has(item.id))
@@ -2451,12 +2711,7 @@
       if (kitsuItems.length) {
         const total = all.length + kitsuItems.length;
         document.getElementById('allCount').textContent = tFn('allCount', total);
-        document.getElementById('allGrid').innerHTML += kitsuItems.map(item=>`
-          <div class="gcard" onclick="navAnime('${item.kitsuId}')">
-            <div class="gcard-thumb">${thumbHtml(item)||''}</div>
-            <div class="gcard-body"><h3>${getTitle(item)}</h3><p>${item.meta}</p><span class="badge">${tFn('reviewCount',0)}</span><span class="recruit-badge">📢 レビュー募集中</span></div>
-          </div>
-        `).join('');
+        document.getElementById('allGrid').innerHTML += kitsuItems.map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true, showRecruitBadge:false, badges:['<span class="recruit-badge">📢 レビュー募集中</span>']})).join('');
       }
     } catch(_) {}
   }
@@ -2914,20 +3169,31 @@
         section.style.display='none'; return;
       }
       section.style.display='';
-      // 上位10か国まで表示
-      const top = entries.slice(0,10);
+      // 視認性のため上位5か国のみ表示（データ自体は全件収集・保持）
+      const top = entries.slice(0,5);
+      const maxCount = top.length ? top[0][1] : 1;
+      // グリッド線（0%, 50%, 100%の3段階の目安値）
+      const gridSteps = [maxCount, Math.round(maxCount/2), 0];
       content.innerHTML = `
-        <p style="font-size:.72rem;color:var(--muted);margin:0 0 .5rem;">${t('totalPV')}: ${total}${t('countUnit')}</p>
-        <div class="world-country-list">
-          ${top.map(([code,count])=>`
-            <div class="world-country-item">
-              <span class="world-country-flag">${countryFlag(code)}</span>
-              <div class="world-country-body">
-                <span class="world-country-name">${COUNTRY_NAMES[code]||code}</span>
-                <span class="world-country-count">${count}</span>
-              </div>
-            </div>
-          `).join('')}
+        <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">${t('totalPV')}: ${total}${t('countUnit')}</p>
+        <div class="world-vbar-wrap">
+          <div class="world-vbar-grid">
+            ${gridSteps.map(v=>`<div class="world-vbar-gridline"><span>${v}</span></div>`).join('')}
+          </div>
+          <div class="world-vbar-bars">
+            ${top.map(([code,count])=>{
+              const pct = Math.max(3, Math.round(count/maxCount*100));
+              return `
+              <div class="world-vbar-col">
+                <span class="world-vbar-count">${count}</span>
+                <div class="world-vbar-fill" style="height:${pct}%;"></div>
+                <div class="world-vbar-label">
+                  <span class="world-country-flag">${countryFlag(code)}</span>
+                  <span class="world-country-name">${COUNTRY_NAMES[code]||code}</span>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
         </div>
       `;
     }
@@ -2971,7 +3237,7 @@
 
     const labA=getAxisA(), labB=getAxisB();
     el.innerHTML = tagsHtml + reviews.map((rev,i)=>{
-      const tags=(rev.tags||[]).map(tag=>`<span class="tag-chip">#${tag}</span>`).join('');
+      const tags=(rev.tags||[]).map(tag=>`<span class="tag-chip">#${escapeHtml(tag)}</span>`).join('');
       return `
         <article class="review-card">
           <div class="rc-head">
@@ -2980,7 +3246,7 @@
                 ${(()=>{const name=rev.userName||'ゲスト';if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-                <span class="rc-name">${rev.userName||'ゲスト'}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}</span>
+                <span class="rc-name">${escapeHtml(rev.userName||'ゲスト')}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${rev.createdAt?new Date(rev.createdAt).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'}):''}</span>
               </div>
             </div>
@@ -3060,8 +3326,8 @@
       const loggedField = document.getElementById('reviewUserNameLoggedIn');
       const display = document.getElementById('reviewUserNameDisplay');
       if(_currentUser && sb) {
-        const { data } = await sb.from('profiles').select('username').eq('id', _currentUser.id).single();
-        const uname = data?.username || _currentUser.email.split('@')[0];
+        const fetchedUsername = await db.profiles.getUsername(_currentUser.id);
+        const uname = fetchedUsername || _currentUser.email.split('@')[0];
         window._loggedInUsername = uname;
         if(loggedField) loggedField.style.display = '';
         if(display) display.textContent = uname;
@@ -3169,7 +3435,7 @@
       (async()=>{
         const page = getAll().find(p=>p.id===review.animeId);
         if(page) {
-          await sb.from('anime_pages').upsert({
+          await db.animePages.upsert({
             id: page.id, kitsu_id: page.kitsuId||null,
             title: page.title||null, title_en: page.titleEn||null,
             meta: page.meta||null, image_url: page.image||null,
@@ -3177,10 +3443,10 @@
             episodes: page.episodes||null,
             genres: page.genres||[], categories: page.categories||[],
             studios: page.studios||[], streaming: page.streaming||[],
-          }, { onConflict: 'id' });
+          });
         }
-        const country = geoStore.getCountry() || null;
-        await sb.from('reviews').insert({
+        const country = await geoStore.detectCountry().catch(()=>null);
+        await db.reviews.insert({
           anime_id: review.animeId,
           username: review.userName||'ゲスト',
           country_code: country,
@@ -3322,9 +3588,7 @@
     let kitsuResults = [];
     if (q) {
       try {
-        const url = `https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(srSearchState.q)}&page[limit]=20&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
-        const res = await fetch(url, { headers: { 'Accept': 'application/vnd.api+json' } });
-        const json = await res.json();
+        const json = await animeApi.searchByText(srSearchState.q, 20);
         const existingIds = new Set(list.map(row=>row.anime.kitsuId||'').filter(Boolean));
         kitsuResults = (json.data||[])
           .filter(item => !existingIds.has(item.id))
@@ -3361,12 +3625,7 @@
       const a=row.anime;
       const mb=row.match!==Infinity&&hasSrProfile()?`<span class="badge match-badge">${t('graphMatchBadge').replace('{n}',Math.max(0,Math.round(100-row.match*10)))}</span>`:'';
       const tb=row.tagScore>0?`<span class="badge" style="background:rgba(94,150,255,.15);border-color:#4a6abf;color:#b8d0ff;">${t('tagMatchBadge').replace('{n}',row.tagScore)}</span>`:'';
-      return `
-        <div class="gcard" onclick="${a.kitsuId?`navAnime('${a.kitsuId}')`:`nav('anime','${a.id}')`}">
-          <div class="gcard-thumb">${a.image?`<img src="${a.image}" alt="${getTitle(a)}" style="width:100%;height:100%;object-fit:cover;" />`:'📺'}</div>
-          <div class="gcard-body"><h3>${getTitle(a)}</h3><p>${a.meta||''}</p><span class="badge">${tFn('reviewCount',row.reviews)}</span>${mb}${tb}${recruitBadgeHtml(a.id)}</div>
-        </div>
-      `;
+      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, badges:[mb,tb]});
     }).join('');
   }
 
@@ -4343,8 +4602,16 @@
   /* ════════════════════════════
      ADMIN PAGE
   ════════════════════════════ */
-  const ADMIN_PASSWORD = 'animepple2026admin'; // ← 変更してください
+  // パスワードはSHA-256ハッシュ化して保持（平文をソースに残さない）
+  // 新しいパスワードに変更する場合は、ブラウザのConsoleで以下を実行してハッシュを取得し、下の値を置き換えてください:
+  // crypto.subtle.digest('SHA-256', new TextEncoder().encode('新しいパスワード')).then(b=>console.log(Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')))
+  const ADMIN_PASSWORD_HASH = 'e914173862a430c3ffbce7696b2647ad7a4871c08e700f8dd2d9a1e94f349737';
   let _adminAuthed = false;
+
+  async function sha256Hex(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
 
   function initAdminPage() {
     const login = document.getElementById('adminLoginSection');
@@ -4361,9 +4628,10 @@
     }
   }
 
-  function adminLogin() {
+  async function adminLogin() {
     const pw = document.getElementById('adminPasswordInput').value;
-    if(pw === ADMIN_PASSWORD) {
+    const hash = await sha256Hex(pw);
+    if(hash === ADMIN_PASSWORD_HASH) {
       _adminAuthed = true;
       document.getElementById('adminLoginSection').style.display='none';
       document.getElementById('adminDashboard').style.display='';
@@ -4378,25 +4646,23 @@
     if(!sb) return;
     try {
       // 総レビュー数
-      const { count: reviewCount } = await sb.from('reviews').select('*', {count:'exact',head:true});
+      const reviewCount = await db.reviews.countAll();
       document.getElementById('adminKpiReviews').textContent = reviewCount ?? '—';
 
       // 総PV
-      const { count: pvCount } = await sb.from('pv_logs').select('*', {count:'exact',head:true});
+      const pvCount = await db.pvLogs.countAll();
       document.getElementById('adminKpiPV').textContent = pvCount ?? '—';
 
       // 登録作品数
-      const { count: animeCount } = await sb.from('anime_pages').select('*', {count:'exact',head:true});
+      const animeCount = await db.animePages.countAll();
       document.getElementById('adminKpiAnime').textContent = animeCount ?? '—';
 
       // ユーザー数（profilesテーブル）
-      const { count: userCount } = await sb.from('profiles').select('*', {count:'exact',head:true});
+      const userCount = await db.profiles.countAll();
       document.getElementById('adminKpiUsers').textContent = userCount ?? '—';
 
       // 国別PV
-      const { data: countryData } = await sb.from('pv_logs')
-        .select('country_code')
-        .order('country_code');
+      const countryData = await db.pvLogs.getAllCountryCodes();
       if(countryData) {
         const counts = {};
         countryData.forEach(r=>{ const c=r.country_code||'不明'; counts[c]=(counts[c]||0)+1; });
@@ -4410,10 +4676,7 @@
       }
 
       // 最近のレビュー20件
-      const { data: recentReviews } = await sb.from('reviews')
-        .select('anime_id, username, comment, created_at, chart_moved, quality')
-        .order('created_at', {ascending:false})
-        .limit(20);
+      const recentReviews = await db.reviews.getRecent(20);
       if(recentReviews) {
         document.getElementById('adminRecentReviews').innerHTML = recentReviews.map(r=>`
           <div class="admin-row" style="flex-direction:column;align-items:flex-start;gap:.2rem;">
@@ -4432,12 +4695,12 @@
       }
 
       // アニメランキング
-      const { data: allReviews } = await sb.from('reviews').select('anime_id');
+      const allReviews = await db.reviews.getAllAnimeIds();
       if(allReviews) {
         const animeCounts = {};
         allReviews.forEach(r=>{ animeCounts[r.anime_id]=(animeCounts[r.anime_id]||0)+1; });
         const ranking = Object.entries(animeCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
-        const { data: animePages } = await sb.from('anime_pages').select('id,title,title_en');
+        const animePages = await db.animePages.getAllTitles();
         const animeMap = {};
         (animePages||[]).forEach(a=>{ animeMap[a.id]=a.title||a.title_en||a.id; });
         document.getElementById('adminAnimeRanking').innerHTML = ranking.map(([id,n],i)=>`
@@ -4456,9 +4719,9 @@
           reviewsByAnime[r.anime_id].push(r);
         });
         // anime_idごとの全レビュー詳細を取得（chartA/B付き）して判定
-        const { data: fullReviews } = await sb.from('reviews').select('anime_id,chart_a,chart_b');
+        const fullReviews = await db.reviews.getAllForCluster();
         const animeMap2 = {};
-        (await sb.from('anime_pages').select('id,title,title_en')).data?.forEach(a=>{ animeMap2[a.id]=a.title||a.title_en||a.id; });
+        (await db.animePages.getAllTitles()).forEach(a=>{ animeMap2[a.id]=a.title||a.title_en||a.id; });
         if(fullReviews) {
           const byAnime = {};
           fullReviews.forEach(r=>{
@@ -4565,7 +4828,7 @@
       const iconContent = name==='ゲスト'
         ?'<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>'
         :name.slice(0,1);
-      const tags = (rev.tags||[]).map(tg=>`<span class="tag-badge">${tg}</span>`).join('');
+      const tags = (rev.tags||[]).map(tg=>`<span class="tag-badge">${escapeHtml(tg)}</span>`).join('');
       const dateStr = rev.createdAt||rev.created_at?new Date(rev.createdAt||rev.created_at).toLocaleDateString('ja-JP',{year:'numeric',month:'short',day:'numeric'}):'';
       const flag = rev.country_code||rev.countryCode ? `<span style="font-size:.7rem;color:var(--muted);margin-left:.3rem;">${rev.country_code||rev.countryCode}</span>` : '';
       return `<article class="review-card">
@@ -4659,17 +4922,16 @@
   // 起動時にセッション確認
   async function initAuth() {
     if(!sb) return;
-    const { data } = await sb.auth.getSession();
-    if(data?.session?.user) {
-      _currentUser = data.session.user;
+    const session = await db.auth.getSession();
+    if(session?.user) {
+      _currentUser = session.user;
     }
     // 認証状態変化を監視
-    sb.auth.onAuthStateChange((_event, session) => {
+    db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage();
       }
-      // レビュー投稿者名をアカウント名で上書き
     });
   }
   initAuth();
@@ -4712,18 +4974,17 @@
 
     try {
       if(_authMode === 'register') {
-        const { data, error } = await sb.auth.signUp({ email, password });
-        if(error) { errEl.textContent = error.message; return; }
-        // profilesにusernameを保存
-        if(data.user) {
-          await sb.from('profiles').upsert({ id: data.user.id, username });
-          _currentUser = data.user;
+        const { user, error } = await db.auth.signUp(email, password);
+        if(error) { errEl.textContent = error.message||String(error); return; }
+        if(user) {
+          await db.profiles.upsert(user.id, { username });
+          _currentUser = user;
           _currentUser._username = username;
         }
       } else {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        const { user, error } = await db.auth.signIn(email, password);
         if(error) { errEl.textContent = 'メールかパスワードが違います'; return; }
-        _currentUser = data.user;
+        _currentUser = user;
       }
       closeAuthModal();
       renderMypage();
@@ -4734,7 +4995,7 @@
 
   async function signOut() {
     if(!sb) return;
-    await sb.auth.signOut();
+    await db.auth.signOut();
     _currentUser = null;
     renderMypage();
   }
@@ -4758,8 +5019,7 @@
     // プロフィール取得（username, bio, genres まとめて1回で）
     let profileData = null;
     if(sb) {
-      const { data } = await sb.from('profiles').select('username,bio,favorite_genres').eq('id', _currentUser.id).single();
-      profileData = data;
+      profileData = await db.profiles.get(_currentUser.id);
     }
     const username = _currentUser._username || profileData?.username || _currentUser.email.split('@')[0];
     _myProfile = { username, bio: profileData?.bio||'', genres: profileData?.favorite_genres||[] };
@@ -4772,7 +5032,7 @@
     if(_myProfile.bio || _myProfile.genres.length) {
       bioSection.style.display = '';
       document.getElementById('mypageBioText').textContent = _myProfile.bio || '';
-      document.getElementById('mypageGenreTags').innerHTML = _myProfile.genres.map(g=>`<span class="mypage-genre-tag">${g}</span>`).join('');
+      document.getElementById('mypageGenreTags').innerHTML = _myProfile.genres.map(g=>`<span class="mypage-genre-tag">${escapeHtml(g)}</span>`).join('');
     } else {
       bioSection.style.display = 'none';
     }
@@ -4789,10 +5049,7 @@
 
     // レビュー一覧＋統計（Supabaseから取得）
     if(sb) {
-      const { data: reviews } = await sb.from('reviews')
-        .select('*')
-        .eq('username', username)
-        .order('created_at', { ascending: false });
+      const reviews = await db.reviews.getByUsername(username);
       reviewTotal = reviews ? reviews.length : 0;
       qualityCount = reviews ? reviews.filter(r=>r.quality).length : 0;
 
@@ -4851,8 +5108,7 @@
   ════════════════════════════ */
   async function isFavorited(animeId) {
     if(!_currentUser || !sb) return false;
-    const { data } = await sb.from('favorites').select('id').eq('user_id', _currentUser.id).eq('anime_id', animeId).maybeSingle();
-    return !!data;
+    return await db.favorites.isFavorited(_currentUser.id, animeId);
   }
 
   async function toggleFavorite() {
@@ -4861,10 +5117,10 @@
     const btn = document.getElementById('favToggleBtn');
     const already = await isFavorited(currentAnimeId);
     if(already) {
-      await sb.from('favorites').delete().eq('user_id', _currentUser.id).eq('anime_id', currentAnimeId);
+      await db.favorites.remove(_currentUser.id, currentAnimeId);
       if(btn) { btn.textContent = '♡'; btn.classList.remove('fav-active'); }
     } else {
-      await sb.from('favorites').insert({ user_id: _currentUser.id, anime_id: currentAnimeId });
+      await db.favorites.add(_currentUser.id, currentAnimeId);
       if(btn) { btn.textContent = '❤️'; btn.classList.add('fav-active'); }
     }
   }
@@ -4880,14 +5136,14 @@
   async function renderFavoritesList() {
     const el = document.getElementById('mypageFavoritesList');
     if(!el || !sb || !_currentUser) return;
-    const { data: favs } = await sb.from('favorites').select('anime_id').eq('user_id', _currentUser.id).order('created_at',{ascending:false});
+    const favs = await db.favorites.getByUser(_currentUser.id);
     document.getElementById('statFavCount').textContent = favs ? favs.length : 0;
     if(!favs || !favs.length) {
       el.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${t('noFavoritesYet')}</p>`;
       return;
     }
     const ids = favs.map(f=>f.anime_id);
-    const { data: pages } = await sb.from('anime_pages').select('id,title,title_en,image_url').in('id', ids);
+    const pages = await db.animePages.getByIds(ids);
     const pageMap = {};
     (pages||[]).forEach(p=>{ pageMap[p.id]=p; });
     el.innerHTML = favs.map(f=>{
@@ -4895,8 +5151,8 @@
       const title = p?.title || p?.title_en || f.anime_id;
       const img = p?.image_url;
       return `<div class="mypage-fav-card" onclick="nav('anime','${f.anime_id}')">
-        ${img?`<img src="${img}" loading="lazy">`:'<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;color:var(--muted);">📺</div>'}
-        <div class="mypage-fav-title">${title}</div>
+        ${img?`<img src="${escapeHtml(img)}" loading="lazy">`:'<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;color:var(--muted);">📺</div>'}
+        <div class="mypage-fav-title">${escapeHtml(title)}</div>
       </div>`;
     }).join('');
   }
@@ -4927,8 +5183,7 @@
     if(!_currentUser || !sb) return;
     const username = document.getElementById('profileEditUsername').value.trim() || _myProfile.username;
     const bio = document.getElementById('profileEditBio').value.trim().slice(0,100);
-    await sb.from('profiles').upsert({
-      id: _currentUser.id,
+    await db.profiles.upsert(_currentUser.id, {
       username,
       bio,
       favorite_genres: _myProfile.genres,
