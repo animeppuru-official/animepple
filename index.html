@@ -58,6 +58,9 @@
     .sl-track-wrap input[type="range"] {
       accent-color:var(--brand2); width:100%; margin-top:0;
     }
+    .sl-track-wrap input[type="range"].slider-unset {
+      accent-color:#ff6b9d;
+    }
     .sort-row { display:flex; flex-direction:column; gap:.35rem; margin-bottom:.7rem; }
     .sort-row label { font-size:.82rem; color:var(--muted); }
     .sort-row select { padding:.6rem .75rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:var(--text); font:inherit; }
@@ -99,6 +102,12 @@
     .sec-head small { color:var(--muted); font-size:.8rem; }
 
     /* ── HSCROLL ── */
+    .carousel-wrap { position:relative; overflow:hidden; width:100%; }
+    .carousel-track { display:flex; transition:transform .15s ease; will-change:transform; padding:0; margin:0; gap:0; }
+    .carousel-page { display:flex; gap:.65rem; padding:0 1rem .75rem; flex-shrink:0; box-sizing:border-box; }
+    .carousel-dots { display:flex; justify-content:center; gap:.4rem; padding:.2rem 0 .6rem; }
+    .carousel-dot { width:6px; height:6px; border-radius:50%; background:var(--line); transition:background .2s,width .2s; cursor:pointer; }
+    .carousel-dot.active { background:var(--brand); width:16px; border-radius:3px; }
     .hscroll { display:flex; gap:.65rem; overflow-x:auto; padding:0 1rem .75rem; scroll-snap-type:x mandatory; scrollbar-width:none; }
     .hscroll::-webkit-scrollbar { display:none; }
     .scroll-arrow { position:absolute; top:50%; transform:translateY(-60%); background:rgba(7,21,13,.85); border:1px solid var(--line); color:var(--brand); font-size:1.6rem; width:32px; height:48px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; padding:0; line-height:1; }
@@ -108,8 +117,9 @@
     .hcard { flex:0 0 clamp(140px,42vw,175px); scroll-snap-align:start; background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; }
     .hcard-thumb { width:100%; aspect-ratio:3/4; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
     .hcard-thumb img { width:100%; height:100%; object-fit:cover; }
-    .hcard-body { padding:.5rem .6rem; }
+    .hcard-body { padding:.5rem .6rem; min-height:4.6rem; display:flex; flex-direction:column; }
     .hcard-body h3 { margin:0 0 .2rem; font-size:.86rem; line-height:1.3; }
+    .recruit-badge { display:inline-block; margin-top:.25rem; padding:.1rem .4rem; border-radius:6px; background:rgba(255,180,60,.15); color:#ffb43c; font-size:.62rem; font-weight:700; white-space:nowrap; }
     .hcard-body p { margin:0; font-size:.73rem; color:var(--muted); }
 
     /* ── GRID ── */
@@ -198,6 +208,18 @@
     /* ── REVIEW FORM ── */
     .page-title { font-size:1.2rem; font-weight:900; margin:0 0 .3rem; }
     .page-sub { color:var(--muted); font-size:.82rem; margin:0 0 1rem; }
+    .graph-status-notice {
+      display:flex; align-items:center; gap:.5rem;
+      padding:.6rem .8rem; border-radius:10px; margin-bottom:1rem;
+      background:rgba(255,107,157,.12); border:1px solid rgba(255,107,157,.4);
+      transition:background .3s, border-color .3s;
+    }
+    .graph-status-notice.graph-status-complete {
+      background:rgba(94,170,255,.14); border:1px solid rgba(94,170,255,.5);
+    }
+    .graph-status-icon { font-size:1rem; flex-shrink:0; }
+    .graph-status-text { font-size:.78rem; color:#ffb4cc; line-height:1.4; }
+    .graph-status-complete .graph-status-text { color:#9cc6ff; }
     .chart-wrap { background:var(--card2); border:1px solid var(--line); border-radius:16px; padding:.85rem; margin-bottom:.9rem; }
     .chart-wrap h2 { margin:0 0 .5rem; font-size:.97rem; }
     .chart-canvas { width:100%; height:auto; border:1px solid var(--line); border-radius:12px; background:#09201b; display:block; margin-bottom:.7rem; }
@@ -326,10 +348,33 @@
     .mypage-info { flex:1; }
     .mypage-name { font-size:1.1rem; font-weight:700; color:#dff0e6; margin:0 0 .2rem; }
     .mypage-sub { font-size:.78rem; color:var(--muted); margin:0; }
+    .mypage-rank-badge { display:inline-block; margin-top:.35rem; padding:.15rem .6rem; border-radius:999px; background:rgba(94,201,122,.15); color:var(--brand); font-size:.72rem; font-weight:700; }
     .mypage-actions { padding:.5rem 1rem 1rem; display:flex; flex-direction:column; gap:.5rem; }
     .mypage-btn-primary { width:100%; padding:.75rem; border-radius:12px; background:var(--brand); color:#0c2015; font-weight:700; border:none; cursor:pointer; font-size:.95rem; }
     .mypage-btn-secondary { width:100%; padding:.7rem; border-radius:12px; background:transparent; color:var(--muted); border:1px solid var(--line); cursor:pointer; font-size:.9rem; }
     .mypage-section { padding:1rem; border-top:1px solid var(--line); }
+    .mypage-edit-btn { background:var(--card2); border:1px solid var(--line); border-radius:8px; width:36px; height:36px; font-size:1rem; cursor:pointer; flex-shrink:0; }
+    .mypage-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; padding:0 1rem; }
+    .mypage-stat-card { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:.7rem .5rem; text-align:center; }
+    .mypage-stat-num { font-size:1.3rem; font-weight:800; color:var(--brand); }
+    .mypage-stat-label { font-size:.68rem; color:var(--muted); margin-top:.1rem; }
+    .mypage-bio-text { font-size:.85rem; color:#dff0e6; line-height:1.5; margin:0 0 .6rem; white-space:pre-wrap; }
+    .mypage-genre-tags { display:flex; flex-wrap:wrap; gap:.4rem; }
+    .mypage-genre-tag { background:rgba(94,201,122,.15); color:var(--brand); border-radius:999px; padding:.2rem .65rem; font-size:.72rem; font-weight:700; }
+    .mypage-fav-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+    @media (min-width:640px) { .mypage-fav-grid { grid-template-columns:repeat(5,1fr); } }
+    .mypage-fav-card { cursor:pointer; border-radius:10px; overflow:hidden; background:var(--card2); border:1px solid var(--line); position:relative; }
+    .mypage-fav-card img { width:100%; aspect-ratio:3/4; object-fit:cover; display:block; }
+    .mypage-fav-card .mypage-fav-title { font-size:.66rem; padding:.3rem; color:#dff0e6; line-height:1.2; }
+    .mypage-fav-remove { position:absolute; top:.2rem; right:.2rem; background:rgba(0,0,0,.6); color:#ff8888; border:none; border-radius:6px; width:20px; height:20px; font-size:.7rem; cursor:pointer; }
+    .rank-progress-wrap { display:flex; flex-direction:column; gap:.3rem; }
+    .rank-progress-labels { display:flex; justify-content:space-between; font-size:.72rem; color:var(--muted); }
+    .rank-progress-bar-bg { width:100%; height:8px; border-radius:4px; background:var(--card2); overflow:hidden; }
+    .rank-progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--brand),var(--brand2)); border-radius:4px; transition:width .3s; }
+    .profile-genre-picker { display:flex; flex-wrap:wrap; gap:.4rem; }
+    .profile-genre-chip { background:var(--card2); border:1px solid var(--line); border-radius:999px; padding:.25rem .65rem; font-size:.75rem; color:var(--muted); cursor:pointer; }
+    .profile-genre-chip.selected { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
+    .mypage-hero { position:relative; }
     .mypage-section-title { font-size:.88rem; font-weight:700; color:#dff0e6; margin:0 0 .75rem; }
 
     /* 認証モーダル */
@@ -390,9 +435,15 @@
     .pop-drum-sep { font-size:1.2rem; color:var(--muted); margin-top:1.5rem; }
     .pop-year-apply { padding:.45rem 1.1rem; border-radius:999px; background:var(--brand); color:#0c2015; font-weight:700; border:none; cursor:pointer; font-size:.85rem; margin-top:1.5rem; }
 
-    .pop-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.75rem; padding:.75rem; }
-    @media (min-width:640px) { .pop-grid { grid-template-columns:repeat(3,1fr); } }
-    @media (min-width:960px) { .pop-grid { grid-template-columns:repeat(4,1fr); padding:.75rem 2rem; } }
+    .pop-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; padding:.75rem; }
+    @media (min-width:640px) { .pop-grid { grid-template-columns:repeat(5,1fr); } }
+    @media (min-width:960px) { .pop-grid { grid-template-columns:repeat(7,1fr); padding:.75rem 2rem; } }
+    @media (min-width:1400px) { .pop-grid { grid-template-columns:repeat(9,1fr); } }
+
+    /* ソートバー3軸UI */
+    .pop-axis-row { display:flex; align-items:center; gap:.5rem; padding:.3rem .75rem; }
+    .pop-axis-label { font-size:.7rem; color:var(--muted); flex-shrink:0; min-width:2.2rem; }
+    #popPeriodRow.disabled { opacity:.35; pointer-events:none; }
     .pop-load-btn { padding:.6rem 2rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; font-size:.85rem; }
 
     /* ── LANGUAGE SELECTOR ── */
@@ -663,20 +714,18 @@
       <small id="pickupTimer">— 後に更新</small>
     </div>
   </section>
-  <div style="position:relative;">
-    <div class="hscroll" id="pickupScroll"></div>
-    <button class="scroll-arrow scroll-arrow-l" onclick="document.getElementById('pickupScroll').scrollBy({left:-220,behavior:'smooth'})">‹</button>
-    <button class="scroll-arrow scroll-arrow-r" onclick="document.getElementById('pickupScroll').scrollBy({left:220,behavior:'smooth'})">›</button>
+  <div class="carousel-wrap" id="pickupCarouselWrap">
+    <div class="carousel-track" id="pickupScroll"></div>
+    <div class="carousel-dots" id="pickupDots"></div>
   </div>
 
   <!-- 今季アニメ -->
   <section class="sec" style="margin-top:1rem;">
     <div class="sec-head"><h2>📺 今季アニメ</h2><small id="seasonLabel">—</small></div>
   </section>
-  <div style="position:relative;">
-    <div class="hscroll" id="seasonScroll"></div>
-    <button class="scroll-arrow scroll-arrow-l" onclick="document.getElementById('seasonScroll').scrollBy({left:-220,behavior:'smooth'})">‹</button>
-    <button class="scroll-arrow scroll-arrow-r" onclick="document.getElementById('seasonScroll').scrollBy({left:220,behavior:'smooth'})">›</button>
+  <div class="carousel-wrap" id="seasonCarouselWrap">
+    <div class="carousel-track" id="seasonScroll"></div>
+    <div class="carousel-dots" id="seasonDots"></div>
   </div>
 
   <section class="sec" style="margin-top:.8rem;">
@@ -741,7 +790,7 @@
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.5rem;">
         <button class="review-btn" id="goReviewBtn" data-i18n="btnReview">🍎 レビューする</button>
         <button class="review-btn" id="goReviewListBtn" style="background:var(--card2);color:#dff0e6;border:1px solid var(--line);">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
-
+        <button class="review-btn" id="favToggleBtn" style="background:var(--card2);color:#ffb4cc;border:1px solid var(--line);min-width:44px;" onclick="toggleFavorite()">♡</button>
       </div>
       <!-- ミニグラフ（ボタン下） -->
       <div id="miniGraphSection" style="display:none;margin-top:.6rem;">
@@ -876,6 +925,10 @@
   <div style="padding:1rem 1rem 0;">
     <h1 class="page-title" id="reviewPageTitle">🍎 レビュー可視化フォーム</h1>
     <p class="page-sub">批評より「特徴の見える化」を目的に、各項目を0〜10で調整してください。</p>
+    <div class="graph-status-notice" id="graphStatusNotice">
+      <span class="graph-status-icon">⚠️</span>
+      <span class="graph-status-text" id="graphStatusText" data-i18n="graphIncompleteMsg">この状態で投稿するとレビューとして表示されますが、みんなの評価グラフへのデータ集計はされません。</span>
+    </div>
     <div class="chart-wrap">
       <h2>作品の完成度</h2>
       <canvas class="chart-canvas" id="chartA" width="420" height="300"></canvas>
@@ -922,17 +975,27 @@
     </div>
   </header>
 
-  <!-- ソートバー -->
+  <!-- ソートバー（3軸独立） -->
   <div class="pop-sort-bar">
-    <div class="pop-sort-tabs" id="popSortTabs">
-      <button class="pop-sort-tab active" data-sort="popular" data-i18n="popSortPopular">🔥 人気順</button>
-      <button class="pop-sort-tab" data-sort="reviews" data-i18n="popSortReviews">💬 レビュー順</button>
-      <button class="pop-sort-tab" data-sort="pv_day" data-i18n="popSortToday">📈 今日</button>
-      <button class="pop-sort-tab" data-sort="pv_week" data-i18n="popSortWeek">週間</button>
-      <button class="pop-sort-tab" data-sort="pv_month" data-i18n="popSortMonth">月間</button>
-      <button class="pop-sort-tab" data-sort="pv_year" data-i18n="popSortYear">年間</button>
-      <button class="pop-sort-tab" data-sort="pv_all" data-i18n="popSortAll">全期間</button>
-      <button class="pop-sort-tab" data-sort="year" data-i18n="popSortPeriod">📅 年代</button>
+    <!-- 軸1: 基準 -->
+    <div class="pop-axis-row">
+      <span class="pop-axis-label" data-i18n="popAxisBase">基準</span>
+      <div class="pop-sort-tabs" id="popBaseTabs">
+        <button class="pop-sort-tab active" data-base="popular" data-i18n="popSortPopular">🔥 人気順</button>
+        <button class="pop-sort-tab" data-base="reviews" data-i18n="popSortReviews">💬 レビュー順</button>
+        <button class="pop-sort-tab" data-base="year" data-i18n="popSortPeriod">📅 年代指定</button>
+      </div>
+    </div>
+    <!-- 軸2: 期間（レビュー順のときだけ有効） -->
+    <div class="pop-axis-row" id="popPeriodRow">
+      <span class="pop-axis-label" data-i18n="popAxisPeriod">期間</span>
+      <div class="pop-sort-tabs" id="popPeriodTabs">
+        <button class="pop-sort-tab active" data-period="all" data-i18n="popSortAll">全期間</button>
+        <button class="pop-sort-tab" data-period="day" data-i18n="popSortToday">📈 今日</button>
+        <button class="pop-sort-tab" data-period="week" data-i18n="popSortWeek">週間</button>
+        <button class="pop-sort-tab" data-period="month" data-i18n="popSortMonth">月間</button>
+        <button class="pop-sort-tab" data-period="year" data-i18n="popSortYear">年間</button>
+      </div>
     </div>
   </div>
 
@@ -1060,6 +1123,13 @@
       <h3 class="admin-section-title">🔥 レビュー数ランキング</h3>
       <div id="adminAnimeRanking"></div>
     </div>
+
+    <!-- 票割れ検知 -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">⚠️ 評価が二極化している作品</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .5rem;">荒らしの可能性も含むため目視確認が必要です</p>
+      <div id="adminSplitOpinions"></div>
+    </div>
   </div>
 </div>
 
@@ -1100,14 +1170,77 @@
       <div class="mypage-info">
         <p class="mypage-name" id="mypageUsername">ユーザー名</p>
         <p class="mypage-sub" id="mypageEmail">email</p>
+        <p class="mypage-rank-badge" id="mypageRankBadge" style="display:none;"></p>
+      </div>
+      <button class="mypage-edit-btn" id="mypageEditBtn" onclick="openProfileEdit()">✏️</button>
+    </div>
+
+    <!-- 統計サマリー -->
+    <div class="mypage-stats-row">
+      <div class="mypage-stat-card">
+        <div class="mypage-stat-num" id="statReviewCount">0</div>
+        <div class="mypage-stat-label" data-i18n="statReviews">レビュー</div>
+      </div>
+      <div class="mypage-stat-card">
+        <div class="mypage-stat-num" id="statFavCount">0</div>
+        <div class="mypage-stat-label" data-i18n="statFavorites">お気に入り</div>
+      </div>
+      <div class="mypage-stat-card">
+        <div class="mypage-stat-num" id="statQualityCount">0</div>
+        <div class="mypage-stat-label" data-i18n="statQuality">上質レビュー</div>
       </div>
     </div>
+
+    <!-- 自己紹介・好きなジャンル -->
+    <div class="mypage-section" id="mypageBioSection" style="display:none;">
+      <p class="mypage-bio-text" id="mypageBioText"></p>
+      <div class="mypage-genre-tags" id="mypageGenreTags"></div>
+    </div>
+
+    <!-- 称号進捗バー -->
+    <div class="mypage-section">
+      <h3 class="mypage-section-title" data-i18n="rankProgressTitle">🏅 称号の道のり</h3>
+      <div id="mypageRankProgress"></div>
+    </div>
+
+    <!-- お気に入り -->
+    <div class="mypage-section">
+      <h3 class="mypage-section-title" data-i18n="favoritesTitle">⭐ お気に入り</h3>
+      <div id="mypageFavoritesList" class="mypage-fav-grid"><p style="color:var(--muted);font-size:.85rem;" data-i18n="noFavoritesYet">お気に入りはまだありません</p></div>
+    </div>
+
+    <!-- レビュー履歴 -->
     <div class="mypage-section">
       <h3 class="mypage-section-title" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h3>
       <div id="mypageReviewList"><p style="color:var(--muted);font-size:.85rem;">レビューはまだありません</p></div>
     </div>
     <div class="mypage-actions">
       <button class="mypage-btn-secondary" onclick="signOut()" data-i18n="logoutBtn">ログアウト</button>
+    </div>
+  </div>
+
+  <!-- プロフィール編集モーダル -->
+  <div class="auth-overlay" id="profileEditOverlay" style="display:none;">
+    <div class="auth-modal">
+      <div class="auth-modal-header">
+        <h2 data-i18n="editProfileTitle">プロフィール編集</h2>
+        <button class="legal-close" onclick="closeProfileEdit()">✕</button>
+      </div>
+      <div class="auth-modal-body">
+        <div class="auth-field">
+          <label data-i18n="labelUsername2">ユーザー名</label>
+          <input type="text" id="profileEditUsername" maxlength="20" />
+        </div>
+        <div class="auth-field">
+          <label data-i18n="labelBio">自己紹介</label>
+          <textarea id="profileEditBio" maxlength="100" rows="3" style="padding:.65rem .9rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+        <div class="auth-field">
+          <label data-i18n="labelFavGenres">好きなジャンル（最大5個）</label>
+          <div class="profile-genre-picker" id="profileGenrePicker"></div>
+        </div>
+        <button class="mypage-btn-primary" onclick="saveProfileEdit()" data-i18n="btnSave">保存する</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1218,13 +1351,14 @@
     } catch(e) { console.warn('fetchRemoteReviews:', e); }
   }
   function reviewCount(id) {
-    // 有効レビュー（グラフ操作済み）のみカウント
-    return getReviews().filter(r => {
-      if (r.animeId !== id) return false;
-      const aVals = axisA.map(k => Number(r.chartA&&r.chartA[k]||0));
-      const bVals = axisB.map(k => Number(r.chartB&&r.chartB[k]||0));
-      return aVals.some(v=>v<10) || bVals.some(v=>v<10);
-    }).length;
+    return validReviews(id).length;
+  }
+
+  // カード用「レビュー募集中」バッジ（マスターグラフ反映数が10件未満の場合に表示）
+  function recruitBadgeHtml(id) {
+    const n = reviewCount(id);
+    if (n >= 10) return '';
+    return `<span class="recruit-badge">📢 レビュー募集中</span>`;
   }
 
   /* ════════════════════════════
@@ -1528,7 +1662,7 @@
   /* ════════════════════════════
      POPULAR PAGE
   ════════════════════════════ */
-  const popState = { sort:'popular', yearFrom:null, yearTo:null, page:0, items:[], loading:false };
+  const popState = { base:'popular', period:'all', yearFrom:null, yearTo:null, page:0, items:[], loading:false };
   const POP_PAGE_SIZE = 20;
   const CURRENT_YEAR = new Date().getFullYear();
   const YEAR_LIST = Array.from({length: CURRENT_YEAR - 1959}, (_,i) => CURRENT_YEAR - i);
@@ -1586,42 +1720,89 @@
   }
 
   async function renderPopular() {
-    // ソートタブのイベント（初回のみ）
-    const tabs = document.getElementById('popSortTabs');
-    if(tabs && !tabs.dataset.init) {
-      tabs.dataset.init = '1';
-      tabs.querySelectorAll('.pop-sort-tab').forEach(btn=>{
+    // 基準タブ（軸1）
+    const baseTabs = document.getElementById('popBaseTabs');
+    if(baseTabs && !baseTabs.dataset.init) {
+      baseTabs.dataset.init = '1';
+      baseTabs.querySelectorAll('.pop-sort-tab').forEach(btn=>{
         btn.addEventListener('click', ()=>{
-          tabs.querySelectorAll('.pop-sort-tab').forEach(b=>b.classList.remove('active'));
+          baseTabs.querySelectorAll('.pop-sort-tab').forEach(b=>b.classList.remove('active'));
           btn.classList.add('active');
-          popState.sort = btn.dataset.sort;
+          popState.base = btn.dataset.base;
           popState.page = 0;
           popState.items = [];
-          // 年代ソート時はピッカー表示
+
           const picker = document.getElementById('popYearPicker');
-          if(popState.sort==='year') {
+          const periodRow = document.getElementById('popPeriodRow');
+
+          if(popState.base==='year') {
             picker.style.display='';
+            periodRow.classList.add('disabled');
             buildDrum('popDrumFrom', YEAR_LIST, popState.yearFrom||2010);
           } else {
             picker.style.display='none';
+            // 期間軸は「レビュー順」のときだけ有効、人気順は全期間固定
+            if(popState.base==='reviews') periodRow.classList.remove('disabled');
+            else periodRow.classList.add('disabled');
             loadPopularItems(true);
           }
         });
       });
-      // 年代適用ボタン
-      document.getElementById('popYearApply').addEventListener('click', ()=>{
+    }
+    // 期間タブ（軸2）
+    const periodTabs = document.getElementById('popPeriodTabs');
+    if(periodTabs && !periodTabs.dataset.init) {
+      periodTabs.dataset.init = '1';
+      periodTabs.querySelectorAll('.pop-sort-tab').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          if(document.getElementById('popPeriodRow').classList.contains('disabled')) return;
+          periodTabs.querySelectorAll('.pop-sort-tab').forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          popState.period = btn.dataset.period;
+          popState.page = 0;
+          popState.items = [];
+          loadPopularItems(true);
+        });
+      });
+    }
+    // 年代適用ボタン
+    const yearApplyBtn = document.getElementById('popYearApply');
+    if(yearApplyBtn && !yearApplyBtn.dataset.init) {
+      yearApplyBtn.dataset.init = '1';
+      yearApplyBtn.addEventListener('click', ()=>{
         popState.yearFrom = getDrumYear('popDrumFrom');
         popState.yearTo   = popState.yearFrom;
         popState.page = 0; popState.items = [];
         loadPopularItems(true);
       });
-      // もっと見るボタン
-      document.getElementById('popLoadBtn').addEventListener('click', ()=>{
+    }
+    // もっと見るボタン
+    const loadBtn = document.getElementById('popLoadBtn');
+    if(loadBtn && !loadBtn.dataset.init) {
+      loadBtn.dataset.init = '1';
+      loadBtn.addEventListener('click', ()=>{
         popState.page++;
         loadPopularItems(false);
       });
     }
     loadPopularItems(true);
+  }
+
+  // 期間内に投稿された有効レビュー数をカウント
+  function reviewCountInPeriod(animeId, period) {
+    const revs = validReviews(animeId);
+    if(period==='all') return revs.length;
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const weekStart = todayStart - 6*86400000;
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
+    const bounds = { day:todayStart, week:weekStart, month:monthStart, year:yearStart };
+    const bound = bounds[period];
+    return revs.filter(r=>{
+      const t = new Date(r.createdAt||r.created_at||0).getTime();
+      return t >= bound;
+    }).length;
   }
 
   async function loadPopularItems(reset) {
@@ -1633,30 +1814,20 @@
     if(reset) { grid.innerHTML='<p style="color:var(--muted);padding:1rem;">読み込み中…</p>'; }
 
     try {
-      const sort = popState.sort;
+      const base = popState.base;
       let items = [];
 
-      if(sort==='popular') {
-        // Kitsu userCount順
+      if(base==='popular') {
+        // Kitsu userCount順（期間概念なし、常に全体人気）
         items = await fetchKitsuPopular(popState.page * POP_PAGE_SIZE);
-      } else if(sort==='reviews') {
-        // LocalStorageのレビュー数順
+      } else if(base==='reviews') {
+        // レビュー数順（期間フィルタ対応）
         const all = getAll();
-        const withCount = all.map(a=>({...a, reviewCount: validReviews(a.id).length}));
+        const withCount = all.map(a=>({...a, reviewCount: reviewCountInPeriod(a.id, popState.period)}));
         withCount.sort((a,b)=>b.reviewCount-a.reviewCount);
         items = withCount.slice(popState.page*POP_PAGE_SIZE, (popState.page+1)*POP_PAGE_SIZE);
-      } else if(sort.startsWith('pv_')) {
-        // PV期間別
-        const period = sort.replace('pv_','');
-        const pvMap = pvStore.getAll(period);
-        const all = getAll();
-        const withPv = all.map(a=>({...a, pv: pvMap[a.id]||0}));
-        withPv.sort((a,b)=>b.pv-a.pv);
-        items = withPv.slice(popState.page*POP_PAGE_SIZE, (popState.page+1)*POP_PAGE_SIZE);
-      } else if(sort==='year') {
+      } else if(base==='year') {
         const from = popState.yearFrom || 2000;
-        const to   = popState.yearTo   || CURRENT_YEAR;
-        // 指定年の作品を取得
         items = await fetchKitsuPopular(popState.page * POP_PAGE_SIZE, from);
       }
 
@@ -1670,11 +1841,16 @@
           <div class="gcard-body">
             <div class="gcard-title">${a.title||a.titleEn||a.titleEn}</div>
             <div class="gcard-meta">${[a.meta,a.year?a.year+'年':''].filter(Boolean).join(' · ')}</div>
+            ${recruitBadgeHtml(a.kitsuId?'kitsu-'+a.kitsuId:a.id)}
           </div>
         </div>
       `).join('');
 
-      const label = {popular:'人気順',reviews:'レビュー数順',pv_day:'今日のPV',pv_week:'週間PV',pv_month:'月間PV',pv_year:'年間PV',pv_all:'全期間PV',year:'年代指定'}[sort]||'';
+      const baseLabels = {popular:'人気順',reviews:'レビュー数順',year:'年代指定'};
+      const periodLabels = {all:'全期間',day:'今日',week:'週間',month:'月間',year:'年間'};
+      let label = baseLabels[base]||'';
+      if(base==='reviews') label += ' · ' + periodLabels[popState.period];
+
       meta.textContent = `${label} · ${popState.items.length}件`;
       loadMore.style.display = items.length >= POP_PAGE_SIZE ? '' : 'none';
     } catch(e) {
@@ -1821,6 +1997,79 @@
     if(!allDone && attempt < 10) setTimeout(()=>drawGrids(wraps, attempt+1), 50);
   }
 
+  // レビューフォーム専用: 無(-1)〜10の12段階グリッド
+  function drawGridsReview(wraps, attempt){
+    let allDone = true;
+    wraps.forEach(wrap=>{
+      const input = wrap.querySelector('input[type="range"]');
+      const canvas = wrap.querySelector('.sl-grid-canvas');
+      if(!input||!canvas) return;
+      const iRect = input.getBoundingClientRect();
+      const wRect = wrap.getBoundingClientRect();
+      if(wRect.width < 10){ allDone=false; return; }
+      const thumbR = 8;
+      const trackLeft  = (iRect.left - wRect.left) + thumbR;
+      const trackWidth = iRect.width - thumbR * 2;
+      const dpr = window.devicePixelRatio || 1;
+      const cssWidth = wRect.width;
+      canvas.width  = Math.round(cssWidth * dpr);
+      canvas.height = Math.round(18 * dpr);
+      canvas.style.height = '18px';
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0,0,cssWidth,18);
+      // -1(無) 〜 10 の12段階
+      const MARKS = [-1,0,1,2,3,4,5,6,7,8,9,10];
+      const LABELED = new Set([-1,1,3,5,7,9]);
+      MARKS.forEach(v=>{
+        const x = trackLeft + (trackWidth * (v+1) / 11);
+        ctx.beginPath(); ctx.moveTo(x,10); ctx.lineTo(x,17);
+        ctx.strokeStyle = v===-1 ? 'rgba(255,107,157,0.6)' : 'rgba(94,201,122,0.28)';
+        ctx.lineWidth=1; ctx.stroke();
+        if(LABELED.has(v)){
+          ctx.font='9px sans-serif';
+          ctx.fillStyle = v===-1 ? 'rgba(255,107,157,0.9)' : 'rgba(140,198,160,0.7)';
+          ctx.textAlign='center';
+          ctx.fillText(v===-1?t('sliderUnset'):String(v), x, 9);
+        }
+      });
+    });
+    if(!allDone && attempt < 10) setTimeout(()=>drawGridsReview(wraps, attempt+1), 50);
+  }
+
+  // レビューフォーム専用スライダー構築: 無(-1)〜10
+  function buildReviewSliders(containerId, labels, valuesArr, onInputCb) {
+    const el=document.getElementById(containerId); if(!el) return;
+    el.innerHTML = labels.map((label,i)=>`
+      <div class="sl-row">
+        <span>${label}</span>
+        <div class="sl-track-wrap">
+          <canvas class="sl-grid-canvas" height="18"></canvas>
+          <input type="range" min="-1" max="10" step="1" value="${valuesArr[i]}" data-idx="${i}" id="rv-slider-${containerId}-${i}" class="review-slider-input" />
+        </div>
+        <output>${valuesArr[i]===-1?t('sliderUnset'):valuesArr[i]}</output>
+      </div>
+    `).join('');
+
+    requestAnimationFrame(()=>{
+      const wraps = Array.from(el.querySelectorAll('.sl-track-wrap'));
+      drawGridsReview(wraps, 0);
+    });
+
+    el.querySelectorAll('input[type="range"]').forEach(input=>{
+      const idx = Number(input.dataset.idx);
+      const out = input.closest('.sl-row').querySelector('output');
+      input.classList.toggle('slider-unset', valuesArr[idx]===-1);
+      input.addEventListener('input',()=>{
+        const v = Number(input.value);
+        valuesArr[idx]=v;
+        if(out) out.textContent = v===-1?t('sliderUnset'):v;
+        input.classList.toggle('slider-unset', v===-1);
+        onInputCb();
+      });
+    });
+  }
+
   /* ════════════════════════════
      SLIDER BUILDER
   ════════════════════════════ */
@@ -1930,12 +2179,12 @@
           const res = await fetch(`https://kitsu.io/api/edge/anime?sort=-userCount&page[limit]=20&page[offset]=${randomOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`);
           const json = await res.json();
           if(json.data) {
-            return json.data.map(a=>({
+            return json.data.slice(0,15).map(a=>({
               id: `kitsu-${a.id}`,
               title: a.attributes.canonicalTitle || '—',
               image: a.attributes.posterImage?.small || '',
               meta: a.attributes.subtype || '',
-            })).slice(0, 8);
+            })).slice(0, 15);
           }
         } catch(e) { console.warn('Kitsu pickup:', e); }
         return allPages.slice(0, 8);
@@ -1964,7 +2213,7 @@
       const hb = Math.sin(slot * 9301 + b.id.charCodeAt(0) * 49297) * 233280;
       return (ha - Math.floor(ha)) - (hb - Math.floor(hb));
     });
-    return seeded.slice(0, 8);
+    return seeded.slice(0, 15);
   }
 
   // 残り時間カウントダウン表示
@@ -2007,23 +2256,32 @@
     const year = now.getFullYear();
     const mo = now.getMonth() + 1;
     const season = mo<=3?'winter':mo<=6?'spring':mo<=9?'summer':'fall';
-    const url = `https://kitsu.io/api/edge/anime?filter[season]=${season}&filter[seasonYear]=${year}&sort=-userCount&page[limit]=12&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
-    const res = await fetch(url, { headers: { 'Accept': 'application/vnd.api+json' } });
-    const json = await res.json();
-    return (json.data || []).map(item => {
-      const a = item.attributes;
-      const titles = a.titles || {};
-      const titleJa = titles.ja_jp || '';
-      const titleEn = titles.en || titles.en_jp || a.canonicalTitle || '';
-      return {
-        id: `kitsu-${item.id}`,
-        title: titleJa || a.canonicalTitle || titleEn,
-        titleEn: titleEn,
-        meta: a.subtype || '',
-        image: (a.posterImage||{}).medium || (a.posterImage||{}).large || '',
-        dummy: false
-      };
-    });
+    const base = `https://kitsu.io/api/edge/anime?filter[season]=${season}&filter[seasonYear]=${year}&sort=-userCount&page[limit]=20&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
+    
+    // 複数ページを並行取得（最大3ページ=60件）
+    const offsets = [0, 20, 40];
+    const results = await Promise.allSettled(
+      offsets.map(offset => fetch(`${base}&page[offset]=${offset}`, { headers: { 'Accept': 'application/vnd.api+json' } }).then(r=>r.json()))
+    );
+    
+    const allData = results.flatMap(r => r.status==='fulfilled' ? (r.value.data||[]) : []);
+    // 重複除去
+    const seen = new Set();
+    return allData.filter(item=>{ if(seen.has(item.id)) return false; seen.add(item.id); return true; })
+      .map(item => {
+        const a = item.attributes;
+        const titles = a.titles || {};
+        const titleJa = titles.ja_jp || '';
+        const titleEn = titles.en || titles.en_jp || a.canonicalTitle || '';
+        return {
+          id: `kitsu-${item.id}`,
+          title: titleJa || a.canonicalTitle || titleEn,
+          titleEn: titleEn,
+          meta: a.subtype || '',
+          image: (a.posterImage||{}).medium || (a.posterImage||{}).large || '',
+          dummy: false
+        };
+      });
   }
 
   function renderSeasonSection(items, label) {
@@ -2035,10 +2293,11 @@
         <div class="hcard-body">
           <h3>${getTitle(item)}</h3>
           <p>${item.meta}</p>
-          ${item.dummy?'<span style="font-size:.66rem;color:#7a9a86;">※サンプル表示</span>':''}
+          ${item.dummy?'<span style="font-size:.66rem;color:#7a9a86;">※サンプル表示</span>':recruitBadgeHtml(item.id)}
         </div>
       </div>
     `).join('');
+    initCarousel('seasonScroll','seasonDots',5);
   }
 
   async function loadSeasonSection() {
@@ -2050,6 +2309,78 @@
     // APIが使えない場合はダミー
     renderSeasonSection(SEASON_DUMMY, label + '（サンプル）');
   }
+
+  /* ════════════════════════════
+     CAROUSEL
+  ════════════════════════════ */
+  const carousels = {}; // {id: {items, currentPage, timer, perPage}}
+
+  function initCarousel(trackId, dotsId, perPagePC=5) {
+    if(carousels[trackId]?.timer) clearInterval(carousels[trackId].timer);
+
+    const track = document.getElementById(trackId);
+    const dotsEl = document.getElementById(dotsId);
+    if(!track) return;
+
+    const allItems = Array.from(track.children);
+    if(!allItems.length) return;
+
+    const perPage = window.innerWidth >= 640 ? perPagePC : 2;
+    const wrapWidth = track.parentElement.offsetWidth || window.innerWidth - 160;
+
+    // アイテムをページ単位にグループ化
+    const pages = [];
+    for(let i=0; i<allItems.length; i+=perPage) pages.push(allItems.slice(i,i+perPage));
+    const totalPages = pages.length;
+
+    // trackをクリアしてページdivを作成
+    track.innerHTML='';
+    track.style.width = (wrapWidth * totalPages) + 'px';
+
+    pages.forEach((pageItems, pi) => {
+      const pageDiv = document.createElement('div');
+      pageDiv.className = 'carousel-page';
+      pageDiv.style.width = wrapWidth + 'px';
+      const cardWidth = Math.floor((wrapWidth - 32 - (perPage-1)*10) / perPage);
+      pageItems.forEach(item => {
+        item.style.flex = 'none';
+        item.style.width = cardWidth + 'px';
+        pageDiv.appendChild(item);
+      });
+      track.appendChild(pageDiv);
+    });
+
+    // ドット生成
+    if(dotsEl) {
+      dotsEl.innerHTML = pages.map((_,i)=>
+        `<div class="carousel-dot${i===0?' active':''}" onclick="carouselGoTo('${trackId}','${dotsId}',${i})"></div>`
+      ).join('');
+    }
+
+    let cur = 0;
+    function goTo(page) {
+      cur = ((page%totalPages)+totalPages)%totalPages;
+      track.style.transform = `translateX(-${cur*wrapWidth}px)`;
+      dotsEl?.querySelectorAll('.carousel-dot').forEach((d,i)=>d.classList.toggle('active',i===cur));
+    }
+
+    const timer = setInterval(()=>goTo(cur+1), 10000);
+    carousels[trackId] = {goTo, timer};
+
+    // タッチスワイプ
+    const wrap = track.parentElement;
+    let sx=0;
+    wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+    wrap.addEventListener('touchend',e=>{
+      const d=sx-e.changedTouches[0].clientX;
+      if(Math.abs(d)>40) goTo(cur+(d>0?1:-1));
+    });
+  }
+
+  function carouselGoTo(trackId, dotsId, page) {
+    if(carousels[trackId]) carousels[trackId].goTo(page);
+  }
+  window.carouselGoTo = carouselGoTo;
 
   async function renderHome() {
     const all = getAll();
@@ -2068,9 +2399,12 @@
           <div class="hcard-body">
             <h3>${item.title}</h3>
             <p>${item.meta}</p>
+            ${recruitBadgeHtml(item.id)}
           </div>
         </div>`;
       }).join('') : '<p style="color:var(--muted);padding:.5rem;">作品が増えると表示されます</p>';
+      // HTML挿入後にカルーセル初期化
+      initCarousel('pickupScroll','pickupDots',5);
     });
 
     startPickupTimer();
@@ -2081,7 +2415,7 @@
     document.getElementById('recommendGrid').innerHTML = byReview.slice(0,8).map(item=>`
       <div class="gcard" onclick="${item.kitsuId?`navAnime('${item.kitsuId}')`:`nav('anime','${item.id}')`}">
         <div class="gcard-thumb">${thumbHtml(item)||''}</div>
-        <div class="gcard-body"><h3>${getTitle(item)}</h3><p>${item.meta}</p><span class="badge">${tFn('reviewCount',reviewCount(item.id))}</span></div>
+        <div class="gcard-body"><h3>${getTitle(item)}</h3><p>${item.meta}</p><span class="badge">${tFn('reviewCount',reviewCount(item.id))}</span>${recruitBadgeHtml(item.id)}</div>
       </div>
     `).join('');
 
@@ -2090,7 +2424,7 @@
     document.getElementById('allGrid').innerHTML = all.map(item=>`
       <div class="gcard" onclick="${item.kitsuId?`navAnime('${item.kitsuId}')`:`nav('anime','${item.id}')`}">
         <div class="gcard-thumb">${thumbHtml(item)||''}</div>
-        <div class="gcard-body"><h3>${getTitle(item)}</h3><p>${item.meta}</p><span class="badge">${tFn('reviewCount',reviewCount(item.id))}</span></div>
+        <div class="gcard-body"><h3>${getTitle(item)}</h3><p>${item.meta}</p><span class="badge">${tFn('reviewCount',reviewCount(item.id))}</span>${recruitBadgeHtml(item.id)}</div>
       </div>
     `).join('');
 
@@ -2120,7 +2454,7 @@
         document.getElementById('allGrid').innerHTML += kitsuItems.map(item=>`
           <div class="gcard" onclick="navAnime('${item.kitsuId}')">
             <div class="gcard-thumb">${thumbHtml(item)||''}</div>
-            <div class="gcard-body"><h3>${getTitle(item)}</h3><p>${item.meta}</p><span class="badge">${tFn('reviewCount',0)}</span></div>
+            <div class="gcard-body"><h3>${getTitle(item)}</h3><p>${item.meta}</p><span class="badge">${tFn('reviewCount',0)}</span><span class="recruit-badge">📢 レビュー募集中</span></div>
           </div>
         `).join('');
       }
@@ -2137,6 +2471,277 @@
     return page.titleEn || page.title || '';
   }
 
+  /* ════════════════════════════
+     マスターグラフ集計方式
+     AGGREGATE_MODE を変更するだけで切り替え可能:
+       'trim'    : トリム平均（最高1件・最低1件を除外して平均）※デフォルト
+       'mean'    : 単純平均
+       'median'  : 中央値
+  ════════════════════════════ */
+  const AGGREGATE_MODE = 'trim';
+
+  /* ═══════════════ TEST DATA START（テスト終わったらこのブロックを丸ごと削除） ═══════════════ */
+  (function(){
+    const TEST_ANIME_ID = 'test-anime-001';
+    const testPage = {
+      id: TEST_ANIME_ID,
+      title: '星めぐりのアステリズム（テスト）',
+      titleEn: 'Asterism Wanderers (TEST)',
+      meta: 'TV・2026年・テストデータ',
+      image: '',
+      description: 'これはテスト用の架空アニメです。マスターグラフの集計挙動確認用。',
+      genres: ['Fantasy','Comedy','School'],
+    };
+    const allPages = pj(STORAGE_KEY);
+    if(!allPages.find(p=>p.id===TEST_ANIME_ID)) {
+      allPages.unshift(testPage);
+      sj(STORAGE_KEY, allPages);
+    }
+
+    // 想定される「だいたいの特徴」（中心値）
+    const baseA = {作画:8, 物語:7, キャラクター:8, 世界観:9, 音楽:6, テーマ:7};
+    const baseB = {かっこいい:6, 可愛い:7, シリアス:4, コメディ:8, アダルト:2, エモい:6};
+
+    function clamp(v){ return Math.max(0, Math.min(10, v)); }
+    function jitter(base, spread){ return clamp(Math.round(base + (Math.random()-0.5)*spread)); }
+
+    const testReviews = [];
+    const names = ['ゲスト','りんご好き','アニメ太郎','匿名','夜行性','深夜アニメ勢','コーヒー党','猫好き','学生A','社会人B'];
+
+    // 70件: 人間らしくばらけた自然なレビュー
+    for(let i=0;i<70;i++){
+      const spread = 3 + Math.random()*3;
+      const chartA = {}, chartB = {};
+      Object.keys(baseA).forEach(k=>{ chartA[k]=jitter(baseA[k], spread); });
+      Object.keys(baseB).forEach(k=>{ chartB[k]=jitter(baseB[k], spread); });
+      testReviews.push({
+        animeId: TEST_ANIME_ID,
+        userName: names[i%names.length],
+        tags: [],
+        chartA, chartB,
+        comment: i%5===0 ? 'テスト用の自然なレビューです' : '',
+        createdAt: new Date(Date.now()-i*60000).toISOString(),
+        chartMoved: true,
+        quality: i%3===0,
+        _isTestData: true,
+        _isTroll: false,
+      });
+    }
+
+    // 30件: 荒らし（全部10 / 全部0 / 完全ランダムを均等配分）
+    for(let i=0;i<30;i++){
+      const chartA = {}, chartB = {};
+      const mode = i % 3; // 0:全10 1:全0 2:完全ランダム
+      let trollType = '';
+      Object.keys(baseA).forEach(k=>{
+        chartA[k] = mode===0 ? 10 : mode===1 ? 0 : Math.floor(Math.random()*11);
+      });
+      Object.keys(baseB).forEach(k=>{
+        chartB[k] = mode===0 ? 10 : mode===1 ? 0 : Math.floor(Math.random()*11);
+      });
+      trollType = mode===0 ? '全部MAX' : mode===1 ? '全部MIN' : 'ランダム適当';
+      testReviews.push({
+        animeId: TEST_ANIME_ID,
+        userName: 'ゲスト',
+        tags: [],
+        chartA, chartB,
+        comment: '',
+        createdAt: new Date(Date.now()-(70+i)*60000).toISOString(),
+        chartMoved: true,
+        quality: false,
+        _isTestData: true,
+        _isTroll: true,
+        _trollType: trollType,
+      });
+    }
+
+    const existingReviews = pj(REVIEW_KEY);
+    const filtered = existingReviews.filter(r=>!r._isTestData);
+    sj(REVIEW_KEY, [...testReviews, ...filtered]);
+
+    console.log(`[TEST] ${TEST_ANIME_ID} に ${testReviews.length}件投入（自然70件 / 荒らし30件＝全10:10件,全0:10件,ランダム:10件）`);
+  })();
+  /* ═══════════════ TEST DATA END ═══════════════ */
+
+  // 標準偏差を計算（荒らし優勢判定に使用）
+  function stdDev(values) {
+    const mean = values.reduce((a,b)=>a+b,0) / values.length;
+    const variance = values.reduce((a,b)=>a+(b-mean)**2,0) / values.length;
+    return Math.sqrt(variance);
+  }
+
+  // 密度ベースクラスタリング: 各値の近傍密度（±2以内の個数）を求め、
+  // 最大密度を持つ値の近傍だけを抽出して平均する
+  const DENSITY_RADIUS = 2;       // 近傍とみなす範囲
+  const STD_DEV_THRESHOLD = 3.0;  // この値を超えたら「荒らし優勢」とみなす
+
+  function densityClusterAverage(values) {
+    const counts = values.map(v => ({
+      v,
+      density: values.filter(o => Math.abs(o-v) <= DENSITY_RADIUS).length
+    }));
+    const maxDensity = Math.max(...counts.map(c=>c.density));
+    // 最大密度に近い値を中心とした塊を採用（複数候補があれば中央値寄りを優先）
+    const candidates = counts.filter(c => c.density === maxDensity);
+    const centerV = candidates.sort((a,b)=>a.v-b.v)[Math.floor(candidates.length/2)].v;
+    const cluster = values.filter(v => Math.abs(v-centerV) <= DENSITY_RADIUS);
+    const sum = cluster.reduce((a,b)=>a+b,0);
+    return Math.round(sum/cluster.length*10)/10;
+  }
+
+  /* ════════════════════════════
+     グラフ形状クラスタリング
+     レビューを12次元ベクトルとして扱い、似た形のグラフ同士を
+     グループ化して最大クラスタ（多数派の意見）を採用する
+  ════════════════════════════ */
+  const CLUSTER_DISTANCE_THRESHOLD = 8; // 12軸合計のユークリッド距離しきい値
+
+  function reviewToVector(r) {
+    const aVals = axisA.map(k => Number(r.chartA&&r.chartA[k]||0));
+    const bVals = axisB.map(k => Number(r.chartB&&r.chartB[k]||0));
+    return [...aVals, ...bVals]; // 12次元ベクトル
+  }
+
+  function euclideanDist(v1, v2) {
+    let sum = 0;
+    for(let i=0; i<v1.length; i++) sum += (v1[i]-v2[i])**2;
+    return Math.sqrt(sum);
+  }
+
+  // 単純な距離ベースクラスタリング（しきい値以内をグループ化）
+  /* ════════════════════════════
+     称号・重みシステム
+     ユーザーの上質レビュー累計数で称号と重みを決定する
+  ════════════════════════════ */
+  const RANK_TIERS = [
+    { name:'新人',         min:0,  max:2,        weight:1.0 },
+    { name:'アニメ通',     min:3,  max:9,        weight:1.2 },
+    { name:'グラフマスター',min:10, max:29,       weight:1.5 },
+    { name:'レジェンド',   min:30, max:Infinity, weight:2.0 },
+  ];
+
+  function getRankByQualityCount(qualityCount) {
+    return RANK_TIERS.find(r => qualityCount >= r.min && qualityCount <= r.max) || RANK_TIERS[0];
+  }
+
+  // レビューの重み（ユーザーの上質レビュー累計数から導出）
+  // userQualityCounts: { username: 上質レビュー数 } のマップ
+  function getReviewWeight(review, userQualityCounts) {
+    const name = review.userName || review.username || 'ゲスト';
+    if (name === 'ゲスト') return 1.0; // ゲストは常に重み1
+    const count = userQualityCounts[name] || 0;
+    return getRankByQualityCount(count).weight;
+  }
+
+  // 全レビューからユーザーごとの上質レビュー数を集計
+  function buildUserQualityCounts(allReviews) {
+    const counts = {};
+    allReviews.forEach(r => {
+      if (r.quality) {
+        const name = r.userName || r.username || 'ゲスト';
+        if (name === 'ゲスト') return;
+        counts[name] = (counts[name]||0) + 1;
+      }
+    });
+    return counts;
+  }
+
+  function clusterReviews(reviews) {
+    const vectors = reviews.map(reviewToVector);
+    const n = vectors.length;
+    const visited = new Array(n).fill(false);
+    const clusters = [];
+
+    for (let i=0; i<n; i++) {
+      if (visited[i]) continue;
+      const cluster = [i];
+      visited[i] = true;
+      for (let j=0; j<n; j++) {
+        if (visited[j]) continue;
+        if (euclideanDist(vectors[i], vectors[j]) <= CLUSTER_DISTANCE_THRESHOLD) {
+          cluster.push(j);
+          visited[j] = true;
+        }
+      }
+      clusters.push(cluster);
+    }
+    // クラスタをサイズ順にソートして返す（最大クラスタが先頭）
+    return clusters.sort((a,b)=>b.length-a.length).map(idxs => idxs.map(i=>reviews[i]));
+  }
+
+  // メインクラスタ（多数派の意見）のレビューだけを返す
+  function getMainClusterReviews(reviews) {
+    if (reviews.length < 3) return reviews; // 少数なら全部使う
+    const clusters = clusterReviews(reviews);
+    const mainCluster = clusters[0];
+    // メインクラスタが全体の30%未満しかない場合は分裂しすぎなので全部使う（フォールバック）
+    if (mainCluster.length < reviews.length * 0.3) return reviews;
+    return mainCluster;
+  }
+
+  // 票割れ検知: 上位2クラスタが拮抗しているかチェック（管理者向け）
+  function detectSplitOpinion(reviews) {
+    if (reviews.length < 10) return { isSplit: false }; // 母数が少ないと誤検知しやすいので対象外
+    const clusters = clusterReviews(reviews);
+    if (clusters.length < 2) return { isSplit: false };
+    const top1 = clusters[0].length, top2 = clusters[1].length;
+    const isSplit = top2 >= top1 * 0.6 && (top1+top2) >= reviews.length * 0.6;
+    return { isSplit, top1Size: top1, top2Size: top2, totalReviews: reviews.length };
+  }
+
+  // 重みを反映した値配列を作る（重み1.5なら1.5倍の影響を持たせるため整数複製で近似）
+  function expandByWeight(reviews, valueExtractor, userQualityCounts) {
+    const out = [];
+    reviews.forEach(r => {
+      const w = getReviewWeight(r, userQualityCounts);
+      const v = valueExtractor(r);
+      const repeats = Math.round(w * 2); // 0.5刻みの重みに対応するため2倍精度で複製
+      for (let i=0; i<repeats; i++) out.push(v);
+    });
+    return out;
+  }
+
+  function aggregateValues(values) {
+    // values: 数値配列（そのレビューの該当軸の値一覧）
+    if (values.length === 0) return 0;
+    if (values.length < 3) {
+      // 3件未満は単純平均にフォールバック
+      const sum = values.reduce((a,b)=>a+b, 0);
+      return Math.round(sum/values.length*10)/10;
+    }
+    if (AGGREGATE_MODE === 'mean') {
+      const sum = values.reduce((a,b)=>a+b, 0);
+      return Math.round(sum/values.length*10)/10;
+    }
+    if (AGGREGATE_MODE === 'median') {
+      const sorted = [...values].sort((a,b)=>a-b);
+      const mid = Math.floor(sorted.length/2);
+      const med = sorted.length%2===0 ? (sorted[mid-1]+sorted[mid])/2 : sorted[mid];
+      return Math.round(med*10)/10;
+    }
+    // 'trim' モード: 通常はトリム平均、ばらつきが大きい（荒らし優勢）場合は密度クラスタリングに切替
+    const sd = stdDev(values);
+    if (sd > STD_DEV_THRESHOLD) {
+      return densityClusterAverage(values);
+    }
+    const sorted = [...values].sort((a,b)=>a-b);
+    const trimmed = sorted.slice(1, sorted.length-1);
+    const sum = trimmed.reduce((a,b)=>a+b, 0);
+    return Math.round(sum/trimmed.length*10)/10;
+  }
+
+  // マスターグラフの成熟度判定: レビュー数に応じて集計方式と注記を切り替える
+  const MATURITY_STAGE = {
+    EARLY:  { max:4,         label:'early' },  // 1〜4件: 単純平均のみ
+    GROWING:{ max:9,         label:'growing'}, // 5〜9件: トリム平均（クラスタリングなし）
+    STABLE: { max:Infinity,  label:'stable'},  // 10件以上: フル機能
+  };
+  function getMaturityStage(n) {
+    if (n <= MATURITY_STAGE.EARLY.max) return 'early';
+    if (n <= MATURITY_STAGE.GROWING.max) return 'growing';
+    return 'stable';
+  }
+
   function renderMasterGraph(id) {
     const reviews = validReviews(id);
     const section = document.getElementById('masterGraphSection');
@@ -2146,17 +2751,27 @@
     if (section) section.style.display='';
     const _adMid = document.getElementById('adAnimeMid');
     if(_adMid) _adMid.style.display='';
-    if (meta) meta.textContent = t('validReviewMeta').replace('{n}', reviews.length);
+
+    const stage = getMaturityStage(reviews.length);
+    let metaText = t('validReviewMeta').replace('{n}', reviews.length);
+    if (stage === 'early') metaText = '⚠️ ' + (t('maturityEarly') || 'レビュー数が少ないため参考値です') + `（${reviews.length}件）`;
+    else if (stage === 'growing') metaText += ' ' + (t('maturityGrowing') || '（データ収集中）');
+    if (meta) meta.textContent = metaText;
 
     const labA = getAxisA(), labB = getAxisB();
-    const avgA = axisA.map((k,i) => {
-      const sum = reviews.reduce((a,r)=>a+Number(r.chartA&&r.chartA[k]||0),0);
-      return Math.round(sum/reviews.length*10)/10;
-    });
-    const avgB = axisB.map((k,i) => {
-      const sum = reviews.reduce((a,r)=>a+Number(r.chartB&&r.chartB[k]||0),0);
-      return Math.round(sum/reviews.length*10)/10;
-    });
+    // 成熟度に応じて集計対象を決定
+    let mainCluster;
+    if (stage === 'early') {
+      mainCluster = reviews; // クラスタリングなし、全部使う
+    } else if (stage === 'growing') {
+      mainCluster = reviews; // クラスタリングなし、トリム平均のみ適用（aggregateValuesが対応）
+    } else {
+      // グラフ形状でクラスタリングし、多数派の意見だけで集計（称号による重み付き）
+      mainCluster = getMainClusterReviews(reviews);
+    }
+    const userQCounts = buildUserQualityCounts(getReviews());
+    const avgA = axisA.map((k,i) => aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartA&&r.chartA[k]||0), userQCounts)));
+    const avgB = axisB.map((k,i) => aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartB&&r.chartB[k]||0), userQCounts)));
 
     const caA = document.getElementById('masterChartA');
     const caB = document.getElementById('masterChartB');
@@ -2169,7 +2784,7 @@
     const miA = document.getElementById('miniChartA');
     const miB = document.getElementById('miniChartB');
     if(miniSection) miniSection.style.display='';
-    if(miniMeta) miniMeta.textContent=t('validReviewMeta').replace('{n}', reviews.length);
+    if(miniMeta) miniMeta.textContent=metaText;
     if(miA) drawRadar(miA, labA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a');
     if(miB) drawRadar(miB, labB, avgB, 'rgba(255,153,153,0.38)', '#ff8888');
 
@@ -2269,6 +2884,7 @@
     const thumb=document.getElementById('animeThumbHero');
     thumb.innerHTML=page.image?`<img src="${page.image}" alt="${page.title}" style="width:100%;height:100%;object-fit:cover;display:block;" />`:t('noImage');
     document.getElementById('goReviewBtn').onclick=()=>nav('review',id);
+    updateFavButtonState(id);
     renderAffiliateLinks(page);
     renderWorldStats(id);
     // Supabaseからレビューを取得してからグラフを描画
@@ -2364,7 +2980,7 @@
                 ${(()=>{const name=rev.userName||'ゲスト';if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-                <span class="rc-name">${rev.userName||'ゲスト'}</span>
+                <span class="rc-name">${rev.userName||'ゲスト'}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${rev.createdAt?new Date(rev.createdAt).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'}):''}</span>
               </div>
             </div>
@@ -2454,21 +3070,13 @@
         if(loggedField) loggedField.style.display = 'none';
       }
     })();
-    // 初期値は全部MAX
-    axisA.forEach((_,i)=>{vA[i]=10;});
-    axisB.forEach((_,i)=>{vB[i]=10;});
+    // 初期値は全部「無」(-1)
+    axisA.forEach((_,i)=>{vA[i]=-1;});
+    axisB.forEach((_,i)=>{vB[i]=-1;});
     chartMoved = false;
     _reviewStartTime = Date.now();
-    buildSliders('slidersA',getAxisA(),Object.fromEntries(getAxisA().map((k,i)=>[k,vA[i]])),'rv-a');
-    buildSliders('slidersB',getAxisB(),Object.fromEntries(getAxisB().map((k,i)=>[k,vB[i]])),'rv-b');
-    getAxisA().forEach((_,i)=>{
-      const inp=document.getElementById(`rv-a-${getAxisA()[i]}`);
-      if(inp) inp.addEventListener('input',()=>{ vA[i]=Number(inp.value); chartMoved=true; redrawReview(); });
-    });
-    getAxisB().forEach((_,i)=>{
-      const inp=document.getElementById(`rv-b-${getAxisB()[i]}`);
-      if(inp) inp.addEventListener('input',()=>{ vB[i]=Number(inp.value); chartMoved=true; redrawReview(); });
-    });
+    buildReviewSliders('slidersA', getAxisA(), vA, ()=>{ chartMoved=true; redrawReview(); });
+    buildReviewSliders('slidersB', getAxisB(), vB, ()=>{ chartMoved=true; redrawReview(); });
     // reset tags
     reviewTags.length=0;
     setupTagInput('reviewTagInput','reviewTagAddBtn','reviewTagList',reviewTags,10);
@@ -2479,21 +3087,68 @@
 
   function redrawReview() {
     const ca=document.getElementById('chartA'),cb=document.getElementById('chartB');
-    if(ca) drawRadar(ca,getAxisA(),vA,'rgba(88,201,132,0.35)','#8fe5ab');
-    if(cb) drawRadar(cb,getAxisB(),vB,'rgba(255,153,153,0.32)','#ffaaaa');
+    const dispA = vA.map(v=>v===-1?0:v);
+    const dispB = vB.map(v=>v===-1?0:v);
+    const isComplete = vA.every(v=>v!==-1) && vB.every(v=>v!==-1);
+
+    if (isComplete) {
+      // 全項目入力済み → 青色に変化
+      if(ca) drawRadar(ca,getAxisA(),dispA,'rgba(94,170,255,0.38)','#9cc6ff');
+      if(cb) drawRadar(cb,getAxisB(),dispB,'rgba(94,170,255,0.32)','#9cc6ff');
+    } else {
+      if(ca) drawRadar(ca,getAxisA(),dispA,'rgba(88,201,132,0.35)','#8fe5ab');
+      if(cb) drawRadar(cb,getAxisB(),dispB,'rgba(255,153,153,0.32)','#ffaaaa');
+    }
+
+    // 案内文の切り替え
+    const notice = document.getElementById('graphStatusNotice');
+    if (notice) {
+      const icon = notice.querySelector('.graph-status-icon');
+      const text = notice.querySelector('.graph-status-text');
+      notice.classList.toggle('graph-status-complete', isComplete);
+      if (icon) icon.textContent = isComplete ? '✅' : '⚠️';
+      if (text) {
+        text.dataset.i18n = isComplete ? 'graphCompleteMsg' : 'graphIncompleteMsg';
+        text.textContent = t(text.dataset.i18n);
+      }
+    }
+  }
+
+  // レビュー質スコア計算（5点満点）
+  function calcQualityScore({isFullGraph, elapsed, tags, comment}) {
+    let score = 0;
+    if (!isFullGraph) return 0; // グラフ未完成なら質スコア0
+    if (elapsed >= 30000) score += 1;
+    if (tags.length >= 1) score += 1;
+    if (tags.length >= 3) score += 1;
+    if (comment.length >= 20) score += 1;
+    if (comment.length >= 80) score += 1;
+    return score;
   }
 
   document.getElementById('submitReviewBtn').onclick=()=>{
     const comment = document.getElementById('reviewComment').value.trim();
     const tags = [...reviewTags];
-    // スライダー未操作 + タグなし + コメントなし → 投稿不可
-    if(!chartMoved && tags.length===0 && !comment){
+    // 全軸が「無」でなければ＝全部操作済みなら有効グラフ
+    const allSetA = vA.every(v=>v!==-1);
+    const allSetB = vB.every(v=>v!==-1);
+    const isFullGraph = allSetA && allSetB;
+    const anySet = vA.some(v=>v!==-1) || vB.some(v=>v!==-1);
+
+    // 何も入力なし（グラフ無操作・タグなし・コメントなし）→ 投稿不可
+    if(!anySet && tags.length===0 && !comment){
       alert(currentLang==='ja'?'スライダー・タグ・コメントのいずれかを入力してください。':'Please adjust sliders, add tags, or write a comment.');
       return;
     }
-    // quality判定: スライダー操作あり + 滞在30秒以上
+
+    // 質スコア計算（0〜5点）。3点以上を「上質レビュー」とする
     const elapsed = Date.now() - _reviewStartTime;
-    const isQuality = chartMoved && elapsed >= 30000;
+    const qualityScore = calcQualityScore({isFullGraph, elapsed, tags, comment});
+    const isQuality = qualityScore >= 3;
+
+    // 保存用：「無」(-1)は0に変換
+    const chartAObj = Object.fromEntries(axisA.map((k,i)=>[k, vA[i]===-1?0:vA[i]]));
+    const chartBObj = Object.fromEntries(axisB.map((k,i)=>[k, vB[i]===-1?0:vB[i]]));
 
     const review={
       animeId:currentAnimeId,
@@ -2502,11 +3157,11 @@
         return document.getElementById('reviewUserName').value.trim()||'ゲスト';
       })(),
       tags,
-      chartA:Object.fromEntries(axisA.map((k,i)=>[k,vA[i]])),
-      chartB:Object.fromEntries(axisB.map((k,i)=>[k,vB[i]])),
+      chartA:chartAObj,
+      chartB:chartBObj,
       comment,
       createdAt:new Date().toISOString(),
-      chartMoved,   // スライダー操作フラグ
+      chartMoved: isFullGraph,   // 全軸操作済みフラグ（マスターグラフ集計対象）
       quality: isQuality, // 高品質フラグ
     };
     if(DB_MODE === 'supabase' && sb) {
@@ -2533,8 +3188,9 @@
           chart_b: review.chartB||{},
           tags: review.tags||[],
           comment: review.comment||null,
-          chart_moved: chartMoved,
+          chart_moved: isFullGraph,
           quality: isQuality,
+          quality_score: qualityScore,
         });
         alert(t('reviewPosted'));
         nav('anime',currentAnimeId);
@@ -2559,9 +3215,19 @@
   const srTagsActive=[];
 
   // 有効レビュー（スライダーを動かしたもの）だけをグラフ・検索データに使う
+  // 全軸（chartA+chartB計12軸）が完全に同一値かどうか判定
+  function isUniformReview(r) {
+    const aVals = axisA.map(k => Number(r.chartA&&r.chartA[k]||0));
+    const bVals = axisB.map(k => Number(r.chartB&&r.chartB[k]||0));
+    const all = [...aVals, ...bVals];
+    return all.every(v => v === all[0]);
+  }
+
   function validReviews(animeId) {
     return getReviews().filter(r => {
       if (r.animeId !== animeId) return false;
+      // 全軸同一値（全部0・全部10など）は集計対象から除外
+      if (isUniformReview(r)) return false;
       // chartMovedフラグがあればそれを使う（新形式）
       if(typeof r.chartMoved !== 'undefined') return r.chartMoved;
       // 旧形式: chartA・chartBのどこか1軸でも10未満なら有効
@@ -2571,10 +3237,12 @@
     });
   }
 
-  // 有効レビューの平均グラフ
+  // 有効レビューの集計グラフ（トリム平均/中央値/平均、AGGREGATE_MODEに従う）
   function avgChart(id,chartKey,labels){
     const rs=validReviews(id); if(!rs.length) return null;
-    return Object.fromEntries(labels.map(l=>[l,rs.reduce((a,r)=>a+Number(r[chartKey]&&r[chartKey][l]||0),0)/rs.length]));
+    const mainCluster = getMainClusterReviews(rs);
+    const userQCounts = buildUserQualityCounts(getReviews());
+    return Object.fromEntries(labels.map(l=>[l, aggregateValues(expandByWeight(mainCluster, r=>Number(r[chartKey]&&r[chartKey][l]||0), userQCounts))]));
   }
 
   // 有効レビューのタグを集計して上位10個を返す
@@ -2696,7 +3364,7 @@
       return `
         <div class="gcard" onclick="${a.kitsuId?`navAnime('${a.kitsuId}')`:`nav('anime','${a.id}')`}">
           <div class="gcard-thumb">${a.image?`<img src="${a.image}" alt="${getTitle(a)}" style="width:100%;height:100%;object-fit:cover;" />`:'📺'}</div>
-          <div class="gcard-body"><h3>${getTitle(a)}</h3><p>${a.meta||''}</p><span class="badge">${tFn('reviewCount',row.reviews)}</span>${mb}${tb}</div>
+          <div class="gcard-body"><h3>${getTitle(a)}</h3><p>${a.meta||''}</p><span class="badge">${tFn('reviewCount',row.reviews)}</span>${mb}${tb}${recruitBadgeHtml(a.id)}</div>
         </div>
       `;
     }).join('');
@@ -2977,6 +3645,11 @@
     sortOldest: { ja:'古い順',en:'Oldest',ko:'오래된 순','zh-tw':'最舊','zh-cn':'最旧',es:'Más antiguo',fr:'Plus ancien',pt:'Mais antigo',de:'Älteste',ar:'الأقدم' },
     countryAll:   { ja:'🌍 全て',en:'🌍 All',ko:'🌍 전체','zh-tw':'🌍 全部','zh-cn':'🌍 全部',es:'🌍 Todo',fr:'🌍 Tout',pt:'🌍 Tudo',de:'🌍 Alle',ar:'🌍 الكل' },
     countryOther: { ja:'🌐 その他',en:'🌐 Other',ko:'🌐 기타','zh-tw':'🌐 其他','zh-cn':'🌐 其他',es:'🌐 Otro',fr:'🌐 Autre',pt:'🌐 Outro',de:'🌐 Andere',ar:'🌐 أخرى' },
+    sliderUnset: { ja:'無', en:'—', ko:'무', 'zh-tw':'無', 'zh-cn':'无', es:'—', fr:'—', pt:'—', de:'—', ar:'—' },
+    graphIncompleteMsg: { ja:'この状態で投稿するとレビューとして表示されますが、みんなの評価グラフへのデータ集計はされません。', en:'You can post like this and it will show as a review, but it will not be counted in the master graph.', ko:'이 상태로 게시하면 리뷰로 표시되지만, 모두의 평가 그래프 집계에는 반영되지 않습니다.', 'zh-tw':'以此狀態發佈會顯示為評論，但不會計入大家的評分圖。', 'zh-cn':'以此状态发布会显示为评论，但不会计入大家的评分图。', es:'Puedes publicar así y se mostrará como reseña, pero no se contará en el gráfico general.', fr:"Vous pouvez publier ainsi, l'avis sera affiché mais ne sera pas compté dans le graphique général.", pt:'Você pode postar assim e aparecerá como avaliação, mas não será contado no gráfico geral.', de:'Du kannst so posten, es wird als Bewertung angezeigt, aber nicht in die Gesamtgrafik einberechnet.', ar:'يمكنك النشر هكذا وستظهر كمراجعة، لكنها لن تُحتسب في الرسم البياني العام.' },
+    graphCompleteMsg: { ja:'すべて入力済みです。', en:'All fields are filled in.', ko:'모두 입력 완료되었습니다.', 'zh-tw':'已全部填寫完成。', 'zh-cn':'已全部填写完成。', es:'Todos los campos están completos.', fr:'Tous les champs sont remplis.', pt:'Todos os campos preenchidos.', de:'Alle Felder sind ausgefüllt.', ar:'تم ملء جميع الحقول.' },
+    maturityEarly:  { ja:'レビュー数が少ないため参考値です', en:'Few reviews — values are tentative', ko:'리뷰 수가 적어 참고용입니다', 'zh-tw':'評論數較少，僅供參考', 'zh-cn':'评论数较少，仅供参考', es:'Pocas reseñas, valor referencial', fr:'Peu d\'avis, valeur indicative', pt:'Poucas avaliações, valor referencial', de:'Wenige Bewertungen, Richtwert', ar:'مراجعات قليلة، قيمة تقريبية' },
+    maturityGrowing:{ ja:'（データ収集中）', en:'(Collecting data)', ko:'（데이터 수집 중）', 'zh-tw':'（資料收集中）', 'zh-cn':'（数据收集中）', es:'(Recopilando datos)', fr:'(Collecte en cours)', pt:'(Coletando dados)', de:'(Datensammlung)', ar:'(جمع البيانات)' },
     validReviewMeta: { ja:'有効レビュー {n}件の平均', en:'Average of {n} valid reviews', ko:'유효 리뷰 {n}건의 평균', 'zh-tw':'{n}則有效評論的平均', 'zh-cn':'{n}条有效评论的平均', es:'Media de {n} reseñas válidas', fr:'Moyenne de {n} avis valides', pt:'Média de {n} avaliações válidas', de:'Durchschnitt von {n} gültigen', ar:'متوسط {n} مراجعة' },
     btnBack:      { ja:'← 戻る',en:'← Back',ko:'← 뒤로','zh-tw':'← 返回','zh-cn':'← 返回',es:'← Volver',fr:'← Retour',pt:'← Voltar',de:'← Zurück',ar:'← رجوع' },
     btnClose:     { ja:'← 閉じる',en:'← Close',ko:'← 닫기','zh-tw':'← 關閉','zh-cn':'← 关闭',es:'← Cerrar',fr:'← Fermer',pt:'← Fechar',de:'← Schließen',ar:'← إغلاق' },
@@ -3012,6 +3685,18 @@
     graphMatchBadge:{ ja:'グラフ一致 {n}%',en:'Graph match {n}%',ko:'그래프 일치 {n}%','zh-tw':'圖表匹配 {n}%','zh-cn':'图表匹配 {n}%',es:'Coincidencia {n}%',fr:'Correspondance {n}%',pt:'Correspondência {n}%',de:'Graph-Übereinstimmung {n}%',ar:'تطابق الرسم {n}%' },
     tagMatchBadge: { ja:'タグ {n}件一致',en:'{n} tag match',ko:'태그 {n}건 일치','zh-tw':'標籤 {n}個匹配','zh-cn':'标签 {n}个匹配',es:'{n} etiqueta(s) coinciden',fr:'{n} tag(s) correspondant',pt:'{n} tag(s) coincidente(s)',de:'{n} Tag(s) übereinstimmend',ar:'{n} وسم متطابق' },
     excludedReviews:{ ja:'{n}件のグラフ未操作レビューは集計から除外されています',en:'{n} reviews without graph changes are excluded',ko:'{n}건의 그래프 미조작 리뷰는 집계에서 제외됩니다','zh-tw':'{n}則未調整圖表的評論已排除','zh-cn':'{n}条未调整图表的评论已排除',es:'{n} reseñas sin cambios en el gráfico están excluidas',fr:'{n} avis sans modifications du graphique sont exclus',pt:'{n} avaliações sem alterações no gráfico foram excluídas',de:'{n} Bewertungen ohne Graphänderungen sind ausgeschlossen',ar:'{n} مراجعات بدون تغييرات في الرسم مستثناة' },
+    statReviews:    { ja:'レビュー',en:'Reviews',ko:'리뷰','zh-tw':'評論','zh-cn':'评论',es:'Reseñas',fr:'Avis',pt:'Avaliações',de:'Bewertungen',ar:'مراجعات' },
+    statFavorites:  { ja:'お気に入り',en:'Favorites',ko:'즐겨찾기','zh-tw':'收藏','zh-cn':'收藏',es:'Favoritos',fr:'Favoris',pt:'Favoritos',de:'Favoriten',ar:'المفضلة' },
+    statQuality:    { ja:'上質レビュー',en:'Quality reviews',ko:'우수 리뷰','zh-tw':'優質評論','zh-cn':'优质评论',es:'Reseñas de calidad',fr:'Avis de qualité',pt:'Avaliações de qualidade',de:'Qualitätsbewertungen',ar:'مراجعات عالية الجودة' },
+    rankProgressTitle: { ja:'🏅 称号の道のり',en:'🏅 Rank Progress',ko:'🏅 칭호 진행도','zh-tw':'🏅 稱號之路','zh-cn':'🏅 称号之路',es:'🏅 Progreso de rango',fr:'🏅 Progression de rang',pt:'🏅 Progresso de patente',de:'🏅 Rang-Fortschritt',ar:'🏅 تقدم الرتبة' },
+    favoritesTitle: { ja:'⭐ お気に入り',en:'⭐ Favorites',ko:'⭐ 즐겨찾기','zh-tw':'⭐ 收藏','zh-cn':'⭐ 收藏',es:'⭐ Favoritos',fr:'⭐ Favoris',pt:'⭐ Favoritos',de:'⭐ Favoriten',ar:'⭐ المفضلة' },
+    noFavoritesYet: { ja:'お気に入りはまだありません',en:'No favorites yet',ko:'즐겨찾기가 아직 없습니다','zh-tw':'尚無收藏','zh-cn':'还没有收藏',es:'Sin favoritos aún',fr:'Pas encore de favoris',pt:'Sem favoritos ainda',de:'Noch keine Favoriten',ar:'لا توجد مفضلة بعد' },
+    editProfileTitle:{ ja:'プロフィール編集',en:'Edit Profile',ko:'프로필 편집','zh-tw':'編輯個人資料','zh-cn':'编辑个人资料',es:'Editar perfil',fr:'Modifier le profil',pt:'Editar perfil',de:'Profil bearbeiten',ar:'تعديل الملف الشخصي' },
+    labelBio:       { ja:'自己紹介',en:'Bio',ko:'자기소개','zh-tw':'自我介紹','zh-cn':'自我介绍',es:'Biografía',fr:'Bio',pt:'Bio',de:'Über mich',ar:'نبذة' },
+    labelFavGenres: { ja:'好きなジャンル（最大5個）',en:'Favorite genres (up to 5)',ko:'좋아하는 장르 (최대 5개)','zh-tw':'喜歡的類型（最多5個）','zh-cn':'喜欢的类型（最多5个）',es:'Géneros favoritos (hasta 5)',fr:'Genres préférés (max 5)',pt:'Gêneros favoritos (até 5)',de:'Lieblingsgenres (bis zu 5)',ar:'الأنواع المفضلة (حتى 5)' },
+    btnSave:        { ja:'保存する',en:'Save',ko:'저장',  'zh-tw':'儲存','zh-cn':'保存',es:'Guardar',fr:'Enregistrer',pt:'Salvar',de:'Speichern',ar:'حفظ' },
+    popAxisBase:   { ja:'基準',en:'Sort by',ko:'기준','zh-tw':'排序','zh-cn':'排序',es:'Ordenar',fr:'Trier',pt:'Ordenar',de:'Sortieren',ar:'ترتيب حسب' },
+    popAxisPeriod: { ja:'期間',en:'Period',ko:'기간','zh-tw':'期間','zh-cn':'期间',es:'Periodo',fr:'Période',pt:'Período',de:'Zeitraum',ar:'الفترة' },
     popSortPopular: { ja:'🔥 人気順',en:'🔥 Popular',ko:'🔥 인기순','zh-tw':'🔥 熱門','zh-cn':'🔥 热门',es:'🔥 Popular',fr:'🔥 Populaire',pt:'🔥 Popular',de:'🔥 Beliebt',ar:'🔥 شائع' },
     popSortReviews: { ja:'💬 レビュー順',en:'💬 Most Reviewed',ko:'💬 리뷰순','zh-tw':'💬 評論數','zh-cn':'💬 评论数',es:'💬 Más reseñado',fr:'💬 Plus évalué',pt:'💬 Mais avaliado',de:'💬 Meistbewertet',ar:'💬 الأكثر تقييماً' },
     popSortToday:  { ja:'📈 今日',en:'📈 Today',ko:'📈 오늘','zh-tw':'📈 今天','zh-cn':'📈 今天',es:'📈 Hoy',fr:"📈 Aujourd'hui",pt:'📈 Hoje',de:'📈 Heute',ar:'📈 اليوم' },
@@ -3303,17 +3988,6 @@
     const mcbLabel = document.getElementById('masterChartBLabel');
     if(mcbLabel) mcbLabel.textContent = t('chartBTitle');
 
-    // 人気ページのソートタブ
-    const popSortMap = {
-      popular:'popSortPopular', reviews:'popSortReviews',
-      pv_day:'popSortToday', pv_week:'popSortWeek',
-      pv_month:'popSortMonth', pv_year:'popSortYear',
-      pv_all:'popSortAll', year:'popSortPeriod'
-    };
-    document.querySelectorAll('.pop-sort-tab').forEach(btn=>{
-      const key = popSortMap[btn.dataset.sort];
-      if(key) btn.textContent = t(key);
-    });
     // このアニメを観る
     const streamLabel = document.querySelector('#afStreamSection .af-section-label');
     if(streamLabel) streamLabel.textContent = t('streamSection');
@@ -3424,6 +4098,11 @@
       const ap=document.querySelector('.page.active');
       if(ap&&ap.id==='page-anime') renderMasterGraph(currentAnimeId);
       if(ap&&ap.id==='page-reviews') renderReviewsListFiltered(currentAnimeId);
+      if(ap&&ap.id==='page-review'){
+        buildReviewSliders('slidersA', getAxisA(), vA, ()=>{ chartMoved=true; redrawReview(); });
+        buildReviewSliders('slidersB', getAxisB(), vB, ()=>{ chartMoved=true; redrawReview(); });
+        redrawReview();
+      }
     }
 
     // ========== 確実な全テキスト更新 ==========
@@ -3493,8 +4172,6 @@
       if(i===1) l.textContent=t('labelComment');
     });
     // 人気ページ
-    const _popMap={popular:'popSortPopular',reviews:'popSortReviews',pv_day:'popSortToday',pv_week:'popSortWeek',pv_month:'popSortMonth',pv_year:'popSortYear',pv_all:'popSortAll',year:'popSortPeriod'};
-    document.querySelectorAll('.pop-sort-tab').forEach(btn=>{ const k=_popMap[btn.dataset.sort]; if(k) btn.textContent=t(k); });
     const _dl = document.querySelector('.pop-drum-label'); if(_dl) _dl.textContent=t('yearPickLabel');
     const _ya = document.getElementById('popYearApply'); if(_ya) _ya.textContent=t('btnApply');
     const _pl = document.getElementById('popLoadBtn'); if(_pl) _pl.textContent=t('btnMore');
@@ -3770,6 +4447,45 @@
           </div>
         `).join('');
       }
+
+      // 票割れ検知（全アニメをチェック）
+      if(allReviews) {
+        const reviewsByAnime = {};
+        allReviews.forEach(r=>{
+          if(!reviewsByAnime[r.anime_id]) reviewsByAnime[r.anime_id]=[];
+          reviewsByAnime[r.anime_id].push(r);
+        });
+        // anime_idごとの全レビュー詳細を取得（chartA/B付き）して判定
+        const { data: fullReviews } = await sb.from('reviews').select('anime_id,chart_a,chart_b');
+        const animeMap2 = {};
+        (await sb.from('anime_pages').select('id,title,title_en')).data?.forEach(a=>{ animeMap2[a.id]=a.title||a.title_en||a.id; });
+        if(fullReviews) {
+          const byAnime = {};
+          fullReviews.forEach(r=>{
+            if(!byAnime[r.anime_id]) byAnime[r.anime_id]=[];
+            byAnime[r.anime_id].push({ chartA:r.chart_a, chartB:r.chart_b });
+          });
+          const splitResults = [];
+          Object.entries(byAnime).forEach(([animeId, revs])=>{
+            if(revs.length < 10) return;
+            const result = detectSplitOpinion(revs);
+            if(result.isSplit) splitResults.push({ animeId, ...result });
+          });
+          const splitEl = document.getElementById('adminSplitOpinions');
+          if(splitEl) {
+            if(splitResults.length) {
+              splitEl.innerHTML = splitResults.map(s=>`
+                <div class="admin-row">
+                  <span>${animeMap2[s.animeId]||s.animeId}</span>
+                  <span class="admin-badge" style="background:rgba(255,107,107,.15);color:#ff6b6b;">派閥A:${s.top1Size}件 / 派閥B:${s.top2Size}件（全${s.totalReviews}件）</span>
+                </div>
+              `).join('');
+            } else {
+              splitEl.innerHTML = '<p style="color:var(--muted);font-size:.82rem;">現在、評価が二極化している作品はありません</p>';
+            }
+          }
+        }
+      }
     } catch(e) {
       console.error('Admin data load error:', e);
     }
@@ -3857,7 +4573,7 @@
           <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
             <div style="width:32px;height:32px;border-radius:7px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
             <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-              <span class="rc-name">${name}${flag}</span>
+              <span class="rc-name">${name}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
             </div>
           </div>
@@ -4023,6 +4739,11 @@
     renderMypage();
   }
 
+  let _myProfile = { username:'', bio:'', genres:[] };
+
+  const FAV_KEY = 'animepple-favorites'; // ローカルキャッシュ（表示高速化用）
+  const GENRE_OPTIONS = ['Action','Comedy','Drama','Fantasy','Romance','SciFi','Horror','Slice of Life','Sports','Mystery','Isekai','School'];
+
   async function renderMypage() {
     const guest = document.getElementById('mypageGuest');
     const user = document.getElementById('mypageUser');
@@ -4033,32 +4754,51 @@
     }
     guest.style.display = 'none';
     user.style.display = '';
-    // ユーザー名取得
-    let username = _currentUser._username || '';
-    if(!username && sb) {
-      const { data } = await sb.from('profiles').select('username').eq('id', _currentUser.id).single();
-      username = data?.username || _currentUser.email.split('@')[0];
+
+    // プロフィール取得（username, bio, genres まとめて1回で）
+    let profileData = null;
+    if(sb) {
+      const { data } = await sb.from('profiles').select('username,bio,favorite_genres').eq('id', _currentUser.id).single();
+      profileData = data;
     }
+    const username = _currentUser._username || profileData?.username || _currentUser.email.split('@')[0];
+    _myProfile = { username, bio: profileData?.bio||'', genres: profileData?.favorite_genres||[] };
+
     document.getElementById('mypageUsername').textContent = username;
     document.getElementById('mypageEmail').textContent = _currentUser.email;
+
+    // 自己紹介・ジャンル表示
+    const bioSection = document.getElementById('mypageBioSection');
+    if(_myProfile.bio || _myProfile.genres.length) {
+      bioSection.style.display = '';
+      document.getElementById('mypageBioText').textContent = _myProfile.bio || '';
+      document.getElementById('mypageGenreTags').innerHTML = _myProfile.genres.map(g=>`<span class="mypage-genre-tag">${g}</span>`).join('');
+    } else {
+      bioSection.style.display = 'none';
+    }
+
     // アイコン（イニシャル）
     const initial = username.slice(0,1) || '?';
     const avatar = document.getElementById('mypageAvatarIcon');
     avatar.textContent = initial;
-    // アイコン色をユーザーIDからランダムに
     const colors = ['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
     const idx = _currentUser.id.charCodeAt(0) % colors.length;
     avatar.style.background = colors[idx];
-    // レビュー一覧（Supabaseから取得）
+
+    let qualityCount = 0, reviewTotal = 0;
+
+    // レビュー一覧＋統計（Supabaseから取得）
     if(sb) {
       const { data: reviews } = await sb.from('reviews')
         .select('*')
         .eq('username', username)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .order('created_at', { ascending: false });
+      reviewTotal = reviews ? reviews.length : 0;
+      qualityCount = reviews ? reviews.filter(r=>r.quality).length : 0;
+
       const listEl = document.getElementById('mypageReviewList');
       if(reviews && reviews.length) {
-        listEl.innerHTML = reviews.map(r=>`
+        listEl.innerHTML = reviews.slice(0,10).map(r=>`
           <div style="padding:.6rem 0;border-bottom:1px solid var(--line);">
             <div style="font-size:.82rem;color:#dff0e6;">${r.anime_id.replace('kitsu-','作品ID: ')}</div>
             <div style="font-size:.72rem;color:var(--muted);">${new Date(r.created_at).toLocaleDateString('ja-JP')}</div>
@@ -4067,7 +4807,135 @@
       } else {
         listEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${t('noReviewHistory')}</p>`;
       }
+
+      // 称号バッジ
+      const rank = getRankByQualityCount(qualityCount);
+      const badgeEl = document.getElementById('mypageRankBadge');
+      if(badgeEl) {
+        badgeEl.textContent = `🏅 ${rank.name}`;
+        badgeEl.style.display = '';
+      }
+
+      // 称号進捗バー
+      renderRankProgress(qualityCount);
     }
+
+    // 統計サマリー更新
+    document.getElementById('statReviewCount').textContent = reviewTotal;
+    document.getElementById('statQualityCount').textContent = qualityCount;
+
+    // お気に入り一覧
+    await renderFavoritesList();
+  }
+
+  function renderRankProgress(qualityCount) {
+    const el = document.getElementById('mypageRankProgress');
+    if(!el) return;
+    const currentRank = getRankByQualityCount(qualityCount);
+    const currentIdx = RANK_TIERS.indexOf(currentRank);
+    const nextRank = RANK_TIERS[currentIdx+1];
+    if(!nextRank) {
+      el.innerHTML = `<div class="rank-progress-wrap"><div class="rank-progress-labels"><span>${currentRank.name}（最高位）</span></div></div>`;
+      return;
+    }
+    const progress = Math.min(100, Math.round((qualityCount - currentRank.min) / (nextRank.min - currentRank.min) * 100));
+    el.innerHTML = `
+      <div class="rank-progress-wrap">
+        <div class="rank-progress-labels"><span>${currentRank.name}</span><span>${nextRank.name}まであと${nextRank.min - qualityCount}件</span></div>
+        <div class="rank-progress-bar-bg"><div class="rank-progress-bar-fill" style="width:${progress}%;"></div></div>
+      </div>`;
+  }
+
+  /* ════════════════════════════
+     お気に入り機能
+  ════════════════════════════ */
+  async function isFavorited(animeId) {
+    if(!_currentUser || !sb) return false;
+    const { data } = await sb.from('favorites').select('id').eq('user_id', _currentUser.id).eq('anime_id', animeId).maybeSingle();
+    return !!data;
+  }
+
+  async function toggleFavorite() {
+    if(!_currentUser) { showAuthModal('login'); return; }
+    if(!sb || !currentAnimeId) return;
+    const btn = document.getElementById('favToggleBtn');
+    const already = await isFavorited(currentAnimeId);
+    if(already) {
+      await sb.from('favorites').delete().eq('user_id', _currentUser.id).eq('anime_id', currentAnimeId);
+      if(btn) { btn.textContent = '♡'; btn.classList.remove('fav-active'); }
+    } else {
+      await sb.from('favorites').insert({ user_id: _currentUser.id, anime_id: currentAnimeId });
+      if(btn) { btn.textContent = '❤️'; btn.classList.add('fav-active'); }
+    }
+  }
+
+  async function updateFavButtonState(animeId) {
+    const btn = document.getElementById('favToggleBtn');
+    if(!btn) return;
+    if(!_currentUser) { btn.textContent = '♡'; return; }
+    const fav = await isFavorited(animeId);
+    btn.textContent = fav ? '❤️' : '♡';
+  }
+
+  async function renderFavoritesList() {
+    const el = document.getElementById('mypageFavoritesList');
+    if(!el || !sb || !_currentUser) return;
+    const { data: favs } = await sb.from('favorites').select('anime_id').eq('user_id', _currentUser.id).order('created_at',{ascending:false});
+    document.getElementById('statFavCount').textContent = favs ? favs.length : 0;
+    if(!favs || !favs.length) {
+      el.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${t('noFavoritesYet')}</p>`;
+      return;
+    }
+    const ids = favs.map(f=>f.anime_id);
+    const { data: pages } = await sb.from('anime_pages').select('id,title,title_en,image_url').in('id', ids);
+    const pageMap = {};
+    (pages||[]).forEach(p=>{ pageMap[p.id]=p; });
+    el.innerHTML = favs.map(f=>{
+      const p = pageMap[f.anime_id];
+      const title = p?.title || p?.title_en || f.anime_id;
+      const img = p?.image_url;
+      return `<div class="mypage-fav-card" onclick="nav('anime','${f.anime_id}')">
+        ${img?`<img src="${img}" loading="lazy">`:'<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;color:var(--muted);">📺</div>'}
+        <div class="mypage-fav-title">${title}</div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ════════════════════════════
+     プロフィール編集
+  ════════════════════════════ */
+  function openProfileEdit() {
+    if(!_currentUser) return;
+    document.getElementById('profileEditUsername').value = _myProfile.username;
+    document.getElementById('profileEditBio').value = _myProfile.bio;
+    const picker = document.getElementById('profileGenrePicker');
+    picker.innerHTML = GENRE_OPTIONS.map(g=>`<span class="profile-genre-chip${_myProfile.genres.includes(g)?' selected':''}" data-genre="${g}">${g}</span>`).join('');
+    picker.querySelectorAll('.profile-genre-chip').forEach(chip=>{
+      chip.onclick = ()=>{
+        const g = chip.dataset.genre;
+        const idx = _myProfile.genres.indexOf(g);
+        if(idx>=0) { _myProfile.genres.splice(idx,1); chip.classList.remove('selected'); }
+        else if(_myProfile.genres.length<5) { _myProfile.genres.push(g); chip.classList.add('selected'); }
+      };
+    });
+    document.getElementById('profileEditOverlay').style.display = 'flex';
+  }
+  function closeProfileEdit() {
+    document.getElementById('profileEditOverlay').style.display = 'none';
+  }
+  async function saveProfileEdit() {
+    if(!_currentUser || !sb) return;
+    const username = document.getElementById('profileEditUsername').value.trim() || _myProfile.username;
+    const bio = document.getElementById('profileEditBio').value.trim().slice(0,100);
+    await sb.from('profiles').upsert({
+      id: _currentUser.id,
+      username,
+      bio,
+      favorite_genres: _myProfile.genres,
+    });
+    _currentUser._username = username;
+    closeProfileEdit();
+    renderMypage();
   }
 
   window.showAuthModal = showAuthModal;
@@ -4075,6 +4943,10 @@
   window.authSubmit = authSubmit;
   window.signOut = signOut;
   window.renderMypage = renderMypage;
+  window.toggleFavorite = toggleFavorite;
+  window.openProfileEdit = openProfileEdit;
+  window.closeProfileEdit = closeProfileEdit;
+  window.saveProfileEdit = saveProfileEdit;
 
   document.getElementById('bnav-home').classList.add('active');
 
