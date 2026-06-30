@@ -373,47 +373,127 @@
     .admin-axis-track { height:7px; border-radius:4px; background:var(--card); overflow:hidden; }
     .admin-axis-fill { height:100%; border-radius:4px; }
     .admin-axis-val { font-size:.76rem; font-weight:700; color:var(--brand); text-align:right; }
+    .admin-select { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:.5rem .7rem; color:#dff0e6; font-size:.82rem; }
+    .admin-country-select-row { display:flex; align-items:center; gap:.5rem; }
+    .admin-country-select-row .admin-select { flex:1; }
+    .admin-search-result-item { padding:.5rem .6rem; border-radius:8px; cursor:pointer; font-size:.82rem; color:#dff0e6; }
+    .admin-search-result-item:hover { background:var(--card); }
+    .admin-anime-country-row { display:flex; flex-direction:column; gap:.3rem; padding:.6rem 0; border-bottom:1px solid var(--line); }
+    .admin-anime-country-row:last-child { border-bottom:none; }
     .admin-section-title { font-size:.88rem; font-weight:700; color:#dff0e6; margin:0 0 .75rem; }
     .admin-row { display:flex; align-items:center; justify-content:space-between; padding:.4rem 0; border-bottom:1px solid var(--line); font-size:.82rem; }
     .admin-row:last-child { border-bottom:none; }
     .admin-badge { background:rgba(94,201,122,.15); color:var(--brand); border-radius:6px; padding:.1rem .5rem; font-size:.72rem; font-weight:700; }
 
     /* ══ MY PAGE ══ */
-    .mypage-hero { display:flex; align-items:center; gap:1rem; padding:1.5rem 1rem 1rem; }
-    .mypage-avatar { width:60px; height:60px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .mypage-hero-wrap-bg {
+      background: linear-gradient(160deg, rgba(94,201,122,.16), rgba(7,21,13,0) 65%);
+      border-bottom: 1px solid var(--line);
+      padding-bottom: .5rem;
+    }
+    .mypage-hero { display:flex; align-items:center; gap:1.1rem; padding:1.8rem 1.1rem 1rem; position:relative; }
+    .mypage-avatar {
+      width:68px; height:68px; border-radius:18px; display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+    }
     .guest-avatar { background:var(--card2); border:1px solid var(--line); }
-    .user-avatar { background:var(--brand); color:#0c2015; font-size:1.5rem; font-weight:800; }
-    .mypage-info { flex:1; }
-    .mypage-name { font-size:1.1rem; font-weight:700; color:#dff0e6; margin:0 0 .2rem; }
-    .mypage-sub { font-size:.78rem; color:var(--muted); margin:0; }
-    .mypage-rank-badge { display:inline-block; margin-top:.35rem; padding:.15rem .6rem; border-radius:999px; background:rgba(94,201,122,.15); color:var(--brand); font-size:.72rem; font-weight:700; }
-    .mypage-actions { padding:.5rem 1rem 1rem; display:flex; flex-direction:column; gap:.5rem; }
-    .mypage-btn-primary { width:100%; padding:.75rem; border-radius:12px; background:var(--brand); color:#0c2015; font-weight:700; border:none; cursor:pointer; font-size:.95rem; }
-    .mypage-btn-secondary { width:100%; padding:.7rem; border-radius:12px; background:transparent; color:var(--muted); border:1px solid var(--line); cursor:pointer; font-size:.9rem; }
-    .mypage-section { padding:1rem; border-top:1px solid var(--line); }
-    .mypage-edit-btn { background:var(--card2); border:1px solid var(--line); border-radius:8px; width:36px; height:36px; font-size:1rem; cursor:pointer; flex-shrink:0; }
-    .mypage-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; padding:0 1rem; }
-    .mypage-stat-card { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:.7rem .5rem; text-align:center; }
-    .mypage-stat-num { font-size:1.3rem; font-weight:800; color:var(--brand); }
-    .mypage-stat-label { font-size:.68rem; color:var(--muted); margin-top:.1rem; }
-    .mypage-bio-text { font-size:.85rem; color:#dff0e6; line-height:1.5; margin:0 0 .6rem; white-space:pre-wrap; }
+    .user-avatar { background:linear-gradient(150deg, var(--brand), var(--brand2)); color:#0c2015; font-size:1.7rem; font-weight:800; overflow:hidden; }
+    .user-avatar img { width:100%; height:100%; object-fit:cover; border-radius:18px; }
+    .mypage-avatar-wrap { position:relative; flex-shrink:0; }
+    .mypage-avatar-edit-btn {
+      position:absolute; bottom:-4px; right:-4px; width:26px; height:26px; border-radius:50%;
+      background:var(--card); border:2px solid var(--bg); font-size:.75rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.3);
+    }
+    .mypage-avatar-edit-btn:hover { background:rgba(94,201,122,.2); }
+    .mypage-info { flex:1; min-width:0; }
+    .mypage-name { font-size:1.22rem; font-weight:800; color:#eafff2; margin:0 0 .2rem; letter-spacing:.01em; }
+    .mypage-sub { font-size:.78rem; color:var(--muted); margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .mypage-rank-badge {
+      display:inline-flex; align-items:center; gap:.25rem; margin-top:.5rem; padding:.22rem .75rem; border-radius:999px;
+      background:linear-gradient(120deg, rgba(94,201,122,.22), rgba(94,201,122,.08));
+      border:1px solid rgba(94,201,122,.4);
+      color:var(--brand); font-size:.74rem; font-weight:800; letter-spacing:.02em;
+    }
+    .mypage-actions { padding:.6rem 1.1rem 1.2rem; display:flex; flex-direction:column; gap:.55rem; }
+    .mypage-btn-primary {
+      width:100%; padding:.8rem; border-radius:14px; background:linear-gradient(120deg,var(--brand),var(--brand2));
+      color:#0c2015; font-weight:800; border:none; cursor:pointer; font-size:.95rem;
+      box-shadow: 0 4px 14px rgba(94,201,122,.25); transition: transform .15s, box-shadow .15s;
+    }
+    .mypage-btn-primary:active { transform: scale(.98); }
+    .mypage-btn-secondary {
+      width:100%; padding:.7rem; border-radius:14px; background:var(--card2); color:var(--muted);
+      border:1px solid var(--line); cursor:pointer; font-size:.9rem; transition: background .15s, color .15s;
+    }
+    .mypage-btn-secondary:hover { background:rgba(255,255,255,.04); color:#dff0e6; }
+    .mypage-section { padding:1.1rem; border-top:1px solid var(--line); }
+    .mypage-edit-btn {
+      background:var(--card2); border:1px solid var(--line); border-radius:10px; width:40px; height:40px;
+      font-size:1.05rem; cursor:pointer; flex-shrink:0; align-self:flex-start; margin-top:.2rem;
+      transition: background .15s, transform .15s;
+    }
+    .mypage-edit-btn:hover { background:rgba(94,201,122,.12); transform: rotate(-8deg); }
+    .mypage-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; padding:0 1.1rem; margin-top:.3rem; }
+    .mypage-stat-card {
+      background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:.85rem .5rem; text-align:center;
+      transition: border-color .15s, transform .15s;
+    }
+    .mypage-stat-card:hover { border-color: rgba(94,201,122,.4); transform: translateY(-1px); }
+    .mypage-stat-icon { font-size:1.1rem; margin-bottom:.2rem; opacity:.85; }
+    .mypage-stat-num { font-size:1.45rem; font-weight:800; color:var(--brand); line-height:1.1; }
+    .mypage-stat-label { font-size:.66rem; color:var(--muted); margin-top:.25rem; letter-spacing:.01em; }
+    .mypage-bio-text { font-size:.85rem; color:#dff0e6; line-height:1.6; margin:0 0 .65rem; white-space:pre-wrap; }
     .mypage-genre-tags { display:flex; flex-wrap:wrap; gap:.4rem; }
-    .mypage-genre-tag { background:rgba(94,201,122,.15); color:var(--brand); border-radius:999px; padding:.2rem .65rem; font-size:.72rem; font-weight:700; }
-    .mypage-fav-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+    .mypage-genre-tag {
+      background:rgba(94,201,122,.13); color:var(--brand); border-radius:999px; padding:.25rem .7rem; font-size:.72rem;
+      font-weight:700; border:1px solid rgba(94,201,122,.25);
+    }
+    .mypage-fav-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.55rem; }
     @media (min-width:640px) { .mypage-fav-grid { grid-template-columns:repeat(5,1fr); } }
-    .mypage-fav-card { cursor:pointer; border-radius:10px; overflow:hidden; background:var(--card2); border:1px solid var(--line); position:relative; }
+    .mypage-fav-card {
+      cursor:pointer; border-radius:12px; overflow:hidden; background:var(--card2); border:1px solid var(--line);
+      position:relative; transition: transform .15s, box-shadow .15s;
+    }
+    .mypage-fav-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.3); }
     .mypage-fav-card img { width:100%; aspect-ratio:3/4; object-fit:cover; display:block; }
-    .mypage-fav-card .mypage-fav-title { font-size:.66rem; padding:.3rem; color:#dff0e6; line-height:1.2; }
-    .mypage-fav-remove { position:absolute; top:.2rem; right:.2rem; background:rgba(0,0,0,.6); color:#ff8888; border:none; border-radius:6px; width:20px; height:20px; font-size:.7rem; cursor:pointer; }
-    .rank-progress-wrap { display:flex; flex-direction:column; gap:.3rem; }
-    .rank-progress-labels { display:flex; justify-content:space-between; font-size:.72rem; color:var(--muted); }
-    .rank-progress-bar-bg { width:100%; height:8px; border-radius:4px; background:var(--card2); overflow:hidden; }
-    .rank-progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--brand),var(--brand2)); border-radius:4px; transition:width .3s; }
+    .mypage-fav-card .mypage-fav-title {
+      font-size:.66rem; padding:.4rem .35rem; color:#dff0e6; line-height:1.25;
+      background:linear-gradient(180deg, var(--card2), #0c241a);
+    }
+    .mypage-fav-remove { position:absolute; top:.25rem; right:.25rem; background:rgba(0,0,0,.65); color:#ff8888; border:none; border-radius:7px; width:22px; height:22px; font-size:.72rem; cursor:pointer; }
+    .rank-progress-wrap { display:flex; flex-direction:column; gap:.4rem; }
+    .rank-progress-labels { display:flex; justify-content:space-between; font-size:.74rem; color:var(--muted); }
+    .rank-progress-labels strong { color:#dff0e6; font-weight:700; }
+    .rank-progress-bar-bg { width:100%; height:10px; border-radius:6px; background:var(--card2); overflow:hidden; border:1px solid var(--line); }
+    .rank-progress-bar-fill {
+      height:100%; background:linear-gradient(90deg,var(--brand),var(--brand2)); border-radius:6px; transition:width .4s ease;
+      box-shadow: 0 0 8px rgba(94,201,122,.5);
+    }
     .profile-genre-picker { display:flex; flex-wrap:wrap; gap:.4rem; }
-    .profile-genre-chip { background:var(--card2); border:1px solid var(--line); border-radius:999px; padding:.25rem .65rem; font-size:.75rem; color:var(--muted); cursor:pointer; }
+    .profile-genre-chip { background:var(--card2); border:1px solid var(--line); border-radius:999px; padding:.28rem .7rem; font-size:.75rem; color:var(--muted); cursor:pointer; transition: all .15s; }
+    .profile-genre-chip:hover { border-color: rgba(94,201,122,.4); }
     .profile-genre-chip.selected { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
-    .mypage-hero { position:relative; }
-    .mypage-section-title { font-size:.88rem; font-weight:700; color:#dff0e6; margin:0 0 .75rem; }
+    .mypage-section-title {
+      font-size:.9rem; font-weight:800; color:#eafff2; margin:0 0 .8rem;
+      display:flex; align-items:center; gap:.4rem;
+    }
+    .mypage-review-card {
+      background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:.85rem;
+      margin-bottom:.65rem; transition: border-color .15s;
+    }
+    .mypage-review-card:last-child { margin-bottom:0; }
+    .mypage-review-card:hover { border-color: rgba(94,201,122,.3); }
+    .mypage-review-card-title { font-size:.84rem; font-weight:700; color:#dff0e6; margin-bottom:.2rem; }
+    .mypage-review-card-date { font-size:.7rem; color:var(--muted); }
+    .mypage-review-card-quality {
+      display:inline-flex; align-items:center; gap:.2rem; font-size:.66rem; font-weight:700; color:#ffd166;
+      background:rgba(255,209,102,.12); border-radius:999px; padding:.12rem .5rem; margin-top:.4rem;
+    }
+    .mypage-empty-state {
+      text-align:center; padding:1.5rem .5rem; color:var(--muted); font-size:.85rem;
+    }
+    .mypage-empty-state .mypage-empty-icon { font-size:1.8rem; margin-bottom:.5rem; opacity:.5; }
 
     /* 認証モーダル */
     .auth-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; display:flex; align-items:center; justify-content:center; padding:1rem; }
@@ -1136,6 +1216,7 @@
     <div class="hdr-inner">
       <button class="back-btn" onclick="nav('home')" style="color:#fff;">← 戻る</button>
       <span style="color:var(--brand);font-weight:800;">🔐 管理者ダッシュボード</span>
+      <button onclick="adminLogout()" style="background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:.4rem .8rem;color:#ff8888;font-size:.78rem;cursor:pointer;">ログアウト</button>
     </div>
   </header>
 
@@ -1184,10 +1265,44 @@
       <div id="adminAxisBalance"></div>
     </div>
 
+    <!-- 国別評価傾向（横断比較） -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🌐 国別評価傾向（全アニメ横断）</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">国ごとの評価の癖を比較（PVデータが10件以上ある国のみ表示）</p>
+      <div class="admin-country-select-row">
+        <select id="adminCountrySelectA" class="admin-select"></select>
+        <span style="color:var(--muted);font-size:.8rem;">vs</span>
+        <select id="adminCountrySelectB" class="admin-select"></select>
+      </div>
+      <div id="adminCountryGraphCompare" style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.7rem;">
+        <div>
+          <p style="font-size:.7rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">作品の完成度</p>
+          <canvas id="adminCountryChartA1" style="width:100%;aspect-ratio:1;border-radius:10px;background:#09201b;display:block;"></canvas>
+        </div>
+        <div>
+          <p style="font-size:.7rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">感情・雰囲気</p>
+          <canvas id="adminCountryChartB1" style="width:100%;aspect-ratio:1;border-radius:10px;background:#09201b;display:block;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 特定アニメの国別グラフ -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🎯 特定作品の国別評価比較</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">同じ作品でも国によって評価傾向が違うかを確認</p>
+      <input id="adminAnimeSearchInput" class="admin-select" placeholder="作品名で検索…" style="width:100%;margin-bottom:.5rem;" />
+      <div id="adminAnimeSearchResults" style="max-height:160px;overflow-y:auto;margin-bottom:.5rem;"></div>
+      <div id="adminAnimeCountryGraphWrap" style="display:none;">
+        <p id="adminAnimeCountryGraphTitle" style="font-size:.8rem;color:#dff0e6;font-weight:700;margin:.5rem 0;"></p>
+        <div id="adminAnimeCountryGraphs"></div>
+      </div>
+    </div>
+
     <!-- 国別PV -->
     <div class="admin-section">
       <h3 class="admin-section-title">🌍 国別PV（全期間）</h3>
       <div id="adminCountryStats"></div>
+
     </div>
 
     <!-- 最近のレビュー -->
@@ -1243,29 +1358,38 @@
 
   <!-- ログイン済み表示 -->
   <div id="mypageUser" style="display:none;">
-    <div class="mypage-hero">
-      <div class="mypage-avatar user-avatar" id="mypageAvatarIcon">か</div>
-      <div class="mypage-info">
-        <p class="mypage-name" id="mypageUsername">ユーザー名</p>
-        <p class="mypage-sub" id="mypageEmail">email</p>
-        <p class="mypage-rank-badge" id="mypageRankBadge" style="display:none;"></p>
+    <div class="mypage-hero-wrap-bg">
+      <div class="mypage-hero">
+        <div class="mypage-avatar-wrap">
+          <div class="mypage-avatar user-avatar" id="mypageAvatarIcon">か</div>
+          <button class="mypage-avatar-edit-btn" id="mypageAvatarEditBtn" onclick="document.getElementById('avatarFileInput').click()">📷</button>
+          <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)" />
+        </div>
+        <div class="mypage-info">
+          <p class="mypage-name" id="mypageUsername">ユーザー名</p>
+          <p class="mypage-sub" id="mypageEmail">email</p>
+          <p class="mypage-rank-badge" id="mypageRankBadge" style="display:none;"></p>
+        </div>
+        <button class="mypage-edit-btn" id="mypageEditBtn" onclick="openProfileEdit()">✏️</button>
       </div>
-      <button class="mypage-edit-btn" id="mypageEditBtn" onclick="openProfileEdit()">✏️</button>
-    </div>
 
-    <!-- 統計サマリー -->
-    <div class="mypage-stats-row">
-      <div class="mypage-stat-card">
-        <div class="mypage-stat-num" id="statReviewCount">0</div>
-        <div class="mypage-stat-label" data-i18n="statReviews">レビュー</div>
-      </div>
-      <div class="mypage-stat-card">
-        <div class="mypage-stat-num" id="statFavCount">0</div>
-        <div class="mypage-stat-label" data-i18n="statFavorites">お気に入り</div>
-      </div>
-      <div class="mypage-stat-card">
-        <div class="mypage-stat-num" id="statQualityCount">0</div>
-        <div class="mypage-stat-label" data-i18n="statQuality">上質レビュー</div>
+      <!-- 統計サマリー -->
+      <div class="mypage-stats-row">
+        <div class="mypage-stat-card">
+          <div class="mypage-stat-icon">📝</div>
+          <div class="mypage-stat-num" id="statReviewCount">0</div>
+          <div class="mypage-stat-label" data-i18n="statReviews">レビュー</div>
+        </div>
+        <div class="mypage-stat-card">
+          <div class="mypage-stat-icon">⭐</div>
+          <div class="mypage-stat-num" id="statFavCount">0</div>
+          <div class="mypage-stat-label" data-i18n="statFavorites">お気に入り</div>
+        </div>
+        <div class="mypage-stat-card">
+          <div class="mypage-stat-icon">✨</div>
+          <div class="mypage-stat-num" id="statQualityCount">0</div>
+          <div class="mypage-stat-label" data-i18n="statQuality">上質レビュー</div>
+        </div>
       </div>
     </div>
 
@@ -1284,7 +1408,7 @@
     <!-- お気に入り -->
     <div class="mypage-section">
       <h3 class="mypage-section-title" data-i18n="favoritesTitle">⭐ お気に入り</h3>
-      <div id="mypageFavoritesList" class="mypage-fav-grid"><p style="color:var(--muted);font-size:.85rem;" data-i18n="noFavoritesYet">お気に入りはまだありません</p></div>
+      <div id="mypageFavoritesList" class="mypage-fav-grid"><div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">⭐</div><p data-i18n="noFavoritesYet">お気に入りはまだありません</p></div></div>
     </div>
 
     <!-- レビュー履歴 -->
@@ -1375,7 +1499,15 @@
   const DB_MODE = 'supabase'; // 'local' | 'supabase'
   const SUPABASE_URL  = 'https://ofbjfiuayfhdkgertxyo.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYmpmaXVheWZoZGtnZXJ0eHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzAxOTIsImV4cCI6MjA5ODIwNjE5Mn0.atbMSoL6d_-F-RRomwfjWeKe1YOMZi-48tnPx--Etco';
-  const sb = (DB_MODE === 'supabase') ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+  let sb = null;
+  try {
+    if (DB_MODE === 'supabase' && typeof supabase !== 'undefined') {
+      sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    }
+  } catch(e) {
+    console.warn('Supabase初期化に失敗しました。LocalStorageのみで動作します:', e);
+    sb = null;
+  }
 
   /* ════════════════════════════════════════════════════
      DB アダプター層
@@ -1416,7 +1548,7 @@
     profiles: {
       async get(userId) {
         if(!sb) return null;
-        const { data } = await sb.from('profiles').select('username,bio,favorite_genres').eq('id', userId).single();
+        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url').eq('id', userId).single();
         return data;
       },
       async getUsername(userId) {
@@ -1432,6 +1564,16 @@
         if(!sb) return 0;
         const { count } = await sb.from('profiles').select('*', {count:'exact',head:true});
         return count || 0;
+      },
+      // アバター画像をアップロードしてpublic URLを返す
+      async uploadAvatar(userId, file) {
+        if(!sb) return null;
+        const ext = file.name.split('.').pop();
+        const path = `${userId}/avatar.${ext}`;
+        const { error } = await sb.storage.from('avatars').upload(path, file, { upsert: true });
+        if(error) { console.warn('uploadAvatar error:', error); return null; }
+        const { data } = sb.storage.from('avatars').getPublicUrl(path);
+        return data?.publicUrl || null;
       },
     },
 
@@ -1520,6 +1662,16 @@
       async getAllCharts() {
         if(!sb) return [];
         const { data } = await sb.from('reviews').select('chart_a,chart_b');
+        return data || [];
+      },
+      async getAllChartsWithCountry() {
+        if(!sb) return [];
+        const { data } = await sb.from('reviews').select('chart_a,chart_b,country_code');
+        return data || [];
+      },
+      async getByAnimeIdWithCountry(animeId) {
+        if(!sb) return [];
+        const { data } = await sb.from('reviews').select('chart_a,chart_b,country_code,chart_moved').eq('anime_id', animeId);
         return data || [];
       },
       async getRecent(limit) {
@@ -3026,10 +3178,15 @@
      ユーザーの上質レビュー累計数で称号と重みを決定する
   ════════════════════════════ */
   const RANK_TIERS = [
-    { name:'新人',         min:0,  max:2,        weight:1.0 },
-    { name:'アニメ通',     min:3,  max:9,        weight:1.2 },
-    { name:'グラフマスター',min:10, max:29,       weight:1.5 },
-    { name:'レジェンド',   min:30, max:Infinity, weight:2.0 },
+    { name:'新人',           min:0,  max:2,        weight:1.0 },
+    { name:'駆け出しレビュアー', min:3,  max:7,        weight:1.1 },
+    { name:'アニメ通',       min:8,  max:15,       weight:1.2 },
+    { name:'グラフマイスター', min:16, max:29,       weight:1.35 },
+    { name:'ベテランレビュアー', min:30, max:49,       weight:1.5 },
+    { name:'エキスパート',   min:50, max:69,       weight:1.65 },
+    { name:'レジェンド',     min:70, max:89,       weight:1.8 },
+    { name:'マスターオブグラフ', min:90, max:99,       weight:1.9 },
+    { name:'殿堂入り',       min:100, max:Infinity, weight:2.0 },
   ];
 
   function getRankByQualityCount(qualityCount) {
@@ -4844,7 +5001,8 @@
   // 新しいパスワードに変更する場合は、ブラウザのConsoleで以下を実行してハッシュを取得し、下の値を置き換えてください:
   // crypto.subtle.digest('SHA-256', new TextEncoder().encode('新しいパスワード')).then(b=>console.log(Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')))
   const ADMIN_PASSWORD_HASH = 'e914173862a430c3ffbce7696b2647ad7a4871c08e700f8dd2d9a1e94f349737';
-  let _adminAuthed = false;
+  const ADMIN_SESSION_KEY = 'animepple-admin-session';
+  let _adminAuthed = localStorage.getItem(ADMIN_SESSION_KEY) === '1';
 
   async function sha256Hex(text) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -4858,6 +5016,8 @@
       login.style.display='none';
       dash.style.display='';
       loadAdminData();
+      initAdminCountryCompare();
+      setupAdminAnimeSearch();
     } else {
       login.style.display='';
       dash.style.display='none';
@@ -4871,9 +5031,12 @@
     const hash = await sha256Hex(pw);
     if(hash === ADMIN_PASSWORD_HASH) {
       _adminAuthed = true;
+      localStorage.setItem(ADMIN_SESSION_KEY, '1');
       document.getElementById('adminLoginSection').style.display='none';
       document.getElementById('adminDashboard').style.display='';
       loadAdminData();
+      initAdminCountryCompare();
+      setupAdminAnimeSearch();
     } else {
       document.getElementById('adminLoginError').textContent='パスワードが違います';
     }
@@ -4883,6 +5046,202 @@
   // 日付ごとの件数を集計（直近N日間）
   let _adminTrendData = { reviews:[], pv:[] };
   let _adminTrendMetric = 'reviews';
+
+  /* ════════════════════════════
+     国別マスターグラフ計算
+     既存のクラスタリング＋トリム平均ロジックをそのまま再利用。
+     将来プロ版（企業向け）に切り出す際もこの関数だけ移植すればよい。
+  ════════════════════════════ */
+  function calcCountryMasterGraph(reviewsLikeArr, countryCode) {
+    // reviewsLikeArr: [{chart_a, chart_b, country_code}, ...] 形式（DBの生データ）
+    const filtered = reviewsLikeArr.filter(r => (r.country_code||'不明') === countryCode);
+    if (filtered.length < 3) return null; // データ不足
+
+    // 既存ロジックが期待する形式 {chartA, chartB} に変換
+    const normalized = filtered.map(r => ({ chartA: r.chart_a||{}, chartB: r.chart_b||{} }));
+    const mainCluster = getMainClusterReviews(normalized);
+    const avgA = axisA.map(k => aggregateValues(mainCluster.map(r=>Number(r.chartA?.[k]||0))));
+    const avgB = axisB.map(k => aggregateValues(mainCluster.map(r=>Number(r.chartB?.[k]||0))));
+    return { avgA, avgB, count: filtered.length, usedCount: mainCluster.length };
+  }
+
+  // データのある国コード一覧を件数順で返す（最低N件以上）
+  function getAvailableCountries(reviewsLikeArr, minCount=10) {
+    const counts = {};
+    reviewsLikeArr.forEach(r=>{
+      const c = r.country_code || '不明';
+      counts[c] = (counts[c]||0) + 1;
+    });
+    return Object.entries(counts)
+      .filter(([,n])=>n>=minCount)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([code,n])=>({code, count:n}));
+  }
+
+  let _adminAllChartsWithCountry = [];
+
+  async function initAdminCountryCompare() {
+    _adminAllChartsWithCountry = await db.reviews.getAllChartsWithCountry();
+    const available = getAvailableCountries(_adminAllChartsWithCountry, 10);
+    const selA = document.getElementById('adminCountrySelectA');
+    const selB = document.getElementById('adminCountrySelectB');
+    if(!selA || !selB) return;
+
+    if(!available.length) {
+      selA.innerHTML = '<option>データ不足</option>';
+      selB.innerHTML = '<option>データ不足</option>';
+      return;
+    }
+
+    const optionsHtml = available.map(a=>`<option value="${a.code}">${countryFlag(a.code)} ${COUNTRY_NAMES[a.code]||a.code}（${a.count}件）</option>`).join('');
+    selA.innerHTML = optionsHtml;
+    selB.innerHTML = optionsHtml;
+    if(available[1]) selB.value = available[1].code;
+
+    const redraw = () => {
+      const codeA = selA.value, codeB = selB.value;
+      const resultA = calcCountryMasterGraph(_adminAllChartsWithCountry, codeA);
+      const resultB = calcCountryMasterGraph(_adminAllChartsWithCountry, codeB);
+      const caA = document.getElementById('adminCountryChartA1');
+      const caB = document.getElementById('adminCountryChartB1');
+      if(resultA && caA) drawRadar(caA, getAxisA(), resultA.avgA, 'rgba(88,201,132,0.35)', '#5ec97a');
+      if(resultB && caB) drawRadar(caB, getAxisB(), resultB.avgB, 'rgba(94,170,255,0.35)', '#5ea8ff');
+      // 2国分を重ねて比較したいので、まとめて描画する関数に変更
+      drawCountryCompareCharts(resultA, resultB);
+    };
+
+    selA.onchange = redraw;
+    selB.onchange = redraw;
+    redraw();
+  }
+
+  function drawCountryCompareCharts(resultA, resultB) {
+    const caA = document.getElementById('adminCountryChartA1');
+    const caB = document.getElementById('adminCountryChartB1');
+    if(caA && resultA && resultB) drawRadarCompare(caA, getAxisA(), resultA.avgA, resultB.avgA, '#5ec97a', '#5ea8ff');
+    if(caB && resultA && resultB) drawRadarCompare(caB, getAxisB(), resultA.avgB, resultB.avgB, '#5ec97a', '#5ea8ff');
+  }
+
+  // 2つのデータセットを重ねて描画するレーダーチャート（国別比較用）
+  function drawRadarCompare(canvas, labels, valuesA, valuesB, colorA, colorB) {
+    if(!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const size = canvas.clientWidth || 280;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,size,size);
+
+    const cx = size/2, cy = size/2 - 6, radius = size*0.32;
+    const n = labels.length;
+    const angleStep = (Math.PI*2)/n;
+
+    // グリッド
+    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    for(let ring=1; ring<=4; ring++){
+      ctx.beginPath();
+      for(let i=0;i<=n;i++){
+        const a = -Math.PI/2 + i*angleStep;
+        const r = radius*ring/4;
+        const x = cx + Math.cos(a)*r, y = cy + Math.sin(a)*r;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+
+    // ラベル
+    ctx.fillStyle = 'rgba(180,220,200,.85)';
+    ctx.font = `${Math.max(8,size*0.032)}px sans-serif`;
+    ctx.textAlign = 'center';
+    labels.forEach((label,i)=>{
+      const a = -Math.PI/2 + i*angleStep;
+      const x = cx + Math.cos(a)*(radius+14), y = cy + Math.sin(a)*(radius+14);
+      ctx.fillText(label, x, y);
+    });
+
+    function drawPolygon(values, color, alpha){
+      ctx.beginPath();
+      values.forEach((v,i)=>{
+        const a = -Math.PI/2 + i*angleStep;
+        const r = radius*(v/10);
+        const x = cx + Math.cos(a)*r, y = cy + Math.sin(a)*r;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = color.replace(')', `,${alpha})`).replace('rgb','rgba');
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    if(valuesB) drawPolygon(valuesB, hexToRgb(colorB), 0.18);
+    if(valuesA) drawPolygon(valuesA, hexToRgb(colorA), 0.22);
+  }
+
+  function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  // 特定アニメの国別比較
+  let _adminAnimeSearchTimer = null;
+  function setupAdminAnimeSearch() {
+    const input = document.getElementById('adminAnimeSearchInput');
+    if(!input || input.dataset.init) return;
+    input.dataset.init = '1';
+    input.addEventListener('input', ()=>{
+      clearTimeout(_adminAnimeSearchTimer);
+      _adminAnimeSearchTimer = setTimeout(async ()=>{
+        const q = input.value.trim();
+        const resultsEl = document.getElementById('adminAnimeSearchResults');
+        if(!q) { resultsEl.innerHTML=''; return; }
+        const allTitles = await db.animePages.getAllTitles();
+        const matched = allTitles.filter(a => (a.title||'').includes(q) || (a.title_en||'').toLowerCase().includes(q.toLowerCase())).slice(0,8);
+        resultsEl.innerHTML = matched.map(a=>`<div class="admin-search-result-item" data-id="${a.id}">${escapeHtml(a.title||a.title_en)}</div>`).join('');
+        resultsEl.querySelectorAll('.admin-search-result-item').forEach(item=>{
+          item.onclick = ()=> loadAnimeCountryCompare(item.dataset.id, item.textContent);
+        });
+      }, 300);
+    });
+  }
+
+  async function loadAnimeCountryCompare(animeId, title) {
+    const wrap = document.getElementById('adminAnimeCountryGraphWrap');
+    const titleEl = document.getElementById('adminAnimeCountryGraphTitle');
+    const graphsEl = document.getElementById('adminAnimeCountryGraphs');
+    if(!wrap || !titleEl || !graphsEl) return;
+
+    titleEl.textContent = `📺 ${title}`;
+    wrap.style.display = '';
+    graphsEl.innerHTML = '<p style="color:var(--muted);font-size:.82rem;">読み込み中…</p>';
+
+    const reviews = await db.reviews.getByAnimeIdWithCountry(animeId);
+    const validOnly = reviews.filter(r => r.chart_moved !== false);
+    const available = getAvailableCountries(validOnly, 3); // 1作品単位なので閾値は緩め
+
+    if(!available.length) {
+      graphsEl.innerHTML = '<p style="color:var(--muted);font-size:.82rem;">この作品にはまだ国別比較に十分なデータがありません</p>';
+      return;
+    }
+
+    graphsEl.innerHTML = available.map(a=>`
+      <div class="admin-anime-country-row">
+        <span style="font-size:.8rem;color:#dff0e6;">${countryFlag(a.code)} ${COUNTRY_NAMES[a.code]||a.code}（${a.count}件）</span>
+        <canvas id="adminAnimeCC_${a.code}" style="width:100%;max-width:200px;aspect-ratio:1;border-radius:10px;background:#09201b;display:block;"></canvas>
+      </div>
+    `).join('');
+
+    available.forEach(a=>{
+      const result = calcCountryMasterGraph(validOnly, a.code);
+      const canvas = document.getElementById(`adminAnimeCC_${a.code}`);
+      if(result && canvas) {
+        // 12軸まとめて1グラフに（全体傾向を見たいので作品完成度軸のみ簡易表示）
+        drawRadar(canvas, getAxisA(), result.avgA, 'rgba(88,201,132,0.35)', '#5ec97a');
+      }
+    });
+  }
 
   function buildDailyCounts(dateStrings, days) {
     const now = new Date();
@@ -5163,10 +5522,17 @@
     }
   }
 
+  function adminLogout() {
+    _adminAuthed = false;
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    initAdminPage();
+  }
+
   // URL hashで管理者ページへ
   if(location.hash === '#admin') nav('admin');
 
   window.adminLogin = adminLogin;
+  window.adminLogout = adminLogout;
   window.initAdminPage = initAdminPage;
 
   /* ════════════════════════════
@@ -5446,13 +5812,19 @@
       bioSection.style.display = 'none';
     }
 
-    // アイコン（イニシャル）
+    // アイコン（画像があれば画像、無ければイニシャル）
     const initial = username.slice(0,1) || '?';
     const avatar = document.getElementById('mypageAvatarIcon');
-    avatar.textContent = initial;
-    const colors = ['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
-    const idx = _currentUser.id.charCodeAt(0) % colors.length;
-    avatar.style.background = colors[idx];
+    const avatarUrl = profileData?.avatar_url;
+    if (avatarUrl) {
+      avatar.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="avatar" />`;
+      avatar.style.background = 'transparent';
+    } else {
+      avatar.textContent = initial;
+      const colors = ['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
+      const idx = _currentUser.id.charCodeAt(0) % colors.length;
+      avatar.style.background = colors[idx];
+    }
 
     let qualityCount = 0, reviewTotal = 0;
 
@@ -5464,14 +5836,26 @@
 
       const listEl = document.getElementById('mypageReviewList');
       if(reviews && reviews.length) {
-        listEl.innerHTML = reviews.slice(0,10).map(r=>`
-          <div style="padding:.6rem 0;border-bottom:1px solid var(--line);">
-            <div style="font-size:.82rem;color:#dff0e6;">${r.anime_id.replace('kitsu-','作品ID: ')}</div>
-            <div style="font-size:.72rem;color:var(--muted);">${new Date(r.created_at).toLocaleDateString('ja-JP')}</div>
-          </div>
-        `).join('');
+        const recentReviews = reviews.slice(0,10);
+        const animeIds = [...new Set(recentReviews.map(r=>r.anime_id))];
+        const pages = await db.animePages.getByIds(animeIds);
+        const titleMap = {};
+        pages.forEach(p => { titleMap[p.id] = p.title || p.title_en || p.id; });
+
+        listEl.innerHTML = recentReviews.map(r=>{
+          const title = titleMap[r.anime_id] || r.anime_id;
+          const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' });
+          const qualityBadge = r.quality ? `<span class="mypage-review-card-quality">✨ ${t('statQuality')||'上質レビュー'}</span>` : '';
+          return `
+            <div class="mypage-review-card" onclick="nav('anime','${r.anime_id}')" style="cursor:pointer;">
+              <div class="mypage-review-card-title">${escapeHtml(title)}</div>
+              <div class="mypage-review-card-date">${dateStr}</div>
+              ${qualityBadge}
+            </div>
+          `;
+        }).join('');
       } else {
-        listEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${t('noReviewHistory')}</p>`;
+        listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">📝</div><p>${t('noReviewHistory')}</p></div>`;
       }
 
       // 称号バッジ
@@ -5501,13 +5885,13 @@
     const currentIdx = RANK_TIERS.indexOf(currentRank);
     const nextRank = RANK_TIERS[currentIdx+1];
     if(!nextRank) {
-      el.innerHTML = `<div class="rank-progress-wrap"><div class="rank-progress-labels"><span>${currentRank.name}（最高位）</span></div></div>`;
+      el.innerHTML = `<div class="rank-progress-wrap"><div class="rank-progress-labels"><strong>🏆 ${currentRank.name}（最高位）</strong></div></div>`;
       return;
     }
     const progress = Math.min(100, Math.round((qualityCount - currentRank.min) / (nextRank.min - currentRank.min) * 100));
     el.innerHTML = `
       <div class="rank-progress-wrap">
-        <div class="rank-progress-labels"><span>${currentRank.name}</span><span>${nextRank.name}まであと${nextRank.min - qualityCount}件</span></div>
+        <div class="rank-progress-labels"><strong>${currentRank.name}</strong><span>${nextRank.name}まであと${nextRank.min - qualityCount}件</span></div>
         <div class="rank-progress-bar-bg"><div class="rank-progress-bar-fill" style="width:${progress}%;"></div></div>
       </div>`;
   }
@@ -5548,7 +5932,7 @@
     const favs = await db.favorites.getByUser(_currentUser.id);
     document.getElementById('statFavCount').textContent = favs ? favs.length : 0;
     if(!favs || !favs.length) {
-      el.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${t('noFavoritesYet')}</p>`;
+      el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">⭐</div><p>${t('noFavoritesYet')}</p></div>`;
       return;
     }
     const ids = favs.map(f=>f.anime_id);
@@ -5603,6 +5987,43 @@
   }
 
   window.showAuthModal = showAuthModal;
+  // アバター画像アップロード処理
+  async function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+    if(!_currentUser || !sb) { showAuthModal('login'); return; }
+
+    // ファイルサイズ制限（5MB）
+    if(file.size > 5 * 1024 * 1024) {
+      alert('画像サイズは5MB以下にしてください');
+      return;
+    }
+    // 画像ファイルかどうかの簡易チェック
+    if(!file.type.startsWith('image/')) {
+      alert('画像ファイルを選択してください');
+      return;
+    }
+
+    const editBtn = document.getElementById('mypageAvatarEditBtn');
+    if(editBtn) editBtn.textContent = '…';
+
+    try {
+      const url = await db.profiles.uploadAvatar(_currentUser.id, file);
+      if(url) {
+        await db.profiles.upsert(_currentUser.id, { avatar_url: url });
+        renderMypage();
+      } else {
+        alert('アップロードに失敗しました。もう一度お試しください。');
+      }
+    } catch(e) {
+      console.warn('handleAvatarUpload error:', e);
+      alert('アップロードに失敗しました。もう一度お試しください。');
+    } finally {
+      if(editBtn) editBtn.textContent = '📷';
+      event.target.value = ''; // 同じファイルを再選択できるようリセット
+    }
+  }
+
   window.closeAuthModal = closeAuthModal;
   window.authSubmit = authSubmit;
   window.signOut = signOut;
@@ -5611,6 +6032,7 @@
   window.openProfileEdit = openProfileEdit;
   window.closeProfileEdit = closeProfileEdit;
   window.saveProfileEdit = saveProfileEdit;
+  window.handleAvatarUpload = handleAvatarUpload;
 
   document.getElementById('bnav-home').classList.add('active');
 
