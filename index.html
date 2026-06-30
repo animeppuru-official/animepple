@@ -220,6 +220,11 @@
     .rc-chart-label { font-size:.73rem; color:var(--muted); margin:0 0 .3rem; }
     .rc-canvas { width:100%; height:auto; border:1px solid var(--line); border-radius:10px; background:#09201b; display:block; }
     .rc-comment { border-top:1px solid var(--line); }
+    .rc-share-row { display:flex; gap:.4rem; padding:.5rem .75rem .65rem; border-top:1px solid var(--line); }
+    .rc-share-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:.3rem; padding:.4rem; border-radius:8px; font-size:.74rem; font-weight:700; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--muted); transition:opacity .15s; }
+    .rc-share-btn:hover { opacity:.8; }
+    .rc-share-btn.x-share { color:#fff; }
+    .rc-share-btn.line-share { color:#06c755; border-color:rgba(6,199,85,.3); }
     .rc-comment-btn { background:none; border:none; color:#b8e8c8; font-size:.82rem; padding:.55rem .75rem; cursor:pointer; display:block; width:100%; text-align:left; }
     .rc-comment-text { margin:0; padding:.1rem .75rem .75rem; color:#d4edda; font-size:.86rem; line-height:1.6; }
     .rc-comment p { margin:0; padding:.1rem .75rem .75rem; color:#d4edda; font-size:.86rem; line-height:1.6; }
@@ -777,11 +782,10 @@
   </div>
   <div class="sort-row">
     <label for="overlaySortSelect" data-i18n="sortLabel">並び替え</label>
-    <select id="overlaySortSelect" data-i18n-options="sortRelevance,sortReviewsDesc,sortReviewsAsc,sortMatch">
-      <option value="relevance">関連度順</option>
+    <select id="overlaySortSelect" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
+      <option value="match">好みグラフに近い順</option>
       <option value="reviews_desc">レビューが多い順</option>
       <option value="reviews_asc">レビューが少ない順</option>
-      <option value="match">好みグラフに近い順</option>
     </select>
   </div>
   <div class="search-overlay-filters-row">
@@ -1170,11 +1174,10 @@
   <div class="filter-panel" id="srFilterPanel">
     <div class="sort-row">
       <label for="srSortSelect" data-i18n="sortLabel">並び替え</label>
-      <select id="srSortSelect" data-i18n-options="sortRelevance,sortReviewsDesc,sortReviewsAsc,sortMatch">
-        <option value="relevance">関連度順</option>
+      <select id="srSortSelect" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
+        <option value="match">好みグラフに近い順</option>
         <option value="reviews_desc">レビューが多い順</option>
         <option value="reviews_asc">レビューが少ない順</option>
-        <option value="match">好みグラフに近い順</option>
       </select>
     </div>
     <div class="filter-label">🏷 タグで絞る</div>
@@ -1816,6 +1819,28 @@
   }
 
   // ジャンル名 日本語マッピング辞書（Kitsu APIの英語タグに対応）
+
+  /* ════════════════════════════
+     SNSシェア機能
+     レビューカードのグラフ・ユーザー名・アイコンをシェアする。
+     画像直接添付はSNS側の仕様で不可なため、定型文＋URLでシェアし、
+     SNS側がOGP画像を自動表示する方式。
+  ════════════════════════════ */
+  function shareReviewToSns(platform, animeTitle, userName) {
+    const pageUrl = window.location.href.split('#')[0]; // ハッシュ除去
+    const name = userName === 'ゲスト' ? '' : `${userName}さんが`;
+    const text = `${name}「${animeTitle}」をアニメップルでグラフレビュー！🍎\n好みにドンピシャな作品を探そう`;
+
+    let url = '';
+    if (platform === 'x') {
+      url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(pageUrl)}`;
+    } else if (platform === 'line') {
+      url = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(text)}`;
+    }
+    if (url) window.open(url, '_blank', 'noopener,noreferrer,width=600,height=500');
+  }
+  window.shareReviewToSns = shareReviewToSns;
+
   // 新しいジャンルが出てきたら、ここに1行追加するだけで翻訳される
   const GENRE_JA_MAP = {
     'Action':'アクション', 'Adventure':'冒険', 'Comedy':'コメディ', 'Drama':'ドラマ',
@@ -2738,7 +2763,8 @@
 
   function doOverlaySearch() {
     const q=document.getElementById('overlaySearchInput').value.trim();
-    const sort=document.getElementById('overlaySortSelect').value;
+    let sort=document.getElementById('overlaySortSelect').value;
+    if (q) sort = 'relevance'; // キーワードがあれば関連度ベースを優先（renderSearch側で選択肢も切り替わる）
     closeSearch();
     srSearchState.q=q; srSearchState.sort=sort;
     srTagsActive.length=0; overlayTags.forEach(t=>srTagsActive.push(t));
@@ -3918,13 +3944,33 @@
 
   async function renderSearch() {
     document.getElementById('srQuery').value=srSearchState.q;
-    document.getElementById('srSortSelect').value=srSearchState.sort;
+
+    const hasKeyword = !!srSearchState.q.trim();
+    const _ss=document.getElementById('srSortSelect');
+
+    // キーワードあり: 関連度ベースがデフォルト（明示的な選択肢からは外す）。人気・少数派のみ選べる
+    // キーワードなし: 好みグラフに近い順をデフォルトに、人気・少数派も選べる
+    if (_ss) {
+      if (hasKeyword) {
+        _ss.innerHTML = `
+          <option value="relevance">${t('sortRelevance')}</option>
+          <option value="reviews_desc">${t('sortReviewsDesc')}</option>
+          <option value="reviews_asc">${t('sortReviewsAsc')}</option>
+        `;
+        if (srSearchState.sort === 'match') srSearchState.sort = 'relevance';
+      } else {
+        _ss.innerHTML = `
+          <option value="match">${t('sortMatch')}</option>
+          <option value="reviews_desc">${t('sortReviewsDesc')}</option>
+          <option value="reviews_asc">${t('sortReviewsAsc')}</option>
+        `;
+        if (srSearchState.sort === 'relevance') srSearchState.sort = 'match';
+      }
+      _ss.value = srSearchState.sort;
+    }
+
     buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a');
     buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b');
-    // ソート選択肢を翻訳
-    const _ss=document.getElementById('srSortSelect');
-    if(_ss&&_ss.options.length>=4){_ss.options[0].text=t('sortRelevance');_ss.options[1].text=t('sortReviewsDesc');_ss.options[2].text=t('sortReviewsAsc');_ss.options[3].text=t('sortMatch');}
-    _ss.value=srSearchState.sort;
     setupSrTagInput();
 
     const q=srSearchState.q.toLowerCase();
@@ -4655,11 +4701,6 @@
     const streamLabel = document.querySelector('#afStreamSection .af-section-label');
     if(streamLabel) streamLabel.textContent = t('streamSection');
 
-    // 検索ソート
-    const srSortEl = document.getElementById('srSort');
-    if(srSortEl && srSortEl.options[1]) srSortEl.options[1].text = t('sortMostReview');
-    if(srSortEl && srSortEl.options[2]) srSortEl.options[2].text = t('sortLeastReview');
-    if(srSortEl && srSortEl.options[3]) srSortEl.options[3].text = t('sortMatch');
     const formNote = document.querySelector('#page-review .form-note');
     if (formNote) formNote.textContent = t('formNote');
     const tagPlaceholderEl = document.getElementById('reviewTagInput');
@@ -4714,14 +4755,6 @@
     // 年代ドラムラベル
     const drumLabel = document.querySelector('.pop-drum-label');
     if(drumLabel) drumLabel.textContent = t('yearPickLabel');
-    // 検索オーバーレイのソート選択肢
-    const overlaySortSel = document.getElementById('overlaySortSelect');
-    if(overlaySortSel) {
-      overlaySortSel.options[0].text = t('sortRelevance');
-      overlaySortSel.options[1].text = t('sortReviewsDesc');
-      overlaySortSel.options[2].text = t('sortReviewsAsc');
-      overlaySortSel.options[3].text = t('sortMatch');
-    }
     const overlaySortLabelEl = document.querySelector('label[for="overlaySortSelect"]');
     if(overlaySortLabelEl) overlaySortLabelEl.textContent = t('overlaySortLabel')||t('sortLabel');
     // 検索オーバーレイ「この条件で検索する」
@@ -4776,7 +4809,12 @@
     const _ota = document.getElementById('overlayTagAddBtn'); if(_ota) _ota.textContent = t('btnAdd');
     const _osl = document.querySelector('label[for="overlaySortSelect"]'); if(_osl) _osl.textContent = t('sortLabel');
     const _osel = document.getElementById('overlaySortSelect');
-    if(_osel&&_osel.options.length>=4){_osel.options[0].text=t('sortRelevance');_osel.options[1].text=t('sortReviewsDesc');_osel.options[2].text=t('sortReviewsAsc');_osel.options[3].text=t('sortMatch');}
+    if(_osel){
+      Array.from(_osel.options).forEach(opt=>{
+        const key = {match:'sortMatch', reviews_desc:'sortReviewsDesc', reviews_asc:'sortReviewsAsc', relevance:'sortRelevance'}[opt.value];
+        if(key) opt.text = t(key);
+      });
+    }
     // 検索オーバーレイのfilter-label
     document.querySelectorAll('.filter-label').forEach(el=>{
       const txt=el.textContent.trim();
@@ -4843,7 +4881,12 @@
     const _srf = document.querySelector('#srFilterToggle span:first-child'); if(_srf) _srf.textContent=t('filterTitle');
     const _srl = document.querySelector('label[for="srSortSelect"]'); if(_srl) _srl.textContent=t('sortLabel');
     const _srss = document.getElementById('srSortSelect');
-    if(_srss&&_srss.options.length>=4){_srss.options[0].text=t('sortRelevance');_srss.options[1].text=t('sortReviewsDesc');_srss.options[2].text=t('sortReviewsAsc');_srss.options[3].text=t('sortMatch');}
+    if(_srss){
+      Array.from(_srss.options).forEach(opt=>{
+        const key = {match:'sortMatch', reviews_desc:'sortReviewsDesc', reviews_asc:'sortReviewsAsc', relevance:'sortRelevance'}[opt.value];
+        if(key) opt.text = t(key);
+      });
+    }
     const _sra = document.getElementById('srApplyBtn'); if(_sra) _sra.textContent=t('btnRefineSearch');
     const _srta = document.getElementById('srTagAddBtn'); if(_srta) _srta.textContent=t('btnAdd');
     // マイページ（ゲスト）
@@ -4891,11 +4934,10 @@
     if (srSortLabel) srSortLabel.textContent = t('sortLabel');
     const srSortSelect = document.getElementById('srSortSelect');
     if (srSortSelect) {
-      const opts = srSortSelect.options;
-      if (opts[0]) opts[0].text = t('sortRelevance');
-      if (opts[1]) opts[1].text = t('sortReviewsDesc');
-      if (opts[2]) opts[2].text = t('sortReviewsAsc');
-      if (opts[3]) opts[3].text = t('sortMatch');
+      Array.from(srSortSelect.options).forEach(opt=>{
+        const key = {match:'sortMatch', reviews_desc:'sortReviewsDesc', reviews_asc:'sortReviewsAsc', relevance:'sortRelevance'}[opt.value];
+        if(key) opt.text = t(key);
+      });
     }
     const srTagInputEl = document.getElementById('srTagInput');
     if (srTagInputEl) srTagInputEl.placeholder = t('tagPlaceholder');
@@ -5851,18 +5893,37 @@
         const titleMap = {};
         pages.forEach(p => { titleMap[p.id] = p.title || p.title_en || p.id; });
 
-        listEl.innerHTML = recentReviews.map(r=>{
+        const labA=getAxisA(), labB=getAxisB();
+        listEl.innerHTML = recentReviews.map((r,i)=>{
           const title = titleMap[r.anime_id] || r.anime_id;
           const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' });
           const qualityBadge = r.quality ? `<span class="mypage-review-card-quality">✨ ${t('statQuality')||'上質レビュー'}</span>` : '';
           return `
-            <div class="mypage-review-card" onclick="nav('anime','${r.anime_id}')" style="cursor:pointer;">
-              <div class="mypage-review-card-title">${escapeHtml(title)}</div>
-              <div class="mypage-review-card-date">${dateStr}</div>
-              ${qualityBadge}
+            <div class="mypage-review-card">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;" onclick="nav('anime','${r.anime_id}')">
+                <div>
+                  <div class="mypage-review-card-title">${escapeHtml(title)}</div>
+                  <div class="mypage-review-card-date">${dateStr}</div>
+                  ${qualityBadge}
+                </div>
+              </div>
+              <div class="rc-charts" style="margin-top:.6rem;">
+                <div><p class="rc-chart-label">${t('chartATitle')}</p><canvas class="rc-canvas" data-mai="${i}" width="280" height="200"></canvas></div>
+                <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-mbi="${i}" width="280" height="200"></canvas></div>
+              </div>
+              <div class="rc-share-row" style="border-top:none;padding-top:0;">
+                <button class="rc-share-btn x-share" onclick="shareReviewToSns('x', '${escapeHtml(title)}', '${escapeHtml(username)}')">𝕏 シェア</button>
+                <button class="rc-share-btn line-share" onclick="shareReviewToSns('line', '${escapeHtml(title)}', '${escapeHtml(username)}')">LINEでシェア</button>
+              </div>
             </div>
           `;
         }).join('');
+
+        recentReviews.forEach((r,i)=>{
+          const ca = listEl.querySelector(`[data-mai="${i}"]`), cb = listEl.querySelector(`[data-mbi="${i}"]`);
+          if(ca) drawRadar(ca, labA, labA.map((_,j)=>Number(r.chart_a?.[axisA[j]]||0)), 'rgba(88,201,132,0.35)', '#8fe5ab');
+          if(cb) drawRadar(cb, labB, labB.map((_,j)=>Number(r.chart_b?.[axisB[j]]||0)), 'rgba(255,153,153,0.32)', '#ffaaaa');
+        });
       } else {
         listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">📝</div><p>${t('noReviewHistory')}</p></div>`;
       }
