@@ -281,6 +281,12 @@
     .tag-chip-search { cursor:pointer; }
     .tag-chip-search.active { background:rgba(94,201,122,.35); border-color:var(--brand); color:#e8fff0; }
     .tag-hint { font-size:.74rem; color:var(--muted); margin:.3rem 0 0; }
+    .tag-suggest-wrap { margin-top:.5rem; }
+    .tag-suggest-label { font-size:.7rem; color:var(--muted); margin:0 0 .3rem; }
+    .tag-suggest-list { display:flex; flex-wrap:wrap; gap:.35rem; }
+    .tag-suggest-chip { background:var(--card2); border:1px solid var(--line); border-radius:999px; padding:.2rem .65rem; font-size:.74rem; color:#c8e6d4; cursor:pointer; transition:background .15s; }
+    .tag-suggest-chip:hover { background:rgba(94,201,122,.15); border-color:var(--brand); }
+    .tag-suggest-chip.popular { border-color:#5ec97a; color:var(--brand); }
     /* ── SEARCH TAG SECTION ── */
     .search-tag-input-wrap { display:flex; gap:.45rem; margin-bottom:.45rem; }
     .search-tag-input-wrap input { flex:1; padding:.58rem .75rem; background:var(--bg); border:1px solid var(--line); border-radius:10px; color:var(--text); font:inherit; font-size:.88rem; }
@@ -355,6 +361,18 @@
     .admin-kpi-val { font-size:1.6rem; font-weight:800; color:var(--brand); }
     .admin-kpi-label { font-size:.75rem; color:var(--muted); margin-top:.2rem; }
     .admin-section { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:1rem; margin-bottom:.75rem; }
+    .admin-trend-toggle { display:flex; gap:.4rem; margin-bottom:.6rem; }
+    .admin-trend-btn { background:var(--card); border:1px solid var(--line); border-radius:999px; padding:.25rem .75rem; font-size:.74rem; color:var(--muted); cursor:pointer; }
+    .admin-trend-btn.active { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
+    .admin-tag-row { display:flex; align-items:center; justify-content:space-between; padding:.4rem 0; border-bottom:1px solid var(--line); font-size:.82rem; }
+    .admin-tag-row:last-child { border-bottom:none; }
+    .admin-tag-rank { display:flex; align-items:center; gap:.5rem; }
+    .admin-tag-rank-num { font-weight:800; color:var(--brand); font-size:.85rem; width:1.4rem; text-align:center; }
+    .admin-axis-row { display:grid; grid-template-columns:5rem 1fr 2.4rem; align-items:center; gap:.5rem; padding:.3rem 0; }
+    .admin-axis-label { font-size:.74rem; color:#dff0e6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .admin-axis-track { height:7px; border-radius:4px; background:var(--card); overflow:hidden; }
+    .admin-axis-fill { height:100%; border-radius:4px; }
+    .admin-axis-val { font-size:.76rem; font-weight:700; color:var(--brand); text-align:right; }
     .admin-section-title { font-size:.88rem; font-weight:700; color:#dff0e6; margin:0 0 .75rem; }
     .admin-row { display:flex; align-items:center; justify-content:space-between; padding:.4rem 0; border-bottom:1px solid var(--line); font-size:.82rem; }
     .admin-row:last-child { border-bottom:none; }
@@ -985,6 +1003,10 @@
           <button class="tag-add-btn" id="reviewTagAddBtn" data-i18n="btnAdd" type="button">追加</button>
         </div>
         <div class="tag-list" id="reviewTagList"></div>
+        <div class="tag-suggest-wrap" id="reviewTagSuggestWrap" style="display:none;">
+          <p class="tag-suggest-label" data-i18n="tagSuggestLabel">よく使われるタグ</p>
+          <div class="tag-suggest-list" id="reviewTagSuggestList"></div>
+        </div>
         <p class="tag-hint" data-i18n="tagHint">Enterまたは「追加」で確定。タグはみんなの検索に使われます。</p>
       </div>
       <div class="form-field">
@@ -1137,6 +1159,29 @@
       <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiPV">—</div><div class="admin-kpi-label">総PV</div></div>
       <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiAnime">—</div><div class="admin-kpi-label">登録作品数</div></div>
       <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiUsers">—</div><div class="admin-kpi-label">ユーザー数</div></div>
+    </div>
+
+    <!-- 時系列トレンド -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">📈 過去14日間の推移</h3>
+      <div class="admin-trend-toggle">
+        <button class="admin-trend-btn active" data-metric="reviews">レビュー数</button>
+        <button class="admin-trend-btn" data-metric="pv">PV数</button>
+      </div>
+      <canvas id="adminTrendChart" width="600" height="220" style="width:100%;height:160px;"></canvas>
+    </div>
+
+    <!-- 急上昇タグ -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🔥 急上昇タグ（直近7日）</h3>
+      <div id="adminTrendingTags"></div>
+    </div>
+
+    <!-- 軸別平均スコア -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">📊 全体の評価軸バランス</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">全レビューの平均（どの要素が高評価されやすいか）</p>
+      <div id="adminAxisBalance"></div>
     </div>
 
     <!-- 国別PV -->
@@ -1418,6 +1463,15 @@
         const { count } = await sb.from('anime_pages').select('*', {count:'exact',head:true});
         return count || 0;
       },
+      async getDescriptionJa(id) {
+        if(!sb) return null;
+        const { data } = await sb.from('anime_pages').select('description_ja').eq('id', id).maybeSingle();
+        return data?.description_ja || null;
+      },
+      async saveDescriptionJa(id, descriptionJa) {
+        if(!sb) return;
+        await sb.from('anime_pages').update({ description_ja: descriptionJa }).eq('id', id);
+      },
     },
 
     // ── レビュー ──
@@ -1453,6 +1507,21 @@
         const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b');
         return data || [];
       },
+      async getCreatedDates() {
+        if(!sb) return [];
+        const { data } = await sb.from('reviews').select('created_at');
+        return data || [];
+      },
+      async getTagsWithDates() {
+        if(!sb) return [];
+        const { data } = await sb.from('reviews').select('tags,created_at');
+        return data || [];
+      },
+      async getAllCharts() {
+        if(!sb) return [];
+        const { data } = await sb.from('reviews').select('chart_a,chart_b');
+        return data || [];
+      },
       async getRecent(limit) {
         if(!sb) return [];
         const { data } = await sb.from('reviews')
@@ -1483,6 +1552,11 @@
         if(!sb) return 0;
         const { count } = await sb.from('pv_logs').select('*', {count:'exact',head:true});
         return count || 0;
+      },
+      async getViewedDates() {
+        if(!sb) return [];
+        const { data } = await sb.from('pv_logs').select('viewed_at');
+        return data || [];
       },
     },
 
@@ -1517,6 +1591,37 @@
      検索ロジック）は将来的にこの層を経由するよう移行できる。
      現在の実装: Kitsu API
   ════════════════════════════════════════════════════ */
+  /* ════════════════════════════════════════════════════
+     翻訳APIアダプター層
+     裏側はSupabase Edge Function経由でDeepL APIを呼ぶ。
+     APIキーはサーバー側(Supabase Secrets)に保管されているため
+     このコード上には一切現れない。
+     将来別の翻訳サービスやサーバーに乗り換える場合も、
+     この translateApi オブジェクトの中身だけ書き換えれば良い。
+  ════════════════════════════════════════════════════ */
+  const TRANSLATE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/translate`;
+  const translateApi = {
+    async translate(text, targetLang='JA') {
+      if(!text || !text.trim()) return text;
+      try {
+        const res = await fetch(TRANSLATE_FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON}`,
+          },
+          body: JSON.stringify({ text, targetLang }),
+        });
+        if(!res.ok) return text; // 失敗時は原文をそのまま返す（フォールバック）
+        const data = await res.json();
+        return data.translated || text;
+      } catch(e) {
+        console.warn('translateApi error:', e);
+        return text; // エラー時も原文表示にフォールバック、サイトは止めない
+      }
+    },
+  };
+
   const ANIME_API_BASE = 'https://kitsu.io/api/edge/anime';
   const animeApi = {
     // 生のfetch＋JSON取得だけを担う最小限の共通関数
@@ -1556,6 +1661,58 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  // ジャンル名 日本語マッピング辞書（Kitsu APIの英語タグに対応）
+  // 新しいジャンルが出てきたら、ここに1行追加するだけで翻訳される
+  const GENRE_JA_MAP = {
+    'Action':'アクション', 'Adventure':'冒険', 'Comedy':'コメディ', 'Drama':'ドラマ',
+    'Fantasy':'ファンタジー', 'Romance':'恋愛', 'Sci-Fi':'SF', 'Science Fiction':'SF',
+    'Horror':'ホラー', 'Mystery':'ミステリー', 'Psychological':'サイコロジカル',
+    'Slice of Life':'日常', 'Sports':'スポーツ', 'Supernatural':'超自然',
+    'Thriller':'スリラー', 'Tragedy':'悲劇', 'School':'学園', 'School Life':'学園',
+    'Magic':'魔法', 'Military':'ミリタリー', 'Music':'音楽', 'Mecha':'メカ',
+    'Historical':'時代劇', 'Harem':'ハーレム', 'Ecchi':'エッチ', 'Shounen':'少年',
+    'Shoujo':'少女', 'Seinen':'青年', 'Josei':'女性向け', 'Isekai':'異世界',
+    'Demons':'悪魔', 'Vampire':'吸血鬼', 'Martial Arts':'武術', 'Game':'ゲーム',
+    'Parody':'パロディ', 'Police':'警察', 'Space':'宇宙', 'Super Power':'超能力',
+    'Dementia':'前衛的', 'Samurai':'侍', 'Cars':'カー', 'Kids':'子供向け',
+    'Crime':'犯罪', 'Family':'家族', 'War':'戦争', 'Animation':'アニメーション',
+    'Adult Cast':'大人キャスト', 'Anthropomorphic':'擬人化', 'CGDCT':'日常系',
+    'Combat Sports':'格闘技', 'Crossdressing':'男装・女装', 'Delinquents':'不良',
+    'Detective':'探偵', 'Educational':'教育', 'Gag Humor':'ギャグ', 'Gore':'グロ',
+    'Idols (Female)':'アイドル(女性)', 'Idols (Male)':'アイドル(男性)',
+    'Iyashikei':'癒し系', 'Love Polygon':'恋愛群像', 'Love Status Quo':'片思い',
+    'Mahou Shoujo':'魔法少女', 'Medical':'医療', 'Music ':'音楽',
+    'Mythology':'神話', 'Organized Crime':'組織犯罪', 'Otaku Culture':'オタク文化',
+    'Performing Arts':'舞台芸術', 'Pets':'ペット', 'Racing':'レーシング',
+    'Reincarnation':'転生', 'Reverse Harem':'逆ハーレム', 'Romantic Subtext':'恋愛要素',
+    'Showbiz':'芸能界', 'Strategy Game':'ストラテジーゲーム', 'Survival':'サバイバル',
+    'Team Sports':'チームスポーツ', 'Time Travel':'タイムトラベル', 'Video Game':'ビデオゲーム',
+    'Visual Arts':'視覚芸術', 'Workplace':'職場', 'Yaoi':'BL', 'Yuri':'GL',
+    'Friendship':'友情', 'Anti-Hero':'アンチヒーロー', 'Cyberpunk':'サイバーパンク',
+    'Dystopia':'ディストピア', 'Post-Apocalyptic':'ポストアポカリプス', 'Zombies':'ゾンビ',
+    'Gore ':'グロ', 'Childcare':'育児', 'Cosplay':'コスプレ', 'Dancing':'ダンス',
+    'Cooking':'料理', 'Memoir':'回想録', 'Acting':'演技', 'Agriculture':'農業',
+    'Animals':'動物', 'Astronomy':'天文学', 'Battle Royale':'バトルロイヤル',
+    'College':'大学', 'Coming of Age':'成長物語', 'Conspiracy':'陰謀',
+    'Crossover':'クロスオーバー', 'Episodic':'エピソード形式', 'Gender Bender':'性別逆転',
+    'Ghost':'幽霊', 'Gyaru':'ギャル', 'Henshin':'変身', 'Kaiju':'怪獣',
+    'Lost Civilization':'失われた文明', 'Noir':'ノワール', 'Primarily Adult Cast':'大人キャスト中心',
+    'Primarily Child Cast':'子供キャスト中心', 'Primarily Female Cast':'女性キャスト中心',
+    'Primarily Male Cast':'男性キャスト中心', 'Rehabilitation':'更生',
+    'Royal Affairs':'王室', 'Satire':'風刺', 'Ships':'船', 'Urban Fantasy':'アーバンファンタジー',
+    'Villainess':'悪役令嬢', 'Work':'仕事',
+    'Japan':'日本', 'Earth':'地球', 'America':'アメリカ', 'China':'中国', 'Korea':'韓国',
+    'Europe':'ヨーロッパ', 'Space ':'宇宙', 'Tokyo':'東京', 'Real-Time':'リアルタイム',
+    'Alternate World':'異世界', 'Alternate Universe':'並行世界', 'Urban':'都市',
+    'Countryside':'田舎', 'Rural':'田舎', 'Island':'島', 'Ocean':'海',
+    'Snow':'雪', 'Desert':'砂漠', 'Mountains':'山', 'Asia':'アジア',
+
+
+  };
+  function translateGenre(g) {
+    return GENRE_JA_MAP[g] || g; // 辞書にない場合は原文のまま表示
   }
 
   function pj(key) {
@@ -3102,16 +3259,18 @@
       let extra = '';
       // ジャンル
       if(page.genres&&page.genres.length){
+        const displayGenres = currentLang==='ja' ? page.genres.map(translateGenre) : page.genres;
         extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
           <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelGenre')}</span>
-          ${page.genres.map(g=>`<span class="badge">${g}</span>`).join('')}
+          ${displayGenres.map(g=>`<span class="badge">${escapeHtml(g)}</span>`).join('')}
         </div>`;
       }
-      // カテゴリ
+      // カテゴリ（タグ）
       if(page.categories&&page.categories.length){
+        const displayCategories = currentLang==='ja' ? page.categories.map(translateGenre) : page.categories;
         extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
           <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelTag')}</span>
-          ${page.categories.map(c=>`<span class="badge" style="background:rgba(94,201,122,.08);border-color:#2d6040;">${c}</span>`).join('')}
+          ${displayCategories.map(c=>`<span class="badge" style="background:rgba(94,201,122,.08);border-color:#2d6040;">${escapeHtml(c)}</span>`).join('')}
         </div>`;
       }
       // スタジオ
@@ -3134,7 +3293,7 @@
       extraEl.innerHTML = extra;
     }
 
-    document.getElementById('animeDesc').textContent=page.description||'';
+    renderAnimeDescription(page, id);
     document.getElementById('goReviewBtn').style.display='';
     const thumb=document.getElementById('animeThumbHero');
     thumb.innerHTML=page.image?`<img src="${page.image}" alt="${page.title}" style="width:100%;height:100%;object-fit:cover;display:block;" />`:t('noImage');
@@ -3349,6 +3508,45 @@
     document.getElementById('reviewUserName').value='';
     document.getElementById('reviewComment').value='';
     setTimeout(()=>redrawReview(),50);
+    renderTagSuggestions(id);
+  }
+
+  // タグ候補を表示: そのアニメの人気タグTOP3 + Kitsuジャンル（重複除去）
+  function renderTagSuggestions(animeId) {
+    const wrap = document.getElementById('reviewTagSuggestWrap');
+    const listEl = document.getElementById('reviewTagSuggestList');
+    if(!wrap || !listEl) return;
+
+    const popular = topTags(animeId).slice(0,3); // 人気タグTOP3
+    const all = getAll();
+    const page = all.find(p=>p.id===animeId);
+    const genres = (page?.genres||[]).map(g => currentLang==='ja' ? translateGenre(g) : g);
+
+    // 重複除去（人気タグを優先）
+    const seen = new Set(popular.map(t=>t.toLowerCase()));
+    const genreSuggestions = genres.filter(g => !seen.has(g.toLowerCase())).slice(0,6);
+
+    const suggestions = [
+      ...popular.map(tag=>({ text: tag, popular: true })),
+      ...genreSuggestions.map(tag=>({ text: tag, popular: false })),
+    ];
+
+    if(!suggestions.length) { wrap.style.display='none'; return; }
+
+    wrap.style.display='';
+    listEl.innerHTML = suggestions.map(s=>
+      `<span class="tag-suggest-chip${s.popular?' popular':''}" data-tag="${escapeHtml(s.text)}">${s.popular?'🔥 ':''}${escapeHtml(s.text)}</span>`
+    ).join('');
+
+    listEl.querySelectorAll('.tag-suggest-chip').forEach(chip=>{
+      chip.onclick = ()=>{
+        const tag = chip.dataset.tag;
+        if(reviewTags.length >= 10) return;
+        if(reviewTags.includes(tag)) return;
+        reviewTags.push(tag);
+        setupTagInput('reviewTagInput','reviewTagAddBtn','reviewTagList',reviewTags,10);
+      };
+    });
   }
 
   function redrawReview() {
@@ -3727,6 +3925,45 @@
   }
 
   // 配信サービスリンクを生成
+  // あらすじを表示。日本語選択中は翻訳キャッシュを確認し、無ければ翻訳して保存する
+  async function renderAnimeDescription(page, id) {
+    const el = document.getElementById('animeDesc');
+    if (!el) return;
+    const original = page.description || '';
+    if (!original) { el.textContent = ''; return; }
+
+    // 日本語以外、またはDB_MODEがsupabaseでない場合は原文表示のみ
+    if (currentLang !== 'ja' || DB_MODE !== 'supabase' || !sb) {
+      el.textContent = original;
+      return;
+    }
+
+    // 既にKitsu側が日本語データを返している場合（ja_jp等で取得済み）は翻訳不要
+    // 簡易判定: 日本語文字を含むかどうか
+    const hasJapanese = /[぀-ゟ゠-ヿ一-鿿]/.test(original);
+    if (hasJapanese) { el.textContent = original; return; }
+
+    // まず原文を仮表示（体感速度のため）してからキャッシュ確認・翻訳
+    el.textContent = original;
+
+    try {
+      const cached = await db.animePages.getDescriptionJa(id);
+      if (cached) {
+        el.textContent = cached;
+        return;
+      }
+      // キャッシュが無ければ翻訳して保存（次回以降は誰でもキャッシュを使える）
+      const translated = await translateApi.translate(original, 'JA');
+      el.textContent = translated;
+      if (translated && translated !== original) {
+        db.animePages.saveDescriptionJa(id, translated); // 保存は待たない（表示優先）
+      }
+    } catch(e) {
+      console.warn('renderAnimeDescription error:', e);
+      // 失敗時は原文のまま（既に表示済み）
+    }
+  }
+
   function renderAffiliateLinks(page) {
     renderStreamLinks(page);
     renderGoodsLinks(page);
@@ -3932,6 +4169,7 @@
     noImage:       { ja:'画像未設定',   en:'No image',      ko:'이미지 없음','zh-tw':'無圖片','zh-cn':'无图片', es:'Sin imagen',  fr:'Sans image',pt:'Sem imagem', de:'Kein Bild',  ar:'لا صورة' },
     popularTags:   { ja:'人気タグ:',    en:'Popular tags:',  ko:'인기 태그:','zh-tw':'熱門標籤:','zh-cn':'热门标签:',es:'Tags populares:',fr:'Tags populaires:',pt:'Tags populares:',de:'Beliebte Tags:',ar:'الوسوم الشائعة:' },
     postInfo:      { ja:'投稿情報',     en:'Post info',     ko:'투고 정보', 'zh-tw':'發文資訊','zh-cn':'发文信息',es:'Info del post',fr:'Info de publication',pt:'Info da publicação',de:'Beitragsinfo',ar:'معلومات النشر' },
+    tagSuggestLabel: { ja:'よく使われるタグ',en:'Popular tags',ko:'자주 사용되는 태그','zh-tw':'常用標籤','zh-cn':'常用标签',es:'Tags populares',fr:'Tags populaires',pt:'Tags populares',de:'Beliebte Tags',ar:'الوسوم الشائعة' },
     tagHint:       { ja:'Enterまたは「追加」で確定。タグはみんなの検索に使われます。',en:'Press Enter or "Add" to confirm. Tags are used in search.',ko:'Enter 또는 "추가"로 확정. 태그는 검색에 사용됩니다.','zh-tw':'按Enter或「添加」確認。標籤用於搜尋。','zh-cn':'按Enter或「添加」确认。标签用于搜索。',es:'Pulsa Enter o "Añadir". Los tags se usan en la búsqueda.',fr:'Appuyez sur Entrée ou "Ajouter". Les tags sont utilisés dans la recherche.',pt:'Pressione Enter ou "Adicionar". As tags são usadas na pesquisa.',de:'Drücke Enter oder "Hinzufügen". Tags werden in der Suche verwendet.',ar:'اضغط Enter أو "إضافة". تُستخدم الوسوم في البحث.' },
     reviewHistoryTitle:{ ja:'📊 レビュー履歴',en:'📊 Review History',ko:'📊 리뷰 기록','zh-tw':'📊 評論記錄','zh-cn':'📊 评论记录',es:'📊 Historial',fr:'📊 Historique',pt:'📊 Histórico',de:'📊 Verlauf',ar:'📊 السجل' },
     noReviewHistory:{ ja:'レビューはまだありません',en:'No reviews yet',ko:'아직 리뷰가 없습니다','zh-tw':'尚無評論','zh-cn':'还没有评论',es:'Sin reseñas aún',fr:'Aucun avis encore',pt:'Sem avaliações ainda',de:'Noch keine Bewertungen',ar:'لا توجد مراجعات بعد' },
@@ -4642,6 +4880,109 @@
   }
   document.getElementById('adminPasswordInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') adminLogin(); });
 
+  // 日付ごとの件数を集計（直近N日間）
+  let _adminTrendData = { reviews:[], pv:[] };
+  let _adminTrendMetric = 'reviews';
+
+  function buildDailyCounts(dateStrings, days) {
+    const now = new Date();
+    const counts = [];
+    for(let i=days-1; i>=0; i--){
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const dayStart = d.getTime();
+      const dayEnd = dayStart + 86400000;
+      const count = dateStrings.filter(s=>{
+        const t = new Date(s||0).getTime();
+        return t >= dayStart && t < dayEnd;
+      }).length;
+      counts.push({ date: d, count });
+    }
+    return counts;
+  }
+
+  function drawAdminTrendChart(metric) {
+    const canvas = document.getElementById('adminTrendChart');
+    if(!canvas) return;
+    const data = _adminTrendData[metric] || [];
+    if(!data.length) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.clientWidth || 600;
+    const cssH = 160;
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+    canvas.style.height = cssH + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,cssW,cssH);
+
+    const padding = { top:15, right:10, bottom:25, left:30 };
+    const w = cssW - padding.left - padding.right;
+    const h = cssH - padding.top - padding.bottom;
+    const maxVal = Math.max(...data.map(d=>d.count), 1);
+
+    // グリッド線
+    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx.lineWidth = 1;
+    [0,0.5,1].forEach(r=>{
+      const y = padding.top + h*(1-r);
+      ctx.beginPath(); ctx.moveTo(padding.left,y); ctx.lineTo(padding.left+w,y); ctx.stroke();
+      ctx.fillStyle = 'rgba(141,181,160,.6)';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(Math.round(maxVal*r), padding.left-6, y+3);
+    });
+
+    // 折れ線
+    const stepX = w / (data.length-1 || 1);
+    ctx.beginPath();
+    data.forEach((d,i)=>{
+      const x = padding.left + i*stepX;
+      const y = padding.top + h*(1 - d.count/maxVal);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle = '#5ec97a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // エリア塗り
+    ctx.lineTo(padding.left + w, padding.top+h);
+    ctx.lineTo(padding.left, padding.top+h);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(94,201,122,.12)';
+    ctx.fill();
+
+    // 点
+    data.forEach((d,i)=>{
+      const x = padding.left + i*stepX;
+      const y = padding.top + h*(1 - d.count/maxVal);
+      ctx.beginPath();
+      ctx.arc(x,y,2.5,0,Math.PI*2);
+      ctx.fillStyle = '#5ec97a';
+      ctx.fill();
+    });
+
+    // x軸ラベル（3日おき）
+    ctx.fillStyle = 'rgba(141,181,160,.7)';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    data.forEach((d,i)=>{
+      if(i % 3 !== 0 && i !== data.length-1) return;
+      const x = padding.left + i*stepX;
+      const label = `${d.date.getMonth()+1}/${d.date.getDate()}`;
+      ctx.fillText(label, x, cssH-8);
+    });
+  }
+
+  document.querySelectorAll('.admin-trend-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.admin-trend-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      _adminTrendMetric = btn.dataset.metric;
+      drawAdminTrendChart(_adminTrendMetric);
+    });
+  });
+
   async function loadAdminData() {
     if(!sb) return;
     try {
@@ -4660,6 +5001,74 @@
       // ユーザー数（profilesテーブル）
       const userCount = await db.profiles.countAll();
       document.getElementById('adminKpiUsers').textContent = userCount ?? '—';
+
+      // 時系列トレンド（過去14日間）
+      const reviewDates = await db.reviews.getCreatedDates();
+      const pvDates = await db.pvLogs.getViewedDates();
+      _adminTrendData = {
+        reviews: buildDailyCounts(reviewDates.map(r=>r.created_at), 14),
+        pv: buildDailyCounts(pvDates.map(p=>p.viewed_at), 14),
+      };
+      drawAdminTrendChart(_adminTrendMetric);
+
+      // 急上昇タグ（直近7日間のタグ出現頻度）
+      const tagsData = await db.reviews.getTagsWithDates();
+      if(tagsData) {
+        const cutoff = Date.now() - 7*86400000;
+        const tagCounts = {};
+        tagsData.forEach(r=>{
+          const t = new Date(r.created_at||0).getTime();
+          if(t < cutoff) return;
+          (r.tags||[]).forEach(tag=>{
+            const k = tag.toLowerCase();
+            tagCounts[k] = (tagCounts[k]||0) + 1;
+          });
+        });
+        const ranked = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        const trendEl = document.getElementById('adminTrendingTags');
+        if(trendEl) {
+          if(ranked.length) {
+            trendEl.innerHTML = ranked.map(([tag,n],i)=>`
+              <div class="admin-tag-row">
+                <div class="admin-tag-rank"><span class="admin-tag-rank-num">${i+1}</span><span>#${escapeHtml(tag)}</span></div>
+                <span class="admin-badge">${n}回</span>
+              </div>
+            `).join('');
+          } else {
+            trendEl.innerHTML = '<p style="color:var(--muted);font-size:.82rem;">直近7日間のタグデータがありません</p>';
+          }
+        }
+      }
+
+      // 軸別平均スコア（全レビューの平均、どの要素が高評価されやすいか）
+      const allCharts = await db.reviews.getAllCharts();
+      if(allCharts && allCharts.length) {
+        const axisAvg = {};
+        [...axisA, ...axisB].forEach(k=>{ axisAvg[k] = []; });
+        allCharts.forEach(r=>{
+          axisA.forEach(k=>{ const v = r.chart_a?.[k]; if(v!==undefined && v!==null) axisAvg[k].push(Number(v)); });
+          axisB.forEach(k=>{ const v = r.chart_b?.[k]; if(v!==undefined && v!==null) axisAvg[k].push(Number(v)); });
+        });
+        const axisResults = [...axisA, ...axisB].map(k=>{
+          const vals = axisAvg[k];
+          const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+          return { label: translateGenre ? (getAxisA().includes(k)?getAxisA()[axisA.indexOf(k)]:getAxisB()[axisB.indexOf(k)]) : k, val: Math.round(avg*10)/10 };
+        }).sort((a,b)=>b.val-a.val);
+        const axisEl = document.getElementById('adminAxisBalance');
+        if(axisEl) {
+          const maxVal = Math.max(...axisResults.map(r=>r.val), 1);
+          axisEl.innerHTML = axisResults.map(r=>{
+            const pct = Math.max(3, Math.round(r.val/10*100));
+            const color = r.val>=7 ? '#5ec97a' : r.val>=4 ? '#f4a261' : '#ff8888';
+            return `
+              <div class="admin-axis-row">
+                <span class="admin-axis-label">${escapeHtml(r.label)}</span>
+                <div class="admin-axis-track"><div class="admin-axis-fill" style="width:${pct}%;background:${color};"></div></div>
+                <span class="admin-axis-val">${r.val}</span>
+              </div>`;
+          }).join('');
+        }
+      }
 
       // 国別PV
       const countryData = await db.pvLogs.getAllCountryCodes();
