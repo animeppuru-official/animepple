@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://animeppuru-official.github.io/animepple/sitemap.xml
