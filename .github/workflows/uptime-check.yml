@@ -1,0 +1,28 @@
+name: Uptime Check
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  check-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: サイトが200を返すか確認
+        run: |
+          URL="https://animeppuru-official.github.io/animepple/"
+          STATUS=$(curl -s -o /tmp/response.html -w "%{http_code}" "$URL")
+          echo "HTTPステータス: $STATUS"
+          if [ "$STATUS" -ne 200 ]; then
+            echo "::error::サイトが $STATUS を返しました（$URL）"
+            exit 1
+          fi
+
+      - name: 主要な文言が含まれているか確認
+        run: |
+          if ! grep -q "アニメップル" /tmp/response.html; then
+            echo "::error::期待する文言（アニメップル）がページに見つかりませんでした"
+            exit 1
+          fi
+          echo "✅ サイトは正常に応答しています"
