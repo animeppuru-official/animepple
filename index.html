@@ -212,7 +212,7 @@
     .reviews-head h2 { margin:0 0 .2rem; font-size:1.05rem; font-weight:800; }
     .reviews-head p { margin:0 0 .65rem; color:var(--muted); font-size:.78rem; }
     .review-card { background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
-    #reviewList { display:grid; grid-template-columns:repeat(2,1fr); gap:.6rem; align-items:start; }
+    #reviewList { display:grid; grid-template-columns:1fr; gap:.6rem; align-items:start; }
     .rc-head { display:flex; justify-content:space-between; align-items:flex-start; padding:.65rem .75rem .5rem; }
     .rc-name { font-weight:700; font-size:.9rem; }
     .rc-delete { background:none; border:1px solid #5a3030; color:#ffa0a0; border-radius:8px; padding:.25rem .55rem; font-size:.72rem; cursor:pointer; }
@@ -1603,6 +1603,14 @@
           .limit(limit||1000);
         return { items: data||[], count: count||0 };
       },
+      async search(query, limit) {
+        if(!sb || !query) return [];
+        const { data } = await sb.from('anime_pages')
+          .select('id,title,title_en,image_url,meta,genres')
+          .or(`title.ilike.%${query}%,title_en.ilike.%${query}%`)
+          .limit(limit||20);
+        return data || [];
+      },
       async countAll() {
         if(!sb) return 0;
         const { count } = await sb.from('anime_pages').select('*', {count:'exact',head:true});
@@ -1649,7 +1657,7 @@
       },
       async getAllForCluster() {
         if(!sb) return [];
-        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b');
+        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated');
         return data || [];
       },
       async getCreatedDates() {
@@ -1918,6 +1926,7 @@
         comment: r.comment||'',
         createdAt: r.created_at,
         fromSupabase: true,
+        isAiGenerated: !!r.is_ai_generated,
       }));
       // LocalStorageのレビューと重複なくマージ（Supabase優先、createdAtで重複除去）
       const local = pj(REVIEW_KEY).filter(r=>r.animeId===animeId&&!r.fromSupabase);
@@ -1960,7 +1969,7 @@
     const onclick = opts.dummy
       ? `alert('サンプルです')`
       : (item.kitsuId ? `navAnime('${item.kitsuId}')` : `nav('anime','${item.id}')`);
-    const title = escapeHtml(item.title || item.titleEn || getTitle(item) || '—');
+    const title = escapeHtml(getTitle(item) || item.title || item.titleEn || '—');
     const meta = escapeHtml([item.meta, item.year ? item.year+'年' : ''].filter(Boolean).join(' · ') || item.meta || '');
     const imgHtml = item.image
       ? `<img src="${escapeHtml(item.image)}" alt="${title}" loading="lazy" style="${style==='h'?'width:100%;height:100%;object-fit:cover;border-radius:10px;':''}" />`
@@ -2348,7 +2357,14 @@
   async function fetchKitsuPopular(pageOffset=0, yearFrom=null, yearTo=null) {
     let url = `https://kitsu.io/api/edge/anime?sort=-userCount&page[limit]=20&page[offset]=${pageOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`;
     if(yearFrom) url += `&filter[seasonYear]=${yearFrom}`;
-    const res = await fetch(url, { headers:{'Accept':'application/vnd.api+json'} });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(()=>controller.abort(), 10000); // 10秒でタイムアウト（無限読み込み中を防止）
+    let res;
+    try {
+      res = await fetch(url, { headers:{'Accept':'application/vnd.api+json'}, signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
     const json = await res.json();
     return (json.data||[]).map(item=>({
       id: `kitsu-${item.id}`,
@@ -2428,7 +2444,10 @@
         loadPopularItems(false);
       });
     }
-    loadPopularItems(true);
+    // 既にデータが読み込み済みなら再取得しない（戻る操作等での再呼び出しで
+    // 表示済みカードが「読み込み中…」で上書きされ、再取得が詰まると
+    // そのまま固まって見える不具合の原因だったため）
+    if(popState.items.length === 0) loadPopularItems(true);
   }
 
   // 期間内に投稿された有効レビュー数をカウント
@@ -2454,7 +2473,7 @@
     const grid = document.getElementById('popGrid');
     const meta = document.getElementById('popResultMeta');
     const loadMore = document.getElementById('popLoadMore');
-    if(reset) { grid.innerHTML='<p style="color:var(--muted);padding:1rem;">読み込み中…</p>'; }
+    if(reset && !grid.innerHTML.trim()) { grid.innerHTML='<p style="color:var(--muted);padding:1rem;">読み込み中…</p>'; }
 
     try {
       const base = popState.base;
@@ -2543,7 +2562,7 @@
     canvas.height = Math.round(cssH * dpr);
     ctx.scale(dpr, dpr);
     const w=cssW, h=cssH, cx=w/2, cy=h/2;
-    const radius=Math.min(w,h)*0.34,max=10,count=labels.length;
+    const radius=Math.min(w,h)*(w<180?0.30:0.34),max=10,count=labels.length;
     ctx.clearRect(0,0,w,h);
 
     // リング：0,3,5,7,10の5段階
@@ -2571,14 +2590,22 @@
     });
 
     // 軸線とラベル
+    const fontSize = w < 180 ? 9 : 10;
+    ctx.font = `${fontSize}px sans-serif`;
     for (let i=0;i<count;i++) {
       const a=(-Math.PI/2)+(Math.PI*2*i)/count;
       ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a)*radius,cy+Math.sin(a)*radius);
       ctx.strokeStyle='rgba(140,198,160,0.22)'; ctx.stroke();
-      const lx=cx+Math.cos(a)*(radius+18),ly=cy+Math.sin(a)*(radius+18);
-      ctx.font='10px sans-serif'; ctx.fillStyle='#ddf2e4';
-      ctx.textAlign=lx>=cx?'left':'right'; ctx.textBaseline='middle';
-      ctx.fillText(`${labels[i]} ${values[i]||0}`,lx,ly);
+      let lx=cx+Math.cos(a)*(radius+14),ly=cy+Math.sin(a)*(radius+14);
+      ctx.fillStyle='#ddf2e4';
+      const alignLeft = lx>=cx-0.5;
+      ctx.textAlign=alignLeft?'left':'right'; ctx.textBaseline='middle';
+      const label = `${labels[i]} ${values[i]||0}`;
+      const textW = ctx.measureText(label).width;
+      // ラベルがcanvas幅からはみ出さないようx位置をクランプ
+      if(alignLeft && lx+textW > w-2) lx = Math.max(cx, w-2-textW);
+      if(!alignLeft && lx-textW < 2) lx = Math.min(cx, 2+textW);
+      ctx.fillText(label,lx,ly);
     }
 
     // データポリゴン
@@ -2784,9 +2811,12 @@
   }
 
   // ピックアップ：
-  // Supabaseが100件未満 → Kitsuからランダム取得
-  // 100件以上 → Supabaseの中でレビュー50%未満をランダムピック
-  const PICKUP_THRESHOLD = 100;
+  // Supabaseが閾値未満 → Kitsuからランダム取得
+  // 閾値以上 → Supabaseの中でレビュー50%未満をランダムピック
+  // ※100件ちょうどをボーダーにすると、インポート時に1件でも失敗すると
+  //   Supabaseデータが全く使われずKitsuランダムに丸ごとフォールバックしてしまうため、
+  //   意図的に低め（20件）に設定して確実にSupabase側が使われるようにしている。
+  const PICKUP_THRESHOLD = 20;
 
   async function getPickupItems() {
     const INTERVAL_MS = 30 * 60 * 1000;
@@ -3030,14 +3060,38 @@
     const byReview = [...all].sort((a,b)=>reviewCount(b.id)-reviewCount(a.id));
     document.getElementById('recommendGrid').innerHTML = byReview.slice(0,8).map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true})).join('');
 
-    // すべての作品：まずローカルを表示してからKitsu人気作を追加
-    document.getElementById('allCount').textContent = tFn('allCount', all.length);
-    document.getElementById('allGrid').innerHTML = all.map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true})).join('');
+    // すべての作品：まずローカルを表示
+    let combinedAll = [...all];
+    document.getElementById('allCount').textContent = tFn('allCount', combinedAll.length);
+    document.getElementById('allGrid').innerHTML = combinedAll.map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true})).join('');
+
+    // Supabaseに登録済みの作品（AIピック等、ローカルキャッシュに無い新規訪問者にも見せたいもの）を追加
+    if(DB_MODE === 'supabase' && sb) {
+      try {
+        const { items: dbPages } = await db.animePages.getAllWithLimit(200);
+        const existingIds = new Set(combinedAll.map(a=>a.id));
+        const dbItems = (dbPages||[])
+          .filter(p => !existingIds.has(p.id))
+          .map(p => ({
+            id: p.id,
+            kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+            title: p.title || p.title_en || '',
+            titleEn: p.title_en || p.title || '',
+            meta: p.meta || '',
+            image: p.image_url || '',
+          }));
+        if(dbItems.length) {
+          combinedAll = [...combinedAll, ...dbItems];
+          document.getElementById('allCount').textContent = tFn('allCount', combinedAll.length);
+          document.getElementById('allGrid').innerHTML += dbItems.map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true})).join('');
+        }
+      } catch(e) { console.warn('home Supabase anime_pages fetch:', e); }
+    }
 
     // Kitsuから人気作を取得して「すべての作品」に追加
     try {
       const json = await animeApi.getPopular(0, 20);
-      const existingIds = new Set(all.map(a=>a.kitsuId||'').filter(Boolean));
+      const existingIds = new Set(combinedAll.map(a=>a.kitsuId||'').filter(Boolean));
       const kitsuItems = (json.data||[])
         .filter(item => !existingIds.has(item.id))
         .map(item => {
@@ -3053,7 +3107,7 @@
           };
         });
       if (kitsuItems.length) {
-        const total = all.length + kitsuItems.length;
+        const total = combinedAll.length + kitsuItems.length;
         document.getElementById('allCount').textContent = tFn('allCount', total);
         document.getElementById('allGrid').innerHTML += kitsuItems.map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true, showRecruitBadge:false, badges:['<span class="recruit-badge">📢 レビュー募集中</span>']})).join('');
       }
@@ -3496,8 +3550,10 @@
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
       renderMasterGraph(id);
-      // レビュー数をアニメページに表示（全レビュー）
-      const allReviews = getReviews().filter(r=>r.animeId===id);
+      // レビュー数をアニメページに表示（実レビューがあればAI参考グラフは数に含めない）
+      const scopedReviews = getReviews().filter(r=>r.animeId===id);
+      const hasRealReview = scopedReviews.some(r=>!r.isAiGenerated);
+      const allReviews = hasRealReview ? scopedReviews.filter(r=>!r.isAiGenerated) : scopedReviews;
       const countEl = document.getElementById('animeReviewCount');
       if(countEl) countEl.textContent = allReviews.length ? `${allReviews.length}件` : '';
     });
@@ -3564,7 +3620,9 @@
   }
 
   function renderReviewList(id) {
-    const allRaw=getReviews().filter(r=>r.animeId===id);
+    const scopedAll=getReviews().filter(r=>r.animeId===id);
+    const hasReal = scopedAll.some(r=>!r.isAiGenerated);
+    const allRaw = hasReal ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
     let reviews=allRaw; // 全レビューを表示（グラフ集計はvalidReviewsで別管理）
     const skipped=0;
     const el=document.getElementById('reviewList');
@@ -3597,7 +3655,7 @@
                 ${(()=>{const name=rev.userName||'ゲスト';if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-                <span class="rc-name">${escapeHtml(rev.userName||'ゲスト')}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}</span>
+                <span class="rc-name">${escapeHtml(rev.userName||'ゲスト')}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${rev.createdAt?new Date(rev.createdAt).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'}):''}</span>
               </div>
             </div>
@@ -3608,10 +3666,12 @@
             <div><p class="rc-chart-label">${t('chartATitle')}</p><canvas class="rc-canvas" data-ai="${i}" width="280" height="200"></canvas></div>
             <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-bi="${i}" width="280" height="200"></canvas></div>
           </div>
-          <div class="rc-comment">
+          ${rev.isAiGenerated
+            ? `<div class="rc-comment"><p class="rc-comment-text" style="color:var(--muted);font-size:.74rem;line-height:1.5;">${t('aiGeneratedDisclaimer')}</p></div>`
+            : `<div class="rc-comment">
             <button class="rc-comment-btn" data-ci="${i}">▶ ${t('commentExpandLabel')}</button>
             <p class="rc-comment-text" style="display:none;">${(rev.comment||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
-          </div>
+          </div>`}
         </article>
       `;
     }).join('') + (skipped>0?`<p style="font-size:.74rem;color:var(--muted);text-align:center;padding:.5rem 0;">${t('excludedReviews').replace('{n}',skipped)}</p>`:'');
@@ -3880,8 +3940,11 @@
   }
 
   function validReviews(animeId) {
-    return getReviews().filter(r => {
-      if (r.animeId !== animeId) return false;
+    const scoped = getReviews().filter(r => r.animeId === animeId);
+    const hasReal = scoped.some(r => !r.isAiGenerated);
+    return scoped.filter(r => {
+      // 実レビューが1件でもあればAI生成レビューは集計から除外
+      if (hasReal && r.isAiGenerated) return false;
       // 全軸同一値（全部0・全部10など）は集計対象から除外
       if (isUniformReview(r)) return false;
       // chartMovedフラグがあればそれを使う（新形式）
@@ -3915,9 +3978,58 @@
       .map(([tag])=>tag);
   }
 
+  // グラフ検索用：全アニメのマスターグラフを一括キャッシュ
+  // （matchDistはローカルキャッシュされたレビューしか見れないため、
+  //   まだ個別ページを開いたことがない作品はInfinity扱いになり検索にヒットしない。
+  //   これを避けるため、グラフ検索実行時に一度だけSupabaseから全レビューを取得し、
+  //   作品ごとの簡易マスターグラフを計算してキャッシュしておく）
+  let _searchMasterGraphCache = null;
+  let _searchMasterGraphPromise = null;
+  async function ensureSearchMasterGraphCache() {
+    if(_searchMasterGraphCache) return _searchMasterGraphCache;
+    if(_searchMasterGraphPromise) return _searchMasterGraphPromise;
+    _searchMasterGraphPromise = (async () => {
+      if(DB_MODE !== 'supabase' || !sb) { _searchMasterGraphCache = {}; return _searchMasterGraphCache; }
+      let rows = [];
+      try { rows = await db.reviews.getAllForCluster(); } catch(e) { console.warn('search master graph fetch:', e); }
+      const byAnime = {};
+      (rows||[]).forEach(r=>{
+        if(!byAnime[r.anime_id]) byAnime[r.anime_id]=[];
+        byAnime[r.anime_id].push(r);
+      });
+      const cache = {};
+      Object.entries(byAnime).forEach(([animeId, list])=>{
+        const hasReal = list.some(r=>!r.is_ai_generated);
+        const valid = list.filter(r=>{
+          if(hasReal && r.is_ai_generated) return false;
+          if(typeof r.chart_moved !== 'undefined') return r.chart_moved;
+          return true;
+        });
+        if(!valid.length) return;
+        const avgA = {}, avgB = {};
+        axisA.forEach(k=>{
+          const vals = valid.map(r=>Number(r.chart_a?.[k]||0));
+          avgA[k] = vals.reduce((a,b)=>a+b,0)/vals.length;
+        });
+        axisB.forEach(k=>{
+          const vals = valid.map(r=>Number(r.chart_b?.[k]||0));
+          avgB[k] = vals.reduce((a,b)=>a+b,0)/vals.length;
+        });
+        cache[animeId] = { avgA, avgB };
+      });
+      _searchMasterGraphCache = cache;
+      return cache;
+    })();
+    return _searchMasterGraphPromise;
+  }
+
   function hasSrProfile(){ return Object.values(srProfileA).some(v=>v>0)||Object.values(srProfileB).some(v=>v>0); }
   function matchDist(id){
-    const aA=avgChart(id,'chartA',axisA),aB=avgChart(id,'chartB',axisB);
+    let aA=avgChart(id,'chartA',axisA),aB=avgChart(id,'chartB',axisB);
+    if((!aA||!aB) && _searchMasterGraphCache && _searchMasterGraphCache[id]) {
+      aA = aA || _searchMasterGraphCache[id].avgA;
+      aB = aB || _searchMasterGraphCache[id].avgB;
+    }
     if(!aA&&!aB) return Infinity;
     let dist=0,count=0;
     axisA.forEach(l=>{ if(srProfileA[l]>0&&aA){dist+=Math.abs(aA[l]-srProfileA[l]);count++;} });
@@ -3975,6 +4087,28 @@
 
     const q=srSearchState.q.toLowerCase();
     let list=getAll();
+
+    // Supabase登録済み作品も候補プールに加える（キーワード検索・グラフ検索どちらでも対象にするため）
+    if(DB_MODE === 'supabase' && sb) {
+      try {
+        const { items: dbPages } = await db.animePages.getAllWithLimit(500);
+        const existingIds = new Set(list.map(a=>a.id));
+        const dbItems = (dbPages||[])
+          .filter(p => !existingIds.has(p.id))
+          .map(p => ({
+            id: p.id,
+            kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+            title: p.title || p.title_en || '',
+            titleEn: p.title_en || p.title || '',
+            meta: p.meta || '',
+            image: p.image_url || '',
+          }));
+        list = [...list, ...dbItems];
+      } catch(e) { console.warn('search Supabase anime_pages fetch:', e); }
+    }
+
+    // グラフ検索：マスターグラフキャッシュを事前ロード（未訪問作品もマッチ判定できるように）
+    if(hasSrProfile()) await ensureSearchMasterGraphCache();
 
     if(q) list=list.filter(a=>`${a.title} ${a.titleEn||''} ${a.meta} ${(a.features||[]).join(' ')} ${a.description}`.toLowerCase().includes(q));
     if(srTagsActive.length) list=list.filter(a=>tagMatchScore(a.id)>0);
@@ -4181,41 +4315,60 @@
     renderGoodsLinks(page);
   }
 
+  // KitsuのsiteName表記ゆれ→自社サービスIDへの厳密マッピング
+  // （あいまいな部分一致だと誤爆するので、確認済みの表記だけ列挙する）
+  const KITSU_STREAMER_MAP = {
+    'crunchyroll': 'crunchyroll',
+    'funimation': 'funimation',
+    'netflix': 'netflix',
+    'hidive': 'hidive',
+    'hulu': 'hulu',
+    'amazon prime video': 'amazon',
+    'wakanim': 'wakanim',
+    'vrv': 'vrv',
+    'disney plus': 'disneyplus',
+    'tubi tv': 'tubi',
+  };
+
   function renderStreamLinks(page) {
     const el = document.getElementById('afStreamLinks');
     const section = document.getElementById('afStreamSection');
     if(!el||!section) return;
 
     const country = geoStore.getCountry() || 'DEFAULT';
-    // Kitsuから取れた配信先を優先
-    let services = [];
+    // Kitsuから取れた配信先を優先（厳密マッチのみ「確認済み」扱い）
+    const allServices = Object.values(AFFILIATE.streamByCountry).flat();
+    let confirmed = [];
     if(page && page.streaming && page.streaming.length) {
-      // Kitsuの配信サービス名から既知サービスにマッチング
-      const kitsuNames = page.streaming.map(s=>s.name?.toLowerCase()||'');
-      const allServices = Object.values(AFFILIATE.streamByCountry).flat();
-      const matched = allServices.filter(s=>
-        kitsuNames.some(k=>k.includes(s.id)||s.id.includes(k.split(' ')[0].toLowerCase()))
-      );
-      // 重複除去
+      const kitsuIds = page.streaming
+        .map(s => KITSU_STREAMER_MAP[(s.name||'').trim().toLowerCase()])
+        .filter(Boolean);
+      const kitsuIdSet = new Set(kitsuIds);
       const seen = new Set();
-      services = matched.filter(s=>{ if(seen.has(s.id)) return false; seen.add(s.id); return true; });
+      confirmed = allServices.filter(s => {
+        if(!kitsuIdSet.has(s.id) || seen.has(s.id)) return false;
+        seen.add(s.id); return true;
+      });
     }
-    // Kitsuで取れなければ国別デフォルトを使用
-    if(!services.length) {
-      services = AFFILIATE.streamByCountry[country] || AFFILIATE.streamByCountry.DEFAULT;
-    }
+
+    const isConfirmed = confirmed.length > 0;
+    let services = isConfirmed ? confirmed : (AFFILIATE.streamByCountry[country] || AFFILIATE.streamByCountry.DEFAULT);
+
+    const labelEl = section.querySelector('.af-section-label');
+    if(labelEl) labelEl.textContent = isConfirmed ? t('streamSection') : t('streamSectionFallback');
 
     el.innerHTML = `<div class="af-stream-list">${services.slice(0,4).map(s=>`
       <a class="af-stream-item" href="${s.url}" target="_blank" rel="noopener noreferrer sponsored"
          onclick="adClick('stream_${s.id}')">
         <div class="af-stream-icon">${s.icon}</div>
         <div class="af-stream-body">
-          <div class="af-stream-name">${s.name}</div>
+          <div class="af-stream-name">${s.name}${isConfirmed?` <span class="af-stream-badge">${t('streamConfirmedBadge')}</span>`:''}</div>
           <div class="af-stream-sub">${s.sub}</div>
         </div>
         <div class="af-stream-cta">${s.cta}</div>
       </a>
-    `).join('')}</div>`;
+    `).join('')}</div>
+    <p style="font-size:.68rem;color:var(--muted);margin:.5rem .1rem 0;line-height:1.5;">${t('streamDisclaimer')}</p>`;
     section.style.display = '';
   }
 
@@ -4343,6 +4496,8 @@
     tagPlaceholder:{ ja:'例: 泣ける、鬱、神作画',en:'e.g. emotional, dark, stunning animation',ko:'예: 눈물, 우울, 신작화','zh-tw':'例：感人、黑暗、神作畫','zh-cn':'例：感人、黑暗、神作画',es:'ej: emotivo, oscuro, animación impresionante',fr:'ex: émouvant, sombre, animation époustouflante',pt:'ex: emocional, sombrio, animação incrível',de:'z.B. emotional, dunkel, atemberaubende Animation',ar:'مثل: مؤثر، مظلم، رسوم متحركة مذهلة' },
     btnTagAdd:    { ja:'追加',en:'Add',ko:'추가','zh-tw':'新增','zh-cn':'添加',es:'Añadir',fr:'Ajouter',pt:'Adicionar',de:'Hinzufügen',ar:'إضافة' },
     commentExpandLabel: { ja:'コメントを見る',en:'Read comment',ko:'댓글 보기','zh-tw':'查看留言','zh-cn':'查看评论',es:'Ver comentario',fr:'Voir commentaire',pt:'Ver comentário',de:'Kommentar lesen',ar:'اقرأ التعليق' },
+    aiGeneratedBadge: { ja:'🤖 AI参考グラフ',en:'🤖 AI reference graph',ko:'🤖 AI 참고 그래프','zh-tw':'🤖 AI參考圖表','zh-cn':'🤖 AI参考图表',es:'🤖 Gráfico de referencia IA',fr:'🤖 Graphique de référence IA',pt:'🤖 Gráfico de referência IA',de:'🤖 KI-Referenzgrafik',ar:'🤖 رسم بياني مرجعي بالذكاء الاصطناعي' },
+    aiGeneratedDisclaimer: { ja:'🤖 このグラフはAIが作品情報をもとに自動生成した参考データです。実際の印象と異なる場合があります。上質なレビューが投稿され次第、自動的に非表示になります。',en:'🤖 This graph was auto-generated by AI based on the title\'s public info, as reference data. It may differ from actual impressions and will be automatically hidden once a quality review is posted.',ko:'🤖 이 그래프는 AI가 작품 정보를 바탕으로 자동 생성한 참고 데이터입니다. 실제 인상과 다를 수 있으며, 우수한 리뷰가 등록되면 자동으로 숨겨집니다.','zh-tw':'🤖 此圖表為AI根據作品公開資訊自動生成的參考數據,可能與實際觀感有所不同。一旦有優質評論發佈,將自動隱藏。','zh-cn':'🤖 此图表为AI根据作品公开信息自动生成的参考数据,可能与实际观感有所不同。一旦有优质评论发布,将自动隐藏。',es:'🤖 Este gráfico fue generado automáticamente por IA a partir de información pública de la obra, como dato de referencia. Puede diferir de la impresión real y se ocultará automáticamente en cuanto se publique una reseña de calidad.',fr:'🤖 Ce graphique a été généré automatiquement par l\'IA à partir d\'informations publiques sur l\'œuvre, à titre de référence. Il peut différer de l\'impression réelle et sera automatiquement masqué dès qu\'un avis de qualité sera publié.',pt:'🤖 Este gráfico foi gerado automaticamente por IA com base em informações públicas da obra, como dado de referência. Pode diferir da impressão real e será ocultado automaticamente assim que uma avaliação de qualidade for publicada.',de:'🤖 Dieses Diagramm wurde von einer KI anhand öffentlicher Informationen zum Titel automatisch als Referenzdaten erstellt. Es kann vom tatsächlichen Eindruck abweichen und wird automatisch ausgeblendet, sobald eine qualitativ hochwertige Bewertung veröffentlicht wird.',ar:'🤖 تم إنشاء هذا الرسم البياني تلقائيًا بواسطة الذكاء الاصطناعي استنادًا إلى معلومات عامة عن العمل، كبيانات مرجعية. قد يختلف عن الانطباع الفعلي وسيتم إخفاؤه تلقائيًا بمجرد نشر مراجعة عالية الجودة.' },
     btnReviewList: { ja:'📋 レビューを見る',en:'📋 Reviews',ko:'📋 리뷰 보기','zh-tw':'📋 查看評論','zh-cn':'📋 查看评论',es:'📋 Ver reseñas',fr:'📋 Voir avis',pt:'📋 Ver avaliações',de:'📋 Bewertungen',ar:'📋 المراجعات' },
     periodAll:  { ja:'全期間',en:'All time',ko:'전체 기간','zh-tw':'全部','zh-cn':'全部',es:'Todo',fr:'Tout',pt:'Tudo',de:'Gesamt',ar:'الكل' },
     periodYear: { ja:'今年',en:'This year',ko:'올해','zh-tw':'今年','zh-cn':'今年',es:'Este año',fr:'Cette année',pt:'Este ano',de:'Dieses Jahr',ar:'هذا العام' },
@@ -4415,6 +4570,9 @@
     popSortAll:    { ja:'全期間',en:'All Time',ko:'전체','zh-tw':'全期間','zh-cn':'全期间',es:'Todo',fr:'Tout',pt:'Todo',de:'Gesamt',ar:'الكل' },
     popSortPeriod: { ja:'📅 年代',en:'📅 By Year',ko:'📅 연대','zh-tw':'📅 年代','zh-cn':'📅 年代',es:'📅 Por año',fr:'📅 Par année',pt:'📅 Por ano',de:'📅 Nach Jahr',ar:'📅 حسب العام' },
     streamSection: { ja:'▶ このアニメを観る',en:'▶ Watch This Anime',ko:'▶ 이 애니 보기','zh-tw':'▶ 觀看此動畫','zh-cn':'▶ 观看此动漫',es:'▶ Ver este anime',fr:'▶ Voir cet anime',pt:'▶ Assistir anime',de:'▶ Anime ansehen',ar:'▶ شاهد هذا الأنمي' },
+    streamSectionFallback: { ja:'▶ こちらの配信サービスもチェック',en:'▶ You might also check these services',ko:'▶ 이런 서비스도 확인해보세요','zh-tw':'▶ 也可以參考這些平台','zh-cn':'▶ 也可以参考这些平台',es:'▶ También puedes revisar estos servicios',fr:'▶ Vous pouvez aussi consulter ces services',pt:'▶ Confira também estes serviços',de:'▶ Diese Dienste könnten auch interessant sein',ar:'▶ يمكنك أيضًا مراجعة هذه الخدمات' },
+    streamConfirmedBadge: { ja:'配信中',en:'Available',ko:'스트리밍 중','zh-tw':'上架中','zh-cn':'上架中',es:'Disponible',fr:'Disponible',pt:'Disponível',de:'Verfügbar',ar:'متاح' },
+    streamDisclaimer: { ja:'※配信状況は外部データベース（Kitsu）を参照した参考情報であり、変更されている場合や実際と異なる場合があります。ご利用前に配信先サービスで最新の配信状況をご確認ください。',en:'※Availability info is sourced from an external database (Kitsu) for reference and may be outdated or inaccurate. Please confirm current availability on the streaming service before subscribing.',ko:'※ 스트리밍 정보는 외부 데이터베이스(Kitsu)를 참고한 것으로, 실제와 다르거나 변경되었을 수 있습니다. 이용 전 해당 서비스에서 최신 정보를 확인해 주세요.','zh-tw':'※串流資訊參考自外部資料庫(Kitsu),可能與實際情況不符或已變更。使用前請至該平台確認最新播出狀態。','zh-cn':'※流媒体信息参考自外部数据库(Kitsu),可能与实际情况不符或已变更。使用前请至该平台确认最新播出状态。',es:'※La información de disponibilidad proviene de una base de datos externa (Kitsu) y puede estar desactualizada o ser incorrecta. Verifica la disponibilidad actual en el servicio antes de suscribirte.',fr:'※Les informations de disponibilité proviennent d\'une base de données externe (Kitsu) et peuvent être obsolètes ou inexactes. Veuillez vérifier la disponibilité actuelle sur le service avant de vous abonner.',pt:'※As informações de disponibilidade vêm de um banco de dados externo (Kitsu) e podem estar desatualizadas ou incorretas. Verifique a disponibilidade atual no serviço antes de assinar.',de:'※Die Verfügbarkeitsinformationen stammen aus einer externen Datenbank (Kitsu) und können veraltet oder ungenau sein. Bitte prüfen Sie die aktuelle Verfügbarkeit beim jeweiligen Dienst, bevor Sie abonnieren.',ar:'※معلومات التوفر مأخوذة من قاعدة بيانات خارجية (Kitsu) وقد تكون قديمة أو غير دقيقة. يرجى التحقق من التوفر الحالي على الخدمة قبل الاشتراك.' },
     validReviewMeta: { ja:'有効レビュー {n}件の平均', en:'Avg. of {n} valid reviews', ko:'유효 리뷰 {n}건 평균', 'zh-tw':'{n}則有效評論平均', 'zh-cn':'{n}条有效评论平均', es:'Media de {n} reseñas', fr:'Moy. de {n} avis valides', pt:'Média de {n} avaliações', de:'Ø {n} gültige Bewertungen', ar:'متوسط {n} مراجعة' },
     countUnit: { ja:'件', en:'', ko:'건', 'zh-tw':'則', 'zh-cn':'条', es:'', fr:'', pt:'', de:'', ar:'' },
     noReviewFilter: { ja:'レビューがありません',en:'No reviews found',ko:'리뷰가 없습니다','zh-tw':'找不到評論','zh-cn':'找不到评论',es:'No hay reseñas',fr:'Aucun avis',pt:'Nenhuma avaliação',de:'Keine Bewertungen',ar:'لا توجد مراجعات' },
@@ -4838,8 +4996,11 @@
     const _mcaL = document.getElementById('masterChartALabel'); if(_mcaL) _mcaL.textContent=t('chartATitle');
     const _mcbL = document.getElementById('masterChartBLabel'); if(_mcbL) _mcbL.textContent=t('chartBTitle');
     const _wrt = document.getElementById('worldReactionTitle'); if(_wrt) _wrt.textContent=t('worldReaction');
-    const _stL = document.querySelector('#afStreamSection .af-section-label'); if(_stL) _stL.textContent=t('streamSection');
     const _gdL = document.querySelector('#afGoodsSection .af-section-label'); if(_gdL) _gdL.textContent=t('goodsSection');
+    if(typeof currentAnimeId !== 'undefined' && currentAnimeId) {
+      const _curPage = getAll().find(p=>p.id===currentAnimeId);
+      if(_curPage) renderStreamLinks(_curPage);
+    }
     // world-tab
     document.querySelectorAll('.world-tab').forEach(btn=>{
       const k={all:'periodAll',month:'periodMonth',year:'periodYear',day:'periodDay'}[btn.dataset.period];
@@ -5633,7 +5794,9 @@
   }
 
   function renderReviewsListFiltered(id) {
-    const allRevs = getReviews().filter(r=>r.animeId===id);
+    const scopedAll = getReviews().filter(r=>r.animeId===id);
+    const hasReal = scopedAll.some(r=>!r.isAiGenerated);
+    const allRevs = hasReal ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
     const filtered = filterReviews(allRevs);
     const metaEl = document.getElementById('reviewsListMeta');
     if(metaEl) metaEl.textContent = `${filtered.length}件`;
@@ -5662,7 +5825,7 @@
           <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
             <div style="width:32px;height:32px;border-radius:7px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
             <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-              <span class="rc-name">${name}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
+              <span class="rc-name">${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
             </div>
           </div>
@@ -5672,10 +5835,12 @@
           <div><p class="rc-chart-label">${t('chartATitle')}</p><canvas class="rc-canvas" data-fai="${i}" width="280" height="200"></canvas></div>
           <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-fbi="${i}" width="280" height="200"></canvas></div>
         </div>
-        <div class="rc-comment">
+        ${rev.isAiGenerated
+          ? `<div class="rc-comment"><p class="rc-comment-text" style="color:var(--muted);font-size:.74rem;line-height:1.5;">${t('aiGeneratedDisclaimer')}</p></div>`
+          : `<div class="rc-comment">
           <button class="rc-comment-btn" data-fci="${i}">▶ コメントを見る</button>
           <p class="rc-comment-text" style="display:none;">${(rev.comment||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
-        </div>
+        </div>`}
       </article>`;
     }).join('');
     sorted.forEach((rev,i)=>{
@@ -5695,7 +5860,7 @@
     const all = getAll();
     const page = all.find(p=>p.id===id);
     const titleEl = document.getElementById('reviewsListTitle');
-    if(titleEl) titleEl.textContent = page ? t('reviewsOfTitle').replace('{t}', page.title||page.titleEn||'') : t('reviewListEmpty');
+    if(titleEl) titleEl.textContent = page ? t('reviewsOfTitle').replace('{t}', getTitle(page)) : t('reviewListEmpty');
 
     // フィルター状態リセット
     _rlPeriod = 'all';
@@ -5891,7 +6056,7 @@
         const animeIds = [...new Set(recentReviews.map(r=>r.anime_id))];
         const pages = await db.animePages.getByIds(animeIds);
         const titleMap = {};
-        pages.forEach(p => { titleMap[p.id] = p.title || p.title_en || p.id; });
+        pages.forEach(p => { titleMap[p.id] = currentLang==='ja' ? (p.title||p.title_en||p.id) : (p.title_en||p.title||p.id); });
 
         const labA=getAxisA(), labB=getAxisB();
         listEl.innerHTML = recentReviews.map((r,i)=>{
@@ -6011,7 +6176,7 @@
     (pages||[]).forEach(p=>{ pageMap[p.id]=p; });
     el.innerHTML = favs.map(f=>{
       const p = pageMap[f.anime_id];
-      const title = p?.title || p?.title_en || f.anime_id;
+      const title = currentLang==='ja' ? (p?.title || p?.title_en || f.anime_id) : (p?.title_en || p?.title || f.anime_id);
       const img = p?.image_url;
       return `<div class="mypage-fav-card" onclick="nav('anime','${f.anime_id}')">
         ${img?`<img src="${escapeHtml(img)}" loading="lazy">`:'<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;color:var(--muted);">📺</div>'}
