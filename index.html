@@ -756,6 +756,8 @@
   </style>
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Cloudflare Turnstile（bot対策・SPAなので明示的レンダリングを使用） -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
 
@@ -1102,6 +1104,7 @@
         <label data-i18n="labelComment">コメント</label>
         <textarea id="reviewComment" placeholder="感じた魅力やおすすめポイントを書いてください"></textarea>
       </div>
+      <div id="reviewTurnstile" style="margin:.75rem 0;"></div>
       <button class="submit-btn" id="submitReviewBtn" data-i18n="btnSubmit">🍎 投稿する</button>
       <p class="form-note">※ ブラウザ内に保存します。やさしい言葉での投稿をお願いします。</p>
     </div>
@@ -1528,6 +1531,9 @@
   const DB_MODE = 'supabase'; // 'local' | 'supabase'
   const SUPABASE_URL  = 'https://ofbjfiuayfhdkgertxyo.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYmpmaXVheWZoZGtnZXJ0eHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzAxOTIsImV4cCI6MjA5ODIwNjE5Mn0.atbMSoL6d_-F-RRomwfjWeKe1YOMZi-48tnPx--Etco';
+  // Turnstile サイトキーは公開情報（秘密鍵ではない）なので直書きで問題ない。
+  // ★かずまさんへ: Cloudflareでサイトキーを発行したら、下のプレースホルダーを差し替えてください
+  const TURNSTILE_SITE_KEY = '0x4AAAAAADt8IYSLv7u6jj7S';
   let sb = null;
   try {
     if (DB_MODE === 'supabase' && typeof supabase !== 'undefined') {
@@ -1683,7 +1689,7 @@
       },
       async getAllForCluster() {
         if(!sb) return [];
-        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated');
+        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated,username,quality');
         return data || [];
       },
       async getCreatedDates() {
@@ -1703,7 +1709,7 @@
       },
       async getAllChartsWithCountry() {
         if(!sb) return [];
-        const { data } = await sb.from('reviews').select('chart_a,chart_b,country_code');
+        const { data } = await sb.from('reviews').select('chart_a,chart_b,country_code,username,quality');
         return data || [];
       },
       async getByAnimeIdWithCountry(animeId) {
@@ -3509,24 +3515,50 @@
     return clusters.sort((a,b)=>b.length-a.length).map(idxs => idxs.map(i=>reviews[i]));
   }
 
-  // メインクラスタ（多数派の意見）のレビューだけを返す
-  function getMainClusterReviews(reviews) {
+  // メインクラスタ（多数派の意見）のレビューだけを返す。
+  // 「件数」ではなく「重みの合計」が最大のクラスタを選ぶことで、
+  // 実績のあるレビュアーが集まった少数派クラスタが、無名アカウントを
+  // 大量動員しただけの多数派クラスタ（組織的な荒らし・レビュー爆撃）に
+  // 数の力だけで押し切られないようにしている。
+  function getMainClusterReviews(reviews, userQualityCounts) {
     if (reviews.length < 3) return reviews; // 少数なら全部使う
+    // 成熟度が「growing」段階（5〜9件）ではクラスタリングをスキップする。
+    // データが少ないうちにクラスタ分けすると、1〜2件を誤って「外れ値」扱いしてしまうリスクが高いため。
+    if (getMaturityStage(reviews.length) !== 'stable') return reviews;
     const clusters = clusterReviews(reviews);
-    const mainCluster = clusters[0];
-    // メインクラスタが全体の30%未満しかない場合は分裂しすぎなので全部使う（フォールバック）
-    if (mainCluster.length < reviews.length * 0.3) return reviews;
-    return mainCluster;
+    const qCounts = userQualityCounts || {};
+    const byWeight = clusters.map(cluster => ({
+      cluster,
+      weight: cluster.reduce((sum, r) => sum + getReviewWeight(r, qCounts), 0)
+    })).sort((a,b) => b.weight - a.weight);
+    const totalWeight = byWeight.reduce((s,c)=>s+c.weight, 0);
+    const top = byWeight[0];
+    // 最重量クラスタが全体重みの30%未満しかない場合は分裂しすぎなので全部使う（フォールバック）
+    if (top.weight < totalWeight * 0.3) return reviews;
+    return top.cluster;
   }
 
-  // 票割れ検知: 上位2クラスタが拮抗しているかチェック（管理者向け）
+  // 票割れ検知: 意見が複数派閥に分かれているかチェック（管理者向け）
+  // 2派拮抗だけでなく、3派以上に分裂しているケースも検知する
   function detectSplitOpinion(reviews) {
-    if (reviews.length < 10) return { isSplit: false }; // 母数が少ないと誤検知しやすいので対象外
+    if (reviews.length < 10) return { isSplit: false };
     const clusters = clusterReviews(reviews);
     if (clusters.length < 2) return { isSplit: false };
-    const top1 = clusters[0].length, top2 = clusters[1].length;
-    const isSplit = top2 >= top1 * 0.6 && (top1+top2) >= reviews.length * 0.6;
-    return { isSplit, top1Size: top1, top2Size: top2, totalReviews: reviews.length };
+    const total = reviews.length;
+    const sizes = clusters.map(c=>c.length);
+    const top1 = sizes[0]||0, top2 = sizes[1]||0, top3 = sizes[2]||0;
+    // 2派拮抗: 上位2派閥が同程度の大きさで、かつ合わせて全体の過半数を占める
+    const isSplit = top2 >= top1 * 0.6 && (top1+top2) >= total * 0.6;
+    // 3派以上に分裂: 3つ目の派閥も無視できない大きさを持ち、上位3派閥で全体の大半を説明できる
+    const isFragmented = clusters.length >= 3 && top3 >= total * 0.15 && (top1+top2+top3) >= total * 0.7;
+    return {
+      isSplit: isSplit || isFragmented,
+      isFragmented,
+      clusterCount: clusters.length,
+      clusterSizes: sizes.slice(0, 5),
+      top1Size: top1, top2Size: top2, top3Size: top3,
+      totalReviews: total
+    };
   }
 
   // 重みを反映した値配列を作る（重み1.5なら1.5倍の影響を持たせるため整数複製で近似）
@@ -3599,17 +3631,9 @@
     if (meta) meta.textContent = metaText;
 
     const labA = getAxisA(), labB = getAxisB();
-    // 成熟度に応じて集計対象を決定
-    let mainCluster;
-    if (stage === 'early') {
-      mainCluster = reviews; // クラスタリングなし、全部使う
-    } else if (stage === 'growing') {
-      mainCluster = reviews; // クラスタリングなし、トリム平均のみ適用（aggregateValuesが対応）
-    } else {
-      // グラフ形状でクラスタリングし、多数派の意見だけで集計（称号による重み付き）
-      mainCluster = getMainClusterReviews(reviews);
-    }
     const userQCounts = buildUserQualityCounts(getReviews());
+    // 成熟度に応じたクラスタリングの要否・重み付き主要クラスタの選定はgetMainClusterReviews内で一元管理
+    const mainCluster = getMainClusterReviews(reviews, userQCounts);
     const avgA = axisA.map((k,i) => aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartA&&r.chartA[k]||0), userQCounts)));
     const avgB = axisB.map((k,i) => aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartB&&r.chartB[k]||0), userQCounts)));
 
@@ -3913,6 +3937,27 @@
   // グラフが動かされたかどうかのフラグ
   let chartMoved = false;
   let _reviewStartTime = 0;
+  let _turnstileWidgetId = null;
+  // Turnstileスクリプトは async defer で読み込んでるため、レビューページ表示時に
+  // まだ window.turnstile が準備できてない可能性がある → 準備できるまで軽くリトライする
+  function renderReviewTurnstile(retries) {
+    retries = retries || 0;
+    const container = document.getElementById('reviewTurnstile');
+    if(!container) return;
+    if(typeof turnstile === 'undefined' || !turnstile.render) {
+      if(retries < 20) setTimeout(()=>renderReviewTurnstile(retries+1), 250);
+      return;
+    }
+    // 既に描画済みならリセットするだけ（再生成すると二重描画になるため）
+    if(_turnstileWidgetId !== null) {
+      try { turnstile.reset(_turnstileWidgetId); return; } catch(_) { /* 古いウィジェットが無効なら作り直す */ }
+    }
+    container.innerHTML = '';
+    _turnstileWidgetId = turnstile.render(container, {
+      sitekey: TURNSTILE_SITE_KEY,
+      theme: 'dark',
+    });
+  }
 
   function initReviewPage(id) {
     const all=getAll(), p=all.find(x=>x.id===id);
@@ -3937,6 +3982,7 @@
     axisB.forEach((_,i)=>{vB[i]=-1;});
     chartMoved = false;
     _reviewStartTime = Date.now();
+    renderReviewTurnstile();
     buildReviewSliders('slidersA', getAxisA(), vA, ()=>{ chartMoved=true; redrawReview(); });
     buildReviewSliders('slidersB', getAxisB(), vB, ()=>{ chartMoved=true; redrawReview(); });
     // reset tags
@@ -4066,37 +4112,65 @@
       quality: isQuality, // 高品質フラグ
     };
     if(DB_MODE === 'supabase' && sb) {
-      // Supabaseモード: Supabaseのみに保存、LocalStorageには保存しない
+      // Supabaseモード: Edge Function経由で投稿（Turnstile検証＋service_roleでの書き込み）
       (async()=>{
-        const page = getAll().find(p=>p.id===review.animeId);
-        if(page) {
-          await db.animePages.upsert({
-            id: page.id, kitsu_id: page.kitsuId||null,
-            title: page.title||null, title_en: page.titleEn||null,
-            meta: page.meta||null, image_url: page.image||null,
-            description: page.description||null, year: page.year||null,
-            episodes: page.episodes||null,
-            genres: page.genres||[], categories: page.categories||[],
-            studios: page.studios||[], streaming: page.streaming||[],
-          });
+        // Turnstile検証トークンを取得（未解決なら投稿させない）
+        let turnstileToken = '';
+        try {
+          turnstileToken = (typeof turnstile !== 'undefined' && _turnstileWidgetId !== null) ? turnstile.getResponse(_turnstileWidgetId) : '';
+        } catch(_) {}
+        if(!turnstileToken) {
+          alert(currentLang==='ja' ? 'bot確認にチェックを入れてください。' : 'Please complete the verification check.');
+          return;
         }
+
+        const page = getAll().find(p=>p.id===review.animeId);
         const country = await geoStore.detectCountry().catch(()=>null);
-        await db.reviews.insert({
-          anime_id: review.animeId,
-          user_id: (_currentUser && window._loggedInUsername) ? _currentUser.id : null,
-          username: review.userName||'ゲスト',
-          country_code: country,
-          chart_a: review.chartA||{},
-          chart_b: review.chartB||{},
-          tags: review.tags||[],
-          comment: review.comment||null,
-          chart_moved: isFullGraph,
-          quality: isQuality,
-          quality_score: qualityScore,
+        const session = await db.auth.getSession();
+
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-review`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token || SUPABASE_ANON}`,
+          },
+          body: JSON.stringify({
+            turnstileToken,
+            animePage: page ? {
+              id: page.id, kitsu_id: page.kitsuId||null,
+              title: page.title||null, title_en: page.titleEn||null,
+              meta: page.meta||null, image_url: page.image||null,
+              description: page.description||null, year: page.year||null,
+              episodes: page.episodes||null,
+              genres: page.genres||[], categories: page.categories||[],
+              studios: page.studios||[], streaming: page.streaming||[],
+            } : null,
+            review: {
+              anime_id: review.animeId,
+              username: review.userName||'ゲスト',
+              country_code: country,
+              chart_a: review.chartA||{},
+              chart_b: review.chartB||{},
+              tags: review.tags||[],
+              comment: review.comment||null,
+              chart_moved: isFullGraph,
+              quality: isQuality,
+              quality_score: qualityScore,
+            },
+          }),
         });
+        const result = await res.json().catch(()=>({}));
+        if(!res.ok || result.error) {
+          throw new Error(result.error || `送信に失敗しました（${res.status}）`);
+        }
+        try { if(typeof turnstile !== 'undefined' && _turnstileWidgetId !== null) turnstile.reset(_turnstileWidgetId); } catch(_) {}
         alert(t('reviewPosted'));
         nav('anime',currentAnimeId);
-      })().catch(e=>{ console.warn('Supabase review save:', e); alert('保存に失敗しました。もう一度お試しください。'); });
+      })().catch(e=>{
+        console.warn('review submit:', e);
+        alert(currentLang==='ja' ? '保存に失敗しました。もう一度お試しください。' : 'Failed to save. Please try again.');
+        try { if(typeof turnstile !== 'undefined' && _turnstileWidgetId !== null) turnstile.reset(_turnstileWidgetId); } catch(_) {}
+      });
     } else {
       // ローカルモード: LocalStorageに保存
       const ex=getReviews(); ex.unshift(review); sj(REVIEW_KEY,ex);
@@ -4153,8 +4227,8 @@
   // 有効レビューの集計グラフ（トリム平均/中央値/平均、AGGREGATE_MODEに従う）
   function avgChart(id,chartKey,labels){
     const rs=validReviews(id); if(!rs.length) return null;
-    const mainCluster = getMainClusterReviews(rs);
     const userQCounts = buildUserQualityCounts(getReviews());
+    const mainCluster = getMainClusterReviews(rs, userQCounts);
     return Object.fromEntries(labels.map(l=>[l, aggregateValues(expandByWeight(mainCluster, r=>Number(r[chartKey]&&r[chartKey][l]||0), userQCounts))]));
   }
 
@@ -4176,7 +4250,11 @@
   // （matchDistはローカルキャッシュされたレビューしか見れないため、
   //   まだ個別ページを開いたことがない作品はInfinity扱いになり検索にヒットしない。
   //   これを避けるため、グラフ検索実行時に一度だけSupabaseから全レビューを取得し、
-  //   作品ごとの簡易マスターグラフを計算してキャッシュしておく）
+  //   作品ごとのマスターグラフを計算してキャッシュしておく。
+  //   ※ 以前は簡易的な単純平均で計算していたため、作品ページに実際に表示される
+  //   マスターグラフ（クラスタリング＋上質レビュー重み付け＋トリム平均）と
+  //   結果がズレる可能性があった。avgChart()と全く同じ集計パイプラインを
+  //   再利用することで、検索結果と実際のページ表示を完全に一致させている）
   let _searchMasterGraphCache = null;
   let _searchMasterGraphPromise = null;
   async function ensureSearchMasterGraphCache() {
@@ -4186,30 +4264,33 @@
       if(DB_MODE !== 'supabase' || !sb) { _searchMasterGraphCache = {}; return _searchMasterGraphCache; }
       let rows = [];
       try { rows = await db.reviews.getAllForCluster(); } catch(e) { console.warn('search master graph fetch:', e); }
+      const localRows = (rows||[]).map(r => ({
+        animeId: r.anime_id,
+        chartA: r.chart_a||{},
+        chartB: r.chart_b||{},
+        chartMoved: r.chart_moved,
+        isAiGenerated: !!r.is_ai_generated,
+        userName: r.username,
+        quality: r.quality,
+      }));
       const byAnime = {};
-      (rows||[]).forEach(r=>{
-        if(!byAnime[r.anime_id]) byAnime[r.anime_id]=[];
-        byAnime[r.anime_id].push(r);
+      localRows.forEach(r=>{
+        if(!byAnime[r.animeId]) byAnime[r.animeId]=[];
+        byAnime[r.animeId].push(r);
       });
+      const userQCounts = buildUserQualityCounts(localRows);
       const cache = {};
       Object.entries(byAnime).forEach(([animeId, list])=>{
-        // マスターグラフに反映される（chart_movedな）実レビューが1件でもあるかどうかで判定
-        const hasReal = list.some(r=>!r.is_ai_generated && r.chart_moved);
+        const hasReal = hasValidRealReview(list);
         const valid = list.filter(r=>{
-          if(hasReal && r.is_ai_generated) return false;
-          if(typeof r.chart_moved !== 'undefined') return r.chart_moved;
-          return true;
+          if(hasReal && r.isAiGenerated) return false;
+          return isGraphValidReview(r);
         });
         if(!valid.length) return;
+        const mainCluster = getMainClusterReviews(valid, userQCounts);
         const avgA = {}, avgB = {};
-        axisA.forEach(k=>{
-          const vals = valid.map(r=>Number(r.chart_a?.[k]||0));
-          avgA[k] = vals.reduce((a,b)=>a+b,0)/vals.length;
-        });
-        axisB.forEach(k=>{
-          const vals = valid.map(r=>Number(r.chart_b?.[k]||0));
-          avgB[k] = vals.reduce((a,b)=>a+b,0)/vals.length;
-        });
+        axisA.forEach(k=>{ avgA[k] = aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartA?.[k]||0), userQCounts)); });
+        axisB.forEach(k=>{ avgB[k] = aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartB?.[k]||0), userQCounts)); });
         cache[animeId] = { avgA, avgB };
       });
       _searchMasterGraphCache = cache;
@@ -5472,8 +5553,9 @@
     if (filtered.length < 3) return null; // データ不足
 
     // 既存ロジックが期待する形式 {chartA, chartB} に変換
-    const normalized = filtered.map(r => ({ chartA: r.chart_a||{}, chartB: r.chart_b||{} }));
-    const mainCluster = getMainClusterReviews(normalized);
+    const normalized = filtered.map(r => ({ chartA: r.chart_a||{}, chartB: r.chart_b||{}, userName: r.username, quality: r.quality }));
+    const userQCounts = buildUserQualityCounts(normalized);
+    const mainCluster = getMainClusterReviews(normalized, userQCounts);
     const avgA = axisA.map(k => aggregateValues(mainCluster.map(r=>Number(r.chartA?.[k]||0))));
     const avgB = axisB.map(k => aggregateValues(mainCluster.map(r=>Number(r.chartB?.[k]||0))));
     return { avgA, avgB, count: filtered.length, usedCount: mainCluster.length };
@@ -5935,10 +6017,16 @@
           const byAnime = {};
           fullReviews.forEach(r=>{
             if(!byAnime[r.anime_id]) byAnime[r.anime_id]=[];
-            byAnime[r.anime_id].push({ chartA:r.chart_a, chartB:r.chart_b });
+            byAnime[r.anime_id].push({ chartA:r.chart_a, chartB:r.chart_b, chartMoved:r.chart_moved, isAiGenerated:!!r.is_ai_generated });
           });
           const splitResults = [];
-          Object.entries(byAnime).forEach(([animeId, revs])=>{
+          Object.entries(byAnime).forEach(([animeId, revsRaw])=>{
+            // AI参考レビューは「ユーザーの意見」ではないため票割れ判定の母数から除外する
+            const hasReal = hasValidRealReview(revsRaw);
+            const revs = revsRaw.filter(r=>{
+              if(hasReal && r.isAiGenerated) return false;
+              return isGraphValidReview(r);
+            });
             if(revs.length < 10) return;
             const result = detectSplitOpinion(revs);
             if(result.isSplit) splitResults.push({ animeId, ...result });
@@ -5946,12 +6034,16 @@
           const splitEl = document.getElementById('adminSplitOpinions');
           if(splitEl) {
             if(splitResults.length) {
-              splitEl.innerHTML = splitResults.map(s=>`
+              splitEl.innerHTML = splitResults.map(s=>{
+                const label = s.isFragmented
+                  ? `${s.clusterCount}派に分裂: A${s.top1Size}件 / B${s.top2Size}件 / C${s.top3Size}件（全${s.totalReviews}件）`
+                  : `派閥A:${s.top1Size}件 / 派閥B:${s.top2Size}件（全${s.totalReviews}件）`;
+                return `
                 <div class="admin-row">
                   <span>${animeMap2[s.animeId]||s.animeId}</span>
-                  <span class="admin-badge" style="background:rgba(255,107,107,.15);color:#ff6b6b;">派閥A:${s.top1Size}件 / 派閥B:${s.top2Size}件（全${s.totalReviews}件）</span>
+                  <span class="admin-badge" style="background:rgba(255,107,107,.15);color:#ff6b6b;">${label}</span>
                 </div>
-              `).join('');
+              `;}).join('');
             } else {
               splitEl.innerHTML = '<p style="color:var(--muted);font-size:.82rem;">現在、評価が二極化している作品はありません</p>';
             }
