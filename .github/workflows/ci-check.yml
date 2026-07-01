@@ -1,35 +1,49 @@
-name: Uptime Check
+name: CI Check
 
 on:
-  schedule:
-    # 30分おきに実行（UTC基準のcron。GitHub Actionsの無料枠で十分まかなえる頻度）
-    - cron: '*/30 * * * *'
-  workflow_dispatch: {}
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  check-site:
+  syntax-check:
     runs-on: ubuntu-latest
     steps:
-      - name: サイトが200を返すか確認
-        run: |
-          URL="https://animeppuru-official.github.io/animepple/"
-          STATUS=$(curl -s -o /tmp/response.html -w "%{http_code}" "$URL")
-          echo "HTTPステータス: $STATUS"
-          if [ "$STATUS" -ne 200 ]; then
-            echo "::error::サイトが $STATUS を返しました（$URL）"
-            exit 1
-          fi
+      - uses: actions/checkout@v4
 
-      - name: 主要な文言が含まれているか確認
-        run: |
-          if ! grep -q "アニメップル" /tmp/response.html; then
-            echo "::error::期待する文言（アニメップル）がページに見つかりませんでした"
-            exit 1
-          fi
-          echo "✅ サイトは正常に応答しています"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-# ─────────────────────────────────────
-# このワークフローが失敗すると、GitHubがリポジトリオーナー宛てに
-# 自動でメール通知を送る（デフォルト設定のまま・追加設定不要）。
-# 通知先を増やしたい場合はSlack Webhook等をstepsに追加できる。
-# ─────────────────────────────────────
+      - name: index.html内のJSを抽出して構文チェック
+        run: |
+          python3 <<'EOF'
+          import re, sys
+          with open('index.html', encoding='utf-8') as f:
+              content = f.read()
+          scripts = re.findall(r'<script(?:(?!src=)[^>])*>(.*?)</script>', content, re.DOTALL)
+          if not scripts:
+              print("警告: <script>ブロックが見つかりませんでした")
+              sys.exit(1)
+          with open('/tmp/combined.js', 'w', encoding='utf-8') as f:
+              for s in scripts:
+                  f.write(s)
+                  f.write('\n;\n')
+          print(f"{len(scripts)}個のscriptブロックを抽出しました")
+          EOF
+          node --check /tmp/combined.js && echo "✅ 構文エラーなし"
+
+      - name: HTMLの基本的なタグバランス確認
+        run: |
+          python3 <<'EOF'
+          import re
+          with open('index.html', encoding='utf-8') as f:
+              content = f.read()
+          for tag in ['div', 'script', 'button', 'span']:
+              opens = len(re.findall(rf'<{tag}\b', content))
+              closes = len(re.findall(rf'</{tag}>', content))
+              if abs(opens - closes) > 3:
+                  print(f"⚠️ <{tag}> の開閉が大きくズレています: open={opens} close={closes}")
+          print("タグバランスチェック完了")
+          EOF
