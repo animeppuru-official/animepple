@@ -544,14 +544,20 @@
     .world-vbar-label .world-country-name { font-size:.62rem; color:var(--muted); white-space:nowrap; }
 
     /* ══ POPULAR PAGE ══ */
-    .pop-sort-bar { position:sticky; top:52px; z-index:10; background:var(--bg); border-bottom:1px solid var(--line); }
-    .pop-sort-tabs { display:flex; gap:0; overflow-x:auto; scrollbar-width:none; padding:.4rem .75rem; gap:.4rem; }
+    .pop-sort-bar { position:sticky; top:52px; z-index:10; background:var(--bg); border-bottom:1px solid var(--line); padding:.5rem .75rem; }
+    .pop-quick-row { display:flex; gap:.4rem; flex-wrap:wrap; }
+    .pop-quick-pill { padding:.4rem .8rem; border-radius:999px; border:1px solid var(--line); background:var(--card2); color:var(--text); font-size:.8rem; font-weight:700; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:.25rem; }
+    .pop-quick-pill::after { content:'▾'; font-size:.65rem; color:var(--muted); }
+    .pop-quick-pill.open { border-color:var(--brand); color:var(--brand); }
+    .pop-axis-expand { max-height:0; overflow:hidden; transition:max-height .18s ease; }
+    .pop-axis-expand.open { max-height:140px; margin-top:.4rem; }
+    .pop-sort-tabs { display:flex; gap:.4rem; overflow-x:auto; scrollbar-width:none; }
     .pop-sort-tabs::-webkit-scrollbar { display:none; }
     .pop-sort-tab { flex:0 0 auto; padding:.4rem .85rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); font-size:.8rem; cursor:pointer; white-space:nowrap; }
     .pop-sort-tab.active { background:var(--brand); color:#0c2015; font-weight:700; border-color:var(--brand); }
 
     /* 年代ドラムロール */
-    .pop-year-picker { background:var(--card); border-bottom:1px solid var(--line); padding:.75rem; }
+    .pop-year-picker { background:var(--card); padding:.6rem; border-radius:10px; margin-top:.4rem; }
     .pop-year-picker-inner { display:flex; align-items:center; justify-content:center; gap:1rem; }
     .pop-drum-wrap { display:flex; flex-direction:column; align-items:center; gap:.3rem; }
     .pop-drum-label { font-size:.72rem; color:var(--muted); }
@@ -577,7 +583,6 @@
     /* ソートバー3軸UI */
     .pop-axis-row { display:flex; align-items:center; gap:.5rem; padding:.3rem .75rem; }
     .pop-axis-label { font-size:.7rem; color:var(--muted); flex-shrink:0; min-width:2.2rem; }
-    #popPeriodRow.disabled { opacity:.35; pointer-events:none; }
     .pop-load-btn { padding:.6rem 2rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; font-size:.85rem; }
 
     /* ── LANGUAGE SELECTOR ── */
@@ -1116,18 +1121,21 @@
 
   <!-- ソートバー（3軸独立） -->
   <div class="pop-sort-bar">
+    <div class="pop-quick-row">
+      <button class="pop-quick-pill" id="popPillBase" type="button" data-axis="base">🔥 人気順</button>
+      <button class="pop-quick-pill" id="popPillPeriod" type="button" data-axis="period"><span id="popPillPeriodLabel" data-i18n="popSortAll">全期間</span></button>
+      <button class="pop-quick-pill" id="popPillEra" type="button" data-axis="era"><span id="popPillEraLabel" data-i18n="popEraNone">指定なし</span></button>
+    </div>
+
     <!-- 軸1: 基準 -->
-    <div class="pop-axis-row">
-      <span class="pop-axis-label" data-i18n="popAxisBase">基準</span>
+    <div class="pop-axis-expand" id="popBaseExpand">
       <div class="pop-sort-tabs" id="popBaseTabs">
         <button class="pop-sort-tab active" data-base="popular" data-i18n="popSortPopular">🔥 人気順</button>
         <button class="pop-sort-tab" data-base="reviews" data-i18n="popSortReviews">💬 レビュー順</button>
-        <button class="pop-sort-tab" data-base="year" data-i18n="popSortPeriod">📅 年代指定</button>
       </div>
     </div>
-    <!-- 軸2: 期間（レビュー順のときだけ有効） -->
-    <div class="pop-axis-row" id="popPeriodRow">
-      <span class="pop-axis-label" data-i18n="popAxisPeriod">期間</span>
+    <!-- 軸2: 期間 -->
+    <div class="pop-axis-expand" id="popPeriodExpand">
       <div class="pop-sort-tabs" id="popPeriodTabs">
         <button class="pop-sort-tab active" data-period="all" data-i18n="popSortAll">全期間</button>
         <button class="pop-sort-tab" data-period="day" data-i18n="popSortToday">📈 今日</button>
@@ -1136,16 +1144,22 @@
         <button class="pop-sort-tab" data-period="year" data-i18n="popSortYear">年間</button>
       </div>
     </div>
-  </div>
-
-  <!-- 年代ピッカー（年代ソート時のみ表示） -->
-  <div class="pop-year-picker" id="popYearPicker" style="display:none;">
-    <div class="pop-year-picker-inner">
-      <div class="pop-drum-wrap">
-        <div class="pop-drum-label" data-i18n="yearPickLabel">年代を選ぶ</div>
-        <div class="pop-drum" id="popDrumFrom"></div>
+    <!-- 軸3: 年代 -->
+    <div class="pop-axis-expand" id="popEraExpand">
+      <div class="pop-sort-tabs" id="popEraTabs">
+        <button class="pop-sort-tab active" data-era="none" data-i18n="popEraNone">指定なし</button>
+        <button class="pop-sort-tab" data-era="pick" data-i18n="popEraPick">📅 年代を選ぶ</button>
       </div>
-      <button class="pop-year-apply" id="popYearApply" data-i18n="btnApply">適用</button>
+      <!-- 年代ピッカー（「年代を選ぶ」を選んだ時だけ表示） -->
+      <div class="pop-year-picker" id="popYearPicker" style="display:none;">
+        <div class="pop-year-picker-inner">
+          <div class="pop-drum-wrap">
+            <div class="pop-drum-label" data-i18n="yearPickLabel">年代を選ぶ</div>
+            <div class="pop-drum" id="popDrumFrom"></div>
+          </div>
+          <button class="pop-year-apply" id="popYearApply" data-i18n="btnApply">適用</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1153,6 +1167,7 @@
   <div class="pop-grid" id="popGrid"></div>
   <div id="popLoadMore" style="text-align:center;padding:1rem;display:none;">
     <button class="pop-load-btn" id="popLoadBtn" data-i18n="btnMore">もっと見る</button>
+
   </div>
 </div>
 
@@ -1237,6 +1252,17 @@
 
   <!-- ダッシュボード -->
   <div id="adminDashboard" style="display:none;padding:1rem;">
+    <!-- サイト監視 -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🩺 サイト監視（直近のエラー）</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">サイトを使ってる人のブラウザで起きたJSエラーを自動収集</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.75rem;">
+        <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiErrors24h">—</div><div class="admin-kpi-label">直近24時間のエラー件数</div></div>
+        <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiErrors7d">—</div><div class="admin-kpi-label">直近7日間のエラー件数</div></div>
+      </div>
+      <div id="adminErrorLogList"></div>
+    </div>
+
     <!-- KPIカード -->
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1rem;">
       <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiReviews">—</div><div class="admin-kpi-label">総レビュー数</div></div>
@@ -1335,6 +1361,7 @@
 <div class="page" id="page-mypage">
   <header class="hdr">
     <div class="hdr-inner">
+      <button class="back-btn" id="mypageBackBtn" data-i18n="btnBack" onclick="navBack()" style="display:none;">← 戻る</button>
       <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
     </div>
   </header>
@@ -1365,15 +1392,15 @@
       <div class="mypage-hero">
         <div class="mypage-avatar-wrap">
           <div class="mypage-avatar user-avatar" id="mypageAvatarIcon">か</div>
-          <button class="mypage-avatar-edit-btn" id="mypageAvatarEditBtn" onclick="document.getElementById('avatarFileInput').click()">📷</button>
+          <button class="mypage-avatar-edit-btn mypage-owner-only" id="mypageAvatarEditBtn" onclick="document.getElementById('avatarFileInput').click()">📷</button>
           <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)" />
         </div>
         <div class="mypage-info">
           <p class="mypage-name" id="mypageUsername">ユーザー名</p>
-          <p class="mypage-sub" id="mypageEmail">email</p>
+          <p class="mypage-sub mypage-owner-only" id="mypageEmail">email</p>
           <p class="mypage-rank-badge" id="mypageRankBadge" style="display:none;"></p>
         </div>
-        <button class="mypage-edit-btn" id="mypageEditBtn" onclick="openProfileEdit()">✏️</button>
+        <button class="mypage-edit-btn mypage-owner-only" id="mypageEditBtn" onclick="openProfileEdit()">✏️</button>
       </div>
 
       <!-- 統計サマリー -->
@@ -1419,7 +1446,7 @@
       <h3 class="mypage-section-title" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h3>
       <div id="mypageReviewList"><p style="color:var(--muted);font-size:.85rem;">レビューはまだありません</p></div>
     </div>
-    <div class="mypage-actions">
+    <div class="mypage-actions mypage-owner-only">
       <button class="mypage-btn-secondary" onclick="signOut()" data-i18n="logoutBtn">ログアウト</button>
     </div>
   </div>
@@ -1450,7 +1477,6 @@
   </div>
 </div>
 
-<!-- 認証モーダル -->
 <div class="auth-overlay" id="authOverlay" style="display:none;">
   <div class="auth-modal">
     <div class="auth-modal-header">
@@ -1599,7 +1625,7 @@
       async getAllWithLimit(limit) {
         if(!sb) return { items:[], count:0 };
         const { data, count } = await sb.from('anime_pages')
-          .select('id,title,title_en,image_url,meta,genres', { count: 'exact' })
+          .select('id,title,title_en,image_url,meta,genres,year', { count: 'exact' })
           .limit(limit||1000);
         return { items: data||[], count: count||0 };
       },
@@ -1638,11 +1664,11 @@
         if(error) return [];
         return data || [];
       },
-      async getByUsername(username) {
-        if(!sb) return [];
+      async getByUserId(userId) {
+        if(!sb || !userId) return [];
         const { data } = await sb.from('reviews')
           .select('*')
-          .eq('username', username)
+          .eq('user_id', userId)
           .order('created_at', { ascending: false });
         return data || [];
       },
@@ -1723,6 +1749,29 @@
       },
     },
 
+    // ── エラーログ（監視用） ──
+    errorLogs: {
+      async insert(entry) {
+        if(!sb) return;
+        sb.from('error_logs').insert(entry).then(()=>{});
+      },
+      async getRecent(limit) {
+        if(!sb) return [];
+        const { data } = await sb.from('error_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(limit||30);
+        return data || [];
+      },
+      async countSince(sinceIso) {
+        if(!sb) return 0;
+        const { count } = await sb.from('error_logs')
+          .select('*', { count:'exact', head:true })
+          .gte('created_at', sinceIso);
+        return count || 0;
+      },
+    },
+
     // ── お気に入り ──
     favorites: {
       async isFavorited(userId, animeId) {
@@ -1745,6 +1794,42 @@
       },
     },
   };
+
+  /* ════════════════════════════════════════════════════
+     クライアントサイド エラートラッキング
+     window上で起きたJSエラー・未処理のPromise rejectionを
+     捕捉してSupabaseに記録する（管理画面の「監視」タブで確認できる）。
+     1セッションあたりの送信件数に上限を設け、無限ループでの
+     エラー洪水を防いでいる。個人を特定できる情報は送らない。
+  ════════════════════════════════════════════════════ */
+  (function setupErrorTracking() {
+    let sentCount = 0;
+    const MAX_PER_SESSION = 8;
+    function report(message, stack) {
+      if(DB_MODE !== 'supabase' || !sb) return;
+      if(sentCount >= MAX_PER_SESSION) return;
+      sentCount++;
+      try {
+        db.errorLogs.insert({
+          message: String(message||'').slice(0, 500),
+          stack: String(stack||'').slice(0, 2000),
+          source_url: location.href.slice(0, 300),
+          page: (typeof currentPage !== 'undefined' ? currentPage : '') || '',
+          user_agent: navigator.userAgent.slice(0, 300),
+        });
+      } catch(_) {}
+    }
+    window.addEventListener('error', (e) => {
+      report(e.message, e.error && e.error.stack);
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      const reason = e.reason;
+      report(
+        (reason && reason.message) || String(reason),
+        reason && reason.stack
+      );
+    });
+  })();
 
   /* ════════════════════════════════════════════════════
      アニメ情報APIアダプター層
@@ -1919,6 +2004,7 @@
       // Supabaseのデータ形式をLocalStorage形式に変換してマージ
       const remote = data.map(r=>({
         animeId: r.anime_id,
+        userId: r.user_id || null,
         username: r.username||'名無しのりんご',
         chartA: r.chart_a||{},
         chartB: r.chart_b||{},
@@ -2015,18 +2101,22 @@
     if(!last || last.page !== currentPage || last.animeId !== currentAnimeId) {
       navHistory.push({ page: currentPage, animeId: currentAnimeId });
     }
+    // 「他ユーザーのマイページ」は専用ページを持たず、マイページのDOMを閲覧専用モードで再利用する
+    const domPage = (page === 'user') ? 'mypage' : page;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page-'+page).classList.add('active');
+    document.getElementById('page-'+domPage).classList.add('active');
     window.scrollTo(0,0);
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
-    const ab = document.getElementById('bnav-'+page);
-    if (ab) ab.classList.add('active');
+    const ab = document.getElementById('bnav-'+domPage);
+    if (ab && page !== 'user') ab.classList.add('active');
     // 管理者ページはフルページ表示（ナビを隠す）
     const globalNav = document.getElementById('globalBnav');
     if (globalNav) globalNav.style.display = (page === 'admin') ? 'none' : '';
     document.body.classList.toggle('admin-fullpage', page === 'admin');
     currentPage = page;
     currentAnimeId = animeId || null;
+    const backBtn = document.getElementById('mypageBackBtn');
+    if(backBtn) backBtn.style.display = (page === 'user') ? '' : 'none';
     if (page==='home')   renderHome().catch(console.error);
     if (page==='anime'&&animeId)  { renderAnimePage(animeId); }
     if (page==='review'&&animeId) { initReviewPage(animeId); }
@@ -2035,6 +2125,7 @@
     if (page==='admin') initAdminPage();
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='mypage') renderMypage();
+    if (page==='user'&&animeId) { renderMypage(animeId); }
   }
   window.nav = nav;
   function navBack() {
@@ -2043,17 +2134,20 @@
     // 履歴から戻る時はスタックに積まない
     const overlay = document.getElementById('searchOverlay');
     if(overlay) overlay.classList.remove('open');
+    const domPage = (prev.page === 'user') ? 'mypage' : prev.page;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page-'+prev.page).classList.add('active');
+    document.getElementById('page-'+domPage).classList.add('active');
     window.scrollTo(0,0);
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
-    const ab = document.getElementById('bnav-'+prev.page);
-    if(ab) ab.classList.add('active');
+    const ab = document.getElementById('bnav-'+domPage);
+    if(ab && prev.page !== 'user') ab.classList.add('active');
     const globalNav = document.getElementById('globalBnav');
     if (globalNav) globalNav.style.display = (prev.page === 'admin') ? 'none' : '';
     document.body.classList.toggle('admin-fullpage', prev.page === 'admin');
     currentPage = prev.page;
     currentAnimeId = prev.animeId || null;
+    const backBtn = document.getElementById('mypageBackBtn');
+    if(backBtn) backBtn.style.display = (prev.page === 'user') ? '' : 'none';
     if(prev.page==='home')   renderHome().catch(console.error);
     if(prev.page==='anime'&&prev.animeId)  { renderAnimePage(prev.animeId); }
     if(prev.page==='review'&&prev.animeId) { initReviewPage(prev.animeId); }
@@ -2061,6 +2155,7 @@
     if(prev.page==='popular') renderPopular().catch(console.error);
     if(prev.page==='reviews'&&prev.animeId) { currentAnimeId=prev.animeId; renderReviewsList(prev.animeId); }
     if(prev.page==='mypage') renderMypage();
+    if(prev.page==='user'&&prev.animeId) { renderMypage(prev.animeId); }
   }
   window.navBack = navBack;
   function navSearch(q,sort) {
@@ -2305,7 +2400,7 @@
   /* ════════════════════════════
      POPULAR PAGE
   ════════════════════════════ */
-  const popState = { base:'popular', period:'all', yearFrom:null, yearTo:null, page:0, items:[], loading:false };
+  const popState = { base:'popular', period:'all', yearFrom:null, page:0, items:[], loading:false };
   const POP_PAGE_SIZE = 20;
   const CURRENT_YEAR = new Date().getFullYear();
   const YEAR_LIST = Array.from({length: CURRENT_YEAR - 1959}, (_,i) => CURRENT_YEAR - i);
@@ -2378,8 +2473,52 @@
     }));
   }
 
+  // 各ピルのラベルを現在の状態に合わせて更新
+  function updatePopPillLabels() {
+    const baseBtn = document.querySelector('#popBaseTabs .pop-sort-tab.active');
+    const pillBase = document.getElementById('popPillBase');
+    if(pillBase && baseBtn) pillBase.textContent = baseBtn.textContent.trim();
+
+    const periodBtn = document.querySelector('#popPeriodTabs .pop-sort-tab.active');
+    const pillPeriodLabel = document.getElementById('popPillPeriodLabel');
+    if(pillPeriodLabel && periodBtn) pillPeriodLabel.textContent = periodBtn.textContent.trim();
+
+    const pillEraLabel = document.getElementById('popPillEraLabel');
+    if(pillEraLabel) pillEraLabel.textContent = popState.yearFrom ? `${popState.yearFrom}年代` : t('popEraNone');
+  }
+
+  // 開いている軸だけを切り替える（他が開いていれば閉じる＝画面の動きを最小限に）
+  function togglePopAxis(axis) {
+    const map = { base:['popPillBase','popBaseExpand'], period:['popPillPeriod','popPeriodExpand'], era:['popPillEra','popEraExpand'] };
+    Object.entries(map).forEach(([key,[pillId,expandId]])=>{
+      const pill = document.getElementById(pillId), expand = document.getElementById(expandId);
+      if(!pill || !expand) return;
+      if(key === axis) {
+        const willOpen = !expand.classList.contains('open');
+        pill.classList.toggle('open', willOpen);
+        expand.classList.toggle('open', willOpen);
+      } else {
+        pill.classList.remove('open');
+        expand.classList.remove('open');
+      }
+    });
+  }
+  function closePopAxes() {
+    ['popPillBase','popPillPeriod','popPillEra'].forEach(id=>document.getElementById(id)?.classList.remove('open'));
+    ['popBaseExpand','popPeriodExpand','popEraExpand'].forEach(id=>document.getElementById(id)?.classList.remove('open'));
+  }
+
   async function renderPopular() {
-    // 基準タブ（軸1）
+    // クイックピル（各軸ボタン）：押した軸だけその場でちょっと開く
+    ['popPillBase','popPillPeriod','popPillEra'].forEach(id=>{
+      const pill = document.getElementById(id);
+      if(pill && !pill.dataset.init) {
+        pill.dataset.init = '1';
+        pill.addEventListener('click', ()=> togglePopAxis(pill.dataset.axis));
+      }
+    });
+
+    // 軸1: 基準（人気順 / レビュー順）
     const baseTabs = document.getElementById('popBaseTabs');
     if(baseTabs && !baseTabs.dataset.init) {
       baseTabs.dataset.init = '1';
@@ -2388,39 +2527,50 @@
           baseTabs.querySelectorAll('.pop-sort-tab').forEach(b=>b.classList.remove('active'));
           btn.classList.add('active');
           popState.base = btn.dataset.base;
-          popState.page = 0;
-          popState.items = [];
-
-          const picker = document.getElementById('popYearPicker');
-          const periodRow = document.getElementById('popPeriodRow');
-
-          if(popState.base==='year') {
-            picker.style.display='';
-            periodRow.classList.add('disabled');
-            buildDrum('popDrumFrom', YEAR_LIST, popState.yearFrom||2010);
-          } else {
-            picker.style.display='none';
-            // 期間軸は「レビュー順」のときだけ有効、人気順は全期間固定
-            if(popState.base==='reviews') periodRow.classList.remove('disabled');
-            else periodRow.classList.add('disabled');
-            loadPopularItems(true);
-          }
+          popState.page = 0; popState.items = [];
+          updatePopPillLabels();
+          loadPopularItems(true);
+          closePopAxes();
         });
       });
     }
-    // 期間タブ（軸2）
+    // 軸2: 期間（基準に関係なく常に選べる）
     const periodTabs = document.getElementById('popPeriodTabs');
     if(periodTabs && !periodTabs.dataset.init) {
       periodTabs.dataset.init = '1';
       periodTabs.querySelectorAll('.pop-sort-tab').forEach(btn=>{
         btn.addEventListener('click', ()=>{
-          if(document.getElementById('popPeriodRow').classList.contains('disabled')) return;
           periodTabs.querySelectorAll('.pop-sort-tab').forEach(b=>b.classList.remove('active'));
           btn.classList.add('active');
           popState.period = btn.dataset.period;
-          popState.page = 0;
-          popState.items = [];
+          popState.page = 0; popState.items = [];
+          updatePopPillLabels();
           loadPopularItems(true);
+          closePopAxes();
+        });
+      });
+    }
+    // 軸3: 年代（基準に関係なく常に選べる）
+    const eraTabs = document.getElementById('popEraTabs');
+    if(eraTabs && !eraTabs.dataset.init) {
+      eraTabs.dataset.init = '1';
+      eraTabs.querySelectorAll('.pop-sort-tab').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          eraTabs.querySelectorAll('.pop-sort-tab').forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          const picker = document.getElementById('popYearPicker');
+          if(btn.dataset.era === 'pick') {
+            picker.style.display = '';
+            buildDrum('popDrumFrom', YEAR_LIST, popState.yearFrom||2010);
+            // 年を選んで「適用」を押すまで検索は待つ（この軸は開いたまま）
+          } else {
+            picker.style.display = 'none';
+            popState.yearFrom = null;
+            popState.page = 0; popState.items = [];
+            updatePopPillLabels();
+            loadPopularItems(true);
+            closePopAxes();
+          }
         });
       });
     }
@@ -2430,9 +2580,10 @@
       yearApplyBtn.dataset.init = '1';
       yearApplyBtn.addEventListener('click', ()=>{
         popState.yearFrom = getDrumYear('popDrumFrom');
-        popState.yearTo   = popState.yearFrom;
         popState.page = 0; popState.items = [];
+        updatePopPillLabels();
         loadPopularItems(true);
+        closePopAxes();
       });
     }
     // もっと見るボタン
@@ -2444,27 +2595,66 @@
         loadPopularItems(false);
       });
     }
+    updatePopPillLabels();
     // 既にデータが読み込み済みなら再取得しない（戻る操作等での再呼び出しで
     // 表示済みカードが「読み込み中…」で上書きされ、再取得が詰まると
     // そのまま固まって見える不具合の原因だったため）
     if(popState.items.length === 0) loadPopularItems(true);
   }
 
-  // 期間内に投稿された有効レビュー数をカウント
-  function reviewCountInPeriod(animeId, period) {
-    const revs = validReviews(animeId);
-    if(period==='all') return revs.length;
+  // 期間の下限タイムスタンプ（'all'ならnull＝無制限）
+  function periodBoundMs(period) {
+    if(period==='all') return null;
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const weekStart = todayStart - 6*86400000;
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
-    const bounds = { day:todayStart, week:weekStart, month:monthStart, year:yearStart };
-    const bound = bounds[period];
+    return { day:todayStart, week:weekStart, month:monthStart, year:yearStart }[period];
+  }
+
+  // 期間内に投稿された有効レビュー数をカウント
+  function reviewCountInPeriod(animeId, period) {
+    const revs = validReviews(animeId);
+    const bound = periodBoundMs(period);
+    if(bound===null) return revs.length;
     return revs.filter(r=>{
       const t = new Date(r.createdAt||r.created_at||0).getTime();
       return t >= bound;
     }).length;
+  }
+
+  // 人気ページ用の候補作品一覧（ローカルキャッシュ＋Supabase anime_pages をマージ）
+  async function getPopularCandidates() {
+    let list = getAll();
+    if(DB_MODE === 'supabase' && sb) {
+      try {
+        const { items: dbPages } = await db.animePages.getAllWithLimit(500);
+        const existingIds = new Set(list.map(a=>a.id));
+        const dbItems = (dbPages||[])
+          .filter(p => !existingIds.has(p.id))
+          .map(p => ({
+            id: p.id,
+            kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+            title: p.title || p.title_en || '',
+            titleEn: p.title_en || p.title || '',
+            meta: p.meta || '',
+            image: p.image_url || '',
+            year: p.year || '',
+          }));
+        list = [...list, ...dbItems];
+      } catch(e) { console.warn('popular candidates fetch:', e); }
+    }
+    return list;
+  }
+
+  // レビュー数順（期間・年代フィルタ対応）
+  async function getPopularByReviews(period, yearFrom, page) {
+    let all = await getPopularCandidates();
+    if(yearFrom) all = all.filter(a => String(a.year) === String(yearFrom));
+    const withCount = all.map(a=>({...a, _reviewCount: reviewCountInPeriod(a.id, period)}));
+    withCount.sort((a,b)=>b._reviewCount-a._reviewCount);
+    return withCount.slice(page*POP_PAGE_SIZE, (page+1)*POP_PAGE_SIZE);
   }
 
   async function loadPopularItems(reset) {
@@ -2477,34 +2667,26 @@
 
     try {
       const base = popState.base;
+      const period = popState.period;
+      const yearFrom = popState.yearFrom;
       let items = [];
 
       if(base==='popular') {
-        // Kitsu userCount順（期間概念なし、常に全体人気）
-        items = await fetchKitsuPopular(popState.page * POP_PAGE_SIZE);
-      } else if(base==='reviews') {
-        // レビュー数順（期間フィルタ対応）
-        const all = getAll();
-        const withCount = all.map(a=>({...a, reviewCount: reviewCountInPeriod(a.id, popState.period)}));
-        withCount.sort((a,b)=>b.reviewCount-a.reviewCount);
-        items = withCount.slice(popState.page*POP_PAGE_SIZE, (popState.page+1)*POP_PAGE_SIZE);
-      } else if(base==='year') {
-        const from = popState.yearFrom || 2000;
-        items = await fetchKitsuPopular(popState.page * POP_PAGE_SIZE, from);
+        // Kitsu userCount順。年代フィルタのみ対応。期間軸はKitsu側に概念が無いため人気順には効かない
+        items = await fetchKitsuPopular(popState.page * POP_PAGE_SIZE, yearFrom);
+      } else {
+        items = await getPopularByReviews(period, yearFrom, popState.page);
       }
 
       if(reset) popState.items = items;
       else popState.items = [...popState.items, ...items];
 
       if(reset) grid.innerHTML='';
-      grid.innerHTML += popState.items.map(a=>renderAnimeCard(a, {style:'g'})).join('');
+      grid.innerHTML += popState.items.map(a=>renderAnimeCard(a, {style:'g', showReviewCount:true})).join('');
 
-      const baseLabels = {popular:'人気順',reviews:'レビュー数順',year:'年代指定'};
-      const periodLabels = {all:'全期間',day:'今日',week:'週間',month:'月間',year:'年間'};
-      let label = baseLabels[base]||'';
-      if(base==='reviews') label += ' · ' + periodLabels[popState.period];
-
-      meta.textContent = `${label} · ${popState.items.length}件`;
+      const baseBtn = document.querySelector('#popBaseTabs .pop-sort-tab.active');
+      const baseLabel = baseBtn ? baseBtn.textContent.trim() : '';
+      meta.textContent = `${baseLabel} · ${popState.items.length}件`;
       loadMore.style.display = items.length >= POP_PAGE_SIZE ? '' : 'none';
     } catch(e) {
       console.error(e);
@@ -3550,9 +3732,9 @@
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
       renderMasterGraph(id);
-      // レビュー数をアニメページに表示（実レビューがあればAI参考グラフは数に含めない）
+      // レビュー数をアニメページに表示（マスターグラフに反映される実レビューがあればAI参考グラフは数に含めない）
       const scopedReviews = getReviews().filter(r=>r.animeId===id);
-      const hasRealReview = scopedReviews.some(r=>!r.isAiGenerated);
+      const hasRealReview = hasValidRealReview(scopedReviews);
       const allReviews = hasRealReview ? scopedReviews.filter(r=>!r.isAiGenerated) : scopedReviews;
       const countEl = document.getElementById('animeReviewCount');
       if(countEl) countEl.textContent = allReviews.length ? `${allReviews.length}件` : '';
@@ -3621,7 +3803,7 @@
 
   function renderReviewList(id) {
     const scopedAll=getReviews().filter(r=>r.animeId===id);
-    const hasReal = scopedAll.some(r=>!r.isAiGenerated);
+    const hasReal = hasValidRealReview(scopedAll);
     const allRaw = hasReal ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
     let reviews=allRaw; // 全レビューを表示（グラフ集計はvalidReviewsで別管理）
     const skipped=0;
@@ -3647,15 +3829,18 @@
     const labA=getAxisA(), labB=getAxisB();
     el.innerHTML = tagsHtml + reviews.map((rev,i)=>{
       const tags=(rev.tags||[]).map(tag=>`<span class="tag-chip">#${escapeHtml(tag)}</span>`).join('');
+      const displayName = rev.userName || rev.username || 'ゲスト';
+      const isClickableUser = !!rev.userId;
+      const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(rev.userId)}')" style="cursor:pointer;"` : '';
       return `
         <article class="review-card">
           <div class="rc-head">
             <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
-              <div style="width:32px;height:32px;border-radius:7px;background:${(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=rev.userName||'ゲスト';if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
-                ${(()=>{const name=rev.userName||'ゲスト';if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
+              <div${userOnclick} style="width:32px;height:32px;border-radius:7px;background:${(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
+                ${(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-                <span class="rc-name">${escapeHtml(rev.userName||'ゲスト')}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}</span>
+                <span class="rc-name"${userOnclick}>${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${rev.createdAt?new Date(rev.createdAt).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'}):''}</span>
               </div>
             </div>
@@ -3898,6 +4083,7 @@
         const country = await geoStore.detectCountry().catch(()=>null);
         await db.reviews.insert({
           anime_id: review.animeId,
+          user_id: (_currentUser && window._loggedInUsername) ? _currentUser.id : null,
           username: review.userName||'ゲスト',
           country_code: country,
           chart_a: review.chartA||{},
@@ -3939,20 +4125,28 @@
     return all.every(v => v === all[0]);
   }
 
+  // マスターグラフ集計に反映される「有効なグラフレビュー」かどうか
+  // （コメント・タグのみでグラフを動かしていないレビューは対象外）
+  function isGraphValidReview(r) {
+    if (isUniformReview(r)) return false;
+    if (typeof r.chartMoved !== 'undefined') return r.chartMoved;
+    const aVals = axisA.map(k => Number(r.chartA&&r.chartA[k]||0));
+    const bVals = axisB.map(k => Number(r.chartB&&r.chartB[k]||0));
+    return aVals.some(v=>v<10) || bVals.some(v=>v<10);
+  }
+
+  // AIレビューを除外すべきか（＝マスターグラフに反映される実レビューが1件でもあるか）
+  function hasValidRealReview(scopedReviews) {
+    return scopedReviews.some(r => !r.isAiGenerated && isGraphValidReview(r));
+  }
+
   function validReviews(animeId) {
     const scoped = getReviews().filter(r => r.animeId === animeId);
-    const hasReal = scoped.some(r => !r.isAiGenerated);
+    const hasReal = hasValidRealReview(scoped);
     return scoped.filter(r => {
-      // 実レビューが1件でもあればAI生成レビューは集計から除外
+      // マスターグラフに反映される実レビューが1件でもあればAI生成レビューは集計から除外
       if (hasReal && r.isAiGenerated) return false;
-      // 全軸同一値（全部0・全部10など）は集計対象から除外
-      if (isUniformReview(r)) return false;
-      // chartMovedフラグがあればそれを使う（新形式）
-      if(typeof r.chartMoved !== 'undefined') return r.chartMoved;
-      // 旧形式: chartA・chartBのどこか1軸でも10未満なら有効
-      const aVals = axisA.map(k => Number(r.chartA&&r.chartA[k]||0));
-      const bVals = axisB.map(k => Number(r.chartB&&r.chartB[k]||0));
-      return aVals.some(v=>v<10) || bVals.some(v=>v<10);
+      return isGraphValidReview(r);
     });
   }
 
@@ -3999,7 +4193,8 @@
       });
       const cache = {};
       Object.entries(byAnime).forEach(([animeId, list])=>{
-        const hasReal = list.some(r=>!r.is_ai_generated);
+        // マスターグラフに反映される（chart_movedな）実レビューが1件でもあるかどうかで判定
+        const hasReal = list.some(r=>!r.is_ai_generated && r.chart_moved);
         const valid = list.filter(r=>{
           if(hasReal && r.is_ai_generated) return false;
           if(typeof r.chart_moved !== 'undefined') return r.chart_moved;
@@ -4540,6 +4735,8 @@
     tagHint:       { ja:'Enterまたは「追加」で確定。タグはみんなの検索に使われます。',en:'Press Enter or "Add" to confirm. Tags are used in search.',ko:'Enter 또는 "추가"로 확정. 태그는 검색에 사용됩니다.','zh-tw':'按Enter或「添加」確認。標籤用於搜尋。','zh-cn':'按Enter或「添加」确认。标签用于搜索。',es:'Pulsa Enter o "Añadir". Los tags se usan en la búsqueda.',fr:'Appuyez sur Entrée ou "Ajouter". Les tags sont utilisés dans la recherche.',pt:'Pressione Enter ou "Adicionar". As tags são usadas na pesquisa.',de:'Drücke Enter oder "Hinzufügen". Tags werden in der Suche verwendet.',ar:'اضغط Enter أو "إضافة". تُستخدم الوسوم في البحث.' },
     reviewHistoryTitle:{ ja:'📊 レビュー履歴',en:'📊 Review History',ko:'📊 리뷰 기록','zh-tw':'📊 評論記錄','zh-cn':'📊 评论记录',es:'📊 Historial',fr:'📊 Historique',pt:'📊 Histórico',de:'📊 Verlauf',ar:'📊 السجل' },
     noReviewHistory:{ ja:'レビューはまだありません',en:'No reviews yet',ko:'아직 리뷰가 없습니다','zh-tw':'尚無評論','zh-cn':'还没有评论',es:'Sin reseñas aún',fr:'Aucun avis encore',pt:'Sem avaliações ainda',de:'Noch keine Bewertungen',ar:'لا توجد مراجعات بعد' },
+    loadingLabel: { ja:'読み込み中…',en:'Loading…',ko:'로딩 중…','zh-tw':'載入中…','zh-cn':'加载中…',es:'Cargando…',fr:'Chargement…',pt:'Carregando…',de:'Wird geladen…',ar:'جارٍ التحميل…' },
+    userNotFound: { ja:'ユーザーが見つかりませんでした',en:'User not found',ko:'사용자를 찾을 수 없습니다','zh-tw':'找不到使用者','zh-cn':'找不到用户',es:'Usuario no encontrado',fr:'Utilisateur introuvable',pt:'Usuário não encontrado',de:'Benutzer nicht gefunden',ar:'المستخدم غير موجود' },
     labelEmail:    { ja:'メールアドレス',en:'Email',         ko:'이메일',   'zh-tw':'電子郵件','zh-cn':'电子邮件',es:'Correo',      fr:'Email',      pt:'Email',      de:'E-Mail',     ar:'البريد الإلكتروني' },
     labelPassword: { ja:'パスワード',   en:'Password',      ko:'비밀번호', 'zh-tw':'密碼',   'zh-cn':'密码',   es:'Contraseña',  fr:'Mot de passe',pt:'Senha',      de:'Passwort',   ar:'كلمة المرور' },
     labelUsername2:{ ja:'ユーザー名',   en:'Username',      ko:'유저명',   'zh-tw':'使用者名稱','zh-cn':'用户名',es:'Nombre de usuario',fr:'Nom dutilisateur',pt:'Nome de usuário',de:'Benutzername',ar:'اسم المستخدم' },
@@ -4561,6 +4758,10 @@
     btnSave:        { ja:'保存する',en:'Save',ko:'저장',  'zh-tw':'儲存','zh-cn':'保存',es:'Guardar',fr:'Enregistrer',pt:'Salvar',de:'Speichern',ar:'حفظ' },
     popAxisBase:   { ja:'基準',en:'Sort by',ko:'기준','zh-tw':'排序','zh-cn':'排序',es:'Ordenar',fr:'Trier',pt:'Ordenar',de:'Sortieren',ar:'ترتيب حسب' },
     popAxisPeriod: { ja:'期間',en:'Period',ko:'기간','zh-tw':'期間','zh-cn':'期间',es:'Periodo',fr:'Période',pt:'Período',de:'Zeitraum',ar:'الفترة' },
+    popAxisEra: { ja:'年代',en:'Era',ko:'연대','zh-tw':'年代','zh-cn':'年代',es:'Época',fr:'Époque',pt:'Época',de:'Ära',ar:'الحقبة' },
+    popEraNone: { ja:'指定なし',en:'Any',ko:'지정 안 함','zh-tw':'不指定','zh-cn':'不指定',es:'Cualquiera',fr:'Toutes',pt:'Qualquer',de:'Beliebig',ar:'أي' },
+    popEraPick: { ja:'📅 年代を選ぶ',en:'📅 Pick a year',ko:'📅 연대 선택','zh-tw':'📅 選擇年代','zh-cn':'📅 选择年代',es:'📅 Elegir año',fr:'📅 Choisir une année',pt:'📅 Escolher ano',de:'📅 Jahr wählen',ar:'📅 اختر سنة' },
+    popSortLabel: { ja:'並び替え:',en:'Sort:',ko:'정렬:','zh-tw':'排序:','zh-cn':'排序:',es:'Ordenar:',fr:'Trier:',pt:'Ordenar:',de:'Sortieren:',ar:'ترتيب:' },
     popSortPopular: { ja:'🔥 人気順',en:'🔥 Popular',ko:'🔥 인기순','zh-tw':'🔥 熱門','zh-cn':'🔥 热门',es:'🔥 Popular',fr:'🔥 Populaire',pt:'🔥 Popular',de:'🔥 Beliebt',ar:'🔥 شائع' },
     popSortReviews: { ja:'💬 レビュー順',en:'💬 Most Reviewed',ko:'💬 리뷰순','zh-tw':'💬 評論數','zh-cn':'💬 评论数',es:'💬 Más reseñado',fr:'💬 Plus évalué',pt:'💬 Mais avaliado',de:'💬 Meistbewertet',ar:'💬 الأكثر تقييماً' },
     popSortToday:  { ja:'📈 今日',en:'📈 Today',ko:'📈 오늘','zh-tw':'📈 今天','zh-cn':'📈 今天',es:'📈 Hoy',fr:"📈 Aujourd'hui",pt:'📈 Hoje',de:'📈 Heute',ar:'📈 اليوم' },
@@ -5037,6 +5238,7 @@
     const _dl = document.querySelector('.pop-drum-label'); if(_dl) _dl.textContent=t('yearPickLabel');
     const _ya = document.getElementById('popYearApply'); if(_ya) _ya.textContent=t('btnApply');
     const _pl = document.getElementById('popLoadBtn'); if(_pl) _pl.textContent=t('btnMore');
+    if(typeof updatePopPillLabels === 'function') updatePopPillLabels();
     // 検索結果ページ
     const _srb = document.getElementById('srSearchBtn'); if(_srb) _srb.textContent=t('btnSearchGo');
     const _srf = document.querySelector('#srFilterToggle span:first-child'); if(_srf) _srf.textContent=t('filterTitle');
@@ -5557,6 +5759,33 @@
   async function loadAdminData() {
     if(!sb) return;
     try {
+      // サイト監視: 直近のエラーログ
+      const since24h = new Date(Date.now() - 24*3600*1000).toISOString();
+      const since7d = new Date(Date.now() - 7*24*3600*1000).toISOString();
+      const [errCount24h, errCount7d, recentErrors] = await Promise.all([
+        db.errorLogs.countSince(since24h),
+        db.errorLogs.countSince(since7d),
+        db.errorLogs.getRecent(15),
+      ]);
+      document.getElementById('adminKpiErrors24h').textContent = errCount24h ?? '—';
+      document.getElementById('adminKpiErrors7d').textContent = errCount7d ?? '—';
+      const errListEl = document.getElementById('adminErrorLogList');
+      if(errListEl) {
+        if(!recentErrors.length) {
+          errListEl.innerHTML = `<p style="color:var(--muted);font-size:.82rem;">エラーは記録されていません 👍</p>`;
+        } else {
+          errListEl.innerHTML = recentErrors.map(e => `
+            <div style="background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:.6rem .75rem;margin-bottom:.5rem;">
+              <div style="display:flex;justify-content:space-between;gap:.5rem;">
+                <span style="font-size:.78rem;color:#ff9999;font-weight:700;word-break:break-word;">${escapeHtml((e.message||'').slice(0,140))}</span>
+                <span style="font-size:.68rem;color:var(--muted);white-space:nowrap;">${new Date(e.created_at).toLocaleString('ja-JP')}</span>
+              </div>
+              <div style="font-size:.7rem;color:var(--muted);margin-top:.3rem;">${escapeHtml(e.page||'')} ・ ${escapeHtml((e.user_agent||'').slice(0,60))}</div>
+            </div>
+          `).join('');
+        }
+      }
+
       // 総レビュー数
       const reviewCount = await db.reviews.countAll();
       document.getElementById('adminKpiReviews').textContent = reviewCount ?? '—';
@@ -5795,7 +6024,7 @@
 
   function renderReviewsListFiltered(id) {
     const scopedAll = getReviews().filter(r=>r.animeId===id);
-    const hasReal = scopedAll.some(r=>!r.isAiGenerated);
+    const hasReal = hasValidRealReview(scopedAll);
     const allRevs = hasReal ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
     const filtered = filterReviews(allRevs);
     const metaEl = document.getElementById('reviewsListMeta');
@@ -5820,12 +6049,15 @@
       const tags = (rev.tags||[]).map(tg=>`<span class="tag-badge">${escapeHtml(tg)}</span>`).join('');
       const dateStr = rev.createdAt||rev.created_at?new Date(rev.createdAt||rev.created_at).toLocaleDateString('ja-JP',{year:'numeric',month:'short',day:'numeric'}):'';
       const flag = rev.country_code||rev.countryCode ? `<span style="font-size:.7rem;color:var(--muted);margin-left:.3rem;">${rev.country_code||rev.countryCode}</span>` : '';
+      const userId = rev.userId || rev.user_id || null;
+      const isClickableUser = !!userId;
+      const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(userId)}')" style="cursor:pointer;"` : '';
       return `<article class="review-card">
         <div class="rc-head">
           <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
-            <div style="width:32px;height:32px;border-radius:7px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+            <div${userOnclick} style="width:32px;height:32px;border-radius:7px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
             <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-              <span class="rc-name">${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
+              <span class="rc-name"${userOnclick}>${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
             </div>
           </div>
@@ -5921,7 +6153,7 @@
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
       if(document.getElementById('page-mypage').classList.contains('active')) {
-        renderMypage();
+        renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
     });
   }
@@ -5996,10 +6228,12 @@
   const FAV_KEY = 'animepple-favorites'; // ローカルキャッシュ（表示高速化用）
   const GENRE_OPTIONS = ['Action','Comedy','Drama','Fantasy','Romance','SciFi','Horror','Slice of Life','Sports','Mystery','Isekai','School'];
 
-  async function renderMypage() {
+  async function renderMypage(viewUserId) {
     const guest = document.getElementById('mypageGuest');
     const user = document.getElementById('mypageUser');
-    if(!_currentUser) {
+    const isOwnPage = !viewUserId;
+
+    if(isOwnPage && !_currentUser) {
       guest.style.display = '';
       user.style.display = 'none';
       return;
@@ -6007,23 +6241,47 @@
     guest.style.display = 'none';
     user.style.display = '';
 
+    // 本人限定の要素（編集ボタン・メールアドレス・ログアウト等）は他人閲覧時は隠す
+    document.querySelectorAll('.mypage-owner-only').forEach(el=>{ el.style.display = isOwnPage ? '' : 'none'; });
+
+    const targetUserId = isOwnPage ? _currentUser.id : viewUserId;
+
     // プロフィール取得（username, bio, genres まとめて1回で）
     let profileData = null;
     if(sb) {
-      profileData = await db.profiles.get(_currentUser.id);
+      profileData = await db.profiles.get(targetUserId);
     }
-    const username = _currentUser._username || profileData?.username || _currentUser.email.split('@')[0];
-    _myProfile = { username, bio: profileData?.bio||'', genres: profileData?.favorite_genres||[] };
+
+    if(!isOwnPage && !profileData) {
+      document.getElementById('mypageUsername').textContent = t('userNotFound');
+      document.getElementById('mypageBioSection').style.display = 'none';
+      document.getElementById('mypageRankBadge').style.display = 'none';
+      document.getElementById('mypageRankProgress').innerHTML = '';
+      document.getElementById('mypageFavoritesList').innerHTML = '';
+      document.getElementById('mypageReviewList').innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${t('userNotFound')}</p>`;
+      document.getElementById('statReviewCount').textContent = '0';
+      document.getElementById('statFavCount').textContent = '0';
+      document.getElementById('statQualityCount').textContent = '0';
+      return;
+    }
+
+    const username = isOwnPage
+      ? (_currentUser._username || profileData?.username || _currentUser.email.split('@')[0])
+      : (profileData.username || t('userNotFound'));
+
+    if(isOwnPage) _myProfile = { username, bio: profileData?.bio||'', genres: profileData?.favorite_genres||[] };
+    const bio = profileData?.bio || '';
+    const genres = profileData?.favorite_genres || [];
 
     document.getElementById('mypageUsername').textContent = username;
-    document.getElementById('mypageEmail').textContent = _currentUser.email;
+    if(isOwnPage) document.getElementById('mypageEmail').textContent = _currentUser.email;
 
     // 自己紹介・ジャンル表示
     const bioSection = document.getElementById('mypageBioSection');
-    if(_myProfile.bio || _myProfile.genres.length) {
+    if(bio || genres.length) {
       bioSection.style.display = '';
-      document.getElementById('mypageBioText').textContent = _myProfile.bio || '';
-      document.getElementById('mypageGenreTags').innerHTML = _myProfile.genres.map(g=>`<span class="mypage-genre-tag">${escapeHtml(g)}</span>`).join('');
+      document.getElementById('mypageBioText').textContent = bio;
+      document.getElementById('mypageGenreTags').innerHTML = genres.map(g=>`<span class="mypage-genre-tag">${escapeHtml(g)}</span>`).join('');
     } else {
       bioSection.style.display = 'none';
     }
@@ -6038,7 +6296,7 @@
     } else {
       avatar.textContent = initial;
       const colors = ['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
-      const idx = _currentUser.id.charCodeAt(0) % colors.length;
+      const idx = targetUserId.charCodeAt(0) % colors.length;
       avatar.style.background = colors[idx];
     }
 
@@ -6046,7 +6304,7 @@
 
     // レビュー一覧＋統計（Supabaseから取得）
     if(sb) {
-      const reviews = await db.reviews.getByUsername(username);
+      const reviews = await db.reviews.getByUserId(targetUserId);
       reviewTotal = reviews ? reviews.length : 0;
       qualityCount = reviews ? reviews.filter(r=>r.quality).length : 0;
 
@@ -6110,7 +6368,7 @@
     document.getElementById('statQualityCount').textContent = qualityCount;
 
     // お気に入り一覧
-    await renderFavoritesList();
+    await renderFavoritesList(targetUserId);
   }
 
   function renderRankProgress(qualityCount) {
@@ -6161,10 +6419,11 @@
     btn.textContent = fav ? '❤️' : '♡';
   }
 
-  async function renderFavoritesList() {
+  async function renderFavoritesList(userId) {
     const el = document.getElementById('mypageFavoritesList');
-    if(!el || !sb || !_currentUser) return;
-    const favs = await db.favorites.getByUser(_currentUser.id);
+    const targetId = userId || (_currentUser && _currentUser.id);
+    if(!el || !sb || !targetId) return;
+    const favs = await db.favorites.getByUser(targetId);
     document.getElementById('statFavCount').textContent = favs ? favs.length : 0;
     if(!favs || !favs.length) {
       el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">⭐</div><p>${t('noFavoritesYet')}</p></div>`;
