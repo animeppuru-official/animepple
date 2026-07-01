@@ -2019,6 +2019,9 @@
         createdAt: r.created_at,
         fromSupabase: true,
         isAiGenerated: !!r.is_ai_generated,
+        chartMoved: r.chart_moved,
+        quality: !!r.quality,
+        qualityScore: r.quality_score || 0,
       }));
       // LocalStorageのレビューと重複なくマージ（Supabase優先、createdAtで重複除去）
       const local = pj(REVIEW_KEY).filter(r=>r.animeId===animeId&&!r.fromSupabase);
