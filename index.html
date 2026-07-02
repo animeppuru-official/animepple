@@ -495,6 +495,35 @@
       display:inline-flex; align-items:center; gap:.2rem; font-size:.66rem; font-weight:700; color:#ffd166;
       background:rgba(255,209,102,.12); border-radius:999px; padding:.12rem .5rem; margin-top:.4rem;
     }
+    /* レビュー履歴：小さいタイルを横スクロールでページ送り（1画面分埋まったら右に次ページ） */
+    .mypage-review-pages {
+      display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+      scrollbar-width:none; gap:0;
+    }
+    .mypage-review-pages::-webkit-scrollbar { display:none; }
+    .mypage-review-page {
+      flex:0 0 100%; scroll-snap-align:start;
+      display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem;
+    }
+    @media (min-width:640px) { .mypage-review-page { grid-template-columns:repeat(4,1fr); } }
+    .mypage-review-tile {
+      background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:.55rem;
+      cursor:pointer; transition:border-color .15s; min-height:64px; display:flex; flex-direction:column; gap:.2rem;
+    }
+    .mypage-review-tile:hover { border-color: rgba(94,201,122,.3); }
+    .mypage-review-tile-title {
+      font-size:.72rem; font-weight:700; color:#dff0e6; line-height:1.3;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+    }
+    .mypage-review-tile-date { font-size:.62rem; color:var(--muted); }
+    .mypage-review-tile-quality { font-size:.85rem; }
+    .mypage-review-pagedots { display:flex; justify-content:center; gap:.3rem; margin-top:.5rem; }
+    .mypage-review-pagedot { width:5px; height:5px; border-radius:50%; background:var(--line); }
+    .mypage-logout-link {
+      background:none; border:none; color:var(--muted); font-size:.75rem; text-decoration:underline;
+      cursor:pointer; padding:.2rem .3rem;
+    }
+    .mypage-logout-link:hover { color:#dff0e6; }
     .mypage-empty-state {
       text-align:center; padding:1.5rem .5rem; color:var(--muted); font-size:.85rem;
     }
@@ -1424,6 +1453,10 @@
           <div class="mypage-stat-label" data-i18n="statQuality">上質レビュー</div>
         </div>
       </div>
+
+      <div class="mypage-owner-only" style="display:flex;justify-content:flex-end;padding:.4rem 1.1rem 0;">
+        <button class="mypage-logout-link" onclick="signOut()" data-i18n="logoutBtn">ログアウト</button>
+      </div>
     </div>
 
     <!-- 自己紹介・好きなジャンル -->
@@ -1447,10 +1480,7 @@
     <!-- レビュー履歴 -->
     <div class="mypage-section">
       <h3 class="mypage-section-title" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h3>
-      <div id="mypageReviewList"><p style="color:var(--muted);font-size:.85rem;">レビューはまだありません</p></div>
-    </div>
-    <div class="mypage-actions mypage-owner-only">
-      <button class="mypage-btn-secondary" onclick="signOut()" data-i18n="logoutBtn">ログアウト</button>
+      <div id="mypageReviewList" class="mypage-review-pages"><p style="color:var(--muted);font-size:.85rem;">レビューはまだありません</p></div>
     </div>
   </div>
 
@@ -4621,27 +4651,36 @@
 
     const country = geoStore.getCountry() || 'DEFAULT';
     const amz = AFFILIATE.amazonByCountry[country] || AFFILIATE.amazonByCountry.DEFAULT;
-    const searchTitle = encodeURIComponent((page.title||page.titleEn||'') + ' アニメ グッズ');
-    const searchEn    = encodeURIComponent((page.titleEn||page.title||'') + ' anime');
+    const isJP = country === 'JP';
+    const titleJa = page.title || page.titleEn || '';
+    const titleEn = page.titleEn || page.title || '';
 
-    // Amazon検索リンク（審査不要、アソシエイトタグは審査後に有効化）
-    const amazonUrl = `https://www.${amz.domain}/s?k=${country==='JP'?searchTitle:searchEn}`;
-    // ※ PA-API実装後は以下URLにtagパラメータを追加:
-    // &tag=${amz.tag}
+    // 3カテゴリ分、国籍に応じたAmazonドメイン＋検索語（日本は日本語、それ以外は英語）で検索リンクを生成
+    const categories = [
+      { icon:'🧸', key:'goods', labelJa:'グッズ・フィギュア', labelEn:'Merch & Figures', qJa:'グッズ フィギュア', qEn:'merchandise figure' },
+      { icon:'💿', key:'bluray', labelJa:'DVD・ブルーレイ', labelEn:'DVD & Blu-ray', qJa:'DVD ブルーレイ', qEn:'DVD Blu-ray' },
+      { icon:'📖', key:'manga', labelJa:'漫画', labelEn:'Manga', qJa:'漫画', qEn:'manga' },
+    ];
 
-    el.innerHTML = `<div class="af-goods-list">
-      <a class="af-goods-item" href="${amazonUrl}" target="_blank" rel="noopener noreferrer"
-         onclick="adClick('goods_amazon')">
-        <div class="af-goods-icon">📦</div>
-        <div class="af-goods-body">
-          <div class="af-goods-name">Amazon${country==='JP'?'.co.jp':'.com'}</div>
-          <div class="af-goods-sub">${page.title||page.titleEn} のグッズ・Blu-ray・書籍</div>
-        </div>
-        <div class="af-goods-cta" style="background:#f0a050;color:#1a0800;">商品を見る</div>
-      </a>
-      <!-- PA-API実装後: ここにグッズカードグリッドが入る -->
-      <!-- <div class="af-goods-grid" id="afGoodsGrid"></div> -->
-    </div>`;
+    // ※ PA-API実装後は各URLに &tag=${amz.tag} を追加
+    const items = categories.map(cat => {
+      const query = encodeURIComponent(isJP ? `${titleJa} ${cat.qJa}` : `${titleEn} ${cat.qEn}`);
+      const url = `https://www.${amz.domain}/s?k=${query}`;
+      const label = isJP ? cat.labelJa : cat.labelEn;
+      return `
+        <a class="af-goods-item" href="${url}" target="_blank" rel="noopener noreferrer sponsored"
+           onclick="adClick('goods_amazon_${cat.key}')">
+          <div class="af-goods-icon">${cat.icon}</div>
+          <div class="af-goods-body">
+            <div class="af-goods-name">Amazon${country==='JP'?'.co.jp':''}</div>
+            <div class="af-goods-sub">${escapeHtml(label)}</div>
+          </div>
+          <div class="af-goods-cta" style="background:#f0a050;color:#1a0800;">${t('goodsSeeItem')||'商品を見る'}</div>
+        </a>
+      `;
+    }).join('');
+
+    el.innerHTML = `<div class="af-goods-list">${items}</div>`;
     section.style.display = '';
   }
 
@@ -4828,6 +4867,7 @@
     welcomeMsg:   { ja:'ようこそ<br>アニメップルへ！',en:'Welcome to<br>Animepple!',ko:'아니메플에<br>오신 것을 환영합니다!','zh-tw':'歡迎來到<br>Animepple！','zh-cn':'欢迎来到<br>Animepple！',es:'¡Bienvenido a<br>Animepple!',fr:'Bienvenue sur<br>Animepple !',pt:'Bem-vindo ao<br>Animepple!',de:'Willkommen bei<br>Animepple!',ar:'مرحباً بك في<br>Animepple!' },
     worldReaction:{ ja:'🌍 世界の反応',en:'🌍 World Reactions',ko:'🌍 세계 반응','zh-tw':'🌍 世界反應','zh-cn':'🌍 世界反应',es:'🌍 Reacciones mundiales',fr:'🌍 Réactions mondiales',pt:'🌍 Reações mundiais',de:'🌍 Weltweite Reaktionen',ar:'🌍 ردود العالم' },
     goodsSection: { ja:'🛍 グッズ・関連商品',en:'🛍 Merchandise',ko:'🛍 굿즈・관련 상품','zh-tw':'🛍 周邊商品','zh-cn':'🛍 周边商品',es:'🛍 Merchandising',fr:'🛍 Produits dérivés',pt:'🛍 Mercadoria',de:'🛍 Merchandise',ar:'🛍 البضائع' },
+    goodsSeeItem: { ja:'商品を見る',en:'View items',ko:'상품 보기','zh-tw':'查看商品','zh-cn':'查看商品',es:'Ver productos',fr:'Voir les produits',pt:'Ver produtos',de:'Produkte ansehen',ar:'عرض المنتجات' },
     totalPV:      { ja:'総PV',en:'Total PV',ko:'총 PV','zh-tw':'總PV','zh-cn':'总PV',es:'PV total',fr:'PV total',pt:'PV total',de:'Gesamt-PV',ar:'إجمالي PV' },
     guestDesc:    { ja:'アカウントを作るとレビューが保存されます',en:'Create an account to save your reviews',ko:'계정을 만들면 리뷰가 저장됩니다','zh-tw':'建立帳號以儲存您的評論','zh-cn':'创建账号以保存您的评论',es:'Crea una cuenta para guardar tus reseñas',fr:'Créez un compte pour sauvegarder vos avis',pt:'Crie uma conta para salvar suas avaliações',de:'Erstelle ein Konto, um deine Bewertungen zu speichern',ar:'أنشئ حساباً لحفظ مراجعاتك' },
     createAccount:{ ja:'🍎 アカウントを作成',en:'🍎 Create Account',ko:'🍎 계정 만들기','zh-tw':'🍎 建立帳號','zh-cn':'🍎 创建账号',es:'🍎 Crear cuenta',fr:'🍎 Créer un compte',pt:'🍎 Criar conta',de:'🍎 Konto erstellen',ar:'🍎 إنشاء حساب' },
@@ -6385,43 +6425,29 @@
 
       const listEl = document.getElementById('mypageReviewList');
       if(reviews && reviews.length) {
-        const recentReviews = reviews.slice(0,10);
+        const recentReviews = reviews.slice(0,30);
         const animeIds = [...new Set(recentReviews.map(r=>r.anime_id))];
         const pages = await db.animePages.getByIds(animeIds);
         const titleMap = {};
         pages.forEach(p => { titleMap[p.id] = currentLang==='ja' ? (p.title||p.title_en||p.id) : (p.title_en||p.title||p.id); });
 
-        const labA=getAxisA(), labB=getAxisB();
-        listEl.innerHTML = recentReviews.map((r,i)=>{
+        // 1ページあたりのタイル数（グリッド：スマホ3列×3行=9、640px以上は4列×3行=12）
+        const perPage = window.innerWidth >= 640 ? 12 : 9;
+        const tileHtml = (r) => {
           const title = titleMap[r.anime_id] || r.anime_id;
           const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' });
-          const qualityBadge = r.quality ? `<span class="mypage-review-card-quality">✨ ${t('statQuality')||'上質レビュー'}</span>` : '';
+          const qualityMark = r.quality ? `<span class="mypage-review-tile-quality">✨</span>` : '';
           return `
-            <div class="mypage-review-card">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;" onclick="nav('anime','${r.anime_id}')">
-                <div>
-                  <div class="mypage-review-card-title">${escapeHtml(title)}</div>
-                  <div class="mypage-review-card-date">${dateStr}</div>
-                  ${qualityBadge}
-                </div>
-              </div>
-              <div class="rc-charts" style="margin-top:.6rem;">
-                <div><p class="rc-chart-label">${t('chartATitle')}</p><canvas class="rc-canvas" data-mai="${i}" width="280" height="200"></canvas></div>
-                <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-mbi="${i}" width="280" height="200"></canvas></div>
-              </div>
-              <div class="rc-share-row" style="border-top:none;padding-top:0;">
-                <button class="rc-share-btn x-share" onclick="shareReviewToSns('x', '${escapeHtml(title)}', '${escapeHtml(username)}')">𝕏 シェア</button>
-                <button class="rc-share-btn line-share" onclick="shareReviewToSns('line', '${escapeHtml(title)}', '${escapeHtml(username)}')">LINEでシェア</button>
-              </div>
+            <div class="mypage-review-tile" onclick="nav('anime','${r.anime_id}')">
+              <div class="mypage-review-tile-title">${escapeHtml(title)}</div>
+              <div class="mypage-review-tile-date">${dateStr}</div>
+              ${qualityMark}
             </div>
           `;
-        }).join('');
-
-        recentReviews.forEach((r,i)=>{
-          const ca = listEl.querySelector(`[data-mai="${i}"]`), cb = listEl.querySelector(`[data-mbi="${i}"]`);
-          if(ca) drawRadar(ca, labA, labA.map((_,j)=>Number(r.chart_a?.[axisA[j]]||0)), 'rgba(88,201,132,0.35)', '#8fe5ab');
-          if(cb) drawRadar(cb, labB, labB.map((_,j)=>Number(r.chart_b?.[axisB[j]]||0)), 'rgba(255,153,153,0.32)', '#ffaaaa');
-        });
+        };
+        const chunks = [];
+        for(let i=0;i<recentReviews.length;i+=perPage) chunks.push(recentReviews.slice(i, i+perPage));
+        listEl.innerHTML = chunks.map(chunk => `<div class="mypage-review-page">${chunk.map(tileHtml).join('')}</div>`).join('');
       } else {
         listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">📝</div><p>${t('noReviewHistory')}</p></div>`;
       }
