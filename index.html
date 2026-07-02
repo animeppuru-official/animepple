@@ -1689,7 +1689,7 @@
       },
       async getAllForCluster() {
         if(!sb) return [];
-        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated,username,quality');
+        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated,username,quality,elapsed_ms');
         return data || [];
       },
       async getCreatedDates() {
@@ -2022,6 +2022,7 @@
         chartMoved: r.chart_moved,
         quality: !!r.quality,
         qualityScore: r.quality_score || 0,
+        elapsedMs: r.elapsed_ms,
       }));
       // LocalStorageのレビューと重複なくマージ（Supabase優先、createdAtで重複除去）
       const local = pj(REVIEW_KEY).filter(r=>r.animeId===animeId&&!r.fromSupabase);
@@ -3324,89 +3325,6 @@
   ════════════════════════════ */
   const AGGREGATE_MODE = 'trim';
 
-  /* ═══════════════ TEST DATA START（テスト終わったらこのブロックを丸ごと削除） ═══════════════ */
-  (function(){
-    const TEST_ANIME_ID = 'test-anime-001';
-    const testPage = {
-      id: TEST_ANIME_ID,
-      title: '星めぐりのアステリズム（テスト）',
-      titleEn: 'Asterism Wanderers (TEST)',
-      meta: 'TV・2026年・テストデータ',
-      image: '',
-      description: 'これはテスト用の架空アニメです。マスターグラフの集計挙動確認用。',
-      genres: ['Fantasy','Comedy','School'],
-    };
-    const allPages = pj(STORAGE_KEY);
-    if(!allPages.find(p=>p.id===TEST_ANIME_ID)) {
-      allPages.unshift(testPage);
-      sj(STORAGE_KEY, allPages);
-    }
-
-    // 想定される「だいたいの特徴」（中心値）
-    const baseA = {作画:8, 物語:7, キャラクター:8, 世界観:9, 音楽:6, テーマ:7};
-    const baseB = {かっこいい:6, 可愛い:7, シリアス:4, コメディ:8, アダルト:2, エモい:6};
-
-    function clamp(v){ return Math.max(0, Math.min(10, v)); }
-    function jitter(base, spread){ return clamp(Math.round(base + (Math.random()-0.5)*spread)); }
-
-    const testReviews = [];
-    const names = ['ゲスト','りんご好き','アニメ太郎','匿名','夜行性','深夜アニメ勢','コーヒー党','猫好き','学生A','社会人B'];
-
-    // 70件: 人間らしくばらけた自然なレビュー
-    for(let i=0;i<70;i++){
-      const spread = 3 + Math.random()*3;
-      const chartA = {}, chartB = {};
-      Object.keys(baseA).forEach(k=>{ chartA[k]=jitter(baseA[k], spread); });
-      Object.keys(baseB).forEach(k=>{ chartB[k]=jitter(baseB[k], spread); });
-      testReviews.push({
-        animeId: TEST_ANIME_ID,
-        userName: names[i%names.length],
-        tags: [],
-        chartA, chartB,
-        comment: i%5===0 ? 'テスト用の自然なレビューです' : '',
-        createdAt: new Date(Date.now()-i*60000).toISOString(),
-        chartMoved: true,
-        quality: i%3===0,
-        _isTestData: true,
-        _isTroll: false,
-      });
-    }
-
-    // 30件: 荒らし（全部10 / 全部0 / 完全ランダムを均等配分）
-    for(let i=0;i<30;i++){
-      const chartA = {}, chartB = {};
-      const mode = i % 3; // 0:全10 1:全0 2:完全ランダム
-      let trollType = '';
-      Object.keys(baseA).forEach(k=>{
-        chartA[k] = mode===0 ? 10 : mode===1 ? 0 : Math.floor(Math.random()*11);
-      });
-      Object.keys(baseB).forEach(k=>{
-        chartB[k] = mode===0 ? 10 : mode===1 ? 0 : Math.floor(Math.random()*11);
-      });
-      trollType = mode===0 ? '全部MAX' : mode===1 ? '全部MIN' : 'ランダム適当';
-      testReviews.push({
-        animeId: TEST_ANIME_ID,
-        userName: 'ゲスト',
-        tags: [],
-        chartA, chartB,
-        comment: '',
-        createdAt: new Date(Date.now()-(70+i)*60000).toISOString(),
-        chartMoved: true,
-        quality: false,
-        _isTestData: true,
-        _isTroll: true,
-        _trollType: trollType,
-      });
-    }
-
-    const existingReviews = pj(REVIEW_KEY);
-    const filtered = existingReviews.filter(r=>!r._isTestData);
-    sj(REVIEW_KEY, [...testReviews, ...filtered]);
-
-    console.log(`[TEST] ${TEST_ANIME_ID} に ${testReviews.length}件投入（自然70件 / 荒らし30件＝全10:10件,全0:10件,ランダム:10件）`);
-  })();
-  /* ═══════════════ TEST DATA END ═══════════════ */
-
   // 標準偏差を計算（荒らし優勢判定に使用）
   function stdDev(values) {
     const mean = values.reduce((a,b)=>a+b,0) / values.length;
@@ -3623,6 +3541,25 @@
     const adMid = document.getElementById('adAnimeMid');
     const meta = document.getElementById('masterGraphMeta');
     if (!reviews.length) { if(section) section.style.display='none'; return; }
+
+    // 3件未満は数値を出さない（1〜2件だと荒らし1人でグラフが完全に決まってしまうため、
+    // 「参考値」としてもミスリードになりやすい。件数が集まるまでは非表示にする）
+    if (reviews.length < 3) {
+      if (section) section.style.display='';
+      const _adMid0 = document.getElementById('adAnimeMid');
+      if(_adMid0) _adMid0.style.display='';
+      if (meta) meta.textContent = `⚠️ ${t('notEnoughReviews') || 'レビューが3件集まるまでマスターグラフは表示されません'}（${reviews.length}/3件）`;
+      const caA0 = document.getElementById('masterChartA');
+      const caB0 = document.getElementById('masterChartB');
+      if (caA0) { const ctx=caA0.getContext('2d'); ctx.clearRect(0,0,caA0.width,caA0.height); }
+      if (caB0) { const ctx=caB0.getContext('2d'); ctx.clearRect(0,0,caB0.width,caB0.height); }
+      const miniSection0 = document.getElementById('miniGraphSection');
+      if(miniSection0) miniSection0.style.display='none';
+      const breakdown0 = document.getElementById('masterBreakdown');
+      if(breakdown0) breakdown0.innerHTML = '';
+      return;
+    }
+
     if (section) section.style.display='';
     const _adMid = document.getElementById('adAnimeMid');
     if(_adMid) _adMid.style.display='';
@@ -4159,6 +4096,7 @@
               chart_moved: isFullGraph,
               quality: isQuality,
               quality_score: qualityScore,
+              elapsed_ms: elapsed,
             },
           }),
         });
@@ -4203,9 +4141,15 @@
   }
 
   // マスターグラフ集計に反映される「有効なグラフレビュー」かどうか
-  // （コメント・タグのみでグラフを動かしていないレビューは対象外）
+  // （コメント・タグのみでグラフを動かしていないレビューは対象外。
+  //   また、全軸操作済みでも極端に短時間（3秒未満）での送信は、
+  //   雑に全スライダーを動かしただけの可能性が高いため対象外にする。
+  //   ※elapsedMsはクライアント申告値なので厳密な防止策ではなく、
+  //   雑な入力を弾くための簡易フィルタという位置づけ）
+  const MIN_ELAPSED_MS_FOR_VALID_GRAPH = 3000;
   function isGraphValidReview(r) {
     if (isUniformReview(r)) return false;
+    if (typeof r.elapsedMs === 'number' && r.elapsedMs > 0 && r.elapsedMs < MIN_ELAPSED_MS_FOR_VALID_GRAPH) return false;
     if (typeof r.chartMoved !== 'undefined') return r.chartMoved;
     const aVals = axisA.map(k => Number(r.chartA&&r.chartA[k]||0));
     const bVals = axisB.map(k => Number(r.chartB&&r.chartB[k]||0));
@@ -4275,6 +4219,7 @@
         isAiGenerated: !!r.is_ai_generated,
         userName: r.username,
         quality: r.quality,
+        elapsedMs: r.elapsed_ms,
       }));
       const byAnime = {};
       localRows.forEach(r=>{
@@ -4791,6 +4736,7 @@
     graphIncompleteMsg: { ja:'この状態で投稿するとレビューとして表示されますが、みんなの評価グラフへのデータ集計はされません。', en:'You can post like this and it will show as a review, but it will not be counted in the master graph.', ko:'이 상태로 게시하면 리뷰로 표시되지만, 모두의 평가 그래프 집계에는 반영되지 않습니다.', 'zh-tw':'以此狀態發佈會顯示為評論，但不會計入大家的評分圖。', 'zh-cn':'以此状态发布会显示为评论，但不会计入大家的评分图。', es:'Puedes publicar así y se mostrará como reseña, pero no se contará en el gráfico general.', fr:"Vous pouvez publier ainsi, l'avis sera affiché mais ne sera pas compté dans le graphique général.", pt:'Você pode postar assim e aparecerá como avaliação, mas não será contado no gráfico geral.', de:'Du kannst so posten, es wird als Bewertung angezeigt, aber nicht in die Gesamtgrafik einberechnet.', ar:'يمكنك النشر هكذا وستظهر كمراجعة، لكنها لن تُحتسب في الرسم البياني العام.' },
     graphCompleteMsg: { ja:'すべて入力済みです。', en:'All fields are filled in.', ko:'모두 입력 완료되었습니다.', 'zh-tw':'已全部填寫完成。', 'zh-cn':'已全部填写完成。', es:'Todos los campos están completos.', fr:'Tous les champs sont remplis.', pt:'Todos os campos preenchidos.', de:'Alle Felder sind ausgefüllt.', ar:'تم ملء جميع الحقول.' },
     maturityEarly:  { ja:'レビュー数が少ないため参考値です', en:'Few reviews — values are tentative', ko:'리뷰 수가 적어 참고용입니다', 'zh-tw':'評論數較少，僅供參考', 'zh-cn':'评论数较少，仅供参考', es:'Pocas reseñas, valor referencial', fr:'Peu d\'avis, valeur indicative', pt:'Poucas avaliações, valor referencial', de:'Wenige Bewertungen, Richtwert', ar:'مراجعات قليلة، قيمة تقريبية' },
+    notEnoughReviews: { ja:'レビューが3件集まるまでマスターグラフは表示されません', en:'The master graph appears once there are at least 3 reviews', ko:'리뷰가 3건 모일 때까지 마스터 그래프는 표시되지 않습니다', 'zh-tw':'累積3則評論後才會顯示總評圖表', 'zh-cn':'累计3条评论后才会显示总评图表', es:'El gráfico maestro aparece cuando hay al menos 3 reseñas', fr:'Le graphique principal apparaît à partir de 3 avis', pt:'O gráfico mestre aparece a partir de 3 avaliações', de:'Der Master-Graph erscheint ab 3 Bewertungen', ar:'يظهر الرسم البياني الرئيسي بعد وصول المراجعات إلى 3 على الأقل' },
     maturityGrowing:{ ja:'（データ収集中）', en:'(Collecting data)', ko:'（데이터 수집 중）', 'zh-tw':'（資料收集中）', 'zh-cn':'（数据收集中）', es:'(Recopilando datos)', fr:'(Collecte en cours)', pt:'(Coletando dados)', de:'(Datensammlung)', ar:'(جمع البيانات)' },
     validReviewMeta: { ja:'有効レビュー {n}件の平均', en:'Average of {n} valid reviews', ko:'유효 리뷰 {n}건의 평균', 'zh-tw':'{n}則有效評論的平均', 'zh-cn':'{n}条有效评论的平均', es:'Media de {n} reseñas válidas', fr:'Moyenne de {n} avis valides', pt:'Média de {n} avaliações válidas', de:'Durchschnitt von {n} gültigen', ar:'متوسط {n} مراجعة' },
     btnBack:      { ja:'← 戻る',en:'← Back',ko:'← 뒤로','zh-tw':'← 返回','zh-cn':'← 返回',es:'← Volver',fr:'← Retour',pt:'← Voltar',de:'← Zurück',ar:'← رجوع' },
@@ -6020,7 +5966,7 @@
           const byAnime = {};
           fullReviews.forEach(r=>{
             if(!byAnime[r.anime_id]) byAnime[r.anime_id]=[];
-            byAnime[r.anime_id].push({ chartA:r.chart_a, chartB:r.chart_b, chartMoved:r.chart_moved, isAiGenerated:!!r.is_ai_generated });
+            byAnime[r.anime_id].push({ chartA:r.chart_a, chartB:r.chart_b, chartMoved:r.chart_moved, isAiGenerated:!!r.is_ai_generated, elapsedMs:r.elapsed_ms });
           });
           const splitResults = [];
           Object.entries(byAnime).forEach(([animeId, revsRaw])=>{
