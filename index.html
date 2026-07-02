@@ -1586,6 +1586,11 @@
         const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url').eq('id', userId).single();
         return data;
       },
+      async getByIds(userIds) {
+        if(!sb || !userIds || !userIds.length) return [];
+        const { data } = await sb.from('profiles').select('id,avatar_url').in('id', userIds);
+        return data || [];
+      },
       async getUsername(userId) {
         if(!sb) return null;
         const { data } = await sb.from('profiles').select('username').eq('id', userId).single();
@@ -3765,7 +3770,7 @@
     draw('all');
   }
 
-  function renderReviewList(id) {
+  async function renderReviewList(id) {
     const scopedAll=getReviews().filter(r=>r.animeId===id);
     const hasReal = hasValidRealReview(scopedAll);
     const allRaw = hasReal ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
@@ -3780,6 +3785,18 @@
       const ta=new Date(a.createdAt||0).getTime(), tb=new Date(b.createdAt||0).getTime();
       return sortVal==='oldest'?ta-tb:tb-ta;
     });
+
+    // アカウント登録済みユーザーのアイコン画像をまとめて取得
+    let avatarMap = {};
+    if(sb) {
+      const userIds = [...new Set(reviews.map(r=>r.userId).filter(Boolean))];
+      if(userIds.length) {
+        try {
+          const profiles = await db.profiles.getByIds(userIds);
+          profiles.forEach(p=>{ if(p.avatar_url) avatarMap[p.id]=p.avatar_url; });
+        } catch(e) { console.warn('review avatar fetch:', e); }
+      }
+    }
 
     // タグ上位10個をバッジ表示
     const tags10 = topTags(id);
@@ -3796,12 +3813,13 @@
       const displayName = rev.userName || rev.username || 'ゲスト';
       const isClickableUser = !!rev.userId;
       const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(rev.userId)}')" style="cursor:pointer;"` : '';
+      const avatarUrl = rev.userId ? avatarMap[rev.userId] : null;
       return `
         <article class="review-card">
           <div class="rc-head">
             <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
-              <div${userOnclick} style="width:32px;height:32px;border-radius:7px;background:${(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
-                ${(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
+              <div${userOnclick} style="width:32px;height:32px;border-radius:7px;overflow:hidden;background:${avatarUrl?'transparent':(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
+                ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
                 <span class="rc-name"${userOnclick}>${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}</span>
@@ -6063,7 +6081,7 @@
     });
   }
 
-  function renderReviewsListFiltered(id) {
+  async function renderReviewsListFiltered(id) {
     const scopedAll = getReviews().filter(r=>r.animeId===id);
     const hasReal = hasValidRealReview(scopedAll);
     const allRevs = hasReal ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
@@ -6079,24 +6097,40 @@
     const sorted = [...filtered].sort((a,b)=>{
       return sortVal==='oldest'?getReviewTime(a)-getReviewTime(b):getReviewTime(b)-getReviewTime(a);
     });
+
+    // アカウント登録済みユーザーのアイコン画像をまとめて取得
+    let avatarMap = {};
+    if(sb) {
+      const userIds = [...new Set(sorted.map(r=>r.userId||r.user_id).filter(Boolean))];
+      if(userIds.length) {
+        try {
+          const profiles = await db.profiles.getByIds(userIds);
+          profiles.forEach(p=>{ if(p.avatar_url) avatarMap[p.id]=p.avatar_url; });
+        } catch(e) { console.warn('review avatar fetch:', e); }
+      }
+    }
+
     const labA=getAxisA(), labB=getAxisB();
     el.innerHTML = sorted.map((rev,i)=>{
       const name = rev.userName||rev.username||'ゲスト';
       const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
-      const iconBg = name==='ゲスト'?'rgba(140,198,160,0.2)':colors[name.charCodeAt(0)%colors.length];
-      const iconContent = name==='ゲスト'
-        ?'<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>'
-        :name.slice(0,1);
+      const userId = rev.userId || rev.user_id || null;
+      const avatarUrl = userId ? avatarMap[userId] : null;
+      const iconBg = avatarUrl ? 'transparent' : (name==='ゲスト'?'rgba(140,198,160,0.2)':colors[name.charCodeAt(0)%colors.length]);
+      const iconContent = avatarUrl
+        ? `<img src="${escapeHtml(avatarUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+        : (name==='ゲスト'
+          ?'<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>'
+          :name.slice(0,1));
       const tags = (rev.tags||[]).map(tg=>`<span class="tag-badge">${escapeHtml(tg)}</span>`).join('');
       const dateStr = rev.createdAt||rev.created_at?new Date(rev.createdAt||rev.created_at).toLocaleDateString('ja-JP',{year:'numeric',month:'short',day:'numeric'}):'';
       const flag = rev.country_code||rev.countryCode ? `<span style="font-size:.7rem;color:var(--muted);margin-left:.3rem;">${rev.country_code||rev.countryCode}</span>` : '';
-      const userId = rev.userId || rev.user_id || null;
       const isClickableUser = !!userId;
       const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(userId)}')" style="cursor:pointer;"` : '';
       return `<article class="review-card">
         <div class="rc-head">
           <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
-            <div${userOnclick} style="width:32px;height:32px;border-radius:7px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+            <div${userOnclick} style="width:32px;height:32px;border-radius:7px;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
             <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
               <span class="rc-name"${userOnclick}>${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
