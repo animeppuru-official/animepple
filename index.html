@@ -3818,8 +3818,8 @@
         <article class="review-card">
           <div class="rc-head">
             <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
-              <div${userOnclick} style="width:32px;height:32px;border-radius:7px;overflow:hidden;position:relative;background:${avatarUrl?'transparent':(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
-                ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="position:absolute;inset:0;width:32px;height:32px;object-fit:cover;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
+              <div${userOnclick} style="width:32px;height:32px;border-radius:7px;overflow:hidden;position:relative;background:${(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
+                ${(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="position:absolute;inset:0;width:32px;height:32px;object-fit:cover;" onerror="this.style.display='none'">`:''}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
                 <span class="rc-name"${userOnclick}>${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}</span>
@@ -6116,12 +6116,11 @@
       const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
       const userId = rev.userId || rev.user_id || null;
       const avatarUrl = userId ? avatarMap[userId] : null;
-      const iconBg = avatarUrl ? 'transparent' : (name==='ゲスト'?'rgba(140,198,160,0.2)':colors[name.charCodeAt(0)%colors.length]);
-      const iconContent = avatarUrl
-        ? `<img src="${escapeHtml(avatarUrl)}" alt="" style="position:absolute;inset:0;width:32px;height:32px;object-fit:cover;">`
-        : (name==='ゲスト'
-          ?'<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>'
-          :name.slice(0,1));
+      const iconBg = name==='ゲスト'?'rgba(140,198,160,0.2)':colors[name.charCodeAt(0)%colors.length];
+      const iconBase = name==='ゲスト'
+        ?'<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>'
+        :name.slice(0,1);
+      const iconContent = iconBase + (avatarUrl ? `<img src="${escapeHtml(avatarUrl)}" alt="" style="position:absolute;inset:0;width:32px;height:32px;object-fit:cover;" onerror="this.style.display='none'">` : '');
       const tags = (rev.tags||[]).map(tg=>`<span class="tag-badge">${escapeHtml(tg)}</span>`).join('');
       const dateStr = rev.createdAt||rev.created_at?new Date(rev.createdAt||rev.created_at).toLocaleDateString('ja-JP',{year:'numeric',month:'short',day:'numeric'}):'';
       const flag = rev.country_code||rev.countryCode ? `<span style="font-size:.7rem;color:var(--muted);margin-left:.3rem;">${rev.country_code||rev.countryCode}</span>` : '';
@@ -6361,18 +6360,21 @@
       bioSection.style.display = 'none';
     }
 
-    // アイコン（画像があれば画像、無ければイニシャル）
+    // アイコン（画像があれば画像、無ければイニシャル。画像読み込み失敗時もイニシャルが見えるようにする）
     const initial = username.slice(0,1) || '?';
     const avatar = document.getElementById('mypageAvatarIcon');
     const avatarUrl = profileData?.avatar_url;
+    const colors = ['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
+    const idx = targetUserId.charCodeAt(0) % colors.length;
+    avatar.style.background = colors[idx];
+    avatar.textContent = initial;
     if (avatarUrl) {
-      avatar.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="avatar" />`;
-      avatar.style.background = 'transparent';
-    } else {
-      avatar.textContent = initial;
-      const colors = ['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
-      const idx = targetUserId.charCodeAt(0) % colors.length;
-      avatar.style.background = colors[idx];
+      const img = document.createElement('img');
+      img.src = avatarUrl;
+      img.alt = 'avatar';
+      img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:18px;';
+      img.onerror = () => { img.style.display = 'none'; };
+      avatar.appendChild(img);
     }
 
     let qualityCount = 0, reviewTotal = 0;
