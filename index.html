@@ -792,6 +792,34 @@
     .legal-modal-body h3 { font-size:.88rem; color:#dff0e6; margin:1.2rem 0 .4rem; }
     .legal-modal-body p { margin:.3rem 0; }
     .legal-modal-body .legal-date { font-size:.75rem; color:var(--muted); margin-bottom:1rem; }
+
+    /* クッキーバナー */
+    #cookieBanner {
+      position:fixed; bottom:0; left:0; right:0; z-index:200;
+      background:var(--card); border-top:1px solid var(--line);
+      padding:.75rem 1rem; box-shadow:0 -4px 24px rgba(0,0,0,.4);
+    }
+    .cookie-banner-inner { max-width:900px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; }
+    .cookie-banner-text { flex:1; min-width:200px; font-size:.8rem; color:#c8e6d4; line-height:1.5; margin:0; }
+    .cookie-link { background:none; border:none; color:var(--brand); text-decoration:underline; cursor:pointer; font:inherit; padding:0; }
+    .cookie-banner-btns { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .cookie-btn-all { padding:.45rem 1rem; border-radius:999px; background:var(--brand); color:#0c2015; font-weight:700; border:none; cursor:pointer; font-size:.82rem; }
+    .cookie-btn-settings { padding:.45rem 1rem; border-radius:999px; background:var(--card2); color:var(--text); border:1px solid var(--line); cursor:pointer; font-size:.82rem; }
+    .cookie-btn-min { padding:.45rem 1rem; border-radius:999px; background:transparent; color:var(--muted); border:1px solid var(--line); cursor:pointer; font-size:.82rem; }
+    /* クッキー詳細設定 */
+    .cookie-category { background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:.75rem; }
+    .cookie-category-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:.35rem; font-weight:700; font-size:.88rem; color:#dff0e6; }
+    .cookie-always { font-size:.72rem; color:var(--muted); font-weight:400; }
+    .cookie-toggle { width:18px; height:18px; cursor:pointer; accent-color:var(--brand); }
+    .cookie-category-desc { font-size:.75rem; color:var(--muted); margin:0; line-height:1.5; }
+    /* プライバシーポリシーページ */
+    .pp-section { margin-bottom:1.5rem; }
+    .pp-section h2 { font-size:.95rem; color:#dff0e6; margin:0 0 .6rem; border-left:3px solid var(--brand); padding-left:.6rem; }
+    .pp-section p, .pp-section ul, .pp-section li { font-size:.82rem; color:#c8e6d4; line-height:1.7; }
+    .pp-section ul { padding-left:1.2rem; }
+    .pp-table { width:100%; border-collapse:collapse; font-size:.78rem; margin:.5rem 0; }
+    .pp-table th, .pp-table td { border:1px solid var(--line); padding:.45rem .65rem; text-align:left; color:#c8e6d4; }
+    .pp-table th { background:var(--card2); color:#dff0e6; font-weight:700; }
   </style>
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1271,6 +1299,85 @@
 <!-- ═══════════════════════════════════
      ADMIN PAGE
 ═══════════════════════════════════ -->
+<!-- プライバシーポリシー -->
+<div class="page" id="page-privacy">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+    </div>
+  </header>
+  <div style="max-width:700px;margin:0 auto;padding:1.5rem 1rem 3rem;">
+    <h1 style="font-size:1.2rem;color:#dff0e6;margin-bottom:1.5rem;">プライバシーポリシー / Privacy Policy</h1>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.5rem;">最終更新: 2026年7月 / バージョン 1.0</p>
+
+    <section class="pp-section">
+      <h2>1. 運営者情報</h2>
+      <p>サービス名: アニメップル（Animepple）<br>
+      運営者: <span style="color:var(--muted);">[運営者名 ※本番化時に記入]</span><br>
+      連絡先: <span style="color:var(--muted);">[メールアドレス ※本番化時に記入]</span></p>
+    </section>
+
+    <section class="pp-section">
+      <h2>2. 収集する情報</h2>
+      <p>本サービスでは、以下の情報を収集する場合があります。</p>
+      <ul>
+        <li><strong>アカウント情報</strong>: Googleアカウント経由でログインした場合、メールアドレス・表示名・プロフィール画像URLを取得します</li>
+        <li><strong>レビューデータ</strong>: 投稿されたレーダーチャートスコア・タグ・コメント</li>
+        <li><strong>閲覧ログ</strong>: アクセスした作品ページのPV数（匿名）</li>
+        <li><strong>クッキー・ローカルストレージ</strong>: セッション管理・設定の保存のために使用します（詳細はセクション4参照）</li>
+      </ul>
+    </section>
+
+    <section class="pp-section">
+      <h2>3. 情報の利用目的</h2>
+      <ul>
+        <li>サービスの提供・維持・改善</li>
+        <li>マスターグラフ（作品別集計グラフ）の生成</li>
+        <li>不正利用の防止</li>
+        <li>同意を得た場合のアクセス解析・広告配信</li>
+      </ul>
+    </section>
+
+    <section class="pp-section">
+      <h2>4. クッキーの使用</h2>
+      <p>本サービスは以下の目的でクッキーおよびローカルストレージを使用します。</p>
+      <table class="pp-table">
+        <tr><th>カテゴリ</th><th>目的</th><th>同意</th></tr>
+        <tr><td>必須</td><td>ログインセッション管理・bot対策(Cloudflare Turnstile)・サイト基本動作</td><td>常時有効</td></tr>
+        <tr><td>分析</td><td>PVログ・アクセス解析（将来的なGA4等を含む）</td><td>任意</td></tr>
+        <tr><td>マーケティング</td><td>広告配信・アフィリエイトクリック計測・リターゲティング</td><td>任意</td></tr>
+      </table>
+      <p>クッキー設定はいつでも変更できます。<button onclick="reopenCookieConsent()" style="background:none;border:none;color:var(--brand);text-decoration:underline;cursor:pointer;font:inherit;">クッキー設定を変更する</button></p>
+    </section>
+
+    <section class="pp-section">
+      <h2>5. 第三者への提供</h2>
+      <p>取得した個人情報は、以下の場合を除き第三者に提供しません。</p>
+      <ul>
+        <li>法令に基づく場合</li>
+        <li>本人の同意がある場合</li>
+        <li>業務委託先（Supabase・Cloudflare等）への提供（守秘義務あり）</li>
+      </ul>
+    </section>
+
+    <section class="pp-section">
+      <h2>6. データの保存・削除</h2>
+      <p>データはSupabase（データセンター: 東京リージョン）に保存されます。アカウント削除を希望する場合は運営者まで連絡してください。</p>
+    </section>
+
+    <section class="pp-section">
+      <h2>7. EUユーザー（GDPR）</h2>
+      <p>EU/EEA在住のユーザーは、GDPRに基づき以下の権利を有します: データへのアクセス権・訂正権・削除権・処理制限権・データポータビリティ権。行使を希望する場合は運営者まで連絡してください。</p>
+    </section>
+
+    <section class="pp-section">
+      <h2>8. 改定</h2>
+      <p>本ポリシーを改定する場合はサイト上で告知します。重要な変更の場合は再度同意を求める場合があります。</p>
+    </section>
+  </div>
+</div>
+
 <div class="page" id="page-admin">
   <header class="hdr">
     <div class="hdr-inner">
@@ -1538,6 +1645,55 @@
   </div>
 </div>
 
+<!-- クッキー同意バナー -->
+<div id="cookieBanner" style="display:none;">
+  <div class="cookie-banner-inner">
+    <p class="cookie-banner-text">
+      本サービスはサービス提供・改善・広告配信のためにクッキーを使用します。
+      詳細は<button onclick="nav('privacy')" class="cookie-link">プライバシーポリシー</button>をご覧ください。
+    </p>
+    <div class="cookie-banner-btns">
+      <button class="cookie-btn-all" onclick="cookieAcceptAll()">全て同意</button>
+      <button class="cookie-btn-settings" onclick="openCookieSettings()">設定する</button>
+      <button class="cookie-btn-min" onclick="cookieAcceptMinimal()">必須のみ</button>
+    </div>
+  </div>
+</div>
+
+<!-- クッキー詳細設定モーダル -->
+<div class="auth-overlay" id="cookieSettingsOverlay" style="display:none;">
+  <div class="auth-modal" style="max-width:440px;">
+    <div class="auth-modal-header">
+      <h2>🍪 クッキー設定</h2>
+      <button class="legal-close" onclick="closeCookieSettings()">✕</button>
+    </div>
+    <div class="auth-modal-body" style="gap:1rem;">
+      <div class="cookie-category">
+        <div class="cookie-category-head">
+          <span>必須クッキー</span>
+          <span class="cookie-always">常時有効</span>
+        </div>
+        <p class="cookie-category-desc">ログインセッション・bot対策(Cloudflare Turnstile)・サイトの基本動作に必要です。無効にできません。</p>
+      </div>
+      <div class="cookie-category">
+        <div class="cookie-category-head">
+          <label for="cookieAnalytics">分析クッキー</label>
+          <input type="checkbox" id="cookieAnalytics" class="cookie-toggle">
+        </div>
+        <p class="cookie-category-desc">PVログ・アクセス解析に使用します。サービス改善のために使います。</p>
+      </div>
+      <div class="cookie-category">
+        <div class="cookie-category-head">
+          <label for="cookieMarketing">マーケティングクッキー</label>
+          <input type="checkbox" id="cookieMarketing" class="cookie-toggle">
+        </div>
+        <p class="cookie-category-desc">広告配信・アフィリエイトクリック計測・リターゲティングに使用します。</p>
+      </div>
+      <button class="mypage-btn-primary" onclick="cookieSaveSettings()">この設定で保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
@@ -1786,6 +1942,14 @@
         if(!sb) return [];
         const { data } = await sb.from('pv_logs').select('viewed_at');
         return data || [];
+      },
+    },
+
+    // ── クッキー同意ログ（GDPR）──
+    cookieConsents: {
+      async insert(record) {
+        if(!sb) return;
+        try { await sb.from('cookie_consents').insert(record); } catch(_) {}
       },
     },
 
@@ -2167,6 +2331,7 @@
     if (page==='search') renderSearch().catch(console.error);
     if (page==='popular') renderPopular().catch(console.error);
     if (page==='admin') initAdminPage();
+    if (page==='privacy') {} // 静的ページなのでレンダリング関数不要
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='mypage') renderMypage();
     if (page==='user'&&animeId) { renderMypage(animeId); }
@@ -6319,6 +6484,80 @@
   let _currentUser = null;
 
   // 起動時にセッション確認
+  /* ════════════════════════════════════════════════════
+     クッキー同意管理（GDPR準拠）
+     - 初回訪問時にバナーを表示
+     - 同意内容はlocalStorage + Supabase(cookie_consents)に記録
+     - バージョン管理: PPを改定したらCONSENT_VERSIONを上げると再同意を求める
+  ════════════════════════════════════════════════════ */
+  const CONSENT_VERSION = '1.0';
+  const CONSENT_KEY = 'animepple-cookie-consent';
+
+  function getCookieConsent() {
+    try { return JSON.parse(localStorage.getItem(CONSENT_KEY)); } catch(_) { return null; }
+  }
+
+  function getOrCreateSessionId() {
+    let sid = localStorage.getItem('animepple-session-id');
+    if(!sid) {
+      sid = 'sess-' + Date.now() + '-' + Math.random().toString(36).slice(2,9);
+      localStorage.setItem('animepple-session-id', sid);
+    }
+    return sid;
+  }
+
+  async function saveCookieConsent(analytics, marketing) {
+    const record = {
+      analytics,
+      marketing,
+      version: CONSENT_VERSION,
+      session_id: getOrCreateSessionId(),
+      user_id: _currentUser ? _currentUser.id : null,
+    };
+    localStorage.setItem(CONSENT_KEY, JSON.stringify({ ...record, consented_at: new Date().toISOString() }));
+    // Supabaseにも記録（GDPR同意ログ）
+    await db.cookieConsents.insert(record);
+    document.getElementById('cookieBanner').style.display = 'none';
+    closeCookieSettings();
+  }
+
+  function cookieAcceptAll() { saveCookieConsent(true, true); }
+  function cookieAcceptMinimal() { saveCookieConsent(false, false); }
+
+  function openCookieSettings() {
+    const consent = getCookieConsent();
+    document.getElementById('cookieAnalytics').checked = consent?.analytics ?? false;
+    document.getElementById('cookieMarketing').checked = consent?.marketing ?? false;
+    document.getElementById('cookieSettingsOverlay').style.display = 'flex';
+  }
+  function closeCookieSettings() {
+    document.getElementById('cookieSettingsOverlay').style.display = 'none';
+  }
+  function cookieSaveSettings() {
+    saveCookieConsent(
+      document.getElementById('cookieAnalytics').checked,
+      document.getElementById('cookieMarketing').checked
+    );
+  }
+  // PPページの「クッキー設定を変更する」ボタン用
+  function reopenCookieConsent() { openCookieSettings(); }
+  window.reopenCookieConsent = reopenCookieConsent;
+
+  // 起動時: 未同意 or バージョン違いならバナーを表示
+  (function initCookieBanner() {
+    const consent = getCookieConsent();
+    if(!consent || consent.version !== CONSENT_VERSION) {
+      // 少し遅延させてサイトが描画されてから表示
+      setTimeout(() => {
+        document.getElementById('cookieBanner').style.display = '';
+      }, 800);
+    }
+  })();
+
+  document.getElementById('cookieSettingsOverlay').addEventListener('click', e=>{
+    if(e.target.id === 'cookieSettingsOverlay') closeCookieSettings();
+  });
+
   async function initAuth() {
     if(!sb) return;
 
