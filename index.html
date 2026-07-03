@@ -6339,6 +6339,22 @@
   // 起動時にセッション確認
   async function initAuth() {
     if(!sb) return;
+
+    // OAuthリダイレクト後のURLハッシュを明示的に処理
+    // （GitHub PagesのようなSPAでは自動処理が効かない場合があるため）
+    if(location.hash && location.hash.includes('access_token')) {
+      try {
+        const { data, error } = await sb.auth.getSession();
+        if(data?.session) {
+          _currentUser = data.session.user;
+          // ハッシュを消してホームにとどまる
+          history.replaceState(null, '', location.pathname + location.search);
+          renderMypage();
+          nav('mypage');
+        }
+      } catch(e) { console.warn('OAuth hash handling:', e); }
+    }
+
     const session = await db.auth.getSession();
     if(session?.user) {
       _currentUser = session.user;
@@ -6348,6 +6364,10 @@
       _currentUser = session?.user || null;
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
+      }
+      // Googleログイン後など、モーダルが開いていたら閉じる
+      if(_currentUser) {
+        closeAuthModal();
       }
     });
   }
