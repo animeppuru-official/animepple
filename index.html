@@ -890,7 +890,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.7.4</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.7.5</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1322,6 +1322,20 @@
   </div>
 </div>
 
+<!-- お気に入り全件ページ -->
+<div class="page" id="page-my-favorites">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+    </div>
+  </header>
+  <div style="padding:1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="favoritesTitle">⭐ お気に入り</h2>
+    <div id="myFavoritesFullList" class="mypage-fav-grid"></div>
+  </div>
+</div>
+
 <!-- プライバシーポリシー -->
 <div class="page" id="page-privacy">
   <header class="hdr">
@@ -1617,6 +1631,7 @@
     <div class="mypage-section">
       <h3 class="mypage-section-title" data-i18n="favoritesTitle">⭐ お気に入り</h3>
       <div id="mypageFavoritesList" class="mypage-fav-grid"><div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">⭐</div><p data-i18n="noFavoritesYet">お気に入りはまだありません</p></div></div>
+      <button id="mypageFavSeeAllBtn" onclick="nav('my-favorites')" class="mypage-btn-secondary" style="display:none;width:100%;margin-top:.5rem;" data-i18n="btnSeeAllFavorites">お気に入りをすべて見る →</button>
     </div>
 
     <!-- レビュー履歴 -->
@@ -1627,7 +1642,7 @@
       </div>
       <p id="mypageReviewListPreview" style="font-size:.8rem;color:var(--muted);margin:.3rem 0 .6rem;"></p>
       <div id="mypageReviewList"></div>
-      <button onclick="nav('my-reviews')" class="mypage-btn-secondary" style="width:100%;margin-top:.5rem;" data-i18n="btnSeeAllReviews">レビュー履歴をすべて見る →</button>
+      <button id="mypageReviewSeeAllBtn" onclick="nav('my-reviews')" class="mypage-btn-secondary" style="display:none;width:100%;margin-top:.5rem;" data-i18n="btnSeeAllReviews">レビュー履歴をすべて見る →</button>
     </div>
   </div>
 
@@ -1725,7 +1740,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.7.4</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.7.5</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2371,6 +2386,19 @@
             _currentUser = data.session.user;
           }
           renderMyReviews().catch(console.error);
+        });
+      }
+    }
+    if (page==='my-favorites') {
+      // 認証状態が確定してからレンダリング（initAuthが非同期のため）
+      if(_currentUser) {
+        renderMyFavorites().catch(console.error);
+      } else {
+        sb?.auth.getSession().then(({ data }) => {
+          if(data?.session?.user) {
+            _currentUser = data.session.user;
+          }
+          renderMyFavorites().catch(console.error);
         });
       }
     }
@@ -5137,6 +5165,7 @@
     tagHint:       { ja:'Enterまたは「追加」で確定。タグはみんなの検索に使われます。',en:'Press Enter or "Add" to confirm. Tags are used in search.',ko:'Enter 또는 "추가"로 확정. 태그는 검색에 사용됩니다.','zh-tw':'按Enter或「添加」確認。標籤用於搜尋。','zh-cn':'按Enter或「添加」确认。标签用于搜索。',es:'Pulsa Enter o "Añadir". Los tags se usan en la búsqueda.',fr:'Appuyez sur Entrée ou "Ajouter". Les tags sont utilisés dans la recherche.',pt:'Pressione Enter ou "Adicionar". As tags são usadas na pesquisa.',de:'Drücke Enter oder "Hinzufügen". Tags werden in der Suche verwendet.',ar:'اضغط Enter أو "إضافة". تُستخدم الوسوم في البحث.' },
     reviewHistoryTitle:{ ja:'📊 レビュー履歴',en:'📊 Review History',ko:'📊 리뷰 기록','zh-tw':'📊 評論記錄','zh-cn':'📊 评论记录',es:'📊 Historial',fr:'📊 Historique',pt:'📊 Histórico',de:'📊 Verlauf',ar:'📊 السجل' },
     btnSeeAllReviews: { ja:'レビュー履歴をすべて見る →',en:'See all reviews →',ko:'리뷰 기록 전체 보기 →','zh-tw':'查看所有評論 →','zh-cn':'查看所有评论 →',es:'Ver todo el historial →',fr:'Voir tout l\'historique →',pt:'Ver todo o histórico →',de:'Alle Bewertungen ansehen →',ar:'عرض كل المراجعات →' },
+    btnSeeAllFavorites: { ja:'お気に入りをすべて見る →',en:'See all favorites →',ko:'즐겨찾기 전체 보기 →','zh-tw':'查看所有收藏 →','zh-cn':'查看所有收藏 →',es:'Ver todos los favoritos →',fr:'Voir tous les favoris →',pt:'Ver todos os favoritos →',de:'Alle Favoriten ansehen →',ar:'عرض كل المفضلة →' },
     noReviewHistory:{ ja:'レビューはまだありません',en:'No reviews yet',ko:'아직 리뷰가 없습니다','zh-tw':'尚無評論','zh-cn':'还没有评论',es:'Sin reseñas aún',fr:'Aucun avis encore',pt:'Sem avaliações ainda',de:'Noch keine Bewertungen',ar:'لا توجد مراجعات بعد' },
     loadingLabel: { ja:'読み込み中…',en:'Loading…',ko:'로딩 중…','zh-tw':'載入中…','zh-cn':'加载中…',es:'Cargando…',fr:'Chargement…',pt:'Carregando…',de:'Wird geladen…',ar:'جارٍ التحميل…' },
     userNotFound: { ja:'ユーザーが見つかりませんでした',en:'User not found',ko:'사용자를 찾을 수 없습니다','zh-tw':'找不到使用者','zh-cn':'找不到用户',es:'Usuario no encontrado',fr:'Utilisateur introuvable',pt:'Usuário não encontrado',de:'Benutzer nicht gefunden',ar:'المستخدم غير موجود' },
@@ -5445,8 +5474,6 @@
     if(createAccBtn) createAccBtn.textContent = t('createAccount');
     const loginBtnEl = document.querySelector('#mypageGuest .mypage-btn-secondary');
     if(loginBtnEl) loginBtnEl.textContent = t('loginBtn');
-    const logoutBtnEl = document.querySelector('#mypageUser .mypage-btn-secondary');
-    if(logoutBtnEl) logoutBtnEl.textContent = t('logoutBtn');
     // ようこそメッセージ
     const welcomeEl = document.getElementById('welcomeMsg');
     if(welcomeEl) welcomeEl.innerHTML = t('welcomeMsg');
@@ -6776,6 +6803,33 @@
   const FAV_KEY = 'animepple-favorites'; // ローカルキャッシュ（表示高速化用）
   const GENRE_OPTIONS = ['Action','Comedy','Drama','Fantasy','Romance','SciFi','Horror','Slice of Life','Sports','Mystery','Isekai','School'];
 
+  const MYPAGE_REVIEW_PREVIEW_COUNT = 4;
+
+  // レビュー履歴カードグリッドの共通描画（マイページのプレビューと全件ページの両方で使用）
+  function renderReviewCards(el, reviews, pages) {
+    const titleMap = {};
+    pages.forEach(p => { titleMap[p.id] = currentLang==='ja' ? (p.title||p.title_en||p.id) : (p.title_en||p.title||p.id); });
+    el.innerHTML = `<div class="mr-grid">${reviews.map((r) => {
+      const title = titleMap[r.anime_id] || r.anime_id;
+      const page = pages.find(p=>p.id===r.anime_id);
+      const img = page?.image_url || '';
+      const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
+      const quality = r.quality ? '<span class="mr-quality">✨</span>' : '';
+      return `
+        <div class="mr-card" onclick="nav('anime','${r.anime_id}')">
+          <div class="mr-thumb">${img
+            ? `<img src="${escapeHtml(img)}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+            : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:var(--card2);">🎌</div>`
+          }</div>
+          <div class="mr-info">
+            <div class="mr-title">${escapeHtml(title)}</div>
+            <div class="mr-date">${dateStr}${quality}</div>
+          </div>
+        </div>
+      `;
+    }).join('')}</div>`;
+  }
+
   async function renderMyReviews() {
     const listEl = document.getElementById('myReviewsFullList');
     if(!listEl) return;
@@ -6798,31 +6852,23 @@
     }
     const animeIds = [...new Set(reviews.map(r=>r.anime_id))];
     const pages = await db.animePages.getByIds(animeIds);
-    const titleMap = {};
-    pages.forEach(p => { titleMap[p.id] = currentLang==='ja' ? (p.title||p.title_en||p.id) : (p.title_en||p.title||p.id); });
+    renderReviewCards(listEl, reviews, pages);
+  }
 
-    const labA = getAxisA(), labB = getAxisB();
-    const username = _currentUser.user_metadata?.full_name || _currentUser.email?.split('@')[0] || 'ゲスト';
-
-    listEl.innerHTML = `<div class="mr-grid">${reviews.map((r,i) => {
-      const title = titleMap[r.anime_id] || r.anime_id;
-      const page = pages.find(p=>p.id===r.anime_id);
-      const img = page?.image_url || '';
-      const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
-      const quality = r.quality ? '<span class="mr-quality">✨</span>' : '';
-      return `
-        <div class="mr-card" onclick="nav('anime','${r.anime_id}')">
-          <div class="mr-thumb">${img
-            ? `<img src="${escapeHtml(img)}" alt="" style="width:100%;height:100%;object-fit:cover;">`
-            : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:var(--card2);">🎌</div>`
-          }</div>
-          <div class="mr-info">
-            <div class="mr-title">${escapeHtml(title)}</div>
-            <div class="mr-date">${dateStr}${quality}</div>
-          </div>
-        </div>
-      `;
-    }).join('')}</div>`;
+  async function renderMyFavorites() {
+    const listEl = document.getElementById('myFavoritesFullList');
+    if(!listEl) return;
+    // セッションを最新化してからuser_idを確定する
+    if(sb) {
+      const { data } = await sb.auth.getSession();
+      if(data?.session?.user) _currentUser = data.session.user;
+    }
+    if(!_currentUser || !sb) {
+      listEl.innerHTML = `<p style="color:var(--muted);grid-column:1/-1;">${t('loginRequired')||'ログインが必要です'}</p>`;
+      return;
+    }
+    listEl.innerHTML = `<p style="color:var(--muted);grid-column:1/-1;">${t('loadingLabel')}</p>`;
+    await renderFavoritesGrid(listEl, _currentUser.id, false);
   }
 
   async function renderMypage(viewUserId) {
@@ -6908,12 +6954,22 @@
       const listEl = document.getElementById('mypageReviewList');
       const previewEl = document.getElementById('mypageReviewListPreview');
       const countBtn = document.getElementById('mypageReviewListCountBtn');
+      const seeAllBtn = document.getElementById('mypageReviewSeeAllBtn');
       if(reviews && reviews.length) {
         if(previewEl) previewEl.textContent = `${reviews.length}件のレビュー`;
         if(countBtn) countBtn.textContent = `${reviews.length}件`;
+        if(listEl) {
+          const previewReviews = reviews.slice(0, MYPAGE_REVIEW_PREVIEW_COUNT);
+          const animeIds = [...new Set(previewReviews.map(r=>r.anime_id))];
+          const pages = await db.animePages.getByIds(animeIds);
+          renderReviewCards(listEl, previewReviews, pages);
+        }
+        if(seeAllBtn) seeAllBtn.style.display = reviews.length > MYPAGE_REVIEW_PREVIEW_COUNT ? '' : 'none';
       } else {
         if(previewEl) previewEl.textContent = 'レビューはまだありません';
         if(countBtn) countBtn.textContent = '';
+        if(listEl) listEl.innerHTML = '';
+        if(seeAllBtn) seeAllBtn.style.display = 'none';
       }
 
       // 称号バッジ
@@ -6984,16 +7040,20 @@
     btn.textContent = fav ? '❤️' : '♡';
   }
 
-  async function renderFavoritesList(userId) {
-    const el = document.getElementById('mypageFavoritesList');
-    const targetId = userId || (_currentUser && _currentUser.id);
-    if(!el || !sb || !targetId) return;
-    const favs = await db.favorites.getByUser(targetId);
-    document.getElementById('statFavCount').textContent = favs ? favs.length : 0;
-    if(!favs || !favs.length) {
-      el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">⭐</div><p>${t('noFavoritesYet')}</p></div>`;
-      return;
+  const MYPAGE_FAV_PREVIEW_COUNT = 6;
+
+  // お気に入りグリッドの共通描画（マイページのプレビューと全件ページの両方で使用）
+  async function renderFavoritesGrid(el, targetId, isPreview) {
+    const allFavs = await db.favorites.getByUser(targetId);
+    if(isPreview) {
+      const countEl = document.getElementById('statFavCount');
+      if(countEl) countEl.textContent = allFavs ? allFavs.length : 0;
     }
+    if(!allFavs || !allFavs.length) {
+      el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">⭐</div><p>${t('noFavoritesYet')}</p></div>`;
+      return allFavs ? allFavs.length : 0;
+    }
+    const favs = isPreview ? allFavs.slice(0, MYPAGE_FAV_PREVIEW_COUNT) : allFavs;
     const ids = favs.map(f=>f.anime_id);
     const pages = await db.animePages.getByIds(ids);
     const pageMap = {};
@@ -7007,6 +7067,16 @@
         <div class="mypage-fav-title">${escapeHtml(title)}</div>
       </div>`;
     }).join('');
+    return allFavs.length;
+  }
+
+  async function renderFavoritesList(userId) {
+    const el = document.getElementById('mypageFavoritesList');
+    const btn = document.getElementById('mypageFavSeeAllBtn');
+    const targetId = userId || (_currentUser && _currentUser.id);
+    if(!el || !sb || !targetId) return;
+    const total = await renderFavoritesGrid(el, targetId, true);
+    if(btn) btn.style.display = total > MYPAGE_FAV_PREVIEW_COUNT ? '' : 'none';
   }
 
   /* ════════════════════════════
