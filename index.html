@@ -485,16 +485,16 @@
       display:flex; align-items:center; gap:.4rem;
     }
     .mypage-review-card {
-      background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:.85rem;
-      margin-bottom:.65rem; transition: border-color .15s;
+      background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:.6rem .75rem;
+      margin-bottom:.5rem; transition: border-color .15s;
     }
     .mypage-review-card:last-child { margin-bottom:0; }
     .mypage-review-card:hover { border-color: rgba(94,201,122,.3); }
-    .mypage-review-card-title { font-size:.84rem; font-weight:700; color:#dff0e6; margin-bottom:.2rem; }
-    .mypage-review-card-date { font-size:.7rem; color:var(--muted); }
+    .mypage-review-card-title { font-size:.82rem; font-weight:700; color:#dff0e6; margin-bottom:.15rem; }
+    .mypage-review-card-date { font-size:.68rem; color:var(--muted); }
     .mypage-review-card-quality {
-      display:inline-flex; align-items:center; gap:.2rem; font-size:.66rem; font-weight:700; color:#ffd166;
-      background:rgba(255,209,102,.12); border-radius:999px; padding:.12rem .5rem; margin-top:.4rem;
+      display:inline-flex; align-items:center; gap:.2rem; font-size:.62rem; font-weight:700; color:#ffd166;
+      background:rgba(255,209,102,.12); border-radius:999px; padding:.1rem .4rem; margin-top:.3rem;
     }
     /* レビュー履歴ページ: アルバム風3列グリッド */
     .mr-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
@@ -4357,13 +4357,14 @@
 
         const page = getAll().find(p=>p.id===review.animeId);
         const country = await geoStore.detectCountry().catch(()=>null);
-        const session = await db.auth.getSession();
+        const { data: sessionData } = await sb.auth.getSession();
+        const accessToken = sessionData?.session?.access_token || SUPABASE_ANON;
 
         const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-review`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || SUPABASE_ANON}`,
+            'Authorization': `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             turnstileToken,
@@ -6807,38 +6808,25 @@
     const labA = getAxisA(), labB = getAxisB();
     const username = _currentUser.user_metadata?.full_name || _currentUser.email?.split('@')[0] || 'ゲスト';
 
-    listEl.innerHTML = reviews.map((r,i) => {
+    listEl.innerHTML = `<div class="mr-grid">${reviews.map((r,i) => {
       const title = titleMap[r.anime_id] || r.anime_id;
-      const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' });
-      const qualityBadge = r.quality ? `<span class="mypage-review-card-quality">✨ ${t('statQuality')||'上質レビュー'}</span>` : '';
+      const page = pages.find(p=>p.id===r.anime_id);
+      const img = page?.image_url || '';
+      const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
+      const quality = r.quality ? '<span class="mr-quality">✨</span>' : '';
       return `
-        <div class="mypage-review-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;" onclick="nav('anime','${r.anime_id}')">
-            <div>
-              <div class="mypage-review-card-title">${escapeHtml(title)}</div>
-              <div class="mypage-review-card-date">${dateStr}</div>
-              ${qualityBadge}
-            </div>
-            <span style="font-size:.75rem;color:var(--muted);">▶</span>
-          </div>
-          <div class="rc-charts" style="margin-top:.6rem;">
-            <div><p class="rc-chart-label">${t('chartATitle')}</p><canvas class="rc-canvas" data-mrai="${i}" width="280" height="200"></canvas></div>
-            <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-mrbi="${i}" width="280" height="200"></canvas></div>
-          </div>
-          <div class="rc-share-row" style="border-top:none;padding-top:0;">
-            <button class="rc-share-btn x-share" onclick="shareReviewToSns('x','${escapeHtml(title)}','${escapeHtml(username)}')">𝕏 シェア</button>
-            <button class="rc-share-btn line-share" onclick="shareReviewToSns('line','${escapeHtml(title)}','${escapeHtml(username)}')">LINEでシェア</button>
+        <div class="mr-card" onclick="nav('anime','${r.anime_id}')">
+          <div class="mr-thumb">${img
+            ? `<img src="${escapeHtml(img)}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+            : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:var(--card2);">🎌</div>`
+          }</div>
+          <div class="mr-info">
+            <div class="mr-title">${escapeHtml(title)}</div>
+            <div class="mr-date">${dateStr}${quality}</div>
           </div>
         </div>
       `;
-    }).join('');
-
-    reviews.forEach((r,i) => {
-      const ca = listEl.querySelector(`[data-mrai="${i}"]`);
-      const cb = listEl.querySelector(`[data-mrbi="${i}"]`);
-      if(ca) drawRadar(ca, labA, labA.map((_,j)=>Number(r.chart_a?.[axisA[j]]||0)), 'rgba(88,201,132,0.35)', '#8fe5ab');
-      if(cb) drawRadar(cb, labB, labB.map((_,j)=>Number(r.chart_b?.[axisB[j]]||0)), 'rgba(255,153,153,0.32)', '#ffaaaa');
-    });
+    }).join('')}</div>`;
   }
 
   async function renderMypage(viewUserId) {
