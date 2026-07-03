@@ -2355,7 +2355,19 @@
     if (page==='popular') renderPopular().catch(console.error);
     if (page==='admin') initAdminPage();
     if (page==='privacy') {} // 静的ページなのでレンダリング関数不要
-    if (page==='my-reviews') renderMyReviews().catch(console.error);
+    if (page==='my-reviews') {
+      // 認証状態が確定してからレンダリング（initAuthが非同期のため）
+      if(_currentUser) {
+        renderMyReviews().catch(console.error);
+      } else {
+        sb?.auth.getSession().then(({ data }) => {
+          if(data?.session?.user) {
+            _currentUser = data.session.user;
+          }
+          renderMyReviews().catch(console.error);
+        });
+      }
+    }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='mypage') renderMypage();
     if (page==='user'&&animeId) { renderMypage(animeId); }
@@ -6771,15 +6783,7 @@
     }
     listEl.innerHTML = `<p style="color:var(--muted);">${t('loadingLabel')}</p>`;
 
-    // user_idで取得、なければusernameでフォールバック
-    let reviews = await db.reviews.getByUserId(_currentUser.id);
-    if(!reviews || !reviews.length) {
-      const username = _currentUser.user_metadata?.full_name || _currentUser.email?.split('@')[0] || '';
-      if(username) {
-        const { data } = await sb.from('reviews').select('*').eq('username', username).order('created_at', {ascending:false});
-        reviews = data || [];
-      }
-    }
+    const reviews = await db.reviews.getByUserId(_currentUser.id);
 
     if(!reviews || !reviews.length) {
       listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">📝</div><p>${t('noReviewHistory')}</p></div>`;
