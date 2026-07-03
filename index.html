@@ -6770,32 +6770,61 @@
       return;
     }
     listEl.innerHTML = `<p style="color:var(--muted);">${t('loadingLabel')}</p>`;
-    const reviews = await db.reviews.getByUserId(_currentUser.id);
+
+    // user_idで取得、なければusernameでフォールバック
+    let reviews = await db.reviews.getByUserId(_currentUser.id);
+    if(!reviews || !reviews.length) {
+      const username = _currentUser.user_metadata?.full_name || _currentUser.email?.split('@')[0] || '';
+      if(username) {
+        const { data } = await sb.from('reviews').select('*').eq('username', username).order('created_at', {ascending:false});
+        reviews = data || [];
+      }
+    }
+
     if(!reviews || !reviews.length) {
       listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">📝</div><p>${t('noReviewHistory')}</p></div>`;
       return;
     }
     const animeIds = [...new Set(reviews.map(r=>r.anime_id))];
     const pages = await db.animePages.getByIds(animeIds);
-    const pageMap = {};
-    pages.forEach(p => { pageMap[p.id] = p; });
+    const titleMap = {};
+    pages.forEach(p => { titleMap[p.id] = currentLang==='ja' ? (p.title||p.title_en||p.id) : (p.title_en||p.title||p.id); });
 
-    listEl.innerHTML = `<div class="mr-grid">${reviews.map(r => {
-      const p = pageMap[r.anime_id];
-      const title = p ? (currentLang==='ja' ? (p.title||p.title_en||r.anime_id) : (p.title_en||p.title||r.anime_id)) : r.anime_id;
-      const img = p?.image_url || '';
-      const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
-      const quality = r.quality ? '<span class="mr-quality">✨</span>' : '';
+    const labA = getAxisA(), labB = getAxisB();
+    const username = _currentUser.user_metadata?.full_name || _currentUser.email?.split('@')[0] || 'ゲスト';
+
+    listEl.innerHTML = reviews.map((r,i) => {
+      const title = titleMap[r.anime_id] || r.anime_id;
+      const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' });
+      const qualityBadge = r.quality ? `<span class="mypage-review-card-quality">✨ ${t('statQuality')||'上質レビュー'}</span>` : '';
       return `
-        <div class="mr-card" onclick="nav('anime','${r.anime_id}')">
-          <div class="mr-thumb">${img ? `<img src="${escapeHtml(img)}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎌</div>'}</div>
-          <div class="mr-info">
-            <div class="mr-title">${escapeHtml(title)}</div>
-            <div class="mr-date">${dateStr}${quality}</div>
+        <div class="mypage-review-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;" onclick="nav('anime','${r.anime_id}')">
+            <div>
+              <div class="mypage-review-card-title">${escapeHtml(title)}</div>
+              <div class="mypage-review-card-date">${dateStr}</div>
+              ${qualityBadge}
+            </div>
+            <span style="font-size:.75rem;color:var(--muted);">▶</span>
+          </div>
+          <div class="rc-charts" style="margin-top:.6rem;">
+            <div><p class="rc-chart-label">${t('chartATitle')}</p><canvas class="rc-canvas" data-mrai="${i}" width="280" height="200"></canvas></div>
+            <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-mrbi="${i}" width="280" height="200"></canvas></div>
+          </div>
+          <div class="rc-share-row" style="border-top:none;padding-top:0;">
+            <button class="rc-share-btn x-share" onclick="shareReviewToSns('x','${escapeHtml(title)}','${escapeHtml(username)}')">𝕏 シェア</button>
+            <button class="rc-share-btn line-share" onclick="shareReviewToSns('line','${escapeHtml(title)}','${escapeHtml(username)}')">LINEでシェア</button>
           </div>
         </div>
       `;
-    }).join('')}</div>`;
+    }).join('');
+
+    reviews.forEach((r,i) => {
+      const ca = listEl.querySelector(`[data-mrai="${i}"]`);
+      const cb = listEl.querySelector(`[data-mrbi="${i}"]`);
+      if(ca) drawRadar(ca, labA, labA.map((_,j)=>Number(r.chart_a?.[axisA[j]]||0)), 'rgba(88,201,132,0.35)', '#8fe5ab');
+      if(cb) drawRadar(cb, labB, labB.map((_,j)=>Number(r.chart_b?.[axisB[j]]||0)), 'rgba(255,153,153,0.32)', '#ffaaaa');
+    });
   }
 
   async function renderMypage(viewUserId) {
