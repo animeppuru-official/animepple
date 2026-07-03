@@ -321,21 +321,22 @@
     /* ══ AFFILIATE ══ */
     .af-section { padding:.9rem 1rem; border-bottom:1px solid var(--line); }
     .af-section-label { font-size:.72rem; color:var(--muted); font-weight:600; letter-spacing:.05em; margin-bottom:.6rem; }
-    .af-stream-list { display:flex; flex-direction:column; gap:.5rem; }
+    .af-stream-list { display:grid; grid-template-columns:repeat(2,1fr); gap:.45rem; }
+    @media(min-width:640px){ .af-stream-list { grid-template-columns:repeat(4,1fr); } }
     .af-stream-item {
-      display:flex; align-items:center; gap:.75rem;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.3rem;
       background:var(--card2); border:1px solid var(--line);
-      border-radius:12px; padding:.65rem .9rem;
-      text-decoration:none; color:inherit;
+      border-radius:12px; padding:.65rem .5rem;
+      text-decoration:none; color:inherit; text-align:center;
       transition:border-color .15s;
     }
     .af-stream-item:hover { border-color:var(--brand); }
-    .af-stream-icon { font-size:1.4rem; flex:0 0 auto; }
-    .af-stream-body { flex:1; min-width:0; }
-    .af-stream-name { font-size:.88rem; font-weight:700; color:#dff0e6; }
-    .af-stream-sub  { font-size:.72rem; color:var(--muted); margin-top:.1rem; }
-    .af-stream-cta  { flex:0 0 auto; padding:.35rem .8rem; border-radius:999px; background:var(--brand); color:#0c2015; font-size:.75rem; font-weight:700; white-space:nowrap; }
-    .af-stream-badge { flex:0 0 auto; font-size:.65rem; padding:.15rem .45rem; border-radius:999px; background:rgba(94,201,122,.15); border:1px solid #3d8a56; color:#8fe5ab; }
+    .af-stream-icon { font-size:1.4rem; }
+    .af-stream-body { min-width:0; }
+    .af-stream-name { font-size:.75rem; font-weight:700; color:#dff0e6; line-height:1.2; }
+    .af-stream-sub  { display:none; }
+    .af-stream-cta  { display:none; }
+    .af-stream-badge { font-size:.58rem; padding:.1rem .35rem; border-radius:999px; background:rgba(94,201,122,.15); border:1px solid #3d8a56; color:#8fe5ab; }
     /* グッズ */
     .af-goods-list { display:flex; flex-direction:column; gap:.5rem; }
     .af-goods-item {
@@ -4478,45 +4479,73 @@
     // url: 審査通過後にASPアフィリエイトURLに変更
     streamByCountry: {
       JP: [
-        { id:'danime',   icon:'▶',  name:'dアニメストア',        sub:'月440円〜 / 4,400作品以上',      cta:'無料で試す', url:'https://anime.dmkt-sp.jp/' },
-        { id:'unext',    icon:'🎬', name:'U-NEXT',               sub:'31日間無料 / アニメ見放題',       cta:'無料で試す', url:'https://video.unext.jp/' },
-        { id:'abema',    icon:'📺', name:'ABEMAプレミアム',       sub:'月960円 / 最速配信多数',         cta:'無料で試す', url:'https://abema.tv/' },
-        { id:'netflix',  icon:'🎥', name:'Netflix',              sub:'高画質 / オリジナル作品',         cta:'今すぐ登録', url:'https://www.netflix.com/jp/' },
+        { id:'danime',    icon:'▶',  name:'dアニメストア',   sub:'月440円〜',     cta:'無料で試す', url:'https://anime.dmkt-sp.jp/' },
+        { id:'unext',     icon:'🎬', name:'U-NEXT',          sub:'31日間無料',     cta:'無料で試す', url:'https://video.unext.jp/' },
+        { id:'abema',     icon:'📺', name:'ABEMA',           sub:'月960円',        cta:'無料で試す', url:'https://abema.tv/' },
+        { id:'netflix',   icon:'🎥', name:'Netflix',         sub:'高画質',         cta:'今すぐ登録', url:'https://www.netflix.com/jp/' },
+        { id:'amazon',    icon:'📦', name:'Prime Video',     sub:'月600円',        cta:'今すぐ登録', url:'https://www.amazon.co.jp/Prime-Video/' },
+        { id:'hulu',      icon:'🟢', name:'Hulu',            sub:'月1026円',       cta:'無料で試す', url:'https://www.hulu.jp/' },
+        { id:'disney',    icon:'🏰', name:'Disney+',         sub:'月990円',        cta:'今すぐ登録', url:'https://www.disneyplus.com/ja-jp/' },
+        { id:'bandai',    icon:'🎌', name:'バンダイチャンネル', sub:'月990円〜',    cta:'無料で試す', url:'https://www.b-ch.com/' },
+        { id:'niconico',  icon:'🎴', name:'ニコニコ動画',    sub:'月550円〜',      cta:'無料で試す', url:'https://www.nicovideo.jp/' },
       ],
       US: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'Largest anime library',           cta:'Try Free',   url:'https://www.crunchyroll.com/' },
-        { id:'funimation',  icon:'🎌', name:'Funimation',        sub:'Subbed & Dubbed anime',           cta:'Try Free',   url:'https://www.funimation.com/' },
-        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime originals & more',          cta:'Join Now',   url:'https://www.netflix.com/' },
-        { id:'hidive',      icon:'▶',  name:'HIDIVE',            sub:'Simulcasts & exclusives',         cta:'Try Free',   url:'https://www.hidive.com/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library', cta:'Try Free', url:'https://www.crunchyroll.com/' },
+        { id:'funimation',  icon:'🎌', name:'Funimation',    sub:'Sub & Dub',       cta:'Try Free', url:'https://www.funimation.com/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originals',       cta:'Join Now', url:'https://www.netflix.com/' },
+        { id:'hidive',      icon:'▶',  name:'HIDIVE',        sub:'Simulcasts',      cta:'Try Free', url:'https://www.hidive.com/' },
+        { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Included w/ Prime', cta:'Try Prime', url:'https://www.amazon.com/gp/video/' },
+        { id:'disney',      icon:'🏰', name:'Disney+',       sub:'$7.99/mo',        cta:'Join Now', url:'https://www.disneyplus.com/' },
+        { id:'hulu',        icon:'🟢', name:'Hulu',          sub:'$7.99/mo',        cta:'Try Free', url:'https://www.hulu.com/' },
+        { id:'tubi',        icon:'🆓', name:'Tubi',          sub:'Free',            cta:'Watch Free', url:'https://tubitv.com/' },
       ],
       KR: [
-        { id:'laftel',   icon:'▶',  name:'라프텔',               sub:'월정액 애니메이션',               cta:'무료체험',   url:'https://laftel.net/' },
-        { id:'wavve',    icon:'📺', name:'wavve',                sub:'국내 최대 OTT',                   cta:'무료체험',   url:'https://www.wavve.com/' },
-        { id:'netflix',  icon:'🎥', name:'Netflix',              sub:'오리지널 & 인기 애니',            cta:'가입하기',   url:'https://www.netflix.com/kr/' },
+        { id:'laftel',      icon:'▶',  name:'라프텔',         sub:'월정액',          cta:'무료체험', url:'https://laftel.net/' },
+        { id:'wavve',       icon:'📺', name:'wavve',          sub:'국내 최대 OTT',   cta:'무료체험', url:'https://www.wavve.com/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',        sub:'오리지널',        cta:'가입하기', url:'https://www.netflix.com/kr/' },
+        { id:'amazon',      icon:'📦', name:'Prime Video',    sub:'월정액',          cta:'가입하기', url:'https://www.amazon.com/gp/video/' },
+        { id:'disney',      icon:'🏰', name:'Disney+',        sub:'월정액',          cta:'가입하기', url:'https://www.disneyplus.com/ko-kr/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',    sub:'애니 전문',       cta:'무료체험', url:'https://www.crunchyroll.com/' },
       ],
       GB: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'Largest anime library',           cta:'Try Free',   url:'https://www.crunchyroll.com/gb/' },
-        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime & originals',               cta:'Join Now',   url:'https://www.netflix.com/gb/' },
-        { id:'allblk',      icon:'▶',  name:'All4 / Channel 4', sub:'Free streaming',                  cta:'Watch Free', url:'https://www.channel4.com/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library', cta:'Try Free',  url:'https://www.crunchyroll.com/gb/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originals',       cta:'Join Now',  url:'https://www.netflix.com/gb/' },
+        { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Incl. w/ Prime',  cta:'Try Prime', url:'https://www.amazon.co.uk/gp/video/' },
+        { id:'disney',      icon:'🏰', name:'Disney+',       sub:'£4.99/mo',        cta:'Join Now',  url:'https://www.disneyplus.com/en-gb/' },
+        { id:'hidive',      icon:'▶',  name:'HIDIVE',        sub:'Simulcasts',      cta:'Try Free',  url:'https://www.hidive.com/' },
       ],
       FR: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'La plus grande bibliothèque',     cta:'Essai gratuit', url:'https://www.crunchyroll.com/fr/' },
-        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime & originaux',               cta:"S'abonner",  url:'https://www.netflix.com/fr/' },
-        { id:'wakanim',     icon:'▶',  name:'Wakanim',           sub:'Simulcast & VOSTFR',              cta:'Essai gratuit', url:'https://www.wakanim.tv/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Le plus grand',   cta:'Essai gratuit', url:'https://www.crunchyroll.com/fr/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originaux',       cta:"S'abonner",     url:'https://www.netflix.com/fr/' },
+        { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Inclus Prime',    cta:"S'abonner",     url:'https://www.amazon.fr/gp/video/' },
+        { id:'disney',      icon:'🏰', name:'Disney+',       sub:'€5.99/mois',      cta:"S'abonner",     url:'https://www.disneyplus.com/fr-fr/' },
+        { id:'wakanim',     icon:'▶',  name:'Wakanim',       sub:'VOSTFR',          cta:'Essai gratuit', url:'https://www.wakanim.tv/' },
       ],
       DE: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'Größte Anime-Bibliothek',         cta:'Gratis testen', url:'https://www.crunchyroll.com/de/' },
-        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime & Originale',               cta:'Jetzt starten', url:'https://www.netflix.com/de/' },
-        { id:'wakanim',     icon:'▶',  name:'Wakanim',           sub:'Simulcast auf Deutsch',           cta:'Gratis testen', url:'https://www.wakanim.tv/de/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Größte Bibliothek', cta:'Gratis testen', url:'https://www.crunchyroll.com/de/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originale',          cta:'Jetzt starten', url:'https://www.netflix.com/de/' },
+        { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'In Prime enthalten', cta:'Prime testen',  url:'https://www.amazon.de/gp/video/' },
+        { id:'disney',      icon:'🏰', name:'Disney+',       sub:'€5.99/Monat',        cta:'Jetzt starten', url:'https://www.disneyplus.com/de-de/' },
+        { id:'wakanim',     icon:'▶',  name:'Wakanim',       sub:'Auf Deutsch',        cta:'Gratis testen', url:'https://www.wakanim.tv/de/' },
       ],
       BR: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'Maior biblioteca de anime',       cta:'Teste grátis', url:'https://www.crunchyroll.com/pt-br/' },
-        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime & originais',               cta:'Assinar',    url:'https://www.netflix.com/br/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Maior biblioteca', cta:'Teste grátis', url:'https://www.crunchyroll.com/pt-br/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originais',         cta:'Assinar',      url:'https://www.netflix.com/br/' },
+        { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Incluso no Prime',  cta:'Teste grátis', url:'https://www.amazon.com.br/gp/video/' },
+        { id:'disney',      icon:'🏰', name:'Disney+',       sub:'R$27,90/mês',       cta:'Assinar',      url:'https://www.disneyplus.com/pt-br/' },
       ],
-      // デフォルト（未マッピング国）
+      AU: [
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library',  cta:'Try Free',  url:'https://www.crunchyroll.com/au/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originals',         cta:'Join Now',  url:'https://www.netflix.com/au/' },
+        { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Incl. w/ Prime',   cta:'Try Prime', url:'https://www.amazon.com.au/gp/video/' },
+        { id:'disney',      icon:'🏰', name:'Disney+',       sub:'$13.99/mo',         cta:'Join Now',  url:'https://www.disneyplus.com/en-au/' },
+        { id:'hidive',      icon:'▶',  name:'HIDIVE',        sub:'Simulcasts',        cta:'Try Free',  url:'https://www.hidive.com/' },
+      ],
       DEFAULT: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',       sub:'World\'s largest anime library',  cta:'Try Free',   url:'https://www.crunchyroll.com/' },
-        { id:'netflix',     icon:'🎥', name:'Netflix',           sub:'Anime & originals',               cta:'Join Now',   url:'https://www.netflix.com/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library',  cta:'Try Free', url:'https://www.crunchyroll.com/' },
+        { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Anime & originals', cta:'Join Now', url:'https://www.netflix.com/' },
+        { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Incl. w/ Prime',   cta:'Try Prime', url:'https://www.amazon.com/gp/video/' },
+        { id:'disney',      icon:'🏰', name:'Disney+',       sub:'$7.99/mo',          cta:'Join Now', url:'https://www.disneyplus.com/' },
       ],
     },
 
@@ -4596,11 +4625,34 @@
     'hidive': 'hidive',
     'hulu': 'hulu',
     'amazon prime video': 'amazon',
+    'prime video': 'amazon',
     'wakanim': 'wakanim',
     'vrv': 'vrv',
-    'disney plus': 'disneyplus',
+    'disney plus': 'disney',
+    'disney+': 'disney',
     'tubi tv': 'tubi',
+    'tubi': 'tubi',
   };
+
+  // 各配信サービスのアニメ名検索URL生成
+  // 日本語タイトル(JP)か英語タイトル(その他)をサービスに応じて使い分ける
+  function buildStreamSearchUrl(serviceId, domain, titleJa, titleEn, country) {
+    const q = country === 'JP' ? titleJa : titleEn;
+    const qe = encodeURIComponent(q);
+    const searchUrls = {
+      danime:     `https://animestore.docomo.ne.jp/animestore/sch_pc?searchKey=${qe}`,
+      unext:      `https://video.unext.jp/search?query=${qe}`,
+      abema:      `https://abema.tv/search?q=${qe}`,
+      netflix:    `https://www.netflix.com/search?q=${qe}`,
+      crunchyroll:`https://www.crunchyroll.com/search?q=${qe}`,
+      funimation: `https://www.funimation.com/search/?q=${qe}`,
+      hidive:     `https://www.hidive.com/search#${qe}`,
+      laftel:     `https://laftel.net/search?keyword=${qe}`,
+      wavve:      `https://www.wavve.com/search?q=${qe}`,
+      wakanim:    `https://www.wakanim.tv/sc/search/${qe}`,
+    };
+    return searchUrls[serviceId] || `https://${domain}/search?q=${qe}`;
+  }
 
   function renderStreamLinks(page) {
     const el = document.getElementById('afStreamLinks');
@@ -4608,6 +4660,9 @@
     if(!el||!section) return;
 
     const country = geoStore.getCountry() || 'DEFAULT';
+    const titleJa = page ? (page.title || page.titleEn || '') : '';
+    const titleEn = page ? (page.titleEn || page.title || '') : '';
+
     // Kitsuから取れた配信先を優先（厳密マッチのみ「確認済み」扱い）
     const allServices = Object.values(AFFILIATE.streamByCountry).flat();
     let confirmed = [];
@@ -4629,17 +4684,23 @@
     const labelEl = section.querySelector('.af-section-label');
     if(labelEl) labelEl.textContent = isConfirmed ? t('streamSection') : t('streamSectionFallback');
 
-    el.innerHTML = `<div class="af-stream-list">${services.slice(0,4).map(s=>`
-      <a class="af-stream-item" href="${s.url}" target="_blank" rel="noopener noreferrer sponsored"
-         onclick="adClick('stream_${s.id}')">
-        <div class="af-stream-icon">${s.icon}</div>
-        <div class="af-stream-body">
-          <div class="af-stream-name">${s.name}${isConfirmed?` <span class="af-stream-badge">${t('streamConfirmedBadge')}</span>`:''}</div>
-          <div class="af-stream-sub">${s.sub}</div>
-        </div>
-        <div class="af-stream-cta">${s.cta}</div>
-      </a>
-    `).join('')}</div>
+    el.innerHTML = `<div class="af-stream-list">${services.map(s=>{
+      // ホームページURLではなくアニメ名で検索した状態のURLを生成
+      const searchUrl = (titleJa || titleEn)
+        ? buildStreamSearchUrl(s.id, s.url.replace(/^https?:\/\//, '').split('/')[0], titleJa, titleEn, country)
+        : s.url;
+      return `
+        <a class="af-stream-item" href="${searchUrl}" target="_blank" rel="noopener noreferrer sponsored"
+           onclick="adClick('stream_${s.id}')">
+          <div class="af-stream-icon">${s.icon}</div>
+          <div class="af-stream-body">
+            <div class="af-stream-name">${s.name}${isConfirmed?` <span class="af-stream-badge">${t('streamConfirmedBadge')}</span>`:''}</div>
+            <div class="af-stream-sub">${s.sub}</div>
+          </div>
+          <div class="af-stream-cta">${s.cta}</div>
+        </a>
+      `;
+    }).join('')}</div>
     <p style="font-size:.68rem;color:var(--muted);margin:.5rem .1rem 0;line-height:1.5;">${t('streamDisclaimer')}</p>`;
     section.style.display = '';
   }
