@@ -6523,6 +6523,8 @@
 
   function cookieAcceptAll() { saveCookieConsent(true, true); }
   function cookieAcceptMinimal() { saveCookieConsent(false, false); }
+  window.cookieAcceptAll = cookieAcceptAll;
+  window.cookieAcceptMinimal = cookieAcceptMinimal;
 
   function openCookieSettings() {
     const consent = getCookieConsent();
@@ -6539,6 +6541,9 @@
       document.getElementById('cookieMarketing').checked
     );
   }
+  window.openCookieSettings = openCookieSettings;
+  window.closeCookieSettings = closeCookieSettings;
+  window.cookieSaveSettings = cookieSaveSettings;
   // PPページの「クッキー設定を変更する」ボタン用
   function reopenCookieConsent() { openCookieSettings(); }
   window.reopenCookieConsent = reopenCookieConsent;
