@@ -536,6 +536,15 @@
     .auth-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.2rem; border-bottom:1px solid var(--line); }
     .auth-modal-header h2 { margin:0; font-size:1rem; color:#dff0e6; }
     .auth-modal-body { padding:1.2rem; display:flex; flex-direction:column; gap:.75rem; }
+    .auth-google-btn {
+      display:flex; align-items:center; justify-content:center; gap:.6rem;
+      width:100%; padding:.7rem 1rem; border-radius:10px;
+      background:#fff; color:#3c4043; border:1px solid #dadce0;
+      font-size:.9rem; font-weight:600; cursor:pointer; transition:box-shadow .15s;
+    }
+    .auth-google-btn:hover { box-shadow:0 1px 6px rgba(0,0,0,.2); }
+    .auth-divider { display:flex; align-items:center; gap:.6rem; color:var(--muted); font-size:.78rem; }
+    .auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--line); }
     .auth-field { display:flex; flex-direction:column; gap:.3rem; }
     .auth-field label { font-size:.78rem; color:var(--muted); }
     .auth-field input { padding:.65rem .9rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:#dff0e6; font-size:.9rem; }
@@ -1518,6 +1527,13 @@
       <button class="legal-close" onclick="closeAuthModal()">✕</button>
     </div>
     <div class="auth-modal-body">
+      <!-- Googleでログイン -->
+      <button class="auth-google-btn" id="authGoogleBtn" onclick="authGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0;"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        <span data-i18n="btnGoogleLogin">Googleでログイン</span>
+      </button>
+      <div class="auth-divider"><span data-i18n="authOrLabel">または</span></div>
+      <!-- メール/パスワード -->
       <div class="auth-field">
         <label data-i18n="labelEmail">メールアドレス</label>
         <input type="email" id="authEmail" placeholder="example@email.com" />
@@ -4933,6 +4949,8 @@
     guestDesc:    { ja:'アカウントを作るとレビューが保存されます',en:'Create an account to save your reviews',ko:'계정을 만들면 리뷰가 저장됩니다','zh-tw':'建立帳號以儲存您的評論','zh-cn':'创建账号以保存您的评论',es:'Crea una cuenta para guardar tus reseñas',fr:'Créez un compte pour sauvegarder vos avis',pt:'Crie uma conta para salvar suas avaliações',de:'Erstelle ein Konto, um deine Bewertungen zu speichern',ar:'أنشئ حساباً لحفظ مراجعاتك' },
     createAccount:{ ja:'🍎 アカウントを作成',en:'🍎 Create Account',ko:'🍎 계정 만들기','zh-tw':'🍎 建立帳號','zh-cn':'🍎 创建账号',es:'🍎 Crear cuenta',fr:'🍎 Créer un compte',pt:'🍎 Criar conta',de:'🍎 Konto erstellen',ar:'🍎 إنشاء حساب' },
     loginBtn:     { ja:'ログイン',en:'Log In',ko:'로그인','zh-tw':'登入','zh-cn':'登录',es:'Iniciar sesión',fr:'Se connecter',pt:'Entrar',de:'Anmelden',ar:'تسجيل الدخول' },
+    btnGoogleLogin: { ja:'Googleでログイン',en:'Continue with Google',ko:'Google로 로그인','zh-tw':'使用 Google 登入','zh-cn':'使用 Google 登录',es:'Continuar con Google',fr:'Continuer avec Google',pt:'Continuar com o Google',de:'Mit Google fortfahren',ar:'المتابعة مع Google' },
+    authOrLabel:  { ja:'または',en:'or',ko:'또는','zh-tw':'或','zh-cn':'或',es:'o',fr:'ou',pt:'ou',de:'oder',ar:'أو' },
     logoutBtn:    { ja:'ログアウト',en:'Log Out',ko:'로그아웃','zh-tw':'登出','zh-cn':'退出',es:'Cerrar sesión',fr:'Se déconnecter',pt:'Sair',de:'Abmelden',ar:'تسجيل الخروج' },
     sortMostReview:{ ja:'レビューが多い順',en:'Most reviewed',ko:'리뷰 많은 순','zh-tw':'最多評論','zh-cn':'最多评论',es:'Más reseñado',fr:'Plus évalué',pt:'Mais avaliado',de:'Meistbewertet',ar:'الأكثر مراجعة' },
     sortLeastReview:{ ja:'レビューが少ない順',en:'Least reviewed',ko:'리뷰 적은 순','zh-tw':'最少評論','zh-cn':'最少评论',es:'Menos reseñado',fr:'Moins évalué',pt:'Menos avaliado',de:'Wenigstbewertet',ar:'الأقل مراجعة' },
@@ -6361,6 +6379,28 @@
   document.getElementById('authOverlay').addEventListener('click', e=>{
     if(e.target.id === 'authOverlay') closeAuthModal();
   });
+
+  async function authGoogle() {
+    if(!sb) return;
+    const btn = document.getElementById('authGoogleBtn');
+    if(btn) btn.disabled = true;
+    try {
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.href,
+        },
+      });
+      if(error) throw error;
+      // 成功するとGoogleのOAuth画面にリダイレクトされるためここには来ない
+    } catch(e) {
+      console.warn('Google login:', e);
+      const errEl = document.getElementById('authError');
+      if(errEl) errEl.textContent = currentLang==='ja' ? 'Googleログインに失敗しました' : 'Google sign-in failed';
+      if(btn) btn.disabled = false;
+    }
+  }
+  window.authGoogle = authGoogle;
 
   async function authSubmit() {
     const email = document.getElementById('authEmail').value.trim();
