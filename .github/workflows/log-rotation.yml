@@ -1,0 +1,49 @@
+name: Error Log Rotation
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch: {}
+
+jobs:
+  rotate-logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 90日以上前のエラーログを削除
+        env:
+          SUPABASE_URL: https://ofbjfiuayfhdkgertxyo.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          CUTOFF=$(date -u -d '90 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
+                   date -u -v-90d '+%Y-%m-%dT%H:%M:%SZ')
+          echo "削除対象: $CUTOFF より古いエラーログ"
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
+            "$SUPABASE_URL/rest/v1/error_logs?created_at=lt.$CUTOFF" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          echo "レスポンスコード: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -ne 200 ] && [ "$HTTP_CODE" -ne 204 ]; then
+            echo "::error::エラーログの削除に失敗しました（$HTTP_CODE）"
+            exit 1
+          fi
+          echo "✅ 90日以上前のエラーログを削除しました"
+
+      - name: cookie_consentsも同様にローテーション(1年以上前を削除)
+        env:
+          SUPABASE_URL: https://ofbjfiuayfhdkgertxyo.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          CUTOFF=$(date -u -d '365 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
+                   date -u -v-365d '+%Y-%m-%dT%H:%M:%SZ')
+          curl -s -X DELETE \
+            "$SUPABASE_URL/rest/v1/cookie_consents?consented_at=lt.$CUTOFF" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Prefer: return=minimal"
+          echo "✅ 1年以上前のクッキー同意ログを削除しました"
