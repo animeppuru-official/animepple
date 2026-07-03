@@ -1621,8 +1621,13 @@
 
     <!-- レビュー履歴 -->
     <div class="mypage-section">
-      <h3 class="mypage-section-title" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h3>
-      <div id="mypageReviewList"><p style="color:var(--muted);font-size:.85rem;">レビューはまだありません</p></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h3 class="mypage-section-title" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h3>
+        <span id="mypageReviewListCountBtn" style="font-size:.8rem;color:var(--muted);"></span>
+      </div>
+      <p id="mypageReviewListPreview" style="font-size:.8rem;color:var(--muted);margin:.3rem 0 .6rem;"></p>
+      <div id="mypageReviewList"></div>
+      <button onclick="nav('my-reviews')" class="mypage-btn-secondary" style="width:100%;margin-top:.5rem;" data-i18n="btnSeeAllReviews">レビュー履歴をすべて見る →</button>
     </div>
   </div>
 
@@ -6777,6 +6782,11 @@
   async function renderMyReviews() {
     const listEl = document.getElementById('myReviewsFullList');
     if(!listEl) return;
+    // セッションを最新化してからuser_idを確定する
+    if(sb) {
+      const { data } = await sb.auth.getSession();
+      if(data?.session?.user) _currentUser = data.session.user;
+    }
     if(!_currentUser || !sb) {
       listEl.innerHTML = `<p style="color:var(--muted);">${t('loginRequired')||'ログインが必要です'}</p>`;
       return;
