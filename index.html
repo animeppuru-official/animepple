@@ -496,7 +496,16 @@
       display:inline-flex; align-items:center; gap:.2rem; font-size:.66rem; font-weight:700; color:#ffd166;
       background:rgba(255,209,102,.12); border-radius:999px; padding:.12rem .5rem; margin-top:.4rem;
     }
-    /* レビュー履歴：小さいタイルを横スクロールでページ送り（1画面分埋まったら右に次ページ） */
+    /* レビュー履歴ページ: アルバム風3列グリッド */
+    .mr-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+    @media(min-width:640px){ .mr-grid { grid-template-columns:repeat(4,1fr); } }
+    .mr-card { cursor:pointer; border-radius:10px; overflow:hidden; background:var(--card2); border:1px solid var(--line); transition:border-color .15s; }
+    .mr-card:hover { border-color:var(--brand); }
+    .mr-thumb { width:100%; aspect-ratio:3/4; background:var(--card2); overflow:hidden; }
+    .mr-info { padding:.4rem .5rem; }
+    .mr-title { font-size:.72rem; font-weight:700; color:#dff0e6; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .mr-date { font-size:.62rem; color:var(--muted); margin-top:.15rem; }
+    .mr-quality { margin-left:.3rem; font-size:.7rem; }
     .mypage-review-pages {
       display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
       scrollbar-width:none; gap:0;
@@ -1612,12 +1621,8 @@
 
     <!-- レビュー履歴 -->
     <div class="mypage-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <h3 class="mypage-section-title" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h3>
-        <button onclick="nav('my-reviews')" style="background:none;border:none;color:var(--brand);font-size:.8rem;cursor:pointer;text-decoration:underline;" id="mypageReviewListCountBtn"></button>
-      </div>
-      <p id="mypageReviewListPreview" style="font-size:.8rem;color:var(--muted);margin:.3rem 0 .6rem;"></p>
-      <button onclick="nav('my-reviews')" class="mypage-btn-secondary" style="width:100%;" data-i18n="btnSeeAllReviews">レビュー履歴をすべて見る →</button>
+      <h3 class="mypage-section-title" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h3>
+      <div id="mypageReviewList"><p style="color:var(--muted);font-size:.85rem;">レビューはまだありません</p></div>
     </div>
   </div>
 
@@ -6772,44 +6777,25 @@
     }
     const animeIds = [...new Set(reviews.map(r=>r.anime_id))];
     const pages = await db.animePages.getByIds(animeIds);
-    const titleMap = {};
-    pages.forEach(p => { titleMap[p.id] = currentLang==='ja' ? (p.title||p.title_en||p.id) : (p.title_en||p.title||p.id); });
+    const pageMap = {};
+    pages.forEach(p => { pageMap[p.id] = p; });
 
-    const labA = getAxisA(), labB = getAxisB();
-    const username = _currentUser._username || _currentUser.email?.split('@')[0] || 'ゲスト';
-
-    listEl.innerHTML = reviews.map((r,i) => {
-      const title = titleMap[r.anime_id] || r.anime_id;
-      const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' });
-      const qualityBadge = r.quality ? `<span class="mypage-review-card-quality">✨ ${t('statQuality')||'上質レビュー'}</span>` : '';
+    listEl.innerHTML = `<div class="mr-grid">${reviews.map(r => {
+      const p = pageMap[r.anime_id];
+      const title = p ? (currentLang==='ja' ? (p.title||p.title_en||r.anime_id) : (p.title_en||p.title||r.anime_id)) : r.anime_id;
+      const img = p?.image_url || '';
+      const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
+      const quality = r.quality ? '<span class="mr-quality">✨</span>' : '';
       return `
-        <div class="mypage-review-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;" onclick="nav('anime','${r.anime_id}')">
-            <div>
-              <div class="mypage-review-card-title">${escapeHtml(title)}</div>
-              <div class="mypage-review-card-date">${dateStr}</div>
-              ${qualityBadge}
-            </div>
-            <span style="font-size:.75rem;color:var(--muted);">▶</span>
-          </div>
-          <div class="rc-charts" style="margin-top:.6rem;">
-            <div><p class="rc-chart-label">${t('chartATitle')}</p><canvas class="rc-canvas" data-mrai="${i}" width="280" height="200"></canvas></div>
-            <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-mrbi="${i}" width="280" height="200"></canvas></div>
-          </div>
-          <div class="rc-share-row" style="border-top:none;padding-top:0;">
-            <button class="rc-share-btn x-share" onclick="shareReviewToSns('x','${escapeHtml(title)}','${escapeHtml(username)}')">𝕏 シェア</button>
-            <button class="rc-share-btn line-share" onclick="shareReviewToSns('line','${escapeHtml(title)}','${escapeHtml(username)}')">LINEでシェア</button>
+        <div class="mr-card" onclick="nav('anime','${r.anime_id}')">
+          <div class="mr-thumb">${img ? `<img src="${escapeHtml(img)}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎌</div>'}</div>
+          <div class="mr-info">
+            <div class="mr-title">${escapeHtml(title)}</div>
+            <div class="mr-date">${dateStr}${quality}</div>
           </div>
         </div>
       `;
-    }).join('');
-
-    reviews.forEach((r,i) => {
-      const ca = listEl.querySelector(`[data-mrai="${i}"]`);
-      const cb = listEl.querySelector(`[data-mrbi="${i}"]`);
-      if(ca) drawRadar(ca, labA, labA.map((_,j)=>Number(r.chart_a?.[axisA[j]]||0)), 'rgba(88,201,132,0.35)', '#8fe5ab');
-      if(cb) drawRadar(cb, labB, labB.map((_,j)=>Number(r.chart_b?.[axisB[j]]||0)), 'rgba(255,153,153,0.32)', '#ffaaaa');
-    });
+    }).join('')}</div>`;
   }
 
   async function renderMypage(viewUserId) {
