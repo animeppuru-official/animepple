@@ -2,7 +2,7 @@ name: Uptime Check
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch: {}
 
 jobs:
@@ -26,3 +26,16 @@ jobs:
             exit 1
           fi
           echo "✅ サイトは正常に応答しています"
+
+      - name: Edge Function(submit-review)が応答するか確認
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X OPTIONS \
+            -H "Origin: https://animeppuru-official.github.io" \
+            "https://ofbjfiuayfhdkgertxyo.supabase.co/functions/v1/submit-review")
+          echo "Edge Function ステータス: $STATUS"
+          if [ "$STATUS" -ne 200 ] && [ "$STATUS" -ne 204 ]; then
+            echo "::error::Edge Function(submit-review)が $STATUS を返しました"
+            exit 1
+          fi
+          echo "✅ Edge Functionは正常に応答しています"
