@@ -890,7 +890,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.7.4</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1607,9 +1607,9 @@
       <div class="mypage-genre-tags" id="mypageGenreTags"></div>
     </div>
 
-    <!-- 称号進捗バー -->
+    <!-- 実績（称号進捗） -->
     <div class="mypage-section">
-      <h3 class="mypage-section-title" data-i18n="rankProgressTitle">🏅 称号の道のり</h3>
+      <h3 class="mypage-section-title">🏅 実績</h3>
       <div id="mypageRankProgress"></div>
     </div>
 
@@ -1725,6 +1725,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.7.4</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -5535,9 +5536,6 @@
     // タグヒント
     const tagHintEl = document.querySelector('#page-review .tag-hint');
     if(tagHintEl) tagHintEl.textContent = t('tagHint');
-    // レビュー履歴タイトル
-    const reviewHistEl = document.querySelector('.mypage-section-title');
-    if(reviewHistEl) reviewHistEl.textContent = t('reviewHistoryTitle');
     // マイページ「レビューはまだありません」
     const noRevHistEl = document.querySelector('#mypageReviewList p');
     if(noRevHistEl && (noRevHistEl.textContent.includes('まだ')||noRevHistEl.textContent.includes('yet')||noRevHistEl.textContent.includes('아직'))) {
@@ -5662,8 +5660,6 @@
     const _mpd = document.querySelector('#mypageGuest .mypage-sub'); if(_mpd) _mpd.textContent=t('guestDesc');
     const _mpa = document.querySelector('#mypageGuest .mypage-btn-primary'); if(_mpa) _mpa.textContent=t('createAccount');
     const _mpl = document.querySelector('#mypageGuest .mypage-btn-secondary'); if(_mpl) _mpl.textContent=t('loginBtn');
-    const _mplo = document.querySelector('#mypageUser .mypage-btn-secondary'); if(_mplo) _mplo.textContent=t('logoutBtn');
-    const _mph = document.querySelector('.mypage-section-title'); if(_mph) _mph.textContent=t('reviewHistoryTitle');
     // 認証モーダル
     document.querySelectorAll('#authOverlay .auth-field label').forEach((l,i)=>{
       if(i===0) l.textContent=t('labelEmail');
