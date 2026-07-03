@@ -1299,6 +1299,20 @@
 <!-- ═══════════════════════════════════
      ADMIN PAGE
 ═══════════════════════════════════ -->
+<!-- レビュー履歴ページ -->
+<div class="page" id="page-my-reviews">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+    </div>
+  </header>
+  <div style="padding:1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h2>
+    <div id="myReviewsFullList"></div>
+  </div>
+</div>
+
 <!-- プライバシーポリシー -->
 <div class="page" id="page-privacy">
   <header class="hdr">
@@ -1598,8 +1612,12 @@
 
     <!-- レビュー履歴 -->
     <div class="mypage-section">
-      <h3 class="mypage-section-title" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h3>
-      <div id="mypageReviewList" class="mypage-review-pages"><p style="color:var(--muted);font-size:.85rem;">レビューはまだありません</p></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h3 class="mypage-section-title" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h3>
+        <button onclick="nav('my-reviews')" style="background:none;border:none;color:var(--brand);font-size:.8rem;cursor:pointer;text-decoration:underline;" id="mypageReviewListCountBtn"></button>
+      </div>
+      <p id="mypageReviewListPreview" style="font-size:.8rem;color:var(--muted);margin:.3rem 0 .6rem;"></p>
+      <button onclick="nav('my-reviews')" class="mypage-btn-secondary" style="width:100%;" data-i18n="btnSeeAllReviews">レビュー履歴をすべて見る →</button>
     </div>
   </div>
 
@@ -2332,6 +2350,7 @@
     if (page==='popular') renderPopular().catch(console.error);
     if (page==='admin') initAdminPage();
     if (page==='privacy') {} // 静的ページなのでレンダリング関数不要
+    if (page==='my-reviews') renderMyReviews().catch(console.error);
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='mypage') renderMypage();
     if (page==='user'&&animeId) { renderMypage(animeId); }
@@ -5093,6 +5112,7 @@
     tagSuggestLabel: { ja:'よく使われるタグ',en:'Popular tags',ko:'자주 사용되는 태그','zh-tw':'常用標籤','zh-cn':'常用标签',es:'Tags populares',fr:'Tags populaires',pt:'Tags populares',de:'Beliebte Tags',ar:'الوسوم الشائعة' },
     tagHint:       { ja:'Enterまたは「追加」で確定。タグはみんなの検索に使われます。',en:'Press Enter or "Add" to confirm. Tags are used in search.',ko:'Enter 또는 "추가"로 확정. 태그는 검색에 사용됩니다.','zh-tw':'按Enter或「添加」確認。標籤用於搜尋。','zh-cn':'按Enter或「添加」确认。标签用于搜索。',es:'Pulsa Enter o "Añadir". Los tags se usan en la búsqueda.',fr:'Appuyez sur Entrée ou "Ajouter". Les tags sont utilisés dans la recherche.',pt:'Pressione Enter ou "Adicionar". As tags são usadas na pesquisa.',de:'Drücke Enter oder "Hinzufügen". Tags werden in der Suche verwendet.',ar:'اضغط Enter أو "إضافة". تُستخدم الوسوم في البحث.' },
     reviewHistoryTitle:{ ja:'📊 レビュー履歴',en:'📊 Review History',ko:'📊 리뷰 기록','zh-tw':'📊 評論記錄','zh-cn':'📊 评论记录',es:'📊 Historial',fr:'📊 Historique',pt:'📊 Histórico',de:'📊 Verlauf',ar:'📊 السجل' },
+    btnSeeAllReviews: { ja:'レビュー履歴をすべて見る →',en:'See all reviews →',ko:'리뷰 기록 전체 보기 →','zh-tw':'查看所有評論 →','zh-cn':'查看所有评论 →',es:'Ver todo el historial →',fr:'Voir tout l\'historique →',pt:'Ver todo o histórico →',de:'Alle Bewertungen ansehen →',ar:'عرض كل المراجعات →' },
     noReviewHistory:{ ja:'レビューはまだありません',en:'No reviews yet',ko:'아직 리뷰가 없습니다','zh-tw':'尚無評論','zh-cn':'还没有评论',es:'Sin reseñas aún',fr:'Aucun avis encore',pt:'Sem avaliações ainda',de:'Noch keine Bewertungen',ar:'لا توجد مراجعات بعد' },
     loadingLabel: { ja:'読み込み中…',en:'Loading…',ko:'로딩 중…','zh-tw':'載入中…','zh-cn':'加载中…',es:'Cargando…',fr:'Chargement…',pt:'Carregando…',de:'Wird geladen…',ar:'جارٍ التحميل…' },
     userNotFound: { ja:'ユーザーが見つかりませんでした',en:'User not found',ko:'사용자를 찾을 수 없습니다','zh-tw':'找不到使用者','zh-cn':'找不到用户',es:'Usuario no encontrado',fr:'Utilisateur introuvable',pt:'Usuário não encontrado',de:'Benutzer nicht gefunden',ar:'المستخدم غير موجود' },
@@ -6737,6 +6757,61 @@
   const FAV_KEY = 'animepple-favorites'; // ローカルキャッシュ（表示高速化用）
   const GENRE_OPTIONS = ['Action','Comedy','Drama','Fantasy','Romance','SciFi','Horror','Slice of Life','Sports','Mystery','Isekai','School'];
 
+  async function renderMyReviews() {
+    const listEl = document.getElementById('myReviewsFullList');
+    if(!listEl) return;
+    if(!_currentUser || !sb) {
+      listEl.innerHTML = `<p style="color:var(--muted);">${t('loginRequired')||'ログインが必要です'}</p>`;
+      return;
+    }
+    listEl.innerHTML = `<p style="color:var(--muted);">${t('loadingLabel')}</p>`;
+    const reviews = await db.reviews.getByUserId(_currentUser.id);
+    if(!reviews || !reviews.length) {
+      listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">📝</div><p>${t('noReviewHistory')}</p></div>`;
+      return;
+    }
+    const animeIds = [...new Set(reviews.map(r=>r.anime_id))];
+    const pages = await db.animePages.getByIds(animeIds);
+    const titleMap = {};
+    pages.forEach(p => { titleMap[p.id] = currentLang==='ja' ? (p.title||p.title_en||p.id) : (p.title_en||p.title||p.id); });
+
+    const labA = getAxisA(), labB = getAxisB();
+    const username = _currentUser._username || _currentUser.email?.split('@')[0] || 'ゲスト';
+
+    listEl.innerHTML = reviews.map((r,i) => {
+      const title = titleMap[r.anime_id] || r.anime_id;
+      const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' });
+      const qualityBadge = r.quality ? `<span class="mypage-review-card-quality">✨ ${t('statQuality')||'上質レビュー'}</span>` : '';
+      return `
+        <div class="mypage-review-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;" onclick="nav('anime','${r.anime_id}')">
+            <div>
+              <div class="mypage-review-card-title">${escapeHtml(title)}</div>
+              <div class="mypage-review-card-date">${dateStr}</div>
+              ${qualityBadge}
+            </div>
+            <span style="font-size:.75rem;color:var(--muted);">▶</span>
+          </div>
+          <div class="rc-charts" style="margin-top:.6rem;">
+            <div><p class="rc-chart-label">${t('chartATitle')}</p><canvas class="rc-canvas" data-mrai="${i}" width="280" height="200"></canvas></div>
+            <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-mrbi="${i}" width="280" height="200"></canvas></div>
+          </div>
+          <div class="rc-share-row" style="border-top:none;padding-top:0;">
+            <button class="rc-share-btn x-share" onclick="shareReviewToSns('x','${escapeHtml(title)}','${escapeHtml(username)}')">𝕏 シェア</button>
+            <button class="rc-share-btn line-share" onclick="shareReviewToSns('line','${escapeHtml(title)}','${escapeHtml(username)}')">LINEでシェア</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    reviews.forEach((r,i) => {
+      const ca = listEl.querySelector(`[data-mrai="${i}"]`);
+      const cb = listEl.querySelector(`[data-mrbi="${i}"]`);
+      if(ca) drawRadar(ca, labA, labA.map((_,j)=>Number(r.chart_a?.[axisA[j]]||0)), 'rgba(88,201,132,0.35)', '#8fe5ab');
+      if(cb) drawRadar(cb, labB, labB.map((_,j)=>Number(r.chart_b?.[axisB[j]]||0)), 'rgba(255,153,153,0.32)', '#ffaaaa');
+    });
+  }
+
   async function renderMypage(viewUserId) {
     const guest = document.getElementById('mypageGuest');
     const user = document.getElementById('mypageUser');
@@ -6818,32 +6893,14 @@
       qualityCount = reviews ? reviews.filter(r=>r.quality).length : 0;
 
       const listEl = document.getElementById('mypageReviewList');
+      const previewEl = document.getElementById('mypageReviewListPreview');
+      const countBtn = document.getElementById('mypageReviewListCountBtn');
       if(reviews && reviews.length) {
-        const recentReviews = reviews.slice(0,30);
-        const animeIds = [...new Set(recentReviews.map(r=>r.anime_id))];
-        const pages = await db.animePages.getByIds(animeIds);
-        const titleMap = {};
-        pages.forEach(p => { titleMap[p.id] = currentLang==='ja' ? (p.title||p.title_en||p.id) : (p.title_en||p.title||p.id); });
-
-        // 1ページあたりのタイル数（グリッド：スマホ3列×3行=9、640px以上は4列×3行=12）
-        const perPage = window.innerWidth >= 640 ? 12 : 9;
-        const tileHtml = (r) => {
-          const title = titleMap[r.anime_id] || r.anime_id;
-          const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' });
-          const qualityMark = r.quality ? `<span class="mypage-review-tile-quality">✨</span>` : '';
-          return `
-            <div class="mypage-review-tile" onclick="nav('anime','${r.anime_id}')">
-              <div class="mypage-review-tile-title">${escapeHtml(title)}</div>
-              <div class="mypage-review-tile-date">${dateStr}</div>
-              ${qualityMark}
-            </div>
-          `;
-        };
-        const chunks = [];
-        for(let i=0;i<recentReviews.length;i+=perPage) chunks.push(recentReviews.slice(i, i+perPage));
-        listEl.innerHTML = chunks.map(chunk => `<div class="mypage-review-page">${chunk.map(tileHtml).join('')}</div>`).join('');
+        if(previewEl) previewEl.textContent = `${reviews.length}件のレビュー`;
+        if(countBtn) countBtn.textContent = `${reviews.length}件`;
       } else {
-        listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">📝</div><p>${t('noReviewHistory')}</p></div>`;
+        if(previewEl) previewEl.textContent = 'レビューはまだありません';
+        if(countBtn) countBtn.textContent = '';
       }
 
       // 称号バッジ
