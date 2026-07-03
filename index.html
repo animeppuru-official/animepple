@@ -5819,7 +5819,7 @@
   // パスワードはSHA-256ハッシュ化して保持（平文をソースに残さない）
   // 新しいパスワードに変更する場合は、ブラウザのConsoleで以下を実行してハッシュを取得し、下の値を置き換えてください:
   // crypto.subtle.digest('SHA-256', new TextEncoder().encode('新しいパスワード')).then(b=>console.log(Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')))
-  const ADMIN_PASSWORD_HASH = 'e914173862a430c3ffbce7696b2647ad7a4871c08e700f8dd2d9a1e94f349737';
+  const ADMIN_PASSWORD_HASH = '8999f81eec5815ac2bbeb8309b488a5c4bb5e7bf3549e7a14e61d6f0725572b3';
   const ADMIN_SESSION_KEY = 'animepple-admin-session';
   let _adminAuthed = localStorage.getItem(ADMIN_SESSION_KEY) === '1';
 
