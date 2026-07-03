@@ -2491,7 +2491,7 @@
       async increment(animeId) {
         if(DB_MODE === 'supabase' && sb) {
           const country = await geoStore.detectCountry().catch(()=>null);
-          db.pvLogs.insert(animeId, country);
+          if(canUseAnalytics()) db.pvLogs.insert(animeId, country);
         }
         // LocalStorageにも記録（オフライン対応）
         const d = loadLocal();
@@ -3823,7 +3823,45 @@
     const adMid = document.getElementById('adAnimeMid');
     if(adMid) adMid.style.display='none';
 
-    const all=getAll(), page=all.find(p=>p.id===id);
+    const all=getAll();
+    let page=all.find(p=>p.id===id);
+    if (!page && sb) {
+      // ローカルキャッシュにない場合はSupabaseから取得して表示
+      db.animePages.getByIds([id]).then(rows => {
+        if(rows && rows[0]) {
+          const p = rows[0];
+          const mapped = {
+            id: p.id,
+            kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+            title: p.title || p.title_en || '',
+            titleEn: p.title_en || p.title || '',
+            meta: p.meta || '',
+            image: p.image_url || '',
+            description: p.description || '',
+            genres: p.genres || [],
+            categories: p.categories || [],
+            studios: p.studios || [],
+            streaming: p.streaming || [],
+            year: p.year || '',
+            episodes: p.episodes || '',
+          };
+          // ローカルキャッシュに追加してから再レンダリング
+          const existing = JSON.parse(localStorage.getItem('animepple-user-pages') || '[]');
+          if(!existing.find(x=>x.id===mapped.id)) {
+            localStorage.setItem('animepple-user-pages', JSON.stringify([mapped, ...existing]));
+          }
+          renderAnimePage(id);
+        } else {
+          document.getElementById('animeTitle').textContent='ページが見つかりません';
+          document.getElementById('animeMeta').textContent='';
+          document.getElementById('animeDesc').textContent='トップに戻って別の作品を選んでください。';
+          document.getElementById('goReviewBtn').style.display='none';
+        }
+      }).catch(()=>{
+        document.getElementById('animeTitle').textContent='ページが見つかりません';
+      });
+      return;
+    }
     if (!page) {
       document.getElementById('animeTitle').textContent='ページが見つかりません';
       document.getElementById('animeMeta').textContent='';
@@ -4728,7 +4766,17 @@
   };
 
   // クリック計測（本番はGA4 gtag('event',...) に差し替え）
+  function canUseAnalytics() {
+    const c = getCookieConsent();
+    return c?.analytics === true;
+  }
+  function canUseMarketing() {
+    const c = getCookieConsent();
+    return c?.marketing === true;
+  }
+
   function adClick(slotId) {
+    if(!canUseMarketing()) return; // マーケティング同意なしの場合はクリック計測しない
     console.log(`[AD CLICK] slot=${slotId} time=${new Date().toISOString()}`);
     // 本番差し替え例:
     // gtag('event','ad_click',{slot_id:slotId});
