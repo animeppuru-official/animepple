@@ -594,6 +594,7 @@
     .breakdown-bar-wrap { flex:1; margin:0 .6rem; height:4px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; }
     .breakdown-bar { height:100%; border-radius:2px; }
     .breakdown-val { font-size:.82rem; font-weight:700; color:#dff0e6; min-width:2rem; text-align:right; }
+    .breakdown-margin { font-size:.62rem; font-weight:400; color:var(--muted); margin-left:.15rem; }
 
     /* ══ WORLD STATS ══ */
     .world-period-tabs { display:flex; gap:.4rem; margin-top:.35rem; flex-wrap:wrap; }
@@ -916,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.10.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.10.3</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1066,6 +1067,7 @@
     </div>
     <!-- 内訳 -->
     <div id="masterBreakdown" style="margin-top:.75rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem .75rem;"></div>
+    <p style="font-size:.62rem;color:var(--muted);margin:.5rem 0 0;" data-i18n="marginOfErrorNote">± は参考の誤差範囲です（件数が少ないほど大きくなります）</p>
   </section>
 
   <!-- 広告：グラフ直下（自然な流れ：見て気になった→観る？） -->
@@ -1854,7 +1856,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.10.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.10.3</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -4007,6 +4009,17 @@
     return out;
   }
 
+  // 誤差幅の簡易近似（95%信頼区間の考え方を借用した「参考の誤差範囲」）。
+  // 実際の集計はトリム平均/密度クラスタリングだが、厳密な信頼区間の計算は複雑なため、
+  // ここでは「件数が少ないほど誤差が大きい」ことを伝えるための簡易指標として使う。
+  function marginOfError(rawValues) {
+    const n = rawValues.length;
+    if (n < 2) return null;
+    const sd = stdDev(rawValues);
+    const margin = 1.96 * sd / Math.sqrt(n);
+    return Math.round(margin * 10) / 10;
+  }
+
   function aggregateValues(values) {
     // values: 数値配列（そのレビューの該当軸の値一覧）
     if (values.length === 0) return 0;
@@ -4057,7 +4070,12 @@
 
     // 3件未満は数値を出さない（1〜2件だと荒らし1人でグラフが完全に決まってしまうため、
     // 「参考値」としてもミスリードになりやすい。件数が集まるまでは非表示にする）
-    if (reviews.length < 3) {
+    // ただし「AIシードレビューが1件でも含まれている」場合は、実レビューが0〜2件でも
+    // コールドスタート対策として表示する（AIの予測が混ざっていることを明示した上で）。
+    const aiCount = reviews.filter(r => r.isAiGenerated).length;
+    const realCount = reviews.length - aiCount;
+    const hasAiSeed = aiCount > 0;
+    if (reviews.length < 3 && !hasAiSeed) {
       if (section) section.style.display='';
       const _adMid0 = document.getElementById('adAnimeMid');
       if(_adMid0) _adMid0.style.display='';
@@ -4079,7 +4097,11 @@
 
     const stage = getMaturityStage(reviews.length);
     let metaText = t('validReviewMeta').replace('{n}', reviews.length);
-    if (stage === 'early') metaText = '⚠️ ' + (t('maturityEarly') || 'レビュー数が少ないため参考値です') + `（${reviews.length}件）`;
+    if (hasAiSeed && realCount === 0) {
+      metaText = '🤖 ' + (t('aiOnlyGraphNote') || 'AIによる予測グラフです（実際のレビューはまだありません）');
+    } else if (hasAiSeed) {
+      metaText = '🤖 ' + (t('aiBlendedGraphNote') || 'AIの推定も混ぜた参考グラフです') + `（${t('validReviewMeta').replace('{n}', realCount)}）`;
+    } else if (stage === 'early') metaText = '⚠️ ' + (t('maturityEarly') || 'レビュー数が少ないため参考値です') + `（${reviews.length}件）`;
     else if (stage === 'growing') metaText += ' ' + (t('maturityGrowing') || '（データ収集中）');
     if (meta) meta.textContent = metaText;
 
@@ -4089,6 +4111,9 @@
     const mainCluster = getMainClusterReviews(reviews, userQCounts);
     const avgA = axisA.map((k,i) => aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartA&&r.chartA[k]||0), userQCounts)));
     const avgB = axisB.map((k,i) => aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartB&&r.chartB[k]||0), userQCounts)));
+    // 各軸の誤差幅（参考値）。加重ではなく実際のレビュー件数(mainCluster.length)を母数にする。
+    const marginA = axisA.map(k => marginOfError(mainCluster.map(r=>Number(r.chartA&&r.chartA[k]||0))));
+    const marginB = axisB.map(k => marginOfError(mainCluster.map(r=>Number(r.chartB&&r.chartB[k]||0))));
 
     const caA = document.getElementById('masterChartA');
     const caB = document.getElementById('masterChartB');
@@ -4109,16 +4134,16 @@
     const breakdown = document.getElementById('masterBreakdown');
     if(breakdown) {
       const allAxes = [
-        ...labA.map((k,i)=>({label:k, val:avgA[i], color:'#5ec97a'})),
-        ...labB.map((k,i)=>({label:k, val:avgB[i], color:'#ff8888'})),
+        ...labA.map((k,i)=>({label:k, val:avgA[i], margin:marginA[i], color:'#5ec97a'})),
+        ...labB.map((k,i)=>({label:k, val:avgB[i], margin:marginB[i], color:'#ff8888'})),
       ];
-      breakdown.innerHTML = allAxes.map(({label,val,color})=>`
+      breakdown.innerHTML = allAxes.map(({label,val,margin,color})=>`
         <div class="breakdown-item">
           <span class="breakdown-label">${label}</span>
           <div class="breakdown-bar-wrap">
             <div class="breakdown-bar" style="width:${val*10}%;background:${color};"></div>
           </div>
-          <span class="breakdown-val">${val}</span>
+          <span class="breakdown-val">${val}${margin!=null?`<span class="breakdown-margin">±${margin}</span>`:''}</span>
         </div>
       `).join('');
     }
@@ -4247,10 +4272,10 @@
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
       renderMasterGraph(id);
-      // レビュー数をアニメページに表示（マスターグラフに反映される実レビューがあればAI参考グラフは数に含めない）
+      // レビュー数をアニメページに表示（実レビューが3件に達したらAI参考グラフは数に含めない）
       const scopedReviews = getReviews().filter(r=>r.animeId===id);
-      const hasRealReview = hasValidRealReview(scopedReviews);
-      const allReviews = hasRealReview ? scopedReviews.filter(r=>!r.isAiGenerated) : scopedReviews;
+      const realCountForBadge = countValidRealReviews(scopedReviews);
+      const allReviews = realCountForBadge >= 3 ? scopedReviews.filter(r=>!r.isAiGenerated) : scopedReviews;
       const countEl = document.getElementById('animeReviewCount');
       if(countEl) countEl.textContent = allReviews.length ? `${allReviews.length}件` : '';
     });
@@ -4319,8 +4344,8 @@
 
   async function renderReviewList(id) {
     const scopedAll=getReviews().filter(r=>r.animeId===id);
-    const hasReal = hasValidRealReview(scopedAll);
-    const allRaw = hasReal ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
+    const realCount = countValidRealReviews(scopedAll);
+    const allRaw = realCount >= 3 ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
     let reviews=allRaw; // 全レビューを表示（グラフ集計はvalidReviewsで別管理）
     const skipped=0;
     const el=document.getElementById('reviewList');
@@ -4740,12 +4765,20 @@
     return scopedReviews.some(r => !r.isAiGenerated && isGraphValidReview(r));
   }
 
+  // 有効な実レビュー（AI以外）の件数
+  function countValidRealReviews(scopedReviews) {
+    return scopedReviews.filter(r => !r.isAiGenerated && isGraphValidReview(r)).length;
+  }
+
   function validReviews(animeId) {
     const scoped = getReviews().filter(r => r.animeId === animeId);
-    const hasReal = hasValidRealReview(scoped);
+    // 実レビューが1〜2件だけの間にAIシードを即除外すると、3件ゲートに引っかかって
+    // 「AI予測グラフ→空白→3件到達で復活」という不自然な空白期間が生まれてしまう。
+    // そのため、実レビューが3件に達するまではAIシードを残して混ぜ、
+    // 実レビューが自立できる件数(3件)に達した時点で初めてAIシードを完全除外する。
+    const realCount = countValidRealReviews(scoped);
     return scoped.filter(r => {
-      // マスターグラフに反映される実レビューが1件でもあればAI生成レビューは集計から除外
-      if (hasReal && r.isAiGenerated) return false;
+      if (realCount >= 3 && r.isAiGenerated) return false;
       return isGraphValidReview(r);
     });
   }
@@ -4808,9 +4841,9 @@
       const userQCounts = buildUserQualityCounts(localRows);
       const cache = {};
       Object.entries(byAnime).forEach(([animeId, list])=>{
-        const hasReal = hasValidRealReview(list);
+        const realCount = countValidRealReviews(list);
         const valid = list.filter(r=>{
-          if(hasReal && r.isAiGenerated) return false;
+          if(realCount >= 3 && r.isAiGenerated) return false;
           return isGraphValidReview(r);
         });
         if(!valid.length) return;
@@ -4821,7 +4854,8 @@
         const tagCounts = {};
         valid.forEach(r=>(r.tags||[]).forEach(tag=>{ const k=String(tag).toLowerCase(); tagCounts[k]=(tagCounts[k]||0)+1; }));
         const topTagsForAnime = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([tag])=>tag);
-        cache[animeId] = { avgA, avgB, count: valid.length, tags: topTagsForAnime };
+        const isAiOnly = valid.every(r=>r.isAiGenerated);
+        cache[animeId] = { avgA, avgB, count: valid.length, tags: topTagsForAnime, isAiOnly };
       });
       _searchMasterGraphCache = cache;
       return cache;
@@ -4839,13 +4873,14 @@
     limit = limit || 8;
     const cache = await ensureSearchMasterGraphCache();
     const current = cache[currentId];
-    if(!current || current.count < SIMILAR_ANIME_MIN_REVIEWS) return [];
+    if(!current) return [];
+    if(current.count < SIMILAR_ANIME_MIN_REVIEWS && !current.isAiOnly) return [];
     const labA = axisA, labB = axisB;
     const currentTags = new Set(current.tags||[]);
     const scored = [];
     Object.entries(cache).forEach(([animeId, entry])=>{
       if(animeId === currentId) return;
-      if(entry.count < SIMILAR_ANIME_MIN_REVIEWS) return;
+      if(entry.count < SIMILAR_ANIME_MIN_REVIEWS && !entry.isAiOnly) return;
       let sq = 0;
       labA.forEach(k=>{ const d=(entry.avgA[k]||0)-(current.avgA[k]||0); sq += d*d; });
       labB.forEach(k=>{ const d=(entry.avgB[k]||0)-(current.avgB[k]||0); sq += d*d; });
@@ -4855,7 +4890,7 @@
       scored.push({ animeId, score });
     });
     scored.sort((a,b)=>a.score-b.score);
-    return scored.slice(0, limit).map(s=>s.animeId);
+    return scored.slice(0, limit).map(s=>({ id: s.animeId, isAiOnly: !!cache[s.animeId].isAiOnly }));
   }
 
   async function renderSimilarAnime(id) {
@@ -4864,8 +4899,11 @@
     if(!section || !grid) return;
     if(DB_MODE !== 'supabase' || !sb) { section.style.display='none'; return; }
     try {
-      const ids = await computeSimilarAnime(id);
-      if(!ids.length) { section.style.display='none'; return; }
+      const results = await computeSimilarAnime(id);
+      if(!results.length) { section.style.display='none'; return; }
+      const ids = results.map(r=>r.id);
+      const aiOnlyMap = {};
+      results.forEach(r=>{ aiOnlyMap[r.id] = r.isAiOnly; });
       const all = getAll();
       const missingIds = ids.filter(i=>!all.find(p=>p.id===i));
       const fetchedPages = missingIds.length ? await db.animePages.getByIds(missingIds) : [];
@@ -4883,7 +4921,10 @@
       });
       const items = ids.map(i=>pageMap[i]).filter(Boolean);
       if(!items.length) { section.style.display='none'; return; }
-      grid.innerHTML = items.map(item=>renderAnimeCard(item, { style:'h' })).join('');
+      grid.innerHTML = items.map(item=>renderAnimeCard(item, {
+        style:'h',
+        badges: aiOnlyMap[item.id] ? ['<span class="badge" style="background:rgba(94,201,122,.1);">🤖 AI予測</span>'] : [],
+      })).join('');
       section.style.display='';
     } catch(e) {
       console.warn('similar anime error:', e);
@@ -5559,6 +5600,9 @@
     worldReaction:{ ja:'🌍 世界の反応',en:'🌍 World Reactions',ko:'🌍 세계 반응','zh-tw':'🌍 世界反應','zh-cn':'🌍 世界反应',es:'🌍 Reacciones mundiales',fr:'🌍 Réactions mondiales',pt:'🌍 Reações mundiais',de:'🌍 Weltweite Reaktionen',ar:'🌍 ردود العالم' },
     similarAnimeTitle:{ ja:'🧭 似ている作品',en:'🧭 Similar Titles',ko:'🧭 비슷한 작품','zh-tw':'🧭 相似作品','zh-cn':'🧭 相似作品',es:'🧭 Títulos similares',fr:'🧭 Titres similaires',pt:'🧭 Títulos semelhantes',de:'🧭 Ähnliche Titel',ar:'🧭 عناوين مشابهة' },
     similarAnimeDesc:{ ja:'好みグラフとタグの近さから算出しています',en:'Based on graph similarity and shared tags',ko:'그래프 유사도와 태그를 기반으로 산출됩니다','zh-tw':'依據好惡圖表與標籤的相似度計算','zh-cn':'依据偏好图表与标签的相似度计算',es:'Calculado por similitud de gráficos y etiquetas',fr:'Calculé selon la similarité du graphique et des tags',pt:'Calculado pela semelhança do gráfico e tags',de:'Basierend auf Grafikähnlichkeit und Tags',ar:'يُحسب بناءً على تشابه الرسم البياني والوسوم' },
+    marginOfErrorNote:{ ja:'± は参考の誤差範囲です（件数が少ないほど大きくなります）',en:'± shows an approximate margin of error (larger with fewer reviews)',ko:'±는 참고용 오차 범위입니다（리뷰 수가 적을수록 커집니다）','zh-tw':'±為參考誤差範圍（評論數越少誤差越大）','zh-cn':'±为参考误差范围（评论数越少误差越大）',es:'± es un margen de error aproximado (mayor con menos reseñas)',fr:'± indique une marge d\'erreur approximative (plus grande avec peu d\'avis)',pt:'± indica uma margem de erro aproximada (maior com menos avaliações)',de:'± zeigt eine ungefähre Fehlerspanne (größer bei wenigen Bewertungen)',ar:'± يوضح هامش خطأ تقريبي (يكبر مع قلة المراجعات)' },
+    aiOnlyGraphNote:{ ja:'AIによる予測グラフです（実際のレビューはまだありません）',en:'This is an AI-predicted graph (no real reviews yet)',ko:'AI가 예측한 그래프입니다（아직 실제 리뷰가 없습니다）','zh-tw':'這是AI預測的圖表（尚無實際評論）','zh-cn':'这是AI预测的图表（尚无实际评论）',es:'Este es un gráfico predicho por IA (aún sin reseñas reales)',fr:'Ceci est un graphique prédit par IA (pas encore d\'avis réels)',pt:'Este é um gráfico previsto por IA (ainda sem avaliações reais)',de:'Dies ist ein KI-vorhergesagtes Diagramm (noch keine echten Bewertungen)',ar:'هذا رسم بياني تنبأ به الذكاء الاصطناعي (لا توجد مراجعات حقيقية بعد)' },
+    aiBlendedGraphNote:{ ja:'AIの推定も混ぜた参考グラフです',en:'This reference graph blends AI estimates with real reviews',ko:'AI 추정치를 혼합한 참고 그래프입니다','zh-tw':'此參考圖表混合了AI推測與實際評論','zh-cn':'此参考图表混合了AI推测与实际评论',es:'Este gráfico de referencia combina estimaciones de IA con reseñas reales',fr:'Ce graphique de référence combine des estimations IA et de vrais avis',pt:'Este gráfico de referência combina estimativas de IA com avaliações reais',de:'Dieses Referenzdiagramm kombiniert KI-Schätzungen mit echten Bewertungen',ar:'يجمع هذا الرسم البياني المرجعي بين تقديرات الذكاء الاصطناعي والمراجعات الحقيقية' },
     goodsSection: { ja:'🛍 グッズ・関連商品',en:'🛍 Merchandise',ko:'🛍 굿즈・관련 상품','zh-tw':'🛍 周邊商品','zh-cn':'🛍 周边商品',es:'🛍 Merchandising',fr:'🛍 Produits dérivés',pt:'🛍 Mercadoria',de:'🛍 Merchandise',ar:'🛍 البضائع' },
     goodsSeeItem: { ja:'商品を見る',en:'View items',ko:'상품 보기','zh-tw':'查看商品','zh-cn':'查看商品',es:'Ver productos',fr:'Voir les produits',pt:'Ver produtos',de:'Produkte ansehen',ar:'عرض المنتجات' },
     totalPV:      { ja:'総PV',en:'Total PV',ko:'총 PV','zh-tw':'總PV','zh-cn':'总PV',es:'PV total',fr:'PV total',pt:'PV total',de:'Gesamt-PV',ar:'إجمالي PV' },
@@ -6750,9 +6794,9 @@
           const splitResults = [];
           Object.entries(byAnime).forEach(([animeId, revsRaw])=>{
             // AI参考レビューは「ユーザーの意見」ではないため票割れ判定の母数から除外する
-            const hasReal = hasValidRealReview(revsRaw);
+            const realCountForSplit = countValidRealReviews(revsRaw);
             const revs = revsRaw.filter(r=>{
-              if(hasReal && r.isAiGenerated) return false;
+              if(realCountForSplit >= 3 && r.isAiGenerated) return false;
               return isGraphValidReview(r);
             });
             if(revs.length < 10) return;
@@ -6921,8 +6965,8 @@
 
   async function renderReviewsListFiltered(id) {
     const scopedAll = getReviews().filter(r=>r.animeId===id);
-    const hasReal = hasValidRealReview(scopedAll);
-    const allRevs = hasReal ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
+    const realCountFiltered = countValidRealReviews(scopedAll);
+    const allRevs = realCountFiltered >= 3 ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
     const filtered = filterReviews(allRevs);
     const metaEl = document.getElementById('reviewsListMeta');
     if(metaEl) metaEl.textContent = `${filtered.length}件`;
