@@ -468,11 +468,12 @@
       background:linear-gradient(180deg, var(--card2), #0c241a);
     }
     .mypage-fav-remove { position:absolute; top:.25rem; right:.25rem; background:rgba(0,0,0,.65); color:#ff8888; border:none; border-radius:7px; width:22px; height:22px; font-size:.72rem; cursor:pointer; }
-    .mypage-fav-status {
-      position:absolute; top:.25rem; left:.25rem; background:rgba(0,0,0,.65); color:#dff0e6; border:none;
-      border-radius:999px; padding:.15rem .5rem; font-size:.6rem; cursor:pointer; white-space:nowrap;
+    .mypage-fav-status-row { display:flex; gap:.25rem; padding:.35rem; background:#0c241a; }
+    .mypage-fav-status-btn {
+      flex:1; border:1px solid var(--line); border-radius:7px; padding:.3rem .2rem; font-size:.62rem;
+      background:var(--card2); color:var(--muted); cursor:pointer; white-space:nowrap; transition:.15s;
     }
-    .mypage-fav-status:hover { background:rgba(0,0,0,.85); }
+    .mypage-fav-status-btn.active { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
     .rank-progress-wrap { display:flex; flex-direction:column; gap:.4rem; }
     .rank-progress-labels { display:flex; justify-content:space-between; font-size:.74rem; color:var(--muted); }
     .rank-progress-labels strong { color:#dff0e6; font-weight:700; }
@@ -895,7 +896,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.8.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.8.1</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1746,7 +1747,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.8.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.8.1</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2109,8 +2110,9 @@
         return data || [];
       },
       async setStatus(userId, animeId, status) {
-        if(!sb) return;
-        await sb.from('favorites').update({ status }).eq('user_id', userId).eq('anime_id', animeId);
+        if(!sb) return { error: null };
+        const { error } = await sb.from('favorites').update({ status }).eq('user_id', userId).eq('anime_id', animeId);
+        return { error };
       },
       // レビュー投稿時、その作品がお気に入り済みなら自動で「視聴済み」に切り替える
       async markWatchedIfFavorited(userId, animeId) {
@@ -7168,10 +7170,15 @@
       const title = currentLang==='ja' ? (p?.title || p?.title_en || f.anime_id) : (p?.title_en || p?.title || f.anime_id);
       const img = p?.image_url;
       const isWatched = f.status === 'watched';
-      return `<div class="mypage-fav-card" onclick="nav('anime','${f.anime_id}')">
-        ${img?`<img src="${escapeHtml(img)}" loading="lazy">`:'<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;color:var(--muted);">📺</div>'}
-        <button class="mypage-fav-status" onclick="event.stopPropagation();toggleFavoriteStatus('${f.anime_id}','${isWatched?'want_to_watch':'watched'}')">${isWatched?'✅ 視聴済み':'👀 気になる'}</button>
-        <div class="mypage-fav-title">${escapeHtml(title)}</div>
+      return `<div class="mypage-fav-card">
+        <div onclick="nav('anime','${f.anime_id}')" style="cursor:pointer;">
+          ${img?`<img src="${escapeHtml(img)}" loading="lazy">`:'<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;color:var(--muted);">📺</div>'}
+          <div class="mypage-fav-title">${escapeHtml(title)}</div>
+        </div>
+        <div class="mypage-fav-status-row">
+          <button class="mypage-fav-status-btn${!isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','want_to_watch')">👀 気になる</button>
+          <button class="mypage-fav-status-btn${isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','watched')">✅ 視聴済み</button>
+        </div>
       </div>`;
     }).join('');
     return allFavs.length;
@@ -7180,7 +7187,12 @@
   // お気に入りの視聴ステータス（視聴済み/気になる）を切り替える
   async function toggleFavoriteStatus(animeId, newStatus) {
     if(!_currentUser) return;
-    await db.favorites.setStatus(_currentUser.id, animeId, newStatus);
+    const { error } = await db.favorites.setStatus(_currentUser.id, animeId, newStatus);
+    if(error) {
+      console.warn('ステータス更新エラー:', error);
+      alert(currentLang==='ja' ? 'ステータスの更新に失敗しました。時間を置いて再度お試しください。' : 'Failed to update status.');
+      return;
+    }
     await renderFavoritesList();
   }
   window.toggleFavoriteStatus = toggleFavoriteStatus;
