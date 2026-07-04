@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.13.3</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.14.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1977,7 +1977,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.13.3</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.14.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2508,6 +2508,34 @@
   }
   window.translateApi = translateApi;
   window.translateTagsForDisplay = translateTagsForDisplay;
+
+  // ── ジャンル/カテゴリ（Kitsu由来・英語）の多言語対応 ──
+  // 日本語: 既存の静的辞書（高速・無料）。英語: 変換不要。それ以外: DeepLで翻訳しキャッシュする。
+  async function translateGenresForDisplay(genres) {
+    const uniqueGenres = [...new Set((genres||[]).filter(Boolean))];
+    const map = {};
+    uniqueGenres.forEach(g => { map[g] = g; });
+    if(!uniqueGenres.length) return map;
+    if(currentLang === 'ja') {
+      uniqueGenres.forEach(g => { map[g] = translateGenre(g); });
+      return map;
+    }
+    if(currentLang === 'en') return map; // Kitsu由来のジャンルは元々英語なので変換不要
+    const targetLang = TAG_TRANSLATE_LANG_MAP[currentLang];
+    if(!targetLang) return map;
+    const cache = loadTagTranslationCache();
+    let cacheDirty2 = false;
+    await Promise.all(uniqueGenres.map(async (g) => {
+      const cacheKey = `genre::${g}::${currentLang}`;
+      if(cache[cacheKey]) { map[g] = cache[cacheKey]; return; }
+      const translated = await translateApi.translate(g, targetLang);
+      map[g] = translated;
+      cache[cacheKey] = translated;
+      cacheDirty2 = true;
+    }));
+    if(cacheDirty2) saveTagTranslationCache();
+    return map;
+  }
 
   const ANIME_API_BASE = 'https://kitsu.io/api/edge/anime';
   const animeApi = {
@@ -3420,12 +3448,13 @@
       if (!v) return;
       if (tags.length>=maxTags) { input.value=''; return; }
       input.value='';
-      // 検索用タグ入力では、日本語以外で入力された場合、照合できるよう日本語に翻訳しておく
-      // （保存されているタグデータが基本的に日本語のため。表示はtranslateTagsForDisplayで現在の言語に戻す）
-      if(opts.translateToJa && currentLang !== 'ja') {
+      // 検索用タグ入力: 日本語形（レビュータグ照合用）と英語形（Kitsuジャンル照合用）の両方を用意する
+      if(opts.translateToJa) {
         try {
-          const translated = await translateApi.translate(v, 'JA');
-          if(translated) v = translated;
+          const jaForm = currentLang !== 'ja' ? (await translateApi.translate(v, 'JA')) || v : v;
+          const enForm = (await translateApi.translate(jaForm, 'EN')) || v;
+          v = jaForm;
+          _srTagEnglishForms[v] = enForm;
         } catch(_) {}
       }
       if (!tags.includes(v)) { tags.push(v); render(); }
@@ -4344,7 +4373,7 @@
     }
   }
 
-  function renderAnimePage(id) {
+  async function renderAnimePage(id) {
     // ページ遷移時にキャンバスとミニグラフをリセット
     ['miniChartA','miniChartB','masterChartA','masterChartB'].forEach(cid=>{
       const c = document.getElementById(cid);
@@ -4422,7 +4451,8 @@
       let extra = '';
       // ジャンル
       if(page.genres&&page.genres.length){
-        const displayGenres = currentLang==='ja' ? page.genres.map(translateGenre) : page.genres;
+        const genreMap = await translateGenresForDisplay(page.genres);
+        const displayGenres = page.genres.map(g=>genreMap[g]||g);
         extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
           <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelGenre')}</span>
           ${displayGenres.map(g=>`<span class="badge">${escapeHtml(g)}</span>`).join('')}
@@ -4430,7 +4460,8 @@
       }
       // カテゴリ（タグ）
       if(page.categories&&page.categories.length){
-        const displayCategories = currentLang==='ja' ? page.categories.map(translateGenre) : page.categories;
+        const categoryMap = await translateGenresForDisplay(page.categories);
+        const displayCategories = page.categories.map(c=>categoryMap[c]||c);
         extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
           <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelTag')}</span>
           ${displayCategories.map(c=>`<span class="badge" style="background:rgba(94,201,122,.08);border-color:#2d6040;">${escapeHtml(c)}</span>`).join('')}
@@ -4652,6 +4683,8 @@
   // タグをタップして検索ページへ
   function srSearchByTag(tag) {
     srTagsActive.length=0; srTagsActive.push(tag);
+    // Kitsuジャンル照合用の英語形も算出しておく（結果を待たずに画面遷移してよい：後追いで反映される）
+    translateApi.translate(tag, 'EN').then(en=>{ if(en) _srTagEnglishForms[tag]=en; }).catch(()=>{});
     srSearchState.q=''; srSearchState.sort='relevance';
     nav('search');
   }
@@ -4734,7 +4767,7 @@
   }
 
   // タグ候補を表示: そのアニメの人気タグTOP3 + Kitsuジャンル（重複除去）
-  function renderTagSuggestions(animeId) {
+  async function renderTagSuggestions(animeId) {
     const wrap = document.getElementById('reviewTagSuggestWrap');
     const listEl = document.getElementById('reviewTagSuggestList');
     if(!wrap || !listEl) return;
@@ -4742,7 +4775,9 @@
     const popular = topTags(animeId).slice(0,3); // 人気タグTOP3
     const all = getAll();
     const page = all.find(p=>p.id===animeId);
-    const genres = (page?.genres||[]).map(g => currentLang==='ja' ? translateGenre(g) : g);
+    const rawGenres = page?.genres||[];
+    const genreMap = await translateGenresForDisplay(rawGenres);
+    const genres = rawGenres.map(g => genreMap[g]||g);
 
     // 重複除去（人気タグを優先）
     const seen = new Set(popular.map(t=>t.toLowerCase()));
@@ -4932,6 +4967,8 @@
   const srProfileB=Object.fromEntries(axisB.map(k=>[k,0]));
   const srSearchState={q:'',sort:'relevance'};
   const srTagsActive=[];
+  // タグの日本語形→英語形の対応（Kitsuジャンル/カテゴリとの照合に使う。ジャンルは英語で保存されているため）
+  let _srTagEnglishForms = {};
 
   // 有効レビュー（スライダーを動かしたもの）だけをグラフ・検索データに使う
   // 全軸（chartA+chartB計12軸）が完全に同一値かどうか判定
@@ -5151,8 +5188,17 @@
   // タグ検索：上位10タグの中にsrTagsActiveが含まれるかチェック
   function tagMatchScore(animeId) {
     if(!srTagsActive.length) return 0;
-    const top = new Set(topTags(animeId));
-    return srTagsActive.filter(t=>top.has(t.toLowerCase())).length;
+    const top = new Set(topTags(animeId).map(t=>t.toLowerCase()));
+    // レビュー0件の新作でもヒットできるよう、Kitsu由来のジャンル/カテゴリ情報も照合対象にする
+    const item = getAll().find(a=>a.id===animeId);
+    const kitsuTags = new Set([...(item?.categories||[]), ...(item?.genres||[])].map(c=>String(c).toLowerCase()));
+    return srTagsActive.filter(t=>{
+      const tLower = t.toLowerCase();
+      if(top.has(tLower)) return true; // レビュータグとの一致（日本語）
+      const enForm = _srTagEnglishForms[t];
+      if(enForm && kitsuTags.has(enForm.toLowerCase())) return true; // Kitsuジャンルとの一致（英語）
+      return false;
+    }).length;
   }
 
   function setupSrTagInput() {
