@@ -528,6 +528,10 @@
     .mr-title { font-size:.72rem; font-weight:700; color:#dff0e6; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .mr-date { font-size:.62rem; color:var(--muted); margin-top:.15rem; }
     .mr-quality { margin-left:.3rem; font-size:.7rem; }
+    .mr-card-quality { border-color:#e0b84a; box-shadow:0 0 0 1px rgba(224,184,74,.4), 0 4px 14px rgba(224,184,74,.15); }
+    .mr-card-quality .mr-info { background:linear-gradient(180deg, rgba(224,184,74,.14), transparent); }
+    .mr-card-quality .mr-title { color:#f5deA0; }
+    .mr-card-quality:hover { border-color:#f0cc66; }
     .mypage-review-pages {
       display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
       scrollbar-width:none; gap:0;
@@ -620,14 +624,14 @@
     .pop-quick-pill::after { content:'▾'; font-size:.65rem; color:var(--muted); }
     .pop-quick-pill.open { border-color:var(--brand); color:var(--brand); }
     .pop-axis-expand { max-height:0; overflow:hidden; transition:max-height .18s ease; }
-    .pop-axis-expand.open { max-height:140px; margin-top:.4rem; }
+    .pop-axis-expand.open { max-height:260px; margin-top:.4rem; }
     .pop-sort-tabs { display:flex; gap:.4rem; overflow-x:auto; scrollbar-width:none; }
     .pop-sort-tabs::-webkit-scrollbar { display:none; }
     .pop-sort-tab { flex:0 0 auto; padding:.4rem .85rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); font-size:.8rem; cursor:pointer; white-space:nowrap; }
     .pop-sort-tab.active { background:var(--brand); color:#0c2015; font-weight:700; border-color:var(--brand); }
 
     /* 年代ドラムロール */
-    .pop-year-picker { background:var(--card); padding:.6rem; border-radius:10px; margin-top:.4rem; }
+    .pop-year-picker { background:var(--card); padding:.6rem; border-radius:10px; margin-top:.4rem; border:1px solid var(--line); max-width:280px; }
     .pop-year-picker-inner { display:flex; align-items:center; justify-content:center; gap:1rem; }
     .pop-drum-wrap { display:flex; flex-direction:column; align-items:center; gap:.3rem; }
     .pop-drum-label { font-size:.72rem; color:var(--muted); }
@@ -912,7 +916,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.9.1</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.9.3</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1354,6 +1358,14 @@
   </header>
   <div style="padding:1rem;">
     <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="favoritesTitle">⭐ お気に入り</h2>
+    <div style="display:flex;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap;">
+      <input id="myFavoritesSearchInput" type="search" placeholder="タイトルで検索…" data-i18n="favSearchPlaceholder"
+        style="flex:1;min-width:140px;padding:.55rem .8rem;border-radius:999px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;" />
+      <select id="myFavoritesSortSelect" class="admin-select" style="width:auto;flex-shrink:0;">
+        <option value="new" data-i18n="sortFavNew">新しい順</option>
+        <option value="old" data-i18n="sortFavOld">古い順</option>
+      </select>
+    </div>
     <div id="myFavoritesFullList" class="mypage-fav-grid"></div>
   </div>
 </div>
@@ -1835,7 +1847,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.9.1</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.9.3</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -5431,6 +5443,10 @@
     rankProgressTitle: { ja:'🏅 称号の道のり',en:'🏅 Rank Progress',ko:'🏅 칭호 진행도','zh-tw':'🏅 稱號之路','zh-cn':'🏅 称号之路',es:'🏅 Progreso de rango',fr:'🏅 Progression de rang',pt:'🏅 Progresso de patente',de:'🏅 Rang-Fortschritt',ar:'🏅 تقدم الرتبة' },
     favoritesTitle: { ja:'⭐ お気に入り',en:'⭐ Favorites',ko:'⭐ 즐겨찾기','zh-tw':'⭐ 收藏','zh-cn':'⭐ 收藏',es:'⭐ Favoritos',fr:'⭐ Favoris',pt:'⭐ Favoritos',de:'⭐ Favoriten',ar:'⭐ المفضلة' },
     noFavoritesYet: { ja:'お気に入りはまだありません',en:'No favorites yet',ko:'즐겨찾기가 아직 없습니다','zh-tw':'尚無收藏','zh-cn':'还没有收藏',es:'Sin favoritos aún',fr:'Pas encore de favoris',pt:'Sem favoritos ainda',de:'Noch keine Favoriten',ar:'لا توجد مفضلة بعد' },
+    noFavoritesMatch: { ja:'該当する作品がありません',en:'No matching titles',ko:'일치하는 작품이 없습니다','zh-tw':'沒有符合的作品','zh-cn':'没有符合的作品',es:'No hay títulos coincidentes',fr:'Aucun titre correspondant',pt:'Nenhum título correspondente',de:'Keine passenden Titel',ar:'لا توجد عناوين مطابقة' },
+    favSearchPlaceholder: { ja:'タイトルで検索…',en:'Search by title…',ko:'제목으로 검색…','zh-tw':'依標題搜尋…','zh-cn':'按标题搜索…',es:'Buscar por título…',fr:'Rechercher par titre…',pt:'Buscar por título…',de:'Nach Titel suchen…',ar:'البحث بالعنوان…' },
+    sortFavNew: { ja:'新しい順',en:'Newest first',ko:'최신순','zh-tw':'最新優先','zh-cn':'最新优先',es:'Más reciente',fr:'Plus récent',pt:'Mais recente',de:'Neueste zuerst',ar:'الأحدث أولاً' },
+    sortFavOld: { ja:'古い順',en:'Oldest first',ko:'오래된순','zh-tw':'最舊優先','zh-cn':'最旧优先',es:'Más antiguo',fr:'Plus ancien',pt:'Mais antigo',de:'Älteste zuerst',ar:'الأقدم أولاً' },
     editProfileTitle:{ ja:'プロフィール編集',en:'Edit Profile',ko:'프로필 편집','zh-tw':'編輯個人資料','zh-cn':'编辑个人资料',es:'Editar perfil',fr:'Modifier le profil',pt:'Editar perfil',de:'Profil bearbeiten',ar:'تعديل الملف الشخصي' },
     labelBio:       { ja:'自己紹介',en:'Bio',ko:'자기소개','zh-tw':'自我介紹','zh-cn':'自我介绍',es:'Biografía',fr:'Bio',pt:'Bio',de:'Über mich',ar:'نبذة' },
     labelFavGenres: { ja:'好きなジャンル（最大5個）',en:'Favorite genres (up to 5)',ko:'좋아하는 장르 (최대 5개)','zh-tw':'喜歡的類型（最多5個）','zh-cn':'喜欢的类型（最多5个）',es:'Géneros favoritos (hasta 5)',fr:'Genres préférés (max 5)',pt:'Gêneros favoritos (até 5)',de:'Lieblingsgenres (bis zu 5)',ar:'الأنواع المفضلة (حتى 5)' },
@@ -7176,7 +7192,7 @@
       const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
       const quality = r.quality ? '<span class="mr-quality">✨</span>' : '';
       return `
-        <div class="mr-card" onclick="nav('anime','${r.anime_id}')">
+        <div class="mr-card${r.quality?' mr-card-quality':''}" onclick="nav('anime','${r.anime_id}')">
           <div class="mr-thumb">${img
             ? `<img src="${escapeHtml(img)}" alt="" style="width:100%;height:100%;object-fit:cover;">`
             : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:var(--card2);">🎌</div>`
@@ -7228,8 +7244,17 @@
       return;
     }
     listEl.innerHTML = `<p style="color:var(--muted);grid-column:1/-1;">${t('loadingLabel')}</p>`;
-    await renderFavoritesGrid(listEl, _currentUser.id, false);
+    const searchQuery = document.getElementById('myFavoritesSearchInput')?.value.trim() || '';
+    const sortOrder = document.getElementById('myFavoritesSortSelect')?.value || 'new';
+    await renderFavoritesGrid(listEl, _currentUser.id, false, { searchQuery, sortOrder });
   }
+
+  let _favSearchDebounce = null;
+  document.getElementById('myFavoritesSearchInput')?.addEventListener('input', ()=>{
+    clearTimeout(_favSearchDebounce);
+    _favSearchDebounce = setTimeout(()=>renderMyFavorites(), 250);
+  });
+  document.getElementById('myFavoritesSortSelect')?.addEventListener('change', ()=>renderMyFavorites());
 
   async function renderMypage(viewUserId) {
     const guest = document.getElementById('mypageGuest');
@@ -7405,7 +7430,8 @@
   const MYPAGE_FAV_PREVIEW_COUNT = 4;
 
   // お気に入りグリッドの共通描画（マイページのプレビューと全件ページの両方で使用）
-  async function renderFavoritesGrid(el, targetId, isPreview) {
+  async function renderFavoritesGrid(el, targetId, isPreview, opts) {
+    opts = opts || {};
     const allFavs = await db.favorites.getByUser(targetId);
     if(isPreview) {
       const countEl = document.getElementById('statFavCount');
@@ -7415,14 +7441,35 @@
       el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">⭐</div><p>${t('noFavoritesYet')}</p></div>`;
       return allFavs ? allFavs.length : 0;
     }
-    const favs = isPreview ? allFavs.slice(0, MYPAGE_FAV_PREVIEW_COUNT) : allFavs;
-    const ids = favs.map(f=>f.anime_id);
-    const pages = await db.animePages.getByIds(ids);
+    // タイトル解決のため、絞り込み前に全件のページ情報を取得
+    const allIds = allFavs.map(f=>f.anime_id);
+    const allPages = await db.animePages.getByIds(allIds);
     const pageMap = {};
-    (pages||[]).forEach(p=>{ pageMap[p.id]=p; });
+    (allPages||[]).forEach(p=>{ pageMap[p.id]=p; });
+    const titleOf = (f)=>{
+      const p = pageMap[f.anime_id];
+      return currentLang==='ja' ? (p?.title || p?.title_en || f.anime_id) : (p?.title_en || p?.title || f.anime_id);
+    };
+
+    let favs = allFavs;
+    // タイトル検索（全件ページのみ）
+    if(opts.searchQuery) {
+      const q = opts.searchQuery.toLowerCase();
+      favs = favs.filter(f => titleOf(f).toLowerCase().includes(q));
+    }
+    // 並び替え（favoritesはcreated_at降順で取得済みなので、古い順は反転するだけ）
+    if(opts.sortOrder === 'old') favs = [...favs].reverse();
+
+    if(isPreview) favs = favs.slice(0, MYPAGE_FAV_PREVIEW_COUNT);
+
+    if(!favs.length) {
+      el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">🔍</div><p>${t('noFavoritesMatch')||'該当する作品がありません'}</p></div>`;
+      return allFavs.length;
+    }
+
     el.innerHTML = favs.map(f=>{
       const p = pageMap[f.anime_id];
-      const title = currentLang==='ja' ? (p?.title || p?.title_en || f.anime_id) : (p?.title_en || p?.title || f.anime_id);
+      const title = titleOf(f);
       const img = p?.image_url;
       const isWatched = f.status === 'watched';
       return `<div class="mypage-fav-card">
@@ -7448,7 +7495,12 @@
       alert(currentLang==='ja' ? 'ステータスの更新に失敗しました。時間を置いて再度お試しください。' : 'Failed to update status.');
       return;
     }
-    await renderFavoritesList();
+    // 表示中のページに応じて再描画（マイページのプレビュー／お気に入り全件ページ）
+    if(document.getElementById('page-my-favorites')?.classList.contains('active')) {
+      await renderMyFavorites();
+    } else {
+      await renderFavoritesList();
+    }
   }
   window.toggleFavoriteStatus = toggleFavoriteStatus;
 
