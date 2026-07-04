@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.13.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.13.2</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1977,7 +1977,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.13.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.13.2</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2467,8 +2467,9 @@
   // タグはユーザーの自由入力（基本的に日本語）なので、表示言語が日本語以外の場合は
   // DeepL翻訳APIを使って表示だけ翻訳する（保存データ・検索マッチングは原文のまま）。
   const TAG_TRANSLATE_LANG_MAP = {
-    en:'EN', ko:'KO', 'zh-tw':'ZH', 'zh-cn':'ZH', es:'ES', fr:'FR', pt:'PT-PT', de:'DE',
-    // DeepLはアラビア語(ar)に未対応のため、原文（日本語）のまま表示する
+    en:'EN', ko:'KO', 'zh-tw':'ZH-HANT', 'zh-cn':'ZH', es:'ES', fr:'FR', pt:'PT-PT', de:'DE', ar:'AR',
+    // DeepLは2026年にアラビア語(AR)・繁体字中国語(ZH-HANT)への対応を追加済み。
+    // これで日本語以外の全9言語をカバーしている。
   };
   const TAG_TRANSLATION_CACHE_KEY = 'animepple-tag-translations';
   let _tagTranslationCache = null;
@@ -2491,7 +2492,7 @@
     uniqueTags.forEach(tag => { map[tag] = tag; }); // まずは原文で初期化（フォールバック）
     if(currentLang === 'ja' || !uniqueTags.length) return map;
     const targetLang = TAG_TRANSLATE_LANG_MAP[currentLang];
-    if(!targetLang) return map; // DeepL未対応言語（ar等）は原文のまま
+    if(!targetLang) return map; // 想定外の言語コードの場合のみ原文フォールバック
     const cache = loadTagTranslationCache();
     let cacheDirty = false;
     await Promise.all(uniqueTags.map(async (tag) => {
@@ -2505,6 +2506,8 @@
     if(cacheDirty) saveTagTranslationCache();
     return map;
   }
+  window.translateApi = translateApi;
+  window.translateTagsForDisplay = translateTagsForDisplay;
 
   const ANIME_API_BASE = 'https://kitsu.io/api/edge/anime';
   const animeApi = {
