@@ -387,6 +387,22 @@
     .admin-anime-country-row { display:flex; flex-direction:column; gap:.3rem; padding:.6rem 0; border-bottom:1px solid var(--line); }
     .admin-anime-country-row:last-child { border-bottom:none; }
     .admin-section-title { font-size:.88rem; font-weight:700; color:#dff0e6; margin:0 0 .75rem; }
+    .admin-nav-bar {
+      position:sticky; top:0; z-index:20; display:flex; gap:.4rem; overflow-x:auto;
+      padding:.6rem 1rem; background:#0c241a; border-bottom:1px solid var(--line);
+      -webkit-overflow-scrolling:touch;
+    }
+    .admin-nav-pill {
+      flex-shrink:0; background:var(--card2); border:1px solid var(--line); color:var(--muted);
+      border-radius:999px; padding:.4rem .8rem; font-size:.75rem; cursor:pointer; white-space:nowrap;
+    }
+    .admin-nav-pill:hover { background:rgba(94,201,122,.12); color:#dff0e6; border-color:var(--brand); }
+    .admin-group-header {
+      font-size:.7rem; color:var(--brand); font-weight:800; letter-spacing:.05em; text-transform:uppercase;
+      margin:1.3rem 0 .5rem; padding-top:.3rem;
+    }
+    .admin-group-header:first-of-type { margin-top:0; }
+    .admin-bar-list-row { display:flex; align-items:center; }
     .admin-row { display:flex; align-items:center; justify-content:space-between; padding:.4rem 0; border-bottom:1px solid var(--line); font-size:.82rem; }
     .admin-row:last-child { border-bottom:none; }
     .admin-badge { background:rgba(94,201,122,.15); color:var(--brand); border-radius:6px; padding:.1rem .5rem; font-size:.72rem; font-weight:700; }
@@ -896,7 +912,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.8.1</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.9.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1431,6 +1447,15 @@
     </div>
   </header>
 
+  <div class="admin-nav-bar" id="adminNavBar" style="display:none;">
+    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-overview')">📊 概要</button>
+    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-demand')">🔎 需要</button>
+    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-ratings')">⭐ 評価</button>
+    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-geo')">🌍 国・言語</button>
+    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-revenue')">💰 収益</button>
+    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-reviews')">📝 レビュー</button>
+  </div>
+
   <!-- パスワード画面 -->
   <div id="adminLoginSection" style="padding:2rem 1rem;">
     <div style="max-width:320px;margin:0 auto;">
@@ -1445,6 +1470,8 @@
 
   <!-- ダッシュボード -->
   <div id="adminDashboard" style="display:none;padding:1rem;">
+    <div id="admin-group-overview">
+    <div class="admin-group-header">概要</div>
     <!-- サイト監視 -->
     <div class="admin-section">
       <h3 class="admin-section-title">🩺 サイト監視（直近のエラー）</h3>
@@ -1473,12 +1500,39 @@
       </div>
       <canvas id="adminTrendChart" width="600" height="220" style="width:100%;height:160px;"></canvas>
     </div>
+    </div><!-- /admin-group-overview -->
 
+    <div id="admin-group-demand">
+    <div class="admin-group-header">需要データ</div>
     <!-- 急上昇タグ -->
     <div class="admin-section">
       <h3 class="admin-section-title">🔥 急上昇タグ（直近7日）</h3>
       <div id="adminTrendingTags"></div>
     </div>
+
+    <!-- 人気の検索キーワード -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🔎 人気の検索キーワード（直近30日）</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">ユーザーが実際に検索したキーワードのランキング</p>
+      <div id="adminTopSearchQueries"></div>
+    </div>
+
+    <!-- 0件検索キーワード -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🕳️ 需要はあるが結果が無いキーワード</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">検索しても0件だったキーワード。コンテンツ調達・提携の提案材料になりやすいデータ</p>
+      <div id="adminZeroResultQueries"></div>
+    </div>
+
+    <!-- 検索で使われたタグ -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🏷️ 検索で絞り込まれたタグ（直近30日）</h3>
+      <div id="adminTopFilterTags"></div>
+    </div>
+    </div><!-- /admin-group-demand -->
+
+    <div id="admin-group-ratings">
+    <div class="admin-group-header">評価データ</div>
 
     <!-- 軸別平均スコア -->
     <div class="admin-section">
@@ -1520,13 +1574,53 @@
       </div>
     </div>
 
+    <!-- 票割れ検知 -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">⚠️ 評価が二極化している作品</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .5rem;">荒らしの可能性も含むため目視確認が必要です</p>
+      <div id="adminSplitOpinions"></div>
+    </div>
+    </div><!-- /admin-group-ratings -->
+
+    <div id="admin-group-geo">
+    <div class="admin-group-header">国・言語・デバイス</div>
     <!-- 国別PV -->
     <div class="admin-section">
       <h3 class="admin-section-title">🌍 国別PV（全期間）</h3>
       <div id="adminCountryStats"></div>
-
     </div>
 
+    <!-- デバイス・言語・流入元 -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">📱 デバイス・言語・流入元（直近30日）</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">媒体資料でよく使う基礎統計（すべて匿名データ）</p>
+      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:.6rem 0 .3rem;">デバイス</p>
+      <div id="adminDeviceBreakdown"></div>
+      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:.9rem 0 .3rem;">言語</p>
+      <div id="adminLangBreakdown"></div>
+      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:.9rem 0 .3rem;">流入元</p>
+      <div id="adminReferrerBreakdown"></div>
+    </div>
+    </div><!-- /admin-group-geo -->
+
+    <div id="admin-group-revenue">
+    <div class="admin-group-header">収益・エンゲージメント</div>
+    <!-- 広告・アフィリンククリック -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">💰 広告・アフィリンククリック（直近30日）</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">どの配信・グッズ導線が実際に使われているか</p>
+      <div id="adminAdClicks"></div>
+    </div>
+
+    <!-- シェアクリック -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">📤 SNSシェア数（直近30日）</h3>
+      <div id="adminShareClicks"></div>
+    </div>
+    </div><!-- /admin-group-revenue -->
+
+    <div id="admin-group-reviews">
+    <div class="admin-group-header">レビュー一覧</div>
     <!-- 最近のレビュー -->
     <div class="admin-section">
       <h3 class="admin-section-title">📝 最近のレビュー</h3>
@@ -1538,13 +1632,7 @@
       <h3 class="admin-section-title">🔥 レビュー数ランキング</h3>
       <div id="adminAnimeRanking"></div>
     </div>
-
-    <!-- 票割れ検知 -->
-    <div class="admin-section">
-      <h3 class="admin-section-title">⚠️ 評価が二極化している作品</h3>
-      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .5rem;">荒らしの可能性も含むため目視確認が必要です</p>
-      <div id="adminSplitOpinions"></div>
-    </div>
+    </div><!-- /admin-group-reviews -->
   </div>
 </div>
 
@@ -1747,7 +1835,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.8.1</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.9.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2000,6 +2088,12 @@
         const { data } = await sb.from('pv_logs').select('viewed_at');
         return data || [];
       },
+      async getBreakdown(days) {
+        if(!sb) return [];
+        const since = new Date(Date.now() - (days||30)*86400000).toISOString();
+        const { data } = await sb.from('pv_logs').select('device_type,lang,referrer_type').gte('viewed_at', since);
+        return data || [];
+      },
     },
 
     // ── 検索ログ(匿名・企業提供データ用) ──
@@ -2012,6 +2106,12 @@
           result_count: resultCount,
         }).then(()=>{});
       },
+      async getRecent(days) {
+        if(!sb) return [];
+        const since = new Date(Date.now() - (days||30)*86400000).toISOString();
+        const { data } = await sb.from('search_logs').select('query,result_count,created_at').gte('created_at', since);
+        return data || [];
+      },
     },
 
     // ── フィルター利用ログ(匿名・企業提供データ用) ──
@@ -2022,6 +2122,12 @@
           filter_type: filterType,
           filter_value: String(filterValue).slice(0, 60),
         }).then(()=>{});
+      },
+      async getRecent(days) {
+        if(!sb) return [];
+        const since = new Date(Date.now() - (days||30)*86400000).toISOString();
+        const { data } = await sb.from('filter_logs').select('filter_type,filter_value,created_at').gte('created_at', since);
+        return data || [];
       },
     },
 
@@ -2034,6 +2140,12 @@
           event_type: eventType,
         }).then(()=>{});
       },
+      async getRecent(days) {
+        if(!sb) return [];
+        const since = new Date(Date.now() - (days||30)*86400000).toISOString();
+        const { data } = await sb.from('favorite_events').select('anime_id,event_type,created_at').gte('created_at', since);
+        return data || [];
+      },
     },
 
     // ── 広告・アフィリンククリックログ(マーケティング同意ゲート) ──
@@ -2045,6 +2157,12 @@
           anime_id: animeId || null,
         }).then(()=>{});
       },
+      async getRecent(days) {
+        if(!sb) return [];
+        const since = new Date(Date.now() - (days||30)*86400000).toISOString();
+        const { data } = await sb.from('ad_clicks').select('slot_id,anime_id,created_at').gte('created_at', since);
+        return data || [];
+      },
     },
 
     // ── シェアクリックログ(匿名) ──
@@ -2055,6 +2173,12 @@
           anime_id: animeId || null,
           platform,
         }).then(()=>{});
+      },
+      async getRecent(days) {
+        if(!sb) return [];
+        const since = new Date(Date.now() - (days||30)*86400000).toISOString();
+        const { data } = await sb.from('share_clicks').select('anime_id,platform,created_at').gte('created_at', since);
+        return data || [];
       },
     },
 
@@ -5956,15 +6080,18 @@
   function initAdminPage() {
     const login = document.getElementById('adminLoginSection');
     const dash = document.getElementById('adminDashboard');
+    const navBar = document.getElementById('adminNavBar');
     if(_adminAuthed) {
       login.style.display='none';
       dash.style.display='';
+      if(navBar) navBar.style.display='flex';
       loadAdminData();
       initAdminCountryCompare();
       setupAdminAnimeSearch();
     } else {
       login.style.display='';
       dash.style.display='none';
+      if(navBar) navBar.style.display='none';
       document.getElementById('adminPasswordInput').value='';
       document.getElementById('adminLoginError').textContent='';
     }
@@ -5978,6 +6105,8 @@
       localStorage.setItem(ADMIN_SESSION_KEY, '1');
       document.getElementById('adminLoginSection').style.display='none';
       document.getElementById('adminDashboard').style.display='';
+      const navBar = document.getElementById('adminNavBar');
+      if(navBar) navBar.style.display='flex';
       loadAdminData();
       initAdminCountryCompare();
       setupAdminAnimeSearch();
@@ -5986,6 +6115,34 @@
     }
   }
   document.getElementById('adminPasswordInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') adminLogin(); });
+
+  // ナビピルからのスクロール移動
+  function adminScrollTo(groupId) {
+    const el = document.getElementById(groupId);
+    if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  window.adminScrollTo = adminScrollTo;
+
+  // 汎用: ラベル付き横棒リストを描画（ランキング・比率どちらにも使う）
+  function renderAdminBarList(containerId, items, opts) {
+    opts = opts || {};
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    if(!items || !items.length) {
+      el.innerHTML = `<p style="color:var(--muted);font-size:.82rem;">${opts.emptyText||'直近30日間のデータがありません'}</p>`;
+      return;
+    }
+    const maxVal = Math.max(...items.map(i=>i.value), 1);
+    el.innerHTML = items.map((it,i)=>{
+      const pct = Math.max(3, Math.round(it.value/maxVal*100));
+      return `
+        <div class="admin-axis-row">
+          <span class="admin-axis-label">${opts.showRank?`${i+1}. `:''}${escapeHtml(it.label)}</span>
+          <div class="admin-axis-track"><div class="admin-axis-fill" style="width:${pct}%;background:${it.color||'#5ec97a'};"></div></div>
+          <span class="admin-axis-val">${it.value}${opts.suffix||''}</span>
+        </div>`;
+    }).join('');
+  }
 
   // 日付ごとの件数を集計（直近N日間）
   let _adminTrendData = { reviews:[], pv:[] };
@@ -6498,6 +6655,83 @@
             }
           }
         }
+      }
+
+      // 人気の検索キーワード・0件検索キーワード（直近30日）
+      const searchLogs = await db.searchLogs.getRecent(30);
+      if(searchLogs) {
+        const queryCounts = {};
+        const zeroQueryCounts = {};
+        searchLogs.forEach(r=>{
+          const q = (r.query||'').trim();
+          if(!q) return;
+          const key = q.toLowerCase();
+          queryCounts[key] = (queryCounts[key]||0) + 1;
+          if(r.result_count === 0) zeroQueryCounts[key] = (zeroQueryCounts[key]||0) + 1;
+        });
+        const topQueries = Object.entries(queryCounts).sort((a,b)=>b[1]-a[1]).slice(0,10)
+          .map(([label,value])=>({ label, value }));
+        renderAdminBarList('adminTopSearchQueries', topQueries, { showRank:true, suffix:'回' });
+
+        const zeroQueries = Object.entries(zeroQueryCounts).sort((a,b)=>b[1]-a[1]).slice(0,10)
+          .map(([label,value])=>({ label, value, color:'#ff8888' }));
+        renderAdminBarList('adminZeroResultQueries', zeroQueries, { showRank:true, suffix:'回', emptyText:'直近30日間、0件検索はありません' });
+      }
+
+      // 検索で絞り込まれたタグ（直近30日）
+      const filterLogsData = await db.filterLogs.getRecent(30);
+      if(filterLogsData) {
+        const tagCounts2 = {};
+        filterLogsData.forEach(r=>{
+          if(r.filter_type !== 'tag') return;
+          tagCounts2[r.filter_value] = (tagCounts2[r.filter_value]||0) + 1;
+        });
+        const topFilterTags = Object.entries(tagCounts2).sort((a,b)=>b[1]-a[1]).slice(0,10)
+          .map(([label,value])=>({ label:'#'+label, value }));
+        renderAdminBarList('adminTopFilterTags', topFilterTags, { showRank:true, suffix:'回' });
+      }
+
+      // デバイス・言語・流入元（直近30日、pv_logsより）
+      const pvBreakdown = await db.pvLogs.getBreakdown(30);
+      if(pvBreakdown) {
+        const deviceCounts = {}, langCounts = {}, refCounts = {};
+        pvBreakdown.forEach(r=>{
+          if(r.device_type) deviceCounts[r.device_type] = (deviceCounts[r.device_type]||0) + 1;
+          if(r.lang) langCounts[r.lang] = (langCounts[r.lang]||0) + 1;
+          if(r.referrer_type) refCounts[r.referrer_type] = (refCounts[r.referrer_type]||0) + 1;
+        });
+        const deviceLabels = { mobile:'📱 モバイル', desktop:'🖥️ PC' };
+        const refLabels = { search:'🔎 検索エンジン', sns:'💬 SNS', direct:'➡️ 直接アクセス', other:'🔗 その他' };
+        renderAdminBarList('adminDeviceBreakdown',
+          Object.entries(deviceCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({ label:deviceLabels[k]||k, value:v })),
+          { suffix:'PV' });
+        renderAdminBarList('adminLangBreakdown',
+          Object.entries(langCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({ label:k.toUpperCase(), value:v, color:'#5ea8ff' })),
+          { suffix:'PV' });
+        renderAdminBarList('adminReferrerBreakdown',
+          Object.entries(refCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({ label:refLabels[k]||k, value:v, color:'#f4a261' })),
+          { suffix:'PV' });
+      }
+
+      // 広告・アフィリンククリック（直近30日、スロット別）
+      const adClicksData = await db.adClicks.getRecent(30);
+      if(adClicksData) {
+        const slotCounts = {};
+        adClicksData.forEach(r=>{ slotCounts[r.slot_id] = (slotCounts[r.slot_id]||0) + 1; });
+        const topSlots = Object.entries(slotCounts).sort((a,b)=>b[1]-a[1]).slice(0,10)
+          .map(([label,value])=>({ label, value, color:'#f4a261' }));
+        renderAdminBarList('adminAdClicks', topSlots, { showRank:true, suffix:'回' });
+      }
+
+      // シェアクリック（直近30日、プラットフォーム別）
+      const shareClicksData = await db.shareClicks.getRecent(30);
+      if(shareClicksData) {
+        const platformCounts = {};
+        shareClicksData.forEach(r=>{ platformCounts[r.platform] = (platformCounts[r.platform]||0) + 1; });
+        const platformLabels = { x:'𝕏 (Twitter)', line:'LINE' };
+        const topPlatforms = Object.entries(platformCounts).sort((a,b)=>b[1]-a[1])
+          .map(([label,value])=>({ label:platformLabels[label]||label, value, color:'#5ea8ff' }));
+        renderAdminBarList('adminShareClicks', topPlatforms, { suffix:'回' });
       }
     } catch(e) {
       console.error('Admin data load error:', e);
