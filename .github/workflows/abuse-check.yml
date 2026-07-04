@@ -1,0 +1,46 @@
+name: Abuse Detection Check
+
+# 使い方:
+# 1. このファイルを .github/workflows/abuse-check.yml として今のリポジトリに置く
+# 2. Settings > Secrets and variables > Actions で以下を設定:
+#    - SUPABASE_SERVICE_ROLE_KEY : Supabaseのservice_roleキー
+#      （abuse_flagsテーブルはanonキーでは読めない設計のため必要）
+# 3. これで6時間おきに自動チェックし、新しい不正フラグがあればGitHub Issueを作成する
+#    （GitHubのIssue通知がそのままメール代わりになる。通知設定はGitHubの
+#      Settings > Notifications で「Issues」がONになっているか確認してください）
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # 6時間おき
+  workflow_dispatch: {}     # 手動実行もできるようにする
+
+jobs:
+  check-abuse-flags:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Fetch recent abuse flags
+        id: fetch
+        env:
+          SUPABASE_URL: 'https://ofbjfiuayfhdkgertxyo.supabase.co'
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          SINCE=$(date -u -d '6 hours ago' +%Y-%m-%dT%H:%M:%S)
+          RESULT=$(curl -s "${SUPABASE_URL}/rest/v1/abuse_flags?select=*&created_at=gte.${SINCE}&order=created_at.desc" \
+            -H "apikey: ${SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SERVICE_KEY}")
+          echo "count=$(echo "$RESULT" | jq 'length')" >> "$GITHUB_OUTPUT"
+          echo "$RESULT" > flags.json
+
+      - name: Create issue if flags found
+        if: steps.fetch.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          COUNT=$(jq 'length' flags.json)
+          BODY="直近6時間で ${COUNT} 件の不正アクティビティ疑いを検知しました。\n\n\`\`\`json\n$(cat flags.json | jq -c '.[0:20]')\n\`\`\`\n\n管理画面のSupabase側で \`abuse_flags\` テーブルを確認してください。"
+          gh issue create \
+            --title "🚨 不正アクティビティ検知（${COUNT}件）$(date -u +%Y-%m-%d\ %H:%M)UTC" \
+            --body "$BODY" \
+            --repo "${{ github.repository }}"
