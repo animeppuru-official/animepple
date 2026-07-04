@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.10.3</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.11.1</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1658,8 +1658,80 @@
 </div>
 
 <!-- ═══════════════════════════════════
-     MY PAGE
+     PARTNER PREVIEW（企業向けデータプレビュー）
 ═══════════════════════════════════ -->
+<div class="page" id="page-partner">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" onclick="nav('home')" style="color:#fff;">← 戻る</button>
+      <span style="color:var(--brand);font-weight:800;">🤝 データプレビュー</span>
+    </div>
+  </header>
+
+  <!-- 合言葉入力画面 -->
+  <div id="partnerLoginSection" style="padding:2rem 1rem;">
+    <div style="max-width:360px;margin:0 auto;">
+      <h2 style="font-size:1.1rem;color:#dff0e6;margin:0 0 .5rem;">アニメップル データプレビュー</h2>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem;">
+        提供いただいたアクセスキーを入力してください。作品ごとの匿名集計データ・検索需要・ユーザー行動データをご覧いただけます。
+      </p>
+      <input type="password" id="partnerKeyInput" placeholder="アクセスキー"
+        style="width:100%;padding:.7rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.95rem;box-sizing:border-box;margin-bottom:.75rem;" />
+      <button onclick="partnerLogin()"
+        style="width:100%;padding:.75rem;border-radius:10px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">アクセス</button>
+      <p id="partnerLoginError" style="color:#ff6b6b;font-size:.78rem;margin-top:.5rem;"></p>
+    </div>
+  </div>
+
+  <!-- プレビューダッシュボード -->
+  <div id="partnerDashboard" style="display:none;padding:1rem;">
+    <p style="font-size:.78rem;color:var(--muted);margin:0 0 1rem;">
+      このプレビューに表示されるのは、匿名化・集計済みのデータのみです。個人を特定できる情報(コメント本文・ユーザー名等)は一切含まれません。サンプル数が3件未満のデータは表示されません。
+    </p>
+
+    <div class="admin-group-header">作品別 評価データ</div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">📊 作品ごとの平均評価(上位表示)</h3>
+      <div id="partnerReviewsList"></div>
+    </div>
+
+    <div class="admin-group-header">需要データ</div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">🔎 人気の検索キーワード</h3>
+      <div id="partnerSearchTop"></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">🕳️ 需要はあるが結果が無いキーワード</h3>
+      <div id="partnerSearchZero"></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">🏷️ 人気タグ(検索フィルター)</h3>
+      <div id="partnerFilters"></div>
+    </div>
+
+    <div class="admin-group-header">ユーザー行動データ</div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">📱 デバイス・言語・流入元</h3>
+      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:0 0 .3rem;">デバイス</p>
+      <div id="partnerDevice"></div>
+      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:.9rem 0 .3rem;">言語</p>
+      <div id="partnerLang"></div>
+      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:.9rem 0 .3rem;">流入元</p>
+      <div id="partnerReferrer"></div>
+      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:.9rem 0 .3rem;">国別</p>
+      <div id="partnerCountry"></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">💰 広告・アフィリンククリック</h3>
+      <div id="partnerAdClicks"></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">📤 SNSシェア数</h3>
+      <div id="partnerShareClicks"></div>
+    </div>
+  </div>
+</div>
+
 <div class="page" id="page-mypage">
   <header class="hdr">
     <div class="hdr-inner">
@@ -1856,7 +1928,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.10.3</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.11.1</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2600,6 +2672,7 @@
     if (page==='search') renderSearch().catch(console.error);
     if (page==='popular') renderPopular().catch(console.error);
     if (page==='admin') initAdminPage();
+    if (page==='partner') initPartnerPage();
     if (page==='privacy') {} // 静的ページなのでレンダリング関数不要
     if (page==='my-reviews') {
       // 認証状態が確定してからレンダリング（initAuthが非同期のため）
@@ -3928,8 +4001,24 @@
     return counts;
   }
 
+  // クラスタリングはO(n²)のため、件数が極端に多い場合は計算量が跳ねる。
+  // 上限を超えたらランダムサンプリングして計算量を一定に抑える
+  // （1作品がバズって数千〜数万件になった場合の安全装置。今の規模では発火しない）。
+  const CLUSTER_MAX_INPUT = 500;
+  function sampleForClustering(reviews) {
+    if (reviews.length <= CLUSTER_MAX_INPUT) return reviews;
+    // Fisher-Yatesで簡易シャッフルしてから先頭N件を使う（重み付き偏りを避けるため無作為抽出）
+    const arr = [...reviews];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr.slice(0, CLUSTER_MAX_INPUT);
+  }
+
   function clusterReviews(reviews) {
-    const vectors = reviews.map(reviewToVector);
+    const sampled = sampleForClustering(reviews);
+    const vectors = sampled.map(reviewToVector);
     const n = vectors.length;
     const visited = new Array(n).fill(false);
     const clusters = [];
@@ -3948,7 +4037,7 @@
       clusters.push(cluster);
     }
     // クラスタをサイズ順にソートして返す（最大クラスタが先頭）
-    return clusters.sort((a,b)=>b.length-a.length).map(idxs => idxs.map(i=>reviews[i]));
+    return clusters.sort((a,b)=>b.length-a.length).map(idxs => idxs.map(i=>sampled[i]));
   }
 
   // メインクラスタ（多数派の意見）のレビューだけを返す。
@@ -6243,6 +6332,75 @@
     return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
   }
 
+  // ── パートナー向けデータプレビュー ──
+  let _partnerKey = null;
+
+  function initPartnerPage() {
+    const login = document.getElementById('partnerLoginSection');
+    const dash = document.getElementById('partnerDashboard');
+    if(login) login.style.display='';
+    if(dash) dash.style.display='none';
+    const input = document.getElementById('partnerKeyInput');
+    if(input) input.value='';
+    const err = document.getElementById('partnerLoginError');
+    if(err) err.textContent='';
+  }
+  window.initPartnerPage = initPartnerPage;
+
+  async function fetchPartnerDataset(dataset) {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/export-aggregate-data?dataset=${dataset}`, {
+      headers: { Authorization: `Bearer ${_partnerKey}` },
+    });
+    if(!res.ok) throw new Error('unauthorized or fetch failed: ' + res.status);
+    return res.json();
+  }
+
+  async function partnerLogin() {
+    const key = document.getElementById('partnerKeyInput')?.value.trim();
+    const err = document.getElementById('partnerLoginError');
+    if(!key) return;
+    _partnerKey = key;
+    if(err) err.textContent = '読み込み中…';
+    try {
+      const [reviews, search, filters, engagement] = await Promise.all([
+        fetchPartnerDataset('reviews'),
+        fetchPartnerDataset('search'),
+        fetchPartnerDataset('filters'),
+        fetchPartnerDataset('engagement'),
+      ]);
+      document.getElementById('partnerLoginSection').style.display='none';
+      document.getElementById('partnerDashboard').style.display='';
+
+      // 作品別評価（レビュー数の多い順、タイトルはローカルの作品リストから解決）
+      const all = getAll();
+      const titleMap = {};
+      all.forEach(p=>{ titleMap[p.id] = p.title || p.titleEn || p.id; });
+      const reviewItems = Object.entries(reviews.data||{})
+        .sort((a,b)=>b[1].reviewCount-a[1].reviewCount).slice(0,20)
+        .map(([id,d])=>({ label: titleMap[id]||id, value: d.reviewCount }));
+      renderAdminBarList('partnerReviewsList', reviewItems, { showRank:true, suffix:'件' });
+
+      renderAdminBarList('partnerSearchTop', (search.topQueries||[]).slice(0,10).map(q=>({label:q.query,value:q.count})), { showRank:true, suffix:'回' });
+      renderAdminBarList('partnerSearchZero', (search.topZeroResultQueries||[]).slice(0,10).map(q=>({label:q.query,value:q.count,color:'#ff8888'})), { showRank:true, suffix:'回', emptyText:'データがありません' });
+      renderAdminBarList('partnerFilters', (filters.topTagFilters||[]).slice(0,10).map(t=>({label:'#'+t.tag,value:t.count})), { showRank:true, suffix:'回' });
+
+      const deviceLabels = { mobile:'📱 モバイル', desktop:'🖥️ PC' };
+      const refLabels = { search:'🔎 検索エンジン', sns:'💬 SNS', direct:'➡️ 直接アクセス', other:'🔗 その他' };
+      renderAdminBarList('partnerDevice', Object.entries(engagement.pvByDevice||{}).map(([k,v])=>({label:deviceLabels[k]||k, value:v})), { suffix:'PV' });
+      renderAdminBarList('partnerLang', Object.entries(engagement.pvByLang||{}).map(([k,v])=>({label:k.toUpperCase(), value:v, color:'#5ea8ff'})), { suffix:'PV' });
+      renderAdminBarList('partnerReferrer', Object.entries(engagement.pvByReferrer||{}).map(([k,v])=>({label:refLabels[k]||k, value:v, color:'#f4a261'})), { suffix:'PV' });
+      renderAdminBarList('partnerCountry', Object.entries(engagement.pvByCountry||{}).map(([k,v])=>({label:(COUNTRY_NAMES[k]||k), value:v})), { suffix:'PV' });
+      renderAdminBarList('partnerAdClicks', Object.entries(engagement.adClicksBySlot||{}).map(([k,v])=>({label:k, value:v, color:'#f4a261'})), { suffix:'回' });
+      const platformLabels = { x:'𝕏 (Twitter)', line:'LINE' };
+      renderAdminBarList('partnerShareClicks', Object.entries(engagement.shareClicksByPlatform||{}).map(([k,v])=>({label:platformLabels[k]||k, value:v})), { suffix:'回' });
+    } catch(e) {
+      console.warn('partner data error:', e);
+      if(err) err.textContent = 'アクセスキーが正しくないか、データの取得に失敗しました。';
+    }
+  }
+  window.partnerLogin = partnerLogin;
+  document.getElementById('partnerKeyInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') partnerLogin(); });
+
   function initAdminPage() {
     const login = document.getElementById('adminLoginSection');
     const dash = document.getElementById('adminDashboard');
@@ -6912,6 +7070,7 @@
 
   // URL hashで管理者ページへ
   if(location.hash === '#admin') nav('admin');
+  if(location.hash === '#partner') nav('partner');
 
   window.adminLogin = adminLogin;
   window.adminLogout = adminLogout;
