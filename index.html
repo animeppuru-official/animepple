@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.15.1</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.16.2</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1404,8 +1404,8 @@
     <section class="pp-section">
       <h2>1. 運営者情報</h2>
       <p>サービス名: アニメップル（Animepple）<br>
-      運営者: <span style="color:var(--muted);">[運営者名 ※本番化時に記入]</span><br>
-      連絡先: <span style="color:var(--muted);">[メールアドレス ※本番化時に記入]</span></p>
+      運営者: <span style="color:var(--muted);">アニメップル運営事務局</span><br>
+      連絡先: <span style="color:var(--muted);">sapotoforamu@gmail.com</span></p>
     </section>
 
     <section class="pp-section">
@@ -1591,6 +1591,7 @@
           <canvas id="adminCountryChartB1" style="width:100%;aspect-ratio:1;border-radius:10px;background:#09201b;display:block;"></canvas>
         </div>
       </div>
+      <div id="adminCountrySignificance" style="margin-top:.7rem;"></div>
     </div>
 
     <!-- 特定アニメの国別グラフ -->
@@ -1977,7 +1978,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.15.1</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.16.2</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -4226,6 +4227,25 @@
 
   // 票割れ検知: 意見が複数派閥に分かれているかチェック（管理者向け）
   // 2派拮抗だけでなく、3派以上に分裂しているケースも検知する
+  // 票割れの原因軸を特定する：上位2派閥の平均ベクトルを比較し、差が大きい軸を返す
+  function analyzeSplitAxes(clusters) {
+    if (clusters.length < 2) return [];
+    const labels = [...axisA, ...axisB];
+    const avgVector = (cluster) => {
+      const vectors = cluster.map(reviewToVector);
+      return labels.map((_, i) => vectors.reduce((sum, v) => sum + v[i], 0) / vectors.length);
+    };
+    const avg1 = avgVector(clusters[0]);
+    const avg2 = avgVector(clusters[1]);
+    const diffs = labels.map((label, i) => ({
+      label,
+      group1Avg: Math.round(avg1[i] * 10) / 10,
+      group2Avg: Math.round(avg2[i] * 10) / 10,
+      diff: Math.round(Math.abs(avg1[i] - avg2[i]) * 10) / 10,
+    }));
+    return diffs.sort((a, b) => b.diff - a.diff).slice(0, 3); // 差が大きい上位3軸
+  }
+
   function detectSplitOpinion(reviews) {
     if (reviews.length < 10) return { isSplit: false };
     const clusters = clusterReviews(reviews);
@@ -4237,13 +4257,16 @@
     const isSplit = top2 >= top1 * 0.6 && (top1+top2) >= total * 0.6;
     // 3派以上に分裂: 3つ目の派閥も無視できない大きさを持ち、上位3派閥で全体の大半を説明できる
     const isFragmented = clusters.length >= 3 && top3 >= total * 0.15 && (top1+top2+top3) >= total * 0.7;
+    const splitDetected = isSplit || isFragmented;
     return {
-      isSplit: isSplit || isFragmented,
+      isSplit: splitDetected,
       isFragmented,
       clusterCount: clusters.length,
       clusterSizes: sizes.slice(0, 5),
       top1Size: top1, top2Size: top2, top3Size: top3,
-      totalReviews: total
+      totalReviews: total,
+      // 分裂している時だけ、原因軸（上位2派閥で最も差が大きい軸）を計算する
+      splitAxes: splitDetected ? analyzeSplitAxes(clusters) : [],
     };
   }
 
@@ -4920,7 +4943,7 @@
           turnstileToken = (typeof turnstile !== 'undefined' && _turnstileWidgetId !== null) ? turnstile.getResponse(_turnstileWidgetId) : '';
         } catch(_) {}
         if(!turnstileToken) {
-          alert(currentLang==='ja' ? 'bot確認にチェックを入れてください。' : 'Please complete the verification check.');
+          alert(t('turnstileRequiredAlert'));
           return;
         }
 
@@ -4972,7 +4995,7 @@
         nav('anime',currentAnimeId);
       })().catch(e=>{
         console.warn('review submit:', e);
-        alert(currentLang==='ja' ? '保存に失敗しました。もう一度お試しください。' : 'Failed to save. Please try again.');
+        alert(t('profileSaveFailedAlert'));
         try { if(typeof turnstile !== 'undefined' && _turnstileWidgetId !== null) turnstile.reset(_turnstileWidgetId); } catch(_) {}
       });
     } else {
@@ -5204,11 +5227,51 @@
     axisB.forEach(l=>{ if(srProfileB[l]>0&&aB){dist+=Math.abs(aB[l]-srProfileB[l]);count++;} });
     return count?dist/count:Infinity;
   }
+  // ── タイポ・表記ゆれ許容検索 ──
+  // 「ワンパンマ」で「ワンパンマン」にヒットするよう、編集距離の近い部分文字列も一致とみなす
+  function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
+    const dp = new Array(n + 1);
+    for (let j = 0; j <= n; j++) dp[j] = j;
+    for (let i = 1; i <= m; i++) {
+      let prev = dp[0];
+      dp[0] = i;
+      for (let j = 1; j <= n; j++) {
+        const tmp = dp[j];
+        dp[j] = a[i-1] === b[j-1] ? prev : 1 + Math.min(prev, dp[j], dp[j-1]);
+        prev = tmp;
+      }
+    }
+    return dp[n];
+  }
+  // 完全一致していなくても、近い部分文字列があれば true を返す（短すぎるクエリは誤マッチ防止のため対象外）
+  function fuzzyIncludes(haystack, query) {
+    if (!query) return false;
+    if (haystack.includes(query)) return true;
+    const qLen = query.length;
+    if (qLen < 3) return false;
+    const maxDist = qLen <= 4 ? 1 : Math.floor(qLen / 4) + 1;
+    for (let start = 0; start <= haystack.length - Math.max(1, qLen - maxDist); start++) {
+      for (let len = qLen - maxDist; len <= qLen + maxDist; len++) {
+        if (len < 1 || start + len > haystack.length) continue;
+        if (levenshtein(haystack.substr(start, len), query) <= maxDist) return true;
+      }
+    }
+    return false;
+  }
+
   function relScore(anime,q){
     if(!q) return 0;
     const hay=`${anime.title} ${anime.meta} ${(anime.features||[]).join(' ')} ${anime.description}`.toLowerCase();
     if((anime.title||'').toLowerCase().includes(q)||(anime.titleEn||'').toLowerCase().includes(q)) return 100;
-    return hay.includes(q)?50:0;
+    if(hay.includes(q)) return 50;
+    // タイポ・表記ゆれのあいまい一致（完全一致より低いスコア）
+    const titleHay = `${anime.title||''} ${anime.titleEn||''}`.toLowerCase();
+    if(fuzzyIncludes(titleHay, q)) return 40;
+    if(fuzzyIncludes(hay, q)) return 20;
+    return 0;
   }
 
   // タグ検索：上位10タグの中にsrTagsActiveが含まれるかチェック
@@ -5288,7 +5351,7 @@
     // グラフ検索：マスターグラフキャッシュを事前ロード（未訪問作品もマッチ判定できるように）
     if(hasSrProfile()) await ensureSearchMasterGraphCache();
 
-    if(q) list=list.filter(a=>`${a.title} ${a.titleEn||''} ${a.meta} ${(a.features||[]).join(' ')} ${a.description}`.toLowerCase().includes(q));
+    if(q) list=list.filter(a=>fuzzyIncludes(`${a.title} ${a.titleEn||''} ${a.meta} ${(a.features||[]).join(' ')} ${a.description}`.toLowerCase(), q));
 
     const mapped=list.map(a=>({
       anime:a,
@@ -5916,6 +5979,10 @@
     marginOfErrorNote:{ ja:'± は参考の誤差範囲です（件数が少ないほど大きくなります）',en:'± shows an approximate margin of error (larger with fewer reviews)',ko:'±는 참고용 오차 범위입니다（리뷰 수가 적을수록 커집니다）','zh-tw':'±為參考誤差範圍（評論數越少誤差越大）','zh-cn':'±为参考误差范围（评论数越少误差越大）',es:'± es un margen de error aproximado (mayor con menos reseñas)',fr:'± indique une marge d\'erreur approximative (plus grande avec peu d\'avis)',pt:'± indica uma margem de erro aproximada (maior com menos avaliações)',de:'± zeigt eine ungefähre Fehlerspanne (größer bei wenigen Bewertungen)',ar:'± يوضح هامش خطأ تقريبي (يكبر مع قلة المراجعات)' },
     aiOnlyGraphNote:{ ja:'AIによる予測グラフです（実際のレビューはまだありません）',en:'This is an AI-predicted graph (no real reviews yet)',ko:'AI가 예측한 그래프입니다（아직 실제 리뷰가 없습니다）','zh-tw':'這是AI預測的圖表（尚無實際評論）','zh-cn':'这是AI预测的图表（尚无实际评论）',es:'Este es un gráfico predicho por IA (aún sin reseñas reales)',fr:'Ceci est un graphique prédit par IA (pas encore d\'avis réels)',pt:'Este é um gráfico previsto por IA (ainda sem avaliações reais)',de:'Dies ist ein KI-vorhergesagtes Diagramm (noch keine echten Bewertungen)',ar:'هذا رسم بياني تنبأ به الذكاء الاصطناعي (لا توجد مراجعات حقيقية بعد)' },
     aiBlendedGraphNote:{ ja:'AIの推定も混ぜた参考グラフです',en:'This reference graph blends AI estimates with real reviews',ko:'AI 추정치를 혼합한 참고 그래프입니다','zh-tw':'此參考圖表混合了AI推測與實際評論','zh-cn':'此参考图表混合了AI推测与实际评论',es:'Este gráfico de referencia combina estimaciones de IA con reseñas reales',fr:'Ce graphique de référence combine des estimations IA et de vrais avis',pt:'Este gráfico de referência combina estimativas de IA com avaliações reais',de:'Dieses Referenzdiagramm kombiniert KI-Schätzungen mit echten Bewertungen',ar:'يجمع هذا الرسم البياني المرجعي بين تقديرات الذكاء الاصطناعي والمراجعات الحقيقية' },
+    turnstileRequiredAlert:{ ja:'bot確認にチェックを入れてください。',en:'Please complete the verification check.',ko:'봇 확인에 체크해 주세요.','zh-tw':'請完成機器人驗證。','zh-cn':'请完成机器人验证。',es:'Por favor, complete la verificación anti-bot.',fr:'Veuillez compléter la vérification anti-robot.',pt:'Por favor, complete a verificação anti-robô.',de:'Bitte schließen Sie die Bot-Überprüfung ab.',ar:'يرجى إكمال التحقق من الروبوت.' },
+    profileSaveFailedAlert:{ ja:'保存に失敗しました。もう一度お試しください。',en:'Failed to save. Please try again.',ko:'저장에 실패했습니다. 다시 시도해 주세요.','zh-tw':'儲存失敗，請再試一次。','zh-cn':'保存失败，请再试一次。',es:'Error al guardar. Inténtalo de nuevo.',fr:'Échec de l\'enregistrement. Veuillez réessayer.',pt:'Falha ao salvar. Tente novamente.',de:'Speichern fehlgeschlagen. Bitte versuchen Sie es erneut.',ar:'فشل الحفظ. يرجى المحاولة مرة أخرى.' },
+    googleLoginFailedAlert:{ ja:'Googleログインに失敗しました',en:'Google sign-in failed',ko:'Google 로그인에 실패했습니다','zh-tw':'Google 登入失敗','zh-cn':'Google 登录失败',es:'Error al iniciar sesión con Google',fr:'Échec de la connexion Google',pt:'Falha no login do Google',de:'Google-Anmeldung fehlgeschlagen',ar:'فشل تسجيل الدخول عبر Google' },
+    favStatusUpdateFailedAlert:{ ja:'ステータスの更新に失敗しました。時間を置いて再度お試しください。',en:'Failed to update status. Please try again later.',ko:'상태 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요.','zh-tw':'狀態更新失敗，請稍後再試。','zh-cn':'状态更新失败，请稍后再试。',es:'Error al actualizar el estado. Inténtalo de nuevo más tarde.',fr:'Échec de la mise à jour du statut. Veuillez réessayer plus tard.',pt:'Falha ao atualizar o status. Tente novamente mais tarde.',de:'Status konnte nicht aktualisiert werden. Bitte versuchen Sie es später erneut.',ar:'فشل تحديث الحالة. يرجى المحاولة مرة أخرى لاحقًا.' },
     goodsSection: { ja:'🛍 グッズ・関連商品',en:'🛍 Merchandise',ko:'🛍 굿즈・관련 상품','zh-tw':'🛍 周邊商品','zh-cn':'🛍 周边商品',es:'🛍 Merchandising',fr:'🛍 Produits dérivés',pt:'🛍 Mercadoria',de:'🛍 Merchandise',ar:'🛍 البضائع' },
     goodsSeeItem: { ja:'商品を見る',en:'View items',ko:'상품 보기','zh-tw':'查看商品','zh-cn':'查看商品',es:'Ver productos',fr:'Voir les produits',pt:'Ver produtos',de:'Produkte ansehen',ar:'عرض المنتجات' },
     totalPV:      { ja:'総PV',en:'Total PV',ko:'총 PV','zh-tw':'總PV','zh-cn':'总PV',es:'PV total',fr:'PV total',pt:'PV total',de:'Gesamt-PV',ar:'إجمالي PV' },
@@ -6769,6 +6836,50 @@
      既存のクラスタリング＋トリム平均ロジックをそのまま再利用。
      将来プロ版（企業向け）に切り出す際もこの関数だけ移植すればよい。
   ════════════════════════════ */
+  // ── 国別差の統計的検定 ──
+  // Welchのt検定（2グループの分散が異なる前提の方が安全なので採用）。
+  // 厳密なp値計算（不完全ベータ関数）は複雑なため、代わりに自由度に応じたt臨界値の表を使い、
+  // |t| がその臨界値を超えるかどうかで「有意水準5%で有意な差」を判定する簡易版。
+  const T_CRITICAL_TABLE = [
+    [1,12.71],[2,4.303],[3,3.182],[4,2.776],[5,2.571],[6,2.447],[7,2.365],[8,2.306],
+    [9,2.262],[10,2.228],[15,2.131],[20,2.086],[25,2.060],[30,2.042],[40,2.021],
+    [60,2.000],[120,1.980],[Infinity,1.960],
+  ];
+  function tCriticalValue(df) {
+    for (const [tableDf, crit] of T_CRITICAL_TABLE) {
+      if (df <= tableDf) return crit;
+    }
+    return 1.960;
+  }
+  function mean(arr) { return arr.reduce((a,b)=>a+b,0) / arr.length; }
+  function variance(arr, m) { return arr.reduce((sum,v)=>sum+(v-m)**2, 0) / (arr.length - 1); }
+  function welchTTest(sampleA, sampleB) {
+    const n1 = sampleA.length, n2 = sampleB.length;
+    if (n1 < 2 || n2 < 2) return null;
+    const m1 = mean(sampleA), m2 = mean(sampleB);
+    const v1 = variance(sampleA, m1), v2 = variance(sampleB, m2);
+    const se = Math.sqrt(v1/n1 + v2/n2);
+    if (se === 0) return { t: 0, df: n1+n2-2, mean1: m1, mean2: m2, significant: false };
+    const t = (m1 - m2) / se;
+    // Welch–Satterthwaite の自由度
+    const df = (v1/n1 + v2/n2)**2 / ((v1**2)/((n1**2)*(n1-1)) + (v2**2)/((n2**2)*(n2-1)));
+    const significant = Math.abs(t) >= tCriticalValue(df);
+    return { t: Math.round(t*100)/100, df: Math.round(df*10)/10, mean1: Math.round(m1*10)/10, mean2: Math.round(m2*10)/10, significant };
+  }
+  // 2つの国の12軸それぞれについて有意差検定を行う
+  function computeCountrySignificance(resultA, resultB) {
+    if (!resultA?.mainCluster || !resultB?.mainCluster) return [];
+    const labels = [...axisA, ...axisB];
+    const fields = [...axisA.map(k=>['chartA',k]), ...axisB.map(k=>['chartB',k])];
+    return labels.map((label, i) => {
+      const [field, key] = fields[i];
+      const sampleA = resultA.mainCluster.map(r => Number(r[field]?.[key]||0));
+      const sampleB = resultB.mainCluster.map(r => Number(r[field]?.[key]||0));
+      const result = welchTTest(sampleA, sampleB);
+      return { label, ...result };
+    }).filter(Boolean);
+  }
+
   function calcCountryMasterGraph(reviewsLikeArr, countryCode) {
     // reviewsLikeArr: [{chart_a, chart_b, country_code}, ...] 形式（DBの生データ）
     const filtered = reviewsLikeArr.filter(r => (r.country_code||'不明') === countryCode);
@@ -6780,7 +6891,7 @@
     const mainCluster = getMainClusterReviews(normalized, userQCounts);
     const avgA = axisA.map(k => aggregateValues(mainCluster.map(r=>Number(r.chartA?.[k]||0))));
     const avgB = axisB.map(k => aggregateValues(mainCluster.map(r=>Number(r.chartB?.[k]||0))));
-    return { avgA, avgB, count: filtered.length, usedCount: mainCluster.length };
+    return { avgA, avgB, count: filtered.length, usedCount: mainCluster.length, mainCluster };
   }
 
   // データのある国コード一覧を件数順で返す（最低N件以上）
@@ -6826,11 +6937,36 @@
       if(resultB && caB) drawRadar(caB, getAxisB(), resultB.avgB, 'rgba(94,170,255,0.35)', '#5ea8ff');
       // 2国分を重ねて比較したいので、まとめて描画する関数に変更
       drawCountryCompareCharts(resultA, resultB);
+      renderCountrySignificance(resultA, resultB);
     };
 
     selA.onchange = redraw;
     selB.onchange = redraw;
     redraw();
+  }
+
+  // 統計的検定結果を管理画面に表示する
+  function renderCountrySignificance(resultA, resultB) {
+    const el = document.getElementById('adminCountrySignificance');
+    if (!el) return;
+    if (!resultA || !resultB) { el.innerHTML = ''; return; }
+    const results = computeCountrySignificance(resultA, resultB);
+    if (!results.length) { el.innerHTML = ''; return; }
+    const significantAxes = results.filter(r => r.significant);
+    el.innerHTML = `
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .4rem;">
+        統計的検定（Welchのt検定、有意水準5%）: サンプル数の少ない差はここで除外されます
+      </p>
+      ${significantAxes.length
+        ? significantAxes.map(r => `
+          <div class="admin-row">
+            <span>${r.label}</span>
+            <span class="admin-badge" style="background:rgba(94,201,122,.15);color:#5ec97a;">有意差あり（${r.mean1} vs ${r.mean2}, t=${r.t}）</span>
+          </div>
+        `).join('')
+        : '<p style="color:var(--muted);font-size:.78rem;">この2ヶ国間で統計的に有意な差がある軸はありません（見た目の差はサンプルのブレの範囲内）</p>'
+      }
+    `;
   }
 
   function drawCountryCompareCharts(resultA, resultB) {
@@ -7260,10 +7396,15 @@
                 const label = s.isFragmented
                   ? `${s.clusterCount}派に分裂: A${s.top1Size}件 / B${s.top2Size}件 / C${s.top3Size}件（全${s.totalReviews}件）`
                   : `派閥A:${s.top1Size}件 / 派閥B:${s.top2Size}件（全${s.totalReviews}件）`;
+                const axesLabel = (s.splitAxes||[]).filter(a=>a.diff>=1.5) // 差1.5未満は「原因」と呼ぶには小さすぎるため除外
+                  .map(a=>`${a.label}(A:${a.group1Avg} / B:${a.group2Avg}、差${a.diff})`).join(' ・ ');
                 return `
-                <div class="admin-row">
-                  <span>${animeMap2[s.animeId]||s.animeId}</span>
-                  <span class="admin-badge" style="background:rgba(255,107,107,.15);color:#ff6b6b;">${label}</span>
+                <div class="admin-row" style="flex-direction:column;align-items:flex-start;gap:.25rem;">
+                  <div style="display:flex;justify-content:space-between;width:100%;">
+                    <span>${animeMap2[s.animeId]||s.animeId}</span>
+                    <span class="admin-badge" style="background:rgba(255,107,107,.15);color:#ff6b6b;">${label}</span>
+                  </div>
+                  ${axesLabel ? `<span style="font-size:.7rem;color:var(--muted);">分裂軸: ${axesLabel}</span>` : ''}
                 </div>
               `;}).join('');
             } else {
@@ -7711,7 +7852,7 @@
     } catch(e) {
       console.warn('Google login:', e);
       const errEl = document.getElementById('authError');
-      if(errEl) errEl.textContent = currentLang==='ja' ? 'Googleログインに失敗しました' : 'Google sign-in failed';
+      if(errEl) errEl.textContent = t('googleLoginFailedAlert');
       if(btn) btn.disabled = false;
     }
   }
@@ -8098,7 +8239,7 @@
     const { error } = await db.favorites.setStatus(_currentUser.id, animeId, newStatus);
     if(error) {
       console.warn('ステータス更新エラー:', error);
-      alert(currentLang==='ja' ? 'ステータスの更新に失敗しました。時間を置いて再度お試しください。' : 'Failed to update status.');
+      alert(t('favStatusUpdateFailedAlert'));
       return;
     }
     // 表示中のページに応じて再描画（マイページのプレビュー／お気に入り全件ページ）
