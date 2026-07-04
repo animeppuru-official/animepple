@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.15.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.15.1</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1977,7 +1977,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.15.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.15.1</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -5312,36 +5312,40 @@
       else filtered.sort((a,b)=>b.tagScore-a.tagScore||b.rel-a.rel||a.anime.title.localeCompare(b.anime.title,'ja'));
       list = filtered;
     } else {
-      // キーワード無し：①選んだ並び順そのものの基準に合うヒット → ②タグ/ジャンルのヒット → ③その他の穴埋め、の3段階で常に約100件を目指す
-      let tier1;
-      if(sort==='match') {
-        tier1 = hasSrProfile()
-          ? mapped.filter(r=>r.match!==Infinity).sort((a,b)=>a.match-b.match)
-          : [...mapped].sort((a,b)=>a.match-b.match); // 好みグラフ未設定時は従来通り全件表示
-      } else if(sort==='reviews_desc') {
-        tier1 = mapped.filter(r=>r.reviews>0).sort((a,b)=>b.reviews-a.reviews);
-      } else if(sort==='reviews_asc') {
-        tier1 = mapped.filter(r=>r.reviews>0).sort((a,b)=>a.reviews-b.reviews);
+      // キーワード無し：常に約100件を目指して段階的に積み上げる。
+      // タグが有効な場合は「タグ一致」を最優先の軸にし、その中で選んだ並び順の基準を適用する
+      // （グラフ一致度やレビュー数だけで並べると、タグを指定した意味が無くなるため）。
+      const sortWithinTier = (arr) => {
+        if(sort==='reviews_desc') arr.sort((a,b)=>b.reviews-a.reviews);
+        else if(sort==='reviews_asc') arr.sort((a,b)=>a.reviews-b.reviews);
+        else if(sort==='match') arr.sort((a,b)=>a.match-b.match);
+        else arr.sort((a,b)=>b.tagScore-a.tagScore||b.rel-a.rel||a.anime.title.localeCompare(b.anime.title,'ja'));
+        return arr;
+      };
+      const satisfiesSortCriteria = (r) => {
+        if(sort==='match') return hasSrProfile() ? r.match!==Infinity : true;
+        if(sort==='reviews_desc'||sort==='reviews_asc') return r.reviews>0;
+        return true;
+      };
+
+      let ordered;
+      if(srTagsActive.length) {
+        // ①タグ一致 かつ 並び順の基準も満たす → ②タグ一致のみ → ③並び順の基準のみ満たす → ④その他
+        const tier1 = sortWithinTier(mapped.filter(r=>r.tagScore>0 && satisfiesSortCriteria(r)));
+        const tier2 = sortWithinTier(mapped.filter(r=>r.tagScore>0 && !satisfiesSortCriteria(r)));
+        const usedAfter2 = new Set([...tier1, ...tier2].map(r=>r.anime.id));
+        const tier3 = sortWithinTier(mapped.filter(r=>!usedAfter2.has(r.anime.id) && satisfiesSortCriteria(r)));
+        const usedAfter3 = new Set([...usedAfter2, ...tier3.map(r=>r.anime.id)]);
+        const tier4 = sortWithinTier(mapped.filter(r=>!usedAfter3.has(r.anime.id)));
+        ordered = [...tier1, ...tier2, ...tier3, ...tier4];
       } else {
-        tier1 = srTagsActive.length ? mapped.filter(r=>r.tagScore>0).sort((a,b)=>b.tagScore-a.tagScore||b.rel-a.rel) : [];
+        // タグ無し：①並び順の基準を満たすヒット → ②その他の穴埋め
+        const tier1 = sortWithinTier(mapped.filter(satisfiesSortCriteria));
+        const usedIds1 = new Set(tier1.map(r=>r.anime.id));
+        const tier2 = sortWithinTier(mapped.filter(r=>!usedIds1.has(r.anime.id)));
+        ordered = [...tier1, ...tier2];
       }
-      const usedIds1 = new Set(tier1.map(r=>r.anime.id));
-
-      // タグ/ジャンルのヒット（①にまだ入っていないもの）
-      const tier2 = srTagsActive.length
-        ? mapped.filter(r=>!usedIds1.has(r.anime.id) && r.tagScore>0).sort((a,b)=>b.tagScore-a.tagScore)
-        : [];
-      const usedIds2 = new Set([...usedIds1, ...tier2.map(r=>r.anime.id)]);
-
-      // その他の穴埋め（選んだ並び順の基準で並べる）
-      const tier3 = mapped.filter(r=>!usedIds2.has(r.anime.id));
-      if(sort==='reviews_desc') tier3.sort((a,b)=>b.reviews-a.reviews);
-      else if(sort==='reviews_asc') tier3.sort((a,b)=>a.reviews-b.reviews);
-      else if(sort==='match') tier3.sort((a,b)=>a.match-b.match);
-      else tier3.sort((a,b)=>a.anime.title.localeCompare(b.anime.title,'ja'));
-
-      const needed = Math.max(0, RESULT_TARGET - tier1.length - tier2.length);
-      list = [...tier1, ...tier2, ...tier3.slice(0, needed)];
+      list = ordered.slice(0, RESULT_TARGET);
     }
 
     // Kitsu検索結果も追加（キーワードがある場合）
