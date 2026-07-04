@@ -916,7 +916,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.9.4</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.10.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1093,6 +1093,13 @@
       </div>
     </div>
     <div id="worldStatsContent" style="margin-top:.6rem;"></div>
+  </section>
+
+  <!-- 似ている作品（好みグラフ・タグの近さで算出） -->
+  <section class="reviews-section" id="similarAnimeSection" style="display:none;">
+    <h2 style="margin:0 0 .5rem;" data-i18n="similarAnimeTitle">🧭 似ている作品</h2>
+    <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;" data-i18n="similarAnimeDesc">好みグラフとタグの近さから算出しています</p>
+    <div id="similarAnimeGrid" class="hscroll"></div>
   </section>
 
   <!-- 配信サービス -->
@@ -1847,7 +1854,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.9.4</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.10.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -4247,6 +4254,7 @@
       const countEl = document.getElementById('animeReviewCount');
       if(countEl) countEl.textContent = allReviews.length ? `${allReviews.length}件` : '';
     });
+    renderSimilarAnime(id);
     // 「レビューを見る」ボタン
     const rlBtn = document.getElementById('goReviewListBtn');
     if(rlBtn) rlBtn.onclick = ()=>nav('reviews', id);
@@ -4810,7 +4818,10 @@
         const avgA = {}, avgB = {};
         axisA.forEach(k=>{ avgA[k] = aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartA?.[k]||0), userQCounts)); });
         axisB.forEach(k=>{ avgB[k] = aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartB?.[k]||0), userQCounts)); });
-        cache[animeId] = { avgA, avgB };
+        const tagCounts = {};
+        valid.forEach(r=>(r.tags||[]).forEach(tag=>{ const k=String(tag).toLowerCase(); tagCounts[k]=(tagCounts[k]||0)+1; }));
+        const topTagsForAnime = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([tag])=>tag);
+        cache[animeId] = { avgA, avgB, count: valid.length, tags: topTagsForAnime };
       });
       _searchMasterGraphCache = cache;
       return cache;
@@ -4819,6 +4830,66 @@
   }
 
   function hasSrProfile(){ return Object.values(srProfileA).some(v=>v>0)||Object.values(srProfileB).some(v=>v>0); }
+
+  // ── 似ている作品（コンテンツベース推薦） ──
+  // 好みグラフ12軸のユークリッド距離＋タグの重複数を組み合わせて近さを算出する。
+  // 3件未満のデータしか無い作品は候補から除外する（マスターグラフのk-匿名性ルールと揃える）。
+  const SIMILAR_ANIME_MIN_REVIEWS = 3;
+  async function computeSimilarAnime(currentId, limit) {
+    limit = limit || 8;
+    const cache = await ensureSearchMasterGraphCache();
+    const current = cache[currentId];
+    if(!current || current.count < SIMILAR_ANIME_MIN_REVIEWS) return [];
+    const labA = axisA, labB = axisB;
+    const currentTags = new Set(current.tags||[]);
+    const scored = [];
+    Object.entries(cache).forEach(([animeId, entry])=>{
+      if(animeId === currentId) return;
+      if(entry.count < SIMILAR_ANIME_MIN_REVIEWS) return;
+      let sq = 0;
+      labA.forEach(k=>{ const d=(entry.avgA[k]||0)-(current.avgA[k]||0); sq += d*d; });
+      labB.forEach(k=>{ const d=(entry.avgB[k]||0)-(current.avgB[k]||0); sq += d*d; });
+      const dist = Math.sqrt(sq);
+      const overlap = (entry.tags||[]).filter(t=>currentTags.has(t)).length;
+      const score = dist - overlap * 1.5; // タグが重複するほどスコアが下がる（近くなる）
+      scored.push({ animeId, score });
+    });
+    scored.sort((a,b)=>a.score-b.score);
+    return scored.slice(0, limit).map(s=>s.animeId);
+  }
+
+  async function renderSimilarAnime(id) {
+    const section = document.getElementById('similarAnimeSection');
+    const grid = document.getElementById('similarAnimeGrid');
+    if(!section || !grid) return;
+    if(DB_MODE !== 'supabase' || !sb) { section.style.display='none'; return; }
+    try {
+      const ids = await computeSimilarAnime(id);
+      if(!ids.length) { section.style.display='none'; return; }
+      const all = getAll();
+      const missingIds = ids.filter(i=>!all.find(p=>p.id===i));
+      const fetchedPages = missingIds.length ? await db.animePages.getByIds(missingIds) : [];
+      const pageMap = {};
+      all.forEach(p=>{ pageMap[p.id]=p; });
+      (fetchedPages||[]).forEach(p=>{
+        pageMap[p.id] = {
+          id: p.id,
+          kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+          title: p.title || p.title_en || '',
+          titleEn: p.title_en || p.title || '',
+          meta: p.meta || '', image: p.image_url || '',
+          year: p.year || '', episodes: p.episodes || '',
+        };
+      });
+      const items = ids.map(i=>pageMap[i]).filter(Boolean);
+      if(!items.length) { section.style.display='none'; return; }
+      grid.innerHTML = items.map(item=>renderAnimeCard(item, { style:'h' })).join('');
+      section.style.display='';
+    } catch(e) {
+      console.warn('similar anime error:', e);
+      section.style.display='none';
+    }
+  }
   function matchDist(id){
     let aA=avgChart(id,'chartA',axisA),aB=avgChart(id,'chartB',axisB);
     if((!aA||!aB) && _searchMasterGraphCache && _searchMasterGraphCache[id]) {
@@ -5486,6 +5557,8 @@
     noReviewFilter: { ja:'レビューがありません',en:'No reviews found',ko:'리뷰가 없습니다','zh-tw':'找不到評論','zh-cn':'找不到评论',es:'No hay reseñas',fr:'Aucun avis',pt:'Nenhuma avaliação',de:'Keine Bewertungen',ar:'لا توجد مراجعات' },
     welcomeMsg:   { ja:'ようこそ<br>アニメップルへ！',en:'Welcome to<br>Animepple!',ko:'아니메플에<br>오신 것을 환영합니다!','zh-tw':'歡迎來到<br>Animepple！','zh-cn':'欢迎来到<br>Animepple！',es:'¡Bienvenido a<br>Animepple!',fr:'Bienvenue sur<br>Animepple !',pt:'Bem-vindo ao<br>Animepple!',de:'Willkommen bei<br>Animepple!',ar:'مرحباً بك في<br>Animepple!' },
     worldReaction:{ ja:'🌍 世界の反応',en:'🌍 World Reactions',ko:'🌍 세계 반응','zh-tw':'🌍 世界反應','zh-cn':'🌍 世界反应',es:'🌍 Reacciones mundiales',fr:'🌍 Réactions mondiales',pt:'🌍 Reações mundiais',de:'🌍 Weltweite Reaktionen',ar:'🌍 ردود العالم' },
+    similarAnimeTitle:{ ja:'🧭 似ている作品',en:'🧭 Similar Titles',ko:'🧭 비슷한 작품','zh-tw':'🧭 相似作品','zh-cn':'🧭 相似作品',es:'🧭 Títulos similares',fr:'🧭 Titres similaires',pt:'🧭 Títulos semelhantes',de:'🧭 Ähnliche Titel',ar:'🧭 عناوين مشابهة' },
+    similarAnimeDesc:{ ja:'好みグラフとタグの近さから算出しています',en:'Based on graph similarity and shared tags',ko:'그래프 유사도와 태그를 기반으로 산출됩니다','zh-tw':'依據好惡圖表與標籤的相似度計算','zh-cn':'依据偏好图表与标签的相似度计算',es:'Calculado por similitud de gráficos y etiquetas',fr:'Calculé selon la similarité du graphique et des tags',pt:'Calculado pela semelhança do gráfico e tags',de:'Basierend auf Grafikähnlichkeit und Tags',ar:'يُحسب بناءً على تشابه الرسم البياني والوسوم' },
     goodsSection: { ja:'🛍 グッズ・関連商品',en:'🛍 Merchandise',ko:'🛍 굿즈・관련 상품','zh-tw':'🛍 周邊商品','zh-cn':'🛍 周边商品',es:'🛍 Merchandising',fr:'🛍 Produits dérivés',pt:'🛍 Mercadoria',de:'🛍 Merchandise',ar:'🛍 البضائع' },
     goodsSeeItem: { ja:'商品を見る',en:'View items',ko:'상품 보기','zh-tw':'查看商品','zh-cn':'查看商品',es:'Ver productos',fr:'Voir les produits',pt:'Ver produtos',de:'Produkte ansehen',ar:'عرض المنتجات' },
     totalPV:      { ja:'総PV',en:'Total PV',ko:'총 PV','zh-tw':'總PV','zh-cn':'总PV',es:'PV total',fr:'PV total',pt:'PV total',de:'Gesamt-PV',ar:'إجمالي PV' },
