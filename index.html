@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.16.2</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.16.3</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1978,7 +1978,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.16.2</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.16.3</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2766,7 +2766,7 @@
   // ホーム/人気/マイページなど検索と無関係なページに移動した時、検索の状態を消す
   function resetSearchStateIfLeaving(fromPage, toPage) {
     if(fromPage !== 'search') return;
-    if(['home','popular','mypage','user'].includes(toPage)) {
+    if(toPage !== 'search') {
       srSearchState.q = '';
       srSearchState.sort = 'relevance';
       srTagsActive.length = 0;
@@ -2848,6 +2848,7 @@
   function navBack() {
     const prev = navHistory.pop();
     if(!prev || prev.page==='home') { nav('home'); return; }
+    resetSearchStateIfLeaving(currentPage, prev.page);
     // 履歴から戻る時はスタックに積まない
     const overlay = document.getElementById('searchOverlay');
     if(overlay) overlay.classList.remove('open');
