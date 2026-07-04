@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.13.2</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.13.3</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1977,7 +1977,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.13.2</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.13.3</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -3394,11 +3394,12 @@
      TAG CHIP BUILDER (reusable)
   ════════════════════════════ */
   function makeTagChipUI(listId, tags, maxTags) {
-    function render() {
+    async function render() {
       const el=document.getElementById(listId); if(!el) return;
+      const labelMap = currentLang === 'ja' ? {} : await translateTagsForDisplay(tags);
       el.innerHTML = tags.map((t,i)=>`
         <span class="tag-chip">
-          #${t}
+          #${escapeHtml(labelMap[t]||t)}
           <button type="button" data-ti="${i}" aria-label="削除">×</button>
         </span>
       `).join('');
@@ -3410,15 +3411,24 @@
     return render;
   }
 
-  function setupTagInput(inputId, addBtnId, listId, tags, maxTags) {
+  function setupTagInput(inputId, addBtnId, listId, tags, maxTags, opts) {
+    opts = opts || {};
     const input=document.getElementById(inputId), btn=document.getElementById(addBtnId);
     const render=makeTagChipUI(listId, tags, maxTags);
-    function addTag() {
-      const v=input.value.trim().replace(/^#/,'');
+    async function addTag() {
+      let v=input.value.trim().replace(/^#/,'');
       if (!v) return;
       if (tags.length>=maxTags) { input.value=''; return; }
-      if (!tags.includes(v)) { tags.push(v); render(); }
       input.value='';
+      // 検索用タグ入力では、日本語以外で入力された場合、照合できるよう日本語に翻訳しておく
+      // （保存されているタグデータが基本的に日本語のため。表示はtranslateTagsForDisplayで現在の言語に戻す）
+      if(opts.translateToJa && currentLang !== 'ja') {
+        try {
+          const translated = await translateApi.translate(v, 'JA');
+          if(translated) v = translated;
+        } catch(_) {}
+      }
+      if (!tags.includes(v)) { tags.push(v); render(); }
     }
     if (btn) btn.onclick=addTag;
     if (input) input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addTag(); } });
@@ -3662,7 +3672,7 @@
   document.getElementById('closeSearch').onclick=closeSearch;
   buildSliders('overlayFilterA',axisA,overlayProfileA,'ov-a');
   buildSliders('overlayFilterB',axisB,overlayProfileB,'ov-b');
-  setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10);
+  setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true});
 
   function doOverlaySearch() {
     const q=document.getElementById('overlaySearchInput').value.trim();
@@ -5146,7 +5156,7 @@
   }
 
   function setupSrTagInput() {
-    setupTagInput('srTagInput','srTagAddBtn','srTagList',srTagsActive,10);
+    setupTagInput('srTagInput','srTagAddBtn','srTagList',srTagsActive,10,{translateToJa:true});
   }
 
   async function renderSearch() {
