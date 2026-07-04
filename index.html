@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.16.3</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.16.4</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1978,7 +1978,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.16.3</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.16.4</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2772,8 +2772,14 @@
       srTagsActive.length = 0;
       Object.keys(srProfileA).forEach(k=>srProfileA[k]=0);
       Object.keys(srProfileB).forEach(k=>srProfileB[k]=0);
+      // 検索オーバーレイ（🔍アイコンから開くモーダル）側の状態も一緒にリセットする
+      overlayTags.length = 0;
+      Object.keys(overlayProfileA).forEach(k=>overlayProfileA[k]=0);
+      Object.keys(overlayProfileB).forEach(k=>overlayProfileB[k]=0);
       const qInput = document.getElementById('srQuery');
       if(qInput) qInput.value = '';
+      const overlayQInput = document.getElementById('overlaySearchInput');
+      if(overlayQInput) overlayQInput.value = '';
     }
   }
 
@@ -3713,6 +3719,10 @@
 
   function openSearch() {
     document.getElementById('searchOverlay').classList.add('open');
+    // 開くたびに現在の値でスライダーを再構築する（前回の値が見た目に残らないように）
+    buildSliders('overlayFilterA',axisA,overlayProfileA,'ov-a');
+    buildSliders('overlayFilterB',axisB,overlayProfileB,'ov-b');
+    if(renderOverlayTags) renderOverlayTags();
     // display確定後（iOS含む）にCanvas描画
     setTimeout(()=>{
       ['overlayFilterA','overlayFilterB'].forEach(id=>{
@@ -3729,7 +3739,7 @@
   document.getElementById('closeSearch').onclick=closeSearch;
   buildSliders('overlayFilterA',axisA,overlayProfileA,'ov-a');
   buildSliders('overlayFilterB',axisB,overlayProfileB,'ov-b');
-  setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true});
+  const renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true});
 
   function doOverlaySearch() {
     const q=document.getElementById('overlaySearchInput').value.trim();
