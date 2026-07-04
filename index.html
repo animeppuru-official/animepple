@@ -916,7 +916,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.9.3</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.9.4</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1847,7 +1847,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.9.3</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.9.4</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -4434,6 +4434,7 @@
   // グラフが動かされたかどうかのフラグ
   let chartMoved = false;
   let _reviewStartTime = 0;
+  let _reviewSessionId = null;
   let _turnstileWidgetId = null;
   // Turnstileスクリプトは async defer で読み込んでるため、レビューページ表示時に
   // まだ window.turnstile が準備できてない可能性がある → 準備できるまで軽くリトライする
@@ -4479,6 +4480,16 @@
     axisB.forEach((_,i)=>{vB[i]=-1;});
     chartMoved = false;
     _reviewStartTime = Date.now();
+    _reviewSessionId = null;
+    // サーバー側で投稿時間を検証するため、開始時刻をサーバーに記録してもらう
+    // （elapsed_msをクライアントの申告値だけに頼らないための対策）
+    if(DB_MODE === 'supabase' && sb) {
+      fetch(`${SUPABASE_URL}/functions/v1/start-review-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
+        body: JSON.stringify({ animeId: id }),
+      }).then(r=>r.json()).then(d=>{ if(d.sessionId) _reviewSessionId = d.sessionId; }).catch(()=>{});
+    }
     renderReviewTurnstile();
     buildReviewSliders('slidersA', getAxisA(), vA, ()=>{ chartMoved=true; redrawReview(); });
     buildReviewSliders('slidersB', getAxisB(), vB, ()=>{ chartMoved=true; redrawReview(); });
@@ -4634,6 +4645,7 @@
           },
           body: JSON.stringify({
             turnstileToken,
+            sessionId: _reviewSessionId,
             animePage: page ? {
               id: page.id, kitsu_id: page.kitsuId||null,
               title: page.title||null, title_en: page.titleEn||null,
