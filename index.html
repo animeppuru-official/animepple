@@ -885,7 +885,7 @@
   <div class="filter-label">🏷 タグで絞る（最大10個）</div>
   <div class="filter-box">
     <div class="search-tag-input-wrap">
-      <input id="overlayTagInput" placeholder="タグを入力…例: 泣ける、鬱、神作画" maxlength="20" />
+      <input id="overlayTagInput" placeholder="タグを入力…例: 泣ける、鬱、神作画" maxlength="20" autocomplete="off" />
       <button class="search-tag-add-btn" id="overlayTagAddBtn" data-i18n="btnAdd">追加</button>
     </div>
     <div class="tag-list" id="overlayTagList"></div>
@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.14.1</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.15.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1314,7 +1314,7 @@
     <div class="filter-label">🏷 タグで絞る</div>
     <div class="filter-box">
       <div class="search-tag-input-wrap">
-        <input id="srTagInput" placeholder="タグを入力…" maxlength="20" />
+        <input id="srTagInput" placeholder="タグを入力…" maxlength="20" autocomplete="off" />
         <button class="search-tag-add-btn" id="srTagAddBtn" data-i18n="btnAdd">追加</button>
       </div>
       <div class="tag-list" id="srTagList"></div>
@@ -1977,7 +1977,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.14.1</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.15.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2762,12 +2762,27 @@
   let currentAnimeId = null;
   let navHistory = []; // 履歴スタック
 
+  // ホーム/人気/マイページなど検索と無関係なページに移動した時、検索の状態を消す
+  function resetSearchStateIfLeaving(fromPage, toPage) {
+    if(fromPage !== 'search') return;
+    if(['home','popular','mypage','user'].includes(toPage)) {
+      srSearchState.q = '';
+      srSearchState.sort = 'relevance';
+      srTagsActive.length = 0;
+      Object.keys(srProfileA).forEach(k=>srProfileA[k]=0);
+      Object.keys(srProfileB).forEach(k=>srProfileB[k]=0);
+      const qInput = document.getElementById('srQuery');
+      if(qInput) qInput.value = '';
+    }
+  }
+
   function nav(page, animeId) {
     // 検索オーバーレイが開いていたら閉じる
     const overlay = document.getElementById('searchOverlay');
     if(overlay && overlay.classList.contains('open')) {
       overlay.classList.remove('open');
     }
+    resetSearchStateIfLeaving(currentPage, page);
     // 現在ページを履歴に積む（同じページへの連続遷移は積まない）
     const last = navHistory[navHistory.length-1];
     if(!last || last.page !== currentPage || last.animeId !== currentAnimeId) {
@@ -5274,10 +5289,8 @@
     if(hasSrProfile()) await ensureSearchMasterGraphCache();
 
     if(q) list=list.filter(a=>`${a.title} ${a.titleEn||''} ${a.meta} ${(a.features||[]).join(' ')} ${a.description}`.toLowerCase().includes(q));
-    if(srTagsActive.length) list=list.filter(a=>tagMatchScore(a)>0);
-    if(hasSrProfile()&&srSearchState.sort==='match') list=list.filter(a=>matchDist(a.id)!==Infinity);
 
-    list=list.map(a=>({
+    const mapped=list.map(a=>({
       anime:a,
       reviews:reviewCount(a.id),
       rel:relScore(a,q),
@@ -5286,10 +5299,50 @@
     }));
 
     const sort=srSearchState.sort;
-    if(sort==='reviews_desc') list.sort((a,b)=>b.reviews-a.reviews);
-    else if(sort==='reviews_asc') list.sort((a,b)=>a.reviews-b.reviews);
-    else if(sort==='match') list.sort((a,b)=>a.match-b.match);
-    else list.sort((a,b)=>b.tagScore-a.tagScore||b.rel-a.rel||a.anime.title.localeCompare(b.anime.title,'ja'));
+    const RESULT_TARGET = 100; // キーワード無し検索は、データが少ない初期でも常にこの件数を目指す
+
+    if(q) {
+      // キーワード検索は局所検索なので例外：絞り込んだ結果だけを見せる（穴埋めしない）
+      let filtered = mapped;
+      if(srTagsActive.length) filtered = filtered.filter(r=>r.tagScore>0);
+      if(hasSrProfile()&&sort==='match') filtered = filtered.filter(r=>r.match!==Infinity);
+      if(sort==='reviews_desc') filtered.sort((a,b)=>b.reviews-a.reviews);
+      else if(sort==='reviews_asc') filtered.sort((a,b)=>a.reviews-b.reviews);
+      else if(sort==='match') filtered.sort((a,b)=>a.match-b.match);
+      else filtered.sort((a,b)=>b.tagScore-a.tagScore||b.rel-a.rel||a.anime.title.localeCompare(b.anime.title,'ja'));
+      list = filtered;
+    } else {
+      // キーワード無し：①選んだ並び順そのものの基準に合うヒット → ②タグ/ジャンルのヒット → ③その他の穴埋め、の3段階で常に約100件を目指す
+      let tier1;
+      if(sort==='match') {
+        tier1 = hasSrProfile()
+          ? mapped.filter(r=>r.match!==Infinity).sort((a,b)=>a.match-b.match)
+          : [...mapped].sort((a,b)=>a.match-b.match); // 好みグラフ未設定時は従来通り全件表示
+      } else if(sort==='reviews_desc') {
+        tier1 = mapped.filter(r=>r.reviews>0).sort((a,b)=>b.reviews-a.reviews);
+      } else if(sort==='reviews_asc') {
+        tier1 = mapped.filter(r=>r.reviews>0).sort((a,b)=>a.reviews-b.reviews);
+      } else {
+        tier1 = srTagsActive.length ? mapped.filter(r=>r.tagScore>0).sort((a,b)=>b.tagScore-a.tagScore||b.rel-a.rel) : [];
+      }
+      const usedIds1 = new Set(tier1.map(r=>r.anime.id));
+
+      // タグ/ジャンルのヒット（①にまだ入っていないもの）
+      const tier2 = srTagsActive.length
+        ? mapped.filter(r=>!usedIds1.has(r.anime.id) && r.tagScore>0).sort((a,b)=>b.tagScore-a.tagScore)
+        : [];
+      const usedIds2 = new Set([...usedIds1, ...tier2.map(r=>r.anime.id)]);
+
+      // その他の穴埋め（選んだ並び順の基準で並べる）
+      const tier3 = mapped.filter(r=>!usedIds2.has(r.anime.id));
+      if(sort==='reviews_desc') tier3.sort((a,b)=>b.reviews-a.reviews);
+      else if(sort==='reviews_asc') tier3.sort((a,b)=>a.reviews-b.reviews);
+      else if(sort==='match') tier3.sort((a,b)=>a.match-b.match);
+      else tier3.sort((a,b)=>a.anime.title.localeCompare(b.anime.title,'ja'));
+
+      const needed = Math.max(0, RESULT_TARGET - tier1.length - tier2.length);
+      list = [...tier1, ...tier2, ...tier3.slice(0, needed)];
+    }
 
     // Kitsu検索結果も追加（キーワードがある場合）
     let kitsuResults = [];
