@@ -468,6 +468,11 @@
       background:linear-gradient(180deg, var(--card2), #0c241a);
     }
     .mypage-fav-remove { position:absolute; top:.25rem; right:.25rem; background:rgba(0,0,0,.65); color:#ff8888; border:none; border-radius:7px; width:22px; height:22px; font-size:.72rem; cursor:pointer; }
+    .mypage-fav-status {
+      position:absolute; top:.25rem; left:.25rem; background:rgba(0,0,0,.65); color:#dff0e6; border:none;
+      border-radius:999px; padding:.15rem .5rem; font-size:.6rem; cursor:pointer; white-space:nowrap;
+    }
+    .mypage-fav-status:hover { background:rgba(0,0,0,.85); }
     .rank-progress-wrap { display:flex; flex-direction:column; gap:.4rem; }
     .rank-progress-labels { display:flex; justify-content:space-between; font-size:.74rem; color:var(--muted); }
     .rank-progress-labels strong { color:#dff0e6; font-weight:700; }
@@ -890,7 +895,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.7.8</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.8.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1361,7 +1366,7 @@
       <ul>
         <li><strong>アカウント情報</strong>: Googleアカウント経由でログインした場合、メールアドレス・表示名・プロフィール画像URLを取得します</li>
         <li><strong>レビューデータ</strong>: 投稿されたレーダーチャートスコア・タグ・コメント</li>
-        <li><strong>閲覧ログ</strong>: アクセスした作品ページのPV数（匿名）</li>
+        <li><strong>閲覧・利用ログ</strong>: アクセスした作品ページのPV数、検索キーワード、タグ・フィルターの利用状況など（いずれも匿名）</li>
         <li><strong>クッキー・ローカルストレージ</strong>: セッション管理・設定の保存のために使用します（詳細はセクション4参照）</li>
       </ul>
     </section>
@@ -1396,6 +1401,7 @@
         <li>本人の同意がある場合</li>
         <li>業務委託先（Supabase・Cloudflare等）への提供（守秘義務あり）</li>
       </ul>
+      <p>なお、個人を特定できない形に匿名化・統計化した情報（例：作品ごとの評価傾向の集計データ、タグ・検索キーワードの集計傾向、国別・言語別の利用統計など）については、個人情報に該当しないものとして、サービス改善・調査研究・提携先への提供（有償の場合を含む）に利用する場合があります。</p>
     </section>
 
     <section class="pp-section">
@@ -1740,7 +1746,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.7.8</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.8.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -1970,7 +1976,13 @@
     pvLogs: {
       async insert(animeId, countryCode) {
         if(!sb) return;
-        sb.from('pv_logs').insert({ anime_id: animeId, country_code: countryCode }).then(()=>{});
+        sb.from('pv_logs').insert({
+          anime_id: animeId,
+          country_code: countryCode,
+          device_type: detectDeviceType(),
+          lang: currentLang,
+          referrer_type: detectReferrerType(),
+        }).then(()=>{});
       },
       async getAllCountryCodes() {
         if(!sb) return [];
@@ -1986,6 +1998,62 @@
         if(!sb) return [];
         const { data } = await sb.from('pv_logs').select('viewed_at');
         return data || [];
+      },
+    },
+
+    // ── 検索ログ(匿名・企業提供データ用) ──
+    searchLogs: {
+      async insert(query, countryCode, resultCount) {
+        if(!sb || !query) return;
+        sb.from('search_logs').insert({
+          query: query.slice(0, 100),
+          country_code: countryCode || null,
+          result_count: resultCount,
+        }).then(()=>{});
+      },
+    },
+
+    // ── フィルター利用ログ(匿名・企業提供データ用) ──
+    filterLogs: {
+      async insert(filterType, filterValue) {
+        if(!sb || !filterValue) return;
+        sb.from('filter_logs').insert({
+          filter_type: filterType,
+          filter_value: String(filterValue).slice(0, 60),
+        }).then(()=>{});
+      },
+    },
+
+    // ── お気に入りイベントログ(追加/解除の匿名ログ) ──
+    favoriteEvents: {
+      async insert(animeId, eventType) {
+        if(!sb) return;
+        sb.from('favorite_events').insert({
+          anime_id: animeId,
+          event_type: eventType,
+        }).then(()=>{});
+      },
+    },
+
+    // ── 広告・アフィリンククリックログ(マーケティング同意ゲート) ──
+    adClicks: {
+      async insert(slotId, animeId) {
+        if(!sb) return;
+        sb.from('ad_clicks').insert({
+          slot_id: slotId,
+          anime_id: animeId || null,
+        }).then(()=>{});
+      },
+    },
+
+    // ── シェアクリックログ(匿名) ──
+    shareClicks: {
+      async insert(animeId, platform) {
+        if(!sb) return;
+        sb.from('share_clicks').insert({
+          anime_id: animeId || null,
+          platform,
+        }).then(()=>{});
       },
     },
 
@@ -2029,7 +2097,7 @@
       },
       async add(userId, animeId) {
         if(!sb) return;
-        await sb.from('favorites').insert({ user_id: userId, anime_id: animeId });
+        await sb.from('favorites').insert({ user_id: userId, anime_id: animeId, status: 'want_to_watch' });
       },
       async remove(userId, animeId) {
         if(!sb) return;
@@ -2037,8 +2105,17 @@
       },
       async getByUser(userId) {
         if(!sb) return [];
-        const { data } = await sb.from('favorites').select('anime_id').eq('user_id', userId).order('created_at',{ascending:false});
+        const { data } = await sb.from('favorites').select('anime_id,status').eq('user_id', userId).order('created_at',{ascending:false});
         return data || [];
+      },
+      async setStatus(userId, animeId, status) {
+        if(!sb) return;
+        await sb.from('favorites').update({ status }).eq('user_id', userId).eq('anime_id', animeId);
+      },
+      // レビュー投稿時、その作品がお気に入り済みなら自動で「視聴済み」に切り替える
+      async markWatchedIfFavorited(userId, animeId) {
+        if(!sb) return;
+        await sb.from('favorites').update({ status: 'watched' }).eq('user_id', userId).eq('anime_id', animeId);
       },
     },
   };
@@ -2179,6 +2256,7 @@
       url = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(text)}`;
     }
     if (url) window.open(url, '_blank', 'noopener,noreferrer,width=600,height=500');
+    if (canUseAnalytics()) db.shareClicks.insert(typeof currentAnimeId!=='undefined' ? currentAnimeId : null, platform);
   }
   window.shareReviewToSns = shareReviewToSns;
 
@@ -4426,6 +4504,7 @@
           throw new Error(result.error || `送信に失敗しました（${res.status}）`);
         }
         try { if(typeof turnstile !== 'undefined' && _turnstileWidgetId !== null) turnstile.reset(_turnstileWidgetId); } catch(_) {}
+        if(_currentUser) db.favorites.markWatchedIfFavorited(_currentUser.id, review.animeId).catch(()=>{});
         alert(t('reviewPosted'));
         nav('anime',currentAnimeId);
       })().catch(e=>{
@@ -4706,6 +4785,12 @@
     if(hasSrProfile()) parts.push('グラフ一致');
     document.getElementById('srResultMeta').textContent=`${combined.length}件${parts.length?' · '+parts.join(' · '):''}`;
 
+    // 検索キーワード・タグフィルターの匿名ログ（企業提供データ用・analytics同意時のみ）
+    if(canUseAnalytics()) {
+      if(srSearchState.q) db.searchLogs.insert(srSearchState.q, geoStore.getCountry(), combined.length);
+      srTagsActive.forEach(tag => db.filterLogs.insert('tag', tag));
+    }
+
     if(!combined.length){
       document.getElementById('srResultGrid').innerHTML=`<div class="no-result"><h3>${t('noResults')}</h3><p>${t('noResultsSub')}</p></div>`;
       return;
@@ -4846,11 +4931,26 @@
     return c?.marketing === true;
   }
 
+  // デバイス種別判定（媒体資料用の基礎統計・匿名）
+  function detectDeviceType() {
+    return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
+  }
+
+  // 流入元分類（検索/SNS/直接、匿名）
+  function detectReferrerType() {
+    const ref = document.referrer || '';
+    if(!ref) return 'direct';
+    try {
+      const host = new URL(ref).hostname;
+      if(/google\.|bing\.|yahoo\.|duckduckgo\./i.test(host)) return 'search';
+      if(/twitter\.com|x\.com|facebook\.com|instagram\.com|line\.me|reddit\.com|tiktok\.com/i.test(host)) return 'sns';
+      return 'other';
+    } catch(_) { return 'other'; }
+  }
+
   function adClick(slotId) {
     if(!canUseMarketing()) return; // マーケティング同意なしの場合はクリック計測しない
-    console.log(`[AD CLICK] slot=${slotId} time=${new Date().toISOString()}`);
-    // 本番差し替え例:
-    // gtag('event','ad_click',{slot_id:slotId});
+    db.adClicks.insert(slotId, typeof currentAnimeId!=='undefined' ? currentAnimeId : null);
   }
 
   // 配信サービスリンクを生成
@@ -7029,9 +7129,11 @@
     if(already) {
       await db.favorites.remove(_currentUser.id, currentAnimeId);
       if(btn) { btn.textContent = '♡'; btn.classList.remove('fav-active'); }
+      if(canUseAnalytics()) db.favoriteEvents.insert(currentAnimeId, 'remove');
     } else {
       await db.favorites.add(_currentUser.id, currentAnimeId);
       if(btn) { btn.textContent = '❤️'; btn.classList.add('fav-active'); }
+      if(canUseAnalytics()) db.favoriteEvents.insert(currentAnimeId, 'add');
     }
   }
 
@@ -7065,13 +7167,23 @@
       const p = pageMap[f.anime_id];
       const title = currentLang==='ja' ? (p?.title || p?.title_en || f.anime_id) : (p?.title_en || p?.title || f.anime_id);
       const img = p?.image_url;
+      const isWatched = f.status === 'watched';
       return `<div class="mypage-fav-card" onclick="nav('anime','${f.anime_id}')">
         ${img?`<img src="${escapeHtml(img)}" loading="lazy">`:'<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;color:var(--muted);">📺</div>'}
+        <button class="mypage-fav-status" onclick="event.stopPropagation();toggleFavoriteStatus('${f.anime_id}','${isWatched?'want_to_watch':'watched'}')">${isWatched?'✅ 視聴済み':'👀 気になる'}</button>
         <div class="mypage-fav-title">${escapeHtml(title)}</div>
       </div>`;
     }).join('');
     return allFavs.length;
   }
+
+  // お気に入りの視聴ステータス（視聴済み/気になる）を切り替える
+  async function toggleFavoriteStatus(animeId, newStatus) {
+    if(!_currentUser) return;
+    await db.favorites.setStatus(_currentUser.id, animeId, newStatus);
+    await renderFavoritesList();
+  }
+  window.toggleFavoriteStatus = toggleFavoriteStatus;
 
   async function renderFavoritesList(userId) {
     const el = document.getElementById('mypageFavoritesList');
