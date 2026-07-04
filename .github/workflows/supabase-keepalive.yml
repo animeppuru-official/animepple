@@ -1,0 +1,28 @@
+name: Supabase Keepalive
+
+# Supabaseの無料プランは、約1週間アクセスが無いと自動的に一時停止されてしまう。
+# それを防ぐため、1日1回Supabaseに軽いクエリを送ってアクセスを発生させ続ける。
+#
+# 使い方:
+# このファイルを .github/workflows/supabase-keepalive.yml として追加するだけでOK。
+# 使っているanonキーはもともとindex.html内に公開されている値なので、
+# 新しくGitHub Secretsを設定する必要はない。
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # 毎日 3:00 UTC (日本時間 正午)
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (keep project active)
+        env:
+          SUPABASE_URL: 'https://ofbjfiuayfhdkgertxyo.supabase.co'
+          ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYmpmaXVheWZoZGtnZXJ0eHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzAxOTIsImV4cCI6MjA5ODIwNjE5Mn0.atbMSoL6d_-F-RRomwfjWeKe1YOMZi-48tnPx--Etco'
+        run: |
+          curl -s -o /dev/null -w "Status: %{http_code}\n" \
+            "${SUPABASE_URL}/rest/v1/anime_pages?select=id&limit=1" \
+            -H "apikey: ${ANON_KEY}" \
+            -H "Authorization: Bearer ${ANON_KEY}"
