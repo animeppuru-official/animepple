@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.12.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.13.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1355,6 +1355,14 @@
   </header>
   <div style="padding:1rem;">
     <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h2>
+    <div style="display:flex;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap;">
+      <input id="myReviewsSearchInput" type="search" placeholder="タイトルで検索…" data-i18n="favSearchPlaceholder"
+        style="flex:1;min-width:140px;padding:.55rem .8rem;border-radius:999px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;" />
+      <select id="myReviewsSortSelect" class="admin-select" style="width:auto;flex-shrink:0;">
+        <option value="new" data-i18n="sortFavNew">新しい順</option>
+        <option value="old" data-i18n="sortFavOld">古い順</option>
+      </select>
+    </div>
     <div id="myReviewsFullList"></div>
   </div>
 </div>
@@ -1755,10 +1763,6 @@
       <input id="contactName" type="text" placeholder="お名前"
         style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;" />
 
-      <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">返信用メールアドレス(任意・返信が必要な場合はご記入ください)</label>
-      <input id="contactEmail" type="email" placeholder="you@example.com"
-        style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;" />
-
       <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">お問い合わせ内容<span style="color:#ff8888;">*</span></label>
       <textarea id="contactMessage" rows="6" placeholder="内容をご記入ください"
         style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;resize:vertical;"></textarea>
@@ -1973,7 +1977,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.12.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.13.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2458,6 +2462,49 @@
       }
     },
   };
+
+  // ── タグの多言語対応 ──
+  // タグはユーザーの自由入力（基本的に日本語）なので、表示言語が日本語以外の場合は
+  // DeepL翻訳APIを使って表示だけ翻訳する（保存データ・検索マッチングは原文のまま）。
+  const TAG_TRANSLATE_LANG_MAP = {
+    en:'EN', ko:'KO', 'zh-tw':'ZH', 'zh-cn':'ZH', es:'ES', fr:'FR', pt:'PT-PT', de:'DE',
+    // DeepLはアラビア語(ar)に未対応のため、原文（日本語）のまま表示する
+  };
+  const TAG_TRANSLATION_CACHE_KEY = 'animepple-tag-translations';
+  let _tagTranslationCache = null;
+  function loadTagTranslationCache() {
+    if(_tagTranslationCache) return _tagTranslationCache;
+    try {
+      const raw = localStorage.getItem(TAG_TRANSLATION_CACHE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      _tagTranslationCache = (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+    } catch(_) { _tagTranslationCache = {}; }
+    return _tagTranslationCache;
+  }
+  function saveTagTranslationCache() {
+    try { localStorage.setItem(TAG_TRANSLATION_CACHE_KEY, JSON.stringify(_tagTranslationCache)); } catch(_) {}
+  }
+  // 渡された全タグを一括で翻訳し、{原文タグ: 表示用テキスト} のマップを返す
+  async function translateTagsForDisplay(tags) {
+    const uniqueTags = [...new Set((tags||[]).filter(Boolean))];
+    const map = {};
+    uniqueTags.forEach(tag => { map[tag] = tag; }); // まずは原文で初期化（フォールバック）
+    if(currentLang === 'ja' || !uniqueTags.length) return map;
+    const targetLang = TAG_TRANSLATE_LANG_MAP[currentLang];
+    if(!targetLang) return map; // DeepL未対応言語（ar等）は原文のまま
+    const cache = loadTagTranslationCache();
+    let cacheDirty = false;
+    await Promise.all(uniqueTags.map(async (tag) => {
+      const cacheKey = `${tag}::${currentLang}`;
+      if(cache[cacheKey]) { map[tag] = cache[cacheKey]; return; }
+      const translated = await translateApi.translate(tag, targetLang);
+      map[tag] = translated;
+      cache[cacheKey] = translated;
+      cacheDirty = true;
+    }));
+    if(cacheDirty) saveTagTranslationCache();
+    return map;
+  }
 
   const ANIME_API_BASE = 'https://kitsu.io/api/edge/anime';
   const animeApi = {
@@ -4507,16 +4554,19 @@
 
     // タグ上位10個をバッジ表示
     const tags10 = topTags(id);
+    // 表示言語が日本語以外の場合、全レビューのタグをまとめて翻訳しておく
+    const allTagsForTranslation = [...tags10, ...reviews.flatMap(r=>r.tags||[])];
+    const tagDisplayMap = await translateTagsForDisplay(allTagsForTranslation);
     const tagsHtml = tags10.length
       ? `<div style="padding:.5rem .75rem .2rem;display:flex;flex-wrap:wrap;gap:.35rem;">
           <span style="font-size:.72rem;color:var(--muted);margin-right:.2rem;">${t('popularTags')}</span>
-          ${tags10.map(t=>`<span class="tag-chip" style="cursor:pointer;" onclick="srSearchByTag('${t}')">#${t}</span>`).join('')}
+          ${tags10.map(t=>`<span class="tag-chip" style="cursor:pointer;" onclick="srSearchByTag('${escapeHtml(t)}')">#${escapeHtml(tagDisplayMap[t]||t)}</span>`).join('')}
          </div>`
       : '';
 
     const labA=getAxisA(), labB=getAxisB();
     el.innerHTML = tagsHtml + reviews.map((rev,i)=>{
-      const tags=(rev.tags||[]).map(tag=>`<span class="tag-chip">#${escapeHtml(tag)}</span>`).join('');
+      const tags=(rev.tags||[]).map(tag=>`<span class="tag-chip">#${escapeHtml(tagDisplayMap[tag]||tag)}</span>`).join('');
       const displayName = rev.userName || rev.username || 'ゲスト';
       const isClickableUser = !!rev.userId;
       const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(rev.userId)}')" style="cursor:pointer;"` : '';
@@ -6403,7 +6453,6 @@
     document.getElementById('contactFormSection').style.display = '';
     document.getElementById('contactSuccessSection').style.display = 'none';
     document.getElementById('contactName').value = '';
-    document.getElementById('contactEmail').value = '';
     document.getElementById('contactMessage').value = '';
     document.getElementById('contactError').textContent = '';
     renderContactTurnstile();
@@ -6412,7 +6461,6 @@
 
   async function submitContactForm() {
     const name = document.getElementById('contactName').value.trim();
-    const email = document.getElementById('contactEmail').value.trim();
     const message = document.getElementById('contactMessage').value.trim();
     const errEl = document.getElementById('contactError');
     const btn = document.getElementById('contactSubmitBtn');
@@ -6431,7 +6479,7 @@
       const res = await fetch(`${SUPABASE_URL}/functions/v1/send-feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
-        body: JSON.stringify({ turnstileToken, name, email, message }),
+        body: JSON.stringify({ turnstileToken, name, message }),
       });
       const data = await res.json();
       if(!res.ok) throw new Error(data?.error || '送信に失敗しました');
@@ -7624,16 +7672,42 @@
     }
     listEl.innerHTML = `<p style="color:var(--muted);">${t('loadingLabel')}</p>`;
 
-    const reviews = await db.reviews.getByUserId(_currentUser.id);
+    const allReviews = await db.reviews.getByUserId(_currentUser.id);
 
-    if(!reviews || !reviews.length) {
+    if(!allReviews || !allReviews.length) {
       listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">📝</div><p>${t('noReviewHistory')}</p></div>`;
       return;
     }
-    const animeIds = [...new Set(reviews.map(r=>r.anime_id))];
-    const pages = await db.animePages.getByIds(animeIds);
+    const allAnimeIds = [...new Set(allReviews.map(r=>r.anime_id))];
+    const allPages = await db.animePages.getByIds(allAnimeIds);
+    const pageMap = {};
+    (allPages||[]).forEach(p=>{ pageMap[p.id]=p; });
+    const titleOf = (r)=>{
+      const p = pageMap[r.anime_id];
+      return currentLang==='ja' ? (p?.title || p?.title_en || r.anime_id) : (p?.title_en || p?.title || r.anime_id);
+    };
+
+    const searchQuery = document.getElementById('myReviewsSearchInput')?.value.trim().toLowerCase() || '';
+    const sortOrder = document.getElementById('myReviewsSortSelect')?.value || 'new';
+
+    let reviews = allReviews;
+    if(searchQuery) reviews = reviews.filter(r => titleOf(r).toLowerCase().includes(searchQuery));
+    if(sortOrder === 'old') reviews = [...reviews].reverse();
+
+    if(!reviews.length) {
+      listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">🔍</div><p>${t('noFavoritesMatch')||'該当する作品がありません'}</p></div>`;
+      return;
+    }
+    const pages = allPages;
     renderReviewCards(listEl, reviews, pages);
   }
+
+  let _reviewsSearchDebounce = null;
+  document.getElementById('myReviewsSearchInput')?.addEventListener('input', ()=>{
+    clearTimeout(_reviewsSearchDebounce);
+    _reviewsSearchDebounce = setTimeout(()=>renderMyReviews(), 250);
+  });
+  document.getElementById('myReviewsSortSelect')?.addEventListener('change', ()=>renderMyReviews());
 
   async function renderMyFavorites() {
     const listEl = document.getElementById('myFavoritesFullList');
