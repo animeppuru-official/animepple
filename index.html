@@ -912,7 +912,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.9.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.9.1</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1835,7 +1835,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.9.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.9.1</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2810,19 +2810,35 @@
           _country = cached.code; return _country;
         }
       } catch{}
-      // ipapi.co で取得（商用無料枠：月1000req）
+      // 1. ipapi.co で取得（商用無料枠：月1000req）
       try {
         const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
         const json = await res.json();
-        if(json.country_code) {
+        if(json.country_code && json.country_code.length===2) {
           _country = json.country_code;
           localStorage.setItem(CACHE_KEY, JSON.stringify({code:_country, ts:Date.now()}));
           return _country;
         }
       } catch{}
-      // フォールバック: navigator.language から推定（精度低）
+      // 2. フォールバックAPI: ipwho.is（1が失敗/レート制限時の予備）
+      try {
+        const res2 = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(3000) });
+        const json2 = await res2.json();
+        if(json2.success !== false && json2.country_code && json2.country_code.length===2) {
+          _country = json2.country_code;
+          localStorage.setItem(CACHE_KEY, JSON.stringify({code:_country, ts:Date.now()}));
+          return _country;
+        }
+      } catch{}
+      // 3. フォールバック: navigator.language から推定（精度低・最終手段）
       const lang = navigator.language || '';
-      const map = { ja:'JP', en:'US', ko:'KR', zh:'CN', fr:'FR', de:'DE', es:'ES', pt:'BR', ar:'SA' };
+      const map = {
+        ja:'JP', en:'US', ko:'KR', zh:'CN', fr:'FR', de:'DE', es:'ES', pt:'BR', ar:'SA',
+        it:'IT', nl:'NL', pl:'PL', th:'TH', vi:'VN', id:'ID', tr:'TR', ru:'RU', hi:'IN',
+        tl:'PH', ms:'MY', sv:'SE', no:'NO', da:'DK', fi:'FI', el:'GR', cs:'CZ', hu:'HU',
+        ro:'RO', uk:'UA', he:'IL', fa:'IR',
+      };
+      // 言語のみだと "en" 等が実際は多国籍なので、キャッシュはせず毎回推定し直す
       _country = map[lang.slice(0,2)] || 'UN';
       return _country;
     }
@@ -2869,6 +2885,8 @@
   // 国コードから国旗絵文字
   function countryFlag(code) {
     if(!code||code.length!==2) return '🌐';
+    // 'UN'(不明)など実際の国旗が無い/意図しない絵文字になるコードは🌐にする
+    if(code.toUpperCase()==='UN') return '🌐';
     return String.fromCodePoint(...[...code.toUpperCase()].map(c=>127397+c.charCodeAt(0)));
   }
 
@@ -2878,6 +2896,9 @@
     DE:'ドイツ',ES:'スペイン',MX:'メキシコ',IT:'イタリア',PH:'フィリピン',ID:'インドネシア',
     TH:'タイ',VN:'ベトナム',IN:'インド',GB:'イギリス',CA:'カナダ',AU:'オーストラリア',
     RU:'ロシア',SA:'サウジ',AR:'アルゼンチン',PL:'ポーランド',PT:'ポルトガル',UN:'不明',
+    NL:'オランダ',TR:'トルコ',MY:'マレーシア',SE:'スウェーデン',NO:'ノルウェー',DK:'デンマーク',
+    FI:'フィンランド',GR:'ギリシャ',CZ:'チェコ',HU:'ハンガリー',RO:'ルーマニア',UA:'ウクライナ',
+    IL:'イスラエル',IR:'イラン',
   };
 
   /* ════════════════════════════
