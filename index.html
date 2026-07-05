@@ -263,27 +263,32 @@
     .slider-page-nav span { font-size:.85rem; font-weight:700; color:#dff0e6; min-width:7rem; text-align:center; }
     @media (min-width: 768px) { .slider-page-nav { display:none; } }
     /* スマホ幅：スライダーを矢印タップで左右に切り替える2ページ構成
-       （12本を縦に全部並べると、下の方のスライダーを触る時にグラフが見えなくなるため） */
+       （12本を縦に全部並べると、下の方のスライダーを触る時にグラフが見えなくなるため）
+       ※ scrollLeft/clientWidthのピクセル計算はズレの元になるため使わず、
+       常に「200%幅のトラックを-50%ずつtransformで動かす」方式に統一する（幅に依存しないので正確） */
     @media (max-width: 767px) {
-      .review-slider-swiper-wrap { position:relative; }
+      .review-slider-swiper-wrap { position:relative; overflow:hidden; border-radius:16px; }
       .review-slider-swiper {
-        display:flex; overflow-x:hidden; scroll-behavior:smooth;
-        margin-bottom:.9rem; border-radius:16px;
+        display:flex; width:200%; transition:transform .3s ease; margin-bottom:.9rem;
       }
-      .review-slider-page { flex:0 0 100%; }
+      .review-slider-page { flex:0 0 50%; min-width:0; }
     }
-    /* PC幅：スワイプ不要。2列に並べてどちらも常に見せる */
+    /* PC幅：スワイプ不要。2列に並べてどちらも常に見せる（transformもリセットする）
+       ※ 検索ページの絞り込みパネル(#srSliderSwiper)はここでは対象外にする。常に矢印切り替えのままにするため */
     @media (min-width: 768px) {
-      .review-slider-swiper { display:grid; grid-template-columns:1fr 1fr; column-gap:1rem; }
+      #reviewSliderSwiper, #ovSliderSwiper { display:grid; grid-template-columns:1fr 1fr; column-gap:1rem; width:auto; transform:none !important; }
+      #reviewSliderSwiper .review-slider-page, #ovSliderSwiper .review-slider-page { flex:none; }
+      .review-slider-swiper-wrap:has(#reviewSliderSwiper), .review-slider-swiper-wrap:has(#ovSliderSwiper) { overflow:visible; }
     }
     /* 検索ページの絞り込みパネルは常に幅が狭いサイドバーなので、画面幅に関係なく
        常に1列＋矢印切り替えのままにする（2列にすると狭すぎて目盛りが潰れる） */
     .filter-panel .slider-page-nav { display:flex !important; }
+    .filter-panel .review-slider-swiper-wrap { overflow:hidden !important; }
     .filter-panel .review-slider-swiper {
-      display:flex !important; overflow-x:hidden; scroll-behavior:smooth;
-      margin-bottom:.9rem; border-radius:16px; grid-template-columns:none !important;
+      display:flex !important; width:200% !important; transition:transform .3s ease;
+      margin-bottom:.9rem; grid-template-columns:none !important;
     }
-    .filter-panel .review-slider-page { flex:0 0 100%; }
+    .filter-panel .review-slider-page { flex:0 0 50% !important; min-width:0; }
     .chart-wrap h2 { margin:0 0 .5rem; font-size:.97rem; }
     .chart-canvas { width:100%; height:auto; border:1px solid var(--line); border-radius:12px; background:#09201b; display:block; margin-bottom:.7rem; }
     .form-section { background:var(--card2); border:1px solid var(--line); border-radius:16px; padding:1rem; margin-bottom:.9rem; }
@@ -331,9 +336,20 @@
     .tag-suggest-chip:hover { background:rgba(94,201,122,.15); border-color:var(--brand); }
     .tag-suggest-chip.popular { border-color:#5ec97a; color:var(--brand); }
     /* ── SEARCH TAG SECTION ── */
-    .search-tag-input-wrap { display:flex; gap:.45rem; margin-bottom:.45rem; }
+    .search-tag-input-wrap { display:flex; gap:.45rem; margin-bottom:.45rem; position:relative; }
     .search-tag-input-wrap input { flex:1; padding:.58rem .75rem; background:var(--bg); border:1px solid var(--line); border-radius:10px; color:var(--text); font:inherit; font-size:.88rem; }
     .search-tag-add-btn { padding:.58rem .8rem; border-radius:10px; background:var(--card); border:1px solid var(--line); color:var(--brand); font-weight:700; font-size:.82rem; cursor:pointer; white-space:nowrap; }
+    /* 検索タグ入力にフォーカスした時にふんわり出る既知タグ候補ポップオーバー */
+    .tag-float-popover {
+      position:absolute; top:100%; left:0; right:0; margin-top:.4rem;
+      background:var(--card); border:1px solid var(--line); border-radius:12px;
+      padding:.55rem; z-index:60; display:flex; flex-wrap:wrap; gap:.35rem;
+      max-height:9rem; overflow-y:auto; box-shadow:0 10px 24px rgba(0,0,0,.35);
+      opacity:0; visibility:hidden; transform:translateY(-4px); pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+    }
+    .tag-float-popover.show { opacity:1; visibility:visible; transform:translateY(0); pointer-events:auto; }
+    .tag-float-empty { font-size:.74rem; color:var(--muted); padding:.15rem .3rem; }
 
     /* ── SEARCH OVERLAY: PC 2列レイアウト ── */
     @media (min-width: 640px) {
@@ -962,7 +978,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.18.5</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.30.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1019,8 +1035,8 @@
   </div>
 
   <section class="sec" style="margin-top:.8rem;">
-    <div class="sec-head"><h2>おすすめ作品</h2><small>レビューが多い順</small></div>
-    <div class="grid2" id="recommendGrid"></div>
+    <div class="sec-head"><h2>🎲 今日のセレクション</h2><small id="randomPickTimer">— 後に更新</small></div>
+    <div class="grid2" id="randomPickGrid"></div>
   </section>
   <!-- ▼▼▼ 広告②：コンテンツ間矩形 ▼▼▼
        本番: この div ごと AdSenseコードに置換 -->
@@ -1034,15 +1050,11 @@
       </div>
     </div>
   </div>
-  <section class="sec" style="margin-top:1rem;">
-    <div class="sec-head"><h2>すべての作品</h2><small id="allCount">—</small></div>
-    <div class="grid2" id="allGrid"></div>
-  </section>
   <footer class="footer">
     <div style="margin-bottom:.5rem;">
       <button class="legal-link" onclick="openLegal('terms')">利用規約</button>
       <span style="margin:0 .4rem;">·</span>
-      <button class="legal-link" onclick="openLegal('privacy')">プライバシーポリシー</button>
+      <button class="legal-link" onclick="nav('privacy')">プライバシーポリシー</button>
       <span style="margin:0 .4rem;">·</span>
       <button class="legal-link" onclick="nav('contact')">お問い合わせ</button>
     </div>
@@ -1492,7 +1504,7 @@
   </header>
   <div style="max-width:700px;margin:0 auto;padding:1.5rem 1rem 3rem;">
     <h1 style="font-size:1.2rem;color:#dff0e6;margin-bottom:1.5rem;">プライバシーポリシー / Privacy Policy</h1>
-    <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.5rem;">最終更新: 2026年7月 / バージョン 1.0</p>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.5rem;">最終更新: 2026年7月 / バージョン 1.1</p>
 
     <section class="pp-section">
       <h2>1. 運営者情報</h2>
@@ -1507,7 +1519,8 @@
       <ul>
         <li><strong>アカウント情報</strong>: Googleアカウント経由でログインした場合、メールアドレス・表示名・プロフィール画像URLを取得します</li>
         <li><strong>レビューデータ</strong>: 投稿されたレーダーチャートスコア・タグ・コメント</li>
-        <li><strong>閲覧・利用ログ</strong>: アクセスした作品ページのPV数、検索キーワード、タグ・フィルターの利用状況など（いずれも匿名）</li>
+        <li><strong>閲覧・利用ログ</strong>: アクセスした作品ページのPV数、検索キーワード、タグ・フィルターの利用状況、広告・アフィリエイトリンクのクリック状況、SNSシェアの利用状況など（いずれも匿名）</li>
+        <li><strong>お問い合わせ内容</strong>: お問い合わせフォームから送信された、お名前（任意）・内容。運営者への通知のみに使用し、送信後はメールでのみ保管します</li>
         <li><strong>クッキー・ローカルストレージ</strong>: セッション管理・設定の保存のために使用します（詳細はセクション4参照）</li>
       </ul>
     </section>
@@ -1540,9 +1553,9 @@
       <ul>
         <li>法令に基づく場合</li>
         <li>本人の同意がある場合</li>
-        <li>業務委託先（Supabase・Cloudflare等）への提供（守秘義務あり）</li>
+        <li>業務委託先への提供（守秘義務あり）: データベース・認証(Supabase)、bot対策(Cloudflare Turnstile)、アニメ情報取得(Kitsu API)、翻訳(DeepL API)、お問い合わせメール送信(Resend)</li>
       </ul>
-      <p>なお、個人を特定できない形に匿名化・統計化した情報（例：作品ごとの評価傾向の集計データ、タグ・検索キーワードの集計傾向、国別・言語別の利用統計など）については、個人情報に該当しないものとして、サービス改善・調査研究・提携先への提供（有償の場合を含む）に利用する場合があります。</p>
+      <p>なお、個人を特定できない形に匿名化・統計化した情報（例：作品ごとの評価傾向の集計データ、タグ・検索キーワードの集計傾向、国別・言語別の利用統計など）については、個人情報に該当しないものとして、サービス改善・調査研究・提携先への提供（有償の場合を含む）に利用する場合があります。この匿名化データの提供にあたっては、コメント本文・ユーザー名・ユーザーIDは一切含まれず、サンプル数が少ない（3件未満の）データも公開しません。</p>
     </section>
 
     <section class="pp-section">
@@ -1758,6 +1771,17 @@
       <div id="adminAnimeRanking"></div>
     </div>
     </div><!-- /admin-group-reviews -->
+
+    <div class="admin-group-header">メンテナンス</div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">🏷️ Kitsuジャンル一括登録</h3>
+      <p style="font-size:.78rem;color:var(--muted);margin:0 0 .75rem;">
+        Kitsuのジャンル一覧（Action/Comedy/Dramaなど）は種類が変動しないため、tag_translationsテーブルに英語形をまとめて登録しておけます。
+        既に登録済みのものはスキップされるので、何度実行しても安全です。
+      </p>
+      <button class="admin-btn" onclick="seedKitsuGenres()">Kitsuジャンルを一括登録</button>
+      <p id="seedKitsuGenresResult" style="font-size:.78rem;color:var(--brand);margin:.6rem 0 0;"></p>
+    </div>
   </div>
 </div>
 
@@ -2077,7 +2101,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.18.5</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.30.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2184,6 +2208,42 @@
     },
 
     // ── アニメページ ──
+    // タグ・ジャンルの全言語共有翻訳テーブル（英語を基準IDとして、各言語の訳を1行にまとめる）
+    tagTranslations: {
+      // 指定した言語の列に、指定したテキストと一致する行を探す（大文字小文字は無視）
+      async findByLang(text, lang) {
+        if(!sb || !text) return null;
+        const { data } = await sb.from('tag_translations').select('*').ilike(lang, text).limit(1);
+        return (data && data[0]) || null;
+      },
+      async findByEnglish(enText) {
+        if(!sb || !enText) return null;
+        const { data } = await sb.from('tag_translations').select('*').ilike('en', enText).limit(1);
+        return (data && data[0]) || null;
+      },
+      async insertRow(enText, extraCols) {
+        if(!sb) return null;
+        const payload = { en: enText, ...(extraCols || {}) };
+        const { data, error } = await sb.from('tag_translations').insert(payload).select('*').maybeSingle();
+        if(error) {
+          // 同時に他のユーザーが同じ英語形を先に登録した場合（unique制約）は、その行を取りに行く
+          if(error.code === '23505') return await this.findByEnglish(enText);
+          console.warn('tag_translations insert error:', error.message);
+          return null;
+        }
+        return data;
+      },
+      async updateColumn(id, lang, value) {
+        if(!sb) return;
+        await sb.from('tag_translations').update({ [lang]: value, updated_at: new Date().toISOString() }).eq('id', id);
+      },
+      // 検索窓のタグ候補ポップオーバー用：既に登録済みの既知タグを一覧取得する
+      async listKnown(limit) {
+        if(!sb) return [];
+        const { data } = await sb.from('tag_translations').select('*').order('id', { ascending: true }).limit(limit || 40);
+        return data || [];
+      },
+    },
     animePages: {
       async upsert(page) {
         if(!sb) return;
@@ -2563,54 +2623,119 @@
     },
   };
 
-  // ── タグの多言語対応 ──
-  // タグはユーザーの自由入力（基本的に日本語）なので、表示言語が日本語以外の場合は
-  // DeepL翻訳APIを使って表示だけ翻訳する（保存データ・検索マッチングは原文のまま）。
+  // ── タグ・ジャンルの全言語共有翻訳（英語を基準IDとしてSupabaseに保存） ──
+  // 1つの概念（例:「ファンタジー」＝Fantasy＝판타지）を1行にまとめて、どの言語からでも
+  // 同じ行にたどり着けるようにする。ブラウザのキャッシュを消しても、他のユーザーが既に
+  // 翻訳した結果を全員で使い回せる（あらすじの翻訳キャッシュと同じ考え方）。
   const TAG_TRANSLATE_LANG_MAP = {
-    en:'EN', ko:'KO', 'zh-tw':'ZH-HANT', 'zh-cn':'ZH', es:'ES', fr:'FR', pt:'PT-PT', de:'DE', ar:'AR',
-    // DeepLは2026年にアラビア語(AR)・繁体字中国語(ZH-HANT)への対応を追加済み。
-    // これで日本語以外の全9言語をカバーしている。
+    en:'EN', ja:'JA', ko:'KO', 'zh-tw':'ZH-HANT', 'zh-cn':'ZH', es:'ES', fr:'FR', pt:'PT-PT', de:'DE', ar:'AR',
+    // DeepLは2026年にアラビア語(AR)・繁体字中国語(ZH-HANT)への対応を追加済み。これで全10言語をカバー。
   };
-  const TAG_TRANSLATION_CACHE_KEY = 'animepple-tag-translations';
-  let _tagTranslationCache = null;
-  function loadTagTranslationCache() {
-    if(_tagTranslationCache) return _tagTranslationCache;
+  // 同じページ内で同じ語を何度も問い合わせない、軽量なメモリ内キャッシュ（本体はSupabase側）
+  const _tagResolveMemoryCache = {};
+  // text: 対象の語, sourceLang: textが書かれている言語が分かっていれば指定（Kitsuジャンルなら'en'、
+  //       ユーザータグなら'ja'、検索入力ならその時のcurrentLang）, targetLang: 欲しい言語
+  // 戻り値: { en, [targetLang]: 訳文 } のような行データ（失敗時はnull）
+  async function resolveTagTranslation(text, sourceLang, targetLang) {
+    if(!text) return null;
+    const memKey = `${text}::${sourceLang}`;
+    if(_tagResolveMemoryCache[memKey]) {
+      const row = _tagResolveMemoryCache[memKey];
+      if(row[targetLang]) return row;
+    }
+    if(DB_MODE !== 'supabase' || !sb) {
+      // Supabase未使用時はDeepL直呼びにフォールバック（キャッシュ無し）
+      const tl = TAG_TRANSLATE_LANG_MAP[targetLang];
+      const translated = tl ? (await translateApi.translate(text, tl)) || text : text;
+      return { en: sourceLang==='en'?text:null, [targetLang]: translated };
+    }
+    let row = _tagResolveMemoryCache[memKey] || await db.tagTranslations.findByLang(text, sourceLang);
+    if(!row) {
+      // まだ知らない語。英語形を確定してから登録する
+      let enText = text;
+      if(sourceLang !== 'en') {
+        enText = (await translateApi.translate(text, 'EN')) || text;
+      }
+      // 表記ゆれで行が増えないよう、既に同じ英語形の行が無いか確認する
+      row = await db.tagTranslations.findByEnglish(enText);
+      if(!row) {
+        const extra = {};
+        if(sourceLang !== 'en') extra[sourceLang] = text;
+        row = await db.tagTranslations.insertRow(enText, extra);
+      } else if(sourceLang !== 'en' && !row[sourceLang]) {
+        db.tagTranslations.updateColumn(row.id, sourceLang, text); // 保存は待たない
+        row[sourceLang] = text;
+      }
+      if(!row) row = { en: enText, [sourceLang]: text }; // 保存に失敗しても表示は続行する
+    }
+    if(!row[targetLang]) {
+      const tl = TAG_TRANSLATE_LANG_MAP[targetLang];
+      if(tl && row.en) {
+        const translated = (await translateApi.translate(row.en, tl)) || row.en;
+        row[targetLang] = translated;
+        if(row.id) db.tagTranslations.updateColumn(row.id, targetLang, translated); // 保存は待たない
+      }
+    }
+    _tagResolveMemoryCache[memKey] = row;
+    if(row.en) _tagResolveMemoryCache[`${row.en}::en`] = row;
+    return row;
+  }
+
+  // Kitsuのジャンル一覧（Action/Comedy/Dramaなど、種類が変動しない大分類）を
+  // まとめてtag_translationsに英語形だけ登録しておく（管理画面の「一括登録」ボタンから実行）。
+  // 既に登録済みの英語形はスキップするので、何度実行しても安全。各言語への訳は
+  // 従来通りresolveTagTranslation()が必要になった時に遅延取得する。
+  async function seedKitsuGenres() {
+    const resultEl = document.getElementById('seedKitsuGenresResult');
+    if(!sb) { if(resultEl) resultEl.textContent = 'Supabase未接続のため実行できません'; return; }
+    if(resultEl) resultEl.textContent = '取得中…';
+    const names = new Set();
     try {
-      const raw = localStorage.getItem(TAG_TRANSLATION_CACHE_KEY);
-      const parsed = raw ? JSON.parse(raw) : {};
-      _tagTranslationCache = (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
-    } catch(_) { _tagTranslationCache = {}; }
-    return _tagTranslationCache;
+      let offset = 0;
+      while(offset <= 500) { // 安全策：無限ループ防止
+        const res = await fetch(`https://kitsu.io/api/edge/genres?page[limit]=20&page[offset]=${offset}`, { headers: { 'Accept': 'application/vnd.api+json' } });
+        const json = await res.json();
+        const data = json.data || [];
+        if(!data.length) break;
+        data.forEach(g => { const name = g.attributes && g.attributes.name; if(name) names.add(name); });
+        offset += 20;
+      }
+    } catch(e) {
+      console.warn('seedKitsuGenres fetch error:', e);
+      if(resultEl) resultEl.textContent = 'Kitsu APIの取得に失敗しました: ' + e.message;
+      return;
+    }
+    let created = 0, skipped = 0;
+    for(const name of names) {
+      try {
+        const existing = await db.tagTranslations.findByEnglish(name);
+        if(existing) { skipped++; continue; }
+        const row = await db.tagTranslations.insertRow(name, {});
+        if(row) created++; else skipped++;
+      } catch(e) { console.warn('seedKitsuGenres insert error:', name, e); }
+    }
+    if(resultEl) resultEl.textContent = `完了: ${names.size}件中、新規登録${created}件・既存スキップ${skipped}件`;
   }
-  function saveTagTranslationCache() {
-    try { localStorage.setItem(TAG_TRANSLATION_CACHE_KEY, JSON.stringify(_tagTranslationCache)); } catch(_) {}
-  }
-  // 渡された全タグを一括で翻訳し、{原文タグ: 表示用テキスト} のマップを返す
+  window.seedKitsuGenres = seedKitsuGenres;
+
+  // 渡された全タグ（ユーザーレビュータグ＝日本語想定）を一括で翻訳し、
+  // {原文タグ: 表示用テキスト} のマップを返す
   async function translateTagsForDisplay(tags) {
     const uniqueTags = [...new Set((tags||[]).filter(Boolean))];
     const map = {};
     uniqueTags.forEach(tag => { map[tag] = tag; }); // まずは原文で初期化（フォールバック）
     if(currentLang === 'ja' || !uniqueTags.length) return map;
-    const targetLang = TAG_TRANSLATE_LANG_MAP[currentLang];
-    if(!targetLang) return map; // 想定外の言語コードの場合のみ原文フォールバック
-    const cache = loadTagTranslationCache();
-    let cacheDirty = false;
     await Promise.all(uniqueTags.map(async (tag) => {
-      const cacheKey = `${tag}::${currentLang}`;
-      if(cache[cacheKey]) { map[tag] = cache[cacheKey]; return; }
-      const translated = await translateApi.translate(tag, targetLang);
-      map[tag] = translated;
-      cache[cacheKey] = translated;
-      cacheDirty = true;
+      const row = await resolveTagTranslation(tag, 'ja', currentLang);
+      if(row && row[currentLang]) map[tag] = row[currentLang];
     }));
-    if(cacheDirty) saveTagTranslationCache();
     return map;
   }
   window.translateApi = translateApi;
   window.translateTagsForDisplay = translateTagsForDisplay;
 
   // ── ジャンル/カテゴリ（Kitsu由来・英語）の多言語対応 ──
-  // 日本語: 既存の静的辞書（高速・無料）。英語: 変換不要。それ以外: DeepLで翻訳しキャッシュする。
+  // 日本語: 既存の静的辞書（高速・無料）。英語: 変換不要。それ以外: 共有翻訳テーブルを使う。
   async function translateGenresForDisplay(genres) {
     const uniqueGenres = [...new Set((genres||[]).filter(Boolean))];
     const map = {};
@@ -2621,19 +2746,10 @@
       return map;
     }
     if(currentLang === 'en') return map; // Kitsu由来のジャンルは元々英語なので変換不要
-    const targetLang = TAG_TRANSLATE_LANG_MAP[currentLang];
-    if(!targetLang) return map;
-    const cache = loadTagTranslationCache();
-    let cacheDirty2 = false;
     await Promise.all(uniqueGenres.map(async (g) => {
-      const cacheKey = `genre::${g}::${currentLang}`;
-      if(cache[cacheKey]) { map[g] = cache[cacheKey]; return; }
-      const translated = await translateApi.translate(g, targetLang);
-      map[g] = translated;
-      cache[cacheKey] = translated;
-      cacheDirty2 = true;
+      const row = await resolveTagTranslation(g, 'en', currentLang);
+      if(row && row[currentLang]) map[g] = row[currentLang];
     }));
-    if(cacheDirty2) saveTagTranslationCache();
     return map;
   }
 
@@ -2644,14 +2760,14 @@
       const res = await fetch(url, { headers: { 'Accept': 'application/vnd.api+json' } });
       return res.json();
     },
-    // テキスト検索（キーワードでアニメを探す）
+    // テキスト検索（キーワードでアニメを探す）。music（ミュージックビデオ等の大分類）は除外
     async searchByText(query, limit=20) {
-      const url = `${ANIME_API_BASE}?filter[text]=${encodeURIComponent(query)}&page[limit]=${limit}&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
+      const url = `${ANIME_API_BASE}?filter[text]=${encodeURIComponent(query)}&filter[subtype]=TV,movie,OVA,ONA,special&page[limit]=${limit}&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
       return this._fetchJson(url);
     },
-    // 人気順で取得（オフセット指定可）
+    // 人気順で取得（オフセット指定可）。music除外
     async getPopular(offset=0, limit=20) {
-      const url = `${ANIME_API_BASE}?sort=-userCount&page[limit]=${limit}&page[offset]=${offset}&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
+      const url = `${ANIME_API_BASE}?sort=-userCount&filter[subtype]=TV,movie,OVA,ONA,special&page[limit]=${limit}&page[offset]=${offset}&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
       return this._fetchJson(url);
     },
   };
@@ -2861,11 +2977,18 @@
   let currentPage = 'home';
   let currentAnimeId = null;
   let navHistory = []; // 履歴スタック
+  const _savedScroll = {}; // ホーム/人気ページを離れる時のスクロール位置（{home:number, popular:number}）
+  function _restoreSavedScroll(page) {
+    const y = _savedScroll[page];
+    if (y === undefined) return;
+    window.scrollTo(0, y);
+  }
 
   // ホーム/人気/マイページなど検索と無関係なページに移動した時、検索の状態を消す
+  // （検索結果からアニメページを開いた時は、後で「戻る」で検索に戻れるよう状態を残す）
   function resetSearchStateIfLeaving(fromPage, toPage) {
     if(fromPage !== 'search') return;
-    if(toPage !== 'search') {
+    if(toPage === 'search' || toPage === 'anime') return;
       srSearchState.q = '';
       srSearchState.sort = 'relevance';
       srTagsActive.length = 0;
@@ -2879,10 +3002,13 @@
       if(qInput) qInput.value = '';
       const overlayQInput = document.getElementById('overlaySearchInput');
       if(overlayQInput) overlayQInput.value = '';
-    }
   }
 
   function nav(page, animeId) {
+    // ホーム/人気ページを離れる時は、後で「戻る」で復元できるようスクロール位置を覚えておく
+    if (currentPage === 'home' || currentPage === 'popular') {
+      _savedScroll[currentPage] = window.scrollY;
+    }
     // 検索オーバーレイが開いていたら閉じる
     const overlay = document.getElementById('searchOverlay');
     if(overlay && overlay.classList.contains('open')) {
@@ -2951,8 +3077,12 @@
   }
   window.nav = nav;
   function navBack() {
+    // ホーム/人気ページから他ページへ「戻る」場合も、同様にスクロール位置を覚えておく
+    if (currentPage === 'home' || currentPage === 'popular') {
+      _savedScroll[currentPage] = window.scrollY;
+    }
     const prev = navHistory.pop();
-    if(!prev || prev.page==='home') { nav('home'); return; }
+    if(!prev) { nav('home'); return; }
     resetSearchStateIfLeaving(currentPage, prev.page);
     // 履歴から戻る時はスタックに積まない
     const overlay = document.getElementById('searchOverlay');
@@ -2960,7 +3090,10 @@
     const domPage = (prev.page === 'user') ? 'mypage' : prev.page;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('page-'+domPage).classList.add('active');
-    window.scrollTo(0,0);
+    // ホーム/人気に戻る場合：前回表示していた内容がまだDOMに残っているので、
+    // データ再取得を待たずにこの時点で即座に位置を復元する（裏では新しいデータに差し替わる）
+    const willRestoreScroll = (prev.page === 'home' || prev.page === 'popular') && _savedScroll[prev.page] !== undefined;
+    if (willRestoreScroll) _restoreSavedScroll(prev.page); else window.scrollTo(0,0);
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     const ab = document.getElementById('bnav-'+domPage);
     if(ab && prev.page !== 'user') ab.classList.add('active');
@@ -3306,9 +3439,9 @@
     return items[i] ? Number(items[i].dataset.year) : null;
   }
 
-  // Kitsuから人気作品を取得（userCount降順）
+  // Kitsuから人気作品を取得（userCount降順）。music（大分類）は除外
   async function fetchKitsuPopular(pageOffset=0, yearFrom=null, yearTo=null) {
-    let url = `https://kitsu.io/api/edge/anime?sort=-userCount&page[limit]=20&page[offset]=${pageOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`;
+    let url = `https://kitsu.io/api/edge/anime?sort=-userCount&filter[subtype]=TV,movie,OVA,ONA,special&page[limit]=20&page[offset]=${pageOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`;
     if(yearFrom) url += `&filter[seasonYear]=${yearFrom}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(()=>controller.abort(), 10000); // 10秒でタイムアウト（無限読み込み中を防止）
@@ -3594,11 +3727,17 @@
       if (tags.length>=maxTags) { input.value=''; return; }
       input.value='';
       const originalInput = v;
-      // 検索用タグ入力: 日本語形（レビュータグ照合用）と英語形（Kitsuジャンル照合用）の両方を用意する
+      // 検索用タグ入力: 日本語形（レビュータグ照合用）と英語形（Kitsuジャンル照合用）の両方を、
+      // 全言語共有の翻訳テーブル（resolveTagTranslation）から取得する
       if(opts.translateToJa) {
         try {
-          const jaForm = currentLang !== 'ja' ? (await translateApi.translate(v, 'JA')) || v : v;
-          const enForm = (await translateApi.translate(jaForm, 'EN')) || v;
+          const row = await resolveTagTranslation(v, currentLang, 'ja');
+          const jaForm = (row && row.ja) || v;
+          let enForm = (row && row.en) || v;
+          if(!enForm || (row && !row.en)) {
+            const enRow = await resolveTagTranslation(jaForm, 'ja', 'en');
+            enForm = (enRow && enRow.en) || v;
+          }
           v = jaForm;
           _srTagEnglishForms[v] = enForm;
         } catch(_) {}
@@ -3610,6 +3749,67 @@
     if (input) input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addTag(); } });
     return render;
   }
+
+  /* ════════════════════════════
+     TAG FLOAT SUGGEST (検索タグ入力フォーカス時のふんわりポップオーバー)
+  ════════════════════════════ */
+  // tag_translationsに既に登録済みの既知タグ一覧（全言語共有）を取り出し、
+  // 検索タグ入力にフォーカスした時にふんわり表示する。クリックすると通常の
+  // タグ追加ボタン（addBtn.click()）を呼ぶだけなので、翻訳・重複チェック等の
+  // 既存ロジック（setupTagInput内のaddTag）はそのまま使われる。
+  let _knownTagsCache = null;
+  let _knownTagsPromise = null;
+  async function ensureKnownTagsCache() {
+    if(_knownTagsCache) return _knownTagsCache;
+    if(_knownTagsPromise) return _knownTagsPromise;
+    _knownTagsPromise = (async () => {
+      try { _knownTagsCache = await db.tagTranslations.listKnown(40); }
+      catch(e) { console.warn('known tags fetch:', e); _knownTagsCache = []; }
+      return _knownTagsCache;
+    })();
+    return _knownTagsPromise;
+  }
+  // tag_translationsの1行を、現在の表示言語向けのテキストに変換（無ければen→jaにフォールバック）
+  function _tagRowDisplay(row) {
+    if(!row) return '';
+    if(currentLang === 'ja') return row.ja || row.en || '';
+    return row[currentLang] || row.en || row.ja || '';
+  }
+  function setupTagFloatSuggest(inputId, addBtnId) {
+    const input = document.getElementById(inputId);
+    const addBtn = document.getElementById(addBtnId);
+    if(!input || !addBtn) return;
+    const wrap = input.closest('.search-tag-input-wrap');
+    if(!wrap) return;
+    const pop = document.createElement('div');
+    pop.className = 'tag-float-popover';
+    wrap.appendChild(pop);
+    function hide() { pop.classList.remove('show'); }
+    async function show() {
+      const rows = await ensureKnownTagsCache();
+      const seen = new Set();
+      const labels = [];
+      rows.forEach(row => {
+        const label = _tagRowDisplay(row);
+        if(label && !seen.has(label)) { seen.add(label); labels.push(label); }
+      });
+      pop.innerHTML = labels.length
+        ? labels.map(label => `<span class="tag-suggest-chip" data-tag="${escapeHtml(label)}">${escapeHtml(label)}</span>`).join('')
+        : `<span class="tag-float-empty">${escapeHtml(t('tagFloatEmpty'))}</span>`;
+      pop.querySelectorAll('[data-tag]').forEach(chip => {
+        chip.onclick = () => {
+          input.value = chip.dataset.tag;
+          addBtn.click();
+          hide();
+          input.focus();
+        };
+      });
+      pop.classList.add('show');
+    }
+    input.addEventListener('focus', show);
+    wrap.addEventListener('mouseleave', hide);
+  }
+  window.setupTagFloatSuggest = setupTagFloatSuggest;
 
   /* ════════════════════════════
      RADAR CHART
@@ -3776,12 +3976,14 @@
     };
     const goToPage = (page) => {
       currentPage = Math.max(0, Math.min(1, page));
-      swiper.scrollTo({ left: currentPage * swiper.clientWidth, behavior: 'smooth' });
+      // ピクセル単位のscrollLeft計算はズレの元になるため使わず、常に幅の50%だけtransformで動かす
+      swiper.style.transform = `translateX(-${currentPage * 50}%)`;
       updateLabel();
     };
     prevBtn.onclick = () => goToPage(0);
     nextBtn.onclick = () => goToPage(1);
     updateLabel();
+    goToPage(0); // 初期状態を明示的に0ページ目に合わせる（開き直した時に前回のtransformが残らないように）
   }
 
   function buildReviewSliders(containerId, labels, valuesArr, onInputCb) {
@@ -3863,6 +4065,7 @@
     // タグ入力の初期化もここで行う（currentLang等の初期化が全て終わった後に実行するため）
     if(!renderOverlayTags) {
       renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true});
+      setupTagFloatSuggest('overlayTagInput','overlayTagAddBtn');
     } else {
       renderOverlayTags();
     }
@@ -3936,7 +4139,7 @@
       if(allPages.length < PICKUP_THRESHOLD) {
         try {
           const randomOffset = Math.floor((slot % 50)) * 20;
-          const res = await fetch(`https://kitsu.io/api/edge/anime?sort=-userCount&page[limit]=20&page[offset]=${randomOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`);
+          const res = await fetch(`https://kitsu.io/api/edge/anime?sort=-userCount&filter[subtype]=TV,movie,OVA,ONA,special&page[limit]=20&page[offset]=${randomOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`);
           const json = await res.json();
           if(json.data) {
             return json.data.slice(0,15).map(a=>({
@@ -3976,6 +4179,69 @@
     return seeded.slice(0, 15);
   }
 
+  // アニメ10・映画10・その他10を、Kitsuのsubtype（meta欄）で判別して完全ランダムにピックする
+  // 「すべての作品」の代わりのセクション。30分ごとに（ページが開いたまま/開き直した時に）入れ替わる
+  function shuffleArray(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+  let randomPickTimerInterval = null;
+  const RANDOM_PICK_INTERVAL_MS = 30 * 60 * 1000;
+  let _randomPickCache = { items: null, ts: 0 }; // 30分間は同じ選出結果を使い回す（ページ遷移のたびに変わらないように）
+  async function renderRandomPickSection() {
+    const now = Date.now();
+    let shuffled;
+    if (_randomPickCache.items && (now - _randomPickCache.ts) < RANDOM_PICK_INTERVAL_MS) {
+      shuffled = _randomPickCache.items;
+    } else {
+      const all = getAll();
+      let pool = [...all];
+      if (DB_MODE === 'supabase' && sb) {
+        try {
+          const { items: dbPages } = await db.animePages.getAllWithLimit(300);
+          const existingIds = new Set(pool.map(a => a.id));
+          const dbItems = (dbPages || [])
+            .filter(p => !existingIds.has(p.id))
+            .map(p => ({
+              id: p.id,
+              kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-', '') : null,
+              title: p.title || p.title_en || '',
+              titleEn: p.title_en || p.title || '',
+              meta: p.meta || '',
+              image: p.image_url || '',
+            }));
+          pool = [...pool, ...dbItems];
+        } catch (e) { console.warn('randomPick Supabase fetch:', e); }
+      }
+      const anime = [], movie = [], other = [];
+      pool.forEach(item => {
+        const meta = (item.meta || '').toLowerCase();
+        if (meta === 'movie') movie.push(item);
+        else if (meta === 'tv') anime.push(item);
+        else other.push(item);
+      });
+      const picked = [
+        ...shuffleArray(anime).slice(0, 10),
+        ...shuffleArray(movie).slice(0, 10),
+        ...shuffleArray(other).slice(0, 10),
+      ];
+      shuffled = shuffleArray(picked); // 種類ごとに固まらないよう最後にもう一度混ぜる
+      _randomPickCache = { items: shuffled, ts: now };
+    }
+    const grid = document.getElementById('randomPickGrid');
+    if (grid) grid.innerHTML = shuffled.map(item => renderAnimeCard(item, { style: 'g', showReviewCount: true })).join('');
+  }
+  function startRandomPickRefresh() {
+    const initialRender = renderRandomPickSection().catch(console.error);
+    if (randomPickTimerInterval) clearInterval(randomPickTimerInterval);
+    randomPickTimerInterval = setInterval(() => renderRandomPickSection().catch(console.error), RANDOM_PICK_INTERVAL_MS);
+    return initialRender;
+  }
+
   // 残り時間カウントダウン表示
   let pickupTimerInterval = null;
   function startPickupTimer() {
@@ -3987,6 +4253,8 @@
       const s = Math.floor((remaining % 60000) / 1000);
       const el = document.getElementById('pickupTimer');
       if (el) el.textContent = `${m}分${s}秒${t('secPickupSub')}`;
+      const el2 = document.getElementById('randomPickTimer');
+      if (el2) el2.textContent = `${m}分${s}秒${t('secPickupSub')}`;
     }
     update();
     pickupTimerInterval = setInterval(update, 1000);
@@ -4016,7 +4284,7 @@
     const year = now.getFullYear();
     const mo = now.getMonth() + 1;
     const season = mo<=3?'winter':mo<=6?'spring':mo<=9?'summer':'fall';
-    const base = `https://kitsu.io/api/edge/anime?filter[season]=${season}&filter[seasonYear]=${year}&sort=-userCount&page[limit]=20&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
+    const base = `https://kitsu.io/api/edge/anime?filter[season]=${season}&filter[seasonYear]=${year}&filter[subtype]=TV,movie,OVA,ONA,special&sort=-userCount&page[limit]=20&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
     
     // 複数ページを並行取得（最大3ページ=60件）
     const offsets = [0, 20, 40];
@@ -4140,7 +4408,7 @@
     const all = getAll();
 
     // ピックアップ（Supabaseから非同期取得）
-    getPickupItems().then(pickupItems=>{
+    const pickupPromise = getPickupItems().then(pickupItems=>{
       document.getElementById('pickupScroll').innerHTML = pickupItems.length ? pickupItems.map(item=>{
         const itemWithKitsuId = { ...item, kitsuId: item.kitsuId || (item.id.startsWith('kitsu-') ? item.id.replace('kitsu-','') : null) };
         return renderAnimeCard(itemWithKitsuId, { style:'h' });
@@ -4150,64 +4418,10 @@
     });
 
     startPickupTimer();
-    loadSeasonSection();
-
-    // おすすめ：LocalStorageのレビュー数順
-    const byReview = [...all].sort((a,b)=>reviewCount(b.id)-reviewCount(a.id));
-    document.getElementById('recommendGrid').innerHTML = byReview.slice(0,8).map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true})).join('');
-
-    // すべての作品：まずローカルを表示
-    let combinedAll = [...all];
-    document.getElementById('allCount').textContent = tFn('allCount', combinedAll.length);
-    document.getElementById('allGrid').innerHTML = combinedAll.map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true})).join('');
-
-    // Supabaseに登録済みの作品（AIピック等、ローカルキャッシュに無い新規訪問者にも見せたいもの）を追加
-    if(DB_MODE === 'supabase' && sb) {
-      try {
-        const { items: dbPages } = await db.animePages.getAllWithLimit(200);
-        const existingIds = new Set(combinedAll.map(a=>a.id));
-        const dbItems = (dbPages||[])
-          .filter(p => !existingIds.has(p.id))
-          .map(p => ({
-            id: p.id,
-            kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
-            title: p.title || p.title_en || '',
-            titleEn: p.title_en || p.title || '',
-            meta: p.meta || '',
-            image: p.image_url || '',
-          }));
-        if(dbItems.length) {
-          combinedAll = [...combinedAll, ...dbItems];
-          document.getElementById('allCount').textContent = tFn('allCount', combinedAll.length);
-          document.getElementById('allGrid').innerHTML += dbItems.map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true})).join('');
-        }
-      } catch(e) { console.warn('home Supabase anime_pages fetch:', e); }
-    }
-
-    // Kitsuから人気作を取得して「すべての作品」に追加
-    try {
-      const json = await animeApi.getPopular(0, 20);
-      const existingIds = new Set(combinedAll.map(a=>a.kitsuId||'').filter(Boolean));
-      const kitsuItems = (json.data||[])
-        .filter(item => !existingIds.has(item.id))
-        .map(item => {
-          const a = item.attributes;
-          const titles = a.titles || {};
-          return {
-            id: `kitsu-${item.id}`,
-            kitsuId: item.id,
-            title: titles.ja_jp || a.canonicalTitle || '',
-            titleEn: titles.en || titles.en_jp || a.canonicalTitle || '',
-            meta: a.subtype || '',
-            image: (a.posterImage||{}).medium || '',
-          };
-        });
-      if (kitsuItems.length) {
-        const total = combinedAll.length + kitsuItems.length;
-        document.getElementById('allCount').textContent = tFn('allCount', total);
-        document.getElementById('allGrid').innerHTML += kitsuItems.map(item=>renderAnimeCard(item, {style:'g', showReviewCount:true, showRecruitBadge:false, badges:['<span class="recruit-badge">📢 レビュー募集中</span>']})).join('');
-      }
-    } catch(_) {}
+    const randomPickPromise = startRandomPickRefresh();
+    const seasonPromise = loadSeasonSection();
+    // スクロール位置復元などが、実際の描画完了を待てるようにする
+    await Promise.all([pickupPromise, randomPickPromise, seasonPromise]);
   }
 
   /* ════════════════════════════
@@ -4890,8 +5104,10 @@
   // タグをタップして検索ページへ
   function srSearchByTag(tag) {
     srTagsActive.length=0; srTagsActive.push(tag);
-    // Kitsuジャンル照合用の英語形も算出しておく（結果を待たずに画面遷移してよい：後追いで反映される）
-    translateApi.translate(tag, 'EN').then(en=>{ if(en) _srTagEnglishForms[tag]=en; }).catch(()=>{});
+    // Kitsuジャンル照合用の英語形を、全言語共有の翻訳テーブルから取得する（結果を待たずに画面遷移してよい）
+    resolveTagTranslation(tag, 'ja', 'en').then(row=>{
+      if(row && row.en) _srTagEnglishForms[tag] = row.en;
+    }).catch(()=>{});
     srSearchState.q=''; srSearchState.sort='relevance';
     nav('search');
   }
@@ -5450,6 +5666,7 @@
 
   function setupSrTagInput() {
     setupTagInput('srTagInput','srTagAddBtn','srTagList',srTagsActive,10,{translateToJa:true});
+    setupTagFloatSuggest('srTagInput','srTagAddBtn');
   }
 
   async function renderSearch() {
@@ -6020,6 +6237,7 @@
     secPickupSub:{ ja:'後に更新',   en:'Updates in',  ko:'후에 업데이트','zh-tw':'後更新','zh-cn':'后更新', es:'Actualiza en',fr:'Mis à jour dans',pt:'Atualiza em',de:'Aktualisiert in',ar:'يتحدث في' },
     secSeason:  { ja:'📺 今季アニメ',en:'📺 This Season',ko:'📺 이번 시즌',  'zh-tw':'📺 本季動畫','zh-cn':'📺 本季动漫',es:'📺 Esta temporada',fr:'📺 Cette saison',pt:'📺 Esta temporada',de:'📺 Diese Saison',ar:'📺 موسم هذا العام' },
     secRecommend:{ ja:'おすすめ作品',en:'Recommended', ko:'추천 작품',  'zh-tw':'推薦作品','zh-cn':'推荐作品',es:'Recomendados',fr:'Recommandés',pt:'Recomendados',de:'Empfehlungen',ar:'موصى به' },
+    secRandomPick:{ ja:'🎲 今日のセレクション',en:'🎲 Today\'s Selection',ko:'🎲 오늘의 선택','zh-tw':'🎲 今日精選','zh-cn':'🎲 今日精选',es:'🎲 Selección de hoy',fr:'🎲 Sélection du jour',pt:'🎲 Seleção de hoje',de:'🎲 Heutige Auswahl',ar:'🎲 اختيار اليوم' },
     secRecommendSub:{ ja:'レビューが多い順',en:'Most reviewed',ko:'리뷰 많은 순',  'zh-tw':'評論最多','zh-cn':'评论最多',es:'Más reseñados',fr:'Plus d\'avis',pt:'Mais avaliados',de:'Meistbewertet',ar:'الأكثر مراجعة' },
     secAll:     { ja:'すべての作品',en:'All Anime',   ko:'모든 작품',  'zh-tw':'全部作品','zh-cn':'全部作品',es:'Todos',      fr:'Tout',       pt:'Todos',      de:'Alle',   ar:'الكل'    },
     // 作品ページ
@@ -6082,6 +6300,7 @@
     labelStream:   { ja:'配信',         en:'Streaming',     ko:'배급',     'zh-tw':'配信',   'zh-cn':'配信',   es:'Streaming',   fr:'Streaming',  pt:'Streaming',  de:'Streaming',  ar:'البث' },
     noImage:       { ja:'画像未設定',   en:'No image',      ko:'이미지 없음','zh-tw':'無圖片','zh-cn':'无图片', es:'Sin imagen',  fr:'Sans image',pt:'Sem imagem', de:'Kein Bild',  ar:'لا صورة' },
     popularTags:   { ja:'人気タグ:',    en:'Popular tags:',  ko:'인기 태그:','zh-tw':'熱門標籤:','zh-cn':'热门标签:',es:'Tags populares:',fr:'Tags populaires:',pt:'Tags populares:',de:'Beliebte Tags:',ar:'الوسوم الشائعة:' },
+    tagFloatEmpty: { ja:'まだ候補タグがありません', en:'No suggested tags yet', ko:'아직 추천 태그가 없습니다', 'zh-tw':'目前沒有建議標籤', 'zh-cn':'暂无建议标签', es:'Aún no hay tags sugeridos', fr:'Pas encore de tags suggérés', pt:'Ainda não há tags sugeridas', de:'Noch keine Tag-Vorschläge', ar:'لا توجد وسوم مقترحة حتى الآن' },
     postInfo:      { ja:'投稿情報',     en:'Post info',     ko:'투고 정보', 'zh-tw':'發文資訊','zh-cn':'发文信息',es:'Info del post',fr:'Info de publication',pt:'Info da publicação',de:'Beitragsinfo',ar:'معلومات النشر' },
     tagSuggestLabel: { ja:'よく使われるタグ',en:'Popular tags',ko:'자주 사용되는 태그','zh-tw':'常用標籤','zh-cn':'常用标签',es:'Tags populares',fr:'Tags populaires',pt:'Tags populares',de:'Beliebte Tags',ar:'الوسوم الشائعة' },
     tagHint:       { ja:'Enterまたは「追加」で確定。タグはみんなの検索に使われます。',en:'Press Enter or "Add" to confirm. Tags are used in search.',ko:'Enter 또는 "추가"로 확정. 태그는 검색에 사용됩니다.','zh-tw':'按Enter或「添加」確認。標籤用於搜尋。','zh-cn':'按Enter或「添加」确认。标签用于搜索。',es:'Pulsa Enter o "Añadir". Los tags se usan en la búsqueda.',fr:'Appuyez sur Entrée ou "Ajouter". Les tags sont utilisés dans la recherche.',pt:'Pressione Enter ou "Adicionar". As tags são usadas na pesquisa.',de:'Drücke Enter oder "Hinzufügen". Tags werden in der Suche verwendet.',ar:'اضغط Enter أو "إضافة". تُستخدم الوسوم في البحث.' },
@@ -6330,10 +6549,8 @@
 
     // セクション見出し
     const secHeads = document.querySelectorAll('#page-home .sec-head h2');
-    const secLabels = ['secPickup','secSeason','secRecommend','secAll'];
+    const secLabels = ['secPickup','secSeason','secRandomPick'];
     secHeads.forEach((h, i) => { if(secLabels[i]) h.textContent = t(secLabels[i]); });
-    const recommendSmall = document.querySelector('#recommendGrid')?.closest('.sec')?.querySelector('small');
-    if (recommendSmall) recommendSmall.textContent = t('secRecommendSub');
 
     // 検索オーバーレイ
     const osi = document.getElementById('overlaySearchInput');
@@ -6553,10 +6770,7 @@
     const _secHeads = document.querySelectorAll('#page-home .sec-head h2');
     if(_secHeads[0]) _secHeads[0].textContent=t('secPickup');
     if(_secHeads[1]) _secHeads[1].textContent=t('secSeason');
-    if(_secHeads[2]) _secHeads[2].textContent=t('secRecommend');
-    if(_secHeads[3]) _secHeads[3].textContent=t('secAll');
-    const _recSmall = document.querySelector('#page-home .sec-head small:not([id])');
-    if(_recSmall) _recSmall.textContent=t('secRecommendSub');
+    if(_secHeads[2]) _secHeads[2].textContent=t('secRandomPick');
     // 戻るボタン全部
     document.querySelectorAll('.back-btn').forEach(btn=>{ btn.textContent=t('btnBack'); });
     // アニメページ
@@ -6684,7 +6898,7 @@
     terms: {
       title: '利用規約',
       body: `
-        <p class="legal-date">制定日：2025年1月1日　最終改定日：2025年6月27日</p>
+        <p class="legal-date">制定日：2025年1月1日　最終改定日：2026年7月5日</p>
 
         <h3>第1条（はじめに）</h3>
         <p>アニメップル（以下「本サービス」）は、アニメ作品のレビュー・可視化・発見を目的としたウェブサービスです。本サービスをご利用いただくことで、以下の利用規約（以下「本規約」）に同意いただいたものとみなします。</p>
@@ -6696,6 +6910,7 @@
         <p>以下の行為を禁止します。</p>
         <p>・他者への誹謗中傷・差別的表現を含むレビューの投稿</p>
         <p>・虚偽情報の投稿・スパム行為</p>
+        <p>・複数アカウントの作成、または他者との共謀による組織的な評価操作（いわゆる組織票）行為</p>
         <p>・本サービスへの不正アクセス・過度な負荷をかける行為</p>
         <p>・著作権等の知的財産権を侵害する行為</p>
         <p>・その他、法令または公序良俗に反する行為</p>
@@ -6712,46 +6927,6 @@
 
         <h3>第7条（準拠法）</h3>
         <p>本規約の解釈は日本法に準拠します。</p>
-      `
-    },
-    privacy: {
-      title: 'プライバシーポリシー',
-      body: `
-        <p class="legal-date">制定日：2025年1月1日　最終改定日：2025年6月27日</p>
-
-        <h3>1. 収集する情報</h3>
-        <p>本サービスは以下の情報を収集・利用します。</p>
-        <p>・<strong>IPアドレス（国情報のみ）</strong>：ipapi.co（外部API）を通じてアクセス元の国コードを取得します。個人を特定する情報は取得・保存しません。</p>
-        <p>・<strong>ブラウザのLocalStorage</strong>：レビューデータ・閲覧履歴・PVデータ・言語設定をお使いの端末内に保存します。サーバーには送信されません。</p>
-        <p>・<strong>アフィリエイトクリックログ</strong>：ブラウザのコンソールにのみ記録されます。外部への送信は行いません。</p>
-
-        <h3>2. 情報の利用目的</h3>
-        <p>・国別の閲覧統計（どの国からのアクセスが多いか）の集計</p>
-        <p>・お使いの端末へのレビューデータの保存・表示</p>
-        <p>・言語・表示設定の保持</p>
-
-        <h3>3. 第三者提供</h3>
-        <p>取得した個人情報を第三者に販売・提供することはありません。ただし以下の外部サービスを利用しています。</p>
-        <p>・<strong>Kitsu API</strong>（アニメ情報取得）：<a href="https://kitsu.io" target="_blank" style="color:var(--brand);">kitsu.io</a></p>
-        <p>・<strong>ipapi.co</strong>（国コード取得）：<a href="https://ipapi.co" target="_blank" style="color:var(--brand);">ipapi.co</a></p>
-
-        <h3>4. アフィリエイトプログラムについて</h3>
-        <p>本サービスは以下のアフィリエイトプログラムに参加しています。</p>
-        <p>・Amazonアソシエイト・プログラム</p>
-        <p>・その他、各動画配信サービスのアフィリエイトプログラム</p>
-        <p>これらのリンクを経由した際に、Cookieが設定される場合があります。詳細は各サービスのプライバシーポリシーをご確認ください。</p>
-
-        <h3>5. Cookieについて</h3>
-        <p>本サービス自体はCookieを使用しません。ただし、アフィリエイトリンク先のサービスがCookieを使用する場合があります。</p>
-
-        <h3>6. 今後の変更予定</h3>
-        <p>将来的にユーザーアカウント機能を追加する際は、メールアドレス等の収集について改めてご案内します。</p>
-
-        <h3>7. お問い合わせ</h3>
-        <p>本ポリシーに関するお問い合わせは、サービス内のSNSアカウントよりご連絡ください。</p>
-
-        <h3>8. ポリシーの変更</h3>
-        <p>本ポリシーはサービスの変更に伴い更新することがあります。重要な変更がある場合はサービス内でお知らせします。</p>
       `
     }
   };
