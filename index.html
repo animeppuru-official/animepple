@@ -262,20 +262,28 @@
     .slider-page-nav button:active { background:var(--line); }
     .slider-page-nav span { font-size:.85rem; font-weight:700; color:#dff0e6; min-width:7rem; text-align:center; }
     @media (min-width: 768px) { .slider-page-nav { display:none; } }
-    /* スマホ幅：スライダーをスワイプで左右に切り替える2ページ構成
+    /* スマホ幅：スライダーを矢印タップで左右に切り替える2ページ構成
        （12本を縦に全部並べると、下の方のスライダーを触る時にグラフが見えなくなるため） */
     @media (max-width: 767px) {
+      .review-slider-swiper-wrap { position:relative; }
       .review-slider-swiper {
-        display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth;
-        -webkit-overflow-scrolling:touch; scrollbar-width:none; margin-bottom:.9rem; border-radius:16px;
+        display:flex; overflow-x:hidden; scroll-behavior:smooth;
+        margin-bottom:.9rem; border-radius:16px;
       }
-      .review-slider-swiper::-webkit-scrollbar { display:none; }
-      .review-slider-page { flex:0 0 100%; scroll-snap-align:start; }
+      .review-slider-page { flex:0 0 100%; }
     }
     /* PC幅：スワイプ不要。2列に並べてどちらも常に見せる */
     @media (min-width: 768px) {
       .review-slider-swiper { display:grid; grid-template-columns:1fr 1fr; column-gap:1rem; }
     }
+    /* 検索ページの絞り込みパネルは常に幅が狭いサイドバーなので、画面幅に関係なく
+       常に1列＋矢印切り替えのままにする（2列にすると狭すぎて目盛りが潰れる） */
+    .filter-panel .slider-page-nav { display:flex !important; }
+    .filter-panel .review-slider-swiper {
+      display:flex !important; overflow-x:hidden; scroll-behavior:smooth;
+      margin-bottom:.9rem; border-radius:16px; grid-template-columns:none !important;
+    }
+    .filter-panel .review-slider-page { flex:0 0 100%; }
     .chart-wrap h2 { margin:0 0 .5rem; font-size:.97rem; }
     .chart-canvas { width:100%; height:auto; border:1px solid var(--line); border-radius:12px; background:#09201b; display:block; margin-bottom:.7rem; }
     .form-section { background:var(--card2); border:1px solid var(--line); border-radius:16px; padding:1rem; margin-bottom:.9rem; }
@@ -805,7 +813,7 @@
       .search-bar { max-width:1200px; margin:0 auto; padding:.8rem 2rem; }
       .filter-toggle-bar { max-width:1200px; margin:0 auto; padding:.6rem 2rem; }
       .filter-panel { max-width:1200px; margin:0 auto; padding:.75rem 2rem; }
-      .filter-panel .sl-row { grid-template-columns:3.8rem 1fr 1.6rem; gap:.3rem; }
+      .filter-panel .sl-row { grid-template-columns:3.6rem 1fr 2rem; gap:.3rem; }
       .result-meta { max-width:1200px; margin:0 auto; padding:.65rem 2rem; }
       .result-grid {
         grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
@@ -928,17 +936,24 @@
       <option value="reviews_asc">レビューが少ない順</option>
     </select>
   </div>
-  <div class="search-overlay-filters-row">
-    <div>
-      <div class="filter-label">📊 作品の完成度でしぼる</div>
-      <div class="filter-box"><div id="overlayFilterA"></div></div>
-    </div>
-    <div>
-      <div class="filter-label">💫 感情・雰囲気でしぼる</div>
-      <div class="filter-box"><div id="overlayFilterB"></div></div>
+  <div class="slider-page-nav" id="ovSliderPageNav">
+    <button type="button" id="ovSliderPagePrev" aria-label="前へ">‹</button>
+    <span id="ovSliderPageLabel">作品の完成度</span>
+    <button type="button" id="ovSliderPageNext" aria-label="次へ">›</button>
+  </div>
+  <div class="review-slider-swiper-wrap">
+    <div class="review-slider-swiper" id="ovSliderSwiper">
+      <div class="review-slider-page">
+        <div class="filter-label" style="text-align:center;">📊 作品の完成度でしぼる</div>
+        <div class="filter-box"><div id="overlayFilterA"></div></div>
+      </div>
+      <div class="review-slider-page">
+        <div class="filter-label" style="text-align:center;">💫 感情・雰囲気でしぼる</div>
+        <div class="filter-box"><div id="overlayFilterB"></div></div>
+      </div>
     </div>
   </div>
-  <button class="search-go" id="overlaySearchBtnBottom" data-i18n="btnRefineSearch" style="width:100%;margin-top:.5rem;">この条件で検索する</button>
+  <button class="search-go" id="overlaySearchBtnBottom" data-i18n="btnSearchGoFull" style="width:100%;margin-top:.5rem;">検索する</button>
 </div>
 
 <!-- ═══════════════════════════════════
@@ -947,7 +962,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.17.2</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.18.5</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1053,7 +1068,10 @@
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
-      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
     </div>
   </header>
   <div class="anime-hero-wrap">
@@ -1156,7 +1174,10 @@
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()" style="color:#fff;">← 戻る</button>
-      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
     </div>
   </header>
   <div style="position:sticky;top:52px;z-index:10;background:var(--bg);padding:.75rem 1rem .5rem;border-bottom:1px solid var(--line);">
@@ -1204,7 +1225,10 @@
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" id="reviewBackBtn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
-      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
     </div>
   </header>
   <div style="padding:1rem 1rem 0;">
@@ -1229,9 +1253,11 @@
       <span id="sliderPageLabel">作品の完成度</span>
       <button type="button" id="sliderPageNext" aria-label="次へ">›</button>
     </div>
-    <div class="review-slider-swiper" id="reviewSliderSwiper">
-      <div class="review-slider-page" id="slidersA"></div>
-      <div class="review-slider-page" id="slidersB"></div>
+    <div class="review-slider-swiper-wrap">
+      <div class="review-slider-swiper" id="reviewSliderSwiper">
+        <div class="review-slider-page" id="slidersA"></div>
+        <div class="review-slider-page" id="slidersB"></div>
+      </div>
     </div>
     <div class="form-section">
       <h2>投稿情報</h2>
@@ -1270,7 +1296,10 @@
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
-      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
     </div>
   </header>
 
@@ -1330,7 +1359,10 @@
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="nav('home')">← 戻る</button>
-      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
     </div>
   </header>
   <div class="search-bar">
@@ -1363,14 +1395,16 @@
       <span id="srSliderPageLabel">作品の完成度</span>
       <button type="button" id="srSliderPageNext" aria-label="次へ">›</button>
     </div>
-    <div class="review-slider-swiper" id="srSliderSwiper">
-      <div class="review-slider-page">
-        <div class="filter-label" style="text-align:center;">📊 作品の完成度（0で無視）</div>
-        <div class="filter-box"><div id="srFilterA"></div></div>
-      </div>
-      <div class="review-slider-page">
-        <div class="filter-label" style="text-align:center;">💫 感情・雰囲気（0で無視）</div>
-        <div class="filter-box"><div id="srFilterB"></div></div>
+    <div class="review-slider-swiper-wrap">
+      <div class="review-slider-swiper" id="srSliderSwiper">
+        <div class="review-slider-page">
+          <div class="filter-label" style="text-align:center;">📊 作品の完成度（0で無視）</div>
+          <div class="filter-box"><div id="srFilterA"></div></div>
+        </div>
+        <div class="review-slider-page">
+          <div class="filter-label" style="text-align:center;">💫 感情・雰囲気（0で無視）</div>
+          <div class="filter-box"><div id="srFilterB"></div></div>
+        </div>
       </div>
     </div>
     <button class="refine-btn" id="srApplyBtn" data-i18n="btnRefineSearch">この条件で再検索</button>
@@ -1400,7 +1434,10 @@
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
-      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
     </div>
   </header>
   <div style="padding:1rem;">
@@ -1422,7 +1459,10 @@
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
-      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
     </div>
   </header>
   <div style="padding:1rem;">
@@ -1444,7 +1484,10 @@
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
-      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
     </div>
   </header>
   <div style="max-width:700px;margin:0 auto;padding:1.5rem 1rem 3rem;">
@@ -1800,7 +1843,10 @@
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" onclick="navBack()">← 戻る</button>
-      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
     </div>
   </header>
   <div style="padding:1rem;max-width:480px;margin:0 auto;">
@@ -1836,7 +1882,10 @@
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" id="mypageBackBtn" data-i18n="btnBack" onclick="navBack()" style="display:none;">← 戻る</button>
-      <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
     </div>
   </header>
 
@@ -2028,7 +2077,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.17.2</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.18.5</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -3719,16 +3768,19 @@
     const nextBtn = document.getElementById(nextId);
     const label = document.getElementById(labelId);
     if (!swiper || !prevBtn || !nextBtn || !label) return;
+    let currentPage = 0;
     const updateLabel = () => {
-      const page = swiper.scrollLeft > swiper.clientWidth * 0.5 ? 1 : 0;
-      label.textContent = page === 0 ? t('chartATitle') : t('chartBTitle');
-      prevBtn.style.visibility = page === 0 ? 'hidden' : 'visible';
-      nextBtn.style.visibility = page === 1 ? 'hidden' : 'visible';
+      label.textContent = currentPage === 0 ? t('chartATitle') : t('chartBTitle');
+      prevBtn.style.visibility = currentPage === 0 ? 'hidden' : 'visible';
+      nextBtn.style.visibility = currentPage === 1 ? 'hidden' : 'visible';
     };
-    const goToPage = (page) => { swiper.scrollTo({ left: page * swiper.clientWidth, behavior: 'smooth' }); };
+    const goToPage = (page) => {
+      currentPage = Math.max(0, Math.min(1, page));
+      swiper.scrollTo({ left: currentPage * swiper.clientWidth, behavior: 'smooth' });
+      updateLabel();
+    };
     prevBtn.onclick = () => goToPage(0);
     nextBtn.onclick = () => goToPage(1);
-    swiper.onscroll = () => { clearTimeout(swiper._scrollTimer); swiper._scrollTimer = setTimeout(updateLabel, 80); };
     updateLabel();
   }
 
@@ -3800,13 +3852,20 @@
   const overlayProfileA=Object.fromEntries(axisA.map(k=>[k,0]));
   const overlayProfileB=Object.fromEntries(axisB.map(k=>[k,0]));
   const overlayTags=[];
+  let renderOverlayTags = null;
 
   function openSearch() {
     document.getElementById('searchOverlay').classList.add('open');
     // 開くたびに現在の値でスライダーを再構築する（前回の値が見た目に残らないように）
     buildSliders('overlayFilterA',axisA,overlayProfileA,'ov-a');
     buildSliders('overlayFilterB',axisB,overlayProfileB,'ov-b');
-    if(renderOverlayTags) renderOverlayTags();
+    setupSliderPageSwiper('ovSliderSwiper','ovSliderPagePrev','ovSliderPageNext','ovSliderPageLabel');
+    // タグ入力の初期化もここで行う（currentLang等の初期化が全て終わった後に実行するため）
+    if(!renderOverlayTags) {
+      renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true});
+    } else {
+      renderOverlayTags();
+    }
     // display確定後（iOS含む）にCanvas描画
     setTimeout(()=>{
       ['overlayFilterA','overlayFilterB'].forEach(id=>{
@@ -3823,7 +3882,7 @@
   document.getElementById('closeSearch').onclick=closeSearch;
   buildSliders('overlayFilterA',axisA,overlayProfileA,'ov-a');
   buildSliders('overlayFilterB',axisB,overlayProfileB,'ov-b');
-  const renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true});
+
 
   function doOverlaySearch() {
     const q=document.getElementById('overlaySearchInput').value.trim();
@@ -6118,6 +6177,7 @@
     filterChartA: { ja:'📊 作品の完成度（0で無視）',en:'📊 Production Quality (0=ignore)',ko:'📊 작품 완성도 (0=무시)','zh-tw':'📊 作品完成度（0=忽略）','zh-cn':'📊 作品完成度（0=忽略）',es:'📊 Calidad (0=ignorar)',fr:'📊 Qualité (0=ignorer)',pt:'📊 Qualidade (0=ignorar)',de:'📊 Qualität (0=ignorieren)',ar:'📊 جودة الإنتاج (0=تجاهل)' },
     filterChartB: { ja:'💫 感情・雰囲気（0で無視）',en:'💫 Mood & Atmosphere (0=ignore)',ko:'💫 감정·분위기 (0=무시)','zh-tw':'💫 情感·氛圍（0=忽略）','zh-cn':'💫 情感·氛围（0=忽略）',es:'💫 Ambiente (0=ignorar)',fr:'💫 Ambiance (0=ignorer)',pt:'💫 Clima (0=ignorar)',de:'💫 Stimmung (0=ignorieren)',ar:'💫 الأجواء (0=تجاهل)' },
     btnRefineSearch:{ ja:'この条件で再検索',en:'Search with these filters',ko:'이 조건으로 재검색','zh-tw':'以此條件重新搜尋','zh-cn':'以此条件重新搜索',es:'Buscar con estos filtros',fr:'Chercher avec ces filtres',pt:'Buscar com esses filtros',de:'Mit diesen Filtern suchen',ar:'البحث بهذه الفلاتر' },
+    btnSearchGoFull:{ ja:'検索する',en:'Search',ko:'검색하기','zh-tw':'搜尋','zh-cn':'搜索',es:'Buscar',fr:'Rechercher',pt:'Buscar',de:'Suchen',ar:'بحث' },
     // ラベル（レーダー軸）
     axisA: {
       ja:  ['作画','物語','キャラクター','世界観','音楽','テーマ'],
@@ -6234,8 +6294,7 @@
       });
     });
     const l = LANGS.find(x => x.code === currentLang);
-    const langBtn = document.getElementById('langBtn');
-    if (langBtn) langBtn.textContent = l ? l.flag : '🌐';
+    document.querySelectorAll('.lang-current-btn').forEach(btn => { btn.textContent = l ? l.flag : '🌐'; });
 
     // RTL対応（アラビア語）
     document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
@@ -6282,7 +6341,7 @@
     const osb = document.getElementById('overlaySearchBtn');
     if (osb) osb.textContent = t('btnSearchGo');
     const osbBottom = document.getElementById('overlaySearchBtnBottom');
-    if (osbBottom) osbBottom.textContent = t('btnRefineSearch');
+    if (osbBottom) osbBottom.textContent = t('btnSearchGoFull');
     const overlayTagInput = document.getElementById('overlayTagInput');
     if (overlayTagInput) overlayTagInput.placeholder = t('tagPlaceholder');
     const overlayTagAddBtn = document.getElementById('overlayTagAddBtn');
@@ -6429,7 +6488,7 @@
     if(overlaySortLabelEl) overlaySortLabelEl.textContent = t('overlaySortLabel')||t('sortLabel');
     // 検索オーバーレイ「この条件で検索する」
     const osbBottom2 = document.getElementById('overlaySearchBtnBottom');
-    if(osbBottom2) osbBottom2.textContent = t('btnRefineSearch');
+    if(osbBottom2) osbBottom2.textContent = t('btnSearchGoFull');
     // みんなの評価グラフタイトル
     const masterGraphTitle = document.querySelector('#masterGraphSection h2');
     if(masterGraphTitle) masterGraphTitle.textContent = t('masterGraphTitle');
@@ -6473,7 +6532,7 @@
     // 検索オーバーレイ
     const _cs = document.getElementById('closeSearch'); if(_cs) _cs.textContent = t('btnClose');
     const _ob = document.getElementById('overlaySearchBtn'); if(_ob) _ob.textContent = t('btnSearchGo');
-    const _obb = document.getElementById('overlaySearchBtnBottom'); if(_obb) _obb.textContent = t('btnRefineSearch');
+    const _obb = document.getElementById('overlaySearchBtnBottom'); if(_obb) _obb.textContent = t('btnSearchGoFull');
     const _ota = document.getElementById('overlayTagAddBtn'); if(_ota) _ota.textContent = t('btnAdd');
     const _osl = document.querySelector('label[for="overlaySortSelect"]'); if(_osl) _osl.textContent = t('sortLabel');
     const _osel = document.getElementById('overlaySortSelect');
