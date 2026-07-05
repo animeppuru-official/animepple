@@ -917,7 +917,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.16.4</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.16.5</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1219,7 +1219,7 @@
       </div>
       <div id="reviewTurnstile" style="margin:.75rem 0;"></div>
       <button class="submit-btn" id="submitReviewBtn" data-i18n="btnSubmit">🍎 投稿する</button>
-      <p class="form-note">※ ブラウザ内に保存します。やさしい言葉での投稿をお願いします。</p>
+      <p class="form-note">※ やさしい言葉での投稿をお願いします。</p>
     </div>
   </div>
 </div>
@@ -1978,7 +1978,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.16.4</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.16.5</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2967,6 +2967,20 @@
         });
       }
 
+      // 文字数で単純に切ると単語やアルファベット略称の途中で切れて不自然になるため、
+      // 上限を超える場合は直近の句点(。/！/？/. / ! / ? )まで戻ってから切る
+      const truncateAtBoundary = (text, maxLen) => {
+        if (!text || text.length <= maxLen) return text || '';
+        const cut = text.slice(0, maxLen);
+        const lastBoundary = Math.max(
+          cut.lastIndexOf('。'), cut.lastIndexOf('！'), cut.lastIndexOf('？'),
+          cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? ')
+        );
+        if (lastBoundary >= maxLen * 0.5) return cut.slice(0, lastBoundary + 1);
+        const lastSpace = cut.lastIndexOf(' ');
+        return (lastSpace >= maxLen * 0.5 ? cut.slice(0, lastSpace) : cut) + '…';
+      };
+
       const page = {
         id: pageId,
         kitsuId,
@@ -2974,7 +2988,7 @@
         titleEn: titles.en || titles.en_jp || a.canonicalTitle || '',
         meta: a.subtype || '',
         image: (a.posterImage||{}).large || (a.posterImage||{}).medium || '',
-        description: (a.synopsis||'').replace(/<[^>]*>/g,'').slice(0,300),
+        description: truncateAtBoundary((a.synopsis||'').replace(/<[^>]*>/g,''), 500),
         year: a.startDate ? a.startDate.slice(0,4) : '',
         episodes: a.episodeCount || '',
         features: a.subtype ? [a.subtype] : [],
@@ -4380,7 +4394,11 @@
     if(_adMid) _adMid.style.display='';
 
     const stage = getMaturityStage(reviews.length);
-    let metaText = t('validReviewMeta').replace('{n}', reviews.length);
+    // 投稿された全レビュー数（無効判定されたものも含む）。有効数と差がある時だけ併記して誤解を防ぐ
+    const totalSubmittedCount = getReviews().filter(r => r.animeId === id).length;
+    const validCountSuffix = totalSubmittedCount > reviews.length
+      ? t('outOfTotalSuffix').replace('{total}', totalSubmittedCount) : '';
+    let metaText = t('validReviewMeta').replace('{n}', reviews.length) + validCountSuffix;
     if (hasAiSeed && realCount === 0) {
       metaText = '🤖 ' + (t('aiOnlyGraphNote') || 'AIによる予測グラフです（実際のレビューはまだありません）');
     } else if (hasAiSeed) {
@@ -5469,7 +5487,10 @@
       const a=row.anime;
       const mb=row.match!==Infinity&&hasSrProfile()?`<span class="badge match-badge">${t('graphMatchBadge').replace('{n}',Math.max(0,Math.round(100-row.match*10)))}</span>`:'';
       const tb=row.tagScore>0?`<span class="badge" style="background:rgba(94,150,255,.15);border-color:#4a6abf;color:#b8d0ff;">${t('tagMatchBadge').replace('{n}',row.tagScore)}</span>`:'';
-      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, badges:[mb,tb]});
+      // グラフ一致がAIシード予測データのみに基づく場合は、実レビューと誤解されないよう明示する
+      const isAiOnlyMatch = mb && _searchMasterGraphCache && _searchMasterGraphCache[a.id]?.isAiOnly;
+      const aib = isAiOnlyMatch ? `<span class="badge" style="background:rgba(94,201,122,.1);">${t('aiPredictedBadge')}</span>` : '';
+      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, badges:[mb,tb,aib]});
     }).join('');
   }
 
@@ -5886,7 +5907,7 @@
     labelTags:    { ja:'タグ（最大10個）',en:'Tags (up to 10)',ko:'태그 (최대 10개)','zh-tw':'標籤（最多10個）','zh-cn':'标签（最多10个）',es:'Etiquetas (hasta 10)',fr:'Tags (jusqu\'à 10)',pt:'Tags (até 10)',de:'Tags (bis zu 10)',ar:'الوسوم (حتى 10)' },
     labelComment: { ja:'コメント',en:'Comment',ko:'댓글','zh-tw':'留言','zh-cn':'评论',es:'Comentario',fr:'Commentaire',pt:'Comentário',de:'Kommentar',ar:'تعليق' },
     btnSubmit:    { ja:'🍎 投稿する',en:'🍎 Submit',ko:'🍎 투고하기','zh-tw':'🍎 發佈','zh-cn':'🍎 发布',es:'🍎 Publicar',fr:'🍎 Publier',pt:'🍎 Publicar',de:'🍎 Veröffentlichen',ar:'🍎 نشر' },
-    formNote:     { ja:'※ ブラウザ内に保存します。やさしい言葉での投稿をお願いします。',en:'※ Saved in your browser. Please be kind in your reviews.',ko:'※ 브라우저에 저장됩니다. 친절한 말로 투고해 주세요.','zh-tw':'※ 儲存於瀏覽器。請以友善的語言發佈。','zh-cn':'※ 保存在浏览器中。请以友善的语言发布。',es:'※ Guardado en el navegador. Por favor, sé amable.',fr:'※ Enregistré dans le navigateur. Merci d\'être bienveillant.',pt:'※ Salvo no navegador. Por favor, seja gentil.',de:'※ Im Browser gespeichert. Bitte freundlich formulieren.',ar:'※ محفوظ في المتصفح. يُرجى استخدام لغة لطيفة.' },
+    formNote:     { ja:'※ やさしい言葉での投稿をお願いします。',en:'※ Please be kind in your reviews.',ko:'※ 친절한 말로 투고해 주세요.','zh-tw':'※ 請以友善的語言發佈。','zh-cn':'※ 请以友善的语言发布。',es:'※ Por favor, sé amable.',fr:'※ Merci d\'être bienveillant.',pt:'※ Por favor, seja gentil.',de:'※ Bitte freundlich formulieren.',ar:'※ يُرجى استخدام لغة لطيفة.' },
     tagPlaceholder:{ ja:'例: 泣ける、鬱、神作画',en:'e.g. emotional, dark, stunning animation',ko:'예: 눈물, 우울, 신작화','zh-tw':'例：感人、黑暗、神作畫','zh-cn':'例：感人、黑暗、神作画',es:'ej: emotivo, oscuro, animación impresionante',fr:'ex: émouvant, sombre, animation époustouflante',pt:'ex: emocional, sombrio, animação incrível',de:'z.B. emotional, dunkel, atemberaubende Animation',ar:'مثل: مؤثر، مظلم، رسوم متحركة مذهلة' },
     btnTagAdd:    { ja:'追加',en:'Add',ko:'추가','zh-tw':'新增','zh-cn':'添加',es:'Añadir',fr:'Ajouter',pt:'Adicionar',de:'Hinzufügen',ar:'إضافة' },
     commentExpandLabel: { ja:'コメントを見る',en:'Read comment',ko:'댓글 보기','zh-tw':'查看留言','zh-cn':'查看评论',es:'Ver comentario',fr:'Voir commentaire',pt:'Ver comentário',de:'Kommentar lesen',ar:'اقرأ التعليق' },
@@ -5994,6 +6015,8 @@
     profileSaveFailedAlert:{ ja:'保存に失敗しました。もう一度お試しください。',en:'Failed to save. Please try again.',ko:'저장에 실패했습니다. 다시 시도해 주세요.','zh-tw':'儲存失敗，請再試一次。','zh-cn':'保存失败，请再试一次。',es:'Error al guardar. Inténtalo de nuevo.',fr:'Échec de l\'enregistrement. Veuillez réessayer.',pt:'Falha ao salvar. Tente novamente.',de:'Speichern fehlgeschlagen. Bitte versuchen Sie es erneut.',ar:'فشل الحفظ. يرجى المحاولة مرة أخرى.' },
     googleLoginFailedAlert:{ ja:'Googleログインに失敗しました',en:'Google sign-in failed',ko:'Google 로그인에 실패했습니다','zh-tw':'Google 登入失敗','zh-cn':'Google 登录失败',es:'Error al iniciar sesión con Google',fr:'Échec de la connexion Google',pt:'Falha no login do Google',de:'Google-Anmeldung fehlgeschlagen',ar:'فشل تسجيل الدخول عبر Google' },
     favStatusUpdateFailedAlert:{ ja:'ステータスの更新に失敗しました。時間を置いて再度お試しください。',en:'Failed to update status. Please try again later.',ko:'상태 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요.','zh-tw':'狀態更新失敗，請稍後再試。','zh-cn':'状态更新失败，请稍后再试。',es:'Error al actualizar el estado. Inténtalo de nuevo más tarde.',fr:'Échec de la mise à jour du statut. Veuillez réessayer plus tard.',pt:'Falha ao atualizar o status. Tente novamente mais tarde.',de:'Status konnte nicht aktualisiert werden. Bitte versuchen Sie es später erneut.',ar:'فشل تحديث الحالة. يرجى المحاولة مرة أخرى لاحقًا.' },
+    outOfTotalSuffix:{ ja:'（全{total}件中・組織票対策で少数派を除外）',en:' (out of {total} total; minority outliers excluded)',ko:' (전체 {total}건 중 · 소수 의견 제외)','zh-tw':'（共{total}則中・已排除少數異常值）','zh-cn':'（共{total}条中・已排除少数异常值）',es:' (de {total} en total; minoría excluida)',fr:' (sur {total} au total ; minorité exclue)',pt:' (de {total} no total; minoria excluída)',de:' (von {total} insgesamt; Minderheit ausgeschlossen)',ar:' (من إجمالي {total}؛ تم استثناء الأقلية)' },
+    aiPredictedBadge:{ ja:'🤖 AI予測',en:'🤖 AI predicted',ko:'🤖 AI 예측','zh-tw':'🤖 AI預測','zh-cn':'🤖 AI预测',es:'🤖 Predicción IA',fr:'🤖 Prédiction IA',pt:'🤖 Previsão IA',de:'🤖 KI-Vorhersage',ar:'🤖 تنبؤ الذكاء الاصطناعي' },
     goodsSection: { ja:'🛍 グッズ・関連商品',en:'🛍 Merchandise',ko:'🛍 굿즈・관련 상품','zh-tw':'🛍 周邊商品','zh-cn':'🛍 周边商品',es:'🛍 Merchandising',fr:'🛍 Produits dérivés',pt:'🛍 Mercadoria',de:'🛍 Merchandise',ar:'🛍 البضائع' },
     goodsSeeItem: { ja:'商品を見る',en:'View items',ko:'상품 보기','zh-tw':'查看商品','zh-cn':'查看商品',es:'Ver productos',fr:'Voir les produits',pt:'Ver produtos',de:'Produkte ansehen',ar:'عرض المنتجات' },
     totalPV:      { ja:'総PV',en:'Total PV',ko:'총 PV','zh-tw':'總PV','zh-cn':'总PV',es:'PV total',fr:'PV total',pt:'PV total',de:'Gesamt-PV',ar:'إجمالي PV' },
@@ -6401,7 +6424,7 @@
     if(_secHeads[2]) _secHeads[2].textContent=t('secRecommend');
     if(_secHeads[3]) _secHeads[3].textContent=t('secAll');
     const _recSmall = document.querySelector('#page-home .sec-head small:not([id])');
-    if(_recSmall) _recSmall.textContent=t('secReviewsDesc')||t('sortReviewsDesc');
+    if(_recSmall) _recSmall.textContent=t('secRecommendSub');
     // 戻るボタン全部
     document.querySelectorAll('.back-btn').forEach(btn=>{ btn.textContent=t('btnBack'); });
     // アニメページ
