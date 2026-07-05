@@ -76,7 +76,7 @@
     .sl-track-wrap { display:flex; flex-direction:column; width:100%; }
     .sl-grid-canvas { display:block; width:100%; pointer-events:none; }
     .sl-track-wrap input[type="range"] {
-      accent-color:var(--brand2); width:100%; margin-top:0;
+      accent-color:var(--brand2); width:100%; margin-top:0; touch-action:none;
     }
     .sl-track-wrap input[type="range"].slider-unset {
       accent-color:#ff6b9d;
@@ -947,7 +947,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.17.1</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.17.2</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1358,10 +1358,21 @@
       </div>
       <div class="tag-list" id="srTagList"></div>
     </div>
-    <div class="filter-label">📊 作品の完成度（0で無視）</div>
-    <div class="filter-box"><div id="srFilterA"></div></div>
-    <div class="filter-label">💫 感情・雰囲気（0で無視）</div>
-    <div class="filter-box"><div id="srFilterB"></div></div>
+    <div class="slider-page-nav" id="srSliderPageNav">
+      <button type="button" id="srSliderPagePrev" aria-label="前へ">‹</button>
+      <span id="srSliderPageLabel">作品の完成度</span>
+      <button type="button" id="srSliderPageNext" aria-label="次へ">›</button>
+    </div>
+    <div class="review-slider-swiper" id="srSliderSwiper">
+      <div class="review-slider-page">
+        <div class="filter-label" style="text-align:center;">📊 作品の完成度（0で無視）</div>
+        <div class="filter-box"><div id="srFilterA"></div></div>
+      </div>
+      <div class="review-slider-page">
+        <div class="filter-label" style="text-align:center;">💫 感情・雰囲気（0で無視）</div>
+        <div class="filter-box"><div id="srFilterB"></div></div>
+      </div>
+    </div>
     <button class="refine-btn" id="srApplyBtn" data-i18n="btnRefineSearch">この条件で再検索</button>
   </div>
   <div class="result-meta" id="srResultMeta"></div>
@@ -2017,7 +2028,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.17.1</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.17.2</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -3702,11 +3713,11 @@
 
   // レビューフォーム専用スライダー構築: 無(-1)〜10
   // スライダーのページ切り替え（スマホ幅：矢印タップ or スワイプで「作品の完成度」⇔「感情・雰囲気」を切り替える）
-  function setupSliderPageSwiper() {
-    const swiper = document.getElementById('reviewSliderSwiper');
-    const prevBtn = document.getElementById('sliderPagePrev');
-    const nextBtn = document.getElementById('sliderPageNext');
-    const label = document.getElementById('sliderPageLabel');
+  function setupSliderPageSwiper(swiperId, prevId, nextId, labelId) {
+    const swiper = document.getElementById(swiperId);
+    const prevBtn = document.getElementById(prevId);
+    const nextBtn = document.getElementById(nextId);
+    const label = document.getElementById(labelId);
     if (!swiper || !prevBtn || !nextBtn || !label) return;
     const updateLabel = () => {
       const page = swiper.scrollLeft > swiper.clientWidth * 0.5 ? 1 : 0;
@@ -4894,7 +4905,7 @@
     renderReviewTurnstile();
     buildReviewSliders('slidersA', getAxisA(), vA, ()=>{ chartMoved=true; redrawReview(); });
     buildReviewSliders('slidersB', getAxisB(), vB, ()=>{ chartMoved=true; redrawReview(); });
-    setupSliderPageSwiper();
+    setupSliderPageSwiper('reviewSliderSwiper','sliderPagePrev','sliderPageNext','sliderPageLabel');
     // reset tags
     reviewTags.length=0;
     setupTagInput('reviewTagInput','reviewTagAddBtn','reviewTagList',reviewTags,10);
@@ -5411,6 +5422,7 @@
 
     buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a');
     buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b');
+    setupSliderPageSwiper('srSliderSwiper','srSliderPagePrev','srSliderPageNext','srSliderPageLabel');
     setupSrTagInput();
 
     const q=srSearchState.q.toLowerCase();
@@ -6452,7 +6464,7 @@
       if(ap&&ap.id==='page-review'){
         buildReviewSliders('slidersA', getAxisA(), vA, ()=>{ chartMoved=true; redrawReview(); });
         buildReviewSliders('slidersB', getAxisB(), vB, ()=>{ chartMoved=true; redrawReview(); });
-        setupSliderPageSwiper();
+        setupSliderPageSwiper('reviewSliderSwiper','sliderPagePrev','sliderPageNext','sliderPageLabel');
         redrawReview();
       }
     }
