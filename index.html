@@ -978,7 +978,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.30.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.31.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -2101,7 +2101,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.30.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.31.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2681,14 +2681,14 @@
     return row;
   }
 
-  // Kitsuのジャンル一覧（Action/Comedy/Dramaなど、種類が変動しない大分類）を
-  // まとめてtag_translationsに英語形だけ登録しておく（管理画面の「一括登録」ボタンから実行）。
-  // 既に登録済みの英語形はスキップするので、何度実行しても安全。各言語への訳は
-  // 従来通りresolveTagTranslation()が必要になった時に遅延取得する。
+  // Kitsuのジャンル一覧（Action/Comedy/Dramaなど、種類が変動しない大分類）を取得し、
+  // DeepLで全言語（ja/ko/zh-tw/zh-cn/es/fr/pt/de/ar）に訳した上でtag_translationsに
+  // まとめて保存する（管理画面の「一括登録」ボタンから実行）。既に登録済みの英語形は
+  // スキップするので、何度実行しても安全。
   async function seedKitsuGenres() {
     const resultEl = document.getElementById('seedKitsuGenresResult');
     if(!sb) { if(resultEl) resultEl.textContent = 'Supabase未接続のため実行できません'; return; }
-    if(resultEl) resultEl.textContent = '取得中…';
+    if(resultEl) resultEl.textContent = 'Kitsuからジャンル取得中…';
     const names = new Set();
     try {
       let offset = 0;
@@ -2705,16 +2705,25 @@
       if(resultEl) resultEl.textContent = 'Kitsu APIの取得に失敗しました: ' + e.message;
       return;
     }
-    let created = 0, skipped = 0;
+    const targetLangs = Object.keys(TAG_TRANSLATE_LANG_MAP).filter(l => l !== 'en');
+    let created = 0, skipped = 0, i = 0;
     for(const name of names) {
+      i++;
       try {
         const existing = await db.tagTranslations.findByEnglish(name);
         if(existing) { skipped++; continue; }
-        const row = await db.tagTranslations.insertRow(name, {});
+        if(resultEl) resultEl.textContent = `翻訳・登録中… (${i}/${names.size}) ${name}`;
+        const extra = {};
+        for(const lang of targetLangs) {
+          try {
+            extra[lang] = (await translateApi.translate(name, TAG_TRANSLATE_LANG_MAP[lang])) || name;
+          } catch(e) { console.warn('seedKitsuGenres translate error:', name, lang, e); }
+        }
+        const row = await db.tagTranslations.insertRow(name, extra);
         if(row) created++; else skipped++;
       } catch(e) { console.warn('seedKitsuGenres insert error:', name, e); }
     }
-    if(resultEl) resultEl.textContent = `完了: ${names.size}件中、新規登録${created}件・既存スキップ${skipped}件`;
+    if(resultEl) resultEl.textContent = `完了: ${names.size}件中、新規登録${created}件・既存スキップ${skipped}件（全言語訳済み）`;
   }
   window.seedKitsuGenres = seedKitsuGenres;
 
