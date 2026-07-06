@@ -307,7 +307,8 @@
     .req { color:var(--red); }
 
     /* ── SEARCH RESULTS ── */
-    .search-bar { padding:.8rem 1rem; border-bottom:1px solid var(--line); display:flex; gap:.5rem; }
+    .search-bar { border-bottom:1px solid var(--line); }
+    .search-bar-inner { padding:.8rem 1rem; display:flex; gap:.5rem; }
     .search-bar input { flex:1; padding:.65rem .85rem; background:var(--card2); border:1px solid var(--line); border-radius:12px; color:var(--text); font:inherit; font-size:.95rem; }
     .filter-toggle-bar { display:flex; align-items:center; justify-content:space-between; padding:.6rem 1rem; background:var(--card); border-bottom:1px solid var(--line); cursor:pointer; font-size:.85rem; }
     .filter-toggle-bar span { color:var(--muted); }
@@ -407,11 +408,18 @@
     .af-goods-sub  { font-size:.72rem; color:var(--muted); margin-top:.1rem; }
     .af-goods-cta  { flex:0 0 auto; padding:.35rem .8rem; border-radius:999px; background:#f0a050; color:#1a0800; font-size:.75rem; font-weight:700; white-space:nowrap; }
     /* PA-API実装後グッズカード */
-    .af-goods-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem; }
-    .af-goods-card { background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:.5rem; text-align:center; }
-    .af-goods-card img { width:100%; aspect-ratio:1; object-fit:contain; border-radius:6px; }
-    .af-goods-card-name { font-size:.7rem; color:#c8e6d4; margin-top:.3rem; line-height:1.3; }
-    .af-goods-card-price { font-size:.8rem; font-weight:700; color:#f0a050; margin-top:.2rem; }
+    .af-goods-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.6rem; }
+    @media(min-width:640px){ .af-goods-grid { grid-template-columns:repeat(4,1fr); } }
+    .af-goods-card { position:relative; background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:.6rem; text-decoration:none; color:inherit; display:block; }
+    .af-goods-card:hover { border-color:#f0a050; }
+    .af-goods-card img { width:100%; max-width:120px; aspect-ratio:1; object-fit:contain; border-radius:8px; background:#1c2e24; margin:0 auto; display:block; }
+    .af-goods-card-thumb { width:100%; max-width:120px; aspect-ratio:1; border-radius:8px; background:#1c2e24; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:0 auto; }
+    .af-goods-card-mockbadge { position:absolute; top:.4rem; left:.4rem; font-size:.58rem; padding:.1rem .4rem; border-radius:999px; background:rgba(0,0,0,.55); color:#f0a050; border:1px solid #f0a050; }
+    .af-goods-card-name { font-size:.74rem; color:#c8e6d4; margin-top:.4rem; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .af-goods-card-stars { font-size:.7rem; color:#f0a050; margin-top:.25rem; letter-spacing:.05em; }
+    .af-goods-card-stars span { color:var(--muted); font-size:.65rem; margin-left:.2rem; }
+    .af-goods-card-price { font-size:.92rem; font-weight:800; color:#f0a050; margin-top:.15rem; }
+    .af-goods-card-cta { margin-top:.4rem; text-align:center; padding:.3rem 0; border-radius:999px; background:#f0a050; color:#1a0800; font-size:.72rem; font-weight:700; }
 
     /* ══ REVIEWS LIST FILTERS ══ */
     .rl-tab, .rl-country { background:var(--card2); border:1px solid var(--line); color:var(--muted); border-radius:999px; padding:.25rem .65rem; font-size:.75rem; cursor:pointer; white-space:nowrap; flex-shrink:0; }
@@ -827,7 +835,7 @@
       #page-review .chart-wrap:first-of-type { margin-right:.5rem; }
 
       /* 検索結果 */
-      .search-bar { max-width:1200px; margin:0 auto; padding:.8rem 2rem; }
+      .search-bar-inner { max-width:1200px; margin:0 auto; padding:.8rem 2rem; }
       .filter-toggle-bar { max-width:1200px; margin:0 auto; padding:.6rem 2rem; }
       .filter-panel { max-width:1200px; margin:0 auto; padding:.75rem 2rem; }
       .filter-panel .sl-row { grid-template-columns:3.6rem 1fr 2rem; gap:.3rem; }
@@ -858,11 +866,15 @@
       }
       /* 検索フィルターを常時表示サイドパネルに */
       .filter-toggle-bar { display:none; }
+      .search-bar {
+        position:sticky; top:var(--hdr-h,60px); z-index:90;
+        background:var(--bg);
+      }
       .filter-panel {
         display:block !important;
-        position:sticky; top:60px;
+        position:sticky; top:calc(var(--hdr-h,60px) + var(--search-bar-h,64px));
         float:left; width:360px;
-        max-height:calc(100vh - 70px); overflow-y:auto;
+        max-height:calc(100vh - var(--hdr-h,60px) - var(--search-bar-h,64px) - 10px); overflow-y:auto;
         border-bottom:none; border-right:1px solid var(--line);
         padding:.9rem 1.2rem;
       }
@@ -979,7 +991,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.32.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.46.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -1111,6 +1123,12 @@
     </div>
   </div>
 
+  <!-- グッズ・関連商品（Amazonアフィリンク。マネタイズの核なので最上部に近い位置に配置） -->
+  <div class="af-section" id="afGoodsSection">
+    <div class="af-section-label" data-i18n="goodsSection">🛍 グッズ・関連商品</div>
+    <div id="afGoodsLinks"></div>
+  </div>
+
   <!-- マスターグラフ -->
   <section class="reviews-section" id="masterGraphSection" style="display:none;" hidden>
     <div class="reviews-head">
@@ -1171,12 +1189,6 @@
   <div class="af-section" id="afStreamSection">
     <div class="af-section-label" data-i18n="streamSection">▶ このアニメを観る</div>
     <div id="afStreamLinks"></div>
-  </div>
-
-  <!-- グッズ・関連商品 -->
-  <div class="af-section" id="afGoodsSection">
-    <div class="af-section-label" data-i18n="goodsSection">🛍 グッズ・関連商品</div>
-    <div id="afGoodsLinks"></div>
   </div>
 </div>
 
@@ -1379,8 +1391,10 @@
     </div>
   </header>
   <div class="search-bar">
-    <input id="srQuery" type="search" placeholder="キーワードで絞り込む" autocomplete="off" />
-    <button class="search-go" id="srSearchBtn" data-i18n="btnSearchGo">検索</button>
+    <div class="search-bar-inner">
+      <input id="srQuery" type="search" placeholder="キーワードで絞り込む" autocomplete="off" />
+      <button class="search-go" id="srSearchBtn" data-i18n="btnSearchGo">検索</button>
+    </div>
   </div>
   <div class="filter-toggle-bar" id="srFilterToggle">
     <span>🎛 詳細フィルター・並び替え</span>
@@ -2102,7 +2116,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.32.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.46.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2753,16 +2767,12 @@
   window.translateTagsForDisplay = translateTagsForDisplay;
 
   // ── ジャンル/カテゴリ（Kitsu由来・英語）の多言語対応 ──
-  // 日本語: 既存の静的辞書（高速・無料）。英語: 変換不要。それ以外: 共有翻訳テーブルを使う。
+  // 全言語、tag_translations（共有翻訳テーブル）を基準にする。英語はKitsu由来の原文そのまま。
   async function translateGenresForDisplay(genres) {
     const uniqueGenres = [...new Set((genres||[]).filter(Boolean))];
     const map = {};
     uniqueGenres.forEach(g => { map[g] = g; });
     if(!uniqueGenres.length) return map;
-    if(currentLang === 'ja') {
-      uniqueGenres.forEach(g => { map[g] = translateGenre(g); });
-      return map;
-    }
     if(currentLang === 'en') return map; // Kitsu由来のジャンルは元々英語なので変換不要
     await Promise.all(uniqueGenres.map(async (g) => {
       const row = await resolveTagTranslation(g, 'en', currentLang);
@@ -3021,6 +3031,16 @@
       const overlayQInput = document.getElementById('overlaySearchInput');
       if(overlayQInput) overlayQInput.value = '';
   }
+
+  // ヘッダー・検索窓の実際の高さを測ってCSS変数に反映する（sticky要素の隙間・重なり防止）
+  function updateStickyOffsets() {
+    const hdr = document.querySelector('#page-search .hdr');
+    const bar = document.querySelector('#page-search .search-bar');
+    if(hdr) document.documentElement.style.setProperty('--hdr-h', hdr.offsetHeight + 'px');
+    if(bar) document.documentElement.style.setProperty('--search-bar-h', bar.offsetHeight + 'px');
+  }
+  window.addEventListener('resize', updateStickyOffsets);
+  window.addEventListener('load', updateStickyOffsets);
 
   function nav(page, animeId) {
     // ホーム/人気ページを離れる時は、後で「戻る」で復元できるようスクロール位置を覚えておく
@@ -3781,7 +3801,7 @@
     if(_knownTagsCache) return _knownTagsCache;
     if(_knownTagsPromise) return _knownTagsPromise;
     _knownTagsPromise = (async () => {
-      try { _knownTagsCache = await db.tagTranslations.listKnown(40); }
+      try { _knownTagsCache = await db.tagTranslations.listKnown(300); }
       catch(e) { console.warn('known tags fetch:', e); _knownTagsCache = []; }
       return _knownTagsCache;
     })();
@@ -3818,13 +3838,13 @@
         chip.onclick = () => {
           input.value = chip.dataset.tag;
           addBtn.click();
-          hide();
-          input.focus();
+          hide(); // タグを選んだら毎回閉じる（input.focus()は呼ばない＝focusイベントで再オープンしないように）
         };
       });
       pop.classList.add('show');
     }
     input.addEventListener('focus', show);
+    wrap.addEventListener('mouseenter', show); // 検索窓にマウスが乗っただけでも開く
     wrap.addEventListener('mouseleave', hide);
   }
   window.setupTagFloatSuggest = setupTagFloatSuggest;
@@ -4039,19 +4059,25 @@
   /* ════════════════════════════
      SLIDER BUILDER
   ════════════════════════════ */
-  function buildSliders(containerId, labels, store, prefix) {
+  // internalKeys: 保存・照合用のキー（常にaxisA/axisB＝日本語の内部キーを渡す）。
+  // labelsは表示用の翻訳済みラベル。省略時はlabelsをキーとしても使う（既存呼び出しとの後方互換）。
+  function buildSliders(containerId, labels, store, prefix, internalKeys) {
+    const keys = internalKeys || labels;
     const el=document.getElementById(containerId); if(!el) return;
     // スライダーのHTMLを生成（グリッドはJS計測後に配置）
-    el.innerHTML = labels.map(label=>`
+    el.innerHTML = labels.map((label,i)=>{
+      const key = keys[i];
+      return `
       <div class="sl-row">
         <span>${label}</span>
         <div class="sl-track-wrap">
           <canvas class="sl-grid-canvas" height="18"></canvas>
-          <input type="range" min="0" max="10" step="1" value="${store[label]||0}" data-key="${label}" id="${prefix}-${label}" />
+          <input type="range" min="0" max="10" step="1" value="${store[key]||0}" data-key="${key}" id="${prefix}-${key}" />
         </div>
-        <output>${store[label]||0}</output>
+        <output>${store[key]||0}</output>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     // 描画後に実稼働幅を計測してグリッドをCanvasで描く
     requestAnimationFrame(()=>{
@@ -4077,8 +4103,8 @@
   function openSearch() {
     document.getElementById('searchOverlay').classList.add('open');
     // 開くたびに現在の値でスライダーを再構築する（前回の値が見た目に残らないように）
-    buildSliders('overlayFilterA',axisA,overlayProfileA,'ov-a');
-    buildSliders('overlayFilterB',axisB,overlayProfileB,'ov-b');
+    buildSliders('overlayFilterA',getAxisA(),overlayProfileA,'ov-a',axisA);
+    buildSliders('overlayFilterB',getAxisB(),overlayProfileB,'ov-b',axisB);
     setupSliderPageSwiper('ovSliderSwiper','ovSliderPagePrev','ovSliderPageNext','ovSliderPageLabel');
     // タグ入力の初期化もここで行う（currentLang等の初期化が全て終わった後に実行するため）
     if(!renderOverlayTags) {
@@ -4101,9 +4127,8 @@
   window.openSearch=openSearch;
 
   document.getElementById('closeSearch').onclick=closeSearch;
-  buildSliders('overlayFilterA',axisA,overlayProfileA,'ov-a');
-  buildSliders('overlayFilterB',axisB,overlayProfileB,'ov-b');
-
+  // ※初期スライダー生成はopenSearch()内で毎回行うため、ここでは呼ばない
+  // （ここで呼ぶとTがまだ初期化されていない状態でgetAxisA()が実行され、TDZエラーになる）
 
   function doOverlaySearch() {
     const q=document.getElementById('overlaySearchInput').value.trim();
@@ -4830,6 +4855,7 @@
     if (!page && sb) {
       // ローカルキャッシュにない場合はSupabaseから取得して表示
       db.animePages.getByIds([id]).then(rows => {
+        if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら何もしない
         if(rows && rows[0]) {
           const p = rows[0];
           const mapped = {
@@ -4860,6 +4886,7 @@
           document.getElementById('goReviewBtn').style.display='none';
         }
       }).catch(()=>{
+        if(currentAnimeId !== id) return;
         document.getElementById('animeTitle').textContent='ページが見つかりません';
       });
       return;
@@ -4890,6 +4917,7 @@
       let extra = '';
       // ジャンル・カテゴリは1回のAPI呼び出しでまとめて翻訳する（往復回数を減らして表示を速くする）
       const combinedGenreCategoryMap = await translateGenresForDisplay([...(page.genres||[]), ...(page.categories||[])]);
+      if(currentAnimeId !== id) return; // 翻訳待ち中に別のページへ移動していたら、古い内容で上書きしない
       // ジャンル
       if(page.genres&&page.genres.length){
         const displayGenres = page.genres.map(g=>combinedGenreCategoryMap[g]||g);
@@ -4936,6 +4964,7 @@
     renderWorldStats(id);
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
+      if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら反映しない
       renderMasterGraph(id);
       // レビュー数をアニメページに表示（実レビューが3件に達したらAI参考グラフは数に含めない）
       const scopedReviews = getReviews().filter(r=>r.animeId===id);
@@ -5577,6 +5606,7 @@
     if(DB_MODE !== 'supabase' || !sb) { section.style.display='none'; return; }
     try {
       const results = await computeSimilarAnime(id);
+      if(currentAnimeId !== id) return; // 計算中に別のページへ移動していたら反映しない
       if(!results.length) { section.style.display='none'; return; }
       const ids = results.map(r=>r.id);
       const aiOnlyMap = {};
@@ -5584,6 +5614,7 @@
       const all = getAll();
       const missingIds = ids.filter(i=>!all.find(p=>p.id===i));
       const fetchedPages = missingIds.length ? await db.animePages.getByIds(missingIds) : [];
+      if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら反映しない
       const pageMap = {};
       all.forEach(p=>{ pageMap[p.id]=p; });
       (fetchedPages||[]).forEach(p=>{
@@ -5688,6 +5719,7 @@
   }
 
   async function renderSearch() {
+    requestAnimationFrame(updateStickyOffsets); // ページ表示後に実際の高さを測ってsticky位置を合わせる
     document.getElementById('srQuery').value=srSearchState.q;
 
     const hasKeyword = !!srSearchState.q.trim();
@@ -5714,8 +5746,8 @@
       _ss.value = srSearchState.sort;
     }
 
-    buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a');
-    buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b');
+    buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a',axisA);
+    buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b',axisB);
     setupSliderPageSwiper('srSliderSwiper','srSliderPagePrev','srSliderPageNext','srSliderPageLabel');
     setupSrTagInput();
 
@@ -6055,24 +6087,6 @@
     renderGoodsLinks(page);
   }
 
-  // KitsuのsiteName表記ゆれ→自社サービスIDへの厳密マッピング
-  // （あいまいな部分一致だと誤爆するので、確認済みの表記だけ列挙する）
-  const KITSU_STREAMER_MAP = {
-    'crunchyroll': 'crunchyroll',
-    'funimation': 'funimation',
-    'netflix': 'netflix',
-    'hidive': 'hidive',
-    'hulu': 'hulu',
-    'amazon prime video': 'amazon',
-    'prime video': 'amazon',
-    'wakanim': 'wakanim',
-    'vrv': 'vrv',
-    'disney plus': 'disney',
-    'disney+': 'disney',
-    'tubi tv': 'tubi',
-    'tubi': 'tubi',
-  };
-
   // 各配信サービスのアニメ名検索URL生成
   // 日本語タイトル(JP)か英語タイトル(その他)をサービスに応じて使い分ける
   function buildStreamSearchUrl(serviceId, domain, titleJa, titleEn, country) {
@@ -6102,26 +6116,11 @@
     const titleJa = page ? (page.title || page.titleEn || '') : '';
     const titleEn = page ? (page.titleEn || page.title || '') : '';
 
-    // Kitsuから取れた配信先を優先（厳密マッチのみ「確認済み」扱い）
-    const allServices = Object.values(AFFILIATE.streamByCountry).flat();
-    let confirmed = [];
-    if(page && page.streaming && page.streaming.length) {
-      const kitsuIds = page.streaming
-        .map(s => KITSU_STREAMER_MAP[(s.name||'').trim().toLowerCase()])
-        .filter(Boolean);
-      const kitsuIdSet = new Set(kitsuIds);
-      const seen = new Set();
-      confirmed = allServices.filter(s => {
-        if(!kitsuIdSet.has(s.id) || seen.has(s.id)) return false;
-        seen.add(s.id); return true;
-      });
-    }
-
-    const isConfirmed = confirmed.length > 0;
-    let services = isConfirmed ? confirmed : (AFFILIATE.streamByCountry[country] || AFFILIATE.streamByCountry.DEFAULT);
+    // 国別のデフォルト配信サービス一覧をそのまま表示する（Kitsuでの確認は行わない）
+    const services = AFFILIATE.streamByCountry[country] || AFFILIATE.streamByCountry.DEFAULT;
 
     const labelEl = section.querySelector('.af-section-label');
-    if(labelEl) labelEl.textContent = isConfirmed ? t('streamSection') : t('streamSectionFallback');
+    if(labelEl) labelEl.textContent = t('streamSectionFallback');
 
     el.innerHTML = `<div class="af-stream-list">${services.map(s=>{
       // ホームページURLではなくアニメ名で検索した状態のURLを生成
@@ -6133,14 +6132,13 @@
            onclick="adClick('stream_${s.id}')">
           <div class="af-stream-icon">${s.icon}</div>
           <div class="af-stream-body">
-            <div class="af-stream-name">${s.name}${isConfirmed?` <span class="af-stream-badge">${t('streamConfirmedBadge')}</span>`:''}</div>
+            <div class="af-stream-name">${s.name}</div>
             <div class="af-stream-sub">${s.sub}</div>
           </div>
           <div class="af-stream-cta">${s.cta}</div>
         </a>
       `;
-    }).join('')}</div>
-    <p style="font-size:.68rem;color:var(--muted);margin:.5rem .1rem 0;line-height:1.5;">${t('streamDisclaimer')}</p>`;
+    }).join('')}</div>`;
     section.style.display = '';
   }
 
@@ -6155,32 +6153,33 @@
     const titleJa = page.title || page.titleEn || '';
     const titleEn = page.titleEn || page.title || '';
 
-    // 3カテゴリ分、国籍に応じたAmazonドメイン＋検索語（日本は日本語、それ以外は英語）で検索リンクを生成
+    // ※ここはPA-API導入前の見た目確認用モック。実際の商品名・価格・画像・評価は入っていない。
+    // PA-API導入後は、この4カテゴリを実際の検索結果1件目（商品名・価格・画像URL・星評価）に差し替える。
     const categories = [
-      { icon:'🧸', key:'goods', labelJa:'グッズ・フィギュア', labelEn:'Merch & Figures', qJa:'グッズ フィギュア', qEn:'merchandise figure' },
-      { icon:'💿', key:'bluray', labelJa:'DVD・ブルーレイ', labelEn:'DVD & Blu-ray', qJa:'DVD ブルーレイ', qEn:'DVD Blu-ray' },
-      { icon:'📖', key:'manga', labelJa:'漫画', labelEn:'Manga', qJa:'漫画', qEn:'manga' },
+      { icon:'🧸', key:'goods',  labelJa:'グッズ・フィギュア', labelEn:'Merch & Figures', qJa:'グッズ フィギュア', qEn:'merchandise figure', mockPrice:'¥3,980' },
+      { icon:'💿', key:'bluray', labelJa:'DVD・ブルーレイ',   labelEn:'DVD & Blu-ray',    qJa:'DVD ブルーレイ',   qEn:'DVD Blu-ray',       mockPrice:'¥5,478' },
+      { icon:'📖', key:'manga',  labelJa:'漫画',              labelEn:'Manga',            qJa:'漫画',             qEn:'manga',              mockPrice:'¥528' },
+      { icon:'🎽', key:'apparel',labelJa:'アパレル',          labelEn:'Apparel',          qJa:'Tシャツ',          qEn:'t-shirt',            mockPrice:'¥2,900' },
     ];
 
-    // ※ PA-API実装後は各URLに &tag=${amz.tag} を追加
     const items = categories.map(cat => {
       const query = encodeURIComponent(isJP ? `${titleJa} ${cat.qJa}` : `${titleEn} ${cat.qEn}`);
       const url = `https://www.${amz.domain}/s?k=${query}`;
       const label = isJP ? cat.labelJa : cat.labelEn;
       return `
-        <a class="af-goods-item" href="${url}" target="_blank" rel="noopener noreferrer sponsored"
+        <a class="af-goods-card" href="${url}" target="_blank" rel="noopener noreferrer sponsored"
            onclick="adClick('goods_amazon_${cat.key}')">
-          <div class="af-goods-icon">${cat.icon}</div>
-          <div class="af-goods-body">
-            <div class="af-goods-name">Amazon${country==='JP'?'.co.jp':''}</div>
-            <div class="af-goods-sub">${escapeHtml(label)}</div>
-          </div>
-          <div class="af-goods-cta" style="background:#f0a050;color:#1a0800;">${t('goodsSeeItem')||'商品を見る'}</div>
+          <span class="af-goods-card-mockbadge">${t('goodsMockBadge')||'プレビュー(仮)'}</span>
+          <div class="af-goods-card-thumb">${cat.icon}</div>
+          <div class="af-goods-card-name">${escapeHtml(titleJa || titleEn)} ${escapeHtml(label)}</div>
+          <div class="af-goods-card-stars">★★★★☆ <span>(128)</span></div>
+          <div class="af-goods-card-price">${cat.mockPrice}</div>
+          <div class="af-goods-card-cta">${t('goodsSeeItem')||'商品を見る'}</div>
         </a>
       `;
     }).join('');
 
-    el.innerHTML = `<div class="af-goods-list">${items}</div>`;
+    el.innerHTML = `<div class="af-goods-grid">${items}</div>`;
     section.style.display = '';
   }
 
@@ -6387,6 +6386,7 @@
     aiPredictedBadge:{ ja:'🤖 AI予測',en:'🤖 AI predicted',ko:'🤖 AI 예측','zh-tw':'🤖 AI預測','zh-cn':'🤖 AI预测',es:'🤖 Predicción IA',fr:'🤖 Prédiction IA',pt:'🤖 Previsão IA',de:'🤖 KI-Vorhersage',ar:'🤖 تنبؤ الذكاء الاصطناعي' },
     goodsSection: { ja:'🛍 グッズ・関連商品',en:'🛍 Merchandise',ko:'🛍 굿즈・관련 상품','zh-tw':'🛍 周邊商品','zh-cn':'🛍 周边商品',es:'🛍 Merchandising',fr:'🛍 Produits dérivés',pt:'🛍 Mercadoria',de:'🛍 Merchandise',ar:'🛍 البضائع' },
     goodsSeeItem: { ja:'商品を見る',en:'View items',ko:'상품 보기','zh-tw':'查看商品','zh-cn':'查看商品',es:'Ver productos',fr:'Voir les produits',pt:'Ver produtos',de:'Produkte ansehen',ar:'عرض المنتجات' },
+    goodsMockBadge: { ja:'プレビュー(仮)',en:'Preview (mock)',ko:'미리보기(임시)','zh-tw':'預覽(暫定)','zh-cn':'预览(暂定)',es:'Vista previa',fr:'Aperçu',pt:'Pré-visualização',de:'Vorschau',ar:'معاينة' },
     totalPV:      { ja:'総PV',en:'Total PV',ko:'총 PV','zh-tw':'總PV','zh-cn':'总PV',es:'PV total',fr:'PV total',pt:'PV total',de:'Gesamt-PV',ar:'إجمالي PV' },
     guestDesc:    { ja:'アカウントを作るとレビューが保存されます',en:'Create an account to save your reviews',ko:'계정을 만들면 리뷰가 저장됩니다','zh-tw':'建立帳號以儲存您的評論','zh-cn':'创建账号以保存您的评论',es:'Crea una cuenta para guardar tus reseñas',fr:'Créez un compte pour sauvegarder vos avis',pt:'Crie uma conta para salvar suas avaliações',de:'Erstelle ein Konto, um deine Bewertungen zu speichern',ar:'أنشئ حساباً لحفظ مراجعاتك' },
     createAccount:{ ja:'🍎 アカウントを作成',en:'🍎 Create Account',ko:'🍎 계정 만들기','zh-tw':'🍎 建立帳號','zh-cn':'🍎 创建账号',es:'🍎 Crear cuenta',fr:'🍎 Créer un compte',pt:'🍎 Criar conta',de:'🍎 Konto erstellen',ar:'🍎 إنشاء حساب' },
