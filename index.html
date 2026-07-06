@@ -341,9 +341,10 @@
     .search-tag-add-btn { padding:.58rem .8rem; border-radius:10px; background:var(--card); border:1px solid var(--line); color:var(--brand); font-weight:700; font-size:.82rem; cursor:pointer; white-space:nowrap; }
     /* 検索タグ入力にフォーカスした時にふんわり出る既知タグ候補ポップオーバー */
     .tag-float-popover {
-      position:absolute; top:100%; left:0; right:0; margin-top:.4rem;
+      position:absolute; top:100%; left:0; right:0; margin-top:0; padding-top:calc(.55rem + .4rem);
       background:var(--card); border:1px solid var(--line); border-radius:12px;
-      padding:.55rem; z-index:60; display:flex; flex-wrap:wrap; gap:.35rem;
+      padding-left:.55rem; padding-right:.55rem; padding-bottom:.55rem;
+      z-index:60; display:flex; flex-wrap:wrap; gap:.35rem; align-content:flex-start;
       max-height:9rem; overflow-y:auto; box-shadow:0 10px 24px rgba(0,0,0,.35);
       opacity:0; visibility:hidden; transform:translateY(-4px); pointer-events:none;
       transition:opacity .18s ease, transform .18s ease;
@@ -978,7 +979,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.31.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.32.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -2101,7 +2102,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.31.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.32.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -2706,24 +2707,32 @@
       return;
     }
     const targetLangs = Object.keys(TAG_TRANSLATE_LANG_MAP).filter(l => l !== 'en');
-    let created = 0, skipped = 0, i = 0;
+    let created = 0, updated = 0, skipped = 0, i = 0;
     for(const name of names) {
       i++;
       try {
         const existing = await db.tagTranslations.findByEnglish(name);
-        if(existing) { skipped++; continue; }
-        if(resultEl) resultEl.textContent = `翻訳・登録中… (${i}/${names.size}) ${name}`;
+        // 既存行がある場合も、まだ入っていない言語だけを埋める（前回失敗して英語だけ入っている行の救済）
+        const missingLangs = existing ? targetLangs.filter(l => !existing[l]) : targetLangs;
+        if(existing && missingLangs.length === 0) { skipped++; continue; }
+        if(resultEl) resultEl.textContent = `翻訳中… (${i}/${names.size}) ${name}`;
         const extra = {};
-        for(const lang of targetLangs) {
+        for(const lang of missingLangs) {
           try {
-            extra[lang] = (await translateApi.translate(name, TAG_TRANSLATE_LANG_MAP[lang])) || name;
+            const translated = await translateApi.translate(name, TAG_TRANSLATE_LANG_MAP[lang]);
+            if(translated) extra[lang] = translated;
           } catch(e) { console.warn('seedKitsuGenres translate error:', name, lang, e); }
         }
-        const row = await db.tagTranslations.insertRow(name, extra);
-        if(row) created++; else skipped++;
+        if(existing) {
+          for(const lang of Object.keys(extra)) { await db.tagTranslations.updateColumn(existing.id, lang, extra[lang]); }
+          if(Object.keys(extra).length) updated++; else skipped++;
+        } else {
+          const row = await db.tagTranslations.insertRow(name, extra);
+          if(row) created++; else skipped++;
+        }
       } catch(e) { console.warn('seedKitsuGenres insert error:', name, e); }
     }
-    if(resultEl) resultEl.textContent = `完了: ${names.size}件中、新規登録${created}件・既存スキップ${skipped}件（全言語訳済み）`;
+    if(resultEl) resultEl.textContent = `完了: ${names.size}件中、新規登録${created}件・既存の穴埋め${updated}件・スキップ${skipped}件`;
   }
   window.seedKitsuGenres = seedKitsuGenres;
 
