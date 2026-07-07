@@ -1384,7 +1384,7 @@
 <div class="page" id="page-search">
   <header class="hdr">
     <div class="hdr-inner">
-      <button class="back-btn" data-i18n="btnBack" onclick="nav('home')">← 戻る</button>
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
@@ -1961,7 +1961,7 @@
           <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)" />
         </div>
         <div class="mypage-info">
-          <p class="mypage-name" id="mypageUsername">ユーザー名</p>
+          <p class="mypage-name" id="mypageUsername" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span id="mypageUsernameText">ユーザー名</span><span id="mypageCountryBadge"></span></p>
           <p class="mypage-sub mypage-owner-only" id="mypageEmail">email</p>
           <p class="mypage-rank-badge" id="mypageRankBadge" style="display:none;"></p>
         </div>
@@ -2823,6 +2823,31 @@
       .replace(/'/g, '&#39;');
   }
 
+  // 国コード(ISO 3166-1 alpha-2)→ 国旗絵文字＋英語国名。
+  // 国名はIntl.DisplayNames（ブラウザ標準）から取得するので、独自の翻訳テーブルは持たない。
+  let _countryNameFormatter = null;
+  function countryFlagAndName(code) {
+    if(!code || typeof code !== 'string' || code.length !== 2) return null;
+    const cc = code.toUpperCase();
+    let flag = '';
+    try {
+      flag = String.fromCodePoint(...[...cc].map(c => 127397 + c.charCodeAt(0)));
+    } catch(e) { return null; }
+    let name = cc;
+    try {
+      if(typeof Intl !== 'undefined' && Intl.DisplayNames) {
+        if(!_countryNameFormatter) _countryNameFormatter = new Intl.DisplayNames(['en'], { type: 'region' });
+        name = _countryNameFormatter.of(cc) || cc;
+      }
+    } catch(e) {}
+    return { flag, name };
+  }
+  function countryBadgeHtml(code) {
+    const info = countryFlagAndName(code);
+    if(!info) return '';
+    return `<span style="font-size:.72rem;color:var(--muted);margin-left:.35rem;white-space:nowrap;">${info.flag} ${escapeHtml(info.name)}</span>`;
+  }
+
   // ジャンル名 日本語マッピング辞書（Kitsu APIの英語タグに対応）
 
   /* ════════════════════════════
@@ -2919,6 +2944,7 @@
         animeId: r.anime_id,
         userId: r.user_id || null,
         username: r.username||'名無しのりんご',
+        countryCode: r.country_code || null,
         chartA: r.chart_a||{},
         chartB: r.chart_b||{},
         tags: r.tags||[],
@@ -4981,14 +5007,14 @@
       // ジャンル・カテゴリは1回のAPI呼び出しでまとめて翻訳する（往復回数を減らして表示を速くする）
       const combinedGenreCategoryMap = await translateGenresForDisplay([...(page.genres||[]), ...(page.categories||[])]);
       if(currentAnimeId !== id) return; // 翻訳待ち中に別のページへ移動していたら、古い内容で上書きしない
-      // ジャンル
-      if(page.genres&&page.genres.length){
-        const displayGenres = page.genres.map(g=>combinedGenreCategoryMap[g]||g);
-        extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
-          <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelGenre')}</span>
-          ${displayGenres.map(g=>`<span class="badge">${escapeHtml(g)}</span>`).join('')}
-        </div>`;
-      }
+      // ジャンル（+ ユーザータグ上位3件・現在言語・翻訳なし。タグ部分は最新レビュー取得後に再計算するので専用枠にする）
+      const displayGenres = (page.genres||[]).map(g=>combinedGenreCategoryMap[g]||g);
+      extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
+        ${displayGenres.length ? `<span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelGenre')}</span>
+        ${displayGenres.map(g=>`<span class="badge">${escapeHtml(g)}</span>`).join('')}` : ''}
+        <span id="animeUserTopTagsBox" style="display:contents;"></span>
+      </div>`;
+
       // カテゴリ（タグ）
       if(page.categories&&page.categories.length){
         const displayCategories = page.categories.map(c=>combinedGenreCategoryMap[c]||c);
@@ -5015,6 +5041,7 @@
         </div>`;
       }
       extraEl.innerHTML = extra;
+      renderUserTopTagsBox(id); // ローカルキャッシュの時点でまず描画（後でSupabase取得後に再描画）
     }
 
     renderAnimeDescription(page, id);
@@ -5029,6 +5056,7 @@
     fetchRemoteReviews(id).then(()=>{
       if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら反映しない
       renderMasterGraph(id);
+      renderUserTopTagsBox(id); // 最新レビュー反映後にタグ上位3件を再計算
       // レビュー数をアニメページに表示（実レビューが3件に達したらAI参考グラフは数に含めない）
       const scopedReviews = getReviews().filter(r=>r.animeId===id);
       const allReviews = filterDisplayReviews(scopedReviews);
@@ -5039,6 +5067,16 @@
     // 「レビューを見る」ボタン
     const rlBtn = document.getElementById('goReviewListBtn');
     if(rlBtn) rlBtn.onclick = ()=>nav('reviews', id);
+  }
+
+  // ジャンル横のユーザータグ上位3件（現在言語・翻訳なし）を描画/再描画する。
+  // レビュー投稿・Supabase同期などタグ集計結果が変わりうるタイミングで呼べば、
+  // それまでの表示はそのまま残り、変動があった時だけ更新される。
+  function renderUserTopTagsBox(id) {
+    const box = document.getElementById('animeUserTopTagsBox');
+    if(!box || currentAnimeId !== id) return;
+    const userTopTags = topTags(id);
+    box.innerHTML = userTopTags.map((tag,idx)=>`<span class="tag-chip-user" onclick="srSearchByTag('${escapeHtml(tag)}')"><span style="opacity:.75;font-weight:800;margin-right:.2rem;">${tFn('rankLabel',idx+1)}</span>#${escapeHtml(tag)}</span>`).join('');
   }
 
   function renderWorldStats(id) {
@@ -5157,7 +5195,7 @@
                 ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="width:32px;height:32px;object-fit:cover;display:block;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-                <span class="rc-name"${userOnclick}>${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}</span>
+                <span class="rc-name"${userOnclick}>${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}${countryBadgeHtml(rev.countryCode||rev.country_code)}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${rev.createdAt?new Date(rev.createdAt).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'}):''}</span>
               </div>
             </div>
@@ -5439,7 +5477,7 @@
         }
 
         const page = getAll().find(p=>p.id===review.animeId);
-        const country = await geoStore.detectCountry().catch(()=>null);
+        const country = canUseAnalytics() ? await geoStore.detectCountry().catch(()=>null) : null;
         const { data: sessionData } = await sb.auth.getSession();
         const accessToken = sessionData?.session?.access_token || SUPABASE_ANON;
 
@@ -6562,6 +6600,7 @@
     },
     // その他
     reviewCount:{ ja:(n)=>`レビュー ${n}件`, en:(n)=>`${n} review${n!==1?'s':''}`, ko:(n)=>`리뷰 ${n}건`, 'zh-tw':(n)=>`${n}則評論`,'zh-cn':(n)=>`${n}条评论`, es:(n)=>`${n} reseña${n!==1?'s':''}`, fr:(n)=>`${n} avis`, pt:(n)=>`${n} avaliação${n!==1?'ões':''}`, de:(n)=>`${n} Bewertung${n!==1?'en':''}`, ar:(n)=>`${n} مراجعة` },
+    rankLabel:{ ja:(n)=>`${n}位`, en:(n)=>`No.${n}`, ko:(n)=>`${n}위`, 'zh-tw':(n)=>`第${n}名`, 'zh-cn':(n)=>`第${n}名`, es:(n)=>`N.º${n}`, fr:(n)=>`N°${n}`, pt:(n)=>`N.º${n}`, de:(n)=>`Platz ${n}`, ar:(n)=>`رقم ${n}` },
     allCount:   { ja:(n)=>`全${n}件`, en:(n)=>`${n} total`, ko:(n)=>`총 ${n}편`, 'zh-tw':(n)=>`共${n}部`,'zh-cn':(n)=>`共${n}部`, es:(n)=>`${n} en total`, fr:(n)=>`${n} au total`, pt:(n)=>`${n} no total`, de:(n)=>`${n} gesamt`, ar:(n)=>`${n} المجموع` },
     langSelectTitle:{ ja:'言語を選択', en:'Select Language', ko:'언어 선택', 'zh-tw':'選擇語言','zh-cn':'选择语言', es:'Seleccionar idioma', fr:'Choisir la langue', pt:'Selecionar idioma', de:'Sprache wählen', ar:'اختر اللغة' },
     confirmDelete:{ ja:'このページを削除しますか？', en:'Delete this page?', ko:'이 페이지를 삭제하시겠습니까?','zh-tw':'確定刪除此頁面？','zh-cn':'确定删除此页面？',es:'¿Eliminar esta página?',fr:'Supprimer cette page ?',pt:'Excluir esta página?',de:'Diese Seite löschen?',ar:'حذف هذه الصفحة؟' },
@@ -6625,6 +6664,7 @@
         applyLang();
         if (currentPage === 'home') { renderHome().catch(console.error); loadSeasonSection(); }
         else if (currentPage === 'search') renderSearch().catch(console.error);
+        else if (currentPage === 'anime' && currentAnimeId) renderAnimePage(currentAnimeId).catch(console.error);
       };
     });
     overlay.classList.add('open');
@@ -8072,7 +8112,7 @@
           :name.slice(0,1));
       const tags = (rev.tags||[]).map(tg=>{const ci=tg.indexOf(':');const text=ci>0?tg.slice(ci+1):tg;return `<span class="tag-chip-user">#${escapeHtml(text)}</span>`;}).join('');
       const dateStr = rev.createdAt||rev.created_at?new Date(rev.createdAt||rev.created_at).toLocaleDateString('ja-JP',{year:'numeric',month:'short',day:'numeric'}):'';
-      const flag = rev.country_code||rev.countryCode ? `<span style="font-size:.7rem;color:var(--muted);margin-left:.3rem;">${rev.country_code||rev.countryCode}</span>` : '';
+      const flag = countryBadgeHtml(rev.country_code||rev.countryCode);
       const isClickableUser = !!userId;
       const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(userId)}')" style="cursor:pointer;"` : '';
       return `<article class="review-card">
@@ -8502,7 +8542,7 @@
     }
 
     if(!isOwnPage && !profileData) {
-      document.getElementById('mypageUsername').textContent = t('userNotFound');
+      document.getElementById('mypageUsernameText').textContent = t('userNotFound');
       document.getElementById('mypageBioSection').style.display = 'none';
       document.getElementById('mypageRankBadge').style.display = 'none';
       document.getElementById('mypageRankProgress').innerHTML = '';
@@ -8522,7 +8562,7 @@
     const bio = profileData?.bio || '';
     const genres = profileData?.favorite_genres || [];
 
-    document.getElementById('mypageUsername').textContent = username;
+    document.getElementById('mypageUsernameText').textContent = username;
     if(isOwnPage) document.getElementById('mypageEmail').textContent = _currentUser.email;
 
     // 自己紹介・ジャンル表示
@@ -8556,6 +8596,13 @@
       const reviews = await db.reviews.getByUserId(targetUserId);
       reviewTotal = reviews ? reviews.length : 0;
       qualityCount = reviews ? reviews.filter(r=>r.quality).length : 0;
+
+      // 国バッジ（最新レビューの国コードから。取得済みかつ許可済みのユーザーのみ表示される）
+      const countryBadgeEl = document.getElementById('mypageCountryBadge');
+      if(countryBadgeEl) {
+        const latestWithCountry = (reviews||[]).find(r=>r.country_code);
+        countryBadgeEl.innerHTML = latestWithCountry ? countryBadgeHtml(latestWithCountry.country_code) : '';
+      }
 
       const listEl = document.getElementById('mypageReviewList');
       const previewEl = document.getElementById('mypageReviewListPreview');
