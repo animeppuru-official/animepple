@@ -992,7 +992,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.56.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.57.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -2117,7 +2117,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.56.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.57.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -4941,29 +4941,6 @@
           if(!existing.find(x=>x.id===mapped.id)) {
             localStorage.setItem('animepple-user-pages', JSON.stringify([mapped, ...existing]));
           }
-          // ジャンル・カテゴリが空の場合(AIシードでインポートされた作品)はKitsuから補完取得
-          if(mapped.kitsuId && (!mapped.genres || !mapped.genres.length) && (!mapped.categories || !mapped.categories.length)) {
-            const H2 = { headers: { 'Accept': 'application/vnd.api+json' } };
-            Promise.allSettled([
-              fetch(`https://kitsu.io/api/edge/anime/${mapped.kitsuId}/genres?page[limit]=10`, H2),
-              fetch(`https://kitsu.io/api/edge/anime/${mapped.kitsuId}/categories?page[limit]=10&sort=-totalMediaCount`, H2),
-            ]).then(async ([genreRes, catRes]) => {
-              if(genreRes.status==='fulfilled') {
-                const gj = await genreRes.value.json();
-                mapped.genres = (gj.data||[]).map(g=>g.attributes.name).filter(Boolean);
-              }
-              if(catRes.status==='fulfilled') {
-                const cj = await catRes.value.json();
-                mapped.categories = (cj.data||[]).slice(0,5).map(c=>c.attributes.title).filter(Boolean);
-              }
-              // キャッシュを更新
-              const pages2 = JSON.parse(localStorage.getItem('animepple-user-pages') || '[]');
-              const idx2 = pages2.findIndex(x=>x.id===mapped.id);
-              if(idx2>=0) pages2[idx2]=mapped; else pages2.unshift(mapped);
-              localStorage.setItem('animepple-user-pages', JSON.stringify(pages2));
-              if(currentAnimeId === id) renderAnimePage(id);
-            }).catch(()=>{});
-          }
           renderAnimePage(id);
         } else {
           document.getElementById('animeTitle').textContent='ページが見つかりません';
@@ -5148,24 +5125,10 @@
       }
     }
 
-
     // タグ表示: Kitsuジャンル(tag_translations経由) + ユーザータグ上位3件(言語別・翻訳なし)
-    // topTags()はgetReviews()のローカルキャッシュを見るため、ここでは取得済みのreviewsから直接集計する
-    const targetLang = currentLang || 'ja';
-    const userTagCount = {};
-    reviews.flatMap(r => r.tags || []).forEach(tag => {
-      const ci = tag.indexOf(':');
-      const tagLang = ci > 0 ? tag.slice(0, ci) : 'ja';
-      const tagText = ci > 0 ? tag.slice(ci + 1) : tag;
-      if(tagLang !== targetLang) return;
-      const k = tagText.toLowerCase();
-      userTagCount[k] = (userTagCount[k] || 0) + 1;
-    });
-    const userTags3 = Object.entries(userTagCount)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([tag]) => tag);
+    const userTags3 = topTags(id); // 現在言語での上位3件
     const allTagsForTranslation = reviews.flatMap(r=>r.tags||[]).map(t=>{
+      // プレフィックス除去して翻訳対象に渡す(レビュー一覧内のタグ表示用)
       const ci = t.indexOf(':'); return ci > 0 ? t.slice(ci+1) : t;
     });
     const tagDisplayMap = await translateTagsForDisplay(allTagsForTranslation);
@@ -5423,6 +5386,9 @@
 
   document.getElementById('submitReviewBtn').onclick=()=>{
     const comment = document.getElementById('reviewComment').value.trim();
+    // タグに現在の表示言語コードをプレフィックスとして付けて保存する。
+    // 例: 日本語モードで「泣ける」→ "ja:泣ける"、韓国語モードで "눈물나는" → "ko:눈물나는"
+    // プレフィックスがないタグ(旧データ)は日本語として扱う(後方互換)。
     const tags = reviewTags.map(t => `${currentLang}:${t}`);
     // 全軸が「無」でなければ＝全部操作済みなら有効グラフ
     const allSetA = vA.every(v=>v!==-1);
@@ -8104,7 +8070,7 @@
         : (name==='ゲスト'
           ?'<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>'
           :name.slice(0,1));
-      const tags = (rev.tags||[]).map(tg=>`<span class="tag-badge">${escapeHtml(tg)}</span>`).join('');
+      const tags = (rev.tags||[]).map(tg=>{const ci=tg.indexOf(':');const text=ci>0?tg.slice(ci+1):tg;return `<span class="tag-chip-user">#${escapeHtml(text)}</span>`;}).join('');
       const dateStr = rev.createdAt||rev.created_at?new Date(rev.createdAt||rev.created_at).toLocaleDateString('ja-JP',{year:'numeric',month:'short',day:'numeric'}):'';
       const flag = rev.country_code||rev.countryCode ? `<span style="font-size:.7rem;color:var(--muted);margin-left:.3rem;">${rev.country_code||rev.countryCode}</span>` : '';
       const isClickableUser = !!userId;
