@@ -2267,7 +2267,7 @@
       },
       async getByIds(ids) {
         if(!sb) return [];
-        const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url').in('id', ids);
+        const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url,meta,description,year,episodes,genres,categories,studios,streaming').in('id', ids);
         return data || [];
       },
       async getAllTitles() {
@@ -3194,23 +3194,23 @@
       const a = json.data.attributes;
       const titles = a.titles || {};
 
-      // ジャンル
-      let genres = [];
-      if(genreRes.status==='fulfilled'){
+      // ジャンル（レート制限等でHTTPエラーの場合は既存データを保持し、空で上書きしない）
+      let genres = (existing && existing.genres) || [];
+      if(genreRes.status==='fulfilled' && genreRes.value.ok){
         const gj = await genreRes.value.json();
         genres = (gj.data||[]).map(g=>g.attributes.name).filter(Boolean);
       }
 
       // カテゴリ（上位5個）
-      let categories = [];
-      if(catRes.status==='fulfilled'){
+      let categories = (existing && existing.categories) || [];
+      if(catRes.status==='fulfilled' && catRes.value.ok){
         const cj = await catRes.value.json();
         categories = (cj.data||[]).slice(0,5).map(c=>c.attributes.title).filter(Boolean);
       }
 
       // スタジオ（制作会社）
-      let studios = [];
-      if(prodRes.status==='fulfilled'){
+      let studios = (existing && existing.studios) || [];
+      if(prodRes.status==='fulfilled' && prodRes.value.ok){
         const pj2 = await prodRes.value.json();
         const included = pj2.included||[];
         studios = included.filter(i=>i.type==='producers'||i.type==='companies').map(i=>i.attributes.name).filter(Boolean);
@@ -3220,8 +3220,8 @@
       }
 
       // 配信サービス
-      let streaming = [];
-      if(streamRes.status==='fulfilled'){
+      let streaming = (existing && existing.streaming) || [];
+      if(streamRes.status==='fulfilled' && streamRes.value.ok){
         const sj2 = await streamRes.value.json();
         const inc = sj2.included||[];
         streaming = inc.filter(i=>i.type==='streamers').map(i=>({
