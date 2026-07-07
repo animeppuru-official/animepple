@@ -991,7 +991,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.46.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.52.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -2116,7 +2116,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.46.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.52.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -4561,6 +4561,19 @@
     return getRankByQualityCount(count).weight;
   }
 
+  // 「多数派クラスタを決める投票権」専用の重み（組織票対策）。
+  // 実際の点数集計(expandByWeight)には使わない。ここだけ新人(実績0〜2件)の重みを0にする。
+  // → 新規アカウントを量産する組織票が「多数派」に選ばれることを防ぐ。
+  // 新作アニメで新人しかレビューしていない場合でも、実際の点数計算(getReviewWeight)は
+  // 影響を受けないので、初期レビューが消えることはない。
+  function getVoteWeight(review, userQualityCounts) {
+    const name = review.userName || review.username || 'ゲスト';
+    if (name === 'ゲスト') return 0; // ゲスト（未ログイン）も投票権なし
+    const count = userQualityCounts[name] || 0;
+    const rank = getRankByQualityCount(count);
+    return rank.name === '新人' ? 0 : rank.weight;
+  }
+
   // 全レビューからユーザーごとの上質レビュー数を集計
   function buildUserQualityCounts(allReviews) {
     const counts = {};
@@ -4613,11 +4626,40 @@
     return clusters.sort((a,b)=>b.length-a.length).map(idxs => idxs.map(i=>sampled[i]));
   }
 
+  // ── 投稿タイミングの偏り検知（実績者が誰もいない時の代替の投票権）──
+  // 「誰が投稿したか」で判断できない（新人・ゲストしかいない）場合、
+  // 代わりに「いつ投稿されたか」を見る。組織票は短時間にまとめて来ることが多く、
+  // 本物のファンのレビューは日や週をかけてポツポツ増える傾向があるため。
+  // 同じ1時間以内に固まって来た投稿は、件数に関わらず最大3件分の重みしか持たない。
+  const BURST_WINDOW_MS = 60 * 60 * 1000; // 1時間
+  const BURST_WAVE_CAP = 3; // 1つの波（短時間の集中投稿）が持てる最大の重み
+  function getTemporalVoteWeights(reviews) {
+    const withTime = reviews.map(r => ({ r, t: new Date(r.createdAt || 0).getTime() || 0 }));
+    withTime.sort((a,b) => a.t - b.t);
+    const weights = new Map();
+    let wave = [];
+    const flushWave = () => {
+      if (!wave.length) return;
+      const perMember = Math.min(1, BURST_WAVE_CAP / wave.length);
+      wave.forEach(({r}) => weights.set(r, perMember));
+      wave = [];
+    };
+    withTime.forEach(item => {
+      if (wave.length && item.t - wave[0].t > BURST_WINDOW_MS) flushWave();
+      wave.push(item);
+    });
+    flushWave();
+    return weights;
+  }
+
   // メインクラスタ（多数派の意見）のレビューだけを返す。
-  // 「件数」ではなく「重みの合計」が最大のクラスタを選ぶことで、
-  // 実績のあるレビュアーが集まった少数派クラスタが、無名アカウントを
+  // 「件数」ではなく「投票権重みの合計」が最大のクラスタを選ぶことで、
+  // 実績のあるレビュアーが集まった少数派クラスタが、新人・ゲストアカウントを
   // 大量動員しただけの多数派クラスタ（組織的な荒らし・レビュー爆撃）に
   // 数の力だけで押し切られないようにしている。
+  // ※ここで使う重みは投票権専用（getVoteWeight。新人・ゲストは0）。
+  //   実際の点数計算（expandByWeight・getReviewWeight）とは別物で、
+  //   新人だけのレビューが点数計算から消えることはない。
   function getMainClusterReviews(reviews, userQualityCounts) {
     if (reviews.length < 3) return reviews; // 少数なら全部使う
     // 成熟度が「growing」段階（5〜9件）ではクラスタリングをスキップする。
@@ -4627,9 +4669,22 @@
     const qCounts = userQualityCounts || {};
     const byWeight = clusters.map(cluster => ({
       cluster,
-      weight: cluster.reduce((sum, r) => sum + getReviewWeight(r, qCounts), 0)
+      weight: cluster.reduce((sum, r) => sum + getVoteWeight(r, qCounts), 0)
     })).sort((a,b) => b.weight - a.weight);
     const totalWeight = byWeight.reduce((s,c)=>s+c.weight, 0);
+    if (totalWeight === 0) {
+      // 誰も投票権を持たない（全員新人・ゲスト）場合：投稿タイミングの偏りで代用判定する
+      const temporalWeights = getTemporalVoteWeights(reviews);
+      const byTemporal = clusters.map(cluster => ({
+        cluster,
+        weight: cluster.reduce((sum, r) => sum + (temporalWeights.get(r) || 0), 0)
+      })).sort((a,b) => b.weight - a.weight);
+      const totalTemporal = byTemporal.reduce((s,c)=>s+c.weight, 0);
+      if (totalTemporal === 0) return reviews; // それでも判定不能なら全件使う
+      const topTemporal = byTemporal[0];
+      if (topTemporal.weight < totalTemporal * 0.3) return reviews;
+      return topTemporal.cluster;
+    }
     const top = byWeight[0];
     // 最重量クラスタが全体重みの30%未満しかない場合は分裂しすぎなので全部使う（フォールバック）
     if (top.weight < totalWeight * 0.3) return reviews;
@@ -4791,12 +4846,19 @@
       metaText = '🤖 ' + (t('aiBlendedGraphNote') || 'AIの推定も混ぜた参考グラフです') + `（${t('validReviewMeta').replace('{n}', realCount)}）`;
     } else if (stage === 'early') metaText = '⚠️ ' + (t('maturityEarly') || 'レビュー数が少ないため参考値です') + `（${reviews.length}件）`;
     else if (stage === 'growing') metaText += ' ' + (t('maturityGrowing') || '（データ収集中）');
-    if (meta) meta.textContent = metaText;
 
     const labA = getAxisA(), labB = getAxisB();
     const userQCounts = buildUserQualityCounts(getReviews());
-    // 成熟度に応じたクラスタリングの要否・重み付き主要クラスタの選定はgetMainClusterReviews内で一元管理
     const mainCluster = getMainClusterReviews(reviews, userQCounts);
+
+    // 票割れ検知：意見が複数の派閥に分かれているか確認し、ユーザーに正直に伝える
+    const splitResult = detectSplitOpinion(reviews, userQCounts);
+    if (splitResult && (splitResult.isSplit || splitResult.isFragmented) && !hasAiSeed) {
+      // クラスタが割れている場合、「単一の正解」のように見せず、幅を持って表示することを伝える
+      metaText += ' ⚡ ' + (t('splitOpinionNote') || '意見が分かれています。グラフは多数派の傾向を示しています');
+    }
+
+    if (meta) meta.textContent = metaText;
     const avgA = axisA.map((k,i) => aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartA&&r.chartA[k]||0), userQCounts)));
     const avgB = axisB.map((k,i) => aggregateValues(expandByWeight(mainCluster, r=>Number(r.chartB&&r.chartB[k]||0), userQCounts)));
     // 各軸の誤差幅（参考値）。加重ではなく実際のレビュー件数(mainCluster.length)を母数にする。
@@ -4968,8 +5030,7 @@
       renderMasterGraph(id);
       // レビュー数をアニメページに表示（実レビューが3件に達したらAI参考グラフは数に含めない）
       const scopedReviews = getReviews().filter(r=>r.animeId===id);
-      const realCountForBadge = countValidRealReviews(scopedReviews);
-      const allReviews = realCountForBadge >= 3 ? scopedReviews.filter(r=>!r.isAiGenerated) : scopedReviews;
+      const allReviews = filterDisplayReviews(scopedReviews);
       const countEl = document.getElementById('animeReviewCount');
       if(countEl) countEl.textContent = allReviews.length ? `${allReviews.length}件` : '';
     });
@@ -5038,8 +5099,7 @@
 
   async function renderReviewList(id) {
     const scopedAll=getReviews().filter(r=>r.animeId===id);
-    const realCount = countValidRealReviews(scopedAll);
-    const allRaw = realCount >= 3 ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
+    const allRaw = filterDisplayReviews(scopedAll);
     let reviews=allRaw; // 全レビューを表示（グラフ集計はvalidReviewsで別管理）
     const skipped=0;
     const el=document.getElementById('reviewList');
@@ -5064,21 +5124,26 @@
       }
     }
 
-    // タグ上位10個をバッジ表示
-    const tags10 = topTags(id);
-    // 表示言語が日本語以外の場合、全レビューのタグをまとめて翻訳しておく
-    const allTagsForTranslation = [...tags10, ...reviews.flatMap(r=>r.tags||[])];
+    // タグ表示: Kitsuジャンル(tag_translations経由) + ユーザータグ上位3件(言語別・翻訳なし)
+    const userTags3 = topTags(id); // 現在言語での上位3件
+    const allTagsForTranslation = reviews.flatMap(r=>r.tags||[]).map(t=>{
+      // プレフィックス除去して翻訳対象に渡す(レビュー一覧内のタグ表示用)
+      const ci = t.indexOf(':'); return ci > 0 ? t.slice(ci+1) : t;
+    });
     const tagDisplayMap = await translateTagsForDisplay(allTagsForTranslation);
-    const tagsHtml = tags10.length
+    const tagsHtml = userTags3.length
       ? `<div style="padding:.5rem .75rem .2rem;display:flex;flex-wrap:wrap;gap:.35rem;">
           <span style="font-size:.72rem;color:var(--muted);margin-right:.2rem;">${t('popularTags')}</span>
-          ${tags10.map(t=>`<span class="tag-chip" style="cursor:pointer;" onclick="srSearchByTag('${escapeHtml(t)}')">#${escapeHtml(tagDisplayMap[t]||t)}</span>`).join('')}
+          ${userTags3.map(tag=>`<span class="tag-chip" style="cursor:pointer;" onclick="srSearchByTag('${escapeHtml(tag)}')">#${escapeHtml(tag)}</span>`).join('')}
          </div>`
       : '';
 
     const labA=getAxisA(), labB=getAxisB();
     el.innerHTML = tagsHtml + reviews.map((rev,i)=>{
-      const tags=(rev.tags||[]).map(tag=>`<span class="tag-chip">#${escapeHtml(tagDisplayMap[tag]||tag)}</span>`).join('');
+      const tags=(rev.tags||[]).map(tag=>{
+        const ci=tag.indexOf(':'); const text=ci>0?tag.slice(ci+1):tag;
+        return `<span class="tag-chip">#${escapeHtml(text)}</span>`;
+      }).join('');
       const displayName = rev.userName || rev.username || 'ゲスト';
       const isClickableUser = !!rev.userId;
       const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(rev.userId)}')" style="cursor:pointer;"` : '';
@@ -5320,7 +5385,10 @@
 
   document.getElementById('submitReviewBtn').onclick=()=>{
     const comment = document.getElementById('reviewComment').value.trim();
-    const tags = [...reviewTags];
+    // タグに現在の表示言語コードをプレフィックスとして付けて保存する。
+    // 例: 日本語モードで「泣ける」→ "ja:泣ける"、韓国語モードで "눈물나는" → "ko:눈물나는"
+    // プレフィックスがないタグ(旧データ)は日本語として扱う(後方互換)。
+    const tags = reviewTags.map(t => `${currentLang}:${t}`);
     // 全軸が「無」でなければ＝全部操作済みなら有効グラフ
     const allSetA = vA.every(v=>v!==-1);
     const allSetB = vB.every(v=>v!==-1);
@@ -5443,6 +5511,8 @@
 
   // 有効レビュー（スライダーを動かしたもの）だけをグラフ・検索データに使う
   // 全軸（chartA+chartB計12軸）が完全に同一値かどうか判定
+  // 全軸が同じ値のレビューは無効。
+  // 本物の絶賛(全10点)であっても、均一な値はアニメの特徴を表さないため集計から除外する。
   function isUniformReview(r) {
     const aVals = axisA.map(k => Number(r.chartA&&r.chartA[k]||0));
     const bVals = axisB.map(k => Number(r.chartB&&r.chartB[k]||0));
@@ -5451,19 +5521,39 @@
   }
 
   // マスターグラフ集計に反映される「有効なグラフレビュー」かどうか
-  // （コメント・タグのみでグラフを動かしていないレビューは対象外。
-  //   また、全軸操作済みでも極端に短時間（3秒未満）での送信は、
-  //   雑に全スライダーを動かしただけの可能性が高いため対象外にする。
-  //   ※elapsedMsはクライアント申告値なので厳密な防止策ではなく、
-  //   雑な入力を弾くための簡易フィルタという位置づけ）
-  const MIN_ELAPSED_MS_FOR_VALID_GRAPH = 3000;
+  // 以下のいずれかに該当するレビューは除外する:
+  // 1. 全軸同一値(isUniformReview)
+  // 2. 投稿時間が13秒未満(雑に動かしただけの可能性が高い)
+  // 3. chartMoved=false(スライダーを動かしていない)
+  // 4. 全12軸の標準偏差が1.0以下(低分散=全部同じような値で適当入力)
+  // 5. axisAとaxisB両方が完全に同じ値の並び(2つのグラフが偶然でも全軸一致するのは不自然)
+  // ※elapsedMsはクライアント申告値なので厳密な防止策ではなく簡易フィルタ
+  const MIN_ELAPSED_MS_FOR_VALID_GRAPH = 13000;
+  const MIN_STD_DEV_FOR_VALID_GRAPH = 1.0;
+  function isLowVarianceReview(r) {
+    const all = [...axisA.map(k=>Number(r.chartA&&r.chartA[k]||0)), ...axisB.map(k=>Number(r.chartB&&r.chartB[k]||0))];
+    const mean = all.reduce((a,b)=>a+b,0)/all.length;
+    const sd = Math.sqrt(all.reduce((a,b)=>a+(b-mean)**2,0)/all.length);
+    return sd <= MIN_STD_DEV_FOR_VALID_GRAPH;
+  }
+  function isMirroredGraph(r) {
+    const aVals = axisA.map(k=>Number(r.chartA&&r.chartA[k]||0));
+    const bVals = axisB.map(k=>Number(r.chartB&&r.chartB[k]||0));
+    return aVals.every((v,i)=>v===bVals[i]);
+  }
   function isGraphValidReview(r) {
     if (isUniformReview(r)) return false;
     if (typeof r.elapsedMs === 'number' && r.elapsedMs > 0 && r.elapsedMs < MIN_ELAPSED_MS_FOR_VALID_GRAPH) return false;
-    if (typeof r.chartMoved !== 'undefined') return r.chartMoved;
-    const aVals = axisA.map(k => Number(r.chartA&&r.chartA[k]||0));
-    const bVals = axisB.map(k => Number(r.chartB&&r.chartB[k]||0));
-    return aVals.some(v=>v<10) || bVals.some(v=>v<10);
+    if (typeof r.chartMoved !== 'undefined' && !r.chartMoved) return false;
+    if (isLowVarianceReview(r)) return false;
+    if (isMirroredGraph(r)) return false;
+    // chartMovedがundefinedの場合(古いデータ互換): 何か1軸でも動かしていれば有効
+    if (typeof r.chartMoved === 'undefined') {
+      const aVals = axisA.map(k=>Number(r.chartA&&r.chartA[k]||0));
+      const bVals = axisB.map(k=>Number(r.chartB&&r.chartB[k]||0));
+      return aVals.some(v=>v<10) || bVals.some(v=>v<10);
+    }
+    return true;
   }
 
   // AIレビューを除外すべきか（＝マスターグラフに反映される実レビューが1件でもあるか）
@@ -5476,17 +5566,42 @@
     return scopedReviews.filter(r => !r.isAiGenerated && isGraphValidReview(r)).length;
   }
 
-  function validReviews(animeId) {
-    const scoped = getReviews().filter(r => r.animeId === animeId);
-    // 実レビューが1〜2件だけの間にAIシードを即除外すると、3件ゲートに引っかかって
-    // 「AI予測グラフ→空白→3件到達で復活」という不自然な空白期間が生まれてしまう。
-    // そのため、実レビューが3件に達するまではAIシードを残して混ぜ、
-    // 実レビューが自立できる件数(3件)に達した時点で初めてAIシードを完全除外する。
-    const realCount = countValidRealReviews(scoped);
-    return scoped.filter(r => {
+  // ── AIシード混在ルールの一元化 ──
+  // 「実レビューが3件に達するまではAIシードを残して混ぜ、3件に達した時点で完全除外する」
+  // というルールを、用途別に2種類の関数として統一する（7箇所に分散していたのを集約）。
+  //
+  // ①グラフ集計用：isGraphValidReview（スライダー未操作等を除外）も併せて適用する。
+  //   マスターグラフ・票割れ検知・検索用グラフキャッシュなど「集計」に使う。
+  function filterGraphReviews(scopedReviews) {
+    const hasAI = scopedReviews.some(r => r.isAiGenerated);
+    // AIシードがある場合、「投票権のある実レビュー(アニメ通以上)」が3件未満の間は
+    // AIシードだけを集計に使う。これにより、コールドスタート中に組織票が来ても
+    // AIシードの値が守られ、検索に使えるグラフが維持される。
+    if (hasAI) {
+      const qCounts = buildUserQualityCounts(scopedReviews);
+      const trustedCount = scopedReviews.filter(r =>
+        !r.isAiGenerated && isGraphValidReview(r) && getVoteWeight(r, qCounts) > 0
+      ).length;
+      if (trustedCount < 3) {
+        return scopedReviews.filter(r => r.isAiGenerated && isGraphValidReview(r));
+      }
+    }
+    const realCount = countValidRealReviews(scopedReviews);
+    return scopedReviews.filter(r => {
       if (realCount >= 3 && r.isAiGenerated) return false;
       return isGraphValidReview(r);
     });
+  }
+  // ②一覧表示用：コメントのみ（グラフを動かしていない）レビューも表示対象に含める。
+  //   レビュー数バッジ・レビュー一覧など「表示」に使う。グラフ集計とは意図的に別基準。
+  function filterDisplayReviews(scopedReviews) {
+    const realCount = countValidRealReviews(scopedReviews);
+    return realCount >= 3 ? scopedReviews.filter(r => !r.isAiGenerated) : scopedReviews;
+  }
+
+  function validReviews(animeId) {
+    const scoped = getReviews().filter(r => r.animeId === animeId);
+    return filterGraphReviews(scoped);
   }
 
   // 有効レビューの集計グラフ（トリム平均/中央値/平均、AGGREGATE_MODEに従う）
@@ -5498,17 +5613,24 @@
   }
 
   // 有効レビューのタグを集計して上位10個を返す
-  function topTags(animeId) {
-    const rs = validReviews(animeId);
+  function topTags(animeId, lang) {
+    // lang: 現在の表示言語('ja'/'ko'/'en'等)。省略時はcurrentLang。
+    const targetLang = lang || currentLang || 'ja';
+    const rs = getReviews().filter(r => r.animeId === animeId);
     const count = {};
-    rs.flatMap(r=>r.tags||[]).forEach(tag=>{
-      const k = tag.toLowerCase();
-      count[k] = (count[k]||0) + 1;
+    rs.flatMap(r => r.tags || []).forEach(tag => {
+      // "ja:泣ける" 形式のタグから言語を判定
+      const colonIdx = tag.indexOf(':');
+      const tagLang = colonIdx > 0 ? tag.slice(0, colonIdx) : 'ja'; // プレフィックスなしは旧データ=ja扱い
+      const tagText = colonIdx > 0 ? tag.slice(colonIdx + 1) : tag;
+      if(tagLang !== targetLang) return; // 対象言語以外はスキップ
+      const k = tagText.toLowerCase();
+      count[k] = (count[k] || 0) + 1;
     });
     return Object.entries(count)
-      .sort((a,b)=>b[1]-a[1])
-      .slice(0,10)
-      .map(([tag])=>tag);
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3) // ユーザータグは上位3件
+      .map(([tag]) => tag);
   }
 
   // グラフ検索用：全アニメのマスターグラフを一括キャッシュ
@@ -5538,6 +5660,7 @@
         userName: r.username,
         quality: r.quality,
         elapsedMs: r.elapsed_ms,
+        createdAt: r.created_at,
       }));
       const byAnime = {};
       localRows.forEach(r=>{
@@ -5547,11 +5670,7 @@
       const userQCounts = buildUserQualityCounts(localRows);
       const cache = {};
       Object.entries(byAnime).forEach(([animeId, list])=>{
-        const realCount = countValidRealReviews(list);
-        const valid = list.filter(r=>{
-          if(realCount >= 3 && r.isAiGenerated) return false;
-          return isGraphValidReview(r);
-        });
+        const valid = filterGraphReviews(list);
         if(!valid.length) return;
         const mainCluster = getMainClusterReviews(valid, userQCounts);
         const avgA = {}, avgB = {};
@@ -7245,7 +7364,7 @@
     if (filtered.length < 3) return null; // データ不足
 
     // 既存ロジックが期待する形式 {chartA, chartB} に変換
-    const normalized = filtered.map(r => ({ chartA: r.chart_a||{}, chartB: r.chart_b||{}, userName: r.username, quality: r.quality }));
+    const normalized = filtered.map(r => ({ chartA: r.chart_a||{}, chartB: r.chart_b||{}, userName: r.username, quality: r.quality, createdAt: r.created_at }));
     const userQCounts = buildUserQualityCounts(normalized);
     const mainCluster = getMainClusterReviews(normalized, userQCounts);
     const avgA = axisA.map(k => aggregateValues(mainCluster.map(r=>Number(r.chartA?.[k]||0))));
@@ -7739,11 +7858,7 @@
           const splitResults = [];
           Object.entries(byAnime).forEach(([animeId, revsRaw])=>{
             // AI参考レビューは「ユーザーの意見」ではないため票割れ判定の母数から除外する
-            const realCountForSplit = countValidRealReviews(revsRaw);
-            const revs = revsRaw.filter(r=>{
-              if(realCountForSplit >= 3 && r.isAiGenerated) return false;
-              return isGraphValidReview(r);
-            });
+            const revs = filterGraphReviews(revsRaw);
             if(revs.length < 10) return;
             const result = detectSplitOpinion(revs);
             if(result.isSplit) splitResults.push({ animeId, ...result });
@@ -7916,8 +8031,7 @@
 
   async function renderReviewsListFiltered(id) {
     const scopedAll = getReviews().filter(r=>r.animeId===id);
-    const realCountFiltered = countValidRealReviews(scopedAll);
-    const allRevs = realCountFiltered >= 3 ? scopedAll.filter(r=>!r.isAiGenerated) : scopedAll;
+    const allRevs = filterDisplayReviews(scopedAll);
     const filtered = filterReviews(allRevs);
     const metaEl = document.getElementById('reviewsListMeta');
     if(metaEl) metaEl.textContent = `${filtered.length}件`;
