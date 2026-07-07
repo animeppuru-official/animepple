@@ -326,6 +326,7 @@
     .tag-add-btn { padding:.6rem .85rem; border-radius:10px; background:var(--card); border:1px solid var(--line); color:var(--brand); font-weight:700; font-size:.85rem; cursor:pointer; white-space:nowrap; }
     .tag-list { display:flex; flex-wrap:wrap; gap:.4rem; min-height:1.6rem; }
     .tag-chip { display:inline-flex; align-items:center; gap:.3rem; padding:.22rem .6rem; border-radius:999px; background:rgba(94,201,122,.15); border:1px solid #3d8a56; font-size:.78rem; color:#b8efc8; }
+    .tag-chip-user { display:inline-flex; align-items:center; gap:.3rem; padding:.22rem .6rem; border-radius:999px; background:rgba(60,130,220,.18); border:1px solid #3a6fc4; font-size:.78rem; color:#9ec8f8; cursor:pointer; }
     .tag-chip button { background:none; border:none; color:#7fc48a; cursor:pointer; font-size:.8rem; padding:0; line-height:1; }
     .tag-chip-search { cursor:pointer; }
     .tag-chip-search.active { background:rgba(94,201,122,.35); border-color:var(--brand); color:#e8fff0; }
@@ -991,7 +992,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.52.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.53.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
@@ -2116,7 +2117,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.52.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.53.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
   <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
@@ -5134,7 +5135,7 @@
     const tagsHtml = userTags3.length
       ? `<div style="padding:.5rem .75rem .2rem;display:flex;flex-wrap:wrap;gap:.35rem;">
           <span style="font-size:.72rem;color:var(--muted);margin-right:.2rem;">${t('popularTags')}</span>
-          ${userTags3.map(tag=>`<span class="tag-chip" style="cursor:pointer;" onclick="srSearchByTag('${escapeHtml(tag)}')">#${escapeHtml(tag)}</span>`).join('')}
+          ${userTags3.map(tag=>`<span class="tag-chip-user" onclick="srSearchByTag('${escapeHtml(tag)}')">#${escapeHtml(tag)}</span>`).join('')}
          </div>`
       : '';
 
@@ -5142,7 +5143,7 @@
     el.innerHTML = tagsHtml + reviews.map((rev,i)=>{
       const tags=(rev.tags||[]).map(tag=>{
         const ci=tag.indexOf(':'); const text=ci>0?tag.slice(ci+1):tag;
-        return `<span class="tag-chip">#${escapeHtml(text)}</span>`;
+        return `<span class="tag-chip-user">#${escapeHtml(text)}</span>`;
       }).join('');
       const displayName = rev.userName || rev.username || 'ゲスト';
       const isClickableUser = !!rev.userId;
