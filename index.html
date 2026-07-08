@@ -3284,7 +3284,7 @@
         title: titles.ja_jp || a.canonicalTitle || titles.en_jp || '',
         titleEn: titles.en || titles.en_jp || a.canonicalTitle || '',
         meta: a.subtype || '',
-        image: (a.posterImage||{}).large || (a.posterImage||{}).medium || '',
+        image: (a.posterImage||{}).medium || (a.posterImage||{}).large || '',
         description: truncateAtBoundary((a.synopsis||'').replace(/<[^>]*>/g,''), 500),
         year: a.startDate ? a.startDate.slice(0,4) : '',
         episodes: a.episodeCount || '',
