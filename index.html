@@ -5004,6 +5004,9 @@
     if(master) master.style.display='none';
     const adMid = document.getElementById('adAnimeMid');
     if(adMid) adMid.style.display='none';
+    // 前のアニメの画像が翻訳待ち等の間に残り続けないよう、ここで即座にクリアする
+    const thumbEarly = document.getElementById('animeThumbHero');
+    if(thumbEarly) thumbEarly.innerHTML = '';
 
     const all=getAll();
     let page=all.find(p=>p.id===id);
@@ -6519,8 +6522,8 @@
     sliderUnset: { ja:'無', en:'—', ko:'무', 'zh-tw':'無', 'zh-cn':'无', es:'—', fr:'—', pt:'—', de:'—', ar:'—' },
     graphIncompleteMsg: { ja:'この状態で投稿するとレビューとして表示されますが、みんなの評価グラフへのデータ集計はされません。', en:'You can post like this and it will show as a review, but it will not be counted in the master graph.', ko:'이 상태로 게시하면 리뷰로 표시되지만, 모두의 평가 그래프 집계에는 반영되지 않습니다.', 'zh-tw':'以此狀態發佈會顯示為評論，但不會計入大家的評分圖。', 'zh-cn':'以此状态发布会显示为评论，但不会计入大家的评分图。', es:'Puedes publicar así y se mostrará como reseña, pero no se contará en el gráfico general.', fr:"Vous pouvez publier ainsi, l'avis sera affiché mais ne sera pas compté dans le graphique général.", pt:'Você pode postar assim e aparecerá como avaliação, mas não será contado no gráfico geral.', de:'Du kannst so posten, es wird als Bewertung angezeigt, aber nicht in die Gesamtgrafik einberechnet.', ar:'يمكنك النشر هكذا وستظهر كمراجعة، لكنها لن تُحتسب في الرسم البياني العام.' },
     graphCompleteMsg: { ja:'すべて入力済みです。', en:'All fields are filled in.', ko:'모두 입력 완료되었습니다.', 'zh-tw':'已全部填寫完成。', 'zh-cn':'已全部填写完成。', es:'Todos los campos están completos.', fr:'Tous les champs sont remplis.', pt:'Todos os campos preenchidos.', de:'Alle Felder sind ausgefüllt.', ar:'تم ملء جميع الحقول.' },
-    maturityEarly:  { ja:'レビュー数が少ないため参考値です', en:'Few reviews — values are tentative', ko:'리뷰 수가 적어 참고용입니다', 'zh-tw':'評論數較少，僅供參考', 'zh-cn':'评论数较少，仅供参考', es:'Pocas reseñas, valor referencial', fr:'Peu d\'avis, valeur indicative', pt:'Poucas avaliações, valor referencial', de:'Wenige Bewertungen, Richtwert', ar:'مراجعات قليلة، قيمة تقريبية' },
-    notEnoughReviews: { ja:'レビューが3件集まるまでマスターグラフは表示されません', en:'The master graph appears once there are at least 3 reviews', ko:'리뷰가 3건 모일 때까지 마스터 그래프는 표시되지 않습니다', 'zh-tw':'累積3則評論後才會顯示總評圖表', 'zh-cn':'累计3条评论后才会显示总评图表', es:'El gráfico maestro aparece cuando hay al menos 3 reseñas', fr:'Le graphique principal apparaît à partir de 3 avis', pt:'O gráfico mestre aparece a partir de 3 avaliações', de:'Der Master-Graph erscheint ab 3 Bewertungen', ar:'يظهر الرسم البياني الرئيسي بعد وصول المراجعات إلى 3 على الأقل' },
+    maturityEarly:  { ja:'有効レビュー数が少ないため参考値です', en:'Few valid reviews — values are tentative', ko:'유효 리뷰 수가 적어 참고용입니다', 'zh-tw':'有效評論數較少，僅供參考', 'zh-cn':'有效评论数较少，仅供参考', es:'Pocas reseñas válidas, valor referencial', fr:'Peu d\'avis valides, valeur indicative', pt:'Poucas avaliações válidas, valor referencial', de:'Wenige gültige Bewertungen, Richtwert', ar:'مراجعات صالحة قليلة، قيمة تقريبية' },
+    notEnoughReviews: { ja:'有効レビューが3件集まるまでマスターグラフは表示されません', en:'The master graph appears once there are at least 3 valid reviews', ko:'유효 리뷰가 3건 모일 때까지 마스터 그래프는 표시되지 않습니다', 'zh-tw':'累積3則有效評論後才會顯示總評圖表', 'zh-cn':'累计3条有效评论后才会显示总评图表', es:'El gráfico maestro aparece cuando hay al menos 3 reseñas válidas', fr:'Le graphique principal apparaît à partir de 3 avis valides', pt:'O gráfico mestre aparece a partir de 3 avaliações válidas', de:'Der Master-Graph erscheint ab 3 gültigen Bewertungen', ar:'يظهر الرسم البياني الرئيسي بعد وصول المراجعات الصالحة إلى 3 على الأقل' },
     maturityGrowing:{ ja:'（データ収集中）', en:'(Collecting data)', ko:'（데이터 수집 중）', 'zh-tw':'（資料收集中）', 'zh-cn':'（数据收集中）', es:'(Recopilando datos)', fr:'(Collecte en cours)', pt:'(Coletando dados)', de:'(Datensammlung)', ar:'(جمع البيانات)' },
     validReviewMeta: { ja:'有効レビュー {n}件の平均', en:'Average of {n} valid reviews', ko:'유효 리뷰 {n}건의 평균', 'zh-tw':'{n}則有效評論的平均', 'zh-cn':'{n}条有效评论的平均', es:'Media de {n} reseñas válidas', fr:'Moyenne de {n} avis valides', pt:'Média de {n} avaliações válidas', de:'Durchschnitt von {n} gültigen', ar:'متوسط {n} مراجعة' },
     btnBack:      { ja:'← 戻る',en:'← Back',ko:'← 뒤로','zh-tw':'← 返回','zh-cn':'← 返回',es:'← Volver',fr:'← Retour',pt:'← Voltar',de:'← Zurück',ar:'← رجوع' },
