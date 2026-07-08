@@ -1137,27 +1137,54 @@
     <div id="afGoodsLinks"></div>
   </div>
 
-  <!-- マスターグラフ -->
-  <section class="reviews-section" id="masterGraphSection" style="display:none;" hidden>
-    <div class="reviews-head">
-      <h2 style="margin:0 0 .2rem;" data-i18n="masterGraphTitle">みんなの評価グラフ</h2>
-      <p id="masterGraphMeta" style="margin:0;font-size:.78rem;color:var(--muted);"></p>
-    </div>
-    <!-- グラフ -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.6rem;">
-      <div>
-        <p id="masterChartALabel" data-i18n="chartATitle" style="font-size:.75rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">作品の完成度</p>
-        <canvas id="masterChartA" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
+  <!-- マスターグラフ + 世界の反応（スマホ幅では左右スワイプで切り替え。PC幅は今まで通り縦に並ぶ） -->
+  <div class="slider-page-nav" id="graphWorldPageNav">
+    <button type="button" id="graphWorldPagePrev" aria-label="前へ">‹</button>
+    <span id="graphWorldPageLabel" data-i18n="masterGraphTitle">みんなの評価グラフ</span>
+    <button type="button" id="graphWorldPageNext" aria-label="次へ">›</button>
+  </div>
+  <div class="review-slider-swiper-wrap">
+    <div class="review-slider-swiper" id="graphWorldSwiper">
+      <div class="review-slider-page">
+        <!-- マスターグラフ -->
+        <section class="reviews-section" id="masterGraphSection">
+          <div class="reviews-head">
+            <h2 style="margin:0 0 .2rem;" data-i18n="masterGraphTitle">みんなの評価グラフ</h2>
+            <p id="masterGraphMeta" style="margin:0;font-size:.78rem;color:var(--muted);"></p>
+          </div>
+          <!-- グラフ -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.6rem;">
+            <div>
+              <p id="masterChartALabel" data-i18n="chartATitle" style="font-size:.75rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">作品の完成度</p>
+              <canvas id="masterChartA" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
+            </div>
+            <div>
+              <p id="masterChartBLabel" data-i18n="chartBTitle" style="font-size:.75rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">感情・雰囲気</p>
+              <canvas id="masterChartB" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
+            </div>
+          </div>
+          <!-- 内訳 -->
+          <div id="masterBreakdown" style="margin-top:.75rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem .75rem;"></div>
+          <p style="font-size:.62rem;color:var(--muted);margin:.5rem 0 0;" data-i18n="marginOfErrorNote">± は参考の誤差範囲です（件数が少ないほど大きくなります）</p>
+        </section>
       </div>
-      <div>
-        <p id="masterChartBLabel" data-i18n="chartBTitle" style="font-size:.75rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">感情・雰囲気</p>
-        <canvas id="masterChartB" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
+      <div class="review-slider-page">
+        <!-- 世界の反応 -->
+        <section class="reviews-section" id="worldStatsSection">
+          <div class="reviews-head">
+            <h2 style="margin:0 0 .25rem;" id="worldReactionTitle" data-i18n="worldReaction">🌍 世界の反応</h2>
+            <div class="world-period-tabs" id="worldPeriodTabs">
+              <button class="world-tab active" data-period="all" data-i18n="periodAll">全期間</button>
+              <button class="world-tab" data-period="month" data-i18n="periodMonth">今月</button>
+              <button class="world-tab" data-period="year" data-i18n="periodYear">今年</button>
+              <button class="world-tab" data-period="day" data-i18n="periodDay">今日</button>
+            </div>
+          </div>
+          <div id="worldStatsContent" style="margin-top:.6rem;"></div>
+        </section>
       </div>
     </div>
-    <!-- 内訳 -->
-    <div id="masterBreakdown" style="margin-top:.75rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem .75rem;"></div>
-    <p style="font-size:.62rem;color:var(--muted);margin:.5rem 0 0;" data-i18n="marginOfErrorNote">± は参考の誤差範囲です（件数が少ないほど大きくなります）</p>
-  </section>
+  </div>
 
   <!-- 広告：グラフ直下（自然な流れ：見て気になった→観る？） -->
   <div class="ad-wrap" id="adAnimeMid" style="display:none;">
@@ -1172,19 +1199,7 @@
     </div>
   </div>
 
-  <!-- 世界の反応 -->
-  <section class="reviews-section" id="worldStatsSection" style="display:none;">
-    <div class="reviews-head">
-      <h2 style="margin:0 0 .25rem;" id="worldReactionTitle" data-i18n="worldReaction">🌍 世界の反応</h2>
-      <div class="world-period-tabs" id="worldPeriodTabs">
-        <button class="world-tab active" data-period="all" data-i18n="periodAll">全期間</button>
-        <button class="world-tab" data-period="month" data-i18n="periodMonth">今月</button>
-        <button class="world-tab" data-period="year" data-i18n="periodYear">今年</button>
-        <button class="world-tab" data-period="day" data-i18n="periodDay">今日</button>
-      </div>
-    </div>
-    <div id="worldStatsContent" style="margin-top:.6rem;"></div>
-  </section>
+
 
   <!-- 似ている作品（好みグラフ・タグの近さで算出） -->
   <section class="reviews-section" id="similarAnimeSection" style="display:none;">
@@ -4034,6 +4049,34 @@
 
   // レビューフォーム専用スライダー構築: 無(-1)〜10
   // スライダーのページ切り替え（スマホ幅：矢印タップ or スワイプで「作品の完成度」⇔「感情・雰囲気」を切り替える）
+  // マスターグラフ⇔世界の反応のスワイプ切り替え（スマホ幅のみ）。
+  // PC幅ではtransformを一切設定しないので、CSSの通常の縦積みレイアウトのまま。
+  function setupGraphWorldSwiper() {
+    const swiper = document.getElementById('graphWorldSwiper');
+    const prevBtn = document.getElementById('graphWorldPagePrev');
+    const nextBtn = document.getElementById('graphWorldPageNext');
+    const label = document.getElementById('graphWorldPageLabel');
+    if (!swiper || !prevBtn || !nextBtn || !label) return;
+    let currentPage = 0;
+    const updateLabel = () => {
+      label.textContent = currentPage === 0 ? (t('masterGraphTitle')||'みんなの評価グラフ') : (t('worldReaction')||'🌍 世界の反応');
+      prevBtn.style.visibility = currentPage === 0 ? 'hidden' : 'visible';
+      nextBtn.style.visibility = currentPage === 1 ? 'hidden' : 'visible';
+    };
+    const goToPage = (page) => {
+      currentPage = Math.max(0, Math.min(1, page));
+      if (window.innerWidth <= 767) {
+        swiper.style.transform = `translateX(-${currentPage * 50}%)`;
+      } else {
+        swiper.style.transform = ''; // PC幅ではtransformを触らない（通常の縦積みのまま）
+      }
+      updateLabel();
+    };
+    prevBtn.onclick = () => goToPage(0);
+    nextBtn.onclick = () => goToPage(1);
+    goToPage(0);
+  }
+
   function setupSliderPageSwiper(swiperId, prevId, nextId, labelId) {
     const swiper = document.getElementById(swiperId);
     const prevBtn = document.getElementById(prevId);
@@ -4839,7 +4882,23 @@
     const section = document.getElementById('masterGraphSection');
     const adMid = document.getElementById('adAnimeMid');
     const meta = document.getElementById('masterGraphMeta');
-    if (!reviews.length) { if(section) section.style.display='none'; return; }
+    if (!reviews.length) {
+      // レビューが1件も無くても、セクション自体は隠さず「空のグラフ」を置いておく
+      // （スマホ幅では「世界の反応」と左右スワイプで切り替える構成のため、常に両方存在させる必要がある）
+      if (section) section.style.display='';
+      if (adMid) adMid.style.display='none';
+      if (meta) meta.textContent = t('notEnoughReviews') || 'まだレビューがありません';
+      const labA0 = getAxisA(), labB0 = getAxisB();
+      const caA0 = document.getElementById('masterChartA');
+      const caB0 = document.getElementById('masterChartB');
+      if (caA0) drawRadar(caA0, labA0, labA0.map(()=>0), 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0.15)');
+      if (caB0) drawRadar(caB0, labB0, labB0.map(()=>0), 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0.15)');
+      const miniSection0 = document.getElementById('miniGraphSection');
+      if(miniSection0) miniSection0.style.display='none';
+      const breakdown0 = document.getElementById('masterBreakdown');
+      if(breakdown0) breakdown0.innerHTML = '';
+      return;
+    }
 
     // 3件未満は数値を出さない（1〜2件だと荒らし1人でグラフが完全に決まってしまうため、
     // 「参考値」としてもミスリードになりやすい。件数が集まるまでは非表示にする）
@@ -5059,6 +5118,7 @@
     updateFavButtonState(id);
     renderAffiliateLinks(page);
     renderWorldStats(id);
+    setupGraphWorldSwiper();
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
       if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら反映しない
@@ -5097,7 +5157,9 @@
       const entries = Object.entries(stats).sort((a,b)=>b[1]-a[1]);
       const total = entries.reduce((s,[,v])=>s+v,0);
       if(!total) {
-        section.style.display='none'; return;
+        section.style.display='';
+        content.innerHTML = `<p style="font-size:.78rem;color:var(--muted);margin:0;">${t('notEnoughReviews') || 'まだデータがありません'}</p>`;
+        return;
       }
       section.style.display='';
       // 視認性のため上位5か国のみ表示（データ自体は全件収集・保持）
