@@ -668,6 +668,10 @@
     .auth-field input { padding:.65rem .9rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:#dff0e6; font-size:.9rem; }
     .auth-field input:focus { outline:none; border-color:var(--brand); }
     .auth-error { font-size:.78rem; color:#ff6b6b; margin:0; min-height:1rem; }
+    .onboard-radio-chip { display:flex; align-items:center; gap:.35rem; padding:.45rem .8rem; border-radius:20px; background:var(--card2); border:1px solid var(--line); font-size:.82rem; color:#dff0e6; cursor:pointer; }
+    .onboard-radio-chip input { accent-color:var(--brand); margin:0; }
+    #onboardUsername { padding:.65rem .9rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:#dff0e6; font-size:.9rem; }
+    #onboardUsername:focus { outline:none; border-color:var(--brand); }
     .auth-switch { font-size:.78rem; color:var(--muted); text-align:center; margin:0; }
     .auth-switch button { background:none; border:none; color:var(--brand); cursor:pointer; text-decoration:underline; font-size:.78rem; }
 
@@ -2109,6 +2113,42 @@
   </div>
 </div>
 
+<!-- 初回登録時プロフィール入力（ユーザー名・性別・年代）。スキップ不可（閉じるボタン無し） -->
+<div class="auth-overlay" id="onboardOverlay" style="display:none;">
+  <div class="auth-modal">
+    <div class="auth-modal-header">
+      <h2>プロフィールを設定</h2>
+    </div>
+    <div class="auth-modal-body" style="gap:1rem;">
+      <div>
+        <label for="onboardUsername" style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem;">ユーザー名</label>
+        <input type="text" id="onboardUsername" placeholder="ユーザー名" maxlength="20" style="width:100%;box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem;">性別</label>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <label class="onboard-radio-chip"><input type="radio" name="onboardGender" value="male" /> 男性</label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardGender" value="female" /> 女性</label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardGender" value="unspecified" checked /> 回答しない</label>
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem;">年代</label>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="10s" /> 10代</label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="20s" /> 20代</label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="30s" /> 30代</label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="40s" /> 40代</label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="50s_plus" /> 50代以上</label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="unspecified" checked /> 回答しない</label>
+        </div>
+      </div>
+      <p class="auth-error" id="onboardError"></p>
+      <button class="auth-google-btn" id="onboardSubmitBtn" onclick="submitOnboarding()" style="justify-content:center;">はじめる</button>
+    </div>
+  </div>
+</div>
+
 <!-- クッキー同意バナー -->
 <div id="cookieBanner" style="display:none;">
   <div class="cookie-banner-inner">
@@ -2233,7 +2273,7 @@
     profiles: {
       async get(userId) {
         if(!sb) return null;
-        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url').eq('id', userId).single();
+        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group').eq('id', userId).single();
         return data;
       },
       async getByIds(userIds) {
@@ -4699,11 +4739,13 @@
   }
 
   // レビューの重み（ユーザーの上質レビュー累計数から導出）
-  // userQualityCounts: { username: 上質レビュー数 } のマップ
+  // userQualityCounts: { userId: 上質レビュー数 } のマップ
+  // ※以前はusername(表示名)で識別していたが、表示名は変更可能・重複しうるため、
+  //   安定したuser_idで識別するように変更した。ゲスト（未ログイン、userId無し）は常に重み1。
   function getReviewWeight(review, userQualityCounts) {
-    const name = review.userName || review.username || 'ゲスト';
-    if (name === 'ゲスト') return 1.0; // ゲストは常に重み1
-    const count = userQualityCounts[name] || 0;
+    const uid = review.userId || review.user_id || null;
+    if (!uid) return 1.0; // ゲストは常に重み1
+    const count = userQualityCounts[uid] || 0;
     return getRankByQualityCount(count).weight;
   }
 
@@ -4713,21 +4755,21 @@
   // 新作アニメで新人しかレビューしていない場合でも、実際の点数計算(getReviewWeight)は
   // 影響を受けないので、初期レビューが消えることはない。
   function getVoteWeight(review, userQualityCounts) {
-    const name = review.userName || review.username || 'ゲスト';
-    if (name === 'ゲスト') return 0; // ゲスト（未ログイン）も投票権なし
-    const count = userQualityCounts[name] || 0;
+    const uid = review.userId || review.user_id || null;
+    if (!uid) return 0; // ゲスト（未ログイン）も投票権なし
+    const count = userQualityCounts[uid] || 0;
     const rank = getRankByQualityCount(count);
     return rank.name === '新人' ? 0 : rank.weight;
   }
 
-  // 全レビューからユーザーごとの上質レビュー数を集計
+  // 全レビューからユーザーごとの上質レビュー数を集計（user_id基準）
   function buildUserQualityCounts(allReviews) {
     const counts = {};
     allReviews.forEach(r => {
       if (r.quality) {
-        const name = r.userName || r.username || 'ゲスト';
-        if (name === 'ゲスト') return;
-        counts[name] = (counts[name]||0) + 1;
+        const uid = r.userId || r.user_id || null;
+        if (!uid) return; // ゲストは実績にカウントしない
+        counts[uid] = (counts[uid]||0) + 1;
       }
     });
     return counts;
@@ -5225,9 +5267,15 @@
     const tabs = document.getElementById('worldPeriodTabs');
     if(!section||!content||!tabs) return;
 
-    function draw(period) {
-      const stats = geoStore.getCountryStats(id, period);
-      const entries = Object.entries(stats).sort((a,b)=>b[1]-a[1]);
+    async function draw(period) {
+      let entries = [];
+      if (sb) {
+        try {
+          const { data, error } = await sb.rpc('get_country_stats', { p_anime_id: id, p_period: period });
+          if (currentAnimeId !== id) return; // 取得中に別のページへ移動していたら反映しない
+          if (!error && data) entries = data.map(r => [r.country_code, r.cnt]);
+        } catch(e) { /* RPC未対応環境等は空のまま扱う */ }
+      }
       const total = entries.reduce((s,[,v])=>s+v,0);
       if(!total) {
         section.style.display='';
@@ -5903,11 +5951,15 @@
     const section = document.getElementById('similarAnimeSection');
     const grid = document.getElementById('similarAnimeGrid');
     if(!section || !grid) return;
-    if(DB_MODE !== 'supabase' || !sb) { section.style.display='none'; return; }
+    const showEmpty = () => {
+      section.style.display='';
+      grid.innerHTML = `<p style="font-size:.78rem;color:var(--muted);margin:0;grid-column:1/-1;">${t('similarAnimeEmpty') || 'マスターグラフができてから表示されます'}</p>`;
+    };
+    if(DB_MODE !== 'supabase' || !sb) { showEmpty(); return; }
     try {
       const results = await computeSimilarAnime(id);
       if(currentAnimeId !== id) return; // 計算中に別のページへ移動していたら反映しない
-      if(!results.length) { section.style.display='none'; return; }
+      if(!results.length) { showEmpty(); return; }
       const ids = results.map(r=>r.id);
       const aiOnlyMap = {};
       results.forEach(r=>{ aiOnlyMap[r.id] = r.isAiOnly; });
@@ -5928,7 +5980,7 @@
         };
       });
       const items = ids.map(i=>pageMap[i]).filter(Boolean);
-      if(!items.length) { section.style.display='none'; return; }
+      if(!items.length) { showEmpty(); return; }
       grid.innerHTML = items.map(item=>renderAnimeCard(item, {
         style:'h',
         badges: aiOnlyMap[item.id] ? ['<span class="badge" style="background:rgba(94,201,122,.1);">🤖 AI予測</span>'] : [],
@@ -5936,7 +5988,7 @@
       section.style.display='';
     } catch(e) {
       console.warn('similar anime error:', e);
-      section.style.display='none';
+      showEmpty();
     }
   }
   function matchDist(id){
@@ -6173,8 +6225,13 @@
 
     // 検索キーワード・タグフィルターの匿名ログ（企業提供データ用・analytics同意時のみ）
     if(canUseAnalytics()) {
-      if(srSearchState.q) db.searchLogs.insert(srSearchState.q, geoStore.getCountry(), combined.length);
+      if(srSearchState.q) {
+        const _searchCountry = await geoStore.detectCountry().catch(()=>null);
+        db.searchLogs.insert(srSearchState.q, _searchCountry, combined.length);
+      }
       srTagsActive.forEach(tag => db.filterLogs.insert('tag', tag));
+      if(hasSrProfile()) db.filterLogs.insert('graph_profile', 'used');
+      if(srSearchState.sort && srSearchState.sort !== 'relevance') db.filterLogs.insert('sort', srSearchState.sort);
     }
 
     if(!combined.length){
@@ -6675,6 +6732,7 @@
     worldReaction:{ ja:'🌍 世界の反応',en:'🌍 World Reactions',ko:'🌍 세계 반응','zh-tw':'🌍 世界反應','zh-cn':'🌍 世界反应',es:'🌍 Reacciones mundiales',fr:'🌍 Réactions mondiales',pt:'🌍 Reações mundiais',de:'🌍 Weltweite Reaktionen',ar:'🌍 ردود العالم' },
     similarAnimeTitle:{ ja:'🧭 似ている作品',en:'🧭 Similar Titles',ko:'🧭 비슷한 작품','zh-tw':'🧭 相似作品','zh-cn':'🧭 相似作品',es:'🧭 Títulos similares',fr:'🧭 Titres similaires',pt:'🧭 Títulos semelhantes',de:'🧭 Ähnliche Titel',ar:'🧭 عناوين مشابهة' },
     similarAnimeDesc:{ ja:'好みグラフとタグの近さから算出しています',en:'Based on graph similarity and shared tags',ko:'그래프 유사도와 태그를 기반으로 산출됩니다','zh-tw':'依據好惡圖表與標籤的相似度計算','zh-cn':'依据偏好图表与标签的相似度计算',es:'Calculado por similitud de gráficos y etiquetas',fr:'Calculé selon la similarité du graphique et des tags',pt:'Calculado pela semelhança do gráfico e tags',de:'Basierend auf Grafikähnlichkeit und Tags',ar:'يُحسب بناءً على تشابه الرسم البياني والوسوم' },
+    similarAnimeEmpty:{ ja:'マスターグラフができてから表示されます',en:'Shown once the master graph is available',ko:'마스터 그래프가 만들어지면 표시됩니다','zh-tw':'總評圖表建立後即會顯示','zh-cn':'总评图表生成后即会显示',es:'Se mostrará cuando el gráfico maestro esté disponible',fr:'Affiché une fois le graphique principal disponible',pt:'Exibido assim que o gráfico mestre estiver disponível',de:'Wird angezeigt, sobald der Master-Graph verfügbar ist',ar:'يظهر بعد توفر الرسم البياني الرئيسي' },
     marginOfErrorNote:{ ja:'± は参考の誤差範囲です（件数が少ないほど大きくなります）',en:'± shows an approximate margin of error (larger with fewer reviews)',ko:'±는 참고용 오차 범위입니다（리뷰 수가 적을수록 커집니다）','zh-tw':'±為參考誤差範圍（評論數越少誤差越大）','zh-cn':'±为参考误差范围（评论数越少误差越大）',es:'± es un margen de error aproximado (mayor con menos reseñas)',fr:'± indique une marge d\'erreur approximative (plus grande avec peu d\'avis)',pt:'± indica uma margem de erro aproximada (maior com menos avaliações)',de:'± zeigt eine ungefähre Fehlerspanne (größer bei wenigen Bewertungen)',ar:'± يوضح هامش خطأ تقريبي (يكبر مع قلة المراجعات)' },
     aiOnlyGraphNote:{ ja:'AIによる予測グラフです（実際のレビューはまだありません）',en:'This is an AI-predicted graph (no real reviews yet)',ko:'AI가 예측한 그래프입니다（아직 실제 리뷰가 없습니다）','zh-tw':'這是AI預測的圖表（尚無實際評論）','zh-cn':'这是AI预测的图表（尚无实际评论）',es:'Este es un gráfico predicho por IA (aún sin reseñas reales)',fr:'Ceci est un graphique prédit par IA (pas encore d\'avis réels)',pt:'Este é um gráfico previsto por IA (ainda sem avaliações reais)',de:'Dies ist ein KI-vorhergesagtes Diagramm (noch keine echten Bewertungen)',ar:'هذا رسم بياني تنبأ به الذكاء الاصطناعي (لا توجد مراجعات حقيقية بعد)' },
     aiBlendedGraphNote:{ ja:'AIの推定も混ぜた参考グラフです',en:'This reference graph blends AI estimates with real reviews',ko:'AI 추정치를 혼합한 참고 그래프입니다','zh-tw':'此參考圖表混合了AI推測與實際評論','zh-cn':'此参考图表混合了AI推测与实际评论',es:'Este gráfico de referencia combina estimaciones de IA con reseñas reales',fr:'Ce graphique de référence combine des estimations IA et de vrais avis',pt:'Este gráfico de referência combina estimativas de IA com avaliações reais',de:'Dieses Referenzdiagramm kombiniert KI-Schätzungen mit echten Bewertungen',ar:'يجمع هذا الرسم البياني المرجعي بين تقديرات الذكاء الاصطناعي والمراجعات الحقيقية' },
@@ -8441,6 +8499,7 @@
           history.replaceState(null, '', location.pathname + location.search);
           renderMypage();
           nav('mypage');
+          checkOnboarding();
         }
       } catch(e) { console.warn('OAuth hash handling:', e); }
     }
@@ -8448,6 +8507,7 @@
     const session = await db.auth.getSession();
     if(session?.user) {
       _currentUser = session.user;
+      checkOnboarding();
     }
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
@@ -8458,10 +8518,47 @@
       // Googleログイン後など、モーダルが開いていたら閉じる
       if(_currentUser) {
         closeAuthModal();
+        checkOnboarding();
       }
     });
   }
   initAuth();
+
+  // 初回ログイン時（または性別・年代が未回答のまま既存アカウントの場合）、
+  // ユーザー名・性別・年代を入力するモーダルを強制的に出す（スキップ不可）
+  async function checkOnboarding() {
+    if(!_currentUser || !sb) return;
+    try {
+      const profile = await db.profiles.get(_currentUser.id);
+      if(profile && profile.gender != null) return; // 回答済み（"回答しない"でも値は入るので、未回答＝gender未設定のみが対象）
+      const unameEl = document.getElementById('onboardUsername');
+      if(unameEl) unameEl.value = profile?.username || '';
+      document.getElementById('onboardOverlay').style.display = 'flex';
+    } catch(e) { console.warn('checkOnboarding:', e); }
+  }
+
+  async function submitOnboarding() {
+    const errEl = document.getElementById('onboardError');
+    errEl.textContent = '';
+    const username = document.getElementById('onboardUsername').value.trim();
+    if(!username) { errEl.textContent = 'ユーザー名を入力してください'; return; }
+    const gender = document.querySelector('input[name="onboardGender"]:checked')?.value || 'unspecified';
+    const ageGroup = document.querySelector('input[name="onboardAge"]:checked')?.value || 'unspecified';
+    const btn = document.getElementById('onboardSubmitBtn');
+    if(btn) btn.disabled = true;
+    try {
+      await db.profiles.upsert(_currentUser.id, { username, gender, age_group: ageGroup });
+      document.getElementById('onboardOverlay').style.display = 'none';
+      if(document.getElementById('page-mypage').classList.contains('active')) {
+        renderMypage();
+      }
+    } catch(e) {
+      console.warn('submitOnboarding:', e);
+      errEl.textContent = '保存に失敗しました。もう一度お試しください。';
+    }
+    if(btn) btn.disabled = false;
+  }
+  window.submitOnboarding = submitOnboarding;
 
   function showAuthModal(mode) {
     _authMode = mode;
