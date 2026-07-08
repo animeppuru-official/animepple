@@ -5511,12 +5511,18 @@
     _reviewSessionId = null;
     // サーバー側で投稿時間を検証するため、開始時刻をサーバーに記録してもらう
     // （elapsed_msをクライアントの申告値だけに頼らないための対策）
+    // セッションIDが届くまでは投稿ボタンを無効化する（届く前に投稿するとサーバー側で
+    // elapsed_msが0扱いになり、abuse_flagsにも誤検知として記録されてしまうため）
+    const _submitBtnForSession = document.getElementById('submitReviewBtn');
     if(DB_MODE === 'supabase' && sb) {
+      if(_submitBtnForSession) { _submitBtnForSession.disabled = true; _submitBtnForSession.style.opacity = '.5'; }
       fetch(`${SUPABASE_URL}/functions/v1/start-review-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
         body: JSON.stringify({ animeId: id }),
-      }).then(r=>r.json()).then(d=>{ if(d.sessionId) _reviewSessionId = d.sessionId; }).catch(()=>{});
+      }).then(r=>r.json()).then(d=>{ if(d.sessionId) _reviewSessionId = d.sessionId; })
+        .catch(()=>{})
+        .finally(()=>{ if(_submitBtnForSession) { _submitBtnForSession.disabled = false; _submitBtnForSession.style.opacity = ''; } });
     }
     renderReviewTurnstile();
     buildReviewSliders('slidersA', getAxisA(), vA, ()=>{ chartMoved=true; redrawReview(); });
