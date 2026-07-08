@@ -2313,7 +2313,7 @@
       // 指定した言語の列に、指定したテキストと一致する行を探す（大文字小文字は無視）
       async findByLang(text, lang) {
         if(!sb || !text) return null;
-        const { data } = await sb.from('tag_translations').select('*').ilike(lang, text).limit(1);
+        const { data } = await sb.from('tag_translations').select('*').ilike(langToTagCol(lang), text).limit(1);
         return (data && data[0]) || null;
       },
       async findByEnglish(enText) {
@@ -2323,7 +2323,9 @@
       },
       async insertRow(enText, extraCols) {
         if(!sb) return null;
-        const payload = { en: enText, ...(extraCols || {}) };
+        const mappedExtra = {};
+        Object.keys(extraCols || {}).forEach(lang => { mappedExtra[langToTagCol(lang)] = extraCols[lang]; });
+        const payload = { en: enText, ...mappedExtra };
         const { data, error } = await sb.from('tag_translations').insert(payload).select('*').maybeSingle();
         if(error) {
           // 同時に他のユーザーが同じ英語形を先に登録した場合（unique制約）は、その行を取りに行く
@@ -2335,7 +2337,7 @@
       },
       async updateColumn(id, lang, value) {
         if(!sb) return;
-        await sb.from('tag_translations').update({ [lang]: value, updated_at: new Date().toISOString() }).eq('id', id);
+        await sb.from('tag_translations').update({ [langToTagCol(lang)]: value, updated_at: new Date().toISOString() }).eq('id', id);
       },
       // 検索窓のタグ候補ポップオーバー用：既に登録済みの既知タグを一覧取得する
       async listKnown(limit) {
@@ -2732,6 +2734,12 @@
     th:'TH', id:'ID', ru:'RU', it:'IT', vi:'VI',
     // DeepLは2026年にアラビア語(AR)・繁体字中国語(ZH-HANT)・タイ語(TH)・ベトナム語(VI)への対応を追加済み。これで全15言語をカバー。
   };
+  // 言語コード → tag_translationsテーブルの実際の列名。
+  // 'id'(インドネシア語)はSupabaseの主キー列"id"と衝突するため、列名だけ"ind"にずらす。
+  // それ以外の言語コードはそのまま列名として使う。
+  function langToTagCol(lang) {
+    return lang === 'id' ? 'ind' : lang;
+  }
   // 同じページ内で同じ語を何度も問い合わせない、軽量なメモリ内キャッシュ（本体はSupabase側）
   const _tagResolveMemoryCache = {};
   // text: 対象の語, sourceLang: textが書かれている言語が分かっていれば指定（Kitsuジャンルなら'en'、
@@ -2742,7 +2750,7 @@
     const memKey = `${text}::${sourceLang}`;
     if(_tagResolveMemoryCache[memKey]) {
       const row = _tagResolveMemoryCache[memKey];
-      if(row[targetLang]) return row;
+      if(row[langToTagCol(targetLang)]) return row;
     }
     if(DB_MODE !== 'supabase' || !sb) {
       // Supabase未使用時はDeepL直呼びにフォールバック（キャッシュ無し）
@@ -2763,17 +2771,17 @@
         const extra = {};
         if(sourceLang !== 'en') extra[sourceLang] = text;
         row = await db.tagTranslations.insertRow(enText, extra);
-      } else if(sourceLang !== 'en' && !row[sourceLang]) {
+      } else if(sourceLang !== 'en' && !row[langToTagCol(sourceLang)]) {
         db.tagTranslations.updateColumn(row.id, sourceLang, text); // 保存は待たない
-        row[sourceLang] = text;
+        row[langToTagCol(sourceLang)] = text;
       }
       if(!row) row = { en: enText, [sourceLang]: text }; // 保存に失敗しても表示は続行する
     }
-    if(!row[targetLang]) {
+    if(!row[langToTagCol(targetLang)]) {
       const tl = TAG_TRANSLATE_LANG_MAP[targetLang];
       if(tl && row.en) {
         const translated = (await translateApi.translate(row.en, tl)) || row.en;
-        row[targetLang] = translated;
+        row[langToTagCol(targetLang)] = translated;
         if(row.id) db.tagTranslations.updateColumn(row.id, targetLang, translated); // 保存は待たない
       }
     }
@@ -2813,7 +2821,7 @@
       try {
         const existing = await db.tagTranslations.findByEnglish(name);
         // 既存行がある場合も、まだ入っていない言語だけを埋める（前回失敗して英語だけ入っている行の救済）
-        const missingLangs = existing ? targetLangs.filter(l => !existing[l]) : targetLangs;
+        const missingLangs = existing ? targetLangs.filter(l => !existing[langToTagCol(l)]) : targetLangs;
         if(existing && missingLangs.length === 0) { skipped++; continue; }
         if(resultEl) resultEl.textContent = `翻訳中… (${i}/${names.size}) ${name}`;
         const extra = {};
@@ -2845,7 +2853,7 @@
     if(currentLang === 'ja' || !uniqueTags.length) return map;
     await Promise.all(uniqueTags.map(async (tag) => {
       const row = await resolveTagTranslation(tag, 'ja', currentLang);
-      if(row && row[currentLang]) map[tag] = row[currentLang];
+      if(row && row[langToTagCol(currentLang)]) map[tag] = row[langToTagCol(currentLang)];
     }));
     return map;
   }
@@ -2862,7 +2870,7 @@
     if(currentLang === 'en') return map; // Kitsu由来のジャンルは元々英語なので変換不要
     await Promise.all(uniqueGenres.map(async (g) => {
       const row = await resolveTagTranslation(g, 'en', currentLang);
-      if(row && row[currentLang]) map[g] = row[currentLang];
+      if(row && row[langToTagCol(currentLang)]) map[g] = row[langToTagCol(currentLang)];
     }));
     return map;
   }
@@ -3923,7 +3931,7 @@
   function _tagRowDisplay(row) {
     if(!row) return '';
     if(currentLang === 'ja') return row.ja || row.en || '';
-    return row[currentLang] || row.en || row.ja || '';
+    return row[langToTagCol(currentLang)] || row.en || row.ja || '';
   }
   function setupTagFloatSuggest(inputId, addBtnId) {
     const input = document.getElementById(inputId);
