@@ -255,8 +255,12 @@
       .review-charts-row .chart-wrap:nth-of-type(2) h2 { grid-column:2; }
       .review-charts-row #chartA { grid-column:1; grid-row:2; margin-bottom:0; }
       .review-charts-row #chartB { grid-column:2; grid-row:2; margin-bottom:0; }
-      /* スマホ幅だけ、アニメ詳細ページの画像の高さに上限をつける（PC/タブレットの2カラムレイアウトには影響させない） */
-      #page-anime .anime-thumb-hero { max-height:240px; }
+      /* スマホ幅：ポスターを16:9に切り取らず、自然な縦長比率のまま小さめに表示し、
+         タイトル・情報と横並びにする（切り取って引き伸ばすのではなく、正しい構図で見せる） */
+      #page-anime .anime-hero-wrap { display:flex; align-items:flex-start; gap:.9rem; padding:.9rem .9rem 0; }
+      #page-anime .anime-thumb-hero { flex:0 0 108px; width:108px; aspect-ratio:2/3; max-height:none; border-radius:12px; overflow:hidden; }
+      #page-anime .anime-thumb-hero img { object-fit:cover; border-radius:12px; }
+      #page-anime .anime-info { flex:1; min-width:0; padding:0; }
     }
     /* スライダーのページ切り替えナビ（矢印＋現在ページ名）。PC幅では両方常に見えるので隠す */
     .slider-page-nav { display:flex; align-items:center; justify-content:center; gap:1rem; margin-bottom:.5rem; }
