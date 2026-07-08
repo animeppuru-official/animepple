@@ -2273,7 +2273,7 @@
     profiles: {
       async get(userId) {
         if(!sb) return null;
-        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group').eq('id', userId).single();
+        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code').eq('id', userId).single();
         return data;
       },
       async getByIds(userIds) {
@@ -8505,7 +8505,7 @@
           history.replaceState(null, '', location.pathname + location.search);
           renderMypage();
           nav('mypage');
-          checkOnboarding();
+          checkOnboarding(); updateProfileCountry();
         }
       } catch(e) { console.warn('OAuth hash handling:', e); }
     }
@@ -8513,7 +8513,7 @@
     const session = await db.auth.getSession();
     if(session?.user) {
       _currentUser = session.user;
-      checkOnboarding();
+      checkOnboarding(); updateProfileCountry();
     }
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
@@ -8524,7 +8524,7 @@
       // Googleログイン後など、モーダルが開いていたら閉じる
       if(_currentUser) {
         closeAuthModal();
-        checkOnboarding();
+        checkOnboarding(); updateProfileCountry();
       }
     });
   }
@@ -8541,6 +8541,16 @@
       if(unameEl) unameEl.value = profile?.username || '';
       document.getElementById('onboardOverlay').style.display = 'flex';
     } catch(e) { console.warn('checkOnboarding:', e); }
+  }
+
+  // ログイン時、プロフィールに国コードを保存する（マイページの国旗表示用）。
+  // analytics同意が無いユーザーからは取得・保存しない。
+  async function updateProfileCountry() {
+    if(!_currentUser || !sb || !canUseAnalytics()) return;
+    try {
+      const country = await geoStore.detectCountry().catch(()=>null);
+      if(country) await db.profiles.upsert(_currentUser.id, { country_code: country });
+    } catch(e) { console.warn('updateProfileCountry:', e); }
   }
 
   async function submitOnboarding() {
@@ -8842,11 +8852,12 @@
       reviewTotal = reviews ? reviews.length : 0;
       qualityCount = reviews ? reviews.filter(r=>r.quality).length : 0;
 
-      // 国バッジ（最新レビューの国コードから。取得済みかつ許可済みのユーザーのみ表示される）
+      // 国バッジ（profiles.country_code優先。無ければ最新レビューの国コードから逆算）
       const countryBadgeEl = document.getElementById('mypageCountryBadge');
       if(countryBadgeEl) {
-        const latestWithCountry = (reviews||[]).find(r=>r.country_code);
-        countryBadgeEl.innerHTML = latestWithCountry ? countryBadgeHtml(latestWithCountry.country_code) : '';
+        const fallbackCountry = (reviews||[]).find(r=>r.country_code)?.country_code;
+        const country = profileData?.country_code || fallbackCountry;
+        countryBadgeEl.innerHTML = country ? countryBadgeHtml(country) : '';
       }
 
       const listEl = document.getElementById('mypageReviewList');
