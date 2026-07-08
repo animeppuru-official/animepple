@@ -262,6 +262,18 @@
       #page-anime .anime-thumb-hero { float:left; width:108px; aspect-ratio:2/3; max-height:none; border-radius:12px; overflow:hidden; margin-right:.9rem; margin-bottom:.5rem; }
       #page-anime .anime-thumb-hero img { object-fit:cover; border-radius:12px; }
       #page-anime .anime-info { padding:0; }
+      /* スマホ幅では下にマスターグラフ本体が常に表示されるようになったので、
+         ボタン下の小さいプレビューグラフ（重複表示）は隠す */
+      #page-anime #miniGraphSection { display:none !important; }
+      #page-anime #mobileInfoTabs { display:block !important; margin:.9rem .9rem 0; }
+      #page-anime .mobile-info-tab-bar { display:flex; gap:.4rem; }
+      #page-anime .mobile-info-tab-btn { flex:1; min-width:0; padding:.6rem .3rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:#dff0e6; font-size:.72rem; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      #page-anime .mobile-info-tab-btn.active { background:var(--brand); color:#0c2015; border-color:var(--brand); }
+      #page-anime #mobileInfoTabContent { margin-top:.7rem; }
+      #page-anime #mobileInfoTabContent .mobile-info-pane { display:none; }
+      #page-anime #mobileInfoTabContent .mobile-info-pane.active { display:block; }
+      /* タブに移動済みの元セクション・スワイプUIはスマホ幅では隠す（中身はJSでタブ側に移動済み） */
+      #page-anime #graphWorldPageNav { display:none !important; }
     }
     /* スライダーのページ切り替えナビ（矢印＋現在ページ名）。PC幅では両方常に見えるので隠す */
     .slider-page-nav { display:flex; align-items:center; justify-content:center; gap:1rem; margin-bottom:.5rem; }
@@ -1131,6 +1143,16 @@
     </div>
   </div>
 
+  <!-- スマホ幅：評価グラフ・世界の反応・似ている作品を3つのタブで切り替え（PC幅では使わない・従来通り縦に並ぶ） -->
+  <div class="mobile-info-tabs" id="mobileInfoTabs" style="display:none;">
+    <div class="mobile-info-tab-bar">
+      <button type="button" class="mobile-info-tab-btn active" data-tab="graph">📊 評価グラフ</button>
+      <button type="button" class="mobile-info-tab-btn" data-tab="world">🌍 世界の反応</button>
+      <button type="button" class="mobile-info-tab-btn" data-tab="similar">🧭 似ている作品</button>
+    </div>
+    <div id="mobileInfoTabContent"></div>
+  </div>
+
   <!-- グッズ・関連商品（Amazonアフィリンク。マネタイズの核なので最上部に近い位置に配置） -->
   <div class="af-section" id="afGoodsSection">
     <div class="af-section-label" data-i18n="goodsSection">🛍 グッズ・関連商品</div>
@@ -1153,12 +1175,12 @@
             <p id="masterGraphMeta" style="margin:0;font-size:.78rem;color:var(--muted);"></p>
           </div>
           <!-- グラフ -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.6rem;">
-            <div>
+          <div style="display:flex;gap:.65rem;margin-top:.6rem;">
+            <div style="flex:1 1 0;min-width:0;">
               <p id="masterChartALabel" data-i18n="chartATitle" style="font-size:.75rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">作品の完成度</p>
               <canvas id="masterChartA" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
             </div>
-            <div>
+            <div style="flex:1 1 0;min-width:0;">
               <p id="masterChartBLabel" data-i18n="chartBTitle" style="font-size:.75rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">感情・雰囲気</p>
               <canvas id="masterChartB" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
             </div>
@@ -4077,6 +4099,53 @@
     goToPage(0);
   }
 
+  // スマホ幅：評価グラフ・世界の反応・似ている作品を3タブに集約する。
+  // 元のセクション要素をDOM移動でタブの中身として使い回すので、
+  // 各セクションのレンダリング関数（renderMasterGraph等）はそのまま変更なしで動く。
+  let _mobileTabsInitialized = false;
+  function setupMobileInfoTabs() {
+    const wrap = document.getElementById('mobileInfoTabs');
+    const content = document.getElementById('mobileInfoTabContent');
+    if (!wrap || !content) return;
+    if (window.innerWidth > 767) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+
+    const master = document.getElementById('masterGraphSection');
+    const adMid = document.getElementById('adAnimeMid');
+    const world = document.getElementById('worldStatsSection');
+    const similar = document.getElementById('similarAnimeSection');
+    if (!master || !world || !similar) return;
+
+    // 初回だけ、タブの中身（3つの枠）を作ってセクション実体を移動する
+    if (!_mobileTabsInitialized) {
+      content.innerHTML = `
+        <div class="mobile-info-pane active" id="mobileInfoPaneGraph"></div>
+        <div class="mobile-info-pane" id="mobileInfoPaneWorld"></div>
+        <div class="mobile-info-pane" id="mobileInfoPaneSimilar"></div>
+      `;
+      document.getElementById('mobileInfoPaneGraph').appendChild(master);
+      if (adMid) document.getElementById('mobileInfoPaneGraph').appendChild(adMid);
+      document.getElementById('mobileInfoPaneWorld').appendChild(world);
+      document.getElementById('mobileInfoPaneSimilar').appendChild(similar);
+
+      wrap.querySelectorAll('.mobile-info-tab-btn').forEach(btn => {
+        btn.onclick = () => {
+          wrap.querySelectorAll('.mobile-info-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+          content.querySelectorAll('.mobile-info-pane').forEach(p => p.classList.remove('active'));
+          const paneId = { graph:'mobileInfoPaneGraph', world:'mobileInfoPaneWorld', similar:'mobileInfoPaneSimilar' }[btn.dataset.tab];
+          const pane = document.getElementById(paneId);
+          if (pane) pane.classList.add('active');
+        };
+      });
+      _mobileTabsInitialized = true;
+    } else {
+      // 2回目以降（別のアニメページに移動した時）：セクション要素はそのままタブの中にあるので動かす必要はない
+      // ただしタブの選択状態は毎回グラフタブに戻す
+      wrap.querySelectorAll('.mobile-info-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'graph'));
+      content.querySelectorAll('.mobile-info-pane').forEach(p => p.classList.toggle('active', p.id === 'mobileInfoPaneGraph'));
+    }
+  }
+
   function setupSliderPageSwiper(swiperId, prevId, nextId, labelId) {
     const swiper = document.getElementById(swiperId);
     const prevBtn = document.getElementById(prevId);
@@ -5134,6 +5203,7 @@
       if(countEl) countEl.textContent = allReviews.length ? `${allReviews.length}件` : '';
     });
     renderSimilarAnime(id);
+    setupMobileInfoTabs();
     // 「レビューを見る」ボタン
     const rlBtn = document.getElementById('goReviewListBtn');
     if(rlBtn) rlBtn.onclick = ()=>nav('reviews', id);
