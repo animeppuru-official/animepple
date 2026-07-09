@@ -2715,7 +2715,11 @@
           },
           body: JSON.stringify({ text, targetLang }),
         });
-        if(!res.ok) return text; // 失敗時は原文をそのまま返す（フォールバック）
+        if(!res.ok) {
+          const errBody = await res.text().catch(()=>'');
+          console.warn(`translateApi HTTP error (targetLang=${targetLang}, status=${res.status}):`, errBody);
+          return text; // 失敗時は原文をそのまま返す（フォールバック）
+        }
         const data = await res.json();
         return data.translated || text;
       } catch(e) {
@@ -2830,6 +2834,7 @@
             const translated = await translateApi.translate(name, TAG_TRANSLATE_LANG_MAP[lang]);
             if(translated) extra[lang] = translated;
           } catch(e) { console.warn('seedKitsuGenres translate error:', name, lang, e); }
+          await new Promise(r => setTimeout(r, 200)); // DeepL無料枠のレート制限対策
         }
         if(existing) {
           for(const lang of Object.keys(extra)) { await db.tagTranslations.updateColumn(existing.id, lang, extra[lang]); }
