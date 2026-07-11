@@ -458,6 +458,40 @@
     .admin-tag-rank { display:flex; align-items:center; gap:.5rem; }
     .admin-tag-rank-num { font-weight:800; color:var(--brand); font-size:.85rem; width:1.4rem; text-align:center; }
     .admin-axis-row { display:grid; grid-template-columns:5rem 1fr 2.4rem; align-items:center; gap:.5rem; padding:.3rem 0; }
+
+    /* ── データパック UI ── */
+    .pack-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:.7rem; margin-bottom:1rem; }
+    .pack-card { background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:1rem .9rem; cursor:pointer; transition:transform .15s, border-color .15s; text-align:left; }
+    .pack-card:hover { transform:translateY(-2px); border-color:var(--pack-color, var(--brand)); }
+    .pack-card .pack-icon { font-size:1.6rem; display:block; margin-bottom:.4rem; }
+    .pack-card .pack-name-en { font-size:.68rem; color:var(--pack-color, var(--brand)); font-weight:800; letter-spacing:.02em; text-transform:uppercase; }
+    .pack-card .pack-name-ja { font-size:.92rem; color:#dff0e6; font-weight:800; margin:.15rem 0 .35rem; }
+    .pack-card .pack-tagline { font-size:.72rem; color:var(--muted); line-height:1.4; }
+    .pack-card .pack-status { font-size:.65rem; color:var(--pack-color, var(--brand)); margin-top:.5rem; font-weight:700; }
+
+    .pack-detail-header { display:flex; align-items:center; gap:.6rem; margin-bottom:1rem; }
+    .pack-detail-back { background:var(--card2); border:1px solid var(--line); color:#dff0e6; border-radius:8px; padding:.4rem .8rem; font-size:.8rem; cursor:pointer; flex-shrink:0; }
+    .pack-detail-title { font-size:1.05rem; font-weight:800; color:#dff0e6; }
+    .pack-detail-title .pack-name-en { display:block; font-size:.68rem; color:var(--pack-color, var(--brand)); font-weight:800; letter-spacing:.02em; text-transform:uppercase; margin-bottom:.15rem; }
+
+    .stat-tile-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:.6rem; margin-bottom:1rem; }
+    .stat-tile { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:.8rem .7rem; }
+    .stat-tile .stat-tile-label { font-size:.68rem; color:var(--muted); margin-bottom:.3rem; }
+    .stat-tile .stat-tile-value { font-size:1.3rem; font-weight:800; color:var(--pack-color, var(--brand)); }
+    .stat-tile .stat-tile-unit { font-size:.68rem; color:var(--muted); margin-left:.15rem; }
+
+    .pack-subsection { margin-bottom:1.2rem; }
+    .pack-subsection-title { font-size:.78rem; font-weight:700; color:#c2deca; margin:0 0 .5rem; display:flex; align-items:center; gap:.4rem; }
+    .pack-subsection-title::before { content:''; width:.35rem; height:.35rem; border-radius:50%; background:var(--pack-color, var(--brand)); }
+
+    .pack-simple-table { width:100%; border-collapse:collapse; font-size:.76rem; }
+    .pack-simple-table th { text-align:left; color:var(--muted); font-weight:600; padding:.35rem .5rem; border-bottom:1px solid var(--line); font-size:.68rem; }
+    .pack-simple-table td { padding:.4rem .5rem; border-bottom:1px solid rgba(255,255,255,.04); color:#dff0e6; }
+    .pack-simple-table tr:last-child td { border-bottom:none; }
+
+    .pack-empty-note { font-size:.78rem; color:var(--muted); padding:.6rem; background:var(--card2); border-radius:10px; }
+    .pack-loading-note { font-size:.78rem; color:var(--muted); padding:.6rem; }
+
     .admin-axis-label { font-size:.74rem; color:#dff0e6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .admin-axis-track { height:7px; border-radius:4px; background:var(--card); overflow:hidden; }
     .admin-axis-fill { height:100%; border-radius:4px; }
@@ -1881,81 +1915,27 @@
       このプレビューに表示されるのは、匿名化・集計済みのデータのみです。個人を特定できる情報(コメント本文・ユーザー名等)は一切含まれません。サンプル数が3件未満のデータは表示されません。
     </p>
 
-    <div class="admin-group-header">作品別 評価データ</div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">📊 作品ごとの平均評価(上位表示)</h3>
-      <div id="partnerReviewsList"></div>
-    </div>
-
     <div class="admin-group-header">📦 データパック（6種）</div>
-    <div class="admin-section">
-      <p style="font-size:.78rem;color:var(--muted);margin:0 0 .6rem;">作品単位のパック(①④一部⑥)は、作品IDを入力してから「作品別データを取得」を押してください。</p>
-      <input type="text" id="partnerAnimeIdInput" placeholder="作品ID（例: kitsu-50187）"
-        style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;margin-bottom:.5rem;" />
-      <button onclick="loadPartnerAnimePacks()"
-        style="width:100%;padding:.6rem;border-radius:8px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;margin-bottom:.5rem;">作品別データを取得</button>
-      <button onclick="loadPartnerGlobalPacks()"
-        style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);color:#dff0e6;border:1px solid var(--line);cursor:pointer;">全体横断データを取得（②③⑤⑥の一部）</button>
+
+    <!-- パック選択カード（初期表示） -->
+    <div id="packCardsView">
+      <p style="font-size:.78rem;color:var(--muted);margin:0 0 .8rem;">見たいパックを選んでください。作品単位のデータは、選んだ後に作品IDを入力します。</p>
+      <div class="pack-grid" id="packCardGrid"></div>
     </div>
 
-    <div class="admin-section">
-      <h3 class="admin-section-title">① Sentiment Pack（感性分析）</h3>
-      <div id="packSentiment"><p style="color:var(--muted);font-size:.82rem;">作品IDを入力して取得してください</p></div>
-    </div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">② Fan Insight Pack（ファン分析）</h3>
-      <div id="packFanInsight"><p style="color:var(--muted);font-size:.82rem;">「全体横断データを取得」を押してください</p></div>
-    </div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">③ Trend Forecast Pack（トレンド予測）</h3>
-      <div id="packTrend"><p style="color:var(--muted);font-size:.82rem;">「全体横断データを取得」を押してください</p></div>
-    </div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">④ Global Market Pack（海外分析）</h3>
-      <div id="packGlobal"><p style="color:var(--muted);font-size:.82rem;">作品IDを入力して取得してください</p></div>
-    </div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">⑤ Consumer Behavior Pack（消費者行動）</h3>
-      <div id="packConsumer"><p style="color:var(--muted);font-size:.82rem;">「全体横断データを取得」を押してください</p></div>
-    </div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">⑥ IP Strategy Pack（IP戦略）</h3>
-      <div id="packIpStrategy"><p style="color:var(--muted);font-size:.82rem;">「全体横断データを取得」を押してください（作品IDがあれば個別データも追加取得）</p></div>
-    </div>
-
-    <div class="admin-group-header">需要データ</div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">🔎 人気の検索キーワード</h3>
-      <div id="partnerSearchTop"></div>
-    </div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">🕳️ 需要はあるが結果が無いキーワード</h3>
-      <div id="partnerSearchZero"></div>
-    </div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">🏷️ 人気タグ(検索フィルター)</h3>
-      <div id="partnerFilters"></div>
-    </div>
-
-    <div class="admin-group-header">ユーザー行動データ</div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">📱 デバイス・言語・流入元</h3>
-      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:0 0 .3rem;">デバイス</p>
-      <div id="partnerDevice"></div>
-      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:.9rem 0 .3rem;">言語</p>
-      <div id="partnerLang"></div>
-      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:.9rem 0 .3rem;">流入元</p>
-      <div id="partnerReferrer"></div>
-      <p style="font-size:.72rem;color:#8db5a0;font-weight:700;margin:.9rem 0 .3rem;">国別</p>
-      <div id="partnerCountry"></div>
-    </div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">💰 広告・アフィリンククリック</h3>
-      <div id="partnerAdClicks"></div>
-    </div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">📤 SNSシェア数</h3>
-      <div id="partnerShareClicks"></div>
+    <!-- パック詳細ビュー（カードを押すと表示） -->
+    <div id="packDetailView" style="display:none;">
+      <div class="pack-detail-header">
+        <button class="pack-detail-back" onclick="showPackCards()">← パック一覧</button>
+        <div class="pack-detail-title" id="packDetailTitle"></div>
+      </div>
+      <div id="packDetailAnimeInput" style="display:none;margin-bottom:.9rem;">
+        <input type="text" id="partnerAnimeIdInput" placeholder="作品ID（例: kitsu-50187）"
+          style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;margin-bottom:.5rem;" />
+        <button onclick="loadCurrentPackDetail()" id="packDetailFetchBtn"
+          style="width:100%;padding:.6rem;border-radius:8px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">この作品のデータを見る</button>
+      </div>
+      <div id="packDetailBody"><p class="pack-loading-note">読み込み中…</p></div>
     </div>
   </div>
 </div>
@@ -7511,50 +7491,185 @@
   }
   window.initPartnerPage = initPartnerPage;
 
-  // ── データパック（6種）の取得・描画 ──
-  function renderPackJson(containerId, obj) {
-    const el = document.getElementById(containerId);
-    if(!el) return;
-    if(!obj) { el.innerHTML = `<p style="color:var(--muted);font-size:.82rem;">データがありません</p>`; return; }
-    el.innerHTML = `<pre style="font-size:.72rem;color:#c8e6d4;white-space:pre-wrap;word-break:break-word;background:#0a1a10;padding:.6rem;border-radius:8px;max-height:280px;overflow:auto;">${escapeHtml(JSON.stringify(obj, null, 2))}</pre>`;
+  // ── データパック（6種）UI ──
+  const PACK_DEFS = [
+    { id:'sentiment', icon:'💡', nameEn:'Sentiment', nameJa:'感性分析', color:'#5ec97a', tagline:'この作品はなぜ人気なのか', needsAnimeId:true, dataset:'sentiment' },
+    { id:'fan_insight', icon:'👥', nameEn:'Fan Insight', nameJa:'ファン分析', color:'#5ea8ff', tagline:'誰がどれだけ熱狂しているか', needsAnimeId:false, dataset:'fan_insight' },
+    { id:'trend', icon:'📈', nameEn:'Trend Forecast', nameJa:'トレンド予測', color:'#f4c261', tagline:'次に伸びる作品を見つける', needsAnimeId:'optional', dataset:'trend_forecast' },
+    { id:'global', icon:'🌍', nameEn:'Global Market', nameJa:'海外分析', color:'#c17aff', tagline:'海外で売れる場所を見つける', needsAnimeId:true, dataset:'global_market' },
+    { id:'consumer', icon:'🧭', nameEn:'Consumer Behavior', nameJa:'消費者行動', color:'#f4a261', tagline:'ユーザーがどう作品を選ぶか', needsAnimeId:false, dataset:'consumer_behavior' },
+    { id:'ip', icon:'🚀', nameEn:'IP Strategy', nameJa:'IP戦略', color:'#ff8fa3', tagline:'このIPをどう伸ばすか', needsAnimeId:'optional', dataset:'ip_strategy' },
+  ];
+  let _currentPackId = null;
+
+  function renderPackCards() {
+    const grid = document.getElementById('packCardGrid');
+    if(!grid) return;
+    grid.innerHTML = PACK_DEFS.map(p => `
+      <button class="pack-card" style="--pack-color:${p.color};" onclick="selectPack('${p.id}')">
+        <span class="pack-icon">${p.icon}</span>
+        <span class="pack-name-en">${p.nameEn}</span>
+        <div class="pack-name-ja">${p.nameJa}</div>
+        <div class="pack-tagline">${escapeHtml(p.tagline)}</div>
+        <div class="pack-status">詳しく見る →</div>
+      </button>
+    `).join('');
   }
 
-  async function loadPartnerAnimePacks() {
-    const animeId = document.getElementById('partnerAnimeIdInput')?.value.trim();
-    if(!animeId) { alert('作品IDを入力してください'); return; }
-    try {
-      const [sentiment, global] = await Promise.all([
-        fetchPartnerDataset(`sentiment&animeId=${encodeURIComponent(animeId)}`),
-        fetchPartnerDataset(`global_market&animeId=${encodeURIComponent(animeId)}`),
-      ]);
-      renderPackJson('packSentiment', sentiment);
-      renderPackJson('packGlobal', global);
-    } catch(e) {
-      console.warn('loadPartnerAnimePacks error:', e);
-      alert('取得に失敗しました: ' + e.message);
-    }
+  function showPackCards() {
+    document.getElementById('packCardsView').style.display = '';
+    document.getElementById('packDetailView').style.display = 'none';
+    _currentPackId = null;
   }
-  window.loadPartnerAnimePacks = loadPartnerAnimePacks;
+  window.showPackCards = showPackCards;
 
-  async function loadPartnerGlobalPacks() {
-    const animeId = document.getElementById('partnerAnimeIdInput')?.value.trim();
-    try {
-      const [fanInsight, trend, consumer, ipStrategy] = await Promise.all([
-        fetchPartnerDataset('fan_insight'),
-        fetchPartnerDataset(`trend_forecast${animeId ? '&animeId=' + encodeURIComponent(animeId) : ''}`),
-        fetchPartnerDataset('consumer_behavior'),
-        fetchPartnerDataset(`ip_strategy${animeId ? '&animeId=' + encodeURIComponent(animeId) : ''}`),
-      ]);
-      renderPackJson('packFanInsight', fanInsight);
-      renderPackJson('packTrend', trend);
-      renderPackJson('packConsumer', consumer);
-      renderPackJson('packIpStrategy', ipStrategy);
-    } catch(e) {
-      console.warn('loadPartnerGlobalPacks error:', e);
-      alert('取得に失敗しました: ' + e.message);
+  function selectPack(packId) {
+    const pack = PACK_DEFS.find(p => p.id === packId);
+    if(!pack) return;
+    _currentPackId = packId;
+    document.getElementById('packCardsView').style.display = 'none';
+    document.getElementById('packDetailView').style.display = '';
+    document.getElementById('packDetailTitle').innerHTML = `<span class="pack-name-en" style="color:${pack.color};">${pack.nameEn}</span>${pack.icon} ${pack.nameJa}`;
+    const animeInputWrap = document.getElementById('packDetailAnimeInput');
+    const fetchBtn = document.getElementById('packDetailFetchBtn');
+    if(pack.needsAnimeId === true) {
+      animeInputWrap.style.display = '';
+      fetchBtn.textContent = 'この作品のデータを見る';
+      document.getElementById('packDetailBody').innerHTML = `<p class="pack-empty-note">上に作品IDを入力してください</p>`;
+    } else if(pack.needsAnimeId === 'optional') {
+      animeInputWrap.style.display = '';
+      fetchBtn.textContent = '全体データを見る（作品IDがあれば絞り込み）';
+      loadCurrentPackDetail(); // 作品ID無しでも全体データはすぐ見れる
+    } else {
+      animeInputWrap.style.display = 'none';
+      loadCurrentPackDetail();
     }
   }
-  window.loadPartnerGlobalPacks = loadPartnerGlobalPacks;
+  window.selectPack = selectPack;
+
+  function statTile(label, value, unit) {
+    return `<div class="stat-tile"><div class="stat-tile-label">${escapeHtml(label)}</div><div class="stat-tile-value">${value ?? '—'}<span class="stat-tile-unit">${unit||''}</span></div></div>`;
+  }
+  function barListHtml(items, opts) {
+    opts = opts || {};
+    if(!items || !items.length) return `<p class="pack-empty-note">${opts.emptyText||'データがありません'}</p>`;
+    const maxVal = Math.max(...items.map(i=>Math.abs(i.value)), 1);
+    return items.map((it,i) => {
+      const pct = Math.max(3, Math.round(Math.abs(it.value)/maxVal*100));
+      return `<div class="admin-axis-row">
+        <span class="admin-axis-label">${opts.showRank?`${i+1}. `:''}${escapeHtml(String(it.label))}</span>
+        <div class="admin-axis-track"><div class="admin-axis-fill" style="width:${pct}%;background:${it.color||opts.color||'#5ec97a'};"></div></div>
+        <span class="admin-axis-val">${it.value}${opts.suffix||''}</span>
+      </div>`;
+    }).join('');
+  }
+  function simpleTable(headers, rows) {
+    if(!rows || !rows.length) return `<p class="pack-empty-note">データがありません</p>`;
+    return `<table class="pack-simple-table"><thead><tr>${headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  }
+  function subsection(title, bodyHtml) {
+    return `<div class="pack-subsection"><div class="pack-subsection-title">${escapeHtml(title)}</div>${bodyHtml}</div>`;
+  }
+
+  function formatSentiment(d, color) {
+    const bp = d.brandPower || {};
+    let html = `<div class="stat-tile-grid">
+      ${statTile('総合ブランド力', bp.total_score, '')}
+      ${statTile('認知', bp.recognition, '')}
+      ${statTile('熱量', bp.intensity, '')}
+      ${statTile('継続率', bp.retention, '%')}
+      ${statTile('国際性', bp.global, '')}
+    </div>`;
+    const fs = d.fanSplitIndex || {};
+    html += subsection('意見の分裂度', `<div class="stat-tile-grid">
+      ${statTile('分裂指数', fs.split_index, '')}
+      ${statTile('判定', fs.split_level || '—', '')}
+      ${statTile('対象レビュー数', fs.total_reviews, '件')}
+    </div>`);
+    html += subsection('評価に効いている軸（刺さる理由）', barListHtml((d.appealBreakdown||[]).map(a=>({label:a.axis, value:a.share_pct, suffix:'%'})), {suffix:'%', color}));
+    const gp = (d.genrePosition||[]).slice(0,10);
+    html += subsection('ジャンル内ポジション', simpleTable(['ジャンル','軸','平均値','パーセンタイル'], gp.map(g=>[escapeHtml(g.genre), escapeHtml(g.axis), g.anime_avg, g.genre_percentile+'%'])));
+    return html;
+  }
+
+  function formatFanInsight(d) {
+    let html = subsection('視聴者クラスタ', simpleTable(['タイプ','人数','世界観','キャラ','作画'], (d.userClusters||[]).map(c=>[escapeHtml(c.cluster_type), c.user_count, c.avg_sekaikan, c.avg_character, c.avg_sakuga])));
+    html += subsection('評価者タイプ（辛口/甘口）', simpleTable(['タイプ','人数','平均点','ばらつき'], (d.reviewerStrictness||[]).map(c=>[escapeHtml(c.cluster_type), c.user_count, c.avg_score, c.score_variance])));
+    const infl = (d.potentialInfluencers||[]).slice(0,10);
+    html += subsection('インフルエンサー予備軍（上位10）', simpleTable(['質の高いレビュー数','平均品質スコア','シェア数','影響力スコア'], infl.map(u=>[u.quality_review_count, u.avg_quality_score, u.share_count, u.influence_score])));
+    return html;
+  }
+
+  function formatTrend(d, color) {
+    let html = '';
+    if(d.hitSignal) {
+      const hs = d.hitSignal;
+      html += `<div class="stat-tile-grid">
+        ${statTile('直近7日PV', hs.recent_7d_pv, '')}
+        ${statTile('前週PV', hs.prev_7d_pv, '')}
+        ${statTile('増加率', hs.growth_rate, '%')}
+        ${statTile('判定', hs.signal_level || '—', '')}
+      </div>`;
+    }
+    html += subsection('急上昇タグ', barListHtml((d.trendingTags||[]).slice(0,15).map(t=>({label:'#'+t.tag, value:t.recent_count})), {showRank:true, suffix:'件', color}));
+    html += subsection('市場トレンド指数（軸別の変化）', simpleTable(['軸','直近平均','以前平均','変化'], (d.marketTrendIndex||[]).map(m=>[escapeHtml(m.axis), m.recent_avg, m.prev_avg??'—', (m.trend_change>0?'+':'')+(m.trend_change??'—')])));
+    return html;
+  }
+
+  function formatGlobal(d) {
+    let html = subsection('国別の感情差分（全体平均との差が大きい軸）', simpleTable(['国','軸','その国の平均','全体平均','差'], (d.countryEmotionDiff||[]).slice(0,20).map(c=>[c.country_code, escapeHtml(c.axis), c.country_avg, c.overall_avg, (c.diff>0?'+':'')+c.diff])));
+    html += subsection('国別の関心ギャップ', simpleTable(['国','PV数','レビュー数','転換率','判定'], (d.countryInterestGap||[]).map(c=>[c.country_code, c.pv_count, c.review_count, c.review_rate+'%', escapeHtml(c.gap_type||'—')])));
+    return html;
+  }
+
+  function formatConsumer(d, color) {
+    const funnel = (d.conversionFunnel||[]).slice(0,10);
+    let html = subsection('視聴転換ファネル（PV→お気に入り→レビュー、上位10作品）', simpleTable(['作品','PV','お気に入り','レビュー','転換率'], funnel.map(f=>[escapeHtml(f.title), f.pv_count, f.favorite_count, f.review_count, (f.fav_to_review_rate??'—')+'%'])));
+    html += subsection('検索ホワイトスペース（需要はあるが作品が少ない）', barListHtml((d.searchWhitespace||[]).slice(0,10).map(s=>({label:s.query, value:s.search_count})), {showRank:true, suffix:'回検索', color}));
+    html += subsection('発見難易度スコア（隠れた名作）', simpleTable(['作品','平均品質','PV数','発見難易度'], (d.discoveryDifficulty||[]).slice(0,10).map(x=>[escapeHtml(x.title), x.avg_quality_score, x.pv_count, x.difficulty_score])));
+    return html;
+  }
+
+  function formatIpStrategy(d, color) {
+    let html = '';
+    if(d.sequelDemand) {
+      const sd = d.sequelDemand;
+      html += `<div class="stat-tile-grid">
+        ${statTile('続編言及数', sd.sequel_mention_count, '')}
+        ${statTile('対象レビュー数', sd.total_reviews, '')}
+        ${statTile('続編需要率', sd.demand_ratio, '%')}
+      </div>`;
+    }
+    if(d.ipValue && d.ipValue.length) {
+      html += subsection('IP価値の内訳', barListHtml(d.ipValue.map(v=>({label:v.metric, value:v.value})), {color}));
+    }
+    html += subsection('新規IP発掘スコア（上位10）', simpleTable(['作品','レビュー数','平均品質','発掘スコア'], (d.newIpDiscovery||[]).slice(0,10).map(x=>[escapeHtml(x.title), x.review_count, x.avg_quality_score, x.discovery_score])));
+    return html;
+  }
+
+  const PACK_FORMATTERS = {
+    sentiment: formatSentiment, fan_insight: formatFanInsight, trend: formatTrend,
+    global: formatGlobal, consumer: formatConsumer, ip: formatIpStrategy,
+  };
+
+  async function loadCurrentPackDetail() {
+    const pack = PACK_DEFS.find(p => p.id === _currentPackId);
+    if(!pack) return;
+    const body = document.getElementById('packDetailBody');
+    const animeId = document.getElementById('partnerAnimeIdInput')?.value.trim();
+    if(pack.needsAnimeId === true && !animeId) { alert('作品IDを入力してください'); return; }
+    body.innerHTML = `<p class="pack-loading-note">読み込み中…</p>`;
+    try {
+      const query = pack.dataset + (animeId ? `&animeId=${encodeURIComponent(animeId)}` : '');
+      const data = await fetchPartnerDataset(query);
+      body.innerHTML = PACK_FORMATTERS[pack.id](data, pack.color);
+    } catch(e) {
+      console.warn('loadCurrentPackDetail error:', e);
+      body.innerHTML = `<p class="pack-empty-note">取得に失敗しました: ${escapeHtml(e.message)}</p>`;
+    }
+  }
+  window.loadCurrentPackDetail = loadCurrentPackDetail;
 
   async function fetchPartnerDataset(dataset) {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/export-aggregate-data?dataset=${dataset}`, {
@@ -7571,37 +7686,13 @@
     _partnerKey = key;
     if(err) err.textContent = '読み込み中…';
     try {
-      const [reviews, search, filters, engagement] = await Promise.all([
-        fetchPartnerDataset('reviews'),
-        fetchPartnerDataset('search'),
-        fetchPartnerDataset('filters'),
-        fetchPartnerDataset('engagement'),
-      ]);
+      // キーが正しいか確認するため、軽いデータセットを1回だけ取得
+      await fetchPartnerDataset('fan_insight');
       document.getElementById('partnerLoginSection').style.display='none';
       document.getElementById('partnerDashboard').style.display='';
-
-      // 作品別評価（レビュー数の多い順、タイトルはローカルの作品リストから解決）
-      const all = getAll();
-      const titleMap = {};
-      all.forEach(p=>{ titleMap[p.id] = p.title || p.titleEn || p.id; });
-      const reviewItems = Object.entries(reviews.data||{})
-        .sort((a,b)=>b[1].reviewCount-a[1].reviewCount).slice(0,20)
-        .map(([id,d])=>({ label: titleMap[id]||id, value: d.reviewCount }));
-      renderAdminBarList('partnerReviewsList', reviewItems, { showRank:true, suffix:'件' });
-
-      renderAdminBarList('partnerSearchTop', (search.topQueries||[]).slice(0,10).map(q=>({label:q.query,value:q.count})), { showRank:true, suffix:'回' });
-      renderAdminBarList('partnerSearchZero', (search.topZeroResultQueries||[]).slice(0,10).map(q=>({label:q.query,value:q.count,color:'#ff8888'})), { showRank:true, suffix:'回', emptyText:'データがありません' });
-      renderAdminBarList('partnerFilters', (filters.topTagFilters||[]).slice(0,10).map(t=>({label:'#'+t.tag,value:t.count})), { showRank:true, suffix:'回' });
-
-      const deviceLabels = { mobile:'📱 モバイル', desktop:'🖥️ PC' };
-      const refLabels = { search:'🔎 検索エンジン', sns:'💬 SNS', direct:'➡️ 直接アクセス', other:'🔗 その他' };
-      renderAdminBarList('partnerDevice', Object.entries(engagement.pvByDevice||{}).map(([k,v])=>({label:deviceLabels[k]||k, value:v})), { suffix:'PV' });
-      renderAdminBarList('partnerLang', Object.entries(engagement.pvByLang||{}).map(([k,v])=>({label:k.toUpperCase(), value:v, color:'#5ea8ff'})), { suffix:'PV' });
-      renderAdminBarList('partnerReferrer', Object.entries(engagement.pvByReferrer||{}).map(([k,v])=>({label:refLabels[k]||k, value:v, color:'#f4a261'})), { suffix:'PV' });
-      renderAdminBarList('partnerCountry', Object.entries(engagement.pvByCountry||{}).map(([k,v])=>({label:(COUNTRY_NAMES[k]||k), value:v})), { suffix:'PV' });
-      renderAdminBarList('partnerAdClicks', Object.entries(engagement.adClicksBySlot||{}).map(([k,v])=>({label:k, value:v, color:'#f4a261'})), { suffix:'回' });
-      const platformLabels = { x:'𝕏 (Twitter)', line:'LINE' };
-      renderAdminBarList('partnerShareClicks', Object.entries(engagement.shareClicksByPlatform||{}).map(([k,v])=>({label:platformLabels[k]||k, value:v})), { suffix:'回' });
+      if(err) err.textContent = '';
+      renderPackCards();
+      showPackCards();
     } catch(e) {
       console.warn('partner data error:', e);
       if(err) err.textContent = 'アクセスキーが正しくないか、データの取得に失敗しました。';
