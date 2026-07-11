@@ -492,14 +492,19 @@
     .pack-empty-note { font-size:.78rem; color:var(--muted); padding:.6rem; background:var(--card2); border-radius:10px; }
     .pack-loading-note { font-size:.78rem; color:var(--muted); padding:.6rem; }
 
-    /* ── Executive Summary UI ── */
-    .exec-summary { background:linear-gradient(135deg, var(--card2), rgba(255,255,255,.02)); border:1px solid var(--line); border-radius:16px; padding:1.2rem; margin-bottom:1.2rem; }
-    .exec-summary-title { font-size:.72rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.8rem; }
-    .exec-score-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.8rem; margin-bottom:1rem; }
-    .exec-score-card { text-align:center; padding:.9rem .5rem; }
-    .exec-score-value { font-size:2.2rem; font-weight:900; line-height:1; margin-bottom:.3rem; color:var(--pack-color, var(--brand)); }
-    .exec-score-label { font-size:.7rem; color:var(--muted); }
-    .exec-comment-box { background:rgba(0,0,0,.15); border-left:3px solid var(--pack-color, var(--brand)); border-radius:8px; padding:.9rem 1rem; font-size:.85rem; line-height:1.7; color:#dff0e6; }
+    /* ── Executive Summary UI（企業向け・明るいトーン） ── */
+    .exec-summary { background:#F7F8FA; border:1px solid #E4E7EB; border-radius:16px; padding:1.4rem; margin-bottom:1.2rem; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+    .exec-summary-title { font-size:.72rem; color:#6B7280; font-weight:800; text-transform:uppercase; letter-spacing:.04em; margin-bottom:1rem; }
+    .exec-top-row { display:flex; gap:1.2rem; margin-bottom:1rem; flex-wrap:wrap; }
+    .exec-anime-info { display:flex; gap:.8rem; align-items:center; flex:1 1 220px; min-width:220px; }
+    .exec-anime-info img { width:64px; height:88px; object-fit:cover; border-radius:8px; flex-shrink:0; background:#E4E7EB; }
+    .exec-anime-name { font-size:1rem; font-weight:800; color:#1A1F26; margin-bottom:.3rem; }
+    .exec-anime-meta { font-size:.72rem; color:#6B7280; line-height:1.6; }
+    .exec-score-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.8rem; margin-bottom:1rem; flex:2 1 400px; }
+    .exec-score-card { text-align:center; padding:.9rem .5rem; background:#fff; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.05); }
+    .exec-score-value { font-size:2.8rem; font-weight:900; line-height:1; margin-bottom:.35rem; color:var(--pack-color, var(--brand)); }
+    .exec-score-label { font-size:.7rem; color:#6B7280; }
+    .exec-comment-box { background:#fff; border-left:3px solid var(--pack-color, var(--brand)); border-radius:8px; padding:1rem 1.1rem; font-size:.88rem; line-height:1.8; color:#1A1F26; }
     .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:.8rem; margin-bottom:1.2rem; }
     .kpi-card { background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:1rem; }
     .kpi-card-title { font-size:.75rem; font-weight:700; color:#c2deca; margin-bottom:.6rem; }
@@ -1943,7 +1948,7 @@
         <button class="pack-detail-back" onclick="showPackCards()">← パック一覧</button>
         <div class="pack-detail-title" id="packDetailTitle"></div>
       </div>
-      <div id="packDetailAnimeInput" style="display:none;margin-bottom:.9rem;">
+      <div id="packDetailAnimeInput" style="display:none;margin-bottom:.9rem;position:sticky;top:0;z-index:5;background:var(--bg,#07150d);padding:.6rem 0;">
         <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:.3rem;">作品名で検索してください</label>
         <input type="text" id="partnerAnimeTitleInput" list="partnerAnimeDatalist" placeholder="例: 進撃の巨人"
           style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;margin-bottom:.5rem;" />
@@ -7602,6 +7607,22 @@
   function subsection(title, bodyHtml) {
     return `<div class="pack-subsection"><div class="pack-subsection-title">${escapeHtml(title)}</div>${bodyHtml}</div>`;
   }
+  function downloadCsv(jsonStr, filename) {
+    try {
+      const rows = JSON.parse(jsonStr);
+      if(!rows || !rows.length) return;
+      const headers = Object.keys(rows[0]);
+      const csv = [headers.join(',')].concat(rows.map(r => headers.map(h => JSON.stringify(r[h] ?? '')).join(','))).join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch(e) { console.warn('downloadCsv error:', e); }
+  }
+  window.downloadCsv = downloadCsv;
+
 
   function formatSentiment(d, color, animeTitle) {
     const bp = d.brandPower || {};
@@ -7609,15 +7630,29 @@
     const topAppeal = (d.appealBreakdown||[])[0] || {};
     const bestGenre = (d.genrePosition||[])[0] || {};
     const radarId = 'sentimentRadar_' + Date.now();
+    const meta = (d.animeId && _partnerAnimeMeta[d.animeId]) || {};
 
     // ① Executive Summary
     let html = `<div class="exec-summary">
       <div class="exec-summary-title">Executive Summary${animeTitle ? ' — ' + escapeHtml(animeTitle) : ''}</div>
-      <div class="exec-score-grid">
+      <div class="exec-top-row">
+        <div class="exec-anime-info">
+          ${meta.image_url ? `<img src="${escapeHtml(meta.image_url)}" alt="">` : ''}
+          <div>
+            <div class="exec-anime-name">${escapeHtml(animeTitle || meta.title || '—')}</div>
+            <div class="exec-anime-meta">
+              ジャンル: ${escapeHtml((meta.genres||[]).slice(0,3).join('、') || '—')}<br>
+              制作会社: ${escapeHtml((meta.studios||[]).slice(0,2).join('、') || '—')}<br>
+              放送年: ${escapeHtml(meta.year || '—')}
+            </div>
+          </div>
+        </div>
+        <div class="exec-score-grid">
         <div class="exec-score-card"><div class="exec-score-value" style="--pack-color:${color};color:${color};">${bp.total_score ?? '—'}</div><div class="exec-score-label">ブランド力</div></div>
         <div class="exec-score-card"><div class="exec-score-value" style="color:${color};">${escapeHtml(cls.classification || '—')}</div><div class="exec-score-label">刺さる理由タイプ</div></div>
         <div class="exec-score-card"><div class="exec-score-value" style="color:${color};">${(d.similarAnime||[]).length}</div><div class="exec-score-label">感性が近い作品数</div></div>
         <div class="exec-score-card"><div class="exec-score-value" style="color:${color};">${bestGenre.genre_index ? bestGenre.genre_index+'倍' : '—'}</div><div class="exec-score-label">ジャンル内最高倍率</div></div>
+      </div>
       </div>
       <div class="exec-comment-box">${escapeHtml(animeTitle||'この作品')}は、${escapeHtml(cls.top_axes || '主要軸')}の評価が市場平均を上回る「${escapeHtml(cls.classification||'バランス型')}」の作品です。${topAppeal.axis ? `特に「${escapeHtml(topAppeal.axis)}」が市場平均の${topAppeal.appeal_index}倍と最も強く評価されています。` : ''}${bestGenre.genre ? `${escapeHtml(bestGenre.genre)}ジャンル内では「${escapeHtml(bestGenre.axis)}」が同ジャンル平均の${bestGenre.genre_index}倍です。` : ''}</div>
     </div>`;
@@ -7651,15 +7686,25 @@
     html += subsection('ジャンル内ポジション（同ジャンル平均比）', simpleTable(['ジャンル','軸','この作品','ジャンル平均','倍率','ジャンル内作品数'], (d.genrePosition||[]).slice(0,10).map(g=>[escapeHtml(g.genre), escapeHtml(g.axis), g.anime_avg, g.genre_avg, g.genre_index+'倍', g.genre_sample_size])));
     html += subsection('作品DNA類似度（感性が近い作品）', simpleTable(['作品','距離（小さいほど似ている）','似ている理由（近い軸）'], (d.similarAnime||[]).map(s=>[escapeHtml(s.title), s.distance, escapeHtml(s.closest_axes||'—')])));
 
-    // ④ 競合比較
+    // ④ 競合比較（タブ形式）
     if(d.competitorComparison && d.competitorComparison.length) {
       const byAnime = {};
-      d.competitorComparison.forEach(c => { (byAnime[c.title] = byAnime[c.title]||[]).push(`${c.axis}:${c.avg_score}`); });
-      html += subsection('④ 競合作品比較（似ている上位3作品との軸比較）', simpleTable(['作品','各軸の平均値'], Object.entries(byAnime).map(([title,vals])=>[escapeHtml(title), vals.join(' / ')])));
+      d.competitorComparison.forEach(c => { (byAnime[c.title] = byAnime[c.title]||[]).push([c.axis, c.avg_score]); });
+      const tabId = 'compTabs_' + Date.now();
+      const titles = Object.keys(byAnime);
+      const tabsHtml = `<div id="${tabId}">
+        <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;">
+          ${titles.map((t,i)=>`<button onclick="document.querySelectorAll('#${tabId} .comp-tab-pane').forEach(el=>el.style.display='none');document.getElementById('${tabId}_pane${i}').style.display='';document.querySelectorAll('#${tabId} .comp-tab-btn').forEach(el=>el.style.opacity='.5');this.style.opacity='1';"
+            class="comp-tab-btn" style="padding:.35rem .8rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.75rem;cursor:pointer;opacity:${i===0?'1':'.5'};">${escapeHtml(t)}</button>`).join('')}
+        </div>
+        ${titles.map((t,i)=>`<div id="${tabId}_pane${i}" class="comp-tab-pane" style="display:${i===0?'':'none'};">${simpleTable(['軸','平均値'], byAnime[t].map(([ax,val])=>[escapeHtml(ax), val]))}</div>`).join('')}
+      </div>`;
+      html += subsection('④ 競合作品比較（似ている上位3作品との軸比較）', tabsHtml);
     }
 
     // ⑤ Raw Data
-    html += subsection('⑤ Raw Data（12軸素点）', simpleTable(['軸','平均値','レビュー数'], (d.masterGraphRaw||[]).map(m=>[escapeHtml(m.axis), m.avg_score, m.review_count])));
+    const csvBtn = `<button onclick='downloadCsv(${JSON.stringify(JSON.stringify((d.masterGraphRaw||[]).map(m=>({axis:m.axis, avg_score:m.avg_score, review_count:m.review_count}))))}, "${(animeTitle||'anime').replace(/[^a-zA-Z0-9]/g,'_')}_raw12axis.csv")' style="margin-bottom:.6rem;padding:.4rem .8rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.75rem;cursor:pointer;">⬇ CSVダウンロード</button>`;
+    html += subsection('⑤ Raw Data（12軸素点）', csvBtn + simpleTable(['軸','平均値','レビュー数'], (d.masterGraphRaw||[]).map(m=>[escapeHtml(m.axis), m.avg_score, m.review_count])));
 
     return html;
   }
@@ -7794,18 +7839,22 @@
   };
 
   let _partnerTitleToId = {};
+  let _partnerAnimeMeta = {};
   async function loadPartnerAnimeTitles() {
     try {
-      const titles = await db.animePages.getAllTitles();
+      if(!sb) return;
+      const { data: titles } = await sb.from('anime_pages').select('id,title,title_en,image_url,genres,studios,year');
       _partnerTitleToId = {};
+      _partnerAnimeMeta = {};
       const dl = document.getElementById('partnerAnimeDatalist');
-      if(dl) {
-        dl.innerHTML = (titles || []).map(t => {
-          const label = t.title || t.title_en || t.id;
-          _partnerTitleToId[label] = t.id;
-          return `<option value="${escapeHtml(label)}"></option>`;
-        }).join('');
-      }
+      const options = [];
+      (titles||[]).forEach(t => {
+        const label = t.title || t.title_en || t.id;
+        _partnerTitleToId[label] = t.id;
+        _partnerAnimeMeta[t.id] = t;
+        options.push(`<option value="${escapeHtml(label)}"></option>`);
+      });
+      if(dl) dl.innerHTML = options.join('');
     } catch(e) { console.warn('loadPartnerAnimeTitles error:', e); }
   }
 
