@@ -2216,11 +2216,11 @@
             <p>作品を12軸の感性データで分析し、人気形成要因を可視化します。</p>
           </div>
           <div class="anime-hero">
-            <img src="https://placehold.co/128x176/182036/8894b0?text=A" alt="テストアニメAのビジュアル" />
+            <img id="sentimentHeroImg" src="https://placehold.co/128x176/182036/8894b0?text=A" alt="" />
             <div>
-              <div class="h-name">テストアニメA</div>
-              <div class="h-meta">アクション / ファンタジー · 2024年 · Studio X</div>
-              <div><span class="tag">エモい型</span><span class="tag">高熱量</span><span class="tag">海外適性◎</span></div>
+              <div class="h-name" id="sentimentHeroName">テストアニメA</div>
+              <div class="h-meta" id="sentimentHeroMeta">アクション / ファンタジー · 2024年 · Studio X</div>
+              <div id="sentimentHeroTags"><span class="tag">エモい型</span><span class="tag">高熱量</span><span class="tag">海外適性◎</span></div>
             </div>
           </div>
           <div class="grid-2">
@@ -2236,7 +2236,7 @@
           <div class="grid-2">
             <div class="panel">
               <div class="panel-title">作品DNA（感性が近い作品）</div>
-              <div class="card-grid">
+              <div class="card-grid" id="dnaCardGrid">
                 <div class="mini-card"><div class="mc-tag">距離 2.27</div><div class="mc-name">テストアニメE</div><div class="mc-sub">世界観・エモさが近似</div></div>
                 <div class="mini-card"><div class="mc-tag">距離 3.60</div><div class="mc-name">テストアニメC</div><div class="mc-sub">キャラ・作画が近似</div></div>
               </div>
@@ -2245,7 +2245,7 @@
               <div class="panel-title">競合作品比較</div>
               <table>
                 <thead><tr><th>作品</th><th>作画</th><th>世界観</th><th>キャラ</th><th>エモい</th></tr></thead>
-                <tbody>
+                <tbody id="competitorTableBody">
                   <tr><td>テストアニメA</td><td>7.4</td><td>8.1</td><td>7.9</td><td class="pos">8.6</td></tr>
                   <tr><td>テストアニメC</td><td>7.1</td><td>6.8</td><td>7.6</td><td>7.2</td></tr>
                   <tr><td>テストアニメE</td><td>6.9</td><td>7.9</td><td>7.0</td><td>8.0</td></tr>
@@ -2278,7 +2278,7 @@
             <div class="panel-title">インフルエンサー予備軍<span class="hint">影響力スコア順</span></div>
             <table>
               <thead><tr><th>順位</th><th>品質スコア</th><th>シェア数</th><th>影響力</th></tr></thead>
-              <tbody>
+              <tbody id="influencerTableBody">
                 <tr><td>1</td><td>9.2</td><td>142</td><td class="pos">88.4</td></tr>
                 <tr><td>2</td><td>8.7</td><td>98</td><td class="pos">74.1</td></tr>
                 <tr><td>3</td><td>8.1</td><td>61</td><td>59.6</td></tr>
@@ -2325,7 +2325,7 @@
             <div class="panel-title">隠れた名作検出（サイレントヒット）</div>
             <table>
               <thead><tr><th>作品</th><th>PV数</th><th>平均品質</th><th>リピート率</th></tr></thead>
-              <tbody>
+              <tbody id="silentHitTableBody">
                 <tr><td>テストアニメG</td><td>240</td><td class="pos">8.9</td><td>34%</td></tr>
                 <tr><td>テストアニメK</td><td>180</td><td class="pos">8.6</td><td>29%</td></tr>
               </tbody>
@@ -2357,7 +2357,7 @@
             <div class="panel-title">国別ランキング表</div>
             <table>
               <thead><tr><th>国</th><th>PV</th><th>レビュー</th><th>転換率</th><th>評価差</th></tr></thead>
-              <tbody>
+              <tbody id="countryTableBody">
                 <tr><td>🇯🇵 日本</td><td>152</td><td>60</td><td>39%</td><td class="pos">+0.0</td></tr>
                 <tr><td>🇺🇸 USA</td><td>79</td><td>31</td><td>39%</td><td class="pos">+0.4</td></tr>
                 <tr><td>🇩🇪 Germany</td><td>48</td><td>18</td><td>37%</td><td class="neg">-0.2</td></tr>
@@ -2393,7 +2393,7 @@
             <div class="panel-title">バイラル係数（シェア率）</div>
             <table>
               <thead><tr><th>作品</th><th>シェア数</th><th>PV数</th><th>バイラル率</th></tr></thead>
-              <tbody>
+              <tbody id="viralTableBody">
                 <tr><td>テストアニメA</td><td>34</td><td>740</td><td class="pos">4.59%</td></tr>
                 <tr><td>テストアニメC</td><td>21</td><td>612</td><td>3.43%</td></tr>
               </tbody>
@@ -2422,7 +2422,7 @@
             <div class="panel-title">新規IP発掘スコア（上位）</div>
             <table>
               <thead><tr><th>作品</th><th>レビュー数</th><th>平均品質</th><th>発掘スコア</th></tr></thead>
-              <tbody>
+              <tbody id="newIpTableBody">
                 <tr><td>テストアニメG</td><td>48</td><td>8.9</td><td class="pos">91.2</td></tr>
                 <tr><td>テストアニメK</td><td>33</td><td>8.6</td><td class="pos">84.7</td></tr>
                 <tr><td>テストアニメM</td><td>27</td><td>8.2</td><td>76.3</td></tr>
@@ -8358,6 +8358,19 @@
       if(aiBody) aiBody.innerHTML = '作品を検索すると、分析結果がここに表示されます。';
       const aiStrat = document.getElementById('aiStrat');
       if(aiStrat) aiStrat.innerHTML = '';
+      // 作品カード（Sentimentビュー上部）
+      const heroName = document.getElementById('sentimentHeroName'); if(heroName) heroName.textContent = '—';
+      const heroMeta = document.getElementById('sentimentHeroMeta'); if(heroMeta) heroMeta.textContent = '作品を検索してください';
+      const heroTags = document.getElementById('sentimentHeroTags'); if(heroTags) heroTags.innerHTML = '';
+      const heroImg = document.getElementById('sentimentHeroImg'); if(heroImg) heroImg.removeAttribute('src');
+      // 残りの静的テーブル・カードは「未検索」の空表示に
+      const emptyRow = (cols) => `<tr><td colspan="${cols}" style="text-align:center;color:var(--muted2);">作品を検索してください</td></tr>`;
+      ['competitorTableBody','influencerTableBody','silentHitTableBody','countryTableBody','viralTableBody','newIpTableBody'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = emptyRow(5);
+      });
+      const dnaGrid = document.getElementById('dnaCardGrid'); if(dnaGrid) dnaGrid.innerHTML = '';
+      const fanGrid = document.getElementById('fanClusterGrid'); if(fanGrid) fanGrid.innerHTML = '';
     })();
 
   // ── ナビゲーション ──
@@ -8374,28 +8387,25 @@
   });
 
   const AI_CONTENT = {
-    dashboard:{t:'テストアニメA の総合診断', b:'総合的に見て<strong>ブランド力46.1・熱量100</strong>と、コア層の熱狂が強い作品です。海外適性が高く、次の一手は「グローバル展開」と「ファンダムの拡張」です。'},
-    sentiment:{t:'感性分析サマリー', b:'人気の主要因は<strong>エモさ(1.36倍)・シリアス(1.35倍)・かっこいい(1.32倍)</strong>。感性が近い「テストアニメE」との共通ファン獲得が有効です。'},
-    fan:{t:'ファン分析サマリー', b:'コア層は<strong>20代・キャラクター愛着型</strong>。インフルエンサー予備軍が明確なため、二次創作・SNS施策で拡散を狙えます。'},
-    trend:{t:'トレンド予測サマリー', b:'直近PVが<strong>+120%</strong>と急上昇シグナル。関連タグの勢いも強く、今が広告投下の最適タイミングです。'},
-    global:{t:'海外市場サマリー', b:'ローカライズ適性<strong>140.6</strong>。日本に次いで<strong>US・KR</strong>の熱量が高く、字幕先行→吹替の順で展開すべきです。'},
-    consumer:{t:'消費者行動サマリー', b:'流入は<strong>検索とSNSが中心</strong>。「異世界×コメディ」など需要過多の検索枠が存在し、周辺IPの獲得余地があります。'},
-    ip:{t:'IP戦略サマリー', b:'継続率72%・続編需要31%と、<strong>シリーズ化の投資回収可能性が高い</strong>IPです。海外成長スコアも高く長期育成に向きます。'}
+    dashboard:{t:'AI分析', b:'作品を検索すると、分析結果がここに表示されます。'},
+    sentiment:{t:'感性分析サマリー', b:'作品を検索すると、分析結果がここに表示されます。'},
+    fan:{t:'ファン分析サマリー', b:'作品を検索すると、分析結果がここに表示されます。'},
+    trend:{t:'トレンド予測サマリー', b:'全体のトレンドデータを表示しています。作品を検索すると、その作品固有の分析も追加されます。'},
+    global:{t:'海外市場サマリー', b:'作品を検索すると、分析結果がここに表示されます。'},
+    consumer:{t:'消費者行動サマリー', b:'全体の消費者行動データを表示しています。作品を検索すると、その作品固有の分析も追加されます。'},
+    ip:{t:'IP戦略サマリー', b:'作品を検索すると、分析結果がここに表示されます。'}
   };
   const AI_STRAT = {
-    dashboard:['グローバル展開を優先','ファンダム拡張施策を強化','続編・派生IPを検討'],
-    sentiment:['「エモさ」を軸にした宣伝訴求','近似作品ファンへのクロス広告','シリアス層向けの深掘りコンテンツ'],
-    fan:['20代女性向け広告を強化','二次創作ガイドラインを整備','インフルエンサー先行試写'],
-    trend:['広告予算を前倒し投下','急上昇タグでSNS運用','サイレントヒット作品を横展開'],
-    global:['US・KR向け字幕を優先','現地配信プラットフォーム連携','言語別需要に応じた吹替判断'],
-    consumer:['検索SEO・指名検索の強化','ホワイトスペース領域の新作企画','シェア動線の最適化'],
-    ip:['続編/劇場版の企画着手','海外ライセンス交渉','グッズ・コラボ展開']
+    dashboard:[], sentiment:[], fan:[], trend:[], global:[], consumer:[], ip:[]
   };
+  window._realAI = {};
+  window._realStrat = {};
   function updateAI(view){
-    const c = AI_CONTENT[view] || AI_CONTENT.dashboard;
+    const c = (window._realAI && window._realAI[view]) || AI_CONTENT[view] || AI_CONTENT.dashboard;
     document.getElementById('aiTitle').textContent = c.t;
     document.getElementById('aiBody').innerHTML = c.b;
-    document.getElementById('aiStrat').innerHTML = (AI_STRAT[view]||AI_STRAT.dashboard).map(s=>`<li>${s}</li>`).join('');
+    const strat = (window._realStrat && window._realStrat[view]) || AI_STRAT[view] || AI_STRAT.dashboard;
+    document.getElementById('aiStrat').innerHTML = strat.map(s=>`<li>${s}</li>`).join('');
   }
 
   // ── 棒リスト描画 ──
@@ -8536,6 +8546,7 @@
       const titleMap = window._partnerTitleToId || {};
       const animeId = titleMap[title];
       if(!animeId) { console.warn('作品が見つかりません:', title); return; }
+      const meta = window._partnerAnimeMeta ? window._partnerAnimeMeta[animeId] : null;
       const [sentiment, fanInsight, trend, global, consumer, ip] = await Promise.all([
         fetchPartnerDataset('sentiment&animeId=' + encodeURIComponent(animeId)),
         fetchPartnerDataset('fan_insight&animeId=' + encodeURIComponent(animeId)),
@@ -8544,66 +8555,108 @@
         fetchPartnerDataset('consumer_behavior&animeId=' + encodeURIComponent(animeId)),
         fetchPartnerDataset('ip_strategy&animeId=' + encodeURIComponent(animeId)),
       ]);
+      const esc = (s) => (window.escapeHtml ? escapeHtml(String(s??'')) : String(s??''));
 
-      // ── Sentiment（① ダッシュボード・②詳細） ──
+      // ── ダッシュボードKPI ──
       const bp = sentiment.brandPower || {};
       const brandEl = document.querySelector('#view-dashboard .kpi .k-val');
       if(brandEl && bp.total_score != null) brandEl.textContent = bp.total_score;
+
+      // ── Sentiment: 作品カード ──
+      const heroName = document.getElementById('sentimentHeroName'); if(heroName) heroName.textContent = title;
+      const heroMeta = document.getElementById('sentimentHeroMeta');
+      if(heroMeta) heroMeta.textContent = [meta?.genres?.slice(0,2).join('/'), meta?.year, meta?.studios?.[0]].filter(Boolean).join(' · ') || '—';
+      const heroImg = document.getElementById('sentimentHeroImg'); if(heroImg && meta?.image_url) heroImg.src = meta.image_url;
+      const heroTags = document.getElementById('sentimentHeroTags');
+      const cls = sentiment.appealClassification || {};
+      if(heroTags) heroTags.innerHTML = cls.classification ? `<span class="tag">${esc(cls.classification)}</span>` : '';
+
+      // ── Sentiment: レーダー・刺さる理由・DNA・競合 ──
       if(sentiment.appealBreakdown && sentiment.appealBreakdown.length) {
         renderBars('appealBars', sentiment.appealBreakdown.map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color:'var(--brand)'});
       }
       if(sentiment.masterGraphRaw && sentiment.masterGraphRaw.length) {
         drawMockRadar(sentiment.masterGraphRaw.map(m=>m.axis), sentiment.masterGraphRaw.map(m=>m.avg_score));
       }
-      const cls = sentiment.appealClassification || {};
-      document.getElementById('aiTitle').textContent = title + ' の分析';
-      if(cls.classification) {
-        document.getElementById('aiBody').innerHTML = `この作品は「<strong>${cls.classification}</strong>」タイプ。市場平均比で最も高いのは「<strong>${(sentiment.appealBreakdown||[])[0]?.axis||''}</strong>」です。`;
+      const dnaGrid = document.getElementById('dnaCardGrid');
+      if(dnaGrid) {
+        const sims = sentiment.similarAnime || [];
+        dnaGrid.innerHTML = sims.length ? sims.slice(0,4).map(s=>`
+          <div class="mini-card"><div class="mc-tag">距離 ${s.distance}</div><div class="mc-name">${esc(s.title)}</div><div class="mc-sub">${esc(s.closest_axes||'')}</div></div>
+        `).join('') : '<p style="color:var(--muted2);">類似作品が見つかりませんでした</p>';
+      }
+      const compBody = document.getElementById('competitorTableBody');
+      if(compBody) {
+        const comp = sentiment.competitorComparison || [];
+        if(comp.length) {
+          const byAnime = {};
+          comp.forEach(c => { (byAnime[c.title] = byAnime[c.title]||{})[c.axis] = c.avg_score; });
+          compBody.innerHTML = Object.entries(byAnime).map(([t,ax])=>`
+            <tr><td>${esc(t)}</td><td>${ax['作画']??'—'}</td><td>${ax['世界観']??'—'}</td><td>${ax['キャラクター']??'—'}</td><td class="pos">${ax['エモい']??'—'}</td></tr>
+          `).join('');
+        } else {
+          compBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+        }
       }
 
-      // ── Trend Forecast（急上昇タグ） ──
-      if(trend.trendingTags && trend.trendingTags.length) {
-        renderBars('trendTags', trend.trendingTags.slice(0,8).map(t=>({label:'#'+t.tag, value:t.recent_count})), {rank:true, suffix:'件', color:'var(--warn)'});
-      }
-
-      // ── Global Market（国別視聴熱量） ──
-      if(global.countryStats && global.countryStats.length) {
-        renderBars('countryBars', global.countryStats.slice(0,6).map(c=>({label:c.country_code, value:c.cnt})), {});
-      }
-
-      // ── IP Strategy（ブランド力内訳） ──
-      if(ip.brandPower) {
-        const b = ip.brandPower;
-        renderBars('ipBars', [
-          {label:'認知度', value:b.recognition||0}, {label:'熱量', value:b.intensity||0},
-          {label:'継続率', value:b.retention||0}, {label:'国際性', value:b.global||0}
-        ], {color:'var(--brand)'});
-      }
-
-      // ── Fan Insight（年代×性別ヒートマップ・視聴者クラスタ） ──
+      // ── Fan Insight: ヒートマップ・クラスタ・インフルエンサー ──
       if(fanInsight.tasteByAttribute && fanInsight.tasteByAttribute.length) {
         drawMockHeatmap(fanInsight.tasteByAttribute.filter(t => t.gender === 'female'));
       }
       const clusters = fanInsight.userClustersWithRatio || fanInsight.userClusters || [];
-      if(clusters.length) {
-        const grid = document.getElementById('fanClusterGrid');
-        if(grid) {
-          grid.innerHTML = clusters.slice(0,3).map((c,i) => `
+      const fanGrid = document.getElementById('fanClusterGrid');
+      if(fanGrid) {
+        fanGrid.innerHTML = clusters.length ? clusters.slice(0,3).map((c,i) => `
             <div class="mini-card">
               <div class="mc-tag">Cluster ${String(i+1).padStart(2,'0')}</div>
               <div class="mc-big">${c.user_count}<span style="font-size:.9rem;color:var(--muted)">人</span></div>
-              <div class="mc-name">${c.cluster_type}</div>
+              <div class="mc-name">${esc(c.cluster_type)}</div>
               <div class="mc-sub">${c.ratio_pct != null ? c.ratio_pct+'%' : ''}</div>
-            </div>`).join('');
-        }
+            </div>`).join('') : '<p style="color:var(--muted2);">データが不足しています</p>';
+      }
+      const inflBody = document.getElementById('influencerTableBody');
+      if(inflBody) {
+        const infl = fanInsight.potentialInfluencers || [];
+        inflBody.innerHTML = infl.length ? infl.slice(0,10).map((u,i)=>`
+          <tr><td>${i+1}</td><td>${u.avg_quality_score??'—'}</td><td>${u.share_count??'—'}</td><td class="pos">${u.influence_score??'—'}</td></tr>
+        `).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
       }
 
-      // ── Trend Forecast（市場センチメント推移・折れ線） ──
+      // ── Trend Forecast: 急上昇タグ・折れ線・サイレントヒット ──
+      if(trend.trendingTags && trend.trendingTags.length) {
+        renderBars('trendTags', trend.trendingTags.slice(0,8).map(t=>({label:'#'+t.tag, value:t.recent_count})), {rank:true, suffix:'件', color:'var(--warn)'});
+      }
       if(trend.marketSentimentIndex && trend.marketSentimentIndex.length) {
         drawMockLine(trend.marketSentimentIndex.map(m => m.avg_overall_score));
       }
+      const silentBody = document.getElementById('silentHitTableBody');
+      if(silentBody) {
+        const hits = trend.silentHits || [];
+        silentBody.innerHTML = hits.length ? hits.slice(0,10).map(h=>`
+          <tr><td>${esc(h.title)}</td><td>${h.total_pv}</td><td class="pos">${h.avg_quality_score}</td><td>${h.repeat_viewer_ratio??'—'}%</td></tr>
+        `).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+      }
 
-      // ── Consumer Behavior（発見経路・ドーナツ） ──
+      // ── Global Market: 国別視聴熱量・国別ランキング表 ──
+      if(global.countryStats && global.countryStats.length) {
+        renderBars('countryBars', global.countryStats.slice(0,6).map(c=>({label:c.country_code, value:c.cnt})), {});
+      }
+      const countryBody = document.getElementById('countryTableBody');
+      if(countryBody) {
+        const gap = global.countryInterestGap || [];
+        countryBody.innerHTML = gap.length ? gap.slice(0,8).map(c=>`
+          <tr><td>${c.country_code}</td><td>${c.pv_count}</td><td>${c.review_count}</td><td>${c.review_rate}%</td><td>${esc(c.gap_type||'—')}</td></tr>
+        `).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+      }
+
+      // ── Consumer Behavior: バイラル係数表 ──
+      const viralBody = document.getElementById('viralTableBody');
+      if(viralBody) {
+        const viral = consumer.viralCoefficient || [];
+        viralBody.innerHTML = viral.length ? viral.slice(0,10).map(v=>`
+          <tr><td>${esc(v.title)}</td><td>${v.share_count}</td><td>${v.pv_count}</td><td class="pos">${v.viral_rate??'—'}%</td></tr>
+        `).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+      }
       if(consumer.discoveryPath && consumer.discoveryPath.length) {
         const donutColors = ['#7c5cff','#22d3ee','#3d7bff','#5d6a89','#fbbf24'];
         const referrerLabels = { search:'Search', sns:'SNS', direct:'Direct', other:'Other', unknown:'Unknown' };
@@ -8613,6 +8666,36 @@
           c: donutColors[i % donutColors.length]
         })));
       }
+
+      // ── IP Strategy: ブランド力内訳・新規IP発掘表 ──
+      if(ip.brandPower) {
+        const b = ip.brandPower;
+        renderBars('ipBars', [
+          {label:'認知度', value:b.recognition||0}, {label:'熱量', value:b.intensity||0},
+          {label:'継続率', value:b.retention||0}, {label:'国際性', value:b.global||0}
+        ], {color:'var(--brand)'});
+      }
+      const newIpBody = document.getElementById('newIpTableBody');
+      if(newIpBody) {
+        const newIp = ip.newIpDiscovery || [];
+        newIpBody.innerHTML = newIp.length ? newIp.slice(0,10).map(x=>`
+          <tr><td>${esc(x.title)}</td><td>${x.review_count}</td><td>${x.avg_quality_score}</td><td class="pos">${x.discovery_score}</td></tr>
+        `).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+      }
+
+      // ── 全ビュー分、AIサマリーを実データで作成（ビュー切替で消えないよう window._realAI に保存） ──
+      const topAppeal = (sentiment.appealBreakdown||[])[0] || {};
+      const topSim = (sentiment.similarAnime||[])[0] || {};
+      window._realAI = window._realAI || {};
+      window._realStrat = window._realStrat || {};
+      window._realAI.dashboard = { t: title+' の総合診断', b: `ブランド力<strong>${bp.total_score??'—'}</strong>。刺さる理由は<strong>${esc(cls.classification||'—')}</strong>タイプです。` };
+      window._realAI.sentiment = { t: '感性分析サマリー', b: topAppeal.axis ? `人気の主要因は<strong>${esc(topAppeal.axis)}(${topAppeal.appeal_index}倍)</strong>。感性が近い「${esc(topSim.title||'')}」との共通ファン獲得が有効です。` : 'データが不足しています。' };
+      window._realAI.fan = { t: 'ファン分析サマリー', b: clusters.length ? `コア層は<strong>${esc(clusters[0].cluster_type)}</strong>（${clusters[0].user_count}人）です。` : 'データが不足しています。' };
+      window._realAI.trend = { t: 'トレンド予測サマリー', b: trend.hitSignal ? `直近PVが<strong>${trend.hitSignal.growth_rate??'—'}%</strong>、判定は<strong>${esc(trend.hitSignal.signal_level||'—')}</strong>です。` : '全体のトレンドデータを表示しています。' };
+      window._realAI.global = { t: '海外市場サマリー', b: (global.countryStats||[])[0] ? `最も熱量が高いのは<strong>${global.countryStats[0].country_code}</strong>（${global.countryStats[0].cnt}件）です。` : 'データが不足しています。' };
+      window._realAI.consumer = { t: '消費者行動サマリー', b: '全体の消費者行動データを表示しています。' };
+      window._realAI.ip = { t: 'IP戦略サマリー', b: ip.sequelDemand ? `続編需要率<strong>${ip.sequelDemand.demand_ratio}%</strong>です。` : 'データが不足しています。' };
+      updateAI(document.querySelector('.nav-item.active')?.dataset.view || 'dashboard');
 
       console.log('6パック実データ反映完了:', title, { sentiment, fanInsight, trend, global, consumer, ip });
     } catch(e) {
