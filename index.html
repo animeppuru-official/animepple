@@ -492,6 +492,20 @@
     .pack-empty-note { font-size:.78rem; color:var(--muted); padding:.6rem; background:var(--card2); border-radius:10px; }
     .pack-loading-note { font-size:.78rem; color:var(--muted); padding:.6rem; }
 
+    /* ── Executive Summary UI ── */
+    .exec-summary { background:linear-gradient(135deg, var(--card2), rgba(255,255,255,.02)); border:1px solid var(--line); border-radius:16px; padding:1.2rem; margin-bottom:1.2rem; }
+    .exec-summary-title { font-size:.72rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.8rem; }
+    .exec-score-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.8rem; margin-bottom:1rem; }
+    .exec-score-card { text-align:center; padding:.9rem .5rem; }
+    .exec-score-value { font-size:2.2rem; font-weight:900; line-height:1; margin-bottom:.3rem; color:var(--pack-color, var(--brand)); }
+    .exec-score-label { font-size:.7rem; color:var(--muted); }
+    .exec-comment-box { background:rgba(0,0,0,.15); border-left:3px solid var(--pack-color, var(--brand)); border-radius:8px; padding:.9rem 1rem; font-size:.85rem; line-height:1.7; color:#dff0e6; }
+    .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:.8rem; margin-bottom:1.2rem; }
+    .kpi-card { background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:1rem; }
+    .kpi-card-title { font-size:.75rem; font-weight:700; color:#c2deca; margin-bottom:.6rem; }
+    .radar-canvas-wrap { width:100%; height:220px; }
+
+
     .admin-axis-label { font-size:.74rem; color:#dff0e6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .admin-axis-track { height:7px; border-radius:4px; background:var(--card); overflow:hidden; }
     .admin-axis-fill { height:100%; border-radius:4px; }
@@ -7589,31 +7603,64 @@
     return `<div class="pack-subsection"><div class="pack-subsection-title">${escapeHtml(title)}</div>${bodyHtml}</div>`;
   }
 
-  function formatSentiment(d, color) {
-    let html = subsection('12軸評価（素点）', barListHtml((d.masterGraphRaw||[]).map(m=>({label:m.axis, value:m.avg_score})), {suffix:'点', color}));
+  function formatSentiment(d, color, animeTitle) {
     const bp = d.brandPower || {};
-    html += `<div class="stat-tile-grid">
-      ${statTile('総合ブランド力', bp.total_score, '')}
-      ${statTile('認知', bp.recognition, '')}
-      ${statTile('熱量', bp.intensity, '')}
-      ${statTile('継続率', bp.retention, '%')}
-      ${statTile('国際性', bp.global, '')}
+    const cls = d.appealClassification || {};
+    const topAppeal = (d.appealBreakdown||[])[0] || {};
+    const bestGenre = (d.genrePosition||[])[0] || {};
+    const radarId = 'sentimentRadar_' + Date.now();
+
+    // ① Executive Summary
+    let html = `<div class="exec-summary">
+      <div class="exec-summary-title">Executive Summary${animeTitle ? ' — ' + escapeHtml(animeTitle) : ''}</div>
+      <div class="exec-score-grid">
+        <div class="exec-score-card"><div class="exec-score-value" style="--pack-color:${color};color:${color};">${bp.total_score ?? '—'}</div><div class="exec-score-label">ブランド力</div></div>
+        <div class="exec-score-card"><div class="exec-score-value" style="color:${color};">${escapeHtml(cls.classification || '—')}</div><div class="exec-score-label">刺さる理由タイプ</div></div>
+        <div class="exec-score-card"><div class="exec-score-value" style="color:${color};">${(d.similarAnime||[]).length}</div><div class="exec-score-label">感性が近い作品数</div></div>
+        <div class="exec-score-card"><div class="exec-score-value" style="color:${color};">${bestGenre.genre_index ? bestGenre.genre_index+'倍' : '—'}</div><div class="exec-score-label">ジャンル内最高倍率</div></div>
+      </div>
+      <div class="exec-comment-box">${escapeHtml(animeTitle||'この作品')}は、${escapeHtml(cls.top_axes || '主要軸')}の評価が市場平均を上回る「${escapeHtml(cls.classification||'バランス型')}」の作品です。${topAppeal.axis ? `特に「${escapeHtml(topAppeal.axis)}」が市場平均の${topAppeal.appeal_index}倍と最も強く評価されています。` : ''}${bestGenre.genre ? `${escapeHtml(bestGenre.genre)}ジャンル内では「${escapeHtml(bestGenre.axis)}」が同ジャンル平均の${bestGenre.genre_index}倍です。` : ''}</div>
     </div>`;
-    const fs = d.fanSplitIndex || {};
+
+    // ② KPI Dashboard
+    html += `<div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-card-title">12軸評価（素点）</div>
+        <div class="radar-canvas-wrap"><canvas id="${radarId}" style="width:100%;height:100%;"></canvas></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-card-title">市場平均との差（倍率）</div>
+        ${barListHtml((d.appealBreakdown||[]).slice(0,8).map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color})}
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-card-title">ジャンル平均との差（倍率）</div>
+        ${barListHtml((d.genrePosition||[]).slice(0,8).map(g=>({label:g.genre+'/'+g.axis, value:g.genre_index})), {suffix:'倍', color})}
+      </div>
+    </div>`;
+    // レーダー描画は非同期でDOM挿入後に実行する必要があるため、後でscheduleRadarDrawに登録
+    window._pendingRadarDraws = window._pendingRadarDraws || [];
+    window._pendingRadarDraws.push({ id: radarId, labels: (d.masterGraphRaw||[]).map(m=>m.axis), values: (d.masterGraphRaw||[]).map(m=>m.avg_score), color });
+
+    // ③ 詳細分析
     html += subsection('意見の分裂度', `<div class="stat-tile-grid">
-      ${statTile('分裂指数', fs.split_index, '')}
-      ${statTile('判定', fs.split_level || '—', '')}
-      ${statTile('対象レビュー数', fs.total_reviews, '件')}
+      ${statTile('分裂指数', d.fanSplitIndex?.split_index, '')}
+      ${statTile('判定', d.fanSplitIndex?.split_level || '—', '')}
+      ${statTile('対象レビュー数', d.fanSplitIndex?.total_reviews, '件')}
     </div>`);
-    html += subsection('評価に効いている軸（市場平均比。1.0=平均並み、1.3=平均より30%高い）', barListHtml((d.appealBreakdown||[]).map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color}));
-    const gp = (d.genrePosition||[]).slice(0,10);
-    html += subsection('ジャンル内ポジション（同ジャンル平均比。1.0=平均並み）', simpleTable(['ジャンル','軸','この作品','ジャンル平均','倍率','ジャンル内作品数'], gp.map(g=>[escapeHtml(g.genre), escapeHtml(g.axis), g.anime_avg, g.genre_avg, g.genre_index+'倍', g.genre_sample_size])));
+    html += subsection('評価に効いている軸（全項目）', barListHtml((d.appealBreakdown||[]).map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color}));
+    html += subsection('ジャンル内ポジション（同ジャンル平均比）', simpleTable(['ジャンル','軸','この作品','ジャンル平均','倍率','ジャンル内作品数'], (d.genrePosition||[]).slice(0,10).map(g=>[escapeHtml(g.genre), escapeHtml(g.axis), g.anime_avg, g.genre_avg, g.genre_index+'倍', g.genre_sample_size])));
     html += subsection('作品DNA類似度（感性が近い作品）', simpleTable(['作品','距離（小さいほど似ている）','似ている理由（近い軸）'], (d.similarAnime||[]).map(s=>[escapeHtml(s.title), s.distance, escapeHtml(s.closest_axes||'—')])));
+
+    // ④ 競合比較
     if(d.competitorComparison && d.competitorComparison.length) {
       const byAnime = {};
       d.competitorComparison.forEach(c => { (byAnime[c.title] = byAnime[c.title]||[]).push(`${c.axis}:${c.avg_score}`); });
-      html += subsection('競合作品比較（似ている上位3作品との軸比較）', simpleTable(['作品','各軸の平均値'], Object.entries(byAnime).map(([title,vals])=>[escapeHtml(title), vals.join(' / ')])));
+      html += subsection('④ 競合作品比較（似ている上位3作品との軸比較）', simpleTable(['作品','各軸の平均値'], Object.entries(byAnime).map(([title,vals])=>[escapeHtml(title), vals.join(' / ')])));
     }
+
+    // ⑤ Raw Data
+    html += subsection('⑤ Raw Data（12軸素点）', simpleTable(['軸','平均値','レビュー数'], (d.masterGraphRaw||[]).map(m=>[escapeHtml(m.axis), m.avg_score, m.review_count])));
+
     return html;
   }
 
@@ -7777,7 +7824,15 @@
       const country = document.getElementById('partnerCountryInput')?.value;
       const query = pack.dataset + (animeId ? `&animeId=${encodeURIComponent(animeId)}` : '') + (country ? `&country=${encodeURIComponent(country)}` : '');
       const data = await fetchPartnerDataset(query);
-      body.innerHTML = PACK_FORMATTERS[pack.id](data, pack.color);
+      window._pendingRadarDraws = [];
+      body.innerHTML = PACK_FORMATTERS[pack.id](data, pack.color, titleInput);
+      // レーダーチャートはDOM挿入後でないと描画できないため、ここで実行
+      (window._pendingRadarDraws || []).forEach(r => {
+        const canvas = document.getElementById(r.id);
+        if(canvas && typeof drawRadar === 'function') {
+          drawRadar(canvas, r.labels, r.values, r.color + '33', r.color);
+        }
+      });
     } catch(e) {
       console.warn('loadCurrentPackDetail error:', e);
       body.innerHTML = `<p class="pack-empty-note">取得に失敗しました: ${escapeHtml(e.message)}</p>`;
