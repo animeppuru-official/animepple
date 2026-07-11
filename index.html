@@ -2099,26 +2099,22 @@
      PARTNER PREVIEW（企業向けデータプレビュー）
 ═══════════════════════════════════ -->
 <div class="page" id="page-partner">
-  <header class="hdr">
-    <div class="hdr-inner">
-      <button class="back-btn" onclick="nav('home')" style="color:#fff;">← 戻る</button>
-      <span style="color:var(--brand);font-weight:800;">🤝 データプレビュー</span>
-    </div>
-  </header>
-  <div class="page-content">
+  <div class="page-content" style="background:#0a0e1a;min-height:100vh;">
     <div id="partnerLoginSection" style="max-width:420px;margin:3rem auto;padding:1.5rem;">
-      <h2 style="margin-bottom:1rem;">企業向けデータプレビュー</h2>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">アクセスキーを入力してください。</p>
+      <button onclick="nav('home')" style="background:none;border:none;color:#8894b0;font-size:.85rem;cursor:pointer;margin-bottom:1.5rem;">← 戻る</button>
+      <h2 style="margin-bottom:1rem;color:#e8ecf5;">企業向けデータプレビュー</h2>
+      <p style="font-size:.82rem;color:#8894b0;margin-bottom:1rem;">アクセスキーを入力してください。</p>
       <input type="password" id="partnerKeyInput" placeholder="アクセスキー"
-        style="width:100%;padding:.7rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.7rem;" />
-      <button onclick="partnerLogin()" style="width:100%;padding:.7rem;border-radius:8px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">ログイン</button>
-      <p id="partnerLoginError" style="color:#ff8888;font-size:.8rem;margin-top:.6rem;"></p>
+        style="width:100%;padding:.7rem;border-radius:8px;background:#131a2b;border:1px solid #243049;color:#e8ecf5;font-size:.9rem;box-sizing:border-box;margin-bottom:.7rem;" />
+      <button onclick="partnerLogin()" style="width:100%;padding:.7rem;border-radius:8px;background:#7c5cff;color:#fff;font-weight:800;border:none;cursor:pointer;">ログイン</button>
+      <p id="partnerLoginError" style="color:#f87171;font-size:.8rem;margin-top:.6rem;"></p>
     </div>
     <div id="partnerDashboard" style="display:none;">
 
 <div class="app">
   <!-- ── サイドバー ── -->
   <aside class="sidebar">
+    <button onclick="nav('home')" style="background:none;border:none;color:var(--muted);font-size:.72rem;cursor:pointer;padding:0 .4rem;margin-bottom:.6rem;">← アニメップルに戻る</button>
     <div class="brand">
       <div class="logo">A</div>
       <div>
