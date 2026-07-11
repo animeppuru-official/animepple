@@ -1930,10 +1930,13 @@
         <div class="pack-detail-title" id="packDetailTitle"></div>
       </div>
       <div id="packDetailAnimeInput" style="display:none;margin-bottom:.9rem;">
-        <input type="text" id="partnerAnimeIdInput" placeholder="作品ID（例: kitsu-50187）"
+        <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:.3rem;">作品名で検索してください</label>
+        <input type="text" id="partnerAnimeTitleInput" list="partnerAnimeDatalist" placeholder="例: 進撃の巨人"
           style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;margin-bottom:.5rem;" />
+        <datalist id="partnerAnimeDatalist"></datalist>
         <button onclick="loadCurrentPackDetail()" id="packDetailFetchBtn"
           style="width:100%;padding:.6rem;border-radius:8px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">この作品のデータを見る</button>
+        <p id="packDetailAnimeError" style="color:#ff8888;font-size:.75rem;margin-top:.4rem;"></p>
       </div>
       <div id="packDetailBody"><p class="pack-loading-note">読み込み中…</p></div>
     </div>
@@ -7653,12 +7656,32 @@
     global: formatGlobal, consumer: formatConsumer, ip: formatIpStrategy,
   };
 
+  let _partnerTitleToId = {};
+  async function loadPartnerAnimeTitles() {
+    try {
+      const titles = await db.animePages.getAllTitles();
+      _partnerTitleToId = {};
+      const dl = document.getElementById('partnerAnimeDatalist');
+      if(dl) {
+        dl.innerHTML = (titles || []).map(t => {
+          const label = t.title || t.title_en || t.id;
+          _partnerTitleToId[label] = t.id;
+          return `<option value="${escapeHtml(label)}"></option>`;
+        }).join('');
+      }
+    } catch(e) { console.warn('loadPartnerAnimeTitles error:', e); }
+  }
+
   async function loadCurrentPackDetail() {
     const pack = PACK_DEFS.find(p => p.id === _currentPackId);
     if(!pack) return;
     const body = document.getElementById('packDetailBody');
-    const animeId = document.getElementById('partnerAnimeIdInput')?.value.trim();
-    if(pack.needsAnimeId === true && !animeId) { alert('作品IDを入力してください'); return; }
+    const errEl = document.getElementById('packDetailAnimeError');
+    if(errEl) errEl.textContent = '';
+    const titleInput = document.getElementById('partnerAnimeTitleInput')?.value.trim();
+    const animeId = titleInput ? _partnerTitleToId[titleInput] : null;
+    if(pack.needsAnimeId === true && !titleInput) { if(errEl) errEl.textContent = '作品名を入力してください'; return; }
+    if(titleInput && !animeId) { if(errEl) errEl.textContent = '候補から作品名を選んでください（一覧に出てくる名前と完全に一致させてください）'; return; }
     body.innerHTML = `<p class="pack-loading-note">読み込み中…</p>`;
     try {
       const query = pack.dataset + (animeId ? `&animeId=${encodeURIComponent(animeId)}` : '');
@@ -7693,6 +7716,7 @@
       if(err) err.textContent = '';
       renderPackCards();
       showPackCards();
+      loadPartnerAnimeTitles();
     } catch(e) {
       console.warn('partner data error:', e);
       if(err) err.textContent = 'アクセスキーが正しくないか、データの取得に失敗しました。';
