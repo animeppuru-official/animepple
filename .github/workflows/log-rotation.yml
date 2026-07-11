@@ -1,10 +1,8 @@
 name: Error Log Rotation
-
 on:
   schedule:
     - cron: '0 3 * * 1'
   workflow_dispatch: {}
-
 jobs:
   rotate-logs:
     runs-on: ubuntu-latest
@@ -17,17 +15,14 @@ jobs:
           CUTOFF=$(date -u -d '90 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
                    date -u -v-90d '+%Y-%m-%dT%H:%M:%SZ')
           echo "削除対象: $CUTOFF より古いエラーログ"
-
           RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
             "$SUPABASE_URL/rest/v1/error_logs?created_at=lt.$CUTOFF" \
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
             -H "Prefer: return=minimal")
-
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           echo "レスポンスコード: $HTTP_CODE"
-
           if [ "$HTTP_CODE" -ne 200 ] && [ "$HTTP_CODE" -ne 204 ]; then
             echo "::error::エラーログの削除に失敗しました（$HTTP_CODE）"
             exit 1
@@ -47,7 +42,8 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Prefer: return=minimal"
           echo "✅ 1年以上前のクッキー同意ログを削除しました"
-- name: 行動ログ(pv_logs等)を180日以上前のものだけ削除
+
+      - name: 行動ログ(pv_logs等)を180日以上前のものだけ削除
         env:
           SUPABASE_URL: https://ofbjfiuayfhdkgertxyo.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -55,7 +51,6 @@ jobs:
           CUTOFF=$(date -u -d '180 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
                    date -u -v-180d '+%Y-%m-%dT%H:%M:%SZ')
           echo "削除対象: $CUTOFF より古い行動ログ"
-
           for TABLE_COL in "pv_logs:viewed_at" "search_logs:created_at" "filter_logs:created_at" "ad_clicks:created_at" "share_clicks:created_at" "favorite_events:created_at"; do
             TABLE="${TABLE_COL%%:*}"
             COL="${TABLE_COL##*:}"
@@ -74,3 +69,26 @@ jobs:
             fi
           done
           echo "✅ 180日以上前の行動ログを削除しました"
+
+      - name: 不正対策ログのローテーション
+        env:
+          SUPABASE_URL: https://ofbjfiuayfhdkgertxyo.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          CUTOFF_SHORT=$(date -u -d '30 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
+                          date -u -v-30d '+%Y-%m-%dT%H:%M:%SZ')
+          curl -s -X DELETE \
+            "$SUPABASE_URL/rest/v1/review_submission_log?created_at=lt.$CUTOFF_SHORT" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Prefer: return=minimal"
+          echo "✅ review_submission_log(30日以上前)を削除しました"
+
+          CUTOFF_LONG=$(date -u -d '180 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
+                        date -u -v-180d '+%Y-%m-%dT%H:%M:%SZ')
+          curl -s -X DELETE \
+            "$SUPABASE_URL/rest/v1/abuse_flags?created_at=lt.$CUTOFF_LONG" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Prefer: return=minimal"
+          echo "✅ abuse_flags(180日以上前)を削除しました"
