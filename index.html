@@ -3217,10 +3217,10 @@
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     const ab = document.getElementById('bnav-'+domPage);
     if (ab && page !== 'user') ab.classList.add('active');
-    // 管理者ページはフルページ表示（ナビを隠す）
+    // 管理者ページ・企業向けプレビューページはフルページ表示（ナビを隠す）
     const globalNav = document.getElementById('globalBnav');
-    if (globalNav) globalNav.style.display = (page === 'admin') ? 'none' : '';
-    document.body.classList.toggle('admin-fullpage', page === 'admin');
+    if (globalNav) globalNav.style.display = (page === 'admin' || page === 'partner') ? 'none' : '';
+    document.body.classList.toggle('admin-fullpage', page === 'admin' || page === 'partner');
     currentPage = page;
     currentAnimeId = animeId || null;
     const backBtn = document.getElementById('mypageBackBtn');
