@@ -485,7 +485,7 @@
 
     /* ── 評価グラフ/世界の反応/似ている作品タブ（PC・スマホ共通） ── */
     #page-anime #miniGraphSection { display:none !important; }
-    #page-anime #mobileInfoTabs { display:block !important; margin:.9rem .9rem 0; max-width:900px; }
+    #page-anime #mobileInfoTabs { display:block !important; margin:.9rem .9rem 0; }
     #page-anime .mobile-info-tab-bar { display:flex; gap:.4rem; }
     #page-anime .mobile-info-tab-btn { flex:1; min-width:0; padding:.6rem .3rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:#dff0e6; font-size:.72rem; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #page-anime .mobile-info-tab-btn.active { background:var(--brand); color:#0c2015; border-color:var(--brand); }
@@ -942,6 +942,9 @@
       }
       #page-anime .anime-thumb-hero {
         aspect-ratio:2/3; max-height:none; height:100%;
+      }
+      #page-anime #mobileInfoTabs {
+        max-width:1200px; margin:.9rem auto 0 !important; padding:0 .9rem;
       }
       /* 検索フィルターを常時表示サイドパネルに */
       .filter-toggle-bar { display:none; }
