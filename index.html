@@ -1887,6 +1887,42 @@
       <div id="partnerReviewsList"></div>
     </div>
 
+    <div class="admin-group-header">📦 データパック（6種）</div>
+    <div class="admin-section">
+      <p style="font-size:.78rem;color:var(--muted);margin:0 0 .6rem;">作品単位のパック(①④一部⑥)は、作品IDを入力してから「作品別データを取得」を押してください。</p>
+      <input type="text" id="partnerAnimeIdInput" placeholder="作品ID（例: kitsu-50187）"
+        style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;margin-bottom:.5rem;" />
+      <button onclick="loadPartnerAnimePacks()"
+        style="width:100%;padding:.6rem;border-radius:8px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;margin-bottom:.5rem;">作品別データを取得</button>
+      <button onclick="loadPartnerGlobalPacks()"
+        style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);color:#dff0e6;border:1px solid var(--line);cursor:pointer;">全体横断データを取得（②③⑤⑥の一部）</button>
+    </div>
+
+    <div class="admin-section">
+      <h3 class="admin-section-title">① Sentiment Pack（感性分析）</h3>
+      <div id="packSentiment"><p style="color:var(--muted);font-size:.82rem;">作品IDを入力して取得してください</p></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">② Fan Insight Pack（ファン分析）</h3>
+      <div id="packFanInsight"><p style="color:var(--muted);font-size:.82rem;">「全体横断データを取得」を押してください</p></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">③ Trend Forecast Pack（トレンド予測）</h3>
+      <div id="packTrend"><p style="color:var(--muted);font-size:.82rem;">「全体横断データを取得」を押してください</p></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">④ Global Market Pack（海外分析）</h3>
+      <div id="packGlobal"><p style="color:var(--muted);font-size:.82rem;">作品IDを入力して取得してください</p></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">⑤ Consumer Behavior Pack（消費者行動）</h3>
+      <div id="packConsumer"><p style="color:var(--muted);font-size:.82rem;">「全体横断データを取得」を押してください</p></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">⑥ IP Strategy Pack（IP戦略）</h3>
+      <div id="packIpStrategy"><p style="color:var(--muted);font-size:.82rem;">「全体横断データを取得」を押してください（作品IDがあれば個別データも追加取得）</p></div>
+    </div>
+
     <div class="admin-group-header">需要データ</div>
     <div class="admin-section">
       <h3 class="admin-section-title">🔎 人気の検索キーワード</h3>
@@ -7474,6 +7510,51 @@
     if(err) err.textContent='';
   }
   window.initPartnerPage = initPartnerPage;
+
+  // ── データパック（6種）の取得・描画 ──
+  function renderPackJson(containerId, obj) {
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    if(!obj) { el.innerHTML = `<p style="color:var(--muted);font-size:.82rem;">データがありません</p>`; return; }
+    el.innerHTML = `<pre style="font-size:.72rem;color:#c8e6d4;white-space:pre-wrap;word-break:break-word;background:#0a1a10;padding:.6rem;border-radius:8px;max-height:280px;overflow:auto;">${escapeHtml(JSON.stringify(obj, null, 2))}</pre>`;
+  }
+
+  async function loadPartnerAnimePacks() {
+    const animeId = document.getElementById('partnerAnimeIdInput')?.value.trim();
+    if(!animeId) { alert('作品IDを入力してください'); return; }
+    try {
+      const [sentiment, global] = await Promise.all([
+        fetchPartnerDataset(`sentiment&animeId=${encodeURIComponent(animeId)}`),
+        fetchPartnerDataset(`global_market&animeId=${encodeURIComponent(animeId)}`),
+      ]);
+      renderPackJson('packSentiment', sentiment);
+      renderPackJson('packGlobal', global);
+    } catch(e) {
+      console.warn('loadPartnerAnimePacks error:', e);
+      alert('取得に失敗しました: ' + e.message);
+    }
+  }
+  window.loadPartnerAnimePacks = loadPartnerAnimePacks;
+
+  async function loadPartnerGlobalPacks() {
+    const animeId = document.getElementById('partnerAnimeIdInput')?.value.trim();
+    try {
+      const [fanInsight, trend, consumer, ipStrategy] = await Promise.all([
+        fetchPartnerDataset('fan_insight'),
+        fetchPartnerDataset(`trend_forecast${animeId ? '&animeId=' + encodeURIComponent(animeId) : ''}`),
+        fetchPartnerDataset('consumer_behavior'),
+        fetchPartnerDataset(`ip_strategy${animeId ? '&animeId=' + encodeURIComponent(animeId) : ''}`),
+      ]);
+      renderPackJson('packFanInsight', fanInsight);
+      renderPackJson('packTrend', trend);
+      renderPackJson('packConsumer', consumer);
+      renderPackJson('packIpStrategy', ipStrategy);
+    } catch(e) {
+      console.warn('loadPartnerGlobalPacks error:', e);
+      alert('取得に失敗しました: ' + e.message);
+    }
+  }
+  window.loadPartnerGlobalPacks = loadPartnerGlobalPacks;
 
   async function fetchPartnerDataset(dataset) {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/export-aggregate-data?dataset=${dataset}`, {
