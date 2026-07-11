@@ -7638,10 +7638,11 @@
     html += subsection('市場トレンド指数（軸別の変化）', simpleTable(['軸','直近平均','以前平均','変化'], (d.marketTrendIndex||[]).map(m=>[escapeHtml(m.axis), m.recent_avg, m.prev_avg??'—', (m.trend_change>0?'+':'')+(m.trend_change??'—')])));
     if(d.declineSignal) {
       const ds = d.declineSignal;
+      const declineDisplay = (ds.decline_rate < 0) ? '減少なし（増加中）' : ds.decline_rate + '%';
       html += subsection('失速検知', `<div class="stat-tile-grid">
         ${statTile('直近7日PV', ds.recent_7d_pv, '')}
         ${statTile('前週PV', ds.prev_7d_pv, '')}
-        ${statTile('減少率', ds.decline_rate, '%')}
+        ${statTile('減少率', declineDisplay, '')}
         ${statTile('判定', ds.signal_level || '—', '')}
       </div>`);
     }
