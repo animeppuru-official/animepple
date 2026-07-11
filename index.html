@@ -7608,7 +7608,7 @@
     html += subsection('評価に効いている軸（市場平均比。1.0=平均並み、1.3=平均より30%高い）', barListHtml((d.appealBreakdown||[]).map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color}));
     const gp = (d.genrePosition||[]).slice(0,10);
     html += subsection('ジャンル内ポジション（同ジャンル平均比。1.0=平均並み）', simpleTable(['ジャンル','軸','この作品','ジャンル平均','倍率','ジャンル内作品数'], gp.map(g=>[escapeHtml(g.genre), escapeHtml(g.axis), g.anime_avg, g.genre_avg, g.genre_index+'倍', g.genre_sample_size])));
-    html += subsection('作品DNA類似度（感性が近い作品）', simpleTable(['作品','距離（小さいほど似ている）'], (d.similarAnime||[]).map(s=>[escapeHtml(s.title), s.distance])));
+    html += subsection('作品DNA類似度（感性が近い作品）', simpleTable(['作品','距離（小さいほど似ている）','似ている理由（近い軸）'], (d.similarAnime||[]).map(s=>[escapeHtml(s.title), s.distance, escapeHtml(s.closest_axes||'—')])));
     if(d.competitorComparison && d.competitorComparison.length) {
       const byAnime = {};
       d.competitorComparison.forEach(c => { (byAnime[c.title] = byAnime[c.title]||[]).push(`${c.axis}:${c.avg_score}`); });
