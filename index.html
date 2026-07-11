@@ -1000,6 +1000,199 @@
     .pp-table { width:100%; border-collapse:collapse; font-size:.78rem; margin:.5rem 0; }
     .pp-table th, .pp-table td { border:1px solid var(--line); padding:.45rem .65rem; text-align:left; color:#c8e6d4; }
     .pp-table th { background:var(--card2); color:#dff0e6; font-weight:700; }
+
+  /* ══ #partner 新デザイン(mockup統合) ══ */
+#page-partner {
+    --bg:#0a0e1a;
+    --bg2:#0f1524;
+    --panel:#131a2b;
+    --panel2:#182036;
+    --line:#243049;
+    --line2:#2e3a56;
+    --text:#e8ecf5;
+    --muted:#8894b0;
+    --muted2:#5d6a89;
+    --brand:#7c5cff;      /* 紫 */
+    --blue:#3d7bff;       /* 青 */
+    --cyan:#22d3ee;       /* シアン */
+    --good:#34d399;
+    --warn:#fbbf24;
+    --bad:#f87171;
+    --radius:14px;
+  }
+
+  
+#page-partner * { box-sizing:border-box; }
+#page-partner html, #page-partner body { margin:0; padding:0; background:var(--bg); color:var(--text); }
+#page-partner body {
+    font-family:"Segoe UI", system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+#page-partner h1, #page-partner h2, #page-partner h3, #page-partner h4 { margin:0; font-weight:800; letter-spacing:.01em; }
+#page-partner a { color:inherit; text-decoration:none; }
+#page-partner::-webkit-scrollbar { width:10px; height:10px; }
+#page-partner::-webkit-scrollbar-thumb { background:var(--line2); border-radius:6px; }
+#page-partner::-webkit-scrollbar-track { background:transparent; }
+
+  /* ── レイアウト ── */
+#page-partner .app { display:grid; grid-template-columns:248px 1fr; min-height:100vh; }
+
+  /* ── サイドバー ── */
+#page-partner .sidebar {
+    background:linear-gradient(180deg,var(--bg2),var(--bg));
+    border-right:1px solid var(--line);
+    padding:1.25rem 1rem; position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+#page-partner .brand { display:flex; align-items:center; gap:.6rem; padding:.25rem .4rem 1.25rem; }
+#page-partner .brand .logo {
+    width:36px; height:36px; border-radius:10px; flex-shrink:0;
+    background:linear-gradient(135deg,var(--brand),var(--cyan));
+    display:grid; place-items:center; font-weight:900; color:#0a0e1a; font-size:1.1rem;
+  }
+#page-partner .brand .name { font-size:1.05rem; font-weight:900; }
+#page-partner .brand .sub { font-size:.62rem; color:var(--muted); letter-spacing:.14em; text-transform:uppercase; }
+
+#page-partner .nav-group-label { font-size:.62rem; color:var(--muted2); text-transform:uppercase; letter-spacing:.12em; margin:1rem .4rem .4rem; }
+#page-partner .nav-item {
+    display:flex; align-items:center; gap:.65rem; width:100%; text-align:left;
+    padding:.6rem .7rem; border-radius:10px; border:none; background:transparent;
+    color:var(--muted); font-size:.85rem; font-weight:600; cursor:pointer; transition:.15s; margin-bottom:.15rem;
+  }
+#page-partner .nav-item .ic { width:18px; text-align:center; opacity:.8; }
+#page-partner .nav-item:hover { background:var(--panel); color:var(--text); }
+#page-partner .nav-item.active { background:var(--panel2); color:var(--text); box-shadow:inset 3px 0 0 var(--brand); }
+#page-partner .nav-item.active .ic { opacity:1; }
+
+#page-partner .sidebar-foot { margin-top:1.5rem; padding:.8rem; border:1px solid var(--line); border-radius:12px; background:var(--panel); }
+#page-partner .sidebar-foot .plan { font-size:.7rem; color:var(--cyan); font-weight:800; letter-spacing:.05em; }
+#page-partner .sidebar-foot .org { font-size:.85rem; font-weight:700; margin:.2rem 0; }
+#page-partner .sidebar-foot .seat { font-size:.68rem; color:var(--muted); }
+
+  /* ── メイン ── */
+#page-partner .main { min-width:0; display:flex; flex-direction:column; }
+#page-partner .topbar {
+    display:flex; align-items:center; gap:1rem; padding:1rem 1.5rem;
+    border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20;
+    background:rgba(10,14,26,.85); backdrop-filter:blur(10px);
+  }
+#page-partner .search {
+    flex:1; display:flex; align-items:center; gap:.6rem; max-width:520px;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:.55rem .8rem;
+  }
+#page-partner .search input { flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:.9rem; }
+#page-partner .search input::placeholder { color:var(--muted2); }
+#page-partner .topbar-actions { display:flex; gap:.5rem; margin-left:auto; }
+#page-partner .btn {
+    display:inline-flex; align-items:center; gap:.4rem; padding:.5rem .85rem; border-radius:9px;
+    font-size:.78rem; font-weight:700; cursor:pointer; border:1px solid var(--line2); background:var(--panel); color:var(--text); transition:.15s;
+  }
+#page-partner .btn:hover { border-color:var(--brand); }
+#page-partner .btn.primary { background:linear-gradient(135deg,var(--brand),var(--blue)); border:none; color:#fff; }
+#page-partner .btn.primary:hover { filter:brightness(1.08); }
+
+#page-partner .content { padding:1.5rem; display:grid; grid-template-columns:1fr 320px; gap:1.25rem; align-items:start; }
+  @media (max-width:1180px){ .content { grid-template-columns:1fr; } .ai-rail { position:static !important; } }
+
+#page-partner .view-head { margin-bottom:1.25rem; }
+#page-partner .view-head .eyebrow { font-size:.66rem; color:var(--brand); font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+#page-partner .view-head h1 { font-size:1.6rem; margin:.25rem 0; }
+#page-partner .view-head p { color:var(--muted); font-size:.86rem; max-width:640px; }
+
+  /* 作品ヘッダー */
+#page-partner .anime-hero { display:flex; gap:1rem; align-items:center; padding:1rem; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:1.25rem; }
+#page-partner .anime-hero img { width:64px; height:88px; border-radius:8px; object-fit:cover; background:var(--panel2); flex-shrink:0; }
+#page-partner .anime-hero .h-name { font-size:1.15rem; font-weight:800; }
+#page-partner .anime-hero .h-meta { font-size:.75rem; color:var(--muted); margin-top:.2rem; }
+#page-partner .tag { display:inline-block; padding:.15rem .5rem; border-radius:999px; background:var(--panel2); border:1px solid var(--line2); font-size:.68rem; color:var(--muted); margin:.35rem .3rem 0 0; }
+
+  /* KPIカード */
+#page-partner .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.25rem; }
+  @media (max-width:900px){ .kpi-row { grid-template-columns:repeat(2,1fr); } }
+#page-partner .kpi {
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:1.1rem; position:relative; overflow:hidden;
+  }
+#page-partner .kpi::after { content:''; position:absolute; inset:0 auto 0 0; width:3px; background:var(--kc,var(--brand)); }
+#page-partner .kpi .k-label { font-size:.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+#page-partner .kpi .k-val { font-size:2.1rem; font-weight:900; margin:.35rem 0 .1rem; color:var(--kc,var(--brand)); }
+#page-partner .kpi .k-sub { font-size:.72rem; color:var(--muted); display:flex; align-items:center; gap:.35rem; }
+#page-partner .k-up { color:var(--good); font-weight:800; }
+#page-partner .k-down { color:var(--bad); font-weight:800; }
+#page-partner .gauge { --p:0; width:44px; height:44px; border-radius:50%; position:absolute; top:1.1rem; right:1.1rem;
+    background:conic-gradient(var(--kc,var(--brand)) calc(var(--p)*1%), var(--line) 0); display:grid; place-items:center; }
+#page-partner .gauge::before { content:''; width:32px; height:32px; border-radius:50%; background:var(--panel); }
+#page-partner .stars { color:var(--warn); letter-spacing:2px; }
+
+  /* パネル */
+#page-partner .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:1.1rem; margin-bottom:1.25rem; }
+#page-partner .panel-title { font-size:.82rem; font-weight:800; color:var(--text); margin-bottom:.9rem; display:flex; align-items:center; gap:.5rem; }
+#page-partner .panel-title::before { content:''; width:.4rem; height:.4rem; border-radius:50%; background:var(--brand); }
+#page-partner .panel-title .hint { margin-left:auto; font-size:.68rem; color:var(--muted2); font-weight:500; }
+#page-partner .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+  @media (max-width:900px){ .grid-2 { grid-template-columns:1fr; } }
+
+  /* レーダー */
+#page-partner .radar-wrap { display:flex; justify-content:center; padding:.5rem 0; }
+#page-partner canvas { max-width:100%; }
+
+  /* 棒リスト */
+#page-partner .bar-row { display:grid; grid-template-columns:130px 1fr 54px; align-items:center; gap:.6rem; margin-bottom:.5rem; font-size:.78rem; }
+#page-partner .bar-row .b-label { color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#page-partner .bar-track { height:8px; background:var(--panel2); border-radius:6px; overflow:hidden; }
+#page-partner .bar-fill { height:100%; border-radius:6px; background:var(--brand); }
+#page-partner .bar-row .b-val { text-align:right; font-weight:800; color:var(--text); }
+
+  /* テーブル */
+#page-partner table { width:100%; border-collapse:collapse; font-size:.78rem; }
+#page-partner th { text-align:left; color:var(--muted2); font-weight:700; padding:.5rem .55rem; border-bottom:1px solid var(--line2); font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; }
+#page-partner td { padding:.55rem .55rem; border-bottom:1px solid rgba(255,255,255,.04); color:var(--text); }
+#page-partner tr:last-child td { border-bottom:none; }
+#page-partner td .pos { color:var(--good); font-weight:700; }
+#page-partner td .neg { color:var(--bad); font-weight:700; }
+
+  /* ヒートマップ */
+#page-partner .heat { display:grid; gap:3px; font-size:.66rem; }
+#page-partner .heat .cell { padding:.5rem .3rem; text-align:center; border-radius:5px; color:#0a0e1a; font-weight:700; }
+#page-partner .heat .hlabel { color:var(--muted); background:transparent !important; display:flex; align-items:center; justify-content:center; }
+
+  /* クラスタ / カード群 */
+#page-partner .card-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.9rem; }
+#page-partner .mini-card { background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:1rem; }
+#page-partner .mini-card .mc-tag { font-size:.66rem; color:var(--cyan); font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+#page-partner .mini-card .mc-big { font-size:1.9rem; font-weight:900; margin:.3rem 0 .1rem; }
+#page-partner .mini-card .mc-name { font-size:.9rem; font-weight:700; }
+#page-partner .mini-card .mc-sub { font-size:.72rem; color:var(--muted); margin-top:.25rem; }
+
+  /* 地図バー（国別） */
+#page-partner .country-row { display:grid; grid-template-columns:34px 1fr 44px; align-items:center; gap:.6rem; margin-bottom:.55rem; font-size:.78rem; }
+#page-partner .flag { font-size:1.1rem; }
+
+  /* AI レール */
+#page-partner .ai-rail { position:sticky; top:88px; }
+#page-partner .ai-card { background:linear-gradient(160deg,var(--panel2),var(--panel)); border:1px solid var(--line2); border-radius:var(--radius); padding:1.15rem; }
+#page-partner .ai-badge { display:inline-flex; align-items:center; gap:.4rem; font-size:.64rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--cyan); background:rgba(34,211,238,.1); border:1px solid rgba(34,211,238,.3); padding:.25rem .55rem; border-radius:999px; }
+#page-partner .ai-card h3 { font-size:1rem; margin:.7rem 0 .5rem; }
+#page-partner .ai-card .ai-body { font-size:.82rem; color:#cdd5e8; line-height:1.8; }
+#page-partner .ai-card .ai-body strong { color:var(--cyan); }
+#page-partner .ai-strat { margin-top:.9rem; padding-top:.9rem; border-top:1px solid var(--line2); }
+#page-partner .ai-strat .st-label { font-size:.66rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.5rem; }
+#page-partner .ai-strat li { list-style:none; padding:.4rem .6rem; margin-bottom:.4rem; background:var(--panel); border-radius:8px; font-size:.78rem; border-left:2px solid var(--brand); }
+
+  /* パック選択（ダッシュボード内） */
+#page-partner .pack-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.9rem; }
+  @media (max-width:900px){ .pack-grid { grid-template-columns:repeat(2,1fr); } }
+#page-partner .pack-card { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:1.1rem; cursor:pointer; text-align:left; transition:.15s; }
+#page-partner .pack-card:hover { transform:translateY(-2px); border-color:var(--pc,var(--brand)); }
+#page-partner .pack-card .p-ic { width:34px; height:34px; border-radius:9px; display:grid; place-items:center; font-size:1.1rem; background:color-mix(in srgb, var(--pc,var(--brand)) 18%, transparent); margin-bottom:.6rem; }
+#page-partner .pack-card .p-en { font-size:.64rem; color:var(--pc,var(--brand)); font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+#page-partner .pack-card .p-ja { font-size:1rem; font-weight:800; margin:.1rem 0 .3rem; }
+#page-partner .pack-card .p-tag { font-size:.74rem; color:var(--muted); }
+
+#page-partner .view { display:none; }
+#page-partner .view.active { display:block; }
+#page-partner .badge-live { display:inline-flex; align-items:center; gap:.35rem; font-size:.66rem; color:var(--good); }
+#page-partner .badge-live::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px rgba(52,211,153,.2); }
+
   </style>
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1912,64 +2105,358 @@
       <span style="color:var(--brand);font-weight:800;">🤝 データプレビュー</span>
     </div>
   </header>
-
-  <!-- 合言葉入力画面 -->
-  <div id="partnerLoginSection" style="padding:2rem 1rem;">
-    <div style="max-width:360px;margin:0 auto;">
-      <h2 style="font-size:1.1rem;color:#dff0e6;margin:0 0 .5rem;">アニメップル データプレビュー</h2>
-      <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem;">
-        提供いただいたアクセスキーを入力してください。作品ごとの匿名集計データ・検索需要・ユーザー行動データをご覧いただけます。
-      </p>
+  <div class="page-content">
+    <div id="partnerLoginSection" style="max-width:420px;margin:3rem auto;padding:1.5rem;">
+      <h2 style="margin-bottom:1rem;">企業向けデータプレビュー</h2>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">アクセスキーを入力してください。</p>
       <input type="password" id="partnerKeyInput" placeholder="アクセスキー"
-        style="width:100%;padding:.7rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.95rem;box-sizing:border-box;margin-bottom:.75rem;" />
-      <button onclick="partnerLogin()"
-        style="width:100%;padding:.75rem;border-radius:10px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">アクセス</button>
-      <p id="partnerLoginError" style="color:#ff6b6b;font-size:.78rem;margin-top:.5rem;"></p>
+        style="width:100%;padding:.7rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.7rem;" />
+      <button onclick="partnerLogin()" style="width:100%;padding:.7rem;border-radius:8px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">ログイン</button>
+      <p id="partnerLoginError" style="color:#ff8888;font-size:.8rem;margin-top:.6rem;"></p>
+    </div>
+    <div id="partnerDashboard" style="display:none;">
+
+<div class="app">
+  <!-- ── サイドバー ── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">A</div>
+      <div>
+        <div class="name">Animepple</div>
+        <div class="sub">Anime Intelligence</div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Overview</div>
+    <button class="nav-item active" data-view="dashboard"><span class="ic">◧</span> Dashboard</button>
+
+    <div class="nav-group-label">Analysis Packs</div>
+    <button class="nav-item" data-view="sentiment"><span class="ic">◈</span> Sentiment</button>
+    <button class="nav-item" data-view="fan"><span class="ic">◉</span> Fan Insight</button>
+    <button class="nav-item" data-view="trend"><span class="ic">◭</span> Trend Forecast</button>
+    <button class="nav-item" data-view="global"><span class="ic">◍</span> Global Market</button>
+    <button class="nav-item" data-view="consumer"><span class="ic">◎</span> Consumer Behavior</button>
+    <button class="nav-item" data-view="ip"><span class="ic">◆</span> IP Strategy</button>
+
+    <div class="nav-group-label">Account</div>
+    <button class="nav-item" data-view="dashboard"><span class="ic">⚙</span> Settings</button>
+
+    <div class="sidebar-foot">
+      <div class="plan">ENTERPRISE PLAN</div>
+      <div class="org">Studio Analytics Inc.</div>
+      <div class="seat">12 / 20 seats · 契約更新 2026-12</div>
+    </div>
+  </aside>
+
+  <!-- ── メイン ── -->
+  <div class="main">
+    <div class="topbar">
+      <div class="search">
+        <span style="color:var(--muted2)">⌕</span>
+        <input id="animeSearch" placeholder="作品名を検索してください（例：進撃の巨人）" value="テストアニメA" />
+      </div>
+      <span class="badge-live">Live data</span>
+      <div class="topbar-actions">
+        <button class="btn" onclick="alert('別作品との比較モードを開きます')">⇄ Compare</button>
+        <button class="btn" onclick="alert('分析リンクを共有しました')">↗ Share</button>
+        <button class="btn primary" onclick="alert('PDFレポートを生成しています…')">⬇ Export PDF</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div style="min-width:0">
+        <!-- ① DASHBOARD -->
+        <section class="view active" id="view-dashboard">
+          <div class="view-head">
+            <div class="eyebrow">Dashboard</div>
+            <h1>テストアニメA — 総合分析</h1>
+            <p>作品の人気理由・ファン属性・海外展開可能性・市場トレンドを横断的に可視化します。</p>
+          </div>
+
+          <div class="kpi-row">
+            <div class="kpi" style="--kc:var(--brand)">
+              <div class="gauge" style="--p:46"></div>
+              <div class="k-label">Brand Power</div>
+              <div class="k-val">46.1</div>
+              <div class="k-sub"><span class="k-up">↑ 総合評価</span></div>
+            </div>
+            <div class="kpi" style="--kc:var(--warn)">
+              <div class="k-label">Fan Heat</div>
+              <div class="k-val">100</div>
+              <div class="k-sub"><span class="stars">★★★★★</span></div>
+            </div>
+            <div class="kpi" style="--kc:var(--cyan)">
+              <div class="k-label">Global Score</div>
+              <div class="k-val">140.6</div>
+              <div class="k-sub">5 Countries</div>
+            </div>
+            <div class="kpi" style="--kc:var(--blue)">
+              <div class="k-label">Quality Reviews</div>
+              <div class="k-val">150</div>
+              <div class="k-sub"><span class="k-up">Confidence High</span></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">分析パックを選ぶ<span class="hint">6 packs available</span></div>
+            <div class="pack-grid">
+              <button class="pack-card" style="--pc:var(--brand)" data-view="sentiment"><div class="p-ic">◈</div><div class="p-en">Sentiment</div><div class="p-ja">感性分析</div><div class="p-tag">なぜ人気なのか</div></button>
+              <button class="pack-card" style="--pc:var(--blue)" data-view="fan"><div class="p-ic">◉</div><div class="p-en">Fan Insight</div><div class="p-ja">ファン分析</div><div class="p-tag">誰が愛しているのか</div></button>
+              <button class="pack-card" style="--pc:var(--warn)" data-view="trend"><div class="p-ic">◭</div><div class="p-en">Trend Forecast</div><div class="p-ja">トレンド予測</div><div class="p-tag">次に伸びる作品</div></button>
+              <button class="pack-card" style="--pc:var(--cyan)" data-view="global"><div class="p-ic">◍</div><div class="p-en">Global Market</div><div class="p-ja">海外分析</div><div class="p-tag">どの国に売るか</div></button>
+              <button class="pack-card" style="--pc:#f4a261" data-view="consumer"><div class="p-ic">◎</div><div class="p-en">Consumer</div><div class="p-ja">消費者行動</div><div class="p-tag">どう作品を選ぶか</div></button>
+              <button class="pack-card" style="--pc:#ff8fa3" data-view="ip"><div class="p-ic">◆</div><div class="p-en">IP Strategy</div><div class="p-ja">IP戦略</div><div class="p-tag">IPをどう伸ばすか</div></button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ② SENTIMENT -->
+        <section class="view" id="view-sentiment">
+          <div class="view-head">
+            <div class="eyebrow">Anime Sentiment</div>
+            <h1>なぜ人気なのか</h1>
+            <p>作品を12軸の感性データで分析し、人気形成要因を可視化します。</p>
+          </div>
+          <div class="anime-hero">
+            <img src="https://placehold.co/128x176/182036/8894b0?text=A" alt="テストアニメAのビジュアル" />
+            <div>
+              <div class="h-name">テストアニメA</div>
+              <div class="h-meta">アクション / ファンタジー · 2024年 · Studio X</div>
+              <div><span class="tag">エモい型</span><span class="tag">高熱量</span><span class="tag">海外適性◎</span></div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">12軸レーダーチャート</div>
+              <div class="radar-wrap"><canvas id="radar" width="360" height="360"></canvas></div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">人気貢献度（市場平均比）<span class="hint">×倍率</span></div>
+              <div id="appealBars"></div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">作品DNA（感性が近い作品）</div>
+              <div class="card-grid">
+                <div class="mini-card"><div class="mc-tag">距離 2.27</div><div class="mc-name">テストアニメE</div><div class="mc-sub">世界観・エモさが近似</div></div>
+                <div class="mini-card"><div class="mc-tag">距離 3.60</div><div class="mc-name">テストアニメC</div><div class="mc-sub">キャラ・作画が近似</div></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">競合作品比較</div>
+              <table>
+                <thead><tr><th>作品</th><th>作画</th><th>世界観</th><th>キャラ</th><th>エモい</th></tr></thead>
+                <tbody>
+                  <tr><td>テストアニメA</td><td>7.4</td><td>8.1</td><td>7.9</td><td class="pos">8.6</td></tr>
+                  <tr><td>テストアニメC</td><td>7.1</td><td>6.8</td><td>7.6</td><td>7.2</td></tr>
+                  <tr><td>テストアニメE</td><td>6.9</td><td>7.9</td><td>7.0</td><td>8.0</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ③ FAN INSIGHT -->
+        <section class="view" id="view-fan">
+          <div class="view-head">
+            <div class="eyebrow">Anime Fan Insight</div>
+            <h1>誰が愛しているのか</h1>
+            <p>年代・性別のセグメント別に、どの感情軸が刺さっているかを分析します。</p>
+          </div>
+          <div class="panel">
+            <div class="panel-title">年代 × 感情軸 嗜好マップ<span class="hint">濃いほど高評価</span></div>
+            <div id="heatmap" class="heat"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">視聴者クラスタ</div>
+            <div class="card-grid">
+              <div class="mini-card"><div class="mc-tag">Cluster 01</div><div class="mc-big">9<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">キャラクター愛着型</div><div class="mc-sub">キャラ評価 7.06</div></div>
+              <div class="mini-card"><div class="mc-tag">Cluster 02</div><div class="mc-big">3<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">世界観重視型</div><div class="mc-sub">世界観 7.15</div></div>
+              <div class="mini-card"><div class="mc-tag">Cluster 03</div><div class="mc-big">5<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">物語没入型</div><div class="mc-sub">物語 6.88</div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">インフルエンサー予備軍<span class="hint">影響力スコア順</span></div>
+            <table>
+              <thead><tr><th>順位</th><th>品質スコア</th><th>シェア数</th><th>影響力</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>9.2</td><td>142</td><td class="pos">88.4</td></tr>
+                <tr><td>2</td><td>8.7</td><td>98</td><td class="pos">74.1</td></tr>
+                <tr><td>3</td><td>8.1</td><td>61</td><td>59.6</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ④ TREND -->
+        <section class="view" id="view-trend">
+          <div class="view-head">
+            <div class="eyebrow">Anime Trend Forecast</div>
+            <h1>次に伸びる作品</h1>
+            <p>PVの伸び・タグの勢い・市場センチメントから急上昇シグナルを検知します。</p>
+          </div>
+          <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
+            <div class="kpi" style="--kc:var(--good)">
+              <div class="k-label">Trend Status</div>
+              <div class="k-val" style="font-size:1.5rem">急上昇 ↑</div>
+              <div class="k-sub">シグナル検知</div>
+            </div>
+            <div class="kpi" style="--kc:var(--warn)">
+              <div class="k-label">直近7日 PV</div>
+              <div class="k-val">11</div>
+              <div class="k-sub"><span class="k-up">+120%</span> 前週比</div>
+            </div>
+            <div class="kpi" style="--kc:var(--cyan)">
+              <div class="k-label">Silent Hit</div>
+              <div class="k-val" style="font-size:1.5rem">1件</div>
+              <div class="k-sub">PV低・品質高</div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">急上昇タグ</div>
+              <div id="trendTags"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">市場センチメント指数（月別推移）</div>
+              <div class="radar-wrap"><canvas id="trendLine" width="360" height="220"></canvas></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">隠れた名作検出（サイレントヒット）</div>
+            <table>
+              <thead><tr><th>作品</th><th>PV数</th><th>平均品質</th><th>リピート率</th></tr></thead>
+              <tbody>
+                <tr><td>テストアニメG</td><td>240</td><td class="pos">8.9</td><td>34%</td></tr>
+                <tr><td>テストアニメK</td><td>180</td><td class="pos">8.6</td><td>29%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ⑤ GLOBAL -->
+        <section class="view" id="view-global">
+          <div class="view-head">
+            <div class="eyebrow">Global Market</div>
+            <h1>どの国に売るか</h1>
+            <p>国別の視聴熱量・転換率・ローカライズ適性から海外展開の優先度を判断します。</p>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">国別視聴熱量ランキング</div>
+              <div id="countryBars"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">ローカライズ適性スコア</div>
+              <div style="text-align:center;padding:1.2rem 0">
+                <div style="font-size:4rem;font-weight:900;color:var(--cyan);line-height:1">140.6</div>
+                <div style="color:var(--muted);font-size:.8rem;margin-top:.4rem">Localization Fit — Very High</div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">国別ランキング表</div>
+            <table>
+              <thead><tr><th>国</th><th>PV</th><th>レビュー</th><th>転換率</th><th>評価差</th></tr></thead>
+              <tbody>
+                <tr><td>🇯🇵 日本</td><td>152</td><td>60</td><td>39%</td><td class="pos">+0.0</td></tr>
+                <tr><td>🇺🇸 USA</td><td>79</td><td>31</td><td>39%</td><td class="pos">+0.4</td></tr>
+                <tr><td>🇩🇪 Germany</td><td>48</td><td>18</td><td>37%</td><td class="neg">-0.2</td></tr>
+                <tr><td>🇫🇷 France</td><td>46</td><td>17</td><td>37%</td><td class="pos">+0.1</td></tr>
+                <tr><td>🇰🇷 Korea</td><td>46</td><td>19</td><td>41%</td><td class="pos">+0.3</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ⑥ CONSUMER -->
+        <section class="view" id="view-consumer">
+          <div class="view-head">
+            <div class="eyebrow">Consumer Behavior</div>
+            <h1>ユーザーはどう選ぶか</h1>
+            <p>流入経路・検索需要・バイラル係数から、獲得と拡散の設計を分析します。</p>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">流入経路</div>
+              <div class="radar-wrap"><canvas id="donut" width="220" height="220"></canvas></div>
+              <div id="donutLegend" style="margin-top:.8rem"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">検索ホワイトスペース<span class="hint">需要あり・作品不足</span></div>
+              <div class="card-grid">
+                <div class="mini-card"><div class="mc-tag">需要あり</div><div class="mc-name">異世界 × コメディ</div><div class="mc-sub">7 searches / 供給少</div></div>
+                <div class="mini-card"><div class="mc-tag">需要あり</div><div class="mc-name">日常 × ミステリー</div><div class="mc-sub">5 searches / 供給少</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">バイラル係数（シェア率）</div>
+            <table>
+              <thead><tr><th>作品</th><th>シェア数</th><th>PV数</th><th>バイラル率</th></tr></thead>
+              <tbody>
+                <tr><td>テストアニメA</td><td>34</td><td>740</td><td class="pos">4.59%</td></tr>
+                <tr><td>テストアニメC</td><td>21</td><td>612</td><td>3.43%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ⑦ IP STRATEGY -->
+        <section class="view" id="view-ip">
+          <div class="view-head">
+            <div class="eyebrow">IP Strategy</div>
+            <h1>このIPをどう伸ばすか</h1>
+            <p>ブランド力・ファンダム寿命・続編需要から、IPの投資判断を支援します。</p>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi" style="--kc:var(--brand)"><div class="k-label">Brand Power</div><div class="k-val">46.1</div><div class="k-sub">総合スコア</div></div>
+            <div class="kpi" style="--kc:var(--blue)"><div class="k-label">継続率</div><div class="k-val">72%</div><div class="k-sub">ファンダム寿命</div></div>
+            <div class="kpi" style="--kc:var(--warn)"><div class="k-label">続編需要率</div><div class="k-val">31%</div><div class="k-sub">言及ベース</div></div>
+            <div class="kpi" style="--kc:var(--cyan)"><div class="k-label">海外成長</div><div class="k-val">140.6</div><div class="k-sub">適性スコア</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">IP価値の内訳</div>
+            <div id="ipBars"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">新規IP発掘スコア（上位）</div>
+            <table>
+              <thead><tr><th>作品</th><th>レビュー数</th><th>平均品質</th><th>発掘スコア</th></tr></thead>
+              <tbody>
+                <tr><td>テストアニメG</td><td>48</td><td>8.9</td><td class="pos">91.2</td></tr>
+                <tr><td>テストアニメK</td><td>33</td><td>8.6</td><td class="pos">84.7</td></tr>
+                <tr><td>テストアニメM</td><td>27</td><td>8.2</td><td>76.3</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- ── AI INSIGHT レール ── -->
+      <aside class="ai-rail">
+        <div class="ai-card">
+          <span class="ai-badge">◇ AI Insight</span>
+          <h3 id="aiTitle">テストアニメA の分析</h3>
+          <div class="ai-body" id="aiBody">
+            この作品は、<strong>エモさ</strong>・<strong>世界観</strong>・<strong>キャラクター</strong>が人気形成の主要因です。海外では<strong>US市場</strong>との相性が高く、ローカライズ適性も上位です。
+          </div>
+          <div class="ai-strat">
+            <div class="st-label">推奨戦略</div>
+            <ul style="margin:0;padding:0" id="aiStrat">
+              <li>海外字幕展開を優先（US・KR）</li>
+              <li>20代女性向け広告を強化</li>
+              <li>続編需要が高くシリーズ化を検討</li>
+            </ul>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
+</div>
 
-  <!-- プレビューダッシュボード -->
-  <div id="partnerDashboard" style="display:none;padding:1rem;">
-    <p style="font-size:.78rem;color:var(--muted);margin:0 0 1rem;">
-      このプレビューに表示されるのは、匿名化・集計済みのデータのみです。個人を特定できる情報(コメント本文・ユーザー名等)は一切含まれません。サンプル数が3件未満のデータは表示されません。
-    </p>
 
-    <div class="admin-group-header">📦 データパック（6種）</div>
-
-    <!-- パック選択カード（初期表示） -->
-    <div id="packCardsView">
-      <p style="font-size:.78rem;color:var(--muted);margin:0 0 .8rem;">見たいパックを選んでください。作品単位のデータは、選んだ後に作品IDを入力します。</p>
-      <div class="pack-grid" id="packCardGrid"></div>
-    </div>
-
-    <!-- パック詳細ビュー（カードを押すと表示） -->
-    <div id="packDetailView" style="display:none;">
-      <div class="pack-detail-header">
-        <button class="pack-detail-back" onclick="showPackCards()">← パック一覧</button>
-        <div class="pack-detail-title" id="packDetailTitle"></div>
-      </div>
-      <div id="packDetailAnimeInput" style="display:none;margin-bottom:.9rem;position:sticky;top:0;z-index:5;background:var(--bg,#07150d);padding:.6rem 0;">
-        <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:.3rem;">作品名で検索してください</label>
-        <input type="text" id="partnerAnimeTitleInput" list="partnerAnimeDatalist" placeholder="例: 進撃の巨人"
-          style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;margin-bottom:.5rem;" />
-        <datalist id="partnerAnimeDatalist"></datalist>
-        <div id="packDetailCountryWrap" style="display:none;margin-bottom:.5rem;">
-          <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:.3rem;">国コード（海外国別マッチング・ローカライズ適性を見る場合）</label>
-          <select id="partnerCountryInput" style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;">
-            <option value="">指定しない</option>
-            <option value="JP">JP（日本）</option>
-            <option value="US">US（アメリカ）</option>
-            <option value="FR">FR（フランス）</option>
-            <option value="KR">KR（韓国）</option>
-            <option value="DE">DE（ドイツ）</option>
-            <option value="BR">BR（ブラジル）</option>
-          </select>
-        </div>
-        <button onclick="loadCurrentPackDetail()" id="packDetailFetchBtn"
-          style="width:100%;padding:.6rem;border-radius:8px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">この作品のデータを見る</button>
-        <p id="packDetailAnimeError" style="color:#ff8888;font-size:.75rem;margin-top:.4rem;"></p>
-      </div>
-      <div id="packDetailBody"><p class="pack-loading-note">読み込み中…</p></div>
     </div>
   </div>
 </div>
@@ -7858,6 +8345,228 @@
     } catch(e) { console.warn('loadPartnerAnimeTitles error:', e); }
   }
 
+  function initPartnerDashboardV2() {
+    loadPartnerAnimeTitles().then(()=>{ window._partnerTitleToId = _partnerTitleToId; });
+
+  // ── ナビゲーション ──
+  function switchView(view){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    const target = document.getElementById('view-'+view);
+    if(target) target.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.view===view));
+    window.scrollTo({top:0, behavior:'smooth'});
+    updateAI(view);
+  }
+  document.querySelectorAll('[data-view]').forEach(el=>{
+    el.addEventListener('click', ()=>switchView(el.dataset.view));
+  });
+
+  const AI_CONTENT = {
+    dashboard:{t:'テストアニメA の総合診断', b:'総合的に見て<strong>ブランド力46.1・熱量100</strong>と、コア層の熱狂が強い作品です。海外適性が高く、次の一手は「グローバル展開」と「ファンダムの拡張」です。'},
+    sentiment:{t:'感性分析サマリー', b:'人気の主要因は<strong>エモさ(1.36倍)・シリアス(1.35倍)・かっこいい(1.32倍)</strong>。感性が近い「テストアニメE」との共通ファン獲得が有効です。'},
+    fan:{t:'ファン分析サマリー', b:'コア層は<strong>20代・キャラクター愛着型</strong>。インフルエンサー予備軍が明確なため、二次創作・SNS施策で拡散を狙えます。'},
+    trend:{t:'トレンド予測サマリー', b:'直近PVが<strong>+120%</strong>と急上昇シグナル。関連タグの勢いも強く、今が広告投下の最適タイミングです。'},
+    global:{t:'海外市場サマリー', b:'ローカライズ適性<strong>140.6</strong>。日本に次いで<strong>US・KR</strong>の熱量が高く、字幕先行→吹替の順で展開すべきです。'},
+    consumer:{t:'消費者行動サマリー', b:'流入は<strong>検索とSNSが中心</strong>。「異世界×コメディ」など需要過多の検索枠が存在し、周辺IPの獲得余地があります。'},
+    ip:{t:'IP戦略サマリー', b:'継続率72%・続編需要31%と、<strong>シリーズ化の投資回収可能性が高い</strong>IPです。海外成長スコアも高く長期育成に向きます。'}
+  };
+  const AI_STRAT = {
+    dashboard:['グローバル展開を優先','ファンダム拡張施策を強化','続編・派生IPを検討'],
+    sentiment:['「エモさ」を軸にした宣伝訴求','近似作品ファンへのクロス広告','シリアス層向けの深掘りコンテンツ'],
+    fan:['20代女性向け広告を強化','二次創作ガイドラインを整備','インフルエンサー先行試写'],
+    trend:['広告予算を前倒し投下','急上昇タグでSNS運用','サイレントヒット作品を横展開'],
+    global:['US・KR向け字幕を優先','現地配信プラットフォーム連携','言語別需要に応じた吹替判断'],
+    consumer:['検索SEO・指名検索の強化','ホワイトスペース領域の新作企画','シェア動線の最適化'],
+    ip:['続編/劇場版の企画着手','海外ライセンス交渉','グッズ・コラボ展開']
+  };
+  function updateAI(view){
+    const c = AI_CONTENT[view] || AI_CONTENT.dashboard;
+    document.getElementById('aiTitle').textContent = c.t;
+    document.getElementById('aiBody').innerHTML = c.b;
+    document.getElementById('aiStrat').innerHTML = (AI_STRAT[view]||AI_STRAT.dashboard).map(s=>`<li>${s}</li>`).join('');
+  }
+
+  // ── 棒リスト描画 ──
+  function renderBars(elId, items, opts){
+    opts = opts||{};
+    const el = document.getElementById(elId);
+    const max = Math.max(...items.map(i=>i.value), 1);
+    el.innerHTML = items.map((it,i)=>{
+      const pct = Math.max(4, Math.round(it.value/max*100));
+      return `<div class="bar-row">
+        <span class="b-label">${opts.rank?(i+1)+'. ':''}${it.label}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${it.color||opts.color||'var(--brand)'}"></div></div>
+        <span class="b-val">${it.value}${opts.suffix||''}</span>
+      </div>`;
+    }).join('');
+  }
+
+  renderBars('appealBars', [
+    {label:'エモい', value:1.36}, {label:'シリアス', value:1.35}, {label:'かっこいい', value:1.32},
+    {label:'世界観', value:1.31}, {label:'キャラクター', value:1.22}, {label:'物語', value:1.18},
+    {label:'音楽', value:1.11}, {label:'作画', value:1.05}
+  ], {suffix:'倍', color:'var(--brand)'});
+
+  renderBars('trendTags', [
+    {label:'#テストタグ', value:195}, {label:'#神作画', value:142}, {label:'#泣ける', value:118},
+    {label:'#OP最高', value:96}, {label:'#考察', value:71}
+  ], {rank:true, suffix:'件', color:'var(--warn)'});
+
+  renderBars('countryBars', [
+    {label:'🇯🇵 日本', value:152, color:'var(--cyan)'}, {label:'🇺🇸 USA', value:79, color:'var(--blue)'},
+    {label:'🇩🇪 Germany', value:48, color:'var(--brand)'}, {label:'🇫🇷 France', value:46, color:'var(--brand)'},
+    {label:'🇰🇷 Korea', value:46, color:'var(--blue)'}
+  ], {});
+
+  renderBars('ipBars', [
+    {label:'認知度', value:52}, {label:'熱量', value:100}, {label:'継続率', value:72}, {label:'拡散力', value:61}, {label:'海外評価', value:84}
+  ], {color:'var(--brand)'});
+
+  // ── ヒートマップ ──
+  (function(){
+    const ages = ['10代','20代','30代','40代','50代'];
+    const axes = ['作画','キャラ','音楽','世界観','物語','エモい'];
+    const el = document.getElementById('heatmap');
+    el.style.gridTemplateColumns = `70px repeat(${ages.length},1fr)`;
+    let html = `<div class="hlabel"></div>` + ages.map(a=>`<div class="hlabel">${a}</div>`).join('');
+    axes.forEach(ax=>{
+      html += `<div class="hlabel" style="justify-content:flex-start">${ax}</div>`;
+      ages.forEach(()=>{
+        const v = Math.random()*4+5; // 5.0-9.0
+        const t = (v-5)/4; // 0-1
+        const c = `rgba(124,92,255,${(0.25+t*0.75).toFixed(2)})`;
+        html += `<div class="cell" style="background:${c}">${v.toFixed(1)}</div>`;
+      });
+    });
+    el.innerHTML = html;
+  })();
+
+  // ── レーダーチャート（12軸） ──
+  (function(){
+    const cv = document.getElementById('radar'); if(!cv) return;
+    const ctx = cv.getContext('2d');
+    const cx=180, cy=180, R=120;
+    const labels=['作画','キャラ','音楽','世界観','テーマ','物語','かっこいい','アダルト','エモい','コメディ','シリアス','可愛い'];
+    const vals=[7.4,7.9,7.1,8.1,7.6,7.7,8.3,5.2,8.6,5.9,8.0,6.4];
+    const n=labels.length, maxV=10;
+    ctx.clearRect(0,0,360,360);
+    // グリッド
+    for(let g=1; g<=4; g++){
+      ctx.beginPath();
+      for(let i=0;i<=n;i++){
+        const a=(-Math.PI/2)+(i%n)*2*Math.PI/n, r=R*g/4;
+        const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.stroke();
+    }
+    // 軸線 + ラベル
+    ctx.font='9px sans-serif'; ctx.fillStyle='#8894b0'; ctx.textAlign='center';
+    for(let i=0;i<n;i++){
+      const a=(-Math.PI/2)+i*2*Math.PI/n;
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+R*Math.cos(a), cy+R*Math.sin(a));
+      ctx.strokeStyle='rgba(255,255,255,.05)'; ctx.stroke();
+      const lx=cx+(R+16)*Math.cos(a), ly=cy+(R+16)*Math.sin(a);
+      ctx.fillText(labels[i], lx, ly+3);
+    }
+    // データ
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){
+      const a=(-Math.PI/2)+(i%n)*2*Math.PI/n, r=R*vals[i%n]/maxV;
+      const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.fillStyle='rgba(124,92,255,.25)'; ctx.fill();
+    ctx.strokeStyle='#7c5cff'; ctx.lineWidth=2; ctx.stroke();
+    for(let i=0;i<n;i++){
+      const a=(-Math.PI/2)+i*2*Math.PI/n, r=R*vals[i]/maxV;
+      ctx.beginPath(); ctx.arc(cx+r*Math.cos(a), cy+r*Math.sin(a),2.5,0,7); ctx.fillStyle='#22d3ee'; ctx.fill();
+    }
+  })();
+
+  // ── 折れ線（月別） ──
+  (function(){
+    const cv=document.getElementById('trendLine'); if(!cv) return;
+    const ctx=cv.getContext('2d'), W=360,H=220,pad=30;
+    const data=[6.1,6.4,6.2,6.8,7.1,7.0,7.6,8.1];
+    const max=9,min=5;
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='rgba(255,255,255,.08)';
+    for(let i=0;i<=4;i++){ const y=pad+(H-2*pad)*i/4; ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke(); }
+    ctx.beginPath();
+    data.forEach((v,i)=>{
+      const x=pad+(W-2*pad)*i/(data.length-1);
+      const y=pad+(H-2*pad)*(1-(v-min)/(max-min));
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle='#22d3ee'; ctx.lineWidth=2.5; ctx.stroke();
+    data.forEach((v,i)=>{
+      const x=pad+(W-2*pad)*i/(data.length-1);
+      const y=pad+(H-2*pad)*(1-(v-min)/(max-min));
+      ctx.beginPath(); ctx.arc(x,y,3,0,7); ctx.fillStyle='#7c5cff'; ctx.fill();
+    });
+  })();
+
+  // ── ドーナツ（流入経路） ──
+  (function(){
+    const cv=document.getElementById('donut'); if(!cv) return;
+    const ctx=cv.getContext('2d'), cx=110,cy=110,R=80,r=48;
+    const segs=[{l:'Search',v:42,c:'#7c5cff'},{l:'SNS',v:31,c:'#22d3ee'},{l:'Direct',v:18,c:'#3d7bff'},{l:'Other',v:9,c:'#5d6a89'}];
+    let start=-Math.PI/2; const total=segs.reduce((s,x)=>s+x.v,0);
+    segs.forEach(s=>{
+      const ang=s.v/total*2*Math.PI;
+      ctx.beginPath(); ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,R,start,start+ang); ctx.closePath();
+      ctx.fillStyle=s.c; ctx.fill(); start+=ang;
+    });
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.fillStyle='#131a2b'; ctx.fill();
+    document.getElementById('donutLegend').innerHTML = segs.map(s=>
+      `<div class="bar-row" style="grid-template-columns:14px 1fr 40px">
+        <span style="width:12px;height:12px;border-radius:3px;background:${s.c};display:inline-block"></span>
+        <span class="b-label">${s.l}</span><span class="b-val">${s.v}%</span></div>`).join('');
+  })();
+
+  // 検索した作品の実データを取得してダッシュボード/Sentimentビューに反映
+  async function loadRealAnimeData(title) {
+    try {
+      const titleMap = window._partnerTitleToId || {};
+      const animeId = titleMap[title];
+      if(!animeId) { console.warn('作品が見つかりません:', title); return; }
+      const [sentiment] = await Promise.all([
+        fetchPartnerDataset('sentiment&animeId=' + encodeURIComponent(animeId)),
+      ]);
+      // ブランド力
+      const bp = sentiment.brandPower || {};
+      const brandEl = document.querySelector('#view-dashboard .kpi .k-val');
+      if(brandEl && bp.total_score != null) brandEl.textContent = bp.total_score;
+      // 刺さる理由(市場平均比)バー
+      if(sentiment.appealBreakdown && sentiment.appealBreakdown.length) {
+        renderBars('appealBars', sentiment.appealBreakdown.map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color:'var(--brand)'});
+      }
+      // AIサマリーにも実データの一部を反映
+      const cls = sentiment.appealClassification || {};
+      document.getElementById('aiTitle').textContent = title + ' の分析';
+      if(cls.classification) {
+        document.getElementById('aiBody').innerHTML = `この作品は「<strong>${cls.classification}</strong>」タイプ。市場平均比で最も高いのは「<strong>${(sentiment.appealBreakdown||[])[0]?.axis||''}</strong>」です。`;
+      }
+      console.log('実データ反映完了:', title, sentiment);
+    } catch(e) {
+      console.warn('loadRealAnimeData error:', e);
+    }
+  }
+  window.loadRealAnimeData = loadRealAnimeData;
+
+  document.getElementById('animeSearch').addEventListener('keydown', e=>{
+    if(e.key==='Enter' && !e.nativeEvent?.isComposing && e.keyCode!==229){
+      loadRealAnimeData(e.target.value);
+    }
+  });
+
+  }
+  window.initPartnerDashboardV2 = initPartnerDashboardV2;
+
+
   async function loadCurrentPackDetail() {
     const pack = PACK_DEFS.find(p => p.id === _currentPackId);
     if(!pack) return;
@@ -7909,9 +8618,7 @@
       document.getElementById('partnerLoginSection').style.display='none';
       document.getElementById('partnerDashboard').style.display='';
       if(err) err.textContent = '';
-      renderPackCards();
-      showPackCards();
-      loadPartnerAnimeTitles();
+      if(typeof initPartnerDashboardV2 === 'function') initPartnerDashboardV2();
     } catch(e) {
       console.warn('partner data error:', e);
       if(err) err.textContent = 'アクセスキーが正しくないか、データの取得に失敗しました。';
