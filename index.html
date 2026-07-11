@@ -1934,6 +1934,18 @@
         <input type="text" id="partnerAnimeTitleInput" list="partnerAnimeDatalist" placeholder="例: 進撃の巨人"
           style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;margin-bottom:.5rem;" />
         <datalist id="partnerAnimeDatalist"></datalist>
+        <div id="packDetailCountryWrap" style="display:none;margin-bottom:.5rem;">
+          <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:.3rem;">国コード（海外国別マッチング・ローカライズ適性を見る場合）</label>
+          <select id="partnerCountryInput" style="width:100%;padding:.6rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;">
+            <option value="">指定しない</option>
+            <option value="JP">JP（日本）</option>
+            <option value="US">US（アメリカ）</option>
+            <option value="FR">FR（フランス）</option>
+            <option value="KR">KR（韓国）</option>
+            <option value="DE">DE（ドイツ）</option>
+            <option value="BR">BR（ブラジル）</option>
+          </select>
+        </div>
         <button onclick="loadCurrentPackDetail()" id="packDetailFetchBtn"
           style="width:100%;padding:.6rem;border-radius:8px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">この作品のデータを見る</button>
         <p id="packDetailAnimeError" style="color:#ff8888;font-size:.75rem;margin-top:.4rem;"></p>
@@ -7535,6 +7547,8 @@
     document.getElementById('packDetailTitle').innerHTML = `<span class="pack-name-en" style="color:${pack.color};">${pack.nameEn}</span>${pack.icon} ${pack.nameJa}`;
     const animeInputWrap = document.getElementById('packDetailAnimeInput');
     const fetchBtn = document.getElementById('packDetailFetchBtn');
+    const countryWrap = document.getElementById('packDetailCountryWrap');
+    countryWrap.style.display = (packId === 'global' || packId === 'ip') ? '' : 'none';
     if(pack.needsAnimeId === true) {
       animeInputWrap.style.display = '';
       fetchBtn.textContent = 'この作品のデータを見る';
@@ -7760,7 +7774,8 @@
     if(titleInput && !animeId) { if(errEl) errEl.textContent = '候補から作品名を選んでください（一覧に出てくる名前と完全に一致させてください）'; return; }
     body.innerHTML = `<p class="pack-loading-note">読み込み中…</p>`;
     try {
-      const query = pack.dataset + (animeId ? `&animeId=${encodeURIComponent(animeId)}` : '');
+      const country = document.getElementById('partnerCountryInput')?.value;
+      const query = pack.dataset + (animeId ? `&animeId=${encodeURIComponent(animeId)}` : '') + (country ? `&country=${encodeURIComponent(country)}` : '');
       const data = await fetchPartnerDataset(query);
       body.innerHTML = PACK_FORMATTERS[pack.id](data, pack.color);
     } catch(e) {
