@@ -1888,7 +1888,6 @@
 <div class="page" id="page-admin">
   <header class="hdr">
     <div class="hdr-inner">
-      <button class="back-btn" onclick="nav('home')" style="color:#fff;">← 戻る</button>
       <span style="color:var(--brand);font-weight:800;">🔐 管理者ダッシュボード</span>
       <button onclick="adminLogout()" style="background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:.4rem .8rem;color:#ff8888;font-size:.78rem;cursor:pointer;">ログアウト</button>
     </div>
@@ -2101,7 +2100,6 @@
 <div class="page" id="page-partner">
   <div class="page-content" style="background:#0a0e1a;min-height:100vh;">
     <div id="partnerLoginSection" style="max-width:420px;margin:3rem auto;padding:1.5rem;">
-      <button onclick="nav('home')" style="background:none;border:none;color:#8894b0;font-size:.85rem;cursor:pointer;margin-bottom:1.5rem;">← 戻る</button>
       <h2 style="margin-bottom:1rem;color:#e8ecf5;">企業向けデータプレビュー</h2>
       <p style="font-size:.82rem;color:#8894b0;margin-bottom:1rem;">アクセスキーを入力してください。</p>
       <input type="password" id="partnerKeyInput" placeholder="アクセスキー"
@@ -2114,7 +2112,6 @@
 <div class="app">
   <!-- ── サイドバー ── -->
   <aside class="sidebar">
-    <button onclick="nav('home')" style="background:none;border:none;color:var(--muted);font-size:.72rem;cursor:pointer;padding:0 .4rem;margin-bottom:.6rem;">← アニメップルに戻る</button>
     <div class="brand">
       <div class="logo">A</div>
       <div>
@@ -2149,7 +2146,8 @@
     <div class="topbar">
       <div class="search">
         <span style="color:var(--muted2)">⌕</span>
-        <input id="animeSearch" placeholder="作品名を検索してください（例：進撃の巨人）" value="テストアニメA" />
+        <input id="animeSearch" list="animeSearchDatalist" placeholder="作品名を検索してください（例：進撃の巨人）" value="テストアニメA" />
+        <datalist id="animeSearchDatalist"></datalist>
       </div>
       <span class="badge-live">Live data</span>
       <div class="topbar-actions">
@@ -8330,6 +8328,7 @@
       _partnerTitleToId = {};
       _partnerAnimeMeta = {};
       const dl = document.getElementById('partnerAnimeDatalist');
+      const dl2 = document.getElementById('animeSearchDatalist');
       const options = [];
       (titles||[]).forEach(t => {
         const label = t.title || t.title_en || t.id;
@@ -8338,6 +8337,7 @@
         options.push(`<option value="${escapeHtml(label)}"></option>`);
       });
       if(dl) dl.innerHTML = options.join('');
+      if(dl2) dl2.innerHTML = options.join('');
     } catch(e) { console.warn('loadPartnerAnimeTitles error:', e); }
   }
 
