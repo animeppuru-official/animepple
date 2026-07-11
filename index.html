@@ -2266,7 +2266,7 @@
           </div>
           <div class="panel">
             <div class="panel-title">視聴者クラスタ</div>
-            <div class="card-grid">
+            <div class="card-grid" id="fanClusterGrid">
               <div class="mini-card"><div class="mc-tag">Cluster 01</div><div class="mc-big">9<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">キャラクター愛着型</div><div class="mc-sub">キャラ評価 7.06</div></div>
               <div class="mini-card"><div class="mc-tag">Cluster 02</div><div class="mc-big">3<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">世界観重視型</div><div class="mc-sub">世界観 7.15</div></div>
               <div class="mini-card"><div class="mc-tag">Cluster 03</div><div class="mc-big">5<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">物語没入型</div><div class="mc-sub">物語 6.88</div></div>
@@ -8419,31 +8419,40 @@
   ], {color:'var(--brand)'});
 
   // ── ヒートマップ ──
-  (function(){
-    const ages = ['10代','20代','30代','40代','50代'];
-    const axes = ['作画','キャラ','音楽','世界観','物語','エモい'];
-    const el = document.getElementById('heatmap');
+  function drawMockHeatmap(tasteData){
+    const ages = ['10s','20s','30s','40s','50s'];
+    const ageLabels = {'10s':'10代','20s':'20代','30s':'30代','40s':'40代','50s':'50代'};
+    const axes = ['作画','キャラクター','音楽','世界観','物語','エモい'];
+    const el = document.getElementById('heatmap'); if(!el) return;
     el.style.gridTemplateColumns = `70px repeat(${ages.length},1fr)`;
-    let html = `<div class="hlabel"></div>` + ages.map(a=>`<div class="hlabel">${a}</div>`).join('');
+    // 実データをlookupしやすい形に変換: {age: {axis: avg_score}}（genderは女性のみ表示。将来切替対応可）
+    const lookup = {};
+    (tasteData||[]).forEach(t => {
+      if(!lookup[t.age_group]) lookup[t.age_group] = {};
+      lookup[t.age_group][t.axis] = t.avg_score;
+    });
+    const hasReal = Object.keys(lookup).length > 0;
+    let html = `<div class="hlabel"></div>` + ages.map(a=>`<div class="hlabel">${ageLabels[a]}</div>`).join('');
     axes.forEach(ax=>{
-      html += `<div class="hlabel" style="justify-content:flex-start">${ax}</div>`;
-      ages.forEach(()=>{
-        const v = Math.random()*4+5; // 5.0-9.0
-        const t = (v-5)/4; // 0-1
+      html += `<div class="hlabel" style="justify-content:flex-start">${ax==='キャラクター'?'キャラ':ax}</div>`;
+      ages.forEach(age=>{
+        const v = hasReal ? (lookup[age]?.[ax] ?? null) : (Math.random()*4+5);
+        if(v == null) { html += `<div class="cell" style="background:rgba(255,255,255,.05);color:#5d6a89;">—</div>`; return; }
+        const t = Math.max(0, Math.min(1, (v-5)/4));
         const c = `rgba(124,92,255,${(0.25+t*0.75).toFixed(2)})`;
         html += `<div class="cell" style="background:${c}">${v.toFixed(1)}</div>`;
       });
     });
     el.innerHTML = html;
-  })();
+  }
+  window.drawMockHeatmap = drawMockHeatmap;
+  drawMockHeatmap([]); // 初期表示はデモ乱数
 
   // ── レーダーチャート（12軸） ──
-  (function(){
+  function drawMockRadar(labels, vals){
     const cv = document.getElementById('radar'); if(!cv) return;
     const ctx = cv.getContext('2d');
     const cx=180, cy=180, R=120;
-    const labels=['作画','キャラ','音楽','世界観','テーマ','物語','かっこいい','アダルト','エモい','コメディ','シリアス','可愛い'];
-    const vals=[7.4,7.9,7.1,8.1,7.6,7.7,8.3,5.2,8.6,5.9,8.0,6.4];
     const n=labels.length, maxV=10;
     ctx.clearRect(0,0,360,360);
     // グリッド
@@ -8479,14 +8488,19 @@
       const a=(-Math.PI/2)+i*2*Math.PI/n, r=R*vals[i]/maxV;
       ctx.beginPath(); ctx.arc(cx+r*Math.cos(a), cy+r*Math.sin(a),2.5,0,7); ctx.fillStyle='#22d3ee'; ctx.fill();
     }
-  })();
+  }
+  window.drawMockRadar = drawMockRadar;
+  drawMockRadar(
+    ['作画','キャラ','音楽','世界観','テーマ','物語','かっこいい','アダルト','エモい','コメディ','シリアス','可愛い'],
+    [7.4,7.9,7.1,8.1,7.6,7.7,8.3,5.2,8.6,5.9,8.0,6.4]
+  );
 
   // ── 折れ線（月別） ──
-  (function(){
+  function drawMockLine(data){
     const cv=document.getElementById('trendLine'); if(!cv) return;
     const ctx=cv.getContext('2d'), W=360,H=220,pad=30;
-    const data=[6.1,6.4,6.2,6.8,7.1,7.0,7.6,8.1];
-    const max=9,min=5;
+    if(!data || data.length < 2) data=[6.1,6.4,6.2,6.8,7.1,7.0,7.6,8.1];
+    const max=Math.max(...data)+0.5, min=Math.min(...data)-0.5;
     ctx.clearRect(0,0,W,H);
     ctx.strokeStyle='rgba(255,255,255,.08)';
     for(let i=0;i<=4;i++){ const y=pad+(H-2*pad)*i/4; ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke(); }
@@ -8502,14 +8516,17 @@
       const y=pad+(H-2*pad)*(1-(v-min)/(max-min));
       ctx.beginPath(); ctx.arc(x,y,3,0,7); ctx.fillStyle='#7c5cff'; ctx.fill();
     });
-  })();
+  }
+  window.drawMockLine = drawMockLine;
+  drawMockLine(null);
 
   // ── ドーナツ（流入経路） ──
-  (function(){
+  function drawMockDonut(segs){
     const cv=document.getElementById('donut'); if(!cv) return;
     const ctx=cv.getContext('2d'), cx=110,cy=110,R=80,r=48;
-    const segs=[{l:'Search',v:42,c:'#7c5cff'},{l:'SNS',v:31,c:'#22d3ee'},{l:'Direct',v:18,c:'#3d7bff'},{l:'Other',v:9,c:'#5d6a89'}];
-    let start=-Math.PI/2; const total=segs.reduce((s,x)=>s+x.v,0);
+    if(!segs || !segs.length) segs=[{l:'Search',v:42,c:'#7c5cff'},{l:'SNS',v:31,c:'#22d3ee'},{l:'Direct',v:18,c:'#3d7bff'},{l:'Other',v:9,c:'#5d6a89'}];
+    ctx.clearRect(0,0,220,220);
+    let start=-Math.PI/2; const total=segs.reduce((s,x)=>s+x.v,0) || 1;
     segs.forEach(s=>{
       const ang=s.v/total*2*Math.PI;
       ctx.beginPath(); ctx.moveTo(cx,cy);
@@ -8521,7 +8538,9 @@
       `<div class="bar-row" style="grid-template-columns:14px 1fr 40px">
         <span style="width:12px;height:12px;border-radius:3px;background:${s.c};display:inline-block"></span>
         <span class="b-label">${s.l}</span><span class="b-val">${s.v}%</span></div>`).join('');
-  })();
+  }
+  window.drawMockDonut = drawMockDonut;
+  drawMockDonut(null);
 
   // 検索した作品の実データを取得してダッシュボード/Sentimentビューに反映
   async function loadRealAnimeData(title) {
@@ -8529,24 +8548,85 @@
       const titleMap = window._partnerTitleToId || {};
       const animeId = titleMap[title];
       if(!animeId) { console.warn('作品が見つかりません:', title); return; }
-      const [sentiment] = await Promise.all([
+      const [sentiment, fanInsight, trend, global, consumer, ip] = await Promise.all([
         fetchPartnerDataset('sentiment&animeId=' + encodeURIComponent(animeId)),
+        fetchPartnerDataset('fan_insight&animeId=' + encodeURIComponent(animeId)),
+        fetchPartnerDataset('trend_forecast&animeId=' + encodeURIComponent(animeId)),
+        fetchPartnerDataset('global_market&animeId=' + encodeURIComponent(animeId)),
+        fetchPartnerDataset('consumer_behavior&animeId=' + encodeURIComponent(animeId)),
+        fetchPartnerDataset('ip_strategy&animeId=' + encodeURIComponent(animeId)),
       ]);
-      // ブランド力
+
+      // ── Sentiment（① ダッシュボード・②詳細） ──
       const bp = sentiment.brandPower || {};
       const brandEl = document.querySelector('#view-dashboard .kpi .k-val');
       if(brandEl && bp.total_score != null) brandEl.textContent = bp.total_score;
-      // 刺さる理由(市場平均比)バー
       if(sentiment.appealBreakdown && sentiment.appealBreakdown.length) {
         renderBars('appealBars', sentiment.appealBreakdown.map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color:'var(--brand)'});
       }
-      // AIサマリーにも実データの一部を反映
+      if(sentiment.masterGraphRaw && sentiment.masterGraphRaw.length) {
+        drawMockRadar(sentiment.masterGraphRaw.map(m=>m.axis), sentiment.masterGraphRaw.map(m=>m.avg_score));
+      }
       const cls = sentiment.appealClassification || {};
       document.getElementById('aiTitle').textContent = title + ' の分析';
       if(cls.classification) {
         document.getElementById('aiBody').innerHTML = `この作品は「<strong>${cls.classification}</strong>」タイプ。市場平均比で最も高いのは「<strong>${(sentiment.appealBreakdown||[])[0]?.axis||''}</strong>」です。`;
       }
-      console.log('実データ反映完了:', title, sentiment);
+
+      // ── Trend Forecast（急上昇タグ） ──
+      if(trend.trendingTags && trend.trendingTags.length) {
+        renderBars('trendTags', trend.trendingTags.slice(0,8).map(t=>({label:'#'+t.tag, value:t.recent_count})), {rank:true, suffix:'件', color:'var(--warn)'});
+      }
+
+      // ── Global Market（国別視聴熱量） ──
+      if(global.countryStats && global.countryStats.length) {
+        renderBars('countryBars', global.countryStats.slice(0,6).map(c=>({label:c.country_code, value:c.cnt})), {});
+      }
+
+      // ── IP Strategy（ブランド力内訳） ──
+      if(ip.brandPower) {
+        const b = ip.brandPower;
+        renderBars('ipBars', [
+          {label:'認知度', value:b.recognition||0}, {label:'熱量', value:b.intensity||0},
+          {label:'継続率', value:b.retention||0}, {label:'国際性', value:b.global||0}
+        ], {color:'var(--brand)'});
+      }
+
+      // ── Fan Insight（年代×性別ヒートマップ・視聴者クラスタ） ──
+      if(fanInsight.tasteByAttribute && fanInsight.tasteByAttribute.length) {
+        drawMockHeatmap(fanInsight.tasteByAttribute.filter(t => t.gender === 'female'));
+      }
+      const clusters = fanInsight.userClustersWithRatio || fanInsight.userClusters || [];
+      if(clusters.length) {
+        const grid = document.getElementById('fanClusterGrid');
+        if(grid) {
+          grid.innerHTML = clusters.slice(0,3).map((c,i) => `
+            <div class="mini-card">
+              <div class="mc-tag">Cluster ${String(i+1).padStart(2,'0')}</div>
+              <div class="mc-big">${c.user_count}<span style="font-size:.9rem;color:var(--muted)">人</span></div>
+              <div class="mc-name">${c.cluster_type}</div>
+              <div class="mc-sub">${c.ratio_pct != null ? c.ratio_pct+'%' : ''}</div>
+            </div>`).join('');
+        }
+      }
+
+      // ── Trend Forecast（市場センチメント推移・折れ線） ──
+      if(trend.marketSentimentIndex && trend.marketSentimentIndex.length) {
+        drawMockLine(trend.marketSentimentIndex.map(m => m.avg_overall_score));
+      }
+
+      // ── Consumer Behavior（発見経路・ドーナツ） ──
+      if(consumer.discoveryPath && consumer.discoveryPath.length) {
+        const donutColors = ['#7c5cff','#22d3ee','#3d7bff','#5d6a89','#fbbf24'];
+        const referrerLabels = { search:'Search', sns:'SNS', direct:'Direct', other:'Other', unknown:'Unknown' };
+        drawMockDonut(consumer.discoveryPath.map((p,i) => ({
+          l: referrerLabels[p.referrer_type] || p.referrer_type,
+          v: p.ratio_pct,
+          c: donutColors[i % donutColors.length]
+        })));
+      }
+
+      console.log('6パック実データ反映完了:', title, { sentiment, fanInsight, trend, global, consumer, ip });
     } catch(e) {
       console.warn('loadRealAnimeData error:', e);
     }
