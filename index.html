@@ -2131,8 +2131,7 @@
     <button class="nav-item" data-view="consumer"><span class="ic">◎</span> Consumer Behavior</button>
     <button class="nav-item" data-view="ip"><span class="ic">◆</span> IP Strategy</button>
 
-    <div class="nav-group-label">Account</div>
-    <button class="nav-item" data-view="dashboard"><span class="ic">⚙</span> Settings</button>
+
 
     <div class="sidebar-foot">
       <div class="plan">ENTERPRISE PLAN</div>
@@ -2146,7 +2145,7 @@
     <div class="topbar">
       <div class="search">
         <span style="color:var(--muted2)">⌕</span>
-        <input id="animeSearch" list="animeSearchDatalist" placeholder="作品名を検索してください（例：進撃の巨人）" value="テストアニメA" />
+        <input id="animeSearch" list="animeSearchDatalist" placeholder="作品名を検索してください（例：進撃の巨人）" />
         <datalist id="animeSearchDatalist"></datalist>
       </div>
       <span class="badge-live">Live data</span>
@@ -8344,6 +8343,19 @@
   function initPartnerDashboardV2() {
     loadPartnerAnimeTitles().then(()=>{ window._partnerTitleToId = _partnerTitleToId; });
 
+    // ── 検索前は「まだ何も検索していない」状態にリセット（デモ値を消す） ──
+    (function resetToEmptyState(){
+      document.querySelectorAll('#page-partner .k-val').forEach(el => el.textContent = '—');
+      const execTitle = document.querySelector('#view-dashboard h1');
+      if(execTitle) execTitle.textContent = '作品を検索してください';
+      const aiTitle = document.getElementById('aiTitle');
+      if(aiTitle) aiTitle.textContent = 'AI分析';
+      const aiBody = document.getElementById('aiBody');
+      if(aiBody) aiBody.innerHTML = '作品を検索すると、分析結果がここに表示されます。';
+      const aiStrat = document.getElementById('aiStrat');
+      if(aiStrat) aiStrat.innerHTML = '';
+    })();
+
   // ── ナビゲーション ──
   function switchView(view){
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -8397,27 +8409,6 @@
     }).join('');
   }
 
-  renderBars('appealBars', [
-    {label:'エモい', value:1.36}, {label:'シリアス', value:1.35}, {label:'かっこいい', value:1.32},
-    {label:'世界観', value:1.31}, {label:'キャラクター', value:1.22}, {label:'物語', value:1.18},
-    {label:'音楽', value:1.11}, {label:'作画', value:1.05}
-  ], {suffix:'倍', color:'var(--brand)'});
-
-  renderBars('trendTags', [
-    {label:'#テストタグ', value:195}, {label:'#神作画', value:142}, {label:'#泣ける', value:118},
-    {label:'#OP最高', value:96}, {label:'#考察', value:71}
-  ], {rank:true, suffix:'件', color:'var(--warn)'});
-
-  renderBars('countryBars', [
-    {label:'🇯🇵 日本', value:152, color:'var(--cyan)'}, {label:'🇺🇸 USA', value:79, color:'var(--blue)'},
-    {label:'🇩🇪 Germany', value:48, color:'var(--brand)'}, {label:'🇫🇷 France', value:46, color:'var(--brand)'},
-    {label:'🇰🇷 Korea', value:46, color:'var(--blue)'}
-  ], {});
-
-  renderBars('ipBars', [
-    {label:'認知度', value:52}, {label:'熱量', value:100}, {label:'継続率', value:72}, {label:'拡散力', value:61}, {label:'海外評価', value:84}
-  ], {color:'var(--brand)'});
-
   // ── ヒートマップ ──
   function drawMockHeatmap(tasteData){
     const ages = ['10s','20s','30s','40s','50s'];
@@ -8446,7 +8437,6 @@
     el.innerHTML = html;
   }
   window.drawMockHeatmap = drawMockHeatmap;
-  drawMockHeatmap([]); // 初期表示はデモ乱数
 
   // ── レーダーチャート（12軸） ──
   function drawMockRadar(labels, vals){
@@ -8490,10 +8480,6 @@
     }
   }
   window.drawMockRadar = drawMockRadar;
-  drawMockRadar(
-    ['作画','キャラ','音楽','世界観','テーマ','物語','かっこいい','アダルト','エモい','コメディ','シリアス','可愛い'],
-    [7.4,7.9,7.1,8.1,7.6,7.7,8.3,5.2,8.6,5.9,8.0,6.4]
-  );
 
   // ── 折れ線（月別） ──
   function drawMockLine(data){
@@ -8518,7 +8504,6 @@
     });
   }
   window.drawMockLine = drawMockLine;
-  drawMockLine(null);
 
   // ── ドーナツ（流入経路） ──
   function drawMockDonut(segs){
@@ -8540,7 +8525,6 @@
         <span class="b-label">${s.l}</span><span class="b-val">${s.v}%</span></div>`).join('');
   }
   window.drawMockDonut = drawMockDonut;
-  drawMockDonut(null);
 
   // 検索した作品の実データを取得してダッシュボード/Sentimentビューに反映
   async function loadRealAnimeData(title) {
