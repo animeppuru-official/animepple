@@ -1,5 +1,4 @@
 name: Abuse Detection Check
-
 # 使い方:
 # 1. このファイルを .github/workflows/abuse-check.yml として今のリポジトリに置く
 # 2. Settings > Secrets and variables > Actions で以下を設定:
@@ -8,12 +7,10 @@ name: Abuse Detection Check
 # 3. これで6時間おきに自動チェックし、新しい不正フラグがあればGitHub Issueを作成する
 #    （GitHubのIssue通知がそのままメール代わりになる。通知設定はGitHubの
 #      Settings > Notifications で「Issues」がONになっているか確認してください）
-
 on:
   schedule:
     - cron: '0 */6 * * *'  # 6時間おき
   workflow_dispatch: {}     # 手動実行もできるようにする
-
 jobs:
   check-abuse-flags:
     runs-on: ubuntu-latest
@@ -32,7 +29,6 @@ jobs:
             -H "Authorization: Bearer ${SERVICE_KEY}")
           echo "count=$(echo "$RESULT" | jq 'length')" >> "$GITHUB_OUTPUT"
           echo "$RESULT" > flags.json
-
       - name: Create issue if flags found
         if: steps.fetch.outputs.count != '0'
         env:
@@ -44,27 +40,3 @@ jobs:
             --title "🚨 不正アクティビティ検知（${COUNT}件）$(date -u +%Y-%m-%d\ %H:%M)UTC" \
             --body "$BODY" \
             --repo "${{ github.repository }}"
-- name: 不正対策ログのローテーション
-        env:
-          SUPABASE_URL: https://ofbjfiuayfhdkgertxyo.supabase.co
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          # review_submission_log: レート制限判定にしか使わないので30日で十分
-          CUTOFF_SHORT=$(date -u -d '30 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
-                          date -u -v-30d '+%Y-%m-%dT%H:%M:%SZ')
-          curl -s -X DELETE \
-            "$SUPABASE_URL/rest/v1/review_submission_log?created_at=lt.$CUTOFF_SHORT" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Prefer: return=minimal"
-          echo "✅ review_submission_log(30日以上前)を削除しました"
-
-          # abuse_flags: 調査用に長めの180日
-          CUTOFF_LONG=$(date -u -d '180 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
-                        date -u -v-180d '+%Y-%m-%dT%H:%M:%SZ')
-          curl -s -X DELETE \
-            "$SUPABASE_URL/rest/v1/abuse_flags?created_at=lt.$CUTOFF_LONG" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Prefer: return=minimal"
-          echo "✅ abuse_flags(180日以上前)を削除しました"
