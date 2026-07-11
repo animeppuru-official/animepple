@@ -2626,7 +2626,7 @@
       },
       async add(userId, animeId) {
         if(!sb) return;
-        await sb.from('favorites').insert({ user_id: userId, anime_id: animeId, status: 'want_to_watch' });
+        await sb.from('favorites').insert({ user_id: userId, anime_id: animeId, status: 'want_to_watch', referrer_type: detectReferrerType() });
       },
       async remove(userId, animeId) {
         if(!sb) return;
@@ -2812,6 +2812,16 @@
         if(!data.length) break;
         data.forEach(g => { const name = g.attributes && g.attributes.name; if(name) names.add(name); });
         offset += 20;
+      }
+      // ジャンル(genres)だけでなく、カテゴリ(categories。より細かいタグ体系。例:Seinen, Dragon, Time Travel等)も対象に含める。
+      // Kitsu側に「カテゴリ全件一覧」を返す専用エンドポイントが無いため、代わりに
+      // このサイトのanime_pagesに既に保存されている実際のcategoriesを集めて対象にする。
+      if(resultEl) resultEl.textContent = 'サイト内のカテゴリを集計中…';
+      if(sb) {
+        const { data: pagesData } = await sb.from('anime_pages').select('categories');
+        (pagesData || []).forEach(p => {
+          (p.categories || []).forEach(c => { if(c) names.add(c); });
+        });
       }
     } catch(e) {
       console.warn('seedKitsuGenres fetch error:', e);
