@@ -7689,7 +7689,7 @@
 
   function formatConsumer(d, color) {
     const funnel = (d.conversionFunnel||[]).slice(0,10);
-    let html = subsection('視聴転換ファネル（PV→お気に入り→レビュー、上位10作品）', simpleTable(['作品','PV','お気に入り','レビュー','転換率'], funnel.map(f=>[escapeHtml(f.title), f.pv_count, f.favorite_count, f.review_count, (f.fav_to_review_rate??'—')+'%'])));
+    let html = subsection('視聴転換ファネル（PV→お気に入り→レビュー、上位10作品。転換率は100%が上限）', simpleTable(['作品','PV','お気に入り','レビュー','転換率'], funnel.map(f=>[escapeHtml(f.title), f.pv_count, f.favorite_count, f.review_count, (f.fav_to_review_rate??'—')+'%'])));
     html += subsection('検索ホワイトスペース（需要はあるが作品が少ない）', barListHtml((d.searchWhitespace||[]).slice(0,10).map(s=>({label:s.query, value:s.search_count})), {showRank:true, suffix:'回検索', color}));
     html += subsection('フィルター利用傾向', barListHtml((d.filterUsage||[]).slice(0,10).map(f=>({label:f.filter_type+'/'+f.filter_value, value:f.usage_count})), {showRank:true, suffix:'回'}));
     html += subsection('発見経路分析', simpleTable(['流入元','PV数','割合'], (d.discoveryPath||[]).map(p=>[escapeHtml(p.referrer_type), p.pv_count, p.ratio_pct+'%'])));
