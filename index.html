@@ -264,16 +264,7 @@
       #page-anime .anime-info { padding:0; }
       /* スマホ幅では下にマスターグラフ本体が常に表示されるようになったので、
          ボタン下の小さいプレビューグラフ（重複表示）は隠す */
-      #page-anime #miniGraphSection { display:none !important; }
-      #page-anime #mobileInfoTabs { display:block !important; margin:.9rem .9rem 0; }
-      #page-anime .mobile-info-tab-bar { display:flex; gap:.4rem; }
-      #page-anime .mobile-info-tab-btn { flex:1; min-width:0; padding:.6rem .3rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:#dff0e6; font-size:.72rem; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-      #page-anime .mobile-info-tab-btn.active { background:var(--brand); color:#0c2015; border-color:var(--brand); }
-      #page-anime #mobileInfoTabContent { margin-top:.7rem; }
-      #page-anime #mobileInfoTabContent .mobile-info-pane { display:none; }
-      #page-anime #mobileInfoTabContent .mobile-info-pane.active { display:block; }
       /* タブに移動済みの元セクション・スワイプUIはスマホ幅では隠す（中身はJSでタブ側に移動済み） */
-      #page-anime #graphWorldPageNav { display:none !important; }
     }
     /* スライダーのページ切り替えナビ（矢印＋現在ページ名）。PC幅では両方常に見えるので隠す */
     .slider-page-nav { display:flex; align-items:center; justify-content:center; gap:1rem; margin-bottom:.5rem; }
@@ -491,6 +482,17 @@
 
     .pack-empty-note { font-size:.78rem; color:var(--muted); padding:.6rem; background:var(--card2); border-radius:10px; }
     .pack-loading-note { font-size:.78rem; color:var(--muted); padding:.6rem; }
+
+    /* ── 評価グラフ/世界の反応/似ている作品タブ（PC・スマホ共通） ── */
+    #page-anime #miniGraphSection { display:none !important; }
+    #page-anime #mobileInfoTabs { display:block !important; margin:.9rem .9rem 0; max-width:900px; }
+    #page-anime .mobile-info-tab-bar { display:flex; gap:.4rem; }
+    #page-anime .mobile-info-tab-btn { flex:1; min-width:0; padding:.6rem .3rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:#dff0e6; font-size:.72rem; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #page-anime .mobile-info-tab-btn.active { background:var(--brand); color:#0c2015; border-color:var(--brand); }
+    #page-anime #mobileInfoTabContent { margin-top:.7rem; }
+    #page-anime #mobileInfoTabContent .mobile-info-pane { display:none; }
+    #page-anime #mobileInfoTabContent .mobile-info-pane.active { display:block; }
+    #page-anime #graphWorldPageNav { display:none !important; }
 
     /* ── Executive Summary UI（企業向け・明るいトーン） ── */
     .exec-summary { background:#F7F8FA; border:1px solid #E4E7EB; border-radius:16px; padding:1.4rem; margin-bottom:1.2rem; box-shadow:0 1px 3px rgba(0,0,0,.06); }
@@ -4701,7 +4703,6 @@
     const wrap = document.getElementById('mobileInfoTabs');
     const content = document.getElementById('mobileInfoTabContent');
     if (!wrap || !content) return;
-    if (window.innerWidth > 767) { wrap.style.display = 'none'; return; }
     wrap.style.display = '';
 
     const master = document.getElementById('masterGraphSection');
