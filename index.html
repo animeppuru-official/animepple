@@ -8743,6 +8743,18 @@
       loadRealAnimeData(e.target.value);
     }
   });
+  document.getElementById('animeSearch').addEventListener('change', e=>{
+    // datalistの候補をクリックで選んだ時はchangeイベントが発火するので、その場で検索する
+    if(window._partnerTitleToId && window._partnerTitleToId[e.target.value]) {
+      loadRealAnimeData(e.target.value);
+    }
+  });
+  document.getElementById('countrySelect')?.addEventListener('change', () => {
+    const currentTitle = document.getElementById('animeSearch')?.value;
+    if(currentTitle && window._partnerTitleToId && window._partnerTitleToId[currentTitle]) {
+      loadRealAnimeData(currentTitle);
+    }
+  });
 
   }
   window.initPartnerDashboardV2 = initPartnerDashboardV2;
