@@ -2418,10 +2418,10 @@
             <p>ブランド力・ファンダム寿命・続編需要から、IPの投資判断を支援します。</p>
           </div>
           <div class="kpi-row">
-            <div class="kpi" style="--kc:var(--brand)"><div class="k-label">Brand Power</div><div class="k-val">46.1</div><div class="k-sub">総合スコア</div></div>
-            <div class="kpi" style="--kc:var(--blue)"><div class="k-label">継続率</div><div class="k-val">72%</div><div class="k-sub">ファンダム寿命</div></div>
-            <div class="kpi" style="--kc:var(--warn)"><div class="k-label">続編需要率</div><div class="k-val">31%</div><div class="k-sub">言及ベース</div></div>
-            <div class="kpi" style="--kc:var(--cyan)"><div class="k-label">海外成長</div><div class="k-val">140.6</div><div class="k-sub">適性スコア</div></div>
+            <div class="kpi" style="--kc:var(--brand)"><div class="k-label">Brand Power</div><div class="k-val" id="ipKpiBrand">46.1</div><div class="k-sub">総合スコア</div></div>
+            <div class="kpi" style="--kc:var(--blue)"><div class="k-label">継続率</div><div class="k-val" id="ipKpiRetention">72%</div><div class="k-sub">ファンダム寿命</div></div>
+            <div class="kpi" style="--kc:var(--warn)"><div class="k-label">続編需要率</div><div class="k-val" id="ipKpiSequel">31%</div><div class="k-sub">言及ベース</div></div>
+            <div class="kpi" style="--kc:var(--cyan)"><div class="k-label">海外成長</div><div class="k-val" id="ipKpiGlobal">140.6</div><div class="k-sub">適性スコア</div></div>
           </div>
           <div class="panel">
             <div class="panel-title">IP価値の内訳</div>
@@ -8708,7 +8708,13 @@
           {label:'認知度', value:b.recognition||0}, {label:'熱量', value:b.intensity||0},
           {label:'継続率', value:b.retention||0}, {label:'国際性', value:b.global||0}
         ], {color:'var(--brand)'});
+        const ipKpiBrand = document.getElementById('ipKpiBrand'); if(ipKpiBrand) ipKpiBrand.textContent = b.total_score ?? '—';
+        const ipKpiRetention = document.getElementById('ipKpiRetention'); if(ipKpiRetention) ipKpiRetention.textContent = (b.retention ?? '—') + (b.retention!=null?'%':'');
       }
+      const ipKpiSequel = document.getElementById('ipKpiSequel');
+      if(ipKpiSequel) ipKpiSequel.textContent = ip.sequelDemand ? ip.sequelDemand.demand_ratio + '%' : '—';
+      const ipKpiGlobal = document.getElementById('ipKpiGlobal');
+      if(ipKpiGlobal) ipKpiGlobal.textContent = ip.localizationFit ? ip.localizationFit.fit_score : '—';
       const newIpBody = document.getElementById('newIpTableBody');
       if(newIpBody) {
         const newIp = ip.newIpDiscovery || [];
