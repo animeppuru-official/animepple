@@ -2392,7 +2392,7 @@
             </div>
             <div class="panel">
               <div class="panel-title">検索ホワイトスペース<span class="hint">需要あり・作品不足</span></div>
-              <div class="card-grid">
+              <div class="card-grid" id="whitespaceCardGrid">
                 <div class="mini-card"><div class="mc-tag">需要あり</div><div class="mc-name">異世界 × コメディ</div><div class="mc-sub">7 searches / 供給少</div></div>
                 <div class="mini-card"><div class="mc-tag">需要あり</div><div class="mc-name">日常 × ミステリー</div><div class="mc-sub">5 searches / 供給少</div></div>
               </div>
@@ -8380,6 +8380,7 @@
       });
       const dnaGrid = document.getElementById('dnaCardGrid'); if(dnaGrid) dnaGrid.innerHTML = '';
       const fanGrid = document.getElementById('fanClusterGrid'); if(fanGrid) fanGrid.innerHTML = '';
+      const wsGrid = document.getElementById('whitespaceCardGrid'); if(wsGrid) wsGrid.innerHTML = '';
       const locScore = document.getElementById('localizationFitScore'); if(locScore) locScore.textContent = '—';
       const locLabel = document.getElementById('localizationFitLabel'); if(locLabel) locLabel.textContent = '検索欄の隣で国を選ぶと表示されます';
     })();
@@ -8682,6 +8683,13 @@
         viralBody.innerHTML = viral.length ? viral.slice(0,10).map(v=>`
           <tr><td>${esc(v.title)}</td><td>${v.share_count}</td><td>${v.pv_count}</td><td class="pos">${v.viral_rate??'—'}%</td></tr>
         `).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+      }
+      const wsGrid = document.getElementById('whitespaceCardGrid');
+      if(wsGrid) {
+        const ws = consumer.searchWhitespace || [];
+        wsGrid.innerHTML = ws.length ? ws.slice(0,6).map(w=>`
+          <div class="mini-card"><div class="mc-tag">需要あり</div><div class="mc-name">${esc(w.query)}</div><div class="mc-sub">${w.search_count} searches / 供給${w.matched_anime_count}件</div></div>
+        `).join('') : '<p style="color:var(--muted2);">該当するホワイトスペースがありません</p>';
       }
       if(consumer.discoveryPath && consumer.discoveryPath.length) {
         const donutColors = ['#7c5cff','#22d3ee','#3d7bff','#5d6a89','#fbbf24'];
