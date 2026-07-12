@@ -2153,6 +2153,15 @@
         <input id="animeSearch" list="animeSearchDatalist" placeholder="作品名を検索してください（例：進撃の巨人）" />
         <datalist id="animeSearchDatalist"></datalist>
       </div>
+      <select id="countrySelect" style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--text);font-size:.82rem;padding:.5rem .6rem;">
+        <option value="">国を指定しない</option>
+        <option value="JP">🇯🇵 日本</option>
+        <option value="US">🇺🇸 USA</option>
+        <option value="FR">🇫🇷 France</option>
+        <option value="KR">🇰🇷 Korea</option>
+        <option value="DE">🇩🇪 Germany</option>
+        <option value="BR">🇧🇷 Brazil</option>
+      </select>
       <span class="badge-live">Live data</span>
       <div class="topbar-actions">
         <button class="btn" onclick="alert('別作品との比較モードを開きます')">⇄ Compare</button>
@@ -2348,8 +2357,8 @@
             <div class="panel">
               <div class="panel-title">ローカライズ適性スコア</div>
               <div style="text-align:center;padding:1.2rem 0">
-                <div style="font-size:4rem;font-weight:900;color:var(--cyan);line-height:1">140.6</div>
-                <div style="color:var(--muted);font-size:.8rem;margin-top:.4rem">Localization Fit — Very High</div>
+                <div style="font-size:4rem;font-weight:900;color:var(--cyan);line-height:1" id="localizationFitScore">—</div>
+                <div style="color:var(--muted);font-size:.8rem;margin-top:.4rem" id="localizationFitLabel">国コードを指定して検索すると表示されます</div>
               </div>
             </div>
           </div>
@@ -8371,6 +8380,8 @@
       });
       const dnaGrid = document.getElementById('dnaCardGrid'); if(dnaGrid) dnaGrid.innerHTML = '';
       const fanGrid = document.getElementById('fanClusterGrid'); if(fanGrid) fanGrid.innerHTML = '';
+      const locScore = document.getElementById('localizationFitScore'); if(locScore) locScore.textContent = '—';
+      const locLabel = document.getElementById('localizationFitLabel'); if(locLabel) locLabel.textContent = '検索欄の隣で国を選ぶと表示されます';
     })();
 
   // ── ナビゲーション ──
@@ -8547,13 +8558,15 @@
       const animeId = titleMap[title];
       if(!animeId) { console.warn('作品が見つかりません:', title); return; }
       const meta = window._partnerAnimeMeta ? window._partnerAnimeMeta[animeId] : null;
+      const country = document.getElementById('countrySelect')?.value || '';
+      const countryQ = country ? '&country=' + encodeURIComponent(country) : '';
       const [sentiment, fanInsight, trend, global, consumer, ip] = await Promise.all([
         fetchPartnerDataset('sentiment&animeId=' + encodeURIComponent(animeId)),
         fetchPartnerDataset('fan_insight&animeId=' + encodeURIComponent(animeId)),
         fetchPartnerDataset('trend_forecast&animeId=' + encodeURIComponent(animeId)),
-        fetchPartnerDataset('global_market&animeId=' + encodeURIComponent(animeId)),
+        fetchPartnerDataset('global_market&animeId=' + encodeURIComponent(animeId) + countryQ),
         fetchPartnerDataset('consumer_behavior&animeId=' + encodeURIComponent(animeId)),
-        fetchPartnerDataset('ip_strategy&animeId=' + encodeURIComponent(animeId)),
+        fetchPartnerDataset('ip_strategy&animeId=' + encodeURIComponent(animeId) + countryQ),
       ]);
       const esc = (s) => (window.escapeHtml ? escapeHtml(String(s??'')) : String(s??''));
 
@@ -8647,6 +8660,19 @@
         countryBody.innerHTML = gap.length ? gap.slice(0,8).map(c=>`
           <tr><td>${c.country_code}</td><td>${c.pv_count}</td><td>${c.review_count}</td><td>${c.review_rate}%</td><td>${esc(c.gap_type||'—')}</td></tr>
         `).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+      }
+
+      const locScoreEl = document.getElementById('localizationFitScore');
+      const locLabelEl = document.getElementById('localizationFitLabel');
+      if(locScoreEl && locLabelEl) {
+        if(global.localizationFit) {
+          const fs = global.localizationFit.fit_score;
+          locScoreEl.textContent = fs ?? '—';
+          locLabelEl.textContent = `Localization Fit (${country}) — ${fs >= 100 ? 'Very High' : fs >= 50 ? 'High' : fs >= 20 ? 'Medium' : 'Low'}`;
+        } else {
+          locScoreEl.textContent = '—';
+          locLabelEl.textContent = country ? 'データが不足しています' : '検索欄の隣で国を選ぶと表示されます';
+        }
       }
 
       // ── Consumer Behavior: バイラル係数表 ──
