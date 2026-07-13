@@ -1774,7 +1774,10 @@
         </div>
       </div>
     </div>
-    <button class="refine-btn" id="srApplyBtn" data-i18n="btnRefineSearch">この条件で再検索</button>
+    <div style="display:flex;gap:.5rem;">
+      <button class="refine-btn" id="srApplyBtn" data-i18n="btnRefineSearch" style="flex:1;">この条件で再検索</button>
+      <button class="refine-btn" id="srResetBtn" data-i18n="btnResetFilters" style="flex:0 0 auto;width:auto;background:var(--card2);color:var(--muted);border:1px solid var(--line);">↺ リセット</button>
+    </div>
   </div>
   <div class="result-meta" id="srResultMeta"></div>
   <!-- ▼▼▼ 広告④：検索結果内バナー ▼▼▼
@@ -4592,6 +4595,7 @@
     const cssH = canvas.clientHeight || canvas.height;
     canvas.width  = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
+    canvas.style.width = cssW + 'px'; canvas.style.height = cssH + 'px';
     ctx.scale(dpr, dpr);
     const w=cssW, h=cssH, cx=w/2, cy=h/2;
     const radius=Math.min(w,h)*(w<180?0.30:0.34),max=10,count=labels.length;
@@ -6923,6 +6927,20 @@
   document.getElementById('srApplyBtn').onclick=doSrSearch;
   document.getElementById('srQuery').addEventListener('keydown',e=>{if(e.key==='Enter')doSrSearch();});
 
+  // タグ・スライダー・⭐優先軸を一括リセット
+  function resetSearchFilters() {
+    srTagsActive.length = 0;
+    priorityAxes.clear();
+    Object.keys(srProfileA).forEach(k=>srProfileA[k]=-1);
+    Object.keys(srProfileB).forEach(k=>srProfileB[k]=-1);
+    const tagListEl = document.getElementById('srTagList');
+    if (tagListEl) tagListEl.innerHTML = '';
+    buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a',axisA);
+    buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b',axisB);
+    doSrSearch();
+  }
+  document.getElementById('srResetBtn').onclick=resetSearchFilters;
+
   /* ════════════════════════════
      広告・マネタイズ設定
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -7445,6 +7463,7 @@
     filterChartA: { ja:'📊 作品の完成度（無で無視）',en:'📊 Production Quality (unset=ignore)',ko:'📊 작품 완성도 (미설정=무시)','zh-tw':'📊 作品完成度（未設定=忽略）','zh-cn':'📊 作品完成度（未设置=忽略）',es:'📊 Calidad (sin ajustar=ignorar)',fr:'📊 Qualité (non réglé=ignorer)',pt:'📊 Qualidade (não definido=ignorar)',de:'📊 Qualität (nicht gesetzt=ignorieren)',ar:'📊 جودة الإنتاج (غير محدد=تجاهل)',th:'📊 คุณภาพงานสร้าง (ไม่ตั้งค่า=ไม่นับ)',id:'📊 Kualitas Produksi (belum diatur=abaikan)',ru:'📊 Качество (не задано=игнор.)',it:'📊 Qualità (non impostato=ignora)',vi:'📊 Chất lượng (chưa đặt=bỏ qua)' },
     filterChartB: { ja:'💫 感情・雰囲気（無で無視）',en:'💫 Mood & Atmosphere (unset=ignore)',ko:'💫 감정·분위기 (미설정=무시)','zh-tw':'💫 情感·氛圍（未設定=忽略）','zh-cn':'💫 情感·氛围（未设置=忽略）',es:'💫 Ambiente (sin ajustar=ignorar)',fr:'💫 Ambiance (non réglé=ignorer)',pt:'💫 Clima (não definido=ignorar)',de:'💫 Stimmung (nicht gesetzt=ignorieren)',ar:'💫 الأجواء (غير محدد=تجاهل)',th:'💫 อารมณ์และบรรยากาศ (ไม่ตั้งค่า=ไม่นับ)',id:'💫 Suasana (belum diatur=abaikan)',ru:'💫 Настроение (не задано=игнор.)',it:'💫 Atmosfera (non impostato=ignora)',vi:'💫 Cảm xúc (chưa đặt=bỏ qua)' },
     btnRefineSearch:{ ja:'この条件で再検索',en:'Search with these filters',ko:'이 조건으로 재검색','zh-tw':'以此條件重新搜尋','zh-cn':'以此条件重新搜索',es:'Buscar con estos filtros',fr:'Chercher avec ces filtres',pt:'Buscar com esses filtros',de:'Mit diesen Filtern suchen',ar:'البحث بهذه الفلاتر',th:'ค้นหาด้วยเงื่อนไขนี้',id:'Cari dengan filter ini',ru:'Искать с этими фильтрами',it:'Cerca con questi filtri',vi:'Tìm với bộ lọc này' },
+    btnResetFilters:{ ja:'↺ リセット',en:'↺ Reset',ko:'↺ 초기화','zh-tw':'↺ 重設','zh-cn':'↺ 重置',es:'↺ Restablecer',fr:'↺ Réinitialiser',pt:'↺ Redefinir',de:'↺ Zurücksetzen',ar:'↺ إعادة تعيين',th:'↺ รีเซ็ต',id:'↺ Reset',ru:'↺ Сбросить',it:'↺ Reimposta',vi:'↺ Đặt lại' },
     btnSearchGoFull:{ ja:'検索する',en:'Search',ko:'검색하기','zh-tw':'搜尋','zh-cn':'搜索',es:'Buscar',fr:'Rechercher',pt:'Buscar',de:'Suchen',ar:'بحث',th:'ค้นหา',id:'Cari',ru:'Поиск',it:'Cerca',vi:'Tìm kiếm' },
     // ラベル（レーダー軸）
     axisA: {
@@ -8558,9 +8577,14 @@
   function drawMockRadar(labels, vals){
     const cv = document.getElementById('radar'); if(!cv) return;
     const ctx = cv.getContext('2d');
-    const cx=180, cy=180, R=120;
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = cv.clientWidth || 360, cssH = cv.clientHeight || 360;
+    cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+    cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const cx=cssW/2, cy=cssH/2, R=Math.min(cssW,cssH)*(120/360);
     const n=labels.length, maxV=10;
-    ctx.clearRect(0,0,360,360);
+    ctx.clearRect(0,0,cssW,cssH);
     // グリッド
     for(let g=1; g<=4; g++){
       ctx.beginPath();
@@ -8600,7 +8624,12 @@
   // ── 折れ線（月別） ──
   function drawMockLine(data){
     const cv=document.getElementById('trendLine'); if(!cv) return;
-    const ctx=cv.getContext('2d'), W=360,H=220,pad=30;
+    const ctx=cv.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const W=cv.clientWidth||360, H=cv.clientHeight||220, pad=30;
+    cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
     if(!data || data.length < 2) data=[6.1,6.4,6.2,6.8,7.1,7.0,7.6,8.1];
     const max=Math.max(...data)+0.5, min=Math.min(...data)-0.5;
     ctx.clearRect(0,0,W,H);
@@ -8624,9 +8653,15 @@
   // ── ドーナツ（流入経路） ──
   function drawMockDonut(segs){
     const cv=document.getElementById('donut'); if(!cv) return;
-    const ctx=cv.getContext('2d'), cx=110,cy=110,R=80,r=48;
+    const ctx=cv.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const cssSize = cv.clientWidth || 220;
+    cv.width = Math.round(cssSize*dpr); cv.height = Math.round(cssSize*dpr);
+    cv.style.width = cssSize + 'px'; cv.style.height = cssSize + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const cx=cssSize/2, cy=cssSize/2, R=cssSize*(80/220), r=cssSize*(48/220);
     if(!segs || !segs.length) segs=[{l:'Search',v:42,c:'#7c5cff'},{l:'SNS',v:31,c:'#22d3ee'},{l:'Direct',v:18,c:'#3d7bff'},{l:'Other',v:9,c:'#5d6a89'}];
-    ctx.clearRect(0,0,220,220);
+    ctx.clearRect(0,0,cssSize,cssSize);
     let start=-Math.PI/2; const total=segs.reduce((s,x)=>s+x.v,0) || 1;
     segs.forEach(s=>{
       const ang=s.v/total*2*Math.PI;
