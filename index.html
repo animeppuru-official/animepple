@@ -8573,22 +8573,23 @@
 
       // ── ダッシュボードKPI ──
       const bp = sentiment.brandPower || {};
-      const kpiVals = document.querySelectorAll('#view-dashboard .kpi .k-val');
+      const dashKpiCards = document.querySelectorAll('#view-dashboard .kpi-row .kpi');
+      const kpiVals = Array.from(dashKpiCards).map(c => c.querySelector('.k-val'));
       if(kpiVals[0] && bp.total_score != null) kpiVals[0].textContent = bp.total_score;
 
       if(sentiment.fanHeat) {
         if(kpiVals[1]) kpiVals[1].textContent = sentiment.fanHeat.fan_heat;
-        const starsEl = document.querySelector('#view-dashboard .stars');
+        const starsEl = dashKpiCards[1]?.querySelector('.stars');
         if(starsEl) starsEl.textContent = '★'.repeat(sentiment.fanHeat.star_rating) + '☆'.repeat(5-sentiment.fanHeat.star_rating);
       }
       if(sentiment.globalScore) {
         if(kpiVals[2]) kpiVals[2].textContent = sentiment.globalScore.global_score;
-        const globalSubEl = document.querySelectorAll('#view-dashboard .kpi .k-sub')[1];
+        const globalSubEl = dashKpiCards[2]?.querySelector('.k-sub');
         if(globalSubEl) globalSubEl.textContent = sentiment.globalScore.country_count + ' Countries';
       }
       if(sentiment.qualityReviewsKpi) {
         if(kpiVals[3]) kpiVals[3].textContent = sentiment.qualityReviewsKpi.quality_review_count;
-        const confEl = document.querySelector('#view-dashboard .k-up');
+        const confEl = dashKpiCards[3]?.querySelector('.k-up');
         if(confEl) confEl.textContent = sentiment.qualityReviewsKpi.confidence_label;
       }
 
