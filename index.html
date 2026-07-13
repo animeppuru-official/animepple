@@ -69,8 +69,16 @@
     .filter-box { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:.75rem; margin-bottom:.6rem; }
     .filter-box h3 { margin:0 0 .55rem; font-size:.88rem; }
     .sl-row { display:grid; grid-template-columns:3.6rem 1fr 1.6rem; gap:.3rem; align-items:center; margin-bottom:.55rem; }
+    .sl-row.has-priority { grid-template-columns:3.6rem 1fr 1.6rem 1.5rem; }
     .sl-row span { font-size:.77rem; color:#b8d8c6; }
     .sl-row output { font-size:.77rem; text-align:right; color:#dff0e6; }
+    .sl-priority-btn {
+      width:1.5rem; height:1.5rem; border:none; background:transparent; cursor:pointer;
+      font-size:1rem; line-height:1; color:#4a6a58; padding:0; display:flex; align-items:center; justify-content:center;
+      transition:color .15s, transform .15s;
+    }
+    .sl-priority-btn:hover { color:#e0c34a; transform:scale(1.15); }
+    .sl-priority-btn.active { color:#ffcc33; }
 
     /* ── スライダーグリッド (Canvas方式) ── */
     .sl-track-wrap { display:flex; flex-direction:column; width:100%; }
@@ -135,7 +143,7 @@
     .scroll-arrow-r { right:2px; }
     .scroll-arrow:active { background:var(--card2); }
     .hcard { flex:0 0 clamp(140px,42vw,175px); scroll-snap-align:start; background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; }
-    .hcard-thumb { width:100%; aspect-ratio:3/4; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
+    .hcard-thumb { position:relative; width:100%; aspect-ratio:3/4; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
     .hcard-thumb img { width:100%; height:100%; object-fit:cover; }
     .hcard-body { padding:.5rem .6rem; min-height:4.6rem; display:flex; flex-direction:column; }
     .hcard-body h3 { margin:0 0 .2rem; font-size:.86rem; line-height:1.3; }
@@ -145,13 +153,14 @@
     /* ── GRID ── */
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; padding:0 1rem; }
     .gcard { background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; }
-    .gcard-thumb { width:100%; aspect-ratio:16/9; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
+    .gcard-thumb { position:relative; width:100%; aspect-ratio:16/9; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
     .gcard-thumb img { width:100%; height:100%; object-fit:cover; }
     .gcard-body { padding:.55rem .65rem; }
     .gcard-body h3 { margin:0 0 .15rem; font-size:.88rem; line-height:1.3; }
     .gcard-body p { margin:0; font-size:.74rem; color:var(--muted); }
     .badge { display:inline-block; margin-top:.3rem; padding:.15rem .5rem; border-radius:999px; background:rgba(94,201,122,.12); border:1px solid #3d8a56; font-size:.7rem; color:#b8efc8; }
     .match-badge { background:rgba(255,153,60,.12); border-color:#8a5a3d; color:#ffd0a0; }
+    .ai-thumb-badge { position:absolute; top:.4rem; left:.4rem; padding:.1rem .45rem; border-radius:999px; background:rgba(7,21,13,.8); border:1px solid #3d8a56; font-size:.62rem; color:#b8efc8; white-space:nowrap; z-index:2; }
 
     /* ── AD SLOTS ── */
     /* 本番時はこのクラスのdisplay:noneを外してAdSenseコードを挿入 */
@@ -383,6 +392,7 @@
       }
       /* スライダーラベル幅を少し広げる */
       .sl-row { grid-template-columns: 3.8rem 1fr 1.6rem; gap:.3rem; }
+      .sl-row.has-priority { grid-template-columns: 3.8rem 1fr 1.6rem 1.5rem; }
     }
 
     /* ══ AFFILIATE ══ */
@@ -918,6 +928,7 @@
       .filter-toggle-bar { max-width:1200px; margin:0 auto; padding:.6rem 2rem; }
       .filter-panel { max-width:1200px; margin:0 auto; padding:.75rem 2rem; }
       .filter-panel .sl-row { grid-template-columns:3.6rem 1fr 2rem; gap:.3rem; }
+      .filter-panel .sl-row.has-priority { grid-template-columns:3.6rem 1fr 2rem 1.5rem; }
       .result-meta { max-width:1200px; margin:0 auto; padding:.65rem 2rem; }
       .result-grid {
         grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
@@ -1245,6 +1256,7 @@
     <span id="ovSliderPageLabel">作品の完成度</span>
     <button type="button" id="ovSliderPageNext" aria-label="次へ">›</button>
   </div>
+  <p class="filter-label" style="text-align:left;font-weight:400;text-transform:none;letter-spacing:normal;font-size:.74rem;color:var(--muted);line-height:1.6;" data-i18n="priorityAxisExplain">⭐ を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。⭐が1つも無い場合は、全軸の平均的な近さで検索します。</p>
   <div class="review-slider-swiper-wrap">
     <div class="review-slider-swiper" id="ovSliderSwiper">
       <div class="review-slider-page">
@@ -1722,14 +1734,15 @@
       <span id="srSliderPageLabel">作品の完成度</span>
       <button type="button" id="srSliderPageNext" aria-label="次へ">›</button>
     </div>
+    <p class="filter-label" style="text-align:left;font-weight:400;text-transform:none;letter-spacing:normal;font-size:.74rem;color:var(--muted);line-height:1.6;" data-i18n="priorityAxisExplain">⭐ を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。⭐が1つも無い場合は、全軸の平均的な近さで検索します。</p>
     <div class="review-slider-swiper-wrap">
       <div class="review-slider-swiper" id="srSliderSwiper">
         <div class="review-slider-page">
-          <div class="filter-label" style="text-align:center;">📊 作品の完成度（0で無視）</div>
+          <div class="filter-label" style="text-align:center;">📊 作品の完成度（無で無視）</div>
           <div class="filter-box"><div id="srFilterA"></div></div>
         </div>
         <div class="review-slider-page">
-          <div class="filter-label" style="text-align:center;">💫 感情・雰囲気（0で無視）</div>
+          <div class="filter-label" style="text-align:center;">💫 感情・雰囲気（無で無視）</div>
           <div class="filter-box"><div id="srFilterB"></div></div>
         </div>
       </div>
@@ -3660,10 +3673,11 @@
     if (opts.showReviewCount) badges.push(`<span class="badge">${tFn('reviewCount', item._reviewCount ?? reviewCount(item.id))}</span>`);
     if (opts.badges) badges.push(...opts.badges);
     if (opts.showRecruitBadge !== false && !opts.dummy) badges.push(recruitBadgeHtml(item.kitsuId?'kitsu-'+item.kitsuId:item.id));
+    const aiThumbBadge = opts.aiBadge ? `<span class="ai-thumb-badge">${opts.aiBadge}</span>` : '';
 
     if (style === 'h') {
       return `<div class="hcard" onclick="${onclick}">
-        <div class="hcard-thumb"${opts.dummy?' style="opacity:.55;"':''}>${imgHtml}</div>
+        <div class="hcard-thumb"${opts.dummy?' style="opacity:.55;"':''}>${imgHtml}${aiThumbBadge}</div>
         <div class="hcard-body">
           <h3>${title}</h3>
           <p>${meta}</p>
@@ -3673,7 +3687,7 @@
     }
     // gcard（デフォルト）
     return `<div class="gcard" onclick="${onclick}">
-      <div class="gcard-thumb">${imgHtml}</div>
+      <div class="gcard-thumb">${imgHtml}${aiThumbBadge}</div>
       <div class="gcard-body"><h3>${title}</h3><p>${meta}</p>${badges.join('')}</div>
     </div>`;
   }
@@ -3699,12 +3713,12 @@
       srSearchState.q = '';
       srSearchState.sort = 'relevance';
       srTagsActive.length = 0;
-      Object.keys(srProfileA).forEach(k=>srProfileA[k]=0);
-      Object.keys(srProfileB).forEach(k=>srProfileB[k]=0);
+      Object.keys(srProfileA).forEach(k=>srProfileA[k]=-1);
+      Object.keys(srProfileB).forEach(k=>srProfileB[k]=-1);
       // 検索オーバーレイ（🔍アイコンから開くモーダル）側の状態も一緒にリセットする
       overlayTags.length = 0;
-      Object.keys(overlayProfileA).forEach(k=>overlayProfileA[k]=0);
-      Object.keys(overlayProfileB).forEach(k=>overlayProfileB[k]=0);
+      Object.keys(overlayProfileA).forEach(k=>overlayProfileA[k]=-1);
+      Object.keys(overlayProfileB).forEach(k=>overlayProfileB[k]=-1);
       const qInput = document.getElementById('srQuery');
       if(qInput) qInput.value = '';
       const overlayQInput = document.getElementById('overlaySearchInput');
@@ -4620,17 +4634,18 @@
       const ctx = canvas.getContext('2d');
       ctx.scale(dpr, dpr);
       ctx.clearRect(0,0,cssWidth,18);
-      const MARKS = [0,1,2,3,4,5,6,7,8,9,10];
-      const LABELED = new Set([1,3,5,7,9]);
+      const MARKS = [-1,0,1,2,3,4,5,6,7,8,9,10];
+      const LABELED = new Set([-1,1,3,5,7,9]);
       MARKS.forEach(v=>{
-        const x = trackLeft + (trackWidth * v / 10);
+        const x = trackLeft + (trackWidth * (v+1) / 11);
         ctx.beginPath(); ctx.moveTo(x,10); ctx.lineTo(x,17);
-        ctx.strokeStyle='rgba(94,201,122,0.28)'; ctx.lineWidth=1; ctx.stroke();
+        ctx.strokeStyle = v===-1 ? 'rgba(255,107,157,0.6)' : 'rgba(94,201,122,0.28)';
+        ctx.lineWidth=1; ctx.stroke();
         if(LABELED.has(v)){
           ctx.font='9px sans-serif';
-          ctx.fillStyle='rgba(140,198,160,0.7)';
+          ctx.fillStyle = v===-1 ? 'rgba(255,107,157,0.9)' : 'rgba(140,198,160,0.7)';
           ctx.textAlign='center';
-          ctx.fillText(String(v), x, 9);
+          ctx.fillText(v===-1?t('sliderUnset'):String(v), x, 9);
         }
       });
     });
@@ -4820,14 +4835,17 @@
     // スライダーのHTMLを生成（グリッドはJS計測後に配置）
     el.innerHTML = labels.map((label,i)=>{
       const key = keys[i];
+      const v = store[key]!==undefined ? store[key] : -1;
+      const isPriority = priorityAxes.has(key);
       return `
-      <div class="sl-row">
+      <div class="sl-row has-priority">
         <span>${label}</span>
         <div class="sl-track-wrap">
           <canvas class="sl-grid-canvas" height="18"></canvas>
-          <input type="range" min="0" max="10" step="1" value="${store[key]||0}" data-key="${key}" id="${prefix}-${key}" />
+          <input type="range" min="-1" max="10" step="1" value="${v}" data-key="${key}" id="${prefix}-${key}" class="${v===-1?'slider-unset':''}" />
         </div>
-        <output>${store[key]||0}</output>
+        <output>${v===-1?t('sliderUnset'):v}</output>
+        <button type="button" class="sl-priority-btn${isPriority?' active':''}" data-key="${key}" title="${t('priorityAxisHint')||'この軸を優先して検索'}">${isPriority?'★':'☆'}</button>
       </div>
     `;
     }).join('');
@@ -4841,15 +4859,28 @@
     el.querySelectorAll('input[type="range"]').forEach(input=>{
       const key=input.dataset.key;
       const out=input.closest('.sl-row').querySelector('output');
-      input.addEventListener('input',()=>{ store[key]=Number(input.value); if(out) out.textContent=input.value; });
+      input.addEventListener('input',()=>{
+        const v = Number(input.value);
+        store[key]=v;
+        if(out) out.textContent = v===-1?t('sliderUnset'):v;
+        input.classList.toggle('slider-unset', v===-1);
+      });
+    });
+
+    el.querySelectorAll('.sl-priority-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const key=btn.dataset.key;
+        if(priorityAxes.has(key)) { priorityAxes.delete(key); btn.classList.remove('active'); btn.textContent='☆'; }
+        else { priorityAxes.add(key); btn.classList.add('active'); btn.textContent='★'; }
+      });
     });
   }
 
   /* ════════════════════════════
      SEARCH OVERLAY
   ════════════════════════════ */
-  const overlayProfileA=Object.fromEntries(axisA.map(k=>[k,0]));
-  const overlayProfileB=Object.fromEntries(axisB.map(k=>[k,0]));
+  const overlayProfileA=Object.fromEntries(axisA.map(k=>[k,-1]));
+  const overlayProfileB=Object.fromEntries(axisB.map(k=>[k,-1]));
   const overlayTags=[];
   let renderOverlayTags = null;
 
@@ -4890,7 +4921,7 @@
     closeSearch();
     srSearchState.q=q; srSearchState.sort=sort;
     srTagsActive.length=0; overlayTags.forEach(t=>srTagsActive.push(t));
-    const hasP=Object.values(overlayProfileA).some(v=>v>0)||Object.values(overlayProfileB).some(v=>v>0);
+    const hasP=Object.values(overlayProfileA).some(v=>v!==-1)||Object.values(overlayProfileB).some(v=>v!==-1);
     if(hasP){ axisA.forEach(k=>{srProfileA[k]=overlayProfileA[k];}); axisB.forEach(k=>{srProfileB[k]=overlayProfileB[k];}); }
     nav('search');
   }
@@ -6304,8 +6335,26 @@
   /* ════════════════════════════
      SEARCH RESULTS
   ════════════════════════════ */
-  const srProfileA=Object.fromEntries(axisA.map(k=>[k,0]));
-  const srProfileB=Object.fromEntries(axisB.map(k=>[k,0]));
+  const srProfileA=Object.fromEntries(axisA.map(k=>[k,-1]));
+  const srProfileB=Object.fromEntries(axisB.map(k=>[k,-1]));
+  const priorityAxes = new Set(); // ⭐を付けた軸名（日本語内部キー）を保持
+
+  function priorityMatchDist(id) {
+    if (!priorityAxes.size) return Infinity;
+    let aA=avgChart(id,'chartA',axisA), aB=avgChart(id,'chartB',axisB);
+    if((!aA||!aB) && _searchMasterGraphCache && _searchMasterGraphCache[id]) {
+      aA = aA || _searchMasterGraphCache[id].avgA;
+      aB = aB || _searchMasterGraphCache[id].avgB;
+    }
+    let dist=0, count=0;
+    priorityAxes.forEach(axis=>{
+      const isA = axisA.includes(axis);
+      const target = isA ? srProfileA[axis] : srProfileB[axis];
+      const val = isA ? aA?.[axis] : aB?.[axis];
+      if (target!==-1 && val!=null) { dist += Math.abs(val-target); count++; }
+    });
+    return count ? dist/count : Infinity;
+  }
   const srSearchState={q:'',sort:'relevance'};
   const srTagsActive=[];
   // タグの日本語形→英語形の対応（Kitsuジャンル/カテゴリとの照合に使う。ジャンルは英語で保存されているため）
@@ -6490,7 +6539,7 @@
     return _searchMasterGraphPromise;
   }
 
-  function hasSrProfile(){ return Object.values(srProfileA).some(v=>v>0)||Object.values(srProfileB).some(v=>v>0); }
+  function hasSrProfile(){ return Object.values(srProfileA).some(v=>v!==-1)||Object.values(srProfileB).some(v=>v!==-1); }
 
   // ── 似ている作品（コンテンツベース推薦） ──
   // 好みグラフ12軸のユークリッド距離＋タグの重複数を組み合わせて近さを算出する。
@@ -6556,7 +6605,7 @@
       if(!items.length) { showEmpty(); return; }
       grid.innerHTML = items.map(item=>renderAnimeCard(item, {
         style:'h',
-        badges: aiOnlyMap[item.id] ? ['<span class="badge" style="background:rgba(94,201,122,.1);">🤖 AI予測</span>'] : [],
+        aiBadge: aiOnlyMap[item.id] ? t('aiPredictedBadge') : '',
       })).join('');
       section.style.display='';
     } catch(e) {
@@ -6572,8 +6621,8 @@
     }
     if(!aA&&!aB) return Infinity;
     let dist=0,count=0;
-    axisA.forEach(l=>{ if(srProfileA[l]>0&&aA){dist+=Math.abs(aA[l]-srProfileA[l]);count++;} });
-    axisB.forEach(l=>{ if(srProfileB[l]>0&&aB){dist+=Math.abs(aB[l]-srProfileB[l]);count++;} });
+    axisA.forEach(l=>{ if(srProfileA[l]!==-1&&aA){dist+=Math.abs(aA[l]-srProfileA[l]);count++;} });
+    axisB.forEach(l=>{ if(srProfileB[l]!==-1&&aB){dist+=Math.abs(aB[l]-srProfileB[l]);count++;} });
     return count?dist/count:Infinity;
   }
   // ── タイポ・表記ゆれ許容検索 ──
@@ -6710,8 +6759,22 @@
       reviews:reviewCount(a.id),
       rel:relScore(a,q),
       match:matchDist(a.id),
-      tagScore:tagMatchScore(a)
+      tagScore:tagMatchScore(a),
+      priorityDist:priorityMatchDist(a.id),
     }));
+
+    // ── 3階層ソート: ①タグ一致数 → ②⭐優先軸の近さ → ③選んだ並び替え基準 ──
+    function tieredSort(arr, sort) {
+      arr.sort((a,b) => {
+        if(srTagsActive.length && a.tagScore!==b.tagScore) return b.tagScore-a.tagScore;
+        if(priorityAxes.size && a.priorityDist!==b.priorityDist) return a.priorityDist-b.priorityDist;
+        if(sort==='reviews_desc') return b.reviews-a.reviews;
+        if(sort==='reviews_asc') return a.reviews-b.reviews;
+        if(sort==='match') return a.match-b.match;
+        return b.rel-a.rel || b.tagScore-a.tagScore || a.anime.title.localeCompare(b.anime.title,'ja');
+      });
+      return arr;
+    }
 
     const sort=srSearchState.sort;
     const RESULT_TARGET = 100; // キーワード無し検索は、データが少ない初期でも常にこの件数を目指す
@@ -6721,22 +6784,16 @@
       let filtered = mapped;
       if(srTagsActive.length) filtered = filtered.filter(r=>r.tagScore>0);
       if(hasSrProfile()&&sort==='match') filtered = filtered.filter(r=>r.match!==Infinity);
-      if(sort==='reviews_desc') filtered.sort((a,b)=>b.reviews-a.reviews);
-      else if(sort==='reviews_asc') filtered.sort((a,b)=>a.reviews-b.reviews);
-      else if(sort==='match') filtered.sort((a,b)=>a.match-b.match);
-      else filtered.sort((a,b)=>b.tagScore-a.tagScore||b.rel-a.rel||a.anime.title.localeCompare(b.anime.title,'ja'));
+      tieredSort(filtered, sort);
       list = filtered;
     } else {
       // キーワード無し：常に約100件を目指して段階的に積み上げる。
       // タグが有効な場合は「タグ一致」を最優先の軸にし、その中で選んだ並び順の基準を適用する
       // （グラフ一致度やレビュー数だけで並べると、タグを指定した意味が無くなるため）。
-      const sortWithinTier = (arr) => {
-        if(sort==='reviews_desc') arr.sort((a,b)=>b.reviews-a.reviews);
-        else if(sort==='reviews_asc') arr.sort((a,b)=>a.reviews-b.reviews);
-        else if(sort==='match') arr.sort((a,b)=>a.match-b.match);
-        else arr.sort((a,b)=>b.tagScore-a.tagScore||b.rel-a.rel||a.anime.title.localeCompare(b.anime.title,'ja'));
-        return arr;
-      };
+      // キーワード無し：常に約100件を目指して段階的に積み上げる。
+      // タグが有効な場合は「タグ一致」を最優先の軸にし、その中で⭐優先軸→選んだ並び順の基準を適用する
+      // （グラフ一致度やレビュー数だけで並べると、タグを指定した意味が無くなるため）。
+      const sortWithinTier = (arr) => tieredSort(arr, sort);
       const satisfiesSortCriteria = (r) => {
         if(sort==='match') return hasSrProfile() ? r.match!==Infinity : true;
         if(sort==='reviews_desc'||sort==='reviews_asc') return r.reviews>0;
@@ -6813,12 +6870,13 @@
     }
     document.getElementById('srResultGrid').innerHTML=combined.map(row=>{
       const a=row.anime;
-      const mb=row.match!==Infinity&&hasSrProfile()?`<span class="badge match-badge">${t('graphMatchBadge').replace('{n}',Math.max(0,Math.round(100-row.match*10)))}</span>`:'';
+      const mb=(row.match!==Infinity && hasSrProfile())?`<span class="badge match-badge">${t('graphMatchBadge').replace('{n}',Math.max(0,Math.round(100-row.match*10)))}</span>`:'';
+      const psb=(priorityAxes.size>0 && row.priorityDist!==Infinity)?`<span class="badge match-badge" style="background:rgba(255,204,51,.12);border-color:#8a7a2d;color:#ffe38a;">${t('priorityMatchBadge').replace('{n}',Math.max(0,Math.round(100-row.priorityDist*10)))}</span>`:'';
       const tb=row.tagScore>0?`<span class="badge" style="background:rgba(94,150,255,.15);border-color:#4a6abf;color:#b8d0ff;">${t('tagMatchBadge').replace('{n}',row.tagScore)}</span>`:'';
-      // グラフ一致がAIシード予測データのみに基づく場合は、実レビューと誤解されないよう明示する
-      const isAiOnlyMatch = mb && _searchMasterGraphCache && _searchMasterGraphCache[a.id]?.isAiOnly;
-      const aib = isAiOnlyMatch ? `<span class="badge" style="background:rgba(94,201,122,.1);">${t('aiPredictedBadge')}</span>` : '';
-      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, badges:[mb,tb,aib]});
+      // グラフ一致がAIシード予測データのみに基づく場合は、実レビューと誤解されないよう明示する（サムネイル左上に固定表示）
+      const isAiOnlyMatch = (mb||psb) && _searchMasterGraphCache && _searchMasterGraphCache[a.id]?.isAiOnly;
+      const aiBadge = isAiOnlyMatch ? t('aiPredictedBadge') : '';
+      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, badges:[mb,psb,tb], aiBadge});
     }).join('');
   }
 
@@ -7274,6 +7332,9 @@
     authSwitchLogin:{ ja:'すでにアカウントをお持ちですか？',en:'Already have an account?',ko:'이미 계정이 있으신가요?','zh-tw':'已有帳號？','zh-cn':'已有账号？',es:'¿Ya tienes cuenta?',fr:'Déjà un compte ?',pt:'Já tem uma conta?',de:'Haben Sie schon ein Konto?',ar:'لديك حساب بالفعل؟',th:'มีบัญชีอยู่แล้ว?',id:'Sudah punya akun?',ru:'Уже есть аккаунт?',it:'Hai già un account?',vi:'Đã có tài khoản?' },
     authSwitchRegister:{ ja:'アカウントがない方は',en:'No account yet?',ko:'계정이 없으신가요?','zh-tw':'沒有帳號？','zh-cn':'没有账号？',es:'¿No tienes cuenta?',fr:'Pas encore de compte ?',pt:'Não tem uma conta?',de:'Noch kein Konto?',ar:'ليس لديك حساب؟',th:'ยังไม่มีบัญชี?',id:'Belum punya akun?',ru:'Нет аккаунта?',it:'Non hai un account?',vi:'Chưa có tài khoản?' },
     graphMatchBadge:{ ja:'グラフ一致 {n}%',en:'Graph match {n}%',ko:'그래프 일치 {n}%','zh-tw':'圖表匹配 {n}%','zh-cn':'图表匹配 {n}%',es:'Coincidencia {n}%',fr:'Correspondance {n}%',pt:'Correspondência {n}%',de:'Graph-Übereinstimmung {n}%',ar:'تطابق الرسم {n}%',th:'กราฟตรงกัน {n}%',id:'Kecocokan grafik {n}%',ru:'Совпадение графика {n}%',it:'Corrispondenza grafico {n}%',vi:'Khớp biểu đồ {n}%' },
+    priorityMatchBadge:{ ja:'⭐ 優先軸 {n}%',en:'⭐ Priority {n}%',ko:'⭐ 우선 {n}%','zh-tw':'⭐ 優先 {n}%','zh-cn':'⭐ 优先 {n}%',es:'⭐ Prioridad {n}%',fr:'⭐ Priorité {n}%',pt:'⭐ Prioridade {n}%',de:'⭐ Priorität {n}%',ar:'⭐ أولوية {n}%',th:'⭐ ลำดับความสำคัญ {n}%',id:'⭐ Prioritas {n}%',ru:'⭐ Приоритет {n}%',it:'⭐ Priorità {n}%',vi:'⭐ Ưu tiên {n}%' },
+    priorityAxisHint:{ ja:'この軸を優先して検索',en:'Prioritize this axis in search',ko:'이 축을 우선하여 검색','zh-tw':'優先以此軸搜尋','zh-cn':'优先以此轴搜索',es:'Priorizar este eje en la búsqueda',fr:'Prioriser cet axe dans la recherche',pt:'Priorizar este eixo na busca',de:'Diese Achse bei der Suche priorisieren',ar:'إعطاء الأولوية لهذا المحور في البحث',th:'จัดลำดับความสำคัญแกนนี้ในการค้นหา',id:'Prioritaskan sumbu ini dalam pencarian',ru:'Приоритет этой оси в поиске',it:'Dai priorità a questo asse nella ricerca',vi:'Ưu tiên trục này khi tìm kiếm' },
+    priorityAxisExplain:{ ja:'⭐ を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。⭐が1つも無い場合は、全軸の平均的な近さで検索します。',en:'Axes marked with ⭐ take priority: results favor anime closest to that value on those axes. With no ⭐, all axes are averaged equally.',ko:'⭐ 표시한 축은 다른 축보다 우선하여 "그 수치에 가까운 작품"을 검색합니다. ⭐가 하나도 없으면 전체 축의 평균 근접도로 검색합니다.','zh-tw':'標記⭐的軸會優先搜尋「數值最接近」的作品。若未標記任何⭐，則以全部軸的平均接近度搜尋。','zh-cn':'标记⭐的轴会优先搜索"数值最接近"的作品。若未标记任何⭐，则以全部轴的平均接近度搜索。',es:'Los ejes marcados con ⭐ tienen prioridad: se buscan animes más cercanos a ese valor. Sin ⭐, se promedian todos los ejes por igual.',fr:'Les axes marqués d\u2019une ⭐ sont prioritaires : les résultats favorisent les animes les plus proches de cette valeur. Sans ⭐, tous les axes sont moyennés également.',pt:'Eixos marcados com ⭐ têm prioridade: os resultados favorecem animes mais próximos desse valor. Sem ⭐, todos os eixos são igualmente calculados na média.',de:'Mit ⭐ markierte Achsen haben Priorität: Ergebnisse bevorzugen Anime, die diesem Wert am nächsten sind. Ohne ⭐ werden alle Achsen gleich gemittelt.',ar:'المحاور المميزة بـ ⭐ لها الأولوية: تفضل النتائج الأنمي الأقرب لتلك القيمة. بدون ⭐، يتم حساب متوسط جميع المحاور بالتساوي.',th:'แกนที่ทำเครื่องหมาย ⭐ จะถูกจัดลำดับความสำคัญ ผลลัพธ์จะเน้นอนิเมะที่ใกล้เคียงค่านั้นที่สุด หากไม่มี ⭐ เลย จะใช้ค่าเฉลี่ยของทุกแกนเท่าๆกัน',id:'Sumbu bertanda ⭐ diprioritaskan: hasil mengutamakan anime yang paling dekat dengan nilai tersebut. Tanpa ⭐, semua sumbu dirata-ratakan sama.',ru:'Оси с ⭐ имеют приоритет: результаты предпочитают аниме, наиболее близкие к этому значению. Без ⭐ все оси усредняются одинаково.',it:'Gli assi contrassegnati con ⭐ hanno la priorità: i risultati favoriscono anime più vicini a quel valore. Senza ⭐, tutti gli assi vengono mediati allo stesso modo.',vi:'Các trục đánh dấu ⭐ được ưu tiên: kết quả ưu tiên anime gần giá trị đó nhất. Không có ⭐, tất cả trục được tính trung bình như nhau.' },
     tagMatchBadge: { ja:'タグ {n}件一致',en:'{n} tag match',ko:'태그 {n}건 일치','zh-tw':'標籤 {n}個匹配','zh-cn':'标签 {n}个匹配',es:'{n} etiqueta(s) coinciden',fr:'{n} tag(s) correspondant',pt:'{n} tag(s) coincidente(s)',de:'{n} Tag(s) übereinstimmend',ar:'{n} وسم متطابق',th:'แท็กตรงกัน {n}',id:'{n} tag cocok',ru:'{n} совпад. тегов',it:'{n} tag corrispondenti',vi:'{n} thẻ khớp' },
     excludedReviews:{ ja:'{n}件のグラフ未操作レビューは集計から除外されています',en:'{n} reviews without graph changes are excluded',ko:'{n}건의 그래프 미조작 리뷰는 집계에서 제외됩니다','zh-tw':'{n}則未調整圖表的評論已排除','zh-cn':'{n}条未调整图表的评论已排除',es:'{n} reseñas sin cambios en el gráfico están excluidas',fr:'{n} avis sans modifications du graphique sont exclus',pt:'{n} avaliações sem alterações no gráfico foram excluídas',de:'{n} Bewertungen ohne Graphänderungen sind ausgeschlossen',ar:'{n} مراجعات بدون تغييرات في الرسم مستثناة',th:'{n} รีวิวที่ไม่ได้ปรับกราฟถูกยกเว้น',id:'{n} ulasan tanpa perubahan grafik dikecualikan',ru:'{n} отзывов без изменений графика исключены',it:'{n} recensioni senza modifiche al grafico escluse',vi:'{n} đánh giá không thay đổi biểu đồ bị loại trừ' },
     statReviews:    { ja:'レビュー',en:'Reviews',ko:'리뷰','zh-tw':'評論','zh-cn':'评论',es:'Reseñas',fr:'Avis',pt:'Avaliações',de:'Bewertungen',ar:'مراجعات',th:'รีวิว',id:'Ulasan',ru:'Отзывы',it:'Recensioni',vi:'Đánh giá' },
@@ -7352,8 +7413,8 @@
     sortReviewsAsc:{ ja:'レビューが少ない順',en:'Least reviewed',ko:'리뷰 적은 순','zh-tw':'評論最少','zh-cn':'评论最少',es:'Menos reseñados',fr:'Moins d\'avis',pt:'Menos avaliados',de:'Wenigstbewertet',ar:'الأقل مراجعة',th:'รีวิวน้อยสุด',id:'Paling sedikit diulas',ru:'Меньше всего отзывов',it:'Meno recensiti',vi:'Ít đánh giá nhất' },
     sortMatch:    { ja:'好みグラフに近い順',en:'Closest to my taste',ko:'취향 그래프에 가까운 순','zh-tw':'最接近喜好圖','zh-cn':'最接近喜好图',es:'Más cercano a mi gusto',fr:'Plus proche de mes goûts',pt:'Mais próximo do meu gosto',de:'Am nächsten meinem Geschmack',ar:'الأقرب لذوقي',th:'ใกล้เคียงกับรสนิยม',id:'Paling sesuai selera',ru:'Ближе всего к моему вкусу',it:'Più vicino ai miei gusti',vi:'Gần gu nhất' },
     filterTagLabel:{ ja:'🏷 タグで絞る（最大10個）',en:'🏷 Filter by tags (up to 10)',ko:'🏷 태그로 좁히기 (최대 10개)','zh-tw':'🏷 以標籤篩選（最多10個）','zh-cn':'🏷 按标签筛选（最多10个）',es:'🏷 Filtrar por etiquetas',fr:'🏷 Filtrer par tags',pt:'🏷 Filtrar por tags',de:'🏷 Nach Tags filtern',ar:'🏷 تصفية حسب الوسوم',th:'🏷 กรองด้วยแท็ก',id:'🏷 Filter dengan tag',ru:'🏷 Фильтр по тегам',it:'🏷 Filtra per tag',vi:'🏷 Lọc theo thẻ' },
-    filterChartA: { ja:'📊 作品の完成度（0で無視）',en:'📊 Production Quality (0=ignore)',ko:'📊 작품 완성도 (0=무시)','zh-tw':'📊 作品完成度（0=忽略）','zh-cn':'📊 作品完成度（0=忽略）',es:'📊 Calidad (0=ignorar)',fr:'📊 Qualité (0=ignorer)',pt:'📊 Qualidade (0=ignorar)',de:'📊 Qualität (0=ignorieren)',ar:'📊 جودة الإنتاج (0=تجاهل)',th:'📊 คุณภาพงานสร้าง (0=ไม่นับ)',id:'📊 Kualitas Produksi (0=abaikan)',ru:'📊 Качество (0=игнор.)',it:'📊 Qualità (0=ignora)',vi:'📊 Chất lượng (0=bỏ qua)' },
-    filterChartB: { ja:'💫 感情・雰囲気（0で無視）',en:'💫 Mood & Atmosphere (0=ignore)',ko:'💫 감정·분위기 (0=무시)','zh-tw':'💫 情感·氛圍（0=忽略）','zh-cn':'💫 情感·氛围（0=忽略）',es:'💫 Ambiente (0=ignorar)',fr:'💫 Ambiance (0=ignorer)',pt:'💫 Clima (0=ignorar)',de:'💫 Stimmung (0=ignorieren)',ar:'💫 الأجواء (0=تجاهل)',th:'💫 อารมณ์และบรรยากาศ (0=ไม่นับ)',id:'💫 Suasana (0=abaikan)',ru:'💫 Настроение (0=игнор.)',it:'💫 Atmosfera (0=ignora)',vi:'💫 Cảm xúc (0=bỏ qua)' },
+    filterChartA: { ja:'📊 作品の完成度（無で無視）',en:'📊 Production Quality (unset=ignore)',ko:'📊 작품 완성도 (미설정=무시)','zh-tw':'📊 作品完成度（未設定=忽略）','zh-cn':'📊 作品完成度（未设置=忽略）',es:'📊 Calidad (sin ajustar=ignorar)',fr:'📊 Qualité (non réglé=ignorer)',pt:'📊 Qualidade (não definido=ignorar)',de:'📊 Qualität (nicht gesetzt=ignorieren)',ar:'📊 جودة الإنتاج (غير محدد=تجاهل)',th:'📊 คุณภาพงานสร้าง (ไม่ตั้งค่า=ไม่นับ)',id:'📊 Kualitas Produksi (belum diatur=abaikan)',ru:'📊 Качество (не задано=игнор.)',it:'📊 Qualità (non impostato=ignora)',vi:'📊 Chất lượng (chưa đặt=bỏ qua)' },
+    filterChartB: { ja:'💫 感情・雰囲気（無で無視）',en:'💫 Mood & Atmosphere (unset=ignore)',ko:'💫 감정·분위기 (미설정=무시)','zh-tw':'💫 情感·氛圍（未設定=忽略）','zh-cn':'💫 情感·氛围（未设置=忽略）',es:'💫 Ambiente (sin ajustar=ignorar)',fr:'💫 Ambiance (non réglé=ignorer)',pt:'💫 Clima (não definido=ignorar)',de:'💫 Stimmung (nicht gesetzt=ignorieren)',ar:'💫 الأجواء (غير محدد=تجاهل)',th:'💫 อารมณ์และบรรยากาศ (ไม่ตั้งค่า=ไม่นับ)',id:'💫 Suasana (belum diatur=abaikan)',ru:'💫 Настроение (не задано=игнор.)',it:'💫 Atmosfera (non impostato=ignora)',vi:'💫 Cảm xúc (chưa đặt=bỏ qua)' },
     btnRefineSearch:{ ja:'この条件で再検索',en:'Search with these filters',ko:'이 조건으로 재검색','zh-tw':'以此條件重新搜尋','zh-cn':'以此条件重新搜索',es:'Buscar con estos filtros',fr:'Chercher avec ces filtres',pt:'Buscar com esses filtros',de:'Mit diesen Filtern suchen',ar:'البحث بهذه الفلاتر',th:'ค้นหาด้วยเงื่อนไขนี้',id:'Cari dengan filter ini',ru:'Искать с этими фильтрами',it:'Cerca con questi filtri',vi:'Tìm với bộ lọc này' },
     btnSearchGoFull:{ ja:'検索する',en:'Search',ko:'검색하기','zh-tw':'搜尋','zh-cn':'搜索',es:'Buscar',fr:'Rechercher',pt:'Buscar',de:'Suchen',ar:'بحث',th:'ค้นหา',id:'Cari',ru:'Поиск',it:'Cerca',vi:'Tìm kiếm' },
     // ラベル（レーダー軸）
