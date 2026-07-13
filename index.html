@@ -154,6 +154,7 @@
     .card-badge-grid { display:grid; grid-template-columns:1fr 1fr; gap:.25rem .35rem; margin-top:.3rem; }
     .card-badge-grid .badge { margin-top:0; width:100%; box-sizing:border-box; text-align:center; }
     .card-badge-grid .badge-empty { visibility:hidden; }
+    .rank-badge { position:absolute; top:.4rem; right:.4rem; padding:.15rem .5rem; border-radius:999px; background:rgba(255,204,51,.92); color:#3a2a08; font-size:.68rem; font-weight:900; white-space:nowrap; z-index:2; }
     .hcard-body p { margin:0; font-size:.73rem; color:var(--muted); }
 
     /* ── GRID ── */
@@ -3706,6 +3707,7 @@
     const aiThumbBadge = opts.aiBadge ? `<span class="ai-thumb-badge">${opts.aiBadge}</span>` : '';
     const recruitThumbBadge = (opts.showRecruitBadge !== false && !opts.dummy) ? recruitBadgeHtml(item.kitsuId?'kitsu-'+item.kitsuId:item.id) : '';
     const thumbStack = (aiThumbBadge || recruitThumbBadge) ? `<div class="thumb-badge-stack">${aiThumbBadge}${recruitThumbBadge}</div>` : '';
+    const rankBadgeHtml = opts.rankBadge ? `<span class="rank-badge">${opts.rankBadge}</span>` : '';
 
     // ── カード下部：固定2×2グリッド（詰めない。無い枠は空欄のまま） ──
     // 左上:レビュー数 右上:タグ一致 左下:優先軸 右下:好み一致
@@ -3719,7 +3721,7 @@
 
     if (style === 'h') {
       return `<div class="hcard" onclick="${onclick}">
-        <div class="hcard-thumb"${opts.dummy?' style="opacity:.55;"':''}>${imgHtml}${thumbStack}</div>
+        <div class="hcard-thumb"${opts.dummy?' style="opacity:.55;"':''}>${imgHtml}${thumbStack}${rankBadgeHtml}</div>
         <div class="hcard-body">
           <h3>${title}</h3>
           <p>${meta}</p>
@@ -3729,7 +3731,7 @@
     }
     // gcard（デフォルト）
     return `<div class="gcard" onclick="${onclick}">
-      <div class="gcard-thumb">${imgHtml}${thumbStack}</div>
+      <div class="gcard-thumb">${imgHtml}${thumbStack}${rankBadgeHtml}</div>
       <div class="gcard-body"><h3>${title}</h3><p>${meta}</p>${badgeGrid}</div>
     </div>`;
   }
@@ -6901,15 +6903,33 @@
       document.getElementById('srResultGrid').innerHTML=`<div class="no-result"><h3>${t('noResults')}</h3><p>${t('noResultsSub')}</p></div>`;
       return;
     }
+    // ── 順位計算：タグ→優先軸→好み一致 の順で比較。同値はタイで同順位、次は連番（1,2,2,2,3...）。30位まで。 ──
+    const rankSorted = [...combined].sort((a,b) => {
+      if (a.tagScore !== b.tagScore) return b.tagScore - a.tagScore;
+      const aP = priorityAxes.size>0 ? a.priorityDist : 0, bP = priorityAxes.size>0 ? b.priorityDist : 0;
+      if (aP !== bP) return aP - bP;
+      const aM = a.match, bM = b.match;
+      if (aM !== bM) return aM - bM;
+      return 0;
+    });
+    const rankMap = new Map();
+    let currentRank = 0, prevKey = null;
+    rankSorted.forEach(row => {
+      const key = `${row.tagScore}|${priorityAxes.size>0?row.priorityDist:0}|${row.match}`;
+      if (key !== prevKey) { currentRank++; prevKey = key; }
+      if (currentRank <= 30) rankMap.set(row, currentRank);
+    });
     document.getElementById('srResultGrid').innerHTML=combined.map(row=>{
       const a=row.anime;
+      const rank = rankMap.get(row);
+      const rankBadge = rank ? `${rank}位` : '';
       const mb=(row.match!==Infinity && hasSrProfile())?`<span class="badge match-badge">${t('graphMatchBadge').replace('{n}',Math.max(0,Math.round(100-row.match*10)))}</span>`:'';
       const psb=(priorityAxes.size>0 && row.priorityDist!==Infinity)?`<span class="badge match-badge" style="background:rgba(255,204,51,.12);border-color:#8a7a2d;color:#ffe38a;">${t('priorityMatchBadge').replace('{n}',Math.max(0,Math.round(100-row.priorityDist*10)))}</span>`:'';
       const tb=row.tagScore>0?`<span class="badge" style="background:rgba(94,150,255,.15);border-color:#4a6abf;color:#b8d0ff;">${t('tagMatchBadge').replace('{n}',row.tagScore)}</span>`:'';
       // グラフ一致がAIシード予測データのみに基づく場合は、実レビューと誤解されないよう明示する（サムネイル左上に固定表示）
       const isAiOnlyMatch = (mb||psb) && _searchMasterGraphCache && _searchMasterGraphCache[a.id]?.isAiOnly;
       const aiBadge = isAiOnlyMatch ? t('aiPredictedBadge') : '';
-      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, tagMatchBadge:tb, graphMatchBadge:mb, priorityMatchBadge:psb, aiBadge});
+      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, tagMatchBadge:tb, graphMatchBadge:mb, priorityMatchBadge:psb, aiBadge, rankBadge});
     }).join('');
   }
 
