@@ -147,7 +147,13 @@
     .hcard-thumb img { width:100%; height:100%; object-fit:cover; }
     .hcard-body { padding:.5rem .6rem; min-height:4.6rem; display:flex; flex-direction:column; }
     .hcard-body h3 { margin:0 0 .2rem; font-size:.86rem; line-height:1.3; }
-    .recruit-badge { display:inline-block; margin-top:.25rem; padding:.1rem .4rem; border-radius:6px; background:rgba(255,180,60,.15); color:#ffb43c; font-size:.62rem; font-weight:700; white-space:nowrap; }
+    .recruit-badge { display:inline-block; padding:.1rem .4rem; border-radius:6px; background:rgba(255,180,60,.15); color:#ffb43c; font-size:.62rem; font-weight:700; white-space:nowrap; }
+    .thumb-badge-stack { position:absolute; top:.4rem; left:.4rem; display:flex; flex-direction:column; align-items:flex-start; gap:.3rem; z-index:2; }
+    .ai-thumb-badge { padding:.1rem .45rem; border-radius:999px; background:rgba(7,21,13,.8); border:1px solid #3d8a56; font-size:.62rem; color:#b8efc8; white-space:nowrap; }
+    .thumb-badge-stack .recruit-badge { background:rgba(7,21,13,.8); }
+    .card-badge-grid { display:grid; grid-template-columns:1fr 1fr; gap:.25rem .35rem; margin-top:.3rem; }
+    .card-badge-grid .badge { margin-top:0; width:100%; box-sizing:border-box; text-align:center; }
+    .card-badge-grid .badge-empty { visibility:hidden; }
     .hcard-body p { margin:0; font-size:.73rem; color:var(--muted); }
 
     /* ── GRID ── */
@@ -160,7 +166,6 @@
     .gcard-body p { margin:0; font-size:.74rem; color:var(--muted); }
     .badge { display:inline-block; margin-top:.3rem; padding:.15rem .5rem; border-radius:999px; background:rgba(94,201,122,.12); border:1px solid #3d8a56; font-size:.7rem; color:#b8efc8; }
     .match-badge { background:rgba(255,153,60,.12); border-color:#8a5a3d; color:#ffd0a0; }
-    .ai-thumb-badge { position:absolute; top:.4rem; left:.4rem; padding:.1rem .45rem; border-radius:999px; background:rgba(7,21,13,.8); border:1px solid #3d8a56; font-size:.62rem; color:#b8efc8; white-space:nowrap; z-index:2; }
 
     /* ── AD SLOTS ── */
     /* 本番時はこのクラスのdisplay:noneを外してAdSenseコードを挿入 */
@@ -216,6 +221,28 @@
     .anime-meta-text { color:var(--muted); font-size:.83rem; margin:0 0 .6rem; }
     .anime-desc-text { color:#d0ecd8; font-size:.9rem; margin:0 0 .9rem; line-height:1.6; }
     .review-btn { display:inline-flex; align-items:center; gap:.35rem; padding:.6rem 1.1rem; border-radius:999px; background:var(--red); color:#fff; font-weight:800; font-size:.9rem; border:none; cursor:pointer; }
+
+    /* ── お気に入りトグルボタン ── */
+    .fav-toggle-btn {
+      position:relative; width:44px; height:44px; padding:0; min-width:44px;
+      display:inline-flex; align-items:center; justify-content:center;
+      border-radius:50%; background:var(--card2); border:1.5px solid var(--line);
+      font-size:1.2rem; color:#ffb4cc; cursor:pointer;
+      transition: background .18s, border-color .18s, transform .12s;
+    }
+    .fav-toggle-btn:hover { border-color:#ff6b9d; }
+    .fav-toggle-btn:active { transform:scale(.9); }
+    .fav-toggle-btn.fav-active {
+      background:rgba(255,107,157,.18); border-color:#ff6b9d; color:#ff6b9d;
+      box-shadow:0 0 0 3px rgba(255,107,157,.15);
+      animation: favPop .32s ease;
+    }
+    @keyframes favPop {
+      0% { transform:scale(1); }
+      35% { transform:scale(1.3); }
+      65% { transform:scale(.92); }
+      100% { transform:scale(1); }
+    }
     .admin-btn { padding:.55rem .85rem; border-radius:10px; background:var(--card2); border:1px solid #7a3a3a; color:#ffcece; font-size:.78rem; cursor:pointer; }
     .reviews-section { padding:0 1rem; margin-top:.8rem; }
     .reviews-head h2 { margin:0 0 .2rem; font-size:1.05rem; font-weight:800; }
@@ -1396,8 +1423,8 @@
       <!-- ボタン：レビューする・レビューを見る・削除 -->
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.5rem;">
         <button class="review-btn" id="goReviewBtn" data-i18n="btnReview">🍎 レビューする</button>
-        <button class="review-btn" id="goReviewListBtn" style="background:var(--card2);color:#dff0e6;border:1px solid var(--line);">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
-        <button class="review-btn" id="favToggleBtn" style="background:var(--card2);color:#ffb4cc;border:1px solid var(--line);min-width:44px;" onclick="toggleFavorite()">♡</button>
+        <button class="review-btn" id="goReviewListBtn" style="background:#f4c261;color:#3a2a08;border:none;">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
+        <button class="fav-toggle-btn" id="favToggleBtn" onclick="toggleFavorite()" aria-pressed="false" aria-label="お気に入り">♡︎</button>
       </div>
       <!-- ミニグラフ（ボタン下） -->
       <div id="miniGraphSection" style="display:none;margin-top:.6rem;">
@@ -3652,9 +3679,12 @@
      item: { id, kitsuId, title, titleEn, image, meta, year, ... }
      opts: {
        style: 'g' | 'h'          // 'g'=gcard(グリッド型) 'h'=hcard(横スクロール型)
-       badges: 配列（追加で出したいバッジHTML文字列の配列）
-       showReviewCount: true/false（レビュー数バッジを出すか）
-       showRecruitBadge: true/false（募集中バッジを出すか）
+       showReviewCount: true/false（レビュー数バッジを出すか。固定グリッドの左上）
+       tagMatchBadge: HTML文字列（タグ一致バッジ。固定グリッドの右上）
+       graphMatchBadge: HTML文字列（グラフ一致バッジ。固定グリッドの左下）
+       priorityMatchBadge: HTML文字列（優先軸一致バッジ。固定グリッドの右下）
+       showRecruitBadge: true/false（募集中バッジを出すか。サムネイル左上、AI予測の下固定）
+       aiBadge: 文字列（AI予測バッジ内容。サムネイル左上固定）
        dummy: true/false（サンプル表示用、クリックでalertのみ）
      }
   ════════════════════════════════════════════════════ */
@@ -3669,26 +3699,35 @@
       ? `<img src="${escapeHtml(item.image)}" alt="${title}" loading="lazy" style="${style==='h'?'width:100%;height:100%;object-fit:cover;border-radius:10px;':''}" />`
       : (typeof thumbHtml==='function' ? (thumbHtml(item)||'📺') : '📺');
 
-    const badges = [];
-    if (opts.showReviewCount) badges.push(`<span class="badge">${tFn('reviewCount', item._reviewCount ?? reviewCount(item.id))}</span>`);
-    if (opts.badges) badges.push(...opts.badges);
-    if (opts.showRecruitBadge !== false && !opts.dummy) badges.push(recruitBadgeHtml(item.kitsuId?'kitsu-'+item.kitsuId:item.id));
+    // ── サムネイル左上：AI予測 → その下にレビュー募集中（固定スタック） ──
     const aiThumbBadge = opts.aiBadge ? `<span class="ai-thumb-badge">${opts.aiBadge}</span>` : '';
+    const recruitThumbBadge = (opts.showRecruitBadge !== false && !opts.dummy) ? recruitBadgeHtml(item.kitsuId?'kitsu-'+item.kitsuId:item.id) : '';
+    const thumbStack = (aiThumbBadge || recruitThumbBadge) ? `<div class="thumb-badge-stack">${aiThumbBadge}${recruitThumbBadge}</div>` : '';
+
+    // ── カード下部：固定2×2グリッド（詰めない。無い枠は空欄のまま） ──
+    // 左上:レビュー数 右上:タグ一致 左下:優先軸 右下:好み一致
+    const cell = (html) => html || '<span class="badge badge-empty">-</span>';
+    const reviewCountBadge = opts.showReviewCount ? `<span class="badge">${tFn('reviewCount', item._reviewCount ?? reviewCount(item.id))}</span>` : '';
+    const hasAnyGridBadge = reviewCountBadge || opts.tagMatchBadge || opts.graphMatchBadge || opts.priorityMatchBadge;
+    const badgeGrid = hasAnyGridBadge ? `<div class="card-badge-grid">
+      ${cell(reviewCountBadge)}${cell(opts.tagMatchBadge)}
+      ${cell(opts.priorityMatchBadge)}${cell(opts.graphMatchBadge)}
+    </div>` : '';
 
     if (style === 'h') {
       return `<div class="hcard" onclick="${onclick}">
-        <div class="hcard-thumb"${opts.dummy?' style="opacity:.55;"':''}>${imgHtml}${aiThumbBadge}</div>
+        <div class="hcard-thumb"${opts.dummy?' style="opacity:.55;"':''}>${imgHtml}${thumbStack}</div>
         <div class="hcard-body">
           <h3>${title}</h3>
           <p>${meta}</p>
-          ${opts.dummy?'<span style="font-size:.66rem;color:#7a9a86;">※サンプル表示</span>':badges.join('')}
+          ${opts.dummy?'<span style="font-size:.66rem;color:#7a9a86;">※サンプル表示</span>':badgeGrid}
         </div>
       </div>`;
     }
     // gcard（デフォルト）
     return `<div class="gcard" onclick="${onclick}">
-      <div class="gcard-thumb">${imgHtml}${aiThumbBadge}</div>
-      <div class="gcard-body"><h3>${title}</h3><p>${meta}</p>${badges.join('')}</div>
+      <div class="gcard-thumb">${imgHtml}${thumbStack}</div>
+      <div class="gcard-body"><h3>${title}</h3><p>${meta}</p>${badgeGrid}</div>
     </div>`;
   }
 
@@ -6791,31 +6830,21 @@
       // タグが有効な場合は「タグ一致」を最優先の軸にし、その中で選んだ並び順の基準を適用する
       // （グラフ一致度やレビュー数だけで並べると、タグを指定した意味が無くなるため）。
       // キーワード無し：常に約100件を目指して段階的に積み上げる。
-      // タグが有効な場合は「タグ一致」を最優先の軸にし、その中で⭐優先軸→選んだ並び順の基準を適用する
-      // （グラフ一致度やレビュー数だけで並べると、タグを指定した意味が無くなるため）。
+      // 好みグラフ（スライダー）を設定している場合は、マスターグラフの無い作品を最初から除外する
+      // （並び替え基準がmatch以外でも、グラフ検索である以上グラフの無い作品を混ぜてはいけない）。
+      // タグが有効な場合は「タグ一致」を最優先の軸にし、その中で⭐優先軸→選んだ並び順の基準を適用する。
       const sortWithinTier = (arr) => tieredSort(arr, sort);
-      const satisfiesSortCriteria = (r) => {
-        if(sort==='match') return hasSrProfile() ? r.match!==Infinity : true;
-        if(sort==='reviews_desc'||sort==='reviews_asc') return r.reviews>0;
-        return true;
-      };
+      let pool = mapped;
+      if (hasSrProfile()) pool = pool.filter(r => r.match !== Infinity);
 
       let ordered;
       if(srTagsActive.length) {
-        // ①タグ一致 かつ 並び順の基準も満たす → ②タグ一致のみ → ③並び順の基準のみ満たす → ④その他
-        const tier1 = sortWithinTier(mapped.filter(r=>r.tagScore>0 && satisfiesSortCriteria(r)));
-        const tier2 = sortWithinTier(mapped.filter(r=>r.tagScore>0 && !satisfiesSortCriteria(r)));
-        const usedAfter2 = new Set([...tier1, ...tier2].map(r=>r.anime.id));
-        const tier3 = sortWithinTier(mapped.filter(r=>!usedAfter2.has(r.anime.id) && satisfiesSortCriteria(r)));
-        const usedAfter3 = new Set([...usedAfter2, ...tier3.map(r=>r.anime.id)]);
-        const tier4 = sortWithinTier(mapped.filter(r=>!usedAfter3.has(r.anime.id)));
-        ordered = [...tier1, ...tier2, ...tier3, ...tier4];
-      } else {
-        // タグ無し：①並び順の基準を満たすヒット → ②その他の穴埋め
-        const tier1 = sortWithinTier(mapped.filter(satisfiesSortCriteria));
-        const usedIds1 = new Set(tier1.map(r=>r.anime.id));
-        const tier2 = sortWithinTier(mapped.filter(r=>!usedIds1.has(r.anime.id)));
+        // ①タグ一致 → ②タグ不一致（どちらもグラフフィルター後のpool内で）
+        const tier1 = sortWithinTier(pool.filter(r=>r.tagScore>0));
+        const tier2 = sortWithinTier(pool.filter(r=>r.tagScore===0));
         ordered = [...tier1, ...tier2];
+      } else {
+        ordered = sortWithinTier(pool);
       }
       list = ordered.slice(0, RESULT_TARGET);
     }
@@ -6850,7 +6879,7 @@
     const parts=[];
     if(srSearchState.q) parts.push(`「${srSearchState.q}」`);
     if(srTagsActive.length) parts.push(`タグ: ${srTagsActive.map(tag=>'#'+tag).join(' ')}`);
-    if(hasSrProfile()) parts.push('グラフ一致');
+    if(hasSrProfile()) parts.push('好み一致');
     document.getElementById('srResultMeta').textContent=`${combined.length}件${parts.length?' · '+parts.join(' · '):''}`;
 
     // 検索キーワード・タグフィルターの匿名ログ（企業提供データ用・analytics同意時のみ）
@@ -6876,7 +6905,7 @@
       // グラフ一致がAIシード予測データのみに基づく場合は、実レビューと誤解されないよう明示する（サムネイル左上に固定表示）
       const isAiOnlyMatch = (mb||psb) && _searchMasterGraphCache && _searchMasterGraphCache[a.id]?.isAiOnly;
       const aiBadge = isAiOnlyMatch ? t('aiPredictedBadge') : '';
-      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, badges:[mb,psb,tb], aiBadge});
+      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, tagMatchBadge:tb, graphMatchBadge:mb, priorityMatchBadge:psb, aiBadge});
     }).join('');
   }
 
@@ -7331,7 +7360,7 @@
     btnAuthCreate: { ja:'作成する',     en:'Create',        ko:'만들기',   'zh-tw':'建立',   'zh-cn':'创建',   es:'Crear',       fr:'Créer',      pt:'Criar',      de:'Erstellen',  ar:'إنشاء',th:'สร้าง',id:'Buat',ru:'Создать',it:'Crea',vi:'Tạo' },
     authSwitchLogin:{ ja:'すでにアカウントをお持ちですか？',en:'Already have an account?',ko:'이미 계정이 있으신가요?','zh-tw':'已有帳號？','zh-cn':'已有账号？',es:'¿Ya tienes cuenta?',fr:'Déjà un compte ?',pt:'Já tem uma conta?',de:'Haben Sie schon ein Konto?',ar:'لديك حساب بالفعل؟',th:'มีบัญชีอยู่แล้ว?',id:'Sudah punya akun?',ru:'Уже есть аккаунт?',it:'Hai già un account?',vi:'Đã có tài khoản?' },
     authSwitchRegister:{ ja:'アカウントがない方は',en:'No account yet?',ko:'계정이 없으신가요?','zh-tw':'沒有帳號？','zh-cn':'没有账号？',es:'¿No tienes cuenta?',fr:'Pas encore de compte ?',pt:'Não tem uma conta?',de:'Noch kein Konto?',ar:'ليس لديك حساب؟',th:'ยังไม่มีบัญชี?',id:'Belum punya akun?',ru:'Нет аккаунта?',it:'Non hai un account?',vi:'Chưa có tài khoản?' },
-    graphMatchBadge:{ ja:'グラフ一致 {n}%',en:'Graph match {n}%',ko:'그래프 일치 {n}%','zh-tw':'圖表匹配 {n}%','zh-cn':'图表匹配 {n}%',es:'Coincidencia {n}%',fr:'Correspondance {n}%',pt:'Correspondência {n}%',de:'Graph-Übereinstimmung {n}%',ar:'تطابق الرسم {n}%',th:'กราฟตรงกัน {n}%',id:'Kecocokan grafik {n}%',ru:'Совпадение графика {n}%',it:'Corrispondenza grafico {n}%',vi:'Khớp biểu đồ {n}%' },
+    graphMatchBadge:{ ja:'好み一致 {n}%',en:'Preference match {n}%',ko:'취향 일치 {n}%','zh-tw':'喜好匹配 {n}%','zh-cn':'喜好匹配 {n}%',es:'Coincidencia de gustos {n}%',fr:'Correspondance de goût {n}%',pt:'Correspondência de preferência {n}%',de:'Geschmacksübereinstimmung {n}%',ar:'تطابق التفضيلات {n}%',th:'ตรงกับความชอบ {n}%',id:'Kecocokan preferensi {n}%',ru:'Совпадение предпочтений {n}%',it:'Corrispondenza di gusti {n}%',vi:'Khớp sở thích {n}%' },
     priorityMatchBadge:{ ja:'⭐ 優先軸 {n}%',en:'⭐ Priority {n}%',ko:'⭐ 우선 {n}%','zh-tw':'⭐ 優先 {n}%','zh-cn':'⭐ 优先 {n}%',es:'⭐ Prioridad {n}%',fr:'⭐ Priorité {n}%',pt:'⭐ Prioridade {n}%',de:'⭐ Priorität {n}%',ar:'⭐ أولوية {n}%',th:'⭐ ลำดับความสำคัญ {n}%',id:'⭐ Prioritas {n}%',ru:'⭐ Приоритет {n}%',it:'⭐ Priorità {n}%',vi:'⭐ Ưu tiên {n}%' },
     priorityAxisHint:{ ja:'この軸を優先して検索',en:'Prioritize this axis in search',ko:'이 축을 우선하여 검색','zh-tw':'優先以此軸搜尋','zh-cn':'优先以此轴搜索',es:'Priorizar este eje en la búsqueda',fr:'Prioriser cet axe dans la recherche',pt:'Priorizar este eixo na busca',de:'Diese Achse bei der Suche priorisieren',ar:'إعطاء الأولوية لهذا المحور في البحث',th:'จัดลำดับความสำคัญแกนนี้ในการค้นหา',id:'Prioritaskan sumbu ini dalam pencarian',ru:'Приоритет этой оси в поиске',it:'Dai priorità a questo asse nella ricerca',vi:'Ưu tiên trục này khi tìm kiếm' },
     priorityAxisExplain:{ ja:'⭐ を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。⭐が1つも無い場合は、全軸の平均的な近さで検索します。',en:'Axes marked with ⭐ take priority: results favor anime closest to that value on those axes. With no ⭐, all axes are averaged equally.',ko:'⭐ 표시한 축은 다른 축보다 우선하여 "그 수치에 가까운 작품"을 검색합니다. ⭐가 하나도 없으면 전체 축의 평균 근접도로 검색합니다.','zh-tw':'標記⭐的軸會優先搜尋「數值最接近」的作品。若未標記任何⭐，則以全部軸的平均接近度搜尋。','zh-cn':'标记⭐的轴会优先搜索"数值最接近"的作品。若未标记任何⭐，则以全部轴的平均接近度搜索。',es:'Los ejes marcados con ⭐ tienen prioridad: se buscan animes más cercanos a ese valor. Sin ⭐, se promedian todos los ejes por igual.',fr:'Les axes marqués d\u2019une ⭐ sont prioritaires : les résultats favorisent les animes les plus proches de cette valeur. Sans ⭐, tous les axes sont moyennés également.',pt:'Eixos marcados com ⭐ têm prioridade: os resultados favorecem animes mais próximos desse valor. Sem ⭐, todos os eixos são igualmente calculados na média.',de:'Mit ⭐ markierte Achsen haben Priorität: Ergebnisse bevorzugen Anime, die diesem Wert am nächsten sind. Ohne ⭐ werden alle Achsen gleich gemittelt.',ar:'المحاور المميزة بـ ⭐ لها الأولوية: تفضل النتائج الأنمي الأقرب لتلك القيمة. بدون ⭐، يتم حساب متوسط جميع المحاور بالتساوي.',th:'แกนที่ทำเครื่องหมาย ⭐ จะถูกจัดลำดับความสำคัญ ผลลัพธ์จะเน้นอนิเมะที่ใกล้เคียงค่านั้นที่สุด หากไม่มี ⭐ เลย จะใช้ค่าเฉลี่ยของทุกแกนเท่าๆกัน',id:'Sumbu bertanda ⭐ diprioritaskan: hasil mengutamakan anime yang paling dekat dengan nilai tersebut. Tanpa ⭐, semua sumbu dirata-ratakan sama.',ru:'Оси с ⭐ имеют приоритет: результаты предпочитают аниме, наиболее близкие к этому значению. Без ⭐ все оси усредняются одинаково.',it:'Gli assi contrassegnati con ⭐ hanno la priorità: i risultati favoriscono anime più vicini a quel valore. Senza ⭐, tutti gli assi vengono mediati allo stesso modo.',vi:'Các trục đánh dấu ⭐ được ưu tiên: kết quả ưu tiên anime gần giá trị đó nhất. Không có ⭐, tất cả trục được tính trung bình như nhau.' },
@@ -10392,11 +10421,11 @@
     const already = await isFavorited(currentAnimeId);
     if(already) {
       await db.favorites.remove(_currentUser.id, currentAnimeId);
-      if(btn) { btn.textContent = '♡'; btn.classList.remove('fav-active'); }
+      if(btn) { btn.textContent = '♡\uFE0E'; btn.classList.remove('fav-active'); btn.setAttribute('aria-pressed','false'); }
       if(canUseAnalytics()) db.favoriteEvents.insert(currentAnimeId, 'remove');
     } else {
       await db.favorites.add(_currentUser.id, currentAnimeId);
-      if(btn) { btn.textContent = '❤️'; btn.classList.add('fav-active'); }
+      if(btn) { btn.textContent = '♥\uFE0E'; btn.classList.add('fav-active'); btn.setAttribute('aria-pressed','true'); }
       if(canUseAnalytics()) db.favoriteEvents.insert(currentAnimeId, 'add');
     }
   }
@@ -10404,9 +10433,11 @@
   async function updateFavButtonState(animeId) {
     const btn = document.getElementById('favToggleBtn');
     if(!btn) return;
-    if(!_currentUser) { btn.textContent = '♡'; return; }
+    if(!_currentUser) { btn.textContent = '♡\uFE0E'; btn.classList.remove('fav-active'); btn.setAttribute('aria-pressed','false'); return; }
     const fav = await isFavorited(animeId);
-    btn.textContent = fav ? '❤️' : '♡';
+    btn.textContent = fav ? '♥\uFE0E' : '♡\uFE0E';
+    btn.classList.toggle('fav-active', fav);
+    btn.setAttribute('aria-pressed', fav ? 'true' : 'false');
   }
 
   const MYPAGE_FAV_PREVIEW_COUNT = 4;
