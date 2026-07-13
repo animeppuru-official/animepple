@@ -8573,8 +8573,63 @@
 
       // ── ダッシュボードKPI ──
       const bp = sentiment.brandPower || {};
-      const brandEl = document.querySelector('#view-dashboard .kpi .k-val');
-      if(brandEl && bp.total_score != null) brandEl.textContent = bp.total_score;
+      const kpiVals = document.querySelectorAll('#view-dashboard .kpi .k-val');
+      if(kpiVals[0] && bp.total_score != null) kpiVals[0].textContent = bp.total_score;
+
+      if(sentiment.fanHeat) {
+        if(kpiVals[1]) kpiVals[1].textContent = sentiment.fanHeat.fan_heat;
+        const starsEl = document.querySelector('#view-dashboard .stars');
+        if(starsEl) starsEl.textContent = '★'.repeat(sentiment.fanHeat.star_rating) + '☆'.repeat(5-sentiment.fanHeat.star_rating);
+      }
+      if(sentiment.globalScore) {
+        if(kpiVals[2]) kpiVals[2].textContent = sentiment.globalScore.global_score;
+        const globalSubEl = document.querySelectorAll('#view-dashboard .kpi .k-sub')[1];
+        if(globalSubEl) globalSubEl.textContent = sentiment.globalScore.country_count + ' Countries';
+      }
+      if(sentiment.qualityReviewsKpi) {
+        if(kpiVals[3]) kpiVals[3].textContent = sentiment.qualityReviewsKpi.quality_review_count;
+        const confEl = document.querySelector('#view-dashboard .k-up');
+        if(confEl) confEl.textContent = sentiment.qualityReviewsKpi.confidence_label;
+      }
+
+      // Fan Heat: Fan Insightパック中心（コア層比率×0.4 + 熱量スコア×0.4 + 潜在インフルエンサー数×3、上限100）
+      (() => {
+        const coreDist = (fanInsight.fandomDistribution || []).find(f => f.maturity_level === 'コア層');
+        const coreRatio = coreDist ? coreDist.ratio_pct : 0;
+        const intensity = (fanInsight.fandomIntensityBreakdown || []).find(c => c.component === '高品質率');
+        const intensityScore = intensity ? intensity.contribution : 0;
+        const influencerCount = (fanInsight.potentialInfluencers || []).length;
+        const fanHeat = Math.min(Math.round((coreRatio*0.4 + intensityScore*0.4 + influencerCount*3)*10)/10, 100);
+        const fanHeatEl = document.getElementById('dashKpiFanHeat');
+        if (fanHeatEl) fanHeatEl.textContent = fanHeat;
+        const starsEl = document.getElementById('dashKpiFanHeatStars');
+        if (starsEl) { const n = Math.max(1, Math.min(5, Math.round(fanHeat/20))); starsEl.textContent = '★'.repeat(n) + '☆'.repeat(5-n); }
+      })();
+
+      // Global Score: Global Marketパック中心（brandPower.globalをそのまま流用。対応国数×10、上限100）
+      (() => {
+        const globalScore = (ip.brandPower && ip.brandPower.global != null) ? ip.brandPower.global : (bp.global ?? null);
+        const scoreEl = document.getElementById('dashKpiGlobalScore');
+        if (scoreEl && globalScore != null) scoreEl.textContent = globalScore;
+        const countryCount = (global.countryStats || []).length;
+        const subEl = document.getElementById('dashKpiGlobalSub');
+        if (subEl) subEl.textContent = countryCount + ' Countries';
+      })();
+
+      // Quality Reviews: Sentimentパック中心（quality=trueのレビュー件数。信頼度はfanSplitIndexと件数の組み合わせ）
+      (() => {
+        const qualityCount = sentiment.masterGraphMeta ? sentiment.masterGraphMeta.validCount : null;
+        const countEl = document.getElementById('dashKpiQualityReviews');
+        if (countEl && qualityCount != null) countEl.textContent = qualityCount;
+        const splitLevel = sentiment.fanSplitIndex ? sentiment.fanSplitIndex.split_level : null;
+        let confidence = 'Confidence Low';
+        if (qualityCount != null) {
+          if (qualityCount >= 15 && splitLevel === '分裂度低') confidence = 'Confidence High';
+          else if (qualityCount >= 5) confidence = 'Confidence Medium';
+        }
+        const confEl = document.getElementById('dashKpiConfidence');
+        if (confEl) confEl.textContent = confidence;
+      })();
 
       // ── Sentiment: 作品カード ──
       const heroName = document.getElementById('sentimentHeroName'); if(heroName) heroName.textContent = title;
