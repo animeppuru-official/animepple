@@ -3063,6 +3063,7 @@
           device_type: detectDeviceType(),
           lang: currentLang,
           referrer_type: detectReferrerType(),
+          session_id: getSessionId(),
         }).then(()=>{});
       },
       async getAllCountryCodes() {
@@ -3096,6 +3097,7 @@
           query: query.slice(0, 100),
           country_code: countryCode || null,
           result_count: resultCount,
+          session_id: getSessionId(),
         }).then(()=>{});
       },
       async getRecent(days) {
@@ -3214,7 +3216,7 @@
       },
       async add(userId, animeId) {
         if(!sb) return;
-        await sb.from('favorites').insert({ user_id: userId, anime_id: animeId, status: 'want_to_watch', referrer_type: detectReferrerType() });
+        await sb.from('favorites').insert({ user_id: userId, anime_id: animeId, status: 'want_to_watch', referrer_type: detectReferrerType(), session_id: getSessionId() });
       },
       async remove(userId, animeId) {
         if(!sb) return;
@@ -3919,8 +3921,8 @@
       // 並行取得
       const [mainRes, genreRes, catRes, prodRes, streamRes] = await Promise.allSettled([
         fetch(`${base}?fields[anime]=titles,posterImage,synopsis,startDate,episodeCount,episodeLength,subtype,canonicalTitle`, H),
-        fetch(`${base}/genres?page[limit]=10`, H),
-        fetch(`${base}/categories?page[limit]=10&sort=-totalMediaCount`, H),
+        fetch(`${base}/genres?page[limit]=20`, H),
+        fetch(`${base}/categories?page[limit]=20&sort=-totalMediaCount`, H),
         fetch(`${base}/productions?include=company`, H),
         fetch(`${base}/streaming-links?include=streamer`, H),
       ]);
@@ -3937,11 +3939,11 @@
         genres = (gj.data||[]).map(g=>g.attributes.name).filter(Boolean);
       }
 
-      // カテゴリ（上位5個）
+      // カテゴリ（Kitsu取得分を全て反映。totalMediaCount降順で既に人気順ソート済み）
       let categories = (existing && existing.categories) || [];
       if(catRes.status==='fulfilled' && catRes.value.ok){
         const cj = await catRes.value.json();
-        categories = (cj.data||[]).slice(0,5).map(c=>c.attributes.title).filter(Boolean);
+        categories = (cj.data||[]).map(c=>c.attributes.title).filter(Boolean);
       }
 
       // スタジオ（制作会社）
@@ -7080,6 +7082,20 @@
     return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
   }
 
+  // 探索セッションID（タブを閉じるまで固定・匿名。検索→閲覧→保存の行動連鎖を後から追跡するために使う）
+  function getSessionId() {
+    try {
+      let sid = sessionStorage.getItem('_ap_session_id');
+      if (!sid) {
+        sid = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          const r = Math.random()*16|0; return (c==='x'?r:(r&0x3|0x8)).toString(16);
+        }));
+        sessionStorage.setItem('_ap_session_id', sid);
+      }
+      return sid;
+    } catch(e) { return null; } // sessionStorage不可の環境（プライベートモード等）ではnull＝連結対象外
+  }
+
   // 流入元分類（検索/SNS/直接、匿名）
   function detectReferrerType() {
     const ref = document.referrer || '';
@@ -7504,21 +7520,21 @@
       vi:  ['Hình ảnh','Cốt truyện','Nhân vật','Thế giới','Âm nhạc','Chủ đề'],
     },
     axisB: {
-      ja:  ['かっこいい','可愛い','シリアス','コメディ','アダルト','エモい'],
-      en:  ['Cool','Cute','Serious','Comedy','Adult','Emotional'],
-      ko:  ['멋있는','귀여운','진지한','코미디','성인','감동'],
-      'zh-tw':['帥氣','可愛','嚴肅','喜劇','成人','感人'],
-      'zh-cn':['帅气','可爱','严肃','喜剧','成人','感人'],
-      es:  ['Genial','Cute','Serio','Comedia','Adult','Emotivo'],
-      fr:  ['Cool','Mignon','Sérieux','Comédie','Adult','Émouvant'],
-      pt:  ['Legal','Fofo','Sério','Comédia','Adult','Emocional'],
-      de:  ['Cool','Süß','Ernst','Komödie','Adult','Emotional'],
-      ar:  ['رائع','لطيف','جدي','كوميدي','بالغ','مؤثر'],
-      th:  ['เท่','น่ารัก','จริงจัง','ตลก','ผู้ใหญ่','อิน'],
-      id:  ['Keren','Imut','Serius','Komedi','Dewasa','Emosional'],
-      ru:  ['Крутой','Милый','Серьёзный','Комедия','Для взрослых','Эмоциональный'],
-      it:  ['Fico','Carino','Serio','Commedia','Adulti','Emozionante'],
-      vi:  ['Ngầu','Dễ thương','Nghiêm túc','Hài hước','Người lớn','Cảm động'],
+      ja:  ['かっこいい','可愛い','シリアス','コメディ','セクシー','エモい'],
+      en:  ['Cool','Cute','Serious','Comedy','Sexy','Emotional'],
+      ko:  ['멋있는','귀여운','진지한','코미디','섹시','감동'],
+      'zh-tw':['帥氣','可愛','嚴肅','喜劇','性感','感人'],
+      'zh-cn':['帅气','可爱','严肃','喜剧','性感','感人'],
+      es:  ['Genial','Cute','Serio','Comedia','Sexy','Emotivo'],
+      fr:  ['Cool','Mignon','Sérieux','Comédie','Sexy','Émouvant'],
+      pt:  ['Legal','Fofo','Sério','Comédia','Sexy','Emocional'],
+      de:  ['Cool','Süß','Ernst','Komödie','Sexy','Emotional'],
+      ar:  ['رائع','لطيف','جدي','كوميدي','مثير','مؤثر'],
+      th:  ['เท่','น่ารัก','จริงจัง','ตลก','เซ็กซี่','อิน'],
+      id:  ['Keren','Imut','Serius','Komedi','Seksi','Emosional'],
+      ru:  ['Крутой','Милый','Серьёзный','Комедия','Сексуальный','Эмоциональный'],
+      it:  ['Fico','Carino','Serio','Commedia','Sexy','Emozionante'],
+      vi:  ['Ngầu','Dễ thương','Nghiêm túc','Hài hước','Gợi cảm','Cảm động'],
     },
     // その他
     reviewCount:{ ja:(n)=>`レビュー ${n}件`, en:(n)=>`${n} review${n!==1?'s':''}`, ko:(n)=>`리뷰 ${n}건`, 'zh-tw':(n)=>`${n}則評論`,'zh-cn':(n)=>`${n}条评论`, es:(n)=>`${n} reseña${n!==1?'s':''}`, fr:(n)=>`${n} avis`, pt:(n)=>`${n} avaliação${n!==1?'ões':''}`, de:(n)=>`${n} Bewertung${n!==1?'en':''}`, ar:(n)=>`${n} مراجعة`, th:(n)=>`${n} รีวิว`, id:(n)=>`${n} ulasan`, ru:(n)=>`${n} отзывов`, it:(n)=>`${n} recensioni`, vi:(n)=>`${n} đánh giá` },
