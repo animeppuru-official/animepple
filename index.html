@@ -2941,7 +2941,7 @@
       },
       async getByIds(ids) {
         if(!sb) return [];
-        const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url,meta,description,year,episodes,genres,categories,studios,streaming').in('id', ids);
+        const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url,meta,description,year,episodes,genres,categories,studios,streaming,broadcast_start,broadcast_end').in('id', ids);
         return data || [];
       },
       async getAllTitles() {
@@ -5554,6 +5554,8 @@
             streaming: p.streaming || [],
             year: p.year || '',
             episodes: p.episodes || '',
+            broadcastStart: p.broadcast_start || '',
+            broadcastEnd: p.broadcast_end || '',
           };
           // ローカルキャッシュに追加してから再レンダリング
           const existing = JSON.parse(localStorage.getItem('animepple-user-pages') || '[]');
@@ -5603,11 +5605,20 @@
     geoStore.record(id).catch(()=>{});
 
     document.getElementById('animeTitle').textContent=getTitle(page);
-    // 種別・放送年・話数を組み合わせて表示
+    // 種別・放送年・話数・放送期間を組み合わせて表示
+    const formatBroadcastDate = (iso) => {
+      if(!iso) return '';
+      const [y,m,d] = iso.split('-');
+      return `${y}/${Number(m)}/${Number(d)}`;
+    };
+    const broadcastRange = page.broadcastStart
+      ? `${formatBroadcastDate(page.broadcastStart)}${page.broadcastEnd && page.broadcastEnd!==page.broadcastStart ? ' - '+formatBroadcastDate(page.broadcastEnd) : ''}`
+      : '';
     const metaParts = [
       page.meta || '',
       page.year ? page.year+'年' : '',
-      page.episodes ? page.episodes+'話' : ''
+      page.episodes ? page.episodes+'話' : '',
+      broadcastRange
     ].filter(Boolean);
     document.getElementById('animeMeta').textContent=metaParts.join(' · ');
 
