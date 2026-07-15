@@ -5537,6 +5537,7 @@
     if (!page && sb) {
       // ローカルキャッシュにない場合はSupabaseから取得して表示
       db.animePages.getByIds([id]).then(rows => {
+        console.log('DEBUG getByIds result:', id, rows);
         if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら何もしない
         if(rows && rows[0]) {
           const p = rows[0];
