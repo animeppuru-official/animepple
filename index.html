@@ -155,6 +155,21 @@
     .card-badge-grid .badge { margin-top:0; width:100%; box-sizing:border-box; text-align:center; }
     .card-badge-grid .badge-empty { visibility:hidden; }
     .rank-badge { position:absolute; top:.4rem; right:.4rem; padding:.15rem .5rem; border-radius:999px; background:rgba(255,204,51,.92); color:#3a2a08; font-size:.68rem; font-weight:900; white-space:nowrap; z-index:2; }
+    .no-image-placeholder {
+      position:relative; width:100%; height:100%; overflow:hidden;
+    }
+    .no-image-placeholder img {
+      width:100%; height:100%; object-fit:cover; display:block;
+    }
+    .no-image-placeholder .no-image-mobile { display:none; }
+    .no-image-placeholder span {
+      position:absolute; bottom:.4rem; left:50%; transform:translateX(-50%);
+      font-size:.68rem; color:#dff0e6; background:rgba(7,21,13,.55); padding:.1rem .5rem; border-radius:999px;
+    }
+    @media (max-width:640px) {
+      .no-image-placeholder .no-image-pc { display:none; }
+      .no-image-placeholder .no-image-mobile { display:block; }
+    }
     .hcard-body p { margin:0; font-size:.73rem; color:var(--muted); }
 
     /* ── GRID ── */
@@ -1415,7 +1430,7 @@
     </div>
   </header>
   <div class="anime-hero-wrap">
-    <div id="animeThumbHero" class="anime-thumb-hero">画像未設定</div>
+    <div id="animeThumbHero" class="anime-thumb-hero"></div>
     <div class="anime-info">
       <h1 id="animeTitle">—</h1>
       <p class="anime-meta-text" id="animeMeta"></p>
@@ -4817,8 +4832,28 @@
   /* ════════════════════════════
      HOME PAGE
   ════════════════════════════ */
+  // 画像未設定時のプレースホルダー（URL参照。カード/PC作品ページ/スマホ作品ページで専用画像を出し分け）
+  function noImagePlaceholderHtml(variant) {
+    variant = variant || 'card';
+    const srcMap = {
+      card:   'assets/placeholder_card.jpg',
+      pc:     'assets/placeholder_pc.jpg',
+      mobile: 'assets/placeholder_mobile.jpg',
+    };
+    if (variant === 'responsive') {
+      // 作品ページ本体：CSSのmedia queryでPC/スマホ用画像を出し分ける
+      return `<div class="no-image-placeholder">
+        <img class="no-image-pc" src="${srcMap.pc}" alt="" />
+        <img class="no-image-mobile" src="${srcMap.mobile}" alt="" />
+        <span>${t('noImage')}</span>
+      </div>`;
+    }
+    const src = srcMap[variant] || srcMap.card;
+    return `<div class="no-image-placeholder"><img src="${src}" alt="" /><span>${t('noImage')}</span></div>`;
+  }
+
   function thumbHtml(item) {
-    return item.image?`<img src="${item.image}" alt="${item.title}" style="width:100%;height:100%;object-fit:cover;" />`:'';
+    return item.image?`<img src="${item.image}" alt="${item.title}" style="width:100%;height:100%;object-fit:cover;" />`:noImagePlaceholderHtml();
   }
 
   // ピックアップ：
@@ -5699,7 +5734,7 @@
     renderAnimeDescription(page, id);
     document.getElementById('goReviewBtn').style.display='';
     const thumb=document.getElementById('animeThumbHero');
-    thumb.innerHTML=page.image?`<img src="${page.image}" alt="${page.title}" style="width:100%;height:100%;object-fit:cover;display:block;" />`:t('noImage');
+    thumb.innerHTML=page.image?`<img src="${page.image}" alt="${page.title}" style="width:100%;height:100%;object-fit:cover;display:block;" />`:noImagePlaceholderHtml('responsive');
     document.getElementById('goReviewBtn').onclick=()=>nav('review',id);
     updateFavButtonState(id);
     renderAffiliateLinks(page);
