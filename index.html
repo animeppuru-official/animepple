@@ -2946,8 +2946,19 @@
       },
       async getAllTitles() {
         if(!sb) return [];
-        const { data } = await sb.from('anime_pages').select('id,title,title_en');
-        return data || [];
+        // PostgRESTのデフォルト上限(1000件)を超えるため、range()でページネーションして全件取得する
+        let all = [];
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const { data, error } = await sb.from('anime_pages').select('id,title,title_en').range(from, from + pageSize - 1);
+          if (error) { console.warn('getAllTitles error:', error); break; }
+          if (!data || !data.length) break;
+          all = all.concat(data);
+          if (data.length < pageSize) break; // 最終ページ
+          from += pageSize;
+        }
+        return all;
       },
       async getAllWithLimit(limit) {
         if(!sb) return { items:[], count:0 };
@@ -2955,6 +2966,24 @@
           .select('id,title,title_en,image_url,meta,genres,categories,year', { count: 'exact' })
           .limit(limit||1000);
         return { items: data||[], count: count||0 };
+      },
+      // キーワード検索用：件数上限を設けず、ページネーションで全件取得する
+      async getAllForSearch() {
+        if(!sb) return { items: [], count: 0 };
+        let all = [];
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const { data, error } = await sb.from('anime_pages')
+            .select('id,title,title_en,image_url,meta,genres,categories,year')
+            .range(from, from + pageSize - 1);
+          if (error) { console.warn('getAllForSearch error:', error); break; }
+          if (!data || !data.length) break;
+          all = all.concat(data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+        return { items: all, count: all.length };
       },
       async search(query, limit) {
         if(!sb || !query) return [];
@@ -6573,10 +6602,11 @@
     const q=srSearchState.q.toLowerCase();
     let list=getAll();
 
-    // Supabase登録済み作品も候補プールに加える（キーワード検索・グラフ検索どちらでも対象にするため）
+    // Supabase登録済み作品も候補プールに加える（キーワード検索・グラフ検索どちらでも対象にするため。
+    // 検索は全件が対象になる必要があるため、件数上限を設けない getAllForSearch を使う）
     if(DB_MODE === 'supabase' && sb) {
       try {
-        const { items: dbPages } = await db.animePages.getAllWithLimit(500);
+        const { items: dbPages } = await db.animePages.getAllForSearch();
         const existingIds = new Set(list.map(a=>a.id));
         const dbItems = (dbPages||[])
           .filter(p => !existingIds.has(p.id))
