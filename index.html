@@ -2137,7 +2137,7 @@
         Kitsuのジャンル一覧（Action/Comedy/Dramaなど）は種類が変動しないため、tag_translationsテーブルに英語形をまとめて登録しておけます。
         既に登録済みのものはスキップされるので、何度実行しても安全です。
       </p>
-      <button class="admin-btn" onclick="seedKitsuGenres()">Kitsuジャンルを一括登録</button>
+      <button class="admin-btn" disabled style="opacity:.4;cursor:not-allowed;">Kitsuジャンル一括登録（廃止済み）</button>
       <p id="seedKitsuGenresResult" style="font-size:.78rem;color:var(--brand);margin:.6rem 0 0;"></p>
     </div>
   </div>
@@ -3390,62 +3390,7 @@
   // スキップするので、何度実行しても安全。
   async function seedKitsuGenres() {
     const resultEl = document.getElementById('seedKitsuGenresResult');
-    if(!sb) { if(resultEl) resultEl.textContent = 'Supabase未接続のため実行できません'; return; }
-    if(resultEl) resultEl.textContent = 'Kitsuからジャンル取得中…';
-    const names = new Set();
-    try {
-      let offset = 0;
-      while(offset <= 500) { // 安全策：無限ループ防止
-        const res = await fetch(`https://kitsu.io/api/edge/genres?page[limit]=20&page[offset]=${offset}`, { headers: { 'Accept': 'application/vnd.api+json' } });
-        const json = await res.json();
-        const data = json.data || [];
-        if(!data.length) break;
-        data.forEach(g => { const name = g.attributes && g.attributes.name; if(name) names.add(name); });
-        offset += 20;
-      }
-      // ジャンル(genres)だけでなく、カテゴリ(categories。より細かいタグ体系。例:Seinen, Dragon, Time Travel等)も対象に含める。
-      // Kitsu側に「カテゴリ全件一覧」を返す専用エンドポイントが無いため、代わりに
-      // このサイトのanime_pagesに既に保存されている実際のcategoriesを集めて対象にする。
-      if(resultEl) resultEl.textContent = 'サイト内のカテゴリを集計中…';
-      if(sb) {
-        const { data: pagesData } = await sb.from('anime_pages').select('categories');
-        (pagesData || []).forEach(p => {
-          (p.categories || []).forEach(c => { if(c) names.add(c); });
-        });
-      }
-    } catch(e) {
-      console.warn('seedKitsuGenres fetch error:', e);
-      if(resultEl) resultEl.textContent = 'Kitsu APIの取得に失敗しました: ' + e.message;
-      return;
-    }
-    const targetLangs = Object.keys(TAG_TRANSLATE_LANG_MAP).filter(l => l !== 'en');
-    let created = 0, updated = 0, skipped = 0, i = 0;
-    for(const name of names) {
-      i++;
-      try {
-        const existing = await db.tagTranslations.findByEnglish(name);
-        // 既存行がある場合も、まだ入っていない言語だけを埋める（前回失敗して英語だけ入っている行の救済）
-        const missingLangs = existing ? targetLangs.filter(l => !existing[langToTagCol(l)]) : targetLangs;
-        if(existing && missingLangs.length === 0) { skipped++; continue; }
-        if(resultEl) resultEl.textContent = `翻訳中… (${i}/${names.size}) ${name}`;
-        const extra = {};
-        for(const lang of missingLangs) {
-          try {
-            const translated = await translateApi.translate(name, TAG_TRANSLATE_LANG_MAP[lang]);
-            if(translated) extra[lang] = translated;
-          } catch(e) { console.warn('seedKitsuGenres translate error:', name, lang, e); }
-          await new Promise(r => setTimeout(r, 200)); // DeepL無料枠のレート制限対策
-        }
-        if(existing) {
-          for(const lang of Object.keys(extra)) { await db.tagTranslations.updateColumn(existing.id, lang, extra[lang]); }
-          if(Object.keys(extra).length) updated++; else skipped++;
-        } else {
-          const row = await db.tagTranslations.insertRow(name, extra);
-          if(row) created++; else skipped++;
-        }
-      } catch(e) { console.warn('seedKitsuGenres insert error:', name, e); }
-    }
-    if(resultEl) resultEl.textContent = `完了: ${names.size}件中、新規登録${created}件・既存の穴埋め${updated}件・スキップ${skipped}件`;
+    if(resultEl) resultEl.textContent = 'この機能は廃止されました（Kitsu API依存を撤去済み）';
   }
   window.seedKitsuGenres = seedKitsuGenres;
 
@@ -3480,23 +3425,10 @@
     return map;
   }
 
-  const ANIME_API_BASE = 'https://kitsu.io/api/edge/anime';
+  // Kitsu API依存を撤去。検索は自社DB（anime_pages）のみを対象とする。
   const animeApi = {
-    // 生のfetch＋JSON取得だけを担う最小限の共通関数
-    async _fetchJson(url) {
-      const res = await fetch(url, { headers: { 'Accept': 'application/vnd.api+json' } });
-      return res.json();
-    },
-    // テキスト検索（キーワードでアニメを探す）。music（ミュージックビデオ等の大分類）は除外
-    async searchByText(query, limit=20) {
-      const url = `${ANIME_API_BASE}?filter[text]=${encodeURIComponent(query)}&filter[subtype]=TV,movie,OVA,ONA,special&page[limit]=${limit}&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
-      return this._fetchJson(url);
-    },
-    // 人気順で取得（オフセット指定可）。music除外
-    async getPopular(offset=0, limit=20) {
-      const url = `${ANIME_API_BASE}?sort=-userCount&filter[subtype]=TV,movie,OVA,ONA,special&page[limit]=${limit}&page[offset]=${offset}&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
-      return this._fetchJson(url);
-    },
+    async searchByText(query, limit=20) { return { data: [] }; },
+    async getPopular(offset=0, limit=20) { return { data: [] }; },
   };
 
   const STORAGE_KEY = "animepple-user-pages";
@@ -3904,114 +3836,11 @@
   }
   window.navPopular = navPopular;
 
-  // KitsuIDからページを自動生成してナビ
+  // Kitsu API依存を撤去。未登録の作品ページへの自動アクセスは、
+  // トップページ(未登録通知)へリダイレクトする形に変更。
   async function navAnime(kitsuId) {
-    const pageId = `kitsu-${kitsuId}`;
-    // すでにLocalStorageにあればそのまま表示
-    const existing = pj(STORAGE_KEY).find(p=>p.id===pageId);
-    // genresが未取得の古いキャッシュなら再取得する
-    if (existing && existing.genres !== undefined) { nav('anime', pageId); return; }
-    // seedAnimeにあればそのまま
-    const seed = seedAnime.find(p=>p.id===pageId);
-    if (seed) { nav('anime', pageId); return; }
-    // なければKitsuから取得して保存
-    try {
-      const H = { headers: { 'Accept': 'application/vnd.api+json' } };
-      const base = `https://kitsu.io/api/edge/anime/${kitsuId}`;
-      // 並行取得
-      const [mainRes, genreRes, catRes, prodRes, streamRes] = await Promise.allSettled([
-        fetch(`${base}?fields[anime]=titles,posterImage,synopsis,startDate,episodeCount,episodeLength,subtype,canonicalTitle`, H),
-        fetch(`${base}/genres?page[limit]=20`, H),
-        fetch(`${base}/categories?page[limit]=20&sort=-totalMediaCount`, H),
-        fetch(`${base}/productions?include=company`, H),
-        fetch(`${base}/streaming-links?include=streamer`, H),
-      ]);
-
-      const json = mainRes.status==='fulfilled' ? await mainRes.value.json() : null;
-      if(!json) throw new Error('main fetch failed');
-      const a = json.data.attributes;
-      const titles = a.titles || {};
-
-      // ジャンル（レート制限等でHTTPエラーの場合は既存データを保持し、空で上書きしない）
-      let genres = (existing && existing.genres) || [];
-      if(genreRes.status==='fulfilled' && genreRes.value.ok){
-        const gj = await genreRes.value.json();
-        genres = (gj.data||[]).map(g=>g.attributes.name).filter(Boolean);
-      }
-
-      // カテゴリ（Kitsu取得分を全て反映。totalMediaCount降順で既に人気順ソート済み）
-      let categories = (existing && existing.categories) || [];
-      if(catRes.status==='fulfilled' && catRes.value.ok){
-        const cj = await catRes.value.json();
-        categories = (cj.data||[]).map(c=>c.attributes.title).filter(Boolean);
-      }
-
-      // スタジオ（制作会社）
-      let studios = (existing && existing.studios) || [];
-      if(prodRes.status==='fulfilled' && prodRes.value.ok){
-        const pj2 = await prodRes.value.json();
-        const included = pj2.included||[];
-        studios = included.filter(i=>i.type==='producers'||i.type==='companies').map(i=>i.attributes.name).filter(Boolean);
-        if(!studios.length){
-          studios = (pj2.data||[]).map(d=>d.attributes.role==='producer'?d.attributes.name:'').filter(Boolean);
-        }
-      }
-
-      // 配信サービス
-      let streaming = (existing && existing.streaming) || [];
-      if(streamRes.status==='fulfilled' && streamRes.value.ok){
-        const sj2 = await streamRes.value.json();
-        const inc = sj2.included||[];
-        streaming = inc.filter(i=>i.type==='streamers').map(i=>({
-          name: i.attributes.siteName,
-        })).filter(s=>s.name);
-        // URLは各streamingLinkから
-        (sj2.data||[]).forEach(d=>{
-          const streamerId = d.relationships?.streamer?.data?.id;
-          const found = streaming.find((s,idx)=>{
-            const inc2 = inc.find(i=>i.id===streamerId);
-            return inc2 && inc2.attributes.siteName===s.name;
-          });
-          if(found && d.attributes.url) found.url = d.attributes.url;
-        });
-      }
-
-      // 文字数で単純に切ると単語やアルファベット略称の途中で切れて不自然になるため、
-      // 上限を超える場合は直近の句点(。/！/？/. / ! / ? )まで戻ってから切る
-      const truncateAtBoundary = (text, maxLen) => {
-        if (!text || text.length <= maxLen) return text || '';
-        const cut = text.slice(0, maxLen);
-        const lastBoundary = Math.max(
-          cut.lastIndexOf('。'), cut.lastIndexOf('！'), cut.lastIndexOf('？'),
-          cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? ')
-        );
-        if (lastBoundary >= maxLen * 0.5) return cut.slice(0, lastBoundary + 1);
-        const lastSpace = cut.lastIndexOf(' ');
-        return (lastSpace >= maxLen * 0.5 ? cut.slice(0, lastSpace) : cut) + '…';
-      };
-
-      const page = {
-        id: pageId,
-        kitsuId,
-        title: titles.ja_jp || a.canonicalTitle || titles.en_jp || '',
-        titleEn: titles.en || titles.en_jp || a.canonicalTitle || '',
-        meta: a.subtype || '',
-        image: (a.posterImage||{}).medium || (a.posterImage||{}).large || '',
-        description: truncateAtBoundary((a.synopsis||'').replace(/<[^>]*>/g,''), 500),
-        year: a.startDate ? a.startDate.slice(0,4) : '',
-        episodes: a.episodeCount || '',
-        features: a.subtype ? [a.subtype] : [],
-        genres,
-        categories,
-        studios,
-        streaming,
-      };
-      const pages = pj(STORAGE_KEY);
-      const existIdx = pages.findIndex(p=>p.id===pageId); if(existIdx>=0) pages[existIdx]=page; else pages.unshift(page); sj(STORAGE_KEY, pages);
-      nav('anime', pageId);
-    } catch(e) {
-      nav('anime', pageId); // エラーでもページに遷移
-    }
+    alert('この作品はまだAnimeppleに登録されていません。');
+    nav('home');
   }
   window.navAnime = navAnime;
 
@@ -4216,29 +4045,9 @@
     return items[i] ? Number(items[i].dataset.year) : null;
   }
 
-  // Kitsuから人気作品を取得（userCount降順）。music（大分類）は除外
+  // Kitsu API依存を撤去。人気作品一覧は自社DB（anime_pages）のみを対象とする。
   async function fetchKitsuPopular(pageOffset=0, yearFrom=null, yearTo=null) {
-    let url = `https://kitsu.io/api/edge/anime?sort=-userCount&filter[subtype]=TV,movie,OVA,ONA,special&page[limit]=20&page[offset]=${pageOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`;
-    if(yearFrom) url += `&filter[seasonYear]=${yearFrom}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(()=>controller.abort(), 10000); // 10秒でタイムアウト（無限読み込み中を防止）
-    let res;
-    try {
-      res = await fetch(url, { headers:{'Accept':'application/vnd.api+json'}, signal: controller.signal });
-    } finally {
-      clearTimeout(timeoutId);
-    }
-    const json = await res.json();
-    return (json.data||[]).map(item=>({
-      id: `kitsu-${item.id}`,
-      kitsuId: item.id,
-      title: item.attributes.titles?.ja_jp || item.attributes.canonicalTitle || '',
-      titleEn: item.attributes.canonicalTitle || '',
-      image: item.attributes.posterImage?.large || item.attributes.posterImage?.medium || '',
-      meta: item.attributes.subtype || '',
-      year: item.attributes.startDate ? item.attributes.startDate.slice(0,4) : '',
-      userCount: item.attributes.userCount || 0,
-    }));
+    return [];
   }
 
   // 各ピルのラベルを現在の状態に合わせて更新
@@ -5009,21 +4818,8 @@
         }));
       }
 
-      // 100件未満ならKitsuからランダム取得
+      // 件数が少ない場合も、Kitsuへのフォールバックはせず自社DBの範囲でそのまま返す
       if(allPages.length < PICKUP_THRESHOLD) {
-        try {
-          const randomOffset = Math.floor((slot % 50)) * 20;
-          const res = await fetch(`https://kitsu.io/api/edge/anime?sort=-userCount&filter[subtype]=TV,movie,OVA,ONA,special&page[limit]=20&page[offset]=${randomOffset}&fields[anime]=titles,posterImage,subtype,canonicalTitle,startDate,userCount`);
-          const json = await res.json();
-          if(json.data) {
-            return json.data.slice(0,15).map(a=>({
-              id: `kitsu-${a.id}`,
-              title: a.attributes.canonicalTitle || '—',
-              image: a.attributes.posterImage?.small || '',
-              meta: a.attributes.subtype || '',
-            })).slice(0, 15);
-          }
-        } catch(e) { console.warn('Kitsu pickup:', e); }
         return allPages.slice(0, 8);
       }
     }
@@ -5153,37 +4949,9 @@
     return { season:'FALL', label:`${y}年秋アニメ` };
   }
 
+  // Kitsu API依存を撤去。今期アニメの自動取得は行わない（自社DB登録作品のみで運用）。
   async function fetchSeasonalAnime() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const mo = now.getMonth() + 1;
-    const season = mo<=3?'winter':mo<=6?'spring':mo<=9?'summer':'fall';
-    const base = `https://kitsu.io/api/edge/anime?filter[season]=${season}&filter[seasonYear]=${year}&filter[subtype]=TV,movie,OVA,ONA,special&sort=-userCount&page[limit]=20&fields[anime]=titles,posterImage,subtype,canonicalTitle`;
-    
-    // 複数ページを並行取得（最大3ページ=60件）
-    const offsets = [0, 20, 40];
-    const results = await Promise.allSettled(
-      offsets.map(offset => fetch(`${base}&page[offset]=${offset}`, { headers: { 'Accept': 'application/vnd.api+json' } }).then(r=>r.json()))
-    );
-    
-    const allData = results.flatMap(r => r.status==='fulfilled' ? (r.value.data||[]) : []);
-    // 重複除去
-    const seen = new Set();
-    return allData.filter(item=>{ if(seen.has(item.id)) return false; seen.add(item.id); return true; })
-      .map(item => {
-        const a = item.attributes;
-        const titles = a.titles || {};
-        const titleJa = titles.ja_jp || '';
-        const titleEn = titles.en || titles.en_jp || a.canonicalTitle || '';
-        return {
-          id: `kitsu-${item.id}`,
-          title: titleJa || a.canonicalTitle || titleEn,
-          titleEn: titleEn,
-          meta: a.subtype || '',
-          image: (a.posterImage||{}).medium || (a.posterImage||{}).large || '',
-          dummy: false
-        };
-      });
+    return [];
   }
 
   function renderSeasonSection(items, label) {
@@ -5791,6 +5559,24 @@
           const existing = JSON.parse(localStorage.getItem('animepple-user-pages') || '[]');
           if(!existing.find(x=>x.id===mapped.id)) {
             localStorage.setItem('animepple-user-pages', JSON.stringify([mapped, ...existing]));
+          }
+          // title_enが未設定（DBにも元々無い）場合のみ、DeepLで翻訳してSupabaseに保存する。
+          // 一度保存すれば以降は p.title_en が入っているのでこの分岐自体を通らない（毎回叩かない）。
+          if(!p.title_en && p.title) {
+            translateApi.translate(p.title, 'EN').then(async (translated) => {
+              if(!translated || translated === p.title) return; // 翻訳失敗時は保存しない
+              try {
+                await sb.from('anime_pages').update({ title_en: translated }).eq('id', id);
+                // ローカルキャッシュとメモリ上のページ情報も更新（再取得なしで反映）
+                const cached = JSON.parse(localStorage.getItem('animepple-user-pages') || '[]');
+                const idx = cached.findIndex(x=>x.id===id);
+                if(idx>=0) { cached[idx].titleEn = translated; localStorage.setItem('animepple-user-pages', JSON.stringify(cached)); }
+                if(currentAnimeId === id) {
+                  const titleEl = document.getElementById('animeTitleEn');
+                  if(titleEl) titleEl.textContent = translated;
+                }
+              } catch(e) { console.warn('title_en auto-translate save error:', e); }
+            }).catch(e => console.warn('title_en auto-translate error:', e));
           }
           renderAnimePage(id);
         } else {
