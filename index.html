@@ -857,6 +857,8 @@
 
     /* ── LANGUAGE SELECTOR ── */
     .lang-current-btn { padding:.38rem .65rem; border-radius:8px; background:var(--card2); border:1px solid var(--line); display:inline-flex; align-items:center; gap:.3rem; cursor:pointer; font-size:.78rem; font-weight:700; color:var(--brand); white-space:nowrap; }
+    .romaji-toggle-btn { padding:.38rem .55rem; border-radius:8px; background:var(--card2); border:1px solid var(--line); cursor:pointer; font-size:.72rem; font-weight:800; color:var(--muted); white-space:nowrap; }
+    .romaji-toggle-btn.active { background:var(--brand); border-color:var(--brand); color:#04150c; }
     .lang-overlay { display:none; position:fixed; inset:0; z-index:300; background:rgba(2,8,5,.97); overflow-y:auto; padding:1.2rem 1rem; }
     .lang-overlay.open { display:block; }
     .lang-overlay h2 { margin:0 0 .3rem; font-size:1.1rem; font-weight:900; }
@@ -1324,6 +1326,7 @@
       <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.57.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
       </div>
     </div>
@@ -1426,6 +1429,7 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1557,6 +1561,7 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1608,6 +1613,7 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1679,6 +1685,7 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1742,6 +1749,7 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1823,6 +1831,7 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1848,6 +1857,7 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1873,6 +1883,7 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -2537,6 +2548,7 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -2576,6 +2588,7 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -2956,7 +2969,7 @@
       },
       async getByIds(ids) {
         if(!sb) return [];
-        const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url,meta,description,year,episodes,genres,categories,studios,streaming,broadcast_start,broadcast_end').in('id', ids);
+        const { data } = await sb.from('anime_pages').select('id,title,title_en,title_romaji,title_i18n,image_url,meta,description,year,episodes,genres,categories,studios,streaming,broadcast_start,broadcast_end').in('id', ids);
         return data || [];
       },
       async getAllTitles() {
@@ -2966,7 +2979,7 @@
         let from = 0;
         const pageSize = 1000;
         while (true) {
-          const { data, error } = await sb.from('anime_pages').select('id,title,title_en').range(from, from + pageSize - 1);
+          const { data, error } = await sb.from('anime_pages').select('id,title,title_en,title_romaji,title_i18n').range(from, from + pageSize - 1);
           if (error) { console.warn('getAllTitles error:', error); break; }
           if (!data || !data.length) break;
           all = all.concat(data);
@@ -2978,7 +2991,7 @@
       async getAllWithLimit(limit) {
         if(!sb) return { items:[], count:0 };
         const { data, count } = await sb.from('anime_pages')
-          .select('id,title,title_en,image_url,meta,genres,categories,year', { count: 'exact' })
+          .select('id,title,title_en,title_romaji,title_i18n,image_url,meta,genres,categories,year', { count: 'exact' })
           .limit(limit||1000);
         return { items: data||[], count: count||0 };
       },
@@ -2990,7 +3003,7 @@
         const pageSize = 1000;
         while (true) {
           const { data, error } = await sb.from('anime_pages')
-            .select('id,title,title_en,image_url,meta,genres,categories,year')
+            .select('id,title,title_en,title_romaji,title_i18n,image_url,meta,genres,categories,year')
             .range(from, from + pageSize - 1);
           if (error) { console.warn('getAllForSearch error:', error); break; }
           if (!data || !data.length) break;
@@ -3003,7 +3016,7 @@
       async search(query, limit) {
         if(!sb || !query) return [];
         const { data } = await sb.from('anime_pages')
-          .select('id,title,title_en,image_url,meta,genres')
+          .select('id,title,title_en,title_romaji,title_i18n,image_url,meta,genres')
           .or(`title.ilike.%${query}%,title_en.ilike.%${query}%`)
           .limit(limit||20);
         return data || [];
@@ -4258,6 +4271,8 @@
             kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
             title: p.title || p.title_en || '',
             titleEn: p.title_en || p.title || '',
+            titleRomaji: p.title_romaji || '',
+            titleI18n: p.title_i18n || {},
             meta: p.meta || '',
             image: p.image_url || '',
             year: p.year || '',
@@ -4944,6 +4959,8 @@
               kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-', '') : null,
               title: p.title || p.title_en || '',
               titleEn: p.title_en || p.title || '',
+              titleRomaji: p.title_romaji || '',
+              titleI18n: p.title_i18n || {},
               meta: p.meta || '',
               image: p.image_url || '',
             }));
@@ -5132,11 +5149,52 @@
   /* ════════════════════════════
      ANIME PAGE
   ════════════════════════════ */
-  // 言語設定に応じてタイトルを返す
+  // 言語設定・ローマ字モードに応じてタイトルを返す
+  // ・ローマ字モードON かつ title_romaji があればそれを返す
+  // ・ja: 日本語タイトル
+  // ・en: title_en（DBに無ければ既存の自動翻訳が裏で入る）
+  // ・それ以外: title_i18n[lang] があればそれ、無ければ裏でT翻訳(DeepL)して以後キャッシュ
   function getTitle(page) {
     if (!page) return '';
+    if (romajiMode && page.titleRomaji) return page.titleRomaji;
     if (currentLang === 'ja') return page.title || page.titleEn || '';
+    if (currentLang === 'en') return page.titleEn || page.title || '';
+    const cached = page.titleI18n && page.titleI18n[currentLang];
+    if (cached) return cached;
+    requestTitleTranslation(page, currentLang);
     return page.titleEn || page.title || '';
+  }
+
+  // ── タイトルのT翻訳（DeepL）: 未キャッシュの言語だけ裏で翻訳してSupabaseに保存 ──
+  const _titleTranslateRequested = new Set();
+  async function requestTitleTranslation(page, lang) {
+    if (!page || !page.id || lang === 'ja' || lang === 'en') return;
+    const dedupKey = `${page.id}::${lang}`;
+    if (_titleTranslateRequested.has(dedupKey)) return;
+    if (page.titleI18n && page.titleI18n[lang]) return;
+    const targetCode = TAG_TRANSLATE_LANG_MAP[lang];
+    const source = page.titleEn || page.title;
+    if (!targetCode || !source) return;
+    _titleTranslateRequested.add(dedupKey);
+    try {
+      const translated = await translateApi.translate(source, targetCode);
+      if (!translated || translated === source) return;
+      page.titleI18n = { ...(page.titleI18n || {}), [lang]: translated };
+      if (sb) {
+        const { data: row } = await sb.from('anime_pages').select('title_i18n').eq('id', page.id).maybeSingle();
+        const merged = { ...(row?.title_i18n || {}), [lang]: translated };
+        await sb.from('anime_pages').update({ title_i18n: merged }).eq('id', page.id);
+      }
+      // 表示中のタイトル要素を更新（詳細ページ）
+      if (currentAnimeId === page.id) {
+        const titleEl = document.getElementById('animeTitle');
+        if (titleEl && currentLang === lang) titleEl.textContent = translated;
+      }
+    } catch (e) {
+      console.warn('title T-translate error:', e);
+    } finally {
+      _titleTranslateRequested.delete(dedupKey);
+    }
   }
 
   /* ════════════════════════════
@@ -5609,6 +5667,8 @@
             kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
             title: p.title || p.title_en || '',
             titleEn: p.title_en || p.title || '',
+            titleRomaji: p.title_romaji || '',
+            titleI18n: p.title_i18n || {},
             meta: p.meta || '',
             image: p.image_url || '',
             description: p.description || '',
@@ -6505,6 +6565,8 @@
           kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
           title: p.title || p.title_en || '',
           titleEn: p.title_en || p.title || '',
+          titleRomaji: p.title_romaji || '',
+          titleI18n: p.title_i18n || {},
           meta: p.meta || '', image: p.image_url || '',
           year: p.year || '', episodes: p.episodes || '',
         };
@@ -6650,6 +6712,8 @@
             kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
             title: p.title || p.title_en || '',
             titleEn: p.title_en || p.title || '',
+            titleRomaji: p.title_romaji || '',
+            titleI18n: p.title_i18n || {},
             meta: p.meta || '',
             image: p.image_url || '',
             genres: p.genres || [],
@@ -7410,6 +7474,19 @@
     noResultsSub:{ ja:'キーワード・タグ・フィルターを変えてみてください。', en:'Try changing your keywords, tags, or filters.', ko:'키워드·태그·필터를 바꿔 보세요.','zh-tw':'請嘗試更改關鍵字、標籤或篩選條件。','zh-cn':'请尝试更改关键字、标签或筛选条件。',es:'Intenta cambiar palabras clave, etiquetas o filtros.',fr:'Essayez de changer les mots-clés, tags ou filtres.',pt:'Tente mudar palavras-chave, tags ou filtros.',de:'Versuche andere Schlüsselwörter, Tags oder Filter.',ar:'جرب تغيير الكلمات المفتاحية أو الوسوم أو الفلاتر.',th:'ลองเปลี่ยนคำค้น แท็ก หรือตัวกรอง',id:'Coba ubah kata kunci, tag, atau filter.',ru:'Попробуйте изменить ключевые слова, теги или фильтры.',it:'Prova a cambiare parole chiave, tag o filtri.',vi:'Hãy thử đổi từ khóa, thẻ hoặc bộ lọc.' },
   };
 
+  // ── ローマ字表示モード ──────────────────────────
+  const ROMAJI_KEY = 'animepple-romaji';
+  let romajiMode = localStorage.getItem(ROMAJI_KEY) === '1';
+  function toggleRomaji() {
+    romajiMode = !romajiMode;
+    localStorage.setItem(ROMAJI_KEY, romajiMode ? '1' : '0');
+    document.querySelectorAll('.romaji-toggle-btn').forEach(btn => btn.classList.toggle('active', romajiMode));
+    if (currentPage === 'home') { renderHome().catch(console.error); loadSeasonSection(); }
+    else if (currentPage === 'search') renderSearch().catch(console.error);
+    else if (currentPage === 'anime' && currentAnimeId) renderAnimePage(currentAnimeId).catch(console.error);
+  }
+  window.toggleRomaji = toggleRomaji;
+
   // ── 言語状態管理 ──────────────────────────────
   const LANG_KEY = 'animepple-lang';
   let currentLang = localStorage.getItem(LANG_KEY) || (() => {
@@ -7493,6 +7570,7 @@
     });
     const l = LANGS.find(x => x.code === currentLang);
     document.querySelectorAll('.lang-current-btn').forEach(btn => { btn.textContent = l ? l.flag : '🌐'; });
+    document.querySelectorAll('.romaji-toggle-btn').forEach(btn => { btn.classList.toggle('active', romajiMode); });
 
     // RTL対応（アラビア語）
     document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
@@ -8344,7 +8422,7 @@
   async function loadPartnerAnimeTitles() {
     try {
       if(!sb) return;
-      const { data: titles } = await sb.from('anime_pages').select('id,title,title_en,image_url,genres,studios,year');
+      const { data: titles } = await sb.from('anime_pages').select('id,title,title_en,title_romaji,title_i18n,image_url,genres,studios,year');
       _partnerTitleToId = {};
       _partnerAnimeMeta = {};
       const dl = document.getElementById('partnerAnimeDatalist');
