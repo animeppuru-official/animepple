@@ -3454,16 +3454,15 @@
   window.translateApi = translateApi;
   window.translateTagsForDisplay = translateTagsForDisplay;
 
-  // ── ジャンル/カテゴリ（Kitsu由来・英語）の多言語対応 ──
-  // 全言語、tag_translations（共有翻訳テーブル）を基準にする。英語はKitsu由来の原文そのまま。
+  // ── ジャンル/カテゴリ（あらすじ・タグ埋めパイプライン由来・日本語）の多言語対応 ──
+  // 全言語、tag_translations（共有翻訳テーブル）を基準にする。ソースは日本語。
   async function translateGenresForDisplay(genres) {
     const uniqueGenres = [...new Set((genres||[]).filter(Boolean))];
     const map = {};
     uniqueGenres.forEach(g => { map[g] = g; });
-    if(!uniqueGenres.length) return map;
-    if(currentLang === 'en') return map; // Kitsu由来のジャンルは元々英語なので変換不要
+    if(!uniqueGenres.length || currentLang === 'ja') return map; // 日本語表示ならそのまま
     await Promise.all(uniqueGenres.map(async (g) => {
-      const row = await resolveTagTranslation(g, 'en', currentLang);
+      const row = await resolveTagTranslation(g, 'ja', currentLang);
       if(row && row[langToTagCol(currentLang)]) map[g] = row[langToTagCol(currentLang)];
     }));
     return map;
@@ -6590,8 +6589,9 @@
     return srTagsActive.filter(t=>{
       const tLower = t.toLowerCase();
       if(top.has(tLower)) return true; // レビュータグとの一致（日本語）
+      if(kitsuTags.has(tLower)) return true; // カテゴリ/ジャンルとの直接一致（日本語。あらすじ・タグ埋めパイプラインは日本語で保存するため）
       const enForm = _srTagEnglishForms[t];
-      if(enForm && kitsuTags.has(enForm.toLowerCase())) return true; // Kitsuジャンルとの一致（英語）
+      if(enForm && kitsuTags.has(enForm.toLowerCase())) return true; // 旧Kitsuジャンルとの一致（英語、test-anime-*等の旧データ用）
       return false;
     }).length;
   }
