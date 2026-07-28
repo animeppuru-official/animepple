@@ -4886,9 +4886,7 @@
     return item.image?`<img src="${item.image}" alt="${item.title}" style="width:100%;height:100%;object-fit:cover;" />`:noImagePlaceholderHtml();
   }
 
-  // ピックアップ：
-  // Supabaseが閾値未満 → Kitsuからランダム取得
-  // 閾値以上 → Supabaseの中でレビュー50%未満をランダムピック
+  // ピックアップ：自社DB（anime_pages）のみが対象。全体レビュー数の50%未満の作品からランダムに選出、30分ごとに入れ替わる
   // ※100件ちょうどをボーダーにすると、インポート時に1件でも失敗すると
   //   Supabaseデータが全く使われずKitsuランダムに丸ごとフォールバックしてしまうため、
   //   意図的に低め（20件）に設定して確実にSupabase側が使われるようにしている。
@@ -4943,8 +4941,8 @@
     return seeded.slice(0, 15);
   }
 
-  // アニメ10・映画10・その他10を、Kitsuのsubtype（meta欄）で判別して完全ランダムにピックする
-  // 「すべての作品」の代わりのセクション。30分ごとに（ページが開いたまま/開き直した時に）入れ替わる
+  // アニメ10・映画10・その他10を、meta欄で判別して完全ランダムにピックする
+  // 「すべての作品」の代わりのセクション。24時間ごとに入れ替わる（日付ベースの決定的シャッフルのため、同じ枠内はページ更新しても結果が変わらない）
   function shuffleArray(arr) {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
@@ -4954,12 +4952,26 @@
     return copy;
   }
   let randomPickTimerInterval = null;
-  const RANDOM_PICK_INTERVAL_MS = 30 * 60 * 1000;
-  let _randomPickCache = { items: null, ts: 0 }; // 30分間は同じ選出結果を使い回す（ページ遷移のたびに変わらないように）
+  const RANDOM_PICK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24時間に1回
+  let _randomPickCache = { items: null, ts: 0, slot: null };
+  // 日付ベースの決定的シャッフル（ページ更新しても同じ24時間枠内なら同じ選出結果になる）
+  function seededShuffle(arr, slot) {
+    return [...arr].sort((a,b)=>{
+      const ha = Math.sin(slot * 9301 + String(a.id).length * 12345 + hashStr(a.id) * 49297) * 233280;
+      const hb = Math.sin(slot * 9301 + String(b.id).length * 12345 + hashStr(b.id) * 49297) * 233280;
+      return (ha - Math.floor(ha)) - (hb - Math.floor(hb));
+    });
+  }
+  function hashStr(s) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; }
+    return Math.abs(h);
+  }
   async function renderRandomPickSection() {
     const now = Date.now();
+    const slot = Math.floor(now / RANDOM_PICK_INTERVAL_MS);
     let shuffled;
-    if (_randomPickCache.items && (now - _randomPickCache.ts) < RANDOM_PICK_INTERVAL_MS) {
+    if (_randomPickCache.items && _randomPickCache.slot === slot) {
       shuffled = _randomPickCache.items;
     } else {
       const all = getAll();
@@ -4989,12 +5001,12 @@
         else other.push(item);
       });
       const picked = [
-        ...shuffleArray(anime).slice(0, 10),
-        ...shuffleArray(movie).slice(0, 10),
-        ...shuffleArray(other).slice(0, 10),
+        ...seededShuffle(anime, slot).slice(0, 10),
+        ...seededShuffle(movie, slot).slice(0, 10),
+        ...seededShuffle(other, slot).slice(0, 10),
       ];
-      shuffled = shuffleArray(picked); // 種類ごとに固まらないよう最後にもう一度混ぜる
-      _randomPickCache = { items: shuffled, ts: now };
+      shuffled = seededShuffle(picked, slot); // 種類ごとに固まらないよう最後にもう一度混ぜる（同じslotなら結果は毎回同じ）
+      _randomPickCache = { items: shuffled, ts: now, slot };
     }
     const grid = document.getElementById('randomPickGrid');
     if (grid) grid.innerHTML = shuffled.map(item => renderAnimeCard(item, { style: 'g', showReviewCount: true })).join('');
@@ -5011,14 +5023,18 @@
   function startPickupTimer() {
     if (pickupTimerInterval) clearInterval(pickupTimerInterval);
     function update() {
-      const INTERVAL_MS = 30 * 60 * 1000;
-      const remaining = INTERVAL_MS - (Date.now() % INTERVAL_MS);
+      const PICKUP_INTERVAL_MS = 30 * 60 * 1000;
+      const remaining = PICKUP_INTERVAL_MS - (Date.now() % PICKUP_INTERVAL_MS);
       const m = Math.floor(remaining / 60000);
       const s = Math.floor((remaining % 60000) / 1000);
       const el = document.getElementById('pickupTimer');
       if (el) el.textContent = `${m}分${s}秒${t('secPickupSub')}`;
+
+      const remaining2 = RANDOM_PICK_INTERVAL_MS - (Date.now() % RANDOM_PICK_INTERVAL_MS);
+      const h2 = Math.floor(remaining2 / 3600000);
+      const m2 = Math.floor((remaining2 % 3600000) / 60000);
       const el2 = document.getElementById('randomPickTimer');
-      if (el2) el2.textContent = `${m}分${s}秒${t('secPickupSub')}`;
+      if (el2) el2.textContent = `${h2}時間${m2}分${t('secPickupSub')}`;
     }
     update();
     pickupTimerInterval = setInterval(update, 1000);
