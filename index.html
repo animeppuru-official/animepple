@@ -857,8 +857,6 @@
 
     /* ── LANGUAGE SELECTOR ── */
     .lang-current-btn { padding:.38rem .65rem; border-radius:8px; background:var(--card2); border:1px solid var(--line); display:inline-flex; align-items:center; gap:.3rem; cursor:pointer; font-size:.78rem; font-weight:700; color:var(--brand); white-space:nowrap; }
-    .romaji-toggle-btn { padding:.38rem .55rem; border-radius:8px; background:var(--card2); border:1px solid var(--line); cursor:pointer; font-size:.72rem; font-weight:800; color:var(--muted); white-space:nowrap; }
-    .romaji-toggle-btn.active { background:var(--brand); border-color:var(--brand); color:#04150c; }
     .lang-overlay { display:none; position:fixed; inset:0; z-index:300; background:rgba(2,8,5,.97); overflow-y:auto; padding:1.2rem 1rem; }
     .lang-overlay.open { display:block; }
     .lang-overlay h2 { margin:0 0 .3rem; font-size:1.1rem; font-weight:900; }
@@ -1326,7 +1324,6 @@
       <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.57.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
       </div>
     </div>
@@ -1429,7 +1426,6 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1561,7 +1557,6 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1613,7 +1608,6 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1685,7 +1679,6 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1749,7 +1742,6 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1831,7 +1823,6 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1857,7 +1848,6 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -1883,7 +1873,6 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -2548,7 +2537,6 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -2588,7 +2576,6 @@
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">🌐</button>
-        <button class="romaji-toggle-btn" onclick="toggleRomaji()" title="ローマ字表示切替">Rj</button>
       </div>
     </div>
   </header>
@@ -2969,7 +2956,7 @@
       },
       async getByIds(ids) {
         if(!sb) return [];
-        const { data } = await sb.from('anime_pages').select('id,title,title_en,title_romaji,title_i18n,image_url,meta,description,year,episodes,genres,categories,studios,streaming,broadcast_start,broadcast_end').in('id', ids);
+        const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url,meta,description,year,episodes,genres,categories,category_ids,studios,streaming,broadcast_start,broadcast_end').in('id', ids);
         return data || [];
       },
       async getAllTitles() {
@@ -2979,7 +2966,7 @@
         let from = 0;
         const pageSize = 1000;
         while (true) {
-          const { data, error } = await sb.from('anime_pages').select('id,title,title_en,title_romaji,title_i18n').range(from, from + pageSize - 1);
+          const { data, error } = await sb.from('anime_pages').select('id,title,title_en').range(from, from + pageSize - 1);
           if (error) { console.warn('getAllTitles error:', error); break; }
           if (!data || !data.length) break;
           all = all.concat(data);
@@ -2991,7 +2978,7 @@
       async getAllWithLimit(limit) {
         if(!sb) return { items:[], count:0 };
         const { data, count } = await sb.from('anime_pages')
-          .select('id,title,title_en,title_romaji,title_i18n,image_url,meta,genres,categories,year', { count: 'exact' })
+          .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year', { count: 'exact' })
           .limit(limit||1000);
         return { items: data||[], count: count||0 };
       },
@@ -3003,7 +2990,7 @@
         const pageSize = 1000;
         while (true) {
           const { data, error } = await sb.from('anime_pages')
-            .select('id,title,title_en,title_romaji,title_i18n,image_url,meta,genres,categories,year')
+            .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year')
             .range(from, from + pageSize - 1);
           if (error) { console.warn('getAllForSearch error:', error); break; }
           if (!data || !data.length) break;
@@ -3016,7 +3003,7 @@
       async search(query, limit) {
         if(!sb || !query) return [];
         const { data } = await sb.from('anime_pages')
-          .select('id,title,title_en,title_romaji,title_i18n,image_url,meta,genres')
+          .select('id,title,title_en,image_url,meta,genres')
           .or(`title.ilike.%${query}%,title_en.ilike.%${query}%`)
           .limit(limit||20);
         return data || [];
@@ -3334,14 +3321,6 @@
   })();
 
   /* ════════════════════════════════════════════════════
-     アニメ情報APIアダプター層
-     将来Kitsu以外のAPI（AniList等）に乗り換える際は、この
-     animeApi オブジェクトの中身だけを書き換えれば良い。
-     呼び出し側（fetchKitsuPopular等の既存関数や各ページの
-     検索ロジック）は将来的にこの層を経由するよう移行できる。
-     現在の実装: Kitsu API
-  ════════════════════════════════════════════════════ */
-  /* ════════════════════════════════════════════════════
      翻訳APIアダプター層
      裏側はSupabase Edge Function経由でDeepL APIを呼ぶ。
      APIキーはサーバー側(Supabase Secrets)に保管されているため
@@ -3469,6 +3448,41 @@
 
   // ── ジャンル/カテゴリ（あらすじ・タグ埋めパイプライン由来・日本語）の多言語対応 ──
   // 全言語、tag_translations（共有翻訳テーブル）を基準にする。ソースは日本語。
+  // ── category_ids用マスタキャッシュ（正規21タグのみ、id<=93） ──
+  // 起動時に一度だけロードし、以後はDeepL/DBを叩かずメモリだけで多言語ラベル・検索照合を行う。
+  let _tagMasterById = null;   // { 1: {en:'Action', ja:'アクション', ...}, ... }
+  let _tagMasterByJa = null;   // { 'アクション': 1, ... }（検索クエリ→id変換用）
+  let _tagMasterLoadPromise = null;
+  async function ensureTagMaster() {
+    if(_tagMasterById) return _tagMasterById;
+    if(_tagMasterLoadPromise) return _tagMasterLoadPromise;
+    _tagMasterLoadPromise = (async () => {
+      _tagMasterById = {};
+      _tagMasterByJa = {};
+      if(DB_MODE === 'supabase' && sb) {
+        try {
+          const { data } = await sb.from('tag_translations').select('*').lte('id', 93);
+          (data||[]).forEach(row => {
+            _tagMasterById[row.id] = row;
+            if(row.ja) _tagMasterByJa[row.ja] = row.id;
+          });
+        } catch(e) { console.warn('ensureTagMaster load error:', e); }
+      }
+      return _tagMasterById;
+    })();
+    return _tagMasterLoadPromise;
+  }
+  // category_ids配列 → 表示言語のラベル配列
+  function categoryIdsToLabels(ids, lang) {
+    if(!ids || !ids.length || !_tagMasterById) return [];
+    const col = langToTagCol(lang||currentLang);
+    return ids.map(id => (_tagMasterById[id] && (_tagMasterById[id][col] || _tagMasterById[id].ja))).filter(Boolean);
+  }
+  // 日本語テキスト → tag_translations.id（検索クエリの正規化用）
+  function jaTextToTagId(text) {
+    return _tagMasterByJa ? _tagMasterByJa[text] : undefined;
+  }
+
   async function translateGenresForDisplay(genres) {
     const uniqueGenres = [...new Set((genres||[]).filter(Boolean))];
     const map = {};
@@ -3481,11 +3495,7 @@
     return map;
   }
 
-  // Kitsu API依存を撤去。検索は自社DB（anime_pages）のみを対象とする。
-  const animeApi = {
-    async searchByText(query, limit=20) { return { data: [] }; },
-    async getPopular(offset=0, limit=20) { return { data: [] }; },
-  };
+  // Kitsu API依存は完全撤去済み。検索は自社DB（anime_pages）のみを対象とする。
 
   const STORAGE_KEY = "animepple-user-pages";
   const REVIEW_KEY  = "animepple-reviews";
@@ -4271,8 +4281,6 @@
             kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
             title: p.title || p.title_en || '',
             titleEn: p.title_en || p.title || '',
-            titleRomaji: p.title_romaji || '',
-            titleI18n: p.title_i18n || {},
             meta: p.meta || '',
             image: p.image_url || '',
             year: p.year || '',
@@ -4959,8 +4967,6 @@
               kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-', '') : null,
               title: p.title || p.title_en || '',
               titleEn: p.title_en || p.title || '',
-              titleRomaji: p.title_romaji || '',
-              titleI18n: p.title_i18n || {},
               meta: p.meta || '',
               image: p.image_url || '',
             }));
@@ -5149,52 +5155,11 @@
   /* ════════════════════════════
      ANIME PAGE
   ════════════════════════════ */
-  // 言語設定・ローマ字モードに応じてタイトルを返す
-  // ・ローマ字モードON かつ title_romaji があればそれを返す
-  // ・ja: 日本語タイトル
-  // ・en: title_en（DBに無ければ既存の自動翻訳が裏で入る）
-  // ・それ以外: title_i18n[lang] があればそれ、無ければ裏でT翻訳(DeepL)して以後キャッシュ
+  // 言語設定に応じてタイトルを返す
   function getTitle(page) {
     if (!page) return '';
-    if (romajiMode && page.titleRomaji) return page.titleRomaji;
     if (currentLang === 'ja') return page.title || page.titleEn || '';
-    if (currentLang === 'en') return page.titleEn || page.title || '';
-    const cached = page.titleI18n && page.titleI18n[currentLang];
-    if (cached) return cached;
-    requestTitleTranslation(page, currentLang);
     return page.titleEn || page.title || '';
-  }
-
-  // ── タイトルのT翻訳（DeepL）: 未キャッシュの言語だけ裏で翻訳してSupabaseに保存 ──
-  const _titleTranslateRequested = new Set();
-  async function requestTitleTranslation(page, lang) {
-    if (!page || !page.id || lang === 'ja' || lang === 'en') return;
-    const dedupKey = `${page.id}::${lang}`;
-    if (_titleTranslateRequested.has(dedupKey)) return;
-    if (page.titleI18n && page.titleI18n[lang]) return;
-    const targetCode = TAG_TRANSLATE_LANG_MAP[lang];
-    const source = page.titleEn || page.title;
-    if (!targetCode || !source) return;
-    _titleTranslateRequested.add(dedupKey);
-    try {
-      const translated = await translateApi.translate(source, targetCode);
-      if (!translated || translated === source) return;
-      page.titleI18n = { ...(page.titleI18n || {}), [lang]: translated };
-      if (sb) {
-        const { data: row } = await sb.from('anime_pages').select('title_i18n').eq('id', page.id).maybeSingle();
-        const merged = { ...(row?.title_i18n || {}), [lang]: translated };
-        await sb.from('anime_pages').update({ title_i18n: merged }).eq('id', page.id);
-      }
-      // 表示中のタイトル要素を更新（詳細ページ）
-      if (currentAnimeId === page.id) {
-        const titleEl = document.getElementById('animeTitle');
-        if (titleEl && currentLang === lang) titleEl.textContent = translated;
-      }
-    } catch (e) {
-      console.warn('title T-translate error:', e);
-    } finally {
-      _titleTranslateRequested.delete(dedupKey);
-    }
   }
 
   /* ════════════════════════════
@@ -5667,14 +5632,12 @@
             kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
             title: p.title || p.title_en || '',
             titleEn: p.title_en || p.title || '',
-            titleRomaji: p.title_romaji || '',
-            titleI18n: p.title_i18n || {},
             meta: p.meta || '',
             image: p.image_url || '',
             description: p.description || '',
             genres: p.genres || [],
             categories: p.categories || [],
-            studios: p.studios || [],
+            categoryIds: p.category_ids || [],
             streaming: p.streaming || [],
             year: p.year || '',
             episodes: p.episodes || '',
@@ -5761,9 +5724,13 @@
         <span id="animeUserTopTagsBox" style="display:contents;"></span>
       </div>`;
 
-      // カテゴリ（タグ）
-      if(page.categories&&page.categories.length){
-        const displayCategories = page.categories.map(c=>combinedGenreCategoryMap[c]||c);
+      // カテゴリ（タグ）：category_ids優先、無ければ従来のcategoriesテキストにフォールバック
+      await ensureTagMaster();
+      if(currentAnimeId !== id) return;
+      const displayCategories = (page.categoryIds && page.categoryIds.length)
+        ? categoryIdsToLabels(page.categoryIds, currentLang)
+        : (page.categories||[]).map(c=>combinedGenreCategoryMap[c]||c);
+      if(displayCategories.length){
         extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
           <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelTag')}</span>
           ${displayCategories.map(c=>`<span class="badge" style="background:rgba(94,201,122,.08);border-color:#2d6040;">${escapeHtml(c)}</span>`).join('')}
@@ -6565,8 +6532,6 @@
           kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
           title: p.title || p.title_en || '',
           titleEn: p.title_en || p.title || '',
-          titleRomaji: p.title_romaji || '',
-          titleI18n: p.title_i18n || {},
           meta: p.meta || '', image: p.image_url || '',
           year: p.year || '', episodes: p.episodes || '',
         };
@@ -6646,12 +6611,17 @@
   function tagMatchScore(item) {
     if(!srTagsActive.length || !item) return 0;
     const top = new Set(topTags(item.id).map(t=>t.toLowerCase()));
-    // レビュー0件の新作でもヒットできるよう、Kitsu由来のジャンル/カテゴリ情報も照合対象にする
+    // レビュー0件の新作でもヒットできるよう、カテゴリ/ジャンル情報も照合対象にする
     const kitsuTags = new Set([...(item.categories||[]), ...(item.genres||[])].map(c=>String(c).toLowerCase()));
+    const categoryIdSet = item.categoryIds && item.categoryIds.length ? new Set(item.categoryIds) : null;
     return srTagsActive.filter(t=>{
       const tLower = t.toLowerCase();
       if(top.has(tLower)) return true; // レビュータグとの一致（日本語）
-      if(kitsuTags.has(tLower)) return true; // カテゴリ/ジャンルとの直接一致（日本語。あらすじ・タグ埋めパイプラインは日本語で保存するため）
+      if(categoryIdSet) {
+        const id = jaTextToTagId(t);
+        if(id !== undefined && categoryIdSet.has(id)) return true; // category_idsとの一致（ID、言語非依存）
+      }
+      if(kitsuTags.has(tLower)) return true; // カテゴリ/ジャンルとの直接一致（日本語。旧categories列用フォールバック）
       const enForm = _srTagEnglishForms[t];
       if(enForm && kitsuTags.has(enForm.toLowerCase())) return true; // 旧Kitsuジャンルとの一致（英語、test-anime-*等の旧データ用）
       return false;
@@ -6697,6 +6667,7 @@
     setupSrTagInput();
 
     const q=srSearchState.q.toLowerCase();
+    await ensureTagMaster();
     let list=getAll();
 
     // Supabase登録済み作品も候補プールに加える（キーワード検索・グラフ検索どちらでも対象にするため。
@@ -6712,12 +6683,11 @@
             kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
             title: p.title || p.title_en || '',
             titleEn: p.title_en || p.title || '',
-            titleRomaji: p.title_romaji || '',
-            titleI18n: p.title_i18n || {},
             meta: p.meta || '',
             image: p.image_url || '',
             genres: p.genres || [],
             categories: p.categories || [],
+            categoryIds: p.category_ids || [],
           }));
         list = [...list, ...dbItems];
       } catch(e) { console.warn('search Supabase anime_pages fetch:', e); }
@@ -6784,33 +6754,7 @@
       list = ordered.slice(0, RESULT_TARGET);
     }
 
-    // Kitsu検索結果も追加（キーワードがある場合）
-    let kitsuResults = [];
-    if (q) {
-      try {
-        const json = await animeApi.searchByText(srSearchState.q, 20);
-        const existingIds = new Set(list.map(row=>row.anime.kitsuId||'').filter(Boolean));
-        kitsuResults = (json.data||[])
-          .filter(item => !existingIds.has(item.id))
-          .map(item => {
-            const a = item.attributes;
-            const titles = a.titles || {};
-            return {
-              anime: {
-                id: `kitsu-${item.id}`,
-                kitsuId: item.id,
-                title: titles.ja_jp || a.canonicalTitle || '',
-                titleEn: titles.en || titles.en_jp || a.canonicalTitle || '',
-                meta: a.subtype || '',
-                image: (a.posterImage||{}).medium || '',
-              },
-              reviews: 0, rel: 30, match: Infinity, tagScore: 0
-            };
-          });
-      } catch(err) { console.error('Kitsu search error:', err); }
-    }
-
-    const combined = [...list, ...kitsuResults];
+    const combined = [...list];
     const parts=[];
     if(srSearchState.q) parts.push(`「${srSearchState.q}」`);
     if(srTagsActive.length) parts.push(`タグ: ${srTagsActive.map(tag=>'#'+tag).join(' ')}`);
@@ -7474,19 +7418,6 @@
     noResultsSub:{ ja:'キーワード・タグ・フィルターを変えてみてください。', en:'Try changing your keywords, tags, or filters.', ko:'키워드·태그·필터를 바꿔 보세요.','zh-tw':'請嘗試更改關鍵字、標籤或篩選條件。','zh-cn':'请尝试更改关键字、标签或筛选条件。',es:'Intenta cambiar palabras clave, etiquetas o filtros.',fr:'Essayez de changer les mots-clés, tags ou filtres.',pt:'Tente mudar palavras-chave, tags ou filtros.',de:'Versuche andere Schlüsselwörter, Tags oder Filter.',ar:'جرب تغيير الكلمات المفتاحية أو الوسوم أو الفلاتر.',th:'ลองเปลี่ยนคำค้น แท็ก หรือตัวกรอง',id:'Coba ubah kata kunci, tag, atau filter.',ru:'Попробуйте изменить ключевые слова, теги или фильтры.',it:'Prova a cambiare parole chiave, tag o filtri.',vi:'Hãy thử đổi từ khóa, thẻ hoặc bộ lọc.' },
   };
 
-  // ── ローマ字表示モード ──────────────────────────
-  const ROMAJI_KEY = 'animepple-romaji';
-  let romajiMode = localStorage.getItem(ROMAJI_KEY) === '1';
-  function toggleRomaji() {
-    romajiMode = !romajiMode;
-    localStorage.setItem(ROMAJI_KEY, romajiMode ? '1' : '0');
-    document.querySelectorAll('.romaji-toggle-btn').forEach(btn => btn.classList.toggle('active', romajiMode));
-    if (currentPage === 'home') { renderHome().catch(console.error); loadSeasonSection(); }
-    else if (currentPage === 'search') renderSearch().catch(console.error);
-    else if (currentPage === 'anime' && currentAnimeId) renderAnimePage(currentAnimeId).catch(console.error);
-  }
-  window.toggleRomaji = toggleRomaji;
-
   // ── 言語状態管理 ──────────────────────────────
   const LANG_KEY = 'animepple-lang';
   let currentLang = localStorage.getItem(LANG_KEY) || (() => {
@@ -7570,7 +7501,6 @@
     });
     const l = LANGS.find(x => x.code === currentLang);
     document.querySelectorAll('.lang-current-btn').forEach(btn => { btn.textContent = l ? l.flag : '🌐'; });
-    document.querySelectorAll('.romaji-toggle-btn').forEach(btn => { btn.classList.toggle('active', romajiMode); });
 
     // RTL対応（アラビア語）
     document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
@@ -8422,7 +8352,7 @@
   async function loadPartnerAnimeTitles() {
     try {
       if(!sb) return;
-      const { data: titles } = await sb.from('anime_pages').select('id,title,title_en,title_romaji,title_i18n,image_url,genres,studios,year');
+      const { data: titles } = await sb.from('anime_pages').select('id,title,title_en,image_url,genres,studios,year');
       _partnerTitleToId = {};
       _partnerAnimeMeta = {};
       const dl = document.getElementById('partnerAnimeDatalist');
