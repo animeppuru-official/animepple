@@ -3627,6 +3627,14 @@
     const d=new Set(pj(DELETED_KEY));
     return [...pj(STORAGE_KEY),...seedAnime.filter(s=>!d.has(s.id))];
   }
+  // 検索結果として取得済みの部分的なアニメデータをメモリ上にキャッシュ。
+  // 検索結果クリック時、詳細ページ初期表示をこのキャッシュから即座に行い、
+  // Supabaseへの二重通信（検索直後に同じデータをもう一度取りに行く無駄）を避ける。
+  // description等の未取得フィールドは、既存の背景フェッチ処理が後から埋める。
+  const _searchAnimeCache = {};
+  function cacheSearchAnimeRows(rows) {
+    (rows||[]).forEach(p => { if(p && p.id) _searchAnimeCache[p.id] = p; });
+  }
   function getReviews() { return pj(REVIEW_KEY); }
 
   // Supabaseからレビューを非同期取得してLocalStorageにマージ
@@ -5620,7 +5628,29 @@
 
     const all=getAll();
     let page=all.find(p=>p.id===id);
-    if (!page && sb) {
+    let pageIsPartial = false;
+    if(!page && _searchAnimeCache[id]) {
+      const p = _searchAnimeCache[id];
+      page = {
+        id: p.id,
+        kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+        title: p.title || p.title_en || '',
+        titleEn: p.title_en || p.title || '',
+        meta: p.meta || '',
+        image: p.image_url || '',
+        description: '', // 検索結果には含まれないフィールド。背景フェッチで埋まる
+        genres: p.genres || [],
+        categories: p.categories || [],
+        categoryIds: p.category_ids || [],
+        streaming: [],
+        year: p.year || '',
+        episodes: '',
+        broadcastStart: '',
+        broadcastEnd: '',
+      };
+      pageIsPartial = true; // description等が未取得なので、下の背景フェッチを必ず走らせる
+    }
+    if ((!page || pageIsPartial) && sb) {
       // ローカルキャッシュにない場合はSupabaseから取得して表示
       db.animePages.getByIds([id]).then(rows => {
         console.log('DEBUG getByIds result:', id, rows);
@@ -5678,7 +5708,7 @@
         if(currentAnimeId !== id) return;
         document.getElementById('animeTitle').textContent='ページが見つかりません';
       });
-      return;
+      if(!pageIsPartial) return; // 部分キャッシュがあれば、背景フェッチは待たずこのまま下の描画処理へ進む
     }
     if (!page) {
       document.getElementById('animeTitle').textContent='ページが見つかりません';
@@ -6675,6 +6705,7 @@
     if(DB_MODE === 'supabase' && sb) {
       try {
         const { items: dbPages } = await db.animePages.getAllForSearch();
+        cacheSearchAnimeRows(dbPages);
         const existingIds = new Set(list.map(a=>a.id));
         const dbItems = (dbPages||[])
           .filter(p => !existingIds.has(p.id))
