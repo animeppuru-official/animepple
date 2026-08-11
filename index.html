@@ -7583,6 +7583,10 @@
         if (currentPage === 'home') { renderHome().catch(console.error); loadSeasonSection(); }
         else if (currentPage === 'search') renderSearch().catch(console.error);
         else if (currentPage === 'anime' && currentAnimeId) renderAnimePage(currentAnimeId).catch(console.error);
+        else if (currentPage === 'popular') {
+          const grid = document.getElementById('popGrid');
+          if (grid) grid.innerHTML = popState.items.map(a=>renderAnimeCard(a, {style:'g', showReviewCount:true})).join('');
+        }
       };
     });
     overlay.classList.add('open');
