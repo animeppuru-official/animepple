@@ -2983,6 +2983,16 @@
           .limit(limit||1000);
         return { items: data||[], count: count||0 };
       },
+      // 年代フィルタ用：指定した年をSupabase側のWHERE句で絞り込んでから取得する。
+      // 全件を取得してからJS側で絞るより通信量・処理量が大幅に少ない。
+      async getByYear(year, limit) {
+        if(!sb) return { items:[], count:0 };
+        const { data, count } = await sb.from('anime_pages')
+          .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year', { count: 'exact' })
+          .eq('year', String(year))
+          .limit(limit||2000);
+        return { items: data||[], count: count||0 };
+      },
       // キーワード検索用：件数上限を設けず、ページネーションで全件取得する
       async getAllForSearch() {
         if(!sb) return { items: [], count: 0 };
@@ -4328,9 +4338,30 @@
   }
 
   // レビュー数順（期間・年代フィルタ対応）
+  // 年代が指定されている場合はSupabase側(WHERE year=...)で先に絞り込んでから取得する。
+  // 全件取得してJS側で絞るより通信量が少なく、500件上限の外にある作品も逃さない。
   async function getPopularByReviews(period, yearFrom, page) {
-    let all = await getPopularCandidates();
-    if(yearFrom) all = all.filter(a => String(a.year) === String(yearFrom));
+    let all;
+    if(yearFrom && DB_MODE === 'supabase' && sb) {
+      try {
+        const { items: dbPages } = await db.animePages.getByYear(yearFrom);
+        all = (dbPages||[]).map(p => ({
+          id: p.id,
+          kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+          title: p.title || p.title_en || '',
+          titleEn: p.title_en || p.title || '',
+          meta: p.meta || '',
+          image: p.image_url || '',
+          year: p.year || '',
+        }));
+      } catch(e) {
+        console.warn('getByYear fetch:', e);
+        all = await getPopularCandidates();
+        all = all.filter(a => String(a.year) === String(yearFrom));
+      }
+    } else {
+      all = await getPopularCandidates();
+    }
     const withCount = all.map(a=>({...a, _reviewCount: reviewCountInPeriod(a.id, period)}));
     withCount.sort((a,b)=>b._reviewCount-a._reviewCount);
     return withCount.slice(page*POP_PAGE_SIZE, (page+1)*POP_PAGE_SIZE);
