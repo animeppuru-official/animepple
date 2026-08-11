@@ -1719,6 +1719,7 @@
         <div class="pop-year-picker-inner">
           <div class="pop-drum-wrap">
             <div class="pop-drum-label" data-i18n="yearPickLabel">年代を選ぶ</div>
+            <input type="number" class="pop-year-input" id="popYearInput" inputmode="numeric" placeholder="例: 2010" style="width:5.5em;text-align:center;font-size:1rem;padding:.35rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);margin-bottom:.4rem;" />
             <div class="pop-drum" id="popDrumFrom"></div>
           </div>
           <button class="pop-year-apply" id="popYearApply" data-i18n="btnApply">適用</button>
@@ -4119,6 +4120,17 @@
     return items[i] ? Number(items[i].dataset.year) : null;
   }
 
+  // 入力欄に打ち込んだ年へドラムをスクロールし、選択状態にする
+  function scrollDrumToYear(elId, year) {
+    const el = document.getElementById(elId);
+    if(!el) return;
+    const items = el.querySelectorAll('.pop-drum-item[data-year]');
+    const idx = Array.from(items).findIndex(item => Number(item.dataset.year) === year);
+    if(idx < 0) return;
+    el.scrollTo({ top: idx * 40, behavior: 'smooth' });
+    items.forEach((item,j)=> item.classList.toggle('selected', j===idx));
+  }
+
   // Kitsu API依存を撤去。人気作品一覧は自社DB（anime_pages）のみを対象とする。
   async function fetchKitsuPopular(pageOffset=0, yearFrom=null, yearTo=null) {
     return [];
@@ -4213,6 +4225,8 @@
           if(btn.dataset.era === 'pick') {
             picker.style.display = '';
             buildDrum('popDrumFrom', YEAR_LIST, popState.yearFrom||2010);
+            const yearInput = document.getElementById('popYearInput');
+            if(yearInput) yearInput.value = popState.yearFrom || '';
             // 年を選んで「適用」を押すまで検索は待つ（この軸は開いたまま）
           } else {
             picker.style.display = 'none';
@@ -4236,6 +4250,20 @@
         loadPopularItems(true);
         closePopAxes();
       });
+    }
+    // 年代入力欄：数字を直接タイプしてドラムをその年へジャンプさせる
+    const yearInput = document.getElementById('popYearInput');
+    if(yearInput && !yearInput.dataset.init) {
+      yearInput.dataset.init = '1';
+      const jumpToTypedYear = ()=>{
+        const y = parseInt(yearInput.value, 10);
+        if(!y || y < 1960 || y > CURRENT_YEAR) return;
+        scrollDrumToYear('popDrumFrom', y);
+      };
+      yearInput.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter') { e.preventDefault(); jumpToTypedYear(); }
+      });
+      yearInput.addEventListener('blur', jumpToTypedYear);
     }
     // もっと見るボタン
     const loadBtn = document.getElementById('popLoadBtn');
@@ -4907,6 +4935,7 @@
           image: p.image_url,
           meta: p.meta || '',
           genres: p.genres || [],
+          year: p.year || '',
         }));
       }
 
@@ -4989,6 +5018,7 @@
               titleEn: p.title_en || p.title || '',
               meta: p.meta || '',
               image: p.image_url || '',
+              year: p.year || '',
             }));
           pool = [...pool, ...dbItems];
         } catch (e) { console.warn('randomPick Supabase fetch:', e); }
@@ -6735,6 +6765,7 @@
             genres: p.genres || [],
             categories: p.categories || [],
             categoryIds: p.category_ids || [],
+            year: p.year || '',
           }));
         list = [...list, ...dbItems];
       } catch(e) { console.warn('search Supabase anime_pages fetch:', e); }
