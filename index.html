@@ -1518,6 +1518,8 @@
     </div>
   </div>
 
+  <div id="boardSection" style="margin-top:1.2rem;"></div>
+
   <!-- 広告：グラフ直下（自然な流れ：見て気になった→観る？） -->
   <div class="ad-wrap" id="adAnimeMid" style="display:none;">
     <div class="ad-label">AD</div>
@@ -2950,6 +2952,39 @@
         return data || [];
       },
     },
+    // ── 価値観掲示板：12項目投票 ──
+    reviewValues: {
+      async upsert(animeId, userId, axisKey, axisGroup) {
+        if(!sb || !userId) return { error: 'no user' };
+        const { error } = await sb.from('review_values').upsert(
+          { anime_id: animeId, user_id: userId, axis_key: axisKey, axis_group: axisGroup },
+          { onConflict: 'anime_id,user_id' }
+        );
+        return { error };
+      },
+      // そのアニメでこのユーザーが投票済みの価値観グループ（未投票ならnull）
+      async getMyGroup(animeId, userId) {
+        if(!sb || !userId) return null;
+        const { data } = await sb.from('review_values').select('axis_group,axis_key').eq('anime_id', animeId).eq('user_id', userId).maybeSingle();
+        return data || null;
+      },
+    },
+    // ── 掲示板：通常掲示板＋価値観別掲示板4個 ──
+    board: {
+      async list(animeId, boardType) {
+        if(!sb) return [];
+        const { data } = await sb.from('board_posts').select('*').eq('anime_id', animeId).eq('board_type', boardType).order('created_at', { ascending: true });
+        return data || [];
+      },
+      async post(animeId, boardType, userId, username, body, parentId) {
+        if(!sb || !userId) return { error: 'no user' };
+        const { error } = await sb.from('board_posts').insert({
+          anime_id: animeId, board_type: boardType, user_id: userId,
+          username: username || null, body, parent_id: parentId || null,
+        });
+        return { error };
+      },
+    },
     animePages: {
       async upsert(page) {
         if(!sb) return;
@@ -3513,6 +3548,17 @@
   const DELETED_KEY = "animepple-deleted-seed-ids";
   const axisA = ["作画","物語","キャラクター","世界観","音楽","テーマ"];
   const axisB = ["かっこいい","可愛い","シリアス","コメディ","アダルト","エモい"];
+  // 価値観掲示板：12項目を3個ずつ4グループに分類（内部キー基準）
+  const VALUE_AXIS_GROUPS = {
+    'A': ['作画','シリアス','かっこいい'],
+    'B': ['物語','世界観','テーマ'],
+    'C': ['キャラクター','可愛い','コメディ'],
+    'D': ['音楽','エモい','アダルト'],
+  };
+  function axisKeyToGroup(key) {
+    for(const g in VALUE_AXIS_GROUPS) { if(VALUE_AXIS_GROUPS[g].includes(key)) return g; }
+    return null;
+  }
 
   const seedAnime = [];
 
@@ -5872,6 +5918,8 @@
     updateFavButtonState(id);
     renderAffiliateLinks(page);
     renderWorldStats(id);
+    _boardActiveTab = 'general';
+    renderBoardSection(id).catch(e=>console.warn('renderBoardSection:', e));
     setupGraphWorldSwiper();
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
@@ -6259,6 +6307,16 @@
   }
 
   document.getElementById('submitReviewBtn').onclick=()=>{
+    const allSetA = vA.every(v=>v!==-1);
+    const allSetB = vB.every(v=>v!==-1);
+    const isFullGraphPreCheck = allSetA && allSetB;
+    if(isFullGraphPreCheck && _currentUser) {
+      showValuePollModal((axisKey, axisGroup) => proceedReviewSubmit(axisKey, axisGroup));
+    } else {
+      proceedReviewSubmit(null, null);
+    }
+  };
+  function proceedReviewSubmit(selectedAxisKey, selectedAxisGroup) {
     const comment = document.getElementById('reviewComment').value.trim();
     // タグに現在の表示言語コードをプレフィックスとして付けて保存する。
     // 例: 日本語モードで「泣ける」→ "ja:泣ける"、韓国語モードで "눈물나는" → "ko:눈물나는"
@@ -6356,6 +6414,7 @@
         }
         try { if(typeof turnstile !== 'undefined' && _turnstileWidgetId !== null) turnstile.reset(_turnstileWidgetId); } catch(_) {}
         if(_currentUser) db.favorites.markWatchedIfFavorited(_currentUser.id, review.animeId).catch(()=>{});
+        if(_currentUser && selectedAxisKey && selectedAxisGroup) db.reviewValues.upsert(review.animeId, _currentUser.id, selectedAxisKey, selectedAxisGroup).catch(()=>{});
         alert(t('reviewPosted'));
         nav('anime',currentAnimeId);
       })().catch(e=>{
@@ -6369,7 +6428,140 @@
       alert(t('reviewPosted'));
       nav('anime',currentAnimeId);
     }
-  };
+  }
+
+  // 価値観掲示板：マスターグラフ対象レビュー投稿時に「一番重要な項目」を選ばせるポップアップ
+  function showValuePollModal(onSelect) {
+    const dispA = getAxisA(), dispB = getAxisB();
+    const items = [
+      ...axisA.map((key,i)=>({key, label: dispA[i]})),
+      ...axisB.map((key,i)=>({key, label: dispB[i]})),
+    ];
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--card,#1a2420);border:1px solid var(--line,#2a3830);border-radius:14px;padding:1.25rem;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;';
+    box.innerHTML = `
+      <h3 style="margin:0 0 .3rem;font-size:1rem;">${escapeHtml(t('valuePollTitle'))}</h3>
+      <p style="margin:0 0 .8rem;font-size:.78rem;color:var(--muted,#9ab);">${escapeHtml(t('valuePollHint'))}</p>
+      <div id="valuePollGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.9rem;"></div>
+      <button type="button" id="valuePollSkipBtn" style="width:100%;padding:.5rem;border-radius:8px;background:transparent;border:1px solid var(--line,#2a3830);color:var(--muted,#9ab);font-size:.78rem;cursor:pointer;">${escapeHtml(t('valuePollSkip'))}</button>
+    `;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    const grid = box.querySelector('#valuePollGrid');
+    items.forEach(item=>{
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = item.label;
+      btn.style.cssText = 'padding:.55rem .3rem;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font-size:.8rem;cursor:pointer;';
+      btn.onclick = () => { document.body.removeChild(overlay); onSelect(item.key, axisKeyToGroup(item.key)); };
+      grid.appendChild(btn);
+    });
+    box.querySelector('#valuePollSkipBtn').onclick = () => { document.body.removeChild(overlay); onSelect(null, null); };
+  }
+
+  // 価値観掲示板：アニメページの掲示板セクション描画
+  let _boardActiveTab = 'general';
+  async function renderBoardSection(animeId) {
+    const el = document.getElementById('boardSection');
+    if(!el || !sb) return;
+    let myGroup = null;
+    if(_currentUser) {
+      const mine = await db.reviewValues.getMyGroup(animeId, _currentUser.id);
+      myGroup = mine ? mine.axis_group : null;
+    }
+    const tabs = [
+      { id:'general', label: t('boardTabGeneral') },
+      { id:'A', label: t('boardTabA') },
+      { id:'B', label: t('boardTabB') },
+      { id:'C', label: t('boardTabC') },
+      { id:'D', label: t('boardTabD') },
+    ];
+    el.innerHTML = `
+      <h2 style="margin:0 0 .6rem;">${escapeHtml(t('boardSectionTitle'))}</h2>
+      <div style="display:flex;gap:.4rem;overflow-x:auto;padding-bottom:4px;margin-bottom:.8rem;">
+        ${tabs.map(tb=>`<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="white-space:nowrap;padding:.4rem .8rem;border-radius:999px;font-size:.78rem;cursor:pointer;border:1px solid var(--line,#2a3830);background:${tb.id===_boardActiveTab?'var(--card2,#141c19)':'transparent'};color:${tb.id===_boardActiveTab?'#dff0e6':'var(--muted,#9ab)'};">${escapeHtml(tb.label)}</button>`).join('')}
+      </div>
+      <div id="boardPanel"></div>
+    `;
+    el.querySelectorAll('.board-tab-btn').forEach(btn=>{
+      btn.onclick = () => { _boardActiveTab = btn.dataset.tab; renderBoardSection(animeId); };
+    });
+    const panel = el.querySelector('#boardPanel');
+    if(_boardActiveTab !== 'general' && myGroup !== _boardActiveTab) {
+      panel.innerHTML = `<div style="border:1px solid var(--line,#2a3830);border-radius:12px;padding:1.6rem 1rem;text-align:center;color:var(--muted,#9ab);">
+        <p style="font-weight:600;color:#dff0e6;margin:0 0 .4rem;">${escapeHtml(t('boardLockedTitle'))}</p>
+        <p style="font-size:.8rem;margin:0;">${escapeHtml(t('boardLocked'+_boardActiveTab))}</p>
+      </div>`;
+      return;
+    }
+    const posts = await db.board.list(animeId, _boardActiveTab);
+    const topLevel = posts.filter(p=>!p.parent_id);
+    const repliesOf = pid => posts.filter(p=>p.parent_id===pid);
+    let html = '';
+    if(_currentUser) {
+      html += `<div style="border:1px solid var(--line,#2a3830);border-radius:12px;padding:.7rem .9rem;margin-bottom:.9rem;">
+        <textarea id="boardComposeInput" rows="2" placeholder="${escapeHtml(t('boardComposePlaceholder'))}" style="width:100%;resize:none;background:transparent;border:none;color:#dff0e6;font-size:.85rem;"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:6px;">
+          <button type="button" id="boardComposeBtn" style="padding:.4rem .9rem;border-radius:8px;background:var(--brand,#2d8a5f);border:none;color:#fff;font-size:.78rem;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button>
+        </div>
+      </div>`;
+    } else {
+      html += `<p style="font-size:.8rem;color:var(--muted,#9ab);margin-bottom:.9rem;">${escapeHtml(t('boardLoginRequired'))}</p>`;
+    }
+    if(!topLevel.length) {
+      html += `<p style="font-size:.82rem;color:var(--muted,#9ab);">${escapeHtml(t('boardEmpty'))}</p>`;
+    } else {
+      html += topLevel.map(p=>{
+        const replies = repliesOf(p.id);
+        return `<div style="border:1px solid var(--line,#2a3830);border-radius:12px;padding:.8rem 1rem;margin-bottom:.7rem;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:.8rem;font-weight:600;">${escapeHtml(p.username||'名無し')}</span>
+            <span style="font-size:.72rem;color:var(--muted,#9ab);">${new Date(p.created_at).toLocaleString(currentLang==='ja'?'ja-JP':'en-US')}</span>
+          </div>
+          <p style="font-size:.85rem;margin:0 0 .4rem;white-space:pre-wrap;">${escapeHtml(p.body)}</p>
+          ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="font-size:.72rem;color:var(--muted,#9ab);background:none;border:none;cursor:pointer;padding:2px 0;">${escapeHtml(t('boardReplyBtn'))} ${replies.length||''}</button>
+          <div class="board-reply-box" data-id="${p.id}" style="display:none;margin-top:6px;">
+            <textarea rows="2" style="width:100%;resize:none;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);border-radius:8px;color:#dff0e6;font-size:.8rem;padding:.4rem;" placeholder="${escapeHtml(t('boardReplyPlaceholder'))}"></textarea>
+            <div style="display:flex;justify-content:flex-end;margin-top:4px;"><button type="button" class="board-reply-submit" data-id="${p.id}" style="padding:.3rem .7rem;border-radius:8px;background:var(--brand,#2d8a5f);border:none;color:#fff;font-size:.72rem;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button></div>
+          </div>` : (replies.length?`<span style="font-size:.72rem;color:var(--muted,#9ab);">${escapeHtml(t('boardReplyBtn'))} ${replies.length}</span>`:'')}
+          ${replies.map(r=>`<div style="margin-top:6px;padding-left:14px;border-left:2px solid var(--line,#2a3830);display:flex;gap:6px;font-size:.78rem;">
+            <span style="font-weight:600;">${escapeHtml(r.username||'名無し')}</span><span style="color:var(--muted,#9ab);">${escapeHtml(r.body)}</span>
+          </div>`).join('')}
+        </div>`;
+      }).join('');
+    }
+    panel.innerHTML = html;
+    const composeBtn = panel.querySelector('#boardComposeBtn');
+    if(composeBtn) composeBtn.onclick = async () => {
+      const input = panel.querySelector('#boardComposeInput');
+      const body = input.value.trim();
+      if(!body) return;
+      const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
+      const { error } = await db.board.post(animeId, _boardActiveTab, _currentUser.id, username, body);
+      if(error) { alert(t('profileSaveFailedAlert')); return; }
+      renderBoardSection(animeId);
+    };
+    panel.querySelectorAll('.board-reply-toggle').forEach(btn=>{
+      btn.onclick = () => {
+        const box = panel.querySelector(`.board-reply-box[data-id="${btn.dataset.id}"]`);
+        if(box) box.style.display = box.style.display==='none' ? 'block' : 'none';
+      };
+    });
+    panel.querySelectorAll('.board-reply-submit').forEach(btn=>{
+      btn.onclick = async () => {
+        const box = panel.querySelector(`.board-reply-box[data-id="${btn.dataset.id}"]`);
+        const textarea = box.querySelector('textarea');
+        const body = textarea.value.trim();
+        if(!body) return;
+        const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
+        const { error } = await db.board.post(animeId, _boardActiveTab, _currentUser.id, username, body, btn.dataset.id);
+        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        renderBoardSection(animeId);
+      };
+    });
+  }
 
   /* ════════════════════════════
      CREATE PAGE
@@ -7372,6 +7564,26 @@
     btnRefine:     { ja:'この条件で再検索',en:'Refine search',ko:'재검색', 'zh-tw':'重新搜尋','zh-cn':'重新搜索',es:'Refinar',    fr:'Affiner',    pt:'Refinar',    de:'Verfeinern', ar:'تكرار البحث',th:'ค้นหาใหม่',id:'Perhalus pencarian',ru:'Уточнить поиск',it:'Affina ricerca',vi:'Tìm kiếm lại' },
     yearPickLabel: { ja:'年代を選ぶ',   en:'Select year',   ko:'연도 선택','zh-tw':'選擇年代','zh-cn':'选择年代',es:'Año',        fr:'Année',      pt:'Ano',        de:'Jahr',       ar:'السنة',th:'เลือกปี',id:'Pilih tahun',ru:'Выбрать год',it:'Seleziona anno',vi:'Chọn năm' },
     masterGraphTitle:{ ja:'みんなの評価グラフ',en:"Everyone's Graph",ko:'모두의 평가 그래프','zh-tw':'大家的評分圖','zh-cn':'大家的评分图',es:'Gráfico de todos',fr:'Graphique de tous',pt:'Gráfico de todos',de:'Aller Bewertungen',ar:'رسم الجميع',th:'กราฟการประเมินของทุกคน',id:'Grafik Penilaian Semua Orang',ru:'График оценок всех',it:'Grafico di tutti',vi:'Biểu đồ đánh giá của mọi người' },
+    boardSectionTitle:{ ja:'掲示板', en:'Board' },
+    boardTabGeneral:{ ja:'通常掲示板', en:'General board' },
+    boardTabA:{ ja:'ビジュアル系', en:'Visual' },
+    boardTabB:{ ja:'物語系', en:'Story' },
+    boardTabC:{ ja:'キャラ系', en:'Characters' },
+    boardTabD:{ ja:'トーン系', en:'Tone' },
+    boardLockedTitle:{ ja:'この掲示板は投票者限定です', en:'Members-only board' },
+    boardLockedA:{ ja:'この作品のレビューで「作画・シリアス・かっこいい」のどれかに投票すると開放されます。', en:'Vote for Animation, Serious, or Cool when reviewing this title to unlock.' },
+    boardLockedB:{ ja:'この作品のレビューで「物語・世界観・テーマ」のどれかに投票すると開放されます。', en:'Vote for Story, World, or Theme when reviewing this title to unlock.' },
+    boardLockedC:{ ja:'この作品のレビューで「キャラクター・可愛い・コメディ」のどれかに投票すると開放されます。', en:'Vote for Characters, Cute, or Comedy when reviewing this title to unlock.' },
+    boardLockedD:{ ja:'この作品のレビューで「音楽・エモい・セクシー」のどれかに投票すると開放されます。', en:'Vote for Music, Emotional, or Sexy when reviewing this title to unlock.' },
+    boardComposePlaceholder:{ ja:'この作品について話そう', en:'Talk about this title' },
+    boardPostBtn:{ ja:'投稿', en:'Post' },
+    boardReplyBtn:{ ja:'返信', en:'Reply' },
+    boardReplyPlaceholder:{ ja:'返信を書く', en:'Write a reply' },
+    boardEmpty:{ ja:'まだ投稿がありません。最初の投稿をしてみましょう。', en:'No posts yet. Be the first to post.' },
+    boardLoginRequired:{ ja:'投稿にはログインが必要です。', en:'Log in to post.' },
+    valuePollTitle:{ ja:'この作品で一番重要な項目は？', en:'What matters most in this title?' },
+    valuePollHint:{ ja:'選ぶと、同じ価値観の人だけの掲示板に参加できます', en:'Pick one to unlock the board for people who share your take' },
+    valuePollSkip:{ ja:'選ばず投稿する', en:'Post without choosing' },
     labelGenre:    { ja:'ジャンル',     en:'Genre',         ko:'장르',     'zh-tw':'類型',   'zh-cn':'类型',   es:'Género',      fr:'Genre',      pt:'Gênero',     de:'Genre',      ar:'النوع',th:'ประเภท',id:'Genre',ru:'Жанр',it:'Genere',vi:'Thể loại' },
     labelTag:      { ja:'タグ',         en:'Tags',          ko:'태그',     'zh-tw':'標籤',   'zh-cn':'标签',   es:'Etiquetas',   fr:'Tags',       pt:'Tags',       de:'Tags',       ar:'الوسوم',th:'แท็ก',id:'Tag',ru:'Теги',it:'Tag',vi:'Thẻ' },
     labelStudio:   { ja:'制作',         en:'Studio',        ko:'제작사',   'zh-tw':'製作',   'zh-cn':'制作',   es:'Estudio',     fr:'Studio',     pt:'Estúdio',    de:'Studio',     ar:'الاستوديو',th:'สตูดิโอ',id:'Studio',ru:'Студия',it:'Studio',vi:'Studio' },
