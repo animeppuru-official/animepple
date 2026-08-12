@@ -723,6 +723,8 @@
     .mr-card-quality .mr-info { background:linear-gradient(180deg, rgba(224,184,74,.14), transparent); }
     .mr-card-quality .mr-title { color:#f5deA0; }
     .mr-card-quality:hover { border-color:#f0cc66; }
+    .gcard.card-quality-gold, .hcard.card-quality-gold { border-color:#e0b84a; background:linear-gradient(180deg, rgba(224,184,74,.16), var(--card2)); box-shadow:0 0 0 1px rgba(224,184,74,.35), 0 4px 14px rgba(224,184,74,.15); }
+    .gcard.card-quality-gold .gcard-body h3, .hcard.card-quality-gold .hcard-body h3 { color:#f5deA0; }
     .mypage-review-pages {
       display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
       scrollbar-width:none; gap:0;
@@ -3105,6 +3107,12 @@
           .order('created_at', { ascending: false });
         return data || [];
       },
+      // マスターグラフ対象レビューを書いた作品ID一覧の元データ（isGraphValidReviewでの厳密な有効性判定はloadMyGoldAnimeIds側で行う）
+      async getMyMasterGraphCandidates(userId) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,elapsed_ms').eq('user_id', userId).eq('chart_moved', true);
+        return data || [];
+      },
       async insert(review) {
         if(!sb) return;
         await sb.from('reviews').insert(review);
@@ -3773,8 +3781,21 @@
        dummy: true/false（サンプル表示用、クリックでalertのみ）
      }
   ════════════════════════════════════════════════════ */
+  // マスターグラフ対象レビューを書いた作品ID集合（ログインユーザーのカードを緑→金に変える判定用）
+  let _myGoldAnimeIds = null;
+  async function loadMyGoldAnimeIds() {
+    if(!_currentUser) { _myGoldAnimeIds = null; return; }
+    try {
+      const rows = await db.reviews.getMyMasterGraphCandidates(_currentUser.id);
+      const validIds = rows.filter(r => isGraphValidReview({
+        chartA: r.chart_a, chartB: r.chart_b, chartMoved: r.chart_moved, elapsedMs: r.elapsed_ms,
+      })).map(r => r.anime_id);
+      _myGoldAnimeIds = new Set(validIds);
+    } catch(e) { console.warn('loadMyGoldAnimeIds:', e); }
+  }
   function renderAnimeCard(item, opts={}) {
     const style = opts.style || 'g';
+    const isGold = !opts.dummy && _myGoldAnimeIds && _myGoldAnimeIds.has(item.id);
     const onclick = opts.dummy
       ? `alert('サンプルです')`
       : (item.kitsuId ? `navAnime('${item.kitsuId}')` : `nav('anime','${item.id}')`);
@@ -3801,7 +3822,7 @@
     </div>` : '';
 
     if (style === 'h') {
-      return `<div class="hcard" onclick="${onclick}">
+      return `<div class="hcard${isGold?' card-quality-gold':''}" onclick="${onclick}">
         <div class="hcard-thumb"${opts.dummy?' style="opacity:.55;"':''}>${imgHtml}${thumbStack}${rankBadgeHtml}</div>
         <div class="hcard-body">
           <h3>${title}</h3>
@@ -3811,7 +3832,7 @@
       </div>`;
     }
     // gcard（デフォルト）
-    return `<div class="gcard" onclick="${onclick}">
+    return `<div class="gcard${isGold?' card-quality-gold':''}" onclick="${onclick}">
       <div class="gcard-thumb">${imgHtml}${thumbStack}${rankBadgeHtml}</div>
       <div class="gcard-body"><h3>${title}</h3><p>${meta}</p>${badgeGrid}</div>
     </div>`;
@@ -6329,10 +6350,14 @@
   }
 
   document.getElementById('submitReviewBtn').onclick=()=>{
-    const allSetA = vA.every(v=>v!==-1);
-    const allSetB = vB.every(v=>v!==-1);
-    const isFullGraphPreCheck = allSetA && allSetB;
-    if(isFullGraphPreCheck && _currentUser) {
+    const chartAObjPreCheck = Object.fromEntries(axisA.map((k,i)=>[k, vA[i]===-1?0:vA[i]]));
+    const chartBObjPreCheck = Object.fromEntries(axisB.map((k,i)=>[k, vB[i]===-1?0:vB[i]]));
+    const isFullGraphPreCheck = vA.every(v=>v!==-1) && vB.every(v=>v!==-1);
+    const elapsedPreCheck = Date.now() - _reviewStartTime;
+    const isValidMasterGraph = isFullGraphPreCheck && isGraphValidReview({
+      chartA: chartAObjPreCheck, chartB: chartBObjPreCheck, chartMoved: true, elapsedMs: elapsedPreCheck,
+    });
+    if(isValidMasterGraph && _currentUser) {
       showValuePollModal((axisKey, axisGroup) => proceedReviewSubmit(axisKey, axisGroup));
     } else {
       proceedReviewSubmit(null, null);
@@ -10337,10 +10362,12 @@
     if(session?.user) {
       _currentUser = session.user;
       checkOnboarding(); updateProfileCountry();
+      loadMyGoldAnimeIds();
     }
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
+      if(_currentUser) loadMyGoldAnimeIds(); else _myGoldAnimeIds = null;
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
