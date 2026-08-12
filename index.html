@@ -1518,7 +1518,7 @@
     </div>
   </div>
 
-  <div id="boardSection" style="margin-top:1.2rem;"></div>
+  <div id="boardEntrySection" style="margin-top:1.2rem;"></div>
 
   <!-- 広告：グラフ直下（自然な流れ：見て気になった→観る？） -->
   <div class="ad-wrap" id="adAnimeMid" style="display:none;">
@@ -1552,6 +1552,22 @@
 <!-- ═══════════════════════════════════
      PAGE: REVIEWS LIST
 ═══════════════════════════════════ -->
+<div class="page" id="page-board">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()" style="color:#fff;">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:.75rem 1rem;">
+    <h2 id="boardPageTitle" style="margin:0 0 .8rem;font-size:1rem;color:#dff0e6;"></h2>
+    <div id="boardSection"></div>
+  </div>
+</div>
+
 <div class="page" id="page-reviews">
   <header class="hdr">
     <div class="hdr-inner">
@@ -3912,6 +3928,13 @@
       }
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
+    if (page==='board'&&animeId) {
+      currentAnimeId = animeId;
+      const p = getAll().find(a=>a.id===animeId);
+      const titleEl = document.getElementById('boardPageTitle');
+      if(titleEl) titleEl.textContent = (p ? getTitle(p) + ' ' : '') + t('boardEntrySectionTitle');
+      renderBoardSection(animeId).catch(console.error);
+    }
     if (page==='mypage') renderMypage();
     if (page==='user'&&animeId) { renderMypage(animeId); }
   }
@@ -5918,8 +5941,7 @@
     updateFavButtonState(id);
     renderAffiliateLinks(page);
     renderWorldStats(id);
-    _boardActiveTab = 'general';
-    renderBoardSection(id).catch(e=>console.warn('renderBoardSection:', e));
+    renderBoardEntry(id).catch(e=>console.warn('renderBoardEntry:', e));
     setupGraphWorldSwiper();
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
@@ -6414,7 +6436,11 @@
         }
         try { if(typeof turnstile !== 'undefined' && _turnstileWidgetId !== null) turnstile.reset(_turnstileWidgetId); } catch(_) {}
         if(_currentUser) db.favorites.markWatchedIfFavorited(_currentUser.id, review.animeId).catch(()=>{});
-        if(_currentUser && selectedAxisKey && selectedAxisGroup) db.reviewValues.upsert(review.animeId, _currentUser.id, selectedAxisKey, selectedAxisGroup).catch(()=>{});
+        if(_currentUser && selectedAxisKey && selectedAxisGroup) {
+          db.reviewValues.upsert(review.animeId, _currentUser.id, selectedAxisKey, selectedAxisGroup).then(({error})=>{
+            if(error) console.warn('review_values upsert failed:', error);
+          }).catch(e=>console.warn('review_values upsert failed:', e));
+        }
         alert(t('reviewPosted'));
         nav('anime',currentAnimeId);
       })().catch(e=>{
@@ -6461,7 +6487,42 @@
     box.querySelector('#valuePollSkipBtn').onclick = () => { document.body.removeChild(overlay); onSelect(null, null); };
   }
 
-  // 価値観掲示板：アニメページの掲示板セクション描画
+  // 価値観掲示板：アニメページ側の入り口（価値観タイプ表示＋5つの掲示板へのリンク）
+  const VALUE_GROUP_ORDER = ['A','B','C','D'];
+  async function renderBoardEntry(animeId) {
+    const el = document.getElementById('boardEntrySection');
+    if(!el || !sb) return;
+    let myGroup = null;
+    if(_currentUser) {
+      const mine = await db.reviewValues.getMyGroup(animeId, _currentUser.id);
+      myGroup = mine ? mine.axis_group : null;
+    }
+    const typeHtml = myGroup
+      ? `<p style="margin:0 0 .7rem;font-size:.85rem;color:#dff0e6;">${escapeHtml((currentLang==='ja'?'あなたのこの作品での価値観は':'Your value type for this title:'))} <strong>${escapeHtml(t('valueType'+myGroup))}</strong> ${currentLang==='ja'?'です':''}</p>`
+      : '';
+    const boards = [
+      { id:'general', label: t('boardEntryGeneral'), locked:false },
+      { id:'A', label: t('boardTabA'), locked: myGroup!=='A' },
+      { id:'B', label: t('boardTabB'), locked: myGroup!=='B' },
+      { id:'C', label: t('boardTabC'), locked: myGroup!=='C' },
+      { id:'D', label: t('boardTabD'), locked: myGroup!=='D' },
+    ];
+    el.innerHTML = `
+      <h2 style="margin:0 0 .5rem;">${escapeHtml(t('boardEntrySectionTitle'))}</h2>
+      ${typeHtml}
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;">
+        ${boards.map(b=>`<button type="button" class="board-entry-btn" data-tab="${b.id}" style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border-radius:10px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:${b.locked?'var(--muted,#9ab)':'#dff0e6'};font-size:.82rem;cursor:pointer;text-align:left;">
+          <span>${escapeHtml(b.label)}</span>
+          ${b.locked?`<span style="font-size:.68rem;">🔒 ${escapeHtml(t('boardEntryLocked'))}</span>`:'<span>→</span>'}
+        </button>`).join('')}
+      </div>
+    `;
+    el.querySelectorAll('.board-entry-btn').forEach(btn=>{
+      btn.onclick = () => { _boardActiveTab = btn.dataset.tab; nav('board', animeId); };
+    });
+  }
+
+  // 価値観掲示板：掲示板ページ（アニメページからは独立した専用ページ）の描画
   let _boardActiveTab = 'general';
   async function renderBoardSection(animeId) {
     const el = document.getElementById('boardSection');
@@ -7570,6 +7631,13 @@
     boardTabB:{ ja:'物語系', en:'Story' },
     boardTabC:{ ja:'キャラ系', en:'Characters' },
     boardTabD:{ ja:'トーン系', en:'Tone' },
+    valueTypeA:{ ja:'ビジュアル型', en:'Visual type' },
+    valueTypeB:{ ja:'物語型', en:'Story type' },
+    valueTypeC:{ ja:'キャラ型', en:'Character type' },
+    valueTypeD:{ ja:'トーン型', en:'Tone type' },
+    boardEntrySectionTitle:{ ja:'掲示板', en:'Board' },
+    boardEntryGeneral:{ ja:'通常掲示板', en:'General board' },
+    boardEntryLocked:{ ja:'未投票', en:'Not voted yet' },
     boardLockedTitle:{ ja:'この掲示板は投票者限定です', en:'Members-only board' },
     boardLockedA:{ ja:'この作品のレビューで「作画・シリアス・かっこいい」のどれかに投票すると開放されます。', en:'Vote for Animation, Serious, or Cool when reviewing this title to unlock.' },
     boardLockedB:{ ja:'この作品のレビューで「物語・世界観・テーマ」のどれかに投票すると開放されます。', en:'Vote for Story, World, or Theme when reviewing this title to unlock.' },
@@ -7795,6 +7863,7 @@
         if (currentPage === 'home') { renderHome().catch(console.error); loadSeasonSection(); }
         else if (currentPage === 'search') renderSearch().catch(console.error);
         else if (currentPage === 'anime' && currentAnimeId) renderAnimePage(currentAnimeId).catch(console.error);
+        else if (currentPage === 'board' && currentAnimeId) renderBoardSection(currentAnimeId).catch(console.error);
         else if (currentPage === 'popular') {
           const grid = document.getElementById('popGrid');
           if (grid) grid.innerHTML = popState.items.map(a=>renderAnimeCard(a, {style:'g', showReviewCount:true})).join('');
