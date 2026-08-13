@@ -1464,6 +1464,7 @@
 
   <!-- グッズ・関連商品（Amazonアフィリンク。マネタイズの核なので最上部に近い位置に配置） -->
   <div class="af-section" id="afGoodsSection">
+    <div id="boardMascotTeaser" style="margin-bottom:.8rem;"></div>
     <div class="af-section-label" data-i18n="goodsSection">🛍 グッズ・関連商品</div>
     <div id="afGoodsLinks"></div>
   </div>
@@ -6020,6 +6021,7 @@
     renderAffiliateLinks(page);
     renderWorldStats(id);
     renderBoardEntry(id).catch(e=>console.warn('renderBoardEntry:', e));
+    renderBoardMascotTeaser(id).catch(e=>console.warn('renderBoardMascotTeaser:', e));
     setupGraphWorldSwiper();
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
@@ -6571,6 +6573,26 @@
   }
 
   // 価値観掲示板：アニメページ側の入り口（価値観タイプ表示＋通常/価値観の2アイコンのみ。価値観別4分岐は掲示板ページ側で行う）
+  // グッズ欄上部のマスコット吹き出し：価値観掲示板への案内（投票前/投票後で文言を切り替え）
+  async function renderBoardMascotTeaser(animeId) {
+    const el = document.getElementById('boardMascotTeaser');
+    if(!el || !sb) return;
+    let myGroup = null;
+    if(_currentUser) {
+      const mine = await db.reviewValues.getMyGroup(animeId, _currentUser.id);
+      myGroup = mine ? mine.axis_group : null;
+    }
+    const msg = myGroup
+      ? `${escapeHtml(t('valueType'+myGroup))}${currentLang==='ja'?'型の掲示板に入れるよ！':' board is open for you!'}`
+      : (currentLang==='ja' ? 'しっかりとしたレビューを書くと、特別な掲示板に入れるよ！' : 'Write a solid review to unlock a special board!');
+    el.innerHTML = `
+      <div style="display:flex;align-items:flex-end;gap:.5rem;">
+        <img src="https://animeppuru-official.github.io/animepple/mascot.png" alt="アニメップルちゃん" style="width:64px;height:auto;flex-shrink:0;" />
+        <div class="mascot-balloon" style="position:static;transform:none;">${msg}</div>
+      </div>
+    `;
+  }
+
   async function renderBoardEntry(animeId) {
     const el = document.getElementById('boardEntrySection');
     if(!el || !sb) return;
