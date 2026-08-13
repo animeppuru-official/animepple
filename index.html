@@ -357,7 +357,7 @@
     }
     .filter-panel .review-slider-page { flex:0 0 50% !important; min-width:0; }
     .chart-wrap h2 { margin:0 0 .5rem; font-size:.97rem; }
-    .chart-canvas { width:100%; height:auto; border:1px solid var(--line); border-radius:12px; background:#09201b; display:block; margin-bottom:.7rem; }
+    .chart-canvas { width:100%; aspect-ratio:420/300; height:auto; border:1px solid var(--line); border-radius:12px; background:#09201b; display:block; margin-bottom:.7rem; }
     .form-section { background:var(--card2); border:1px solid var(--line); border-radius:16px; padding:1rem; margin-bottom:.9rem; }
     .form-section h2 { margin:0 0 .6rem; font-size:.97rem; }
     .form-field { margin-bottom:.75rem; }
@@ -2252,6 +2252,7 @@
     <button class="nav-item" data-view="global"><span class="ic">◍</span> Global Market</button>
     <button class="nav-item" data-view="consumer"><span class="ic">◎</span> Consumer Behavior</button>
     <button class="nav-item" data-view="ip"><span class="ic">◆</span> IP Strategy</button>
+    <button class="nav-item" data-view="overview"><span class="ic">🗺️</span> Platform Overview</button>
 
 
 
@@ -2330,6 +2331,7 @@
               <button class="pack-card" style="--pc:var(--cyan)" data-view="global"><div class="p-ic">◍</div><div class="p-en">Global Market</div><div class="p-ja">海外分析</div><div class="p-tag">どの国に売るか</div></button>
               <button class="pack-card" style="--pc:#f4a261" data-view="consumer"><div class="p-ic">◎</div><div class="p-en">Consumer</div><div class="p-ja">消費者行動</div><div class="p-tag">どう作品を選ぶか</div></button>
               <button class="pack-card" style="--pc:#ff8fa3" data-view="ip"><div class="p-ic">◆</div><div class="p-en">IP Strategy</div><div class="p-ja">IP戦略</div><div class="p-tag">IPをどう伸ばすか</div></button>
+              <button class="pack-card" style="--pc:#8fe5ab" data-view="overview"><div class="p-ic">🗺️</div><div class="p-en">Platform Overview</div><div class="p-ja">全体分析</div><div class="p-tag">プラットフォーム全体を俯瞰する</div></button>
             </div>
           </div>
         </section>
@@ -2554,6 +2556,43 @@
                 <tr><td>テストアニメM</td><td>27</td><td>8.2</td><td>76.3</td></tr>
               </tbody>
             </table>
+          </div>
+        </section>
+
+        <!-- ⑦ PLATFORM OVERVIEW -->
+        <section class="view" id="view-overview">
+          <div class="view-head">
+            <div class="eyebrow">Platform Overview</div>
+            <h1>プラットフォーム全体を俯瞰する</h1>
+            <p>個別作品ではなく、アニメップル全体のジャンル分布・視聴者層・トレンド・国別傾向をまとめて見せます。作品検索は不要です。</p>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">価値観セグメント（全体構成比）</div>
+              <div id="overviewSegmentBars"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">急上昇ランキング（直近7日 vs 前週）</div>
+              <table>
+                <thead><tr><th>作品</th><th>直近7日</th><th>前週</th><th>伸び</th></tr></thead>
+                <tbody id="overviewMomentumTableBody">
+                  <tr><td colspan="4" style="text-align:center;color:var(--muted2);">読み込み中…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">マーケットマップ（ジャンル別の12軸平均）</div>
+            <table>
+              <thead><tr><th>ジャンル</th><th>作品数</th><th>作画</th><th>物語</th><th>キャラ</th><th>世界観</th><th>音楽</th><th>テーマ</th><th>かっこいい</th><th>可愛い</th><th>シリアス</th><th>コメディ</th><th>アダルト</th><th>エモい</th></tr></thead>
+              <tbody id="overviewMarketMapTableBody">
+                <tr><td colspan="13" style="text-align:center;color:var(--muted2);">読み込み中…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-title">国別・好むジャンル</div>
+            <div id="overviewCountryPanels"></div>
           </div>
         </section>
       </div>
@@ -4738,14 +4777,14 @@
     const ctx=canvas.getContext('2d'); if(!ctx) return;
     // devicePixelRatio対応（Retina/高DPI画面でぼやけ防止）
     const dpr = window.devicePixelRatio || 1;
-    // 表示サイズはCSS（width:100%）に完全に任せ、JS側では書き戻さない。
-    // 以前はcanvas.style.widthをJSで測定したpx値に固定していたため、スライダー操作のたびに
+    // 表示サイズはCSS（width:100% + aspect-ratio）に完全に任せ、JS側では幅・高さとも書き戻さない。
+    // 以前はcanvas.style.height（さらに以前はwidthも）をJSで測定したpx値に固定していたため、
     // 再描画→再測定→わずかな丸め誤差で書き戻す、を繰り返してキャンバスが徐々に縮んでいくバグがあった。
-    const cssW = canvas.getBoundingClientRect().width || canvas.clientWidth || canvas.width;
-    const cssH = canvas.clientHeight || canvas.height;
+    const rect = canvas.getBoundingClientRect();
+    const cssW = rect.width || canvas.clientWidth || canvas.width;
+    const cssH = rect.height || canvas.clientHeight || canvas.height;
     canvas.width  = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
-    canvas.style.height = cssH + 'px';
     ctx.scale(dpr, dpr);
     const w=cssW, h=cssH, cx=w/2, cy=h/2;
     const radius=Math.min(w,h)*(w<180?0.30:0.34),max=10,count=labels.length;
@@ -8785,7 +8824,6 @@
     { id:'global', icon:'🌍', nameEn:'Global Market', nameJa:'海外分析', color:'#c17aff', tagline:'海外で売れる場所を見つける', needsAnimeId:true, dataset:'global_market' },
     { id:'consumer', icon:'🧭', nameEn:'Consumer Behavior', nameJa:'消費者行動', color:'#f4a261', tagline:'ユーザーがどう作品を選ぶか', needsAnimeId:'optional', dataset:'consumer_behavior' },
     { id:'ip', icon:'🚀', nameEn:'IP Strategy', nameJa:'IP戦略', color:'#ff8fa3', tagline:'このIPをどう伸ばすか', needsAnimeId:'optional', dataset:'ip_strategy' },
-    { id:'overview', icon:'🗺️', nameEn:'Platform Overview', nameJa:'全体分析', color:'#8fe5ab', tagline:'プラットフォーム全体を俯瞰する', needsAnimeId:false, dataset:'platform_overview' },
   ];
   let _currentPackId = null;
 
@@ -9010,50 +9048,6 @@
     return html;
   }
 
-  // 全体分析（platform_overview）：4つの俯瞰分析をまとめて表示
-  function formatPlatformOverview(d, color) {
-    let html = '';
-    // ① マーケットマップ
-    html += subsection('マーケットマップ（ジャンル別の12軸平均）', simpleTable(
-      ['ジャンル','作品数','作画','物語','キャラ','世界観','音楽','テーマ','かっこいい','可愛い','シリアス','コメディ','アダルト','エモい'],
-      (d.marketMap||[]).map(m=>[
-        escapeHtml(m.category_ja), m.anime_count,
-        m.avg_sakuga, m.avg_monogatari, m.avg_character, m.avg_sekaikan, m.avg_ongaku, m.avg_theme,
-        m.avg_kakkoii, m.avg_kawaii, m.avg_serious, m.avg_comedy, m.avg_adult, m.avg_emo,
-      ])
-    ));
-    // ② 価値観セグメント分析（全体版）
-    const groupLabel = { A:'ビジュアル系', B:'物語系', C:'キャラ系', D:'トーン系' };
-    html += subsection('価値観セグメント分析（全体構成比）', barListHtml(
-      (d.valueSegmentOverview||[]).map(g=>({ label: (groupLabel[g.axis_group]||g.axis_group), value: g.vote_count })),
-      { showRank:true, suffix:'票', color }
-    ));
-    Object.entries(d.valueSegmentTopAnime||{}).forEach(([group, list])=>{
-      if(!list || !list.length) return;
-      html += subsection(`${groupLabel[group]||group}で支持されてる作品トップ5`, simpleTable(
-        ['作品','投票数'], list.map(a=>[escapeHtml(a.title), a.vote_count])
-      ));
-    });
-    // ③ 急上昇・急下降ランキング
-    html += subsection('急上昇ランキング（直近7日 vs 前週のレビュー数）', simpleTable(
-      ['作品','直近7日','前週','伸び率'],
-      (d.momentumRanking||[]).map(m=>[escapeHtml(m.title), m.recent_7d, m.prior_7d, m.prior_7d>0 ? `×${m.growth_ratio}` : '新規急伸'])
-    ));
-    // ④ 国別・言語別の視聴傾向マップ
-    const byCountry = {};
-    (d.countryGenreAffinity||[]).forEach(r=>{
-      if(!byCountry[r.country_code]) byCountry[r.country_code] = [];
-      byCountry[r.country_code].push(r);
-    });
-    Object.entries(byCountry).slice(0,10).forEach(([cc, rows])=>{
-      html += subsection(`${cc} が好むジャンル`, barListHtml(
-        rows.slice(0,8).map(r=>({ label: r.category_ja, value: r.pv_count })),
-        { suffix:'PV', color }
-      ));
-    });
-    return html;
-  }
-
   function formatGlobal(d) {
     let html = subsection('国別視聴熱量ランキング', simpleTable(['国','件数'], (d.countryStats||[]).slice(0,15).map(c=>[c.country_code, c.cnt])));
     html += subsection('国別の感情差分（全体平均との差が大きい軸）', simpleTable(['国','軸','その国の平均','全体平均','差'], (d.countryEmotionDiff||[]).slice(0,20).map(c=>[c.country_code, escapeHtml(c.axis), c.country_avg, c.overall_avg, (c.diff>0?'+':'')+c.diff])));
@@ -9133,7 +9127,6 @@
   const PACK_FORMATTERS = {
     sentiment: formatSentiment, fan_insight: formatFanInsight, trend: formatTrend,
     global: formatGlobal, consumer: formatConsumer, ip: formatIpStrategy,
-    overview: formatPlatformOverview,
   };
 
   let _partnerTitleToId = {};
@@ -9160,6 +9153,7 @@
 
   function initPartnerDashboardV2() {
     loadPartnerAnimeTitles().then(()=>{ window._partnerTitleToId = _partnerTitleToId; });
+    loadOverviewData();
 
     // ── 検索前は「まだ何も検索していない」状態にリセット（デモ値を消す） ──
     (function resetToEmptyState(){
@@ -9374,6 +9368,71 @@
   window.drawMockDonut = drawMockDonut;
 
   // 検索した作品の実データを取得してダッシュボード/Sentimentビューに反映
+  // 全体分析ビュー：作品検索と無関係に、プラットフォーム全体のデータを1回読み込む
+  const groupLabelJa = { A:'ビジュアル系', B:'物語系', C:'キャラ系', D:'トーン系' };
+  async function loadOverviewData() {
+    try {
+      const d = await fetchPartnerDataset('platform_overview');
+      const esc = (s) => (window.escapeHtml ? escapeHtml(String(s??'')) : String(s??''));
+
+      // 価値観セグメント（全体構成比）
+      const segments = d.valueSegmentOverview || [];
+      if(segments.length) {
+        renderBars('overviewSegmentBars', segments.map(g=>({
+          label: groupLabelJa[g.axis_group] || g.axis_group, value: g.vote_count,
+        })), { rank:true, suffix:'票', color:'#8fe5ab' });
+      }
+
+      // 急上昇ランキング
+      const momentumBody = document.getElementById('overviewMomentumTableBody');
+      if(momentumBody) {
+        const rows = d.momentumRanking || [];
+        momentumBody.innerHTML = rows.length ? rows.map(m=>`
+          <tr><td>${esc(m.title)}</td><td>${esc(m.recent_7d)}</td><td>${esc(m.prior_7d)}</td>
+          <td class="pos">${m.prior_7d>0 ? '×'+esc(m.growth_ratio) : '新規急伸'}</td></tr>
+        `).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+      }
+
+      // マーケットマップ
+      const mapBody = document.getElementById('overviewMarketMapTableBody');
+      if(mapBody) {
+        const rows = d.marketMap || [];
+        mapBody.innerHTML = rows.length ? rows.map(m=>`
+          <tr><td>${esc(m.category_ja)}</td><td>${esc(m.anime_count)}</td>
+          <td>${esc(m.avg_sakuga)}</td><td>${esc(m.avg_monogatari)}</td><td>${esc(m.avg_character)}</td>
+          <td>${esc(m.avg_sekaikan)}</td><td>${esc(m.avg_ongaku)}</td><td>${esc(m.avg_theme)}</td>
+          <td>${esc(m.avg_kakkoii)}</td><td>${esc(m.avg_kawaii)}</td><td>${esc(m.avg_serious)}</td>
+          <td>${esc(m.avg_comedy)}</td><td>${esc(m.avg_adult)}</td><td>${esc(m.avg_emo)}</td></tr>
+        `).join('') : '<tr><td colspan="13" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+      }
+
+      // 国別・好むジャンル
+      const countryEl = document.getElementById('overviewCountryPanels');
+      if(countryEl) {
+        const byCountry = {};
+        (d.countryGenreAffinity || []).forEach(r=>{
+          if(!byCountry[r.country_code]) byCountry[r.country_code] = [];
+          byCountry[r.country_code].push(r);
+        });
+        const entries = Object.entries(byCountry).slice(0, 8);
+        countryEl.innerHTML = entries.length ? entries.map(([cc, rows])=>`
+          <div style="margin-bottom:1rem;">
+            <div class="b-label" style="font-weight:700;margin-bottom:.4rem;">${esc(cc)}</div>
+            ${rows.slice(0,6).map(r=>`
+              <div class="bar-row">
+                <span class="b-label">${esc(r.category_ja)}</span>
+                <div class="bar-track"><div class="bar-fill" style="width:${Math.max(4, Math.min(100, r.pv_count))}%;background:#8fe5ab"></div></div>
+                <span class="b-val">${esc(r.pv_count)}PV</span>
+              </div>
+            `).join('')}
+          </div>
+        `).join('') : '<p style="color:var(--muted2);">データがありません</p>';
+      }
+    } catch(e) {
+      console.warn('loadOverviewData error:', e);
+    }
+  }
+
   async function loadRealAnimeData(title) {
     try {
       const titleMap = window._partnerTitleToId || {};
