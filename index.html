@@ -342,6 +342,10 @@
       #reviewSliderSwiper .review-slider-page, #ovSliderSwiper .review-slider-page { flex:none; }
       .review-slider-swiper-wrap:has(#reviewSliderSwiper), .review-slider-swiper-wrap:has(#ovSliderSwiper) { overflow:visible; }
     }
+    /* 掲示板ページ：PCでは画面中央に幅を絞って表示（スマホは全幅のまま） */
+    @media (min-width: 768px) {
+      .board-page-wrap { max-width:33vw; min-width:420px; margin:0 auto; }
+    }
     /* 検索ページの絞り込みパネルは常に幅が狭いサイドバーなので、画面幅に関係なく
        常に1列＋矢印切り替えのままにする（2列にすると狭すぎて目盛りが潰れる） */
     .filter-panel .slider-page-nav { display:flex !important; }
@@ -1565,7 +1569,7 @@
       </div>
     </div>
   </header>
-  <div style="padding:.75rem 1rem;">
+  <div class="board-page-wrap" style="padding:.75rem 1rem;">
     <h2 id="boardGeneralPageTitle" style="margin:0 0 .8rem;font-size:1rem;color:#dff0e6;"></h2>
     <div id="boardGeneralSection"></div>
   </div>
@@ -1581,7 +1585,7 @@
       </div>
     </div>
   </header>
-  <div style="padding:.75rem 1rem;">
+  <div class="board-page-wrap" style="padding:.75rem 1rem;">
     <h2 id="boardValuePageTitle" style="margin:0 0 .8rem;font-size:1rem;color:#dff0e6;"></h2>
     <div id="boardValueSection"></div>
   </div>
@@ -6644,6 +6648,18 @@
   }
 
   // 通常・価値観、両掲示板共通：投稿一覧＋投稿フォーム＋返信の描画
+  // 「◯分前」のような相対時間表記
+  function formatRelativeTime(dateStr) {
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const min = Math.floor(diffMs / 60000);
+    if(min < 1) return currentLang==='ja' ? 'たった今' : 'just now';
+    if(min < 60) return currentLang==='ja' ? `${min}分前` : `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if(hr < 24) return currentLang==='ja' ? `${hr}時間前` : `${hr}h ago`;
+    const day = Math.floor(hr / 24);
+    return currentLang==='ja' ? `${day}日前` : `${day}d ago`;
+  }
+
   async function renderBoardPostsInto(panel, animeId, boardType, rerenderFn) {
     const posts = await db.board.list(animeId, boardType);
     const topLevel = posts.filter(p=>!p.parent_id);
@@ -6667,7 +6683,7 @@
         return `<div style="border:1px solid var(--line,#2a3830);border-radius:12px;padding:.8rem 1rem;margin-bottom:.7rem;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
             <span style="font-size:.8rem;font-weight:600;">${escapeHtml(p.username||'名無し')}</span>
-            <span style="font-size:.72rem;color:var(--muted,#9ab);">${new Date(p.created_at).toLocaleString(currentLang==='ja'?'ja-JP':'en-US')}</span>
+            <span style="font-size:.72rem;color:var(--muted,#9ab);">${new Date(p.created_at).toLocaleString(currentLang==='ja'?'ja-JP':'en-US')}（${formatRelativeTime(p.created_at)}）</span>
           </div>
           <p style="font-size:.85rem;margin:0 0 .4rem;white-space:pre-wrap;">${escapeHtml(p.body)}</p>
           ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="font-size:.72rem;color:var(--muted,#9ab);background:none;border:none;cursor:pointer;padding:2px 0;">${escapeHtml(t('boardReplyBtn'))} ${replies.length||''}</button>
@@ -10509,6 +10525,13 @@
     if(e.target.id === 'cookieSettingsOverlay') closeCookieSettings();
   });
 
+  // ログイン中のユーザー名をキャッシュする（レビュー投稿・掲示板投稿など、どこからでも参照できるように）
+  async function ensureLoggedInUsername() {
+    if(!_currentUser || !sb) { window._loggedInUsername = null; return; }
+    const fetchedUsername = await db.profiles.getUsername(_currentUser.id);
+    window._loggedInUsername = fetchedUsername || _currentUser.email.split('@')[0];
+  }
+
   async function initAuth() {
     if(!sb) return;
 
@@ -10524,6 +10547,7 @@
           renderMypage();
           nav('mypage');
           checkOnboarding(); updateProfileCountry();
+          ensureLoggedInUsername();
         }
       } catch(e) { console.warn('OAuth hash handling:', e); }
     }
@@ -10533,11 +10557,12 @@
       _currentUser = session.user;
       checkOnboarding(); updateProfileCountry();
       loadMyGoldAnimeIds();
+      ensureLoggedInUsername();
     }
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) loadMyGoldAnimeIds(); else _myGoldAnimeIds = null;
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
