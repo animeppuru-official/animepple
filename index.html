@@ -952,6 +952,8 @@
         padding:0 2rem; max-width:1200px; margin:0 auto;
         gap:.85rem;
       }
+      /* 今日のセレクション：ピックアップと同じ枚数（5列）に揃えてカード幅を一致させる */
+      #randomPickGrid { grid-template-columns:repeat(5, 1fr); }
       .gcard-body h3 { font-size:.95rem; }
 
       /* 広告 */
@@ -10756,7 +10758,7 @@
   function renderReviewCards(el, reviews, pages) {
     const titleMap = {};
     pages.forEach(p => { titleMap[p.id] = currentLang==='ja' ? (p.title||p.title_en||p.id) : (p.title_en||p.title||p.id); });
-    el.innerHTML = `<div class="grid2">${reviews.map((r) => {
+    el.innerHTML = `<div class="mypage-fav-grid">${reviews.map((r) => {
       const title = titleMap[r.anime_id] || r.anime_id;
       const page = pages.find(p=>p.id===r.anime_id);
       const img = page?.image_url || '';
