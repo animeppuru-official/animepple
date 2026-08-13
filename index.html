@@ -1440,6 +1440,7 @@
       <p class="anime-meta-text" id="animeMeta"></p>
       <div id="animeExtraInfo" style="margin-bottom:.7rem;"></div>
       <p class="anime-desc-text" id="animeDesc"></p>
+      <div id="boardEntrySection" style="margin:.4rem 0 .2rem;"></div>
       <!-- ボタン：レビューする・レビューを見る・削除 -->
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.5rem;">
         <button class="review-btn" id="goReviewBtn" data-i18n="btnReview">🍎 レビューする</button>
@@ -1521,8 +1522,6 @@
       </div>
     </div>
   </div>
-
-  <div id="boardEntrySection" style="margin-top:1.2rem;"></div>
 
   <!-- 広告：グラフ直下（自然な流れ：見て気になった→観る？） -->
   <div class="ad-wrap" id="adAnimeMid" style="display:none;">
@@ -6514,8 +6513,7 @@
     box.querySelector('#valuePollSkipBtn').onclick = () => { document.body.removeChild(overlay); onSelect(null, null); };
   }
 
-  // 価値観掲示板：アニメページ側の入り口（価値観タイプ表示＋5つの掲示板へのリンク）
-  const VALUE_GROUP_ORDER = ['A','B','C','D'];
+  // 価値観掲示板：アニメページ側の入り口（価値観タイプ表示＋通常/価値観の2アイコンのみ。価値観別4分岐は掲示板ページ側で行う）
   async function renderBoardEntry(animeId) {
     const el = document.getElementById('boardEntrySection');
     if(!el || !sb) return;
@@ -6525,23 +6523,17 @@
       myGroup = mine ? mine.axis_group : null;
     }
     const typeHtml = myGroup
-      ? `<p style="margin:0 0 .7rem;font-size:.85rem;color:#dff0e6;">${escapeHtml((currentLang==='ja'?'あなたのこの作品での価値観は':'Your value type for this title:'))} <strong>${escapeHtml(t('valueType'+myGroup))}</strong> ${currentLang==='ja'?'です':''}</p>`
+      ? `<p style="margin:0 0 .4rem;font-size:.8rem;color:#dff0e6;">${escapeHtml((currentLang==='ja'?'あなたの価値観は':'Your value type:'))} <strong>${escapeHtml(t('valueType'+myGroup))}</strong> ${currentLang==='ja'?'です':''}</p>`
       : '';
-    const boards = [
-      { id:'general', label: t('boardEntryGeneral'), locked:false },
-      { id:'A', label: t('boardTabA'), locked: myGroup!=='A' },
-      { id:'B', label: t('boardTabB'), locked: myGroup!=='B' },
-      { id:'C', label: t('boardTabC'), locked: myGroup!=='C' },
-      { id:'D', label: t('boardTabD'), locked: myGroup!=='D' },
-    ];
     el.innerHTML = `
-      <h2 style="margin:0 0 .5rem;">${escapeHtml(t('boardEntrySectionTitle'))}</h2>
       ${typeHtml}
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;">
-        ${boards.map(b=>`<button type="button" class="board-entry-btn" data-tab="${b.id}" style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border-radius:10px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:${b.locked?'var(--muted,#9ab)':'#dff0e6'};font-size:.82rem;cursor:pointer;text-align:left;">
-          <span>${escapeHtml(b.label)}</span>
-          ${b.locked?`<span style="font-size:.68rem;">🔒 ${escapeHtml(t('boardEntryLocked'))}</span>`:'<span>→</span>'}
-        </button>`).join('')}
+      <div style="display:flex;gap:.6rem;">
+        <button type="button" class="board-entry-btn" data-tab="general" style="display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:#dff0e6;font-size:.78rem;cursor:pointer;">
+          <span>💬</span><span>${escapeHtml(t('boardEntryGeneral'))}</span>
+        </button>
+        <button type="button" class="board-entry-btn" data-tab="${myGroup||'A'}" style="display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:${myGroup?'#dff0e6':'var(--muted,#9ab)'};font-size:.78rem;cursor:pointer;">
+          <span>${myGroup?'💎':'🔒'}</span><span>${escapeHtml(t('boardEntryValue'))}</span>
+        </button>
       </div>
     `;
     el.querySelectorAll('.board-entry-btn').forEach(btn=>{
@@ -7665,6 +7657,7 @@
     boardEntrySectionTitle:{ ja:'掲示板', en:'Board' },
     boardEntryGeneral:{ ja:'通常掲示板', en:'General board' },
     boardEntryLocked:{ ja:'未投票', en:'Not voted yet' },
+    boardEntryValue:{ ja:'価値観掲示板', en:'Value board' },
     boardLockedTitle:{ ja:'この掲示板は投票者限定です', en:'Members-only board' },
     boardLockedA:{ ja:'この作品のレビューで「作画・シリアス・かっこいい」のどれかに投票すると開放されます。', en:'Vote for Animation, Serious, or Cool when reviewing this title to unlock.' },
     boardLockedB:{ ja:'この作品のレビューで「物語・世界観・テーマ」のどれかに投票すると開放されます。', en:'Vote for Story, World, or Theme when reviewing this title to unlock.' },
