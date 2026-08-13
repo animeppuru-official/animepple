@@ -2665,6 +2665,9 @@
       </div>
     </div>
 
+    <!-- 全体価値観プロフィール -->
+    <div class="mypage-section" id="mypageValueProfileSection" style="display:none;"></div>
+
     <!-- 自己紹介・好きなジャンル -->
     <div class="mypage-section" id="mypageBioSection" style="display:none;">
       <p class="mypage-bio-text" id="mypageBioText"></p>
@@ -2972,6 +2975,22 @@
       },
     },
     // ── 価値観掲示板：12項目投票 ──
+    // ── 全体価値観プロフィール：閲覧したアニメのマスターグラフから高い軸・低い軸を蓄積 ──
+    axisSignals: {
+      async upsert(userId, animeId, highAxis, lowAxis) {
+        if(!sb || !userId) return { error: 'no user' };
+        const { error } = await sb.from('user_axis_signals').upsert(
+          { user_id: userId, anime_id: animeId, high_axis: highAxis, low_axis: lowAxis },
+          { onConflict: 'user_id,anime_id' }
+        );
+        return { error };
+      },
+      async listForUser(userId) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('user_axis_signals').select('high_axis,low_axis').eq('user_id', userId);
+        return data || [];
+      },
+    },
     reviewValues: {
       async upsert(animeId, userId, axisKey, axisGroup) {
         if(!sb || !userId) return { error: 'no user' };
@@ -5970,6 +5989,7 @@
       if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら反映しない
       renderMasterGraph(id);
       renderUserTopTagsBox(id); // 最新レビュー反映後にタグ上位3件を再計算
+      recordAxisSignal(id); // 全体価値観プロフィール用：このアニメの高い軸・低い軸を蓄積
       // レビュー数をアニメページに表示（実レビューが3件に達したらAI参考グラフは数に含めない）
       const scopedReviews = getReviews().filter(r=>r.animeId===id);
       const allReviews = filterDisplayReviews(scopedReviews);
@@ -6770,6 +6790,22 @@
   }
 
   // 有効レビューの集計グラフ（トリム平均/中央値/平均、AGGREGATE_MODEに従う）
+  // 全体価値観プロフィール：このアニメのマスターグラフで一番高い軸・低い軸を、閲覧者の傾向として蓄積する
+  function recordAxisSignal(animeId) {
+    if(!_currentUser || !sb) return;
+    const aA = avgChart(animeId, 'chartA', axisA);
+    const aB = avgChart(animeId, 'chartB', axisB);
+    if(!aA || !aB) return; // マスターグラフがまだ形成されていない作品は対象外
+    const all = { ...aA, ...aB };
+    const entries = Object.entries(all).filter(([,v])=>typeof v === 'number' && !isNaN(v));
+    if(entries.length < 2) return;
+    entries.sort((a,b)=>b[1]-a[1]);
+    const highAxis = entries[0][0];
+    const lowAxis = entries[entries.length-1][0];
+    if(highAxis === lowAxis) return;
+    db.axisSignals.upsert(_currentUser.id, animeId, highAxis, lowAxis).catch(e=>console.warn('recordAxisSignal:', e));
+  }
+
   function avgChart(id,chartKey,labels){
     const rs=validReviews(id); if(!rs.length) return null;
     const userQCounts = buildUserQualityCounts(getReviews());
@@ -6881,6 +6917,58 @@
     });
     scored.sort((a,b)=>a.score-b.score);
     return scored.slice(0, limit).map(s=>({ id: s.animeId, isAiOnly: !!cache[s.animeId].isAiOnly }));
+  }
+
+  // 全体価値観プロフィール：マイページに「あなたは○○が高く○○が低いです」＋おすすめ作品を表示
+  async function renderValueProfile(userId) {
+    const el = document.getElementById('mypageValueProfileSection');
+    if(!el || !sb) return;
+    const signals = await db.axisSignals.listForUser(userId);
+    if(!signals.length) { el.style.display='none'; return; }
+    const highCount = {}, lowCount = {};
+    signals.forEach(s=>{
+      if(s.high_axis) highCount[s.high_axis] = (highCount[s.high_axis]||0)+1;
+      if(s.low_axis) lowCount[s.low_axis] = (lowCount[s.low_axis]||0)+1;
+    });
+    const topHigh = Object.entries(highCount).sort((a,b)=>b[1]-a[1])[0];
+    const topLow = Object.entries(lowCount).sort((a,b)=>b[1]-a[1])[0];
+    if(!topHigh && !topLow) { el.style.display='none'; return; }
+    const summaryText = currentLang==='ja'
+      ? `あなたは${topHigh?`「${topHigh[0]}」が高く`:''}${topHigh&&topLow?'、':''}${topLow?`「${topLow[0]}」が低い`:''}作品を好む傾向があります`
+      : `You tend to favor titles with high ${topHigh?topHigh[0]:''}${topHigh&&topLow?' and low ':''}${topLow?topLow[0]:''}`;
+    el.style.display='';
+    el.innerHTML = `
+      <h3 style="margin:0 0 .4rem;font-size:.9rem;">${escapeHtml(currentLang==='ja'?'あなたの価値観':'Your taste profile')}</h3>
+      <p style="margin:0 0 .8rem;font-size:.82rem;color:#dff0e6;">${escapeHtml(summaryText)}</p>
+      <div id="valueProfileRecs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;"></div>
+    `;
+    if(!topHigh) return;
+    // おすすめ：全体マスターグラフキャッシュの中から、あなたの好む軸が高く・苦手な軸が低い作品を探す
+    const cache = await ensureSearchMasterGraphCache();
+    const recs = Object.entries(cache)
+      .map(([animeId, d])=>{
+        const val = (d.avgA && d.avgA[topHigh[0]] != null) ? d.avgA[topHigh[0]] : (d.avgB && d.avgB[topHigh[0]]);
+        const lowVal = topLow ? ((d.avgA && d.avgA[topLow[0]] != null) ? d.avgA[topLow[0]] : (d.avgB && d.avgB[topLow[0]])) : null;
+        if(val == null) return null;
+        const score = val - (lowVal != null ? lowVal*0.5 : 0);
+        return { animeId, score };
+      })
+      .filter(Boolean)
+      .sort((a,b)=>b.score-a.score)
+      .slice(0,6);
+    if(!recs.length) return;
+    const ids = recs.map(r=>r.animeId);
+    const all = getAll();
+    const missingIds = ids.filter(i=>!all.find(p=>p.id===i));
+    const fetched = missingIds.length ? await db.animePages.getByIds(missingIds) : [];
+    const pageMap = {};
+    all.forEach(p=>{ pageMap[p.id]=p; });
+    (fetched||[]).forEach(p=>{
+      pageMap[p.id] = { id:p.id, title:p.title||p.title_en||'', titleEn:p.title_en||p.title||'', meta:p.meta||'', image:p.image_url||'', year:p.year||'' };
+    });
+    const items = ids.map(i=>pageMap[i]).filter(Boolean);
+    const recEl = document.getElementById('valueProfileRecs');
+    if(recEl) recEl.innerHTML = items.map(item=>renderAnimeCard(item, { style:'g' })).join('');
   }
 
   async function renderSimilarAnime(id) {
@@ -10661,6 +10749,7 @@
     if(isOwnPage) _myProfile = { username, bio: profileData?.bio||'', genres: profileData?.favorite_genres||[] };
     const bio = profileData?.bio || '';
     const genres = profileData?.favorite_genres || [];
+    if(isOwnPage) renderValueProfile(targetUserId).catch(e=>console.warn('renderValueProfile:', e));
 
     document.getElementById('mypageUsernameText').textContent = username;
     if(isOwnPage) document.getElementById('mypageEmail').textContent = _currentUser.email;
