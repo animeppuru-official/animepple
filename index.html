@@ -6678,12 +6678,21 @@
     if(!topLevel.length) {
       html += `<p style="font-size:.82rem;color:var(--muted,#9ab);">${escapeHtml(t('boardEmpty'))}</p>`;
     } else {
+      const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
+      const avatarHtml = (name, size) => {
+        const bg = name==='ゲスト' ? 'rgba(140,198,160,0.2)' : colors[name.charCodeAt(0)%colors.length];
+        return `<div style="width:${size}px;height:${size}px;border-radius:${size>=28?7:6}px;overflow:hidden;background:${bg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${size>=28?'.8rem':'.65rem'};color:#0c2015;flex-shrink:0;">${escapeHtml((name||'ゲ').charAt(0))}</div>`;
+      };
       html += topLevel.map(p=>{
         const replies = repliesOf(p.id);
+        const name = p.username || '名無し';
         return `<div style="border:1px solid var(--line,#2a3830);border-radius:12px;padding:.8rem 1rem;margin-bottom:.7rem;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-            <span style="font-size:.8rem;font-weight:600;">${escapeHtml(p.username||'名無し')}</span>
-            <span style="font-size:.72rem;color:var(--muted,#9ab);">${new Date(p.created_at).toLocaleString(currentLang==='ja'?'ja-JP':'en-US')}（${formatRelativeTime(p.created_at)}）</span>
+            ${avatarHtml(name, 28)}
+            <div style="display:flex;flex-direction:column;">
+              <span style="font-size:.8rem;font-weight:600;">${escapeHtml(name)}</span>
+              <span style="font-size:.68rem;color:var(--muted,#9ab);">${new Date(p.created_at).toLocaleString(currentLang==='ja'?'ja-JP':'en-US')}（${formatRelativeTime(p.created_at)}）</span>
+            </div>
           </div>
           <p style="font-size:.85rem;margin:0 0 .4rem;white-space:pre-wrap;">${escapeHtml(p.body)}</p>
           ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="font-size:.72rem;color:var(--muted,#9ab);background:none;border:none;cursor:pointer;padding:2px 0;">${escapeHtml(t('boardReplyBtn'))} ${replies.length||''}</button>
@@ -6691,9 +6700,13 @@
             <textarea rows="2" style="width:100%;resize:none;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);border-radius:8px;color:#dff0e6;font-size:.8rem;padding:.4rem;" placeholder="${escapeHtml(t('boardReplyPlaceholder'))}"></textarea>
             <div style="display:flex;justify-content:flex-end;margin-top:4px;"><button type="button" class="board-reply-submit" data-id="${p.id}" style="padding:.3rem .7rem;border-radius:8px;background:var(--brand,#2d8a5f);border:none;color:#fff;font-size:.72rem;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button></div>
           </div>` : (replies.length?`<span style="font-size:.72rem;color:var(--muted,#9ab);">${escapeHtml(t('boardReplyBtn'))} ${replies.length}</span>`:'')}
-          ${replies.map(r=>`<div style="margin-top:6px;padding-left:14px;border-left:2px solid var(--line,#2a3830);display:flex;gap:6px;font-size:.78rem;">
-            <span style="font-weight:600;">${escapeHtml(r.username||'名無し')}</span><span style="color:var(--muted,#9ab);">${escapeHtml(r.body)}</span>
-          </div>`).join('')}
+          ${replies.map(r=>{
+            const rname = r.username || '名無し';
+            return `<div style="margin-top:8px;padding-left:6px;border-left:2px solid var(--line,#2a3830);display:flex;gap:8px;align-items:flex-start;">
+              ${avatarHtml(rname, 20)}
+              <div style="font-size:.78rem;"><span style="font-weight:600;">${escapeHtml(rname)}</span> <span style="color:var(--muted,#9ab);">${escapeHtml(r.body)}</span></div>
+            </div>`;
+          }).join('')}
         </div>`;
       }).join('');
     }
