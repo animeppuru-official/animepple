@@ -1335,6 +1335,7 @@
     <div class="hdr-inner">
       <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.57.0</span></span>
       <div class="hdr-right">
+        <button class="hdr-search-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" style="display:none;" title="あなたの価値観">🧭</button>
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
         <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
       </div>
@@ -2743,6 +2744,9 @@
     <!-- 全体価値観プロフィール -->
     <div class="mypage-section" id="mypageValueProfileSection" style="display:none;"></div>
 
+    <!-- 参加中の掲示板 -->
+    <div class="mypage-section" id="mypageBoardsSection" style="display:none;"></div>
+
     <!-- ブロック中のユーザー -->
     <div class="mypage-section" id="mypageBlockedSection" style="display:none;"></div>
 
@@ -3055,6 +3059,90 @@
     // ── 価値観掲示板：12項目投票 ──
     // ── 全体価値観プロフィール：閲覧したアニメのマスターグラフから高い軸・低い軸を蓄積 ──
     // ── ブロック：相手ユーザーの投稿・レビューを自分の画面から非表示にする ──
+    // ── 参加中の掲示板：既読状態・通知設定 ──
+    // ── Web Push購読情報 ──
+    pushSubscriptions: {
+      async save(userId, sub) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const { error } = await sb.from('push_subscriptions').upsert({
+          user_id: userId, endpoint: sub.endpoint,
+          p256dh: sub.keys.p256dh, auth: sub.keys.auth,
+        }, { onConflict: 'endpoint' });
+        return { error };
+      },
+      async remove(endpoint) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('push_subscriptions').delete().eq('endpoint', endpoint);
+        return { error };
+      },
+      async hasAny(userId) {
+        if(!sb || !userId) return false;
+        const { data } = await sb.from('push_subscriptions').select('id').eq('user_id', userId).limit(1);
+        return !!(data && data.length);
+      },
+    },
+    boardState: {
+      // 投稿履歴＋価値観投票から「参加中の掲示板」一覧を作る（通常掲示板＋解放済みの価値観掲示板）
+      async listMyBoards(userId) {
+        if(!sb || !userId) return [];
+        const [postedRes, votedRes] = await Promise.all([
+          sb.from('board_posts').select('anime_id, board_type').eq('user_id', userId),
+          sb.from('review_values').select('anime_id, axis_group').eq('user_id', userId),
+        ]);
+        const seen = new Set();
+        const boards = [];
+        (postedRes.data||[]).forEach(r=>{
+          const key = r.anime_id+'|'+r.board_type;
+          if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.board_type }); }
+        });
+        (votedRes.data||[]).forEach(r=>{
+          const key = r.anime_id+'|'+r.axis_group;
+          if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.axis_group }); }
+        });
+        return boards;
+      },
+      // 掲示板ごとの最新投稿日時（複数の(anime_id,board_type)をまとめて取得）
+      async getLatestActivity(pairs) {
+        if(!sb || !pairs.length) return {};
+        const animeIds = [...new Set(pairs.map(p=>p.anime_id))];
+        const { data } = await sb.from('board_posts').select('anime_id, board_type, created_at').in('anime_id', animeIds);
+        const latest = {};
+        (data||[]).forEach(r=>{
+          const key = r.anime_id+'|'+r.board_type;
+          if(!latest[key] || r.created_at > latest[key]) latest[key] = r.created_at;
+        });
+        return latest;
+      },
+      async getState(userId) {
+        if(!sb || !userId) return {};
+        const { data } = await sb.from('user_board_state').select('anime_id, board_type, last_read_at, notify').eq('user_id', userId);
+        const map = {};
+        (data||[]).forEach(r=>{ map[r.anime_id+'|'+r.board_type] = r; });
+        return map;
+      },
+      async markRead(userId, animeId, boardType) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const { error } = await sb.from('user_board_state').upsert(
+          { user_id: userId, anime_id: animeId, board_type: boardType, last_read_at: new Date().toISOString() },
+          { onConflict: 'user_id,anime_id,board_type' }
+        );
+        return { error };
+      },
+      async setNotify(userId, animeId, boardType, notify) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const { error } = await sb.from('user_board_state').upsert(
+          { user_id: userId, anime_id: animeId, board_type: boardType, notify },
+          { onConflict: 'user_id,anime_id,board_type' }
+        );
+        return { error };
+      },
+      async setNotifyBulk(userId, boards, notify) {
+        if(!sb || !userId || !boards.length) return { error: 'invalid' };
+        const rows = boards.map(b => ({ user_id: userId, anime_id: b.anime_id, board_type: b.board_type, notify }));
+        const { error } = await sb.from('user_board_state').upsert(rows, { onConflict: 'user_id,anime_id,board_type' });
+        return { error };
+      },
+    },
     blocks: {
       async list(userId) {
         if(!sb || !userId) return [];
@@ -6725,6 +6813,7 @@
     if(!el || !sb) return;
     el.innerHTML = `<div id="boardPanel"></div>`;
     await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, 'general', renderBoardGeneral);
+    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, 'general').catch(()=>{});
   }
 
   // ── 価値観掲示板：単独ページ、内部でA〜Dの4つに分岐（タブ） ──
@@ -6762,6 +6851,7 @@
       return;
     }
     await renderBoardPostsInto(panel, animeId, _boardActiveTab, () => renderBoardValue(animeId));
+    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, _boardActiveTab).catch(()=>{});
   }
 
   // 通常・価値観、両掲示板共通：投稿一覧＋投稿フォーム＋返信の描画
@@ -7158,6 +7248,86 @@
 
   // 全体価値観プロフィール：マイページに「あなたは○○が高く○○が低いです」＋おすすめ作品を表示
   // マイページ：ブロック中のユーザー一覧＋解除ボタン
+  // マイページ：参加中の掲示板一覧（新着順・通知設定つき）
+  const _boardGroupLabel = { general:'boardGeneralLabel', A:'boardTabA', B:'boardTabB', C:'boardTabC', D:'boardTabD' };
+  async function renderMyBoards(userId) {
+    const el = document.getElementById('mypageBoardsSection');
+    if(!el || !sb) return;
+    const boards = await db.boardState.listMyBoards(userId);
+    if(!boards.length) { el.style.display=''; el.innerHTML = `<h3 style="margin:0 0 .4rem;font-size:.9rem;">${escapeHtml(t('myBoardsTitle'))}</h3><p style="font-size:.82rem;color:var(--muted,#9ab);">${escapeHtml(t('noMyBoards'))}</p>`; return; }
+    el.style.display='';
+    const [latestMap, stateMap, animePages] = await Promise.all([
+      db.boardState.getLatestActivity(boards),
+      db.boardState.getState(userId),
+      Promise.resolve(getAll()),
+    ]);
+    const pageMap = {};
+    animePages.forEach(p=>{ pageMap[p.id]=p; });
+    const enriched = boards.map(b=>{
+      const key = b.anime_id+'|'+b.board_type;
+      const latest = latestMap[key] || null;
+      const state = stateMap[key] || null;
+      const isNew = latest && (!state || !state.last_read_at || latest > state.last_read_at);
+      return { ...b, latest, isNew, notify: state ? state.notify !== false : true, title: getTitle(pageMap[b.anime_id]) || pageMap[b.anime_id]?.title || b.anime_id };
+    });
+    // 新着があるものを先頭に、その中でも最新順。既読済みも最新活動順
+    enriched.sort((a,b)=>{
+      if(a.isNew !== b.isNew) return a.isNew ? -1 : 1;
+      return new Date(b.latest||0) - new Date(a.latest||0);
+    });
+    const hasPush = await db.pushSubscriptions.hasAny(userId);
+    const pushBannerHtml = hasPush ? '' : `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;border:1px solid var(--line,#2a3830);border-radius:8px;padding:.5rem .7rem;margin-bottom:.6rem;background:var(--card2,#141c19);">
+        <span style="font-size:.78rem;color:#dff0e6;">${escapeHtml(t('pushEnablePrompt'))}</span>
+        <button type="button" id="myBoardsEnablePushBtn" style="font-size:.72rem;padding:.3rem .7rem;border-radius:8px;background:var(--brand,#2d8a5f);border:none;color:#fff;cursor:pointer;flex-shrink:0;">${escapeHtml(t('pushEnableBtn'))}</button>
+      </div>`;
+    el.innerHTML = `
+      ${pushBannerHtml}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+        <h3 style="margin:0;font-size:.9rem;">${escapeHtml(t('myBoardsTitle'))}</h3>
+        <div style="display:flex;gap:.4rem;">
+          <button type="button" id="myBoardsNotifyAllOn" style="font-size:.68rem;padding:.25rem .6rem;border-radius:999px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">${escapeHtml(t('notifyAllOn'))}</button>
+          <button type="button" id="myBoardsNotifyAllOff" style="font-size:.68rem;padding:.25rem .6rem;border-radius:999px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">${escapeHtml(t('notifyAllOff'))}</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.4rem;">
+        ${enriched.map(b=>`
+          <div style="display:flex;align-items:center;gap:.5rem;border:1px solid var(--line,#2a3830);border-radius:8px;padding:.5rem .7rem;cursor:pointer;" class="my-board-row" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(b.title)} ・ ${escapeHtml(t(_boardGroupLabel[b.board_type]||b.board_type))}</div>
+              <div style="font-size:.68rem;color:var(--muted,#9ab);">${b.latest ? formatRelativeTime(b.latest) : ''}</div>
+            </div>
+            ${b.isNew ? `<span style="font-size:.65rem;padding:.15rem .5rem;border-radius:999px;background:rgba(94,201,122,.18);color:#8ee26f;font-weight:700;flex-shrink:0;">${escapeHtml(t('newActivityBadge'))}</span>` : ''}
+            <label style="display:flex;align-items:center;gap:.3rem;font-size:.68rem;color:var(--muted,#9ab);flex-shrink:0;" onclick="event.stopPropagation();">
+              <input type="checkbox" class="my-board-notify-toggle" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" ${b.notify?'checked':''} />
+            </label>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    el.querySelectorAll('.my-board-row').forEach(row=>{
+      row.onclick = () => {
+        const animeId = row.dataset.animeId, boardType = row.dataset.boardType;
+        if(boardType === 'general') { nav('board-general', animeId); }
+        else { _boardActiveTab = boardType; nav('board-value', animeId); }
+      };
+    });
+    el.querySelectorAll('.my-board-notify-toggle').forEach(cb=>{
+      cb.onclick = (e) => { e.stopPropagation(); db.boardState.setNotify(userId, cb.dataset.animeId, cb.dataset.boardType, cb.checked).catch(()=>{}); };
+    });
+    const onBtn = document.getElementById('myBoardsNotifyAllOn');
+    const offBtn = document.getElementById('myBoardsNotifyAllOff');
+    if(onBtn) onBtn.onclick = async () => { await db.boardState.setNotifyBulk(userId, boards, true); renderMyBoards(userId); };
+    if(offBtn) offBtn.onclick = async () => { await db.boardState.setNotifyBulk(userId, boards, false); renderMyBoards(userId); };
+    const pushBtn = document.getElementById('myBoardsEnablePushBtn');
+    if(pushBtn) pushBtn.onclick = async () => {
+      pushBtn.disabled = true; pushBtn.textContent = '...';
+      const { error } = await enablePushNotifications();
+      if(error) { alert(t('pushEnableFailedAlert')); pushBtn.disabled = false; pushBtn.textContent = t('pushEnableBtn'); return; }
+      renderMyBoards(userId);
+    };
+  }
+
   async function renderBlockedUsers(userId) {
     const el = document.getElementById('mypageBlockedSection');
     if(!el || !sb) return;
@@ -8025,6 +8195,16 @@
     unblockBtn:{ ja:'解除', en:'Unblock' },
     blockedUsersTitle:{ ja:'ブロック中のユーザー', en:'Blocked users' },
     noBlockedUsers:{ ja:'ブロック中のユーザーはいません', en:'No blocked users' },
+    myBoardsTitle:{ ja:'参加中の掲示板', en:'Your boards' },
+    noMyBoards:{ ja:'まだ参加してる掲示板はありません', en:'No boards yet' },
+    newActivityBadge:{ ja:'新着', en:'New' },
+    notifyAllOn:{ ja:'すべて通知ON', en:'Notify all' },
+    notifyAllOff:{ ja:'すべて通知OFF', en:'Mute all' },
+    boardGeneralLabel:{ ja:'通常掲示板', en:'General board' },
+    yourValueBtn:{ ja:'あなたの価値観', en:'Your taste' },
+    pushEnablePrompt:{ ja:'通知ONの掲示板に新着があったら、スマホ・PCに通知を届けます', en:'Get notified on your device when boards you follow have new posts' },
+    pushEnableBtn:{ ja:'通知を有効にする', en:'Enable notifications' },
+    pushEnableFailedAlert:{ ja:'通知の許可ができませんでした。ブラウザの通知設定を確認してください。', en:'Could not enable notifications. Check your browser settings.' },
     boardLockedTitle:{ ja:'この掲示板は投票者限定です', en:'Members-only board' },
     boardLockedA:{ ja:'この作品のレビューで「作画・シリアス・かっこいい」のどれかに投票すると開放されます。', en:'Vote for Animation, Serious, or Cool when reviewing this title to unlock.' },
     boardLockedB:{ ja:'この作品のレビューで「物語・世界観・テーマ」のどれかに投票すると開放されます。', en:'Vote for Story, World, or Theme when reviewing this title to unlock.' },
@@ -10845,6 +11025,40 @@
   });
 
   // ログイン中のユーザー名をキャッシュする（レビュー投稿・掲示板投稿など、どこからでも参照できるように）
+  // ── Web Push通知：許可リクエスト＋購読登録 ──
+  const VAPID_PUBLIC_KEY = 'BOSs13MSCQIjAqUelZL9dL3oPbXeHxY4N1zHLL7Z62Lo3LkhsBOT4DLE3cPDjcNa00dKdcZsWA7NMhZX3wPOtzM';
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+  }
+  async function enablePushNotifications() {
+    if(!_currentUser) return { error: 'not logged in' };
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)) return { error: 'unsupported' };
+    try {
+      const permission = await Notification.requestPermission();
+      if(permission !== 'granted') return { error: 'denied' };
+      const reg = await navigator.serviceWorker.register('/animepple/sw.js');
+      await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if(!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+      }
+      const { error } = await db.pushSubscriptions.save(_currentUser.id, sub.toJSON());
+      return { error };
+    } catch(e) {
+      console.warn('enablePushNotifications error:', e);
+      return { error: e.message };
+    }
+  }
+  window.enablePushNotifications = enablePushNotifications;
+
   async function ensureLoggedInUsername() {
     if(!_currentUser || !sb) { window._loggedInUsername = null; return; }
     const fetchedUsername = await db.profiles.getUsername(_currentUser.id);
@@ -10879,10 +11093,14 @@
       ensureLoggedInUsername();
       loadMyBlockedUserIds();
     }
+    const yourValueBtn = document.getElementById('yourValueHeaderBtn');
+    if(yourValueBtn) yourValueBtn.style.display = _currentUser ? '' : 'none';
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
       if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; }
+      const yourValueBtn2 = document.getElementById('yourValueHeaderBtn');
+      if(yourValueBtn2) yourValueBtn2.style.display = _currentUser ? '' : 'none';
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -11171,6 +11389,7 @@
     const bio = profileData?.bio || '';
     const genres = profileData?.favorite_genres || [];
     if(isOwnPage) renderValueProfile(targetUserId).catch(e=>console.warn('renderValueProfile:', e));
+    if(isOwnPage) renderMyBoards(targetUserId).catch(e=>console.warn('renderMyBoards:', e));
     if(isOwnPage) renderBlockedUsers(targetUserId).catch(e=>console.warn('renderBlockedUsers:', e));
 
     document.getElementById('mypageUsernameText').textContent = username;
