@@ -6561,12 +6561,13 @@
         <button type="button" class="board-entry-btn" data-tab="general" style="display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:#dff0e6;font-size:.78rem;cursor:pointer;">
           <span>💬</span><span>${escapeHtml(t('boardEntryGeneral'))}</span>
         </button>
-        <button type="button" class="board-entry-btn" data-tab="${myGroup||'A'}" style="display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:${myGroup?'#dff0e6':'var(--muted,#9ab)'};font-size:.78rem;cursor:pointer;">
+        <button type="button" class="board-entry-btn"${myGroup?` data-tab="${myGroup}"`:''} ${myGroup?'':'disabled'} style="display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:${myGroup?'#dff0e6':'var(--muted,#9ab)'};font-size:.78rem;cursor:${myGroup?'pointer':'not-allowed'};opacity:${myGroup?'1':'.6'};">
           <span>${myGroup?'💎':'🔒'}</span><span>${escapeHtml(t('boardEntryValue'))}</span>
         </button>
       </div>
     `;
     el.querySelectorAll('.board-entry-btn').forEach(btn=>{
+      if(btn.disabled) return; // 未投票（フラグなし）の価値観掲示板ボタンはタップしても何も起きない
       btn.onclick = () => { _boardActiveTab = btn.dataset.tab; nav('board', animeId); };
     });
   }
