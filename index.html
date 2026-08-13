@@ -4647,11 +4647,14 @@
     const ctx=canvas.getContext('2d'); if(!ctx) return;
     // devicePixelRatio対応（Retina/高DPI画面でぼやけ防止）
     const dpr = window.devicePixelRatio || 1;
-    const cssW = canvas.clientWidth  || canvas.width;
+    // 表示サイズはCSS（width:100%）に完全に任せ、JS側では書き戻さない。
+    // 以前はcanvas.style.widthをJSで測定したpx値に固定していたため、スライダー操作のたびに
+    // 再描画→再測定→わずかな丸め誤差で書き戻す、を繰り返してキャンバスが徐々に縮んでいくバグがあった。
+    const cssW = canvas.getBoundingClientRect().width || canvas.clientWidth || canvas.width;
     const cssH = canvas.clientHeight || canvas.height;
     canvas.width  = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
-    canvas.style.width = cssW + 'px'; canvas.style.height = cssH + 'px';
+    canvas.style.height = cssH + 'px';
     ctx.scale(dpr, dpr);
     const w=cssW, h=cssH, cx=w/2, cy=h/2;
     const radius=Math.min(w,h)*(w<180?0.30:0.34),max=10,count=labels.length;
