@@ -5221,7 +5221,7 @@
       _randomPickCache = { items: shuffled, ts: now, slot };
     }
     const grid = document.getElementById('randomPickGrid');
-    if (grid) grid.innerHTML = shuffled.map(item => renderAnimeCard(item, { style: 'g', showReviewCount: true })).join('');
+    if (grid) grid.innerHTML = shuffled.map(item => renderAnimeCard(item, { style: 'g' })).join('');
   }
   function startRandomPickRefresh() {
     const initialRender = renderRandomPickSection().catch(console.error);
