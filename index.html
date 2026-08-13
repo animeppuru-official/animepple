@@ -1555,7 +1555,7 @@
 <!-- ═══════════════════════════════════
      PAGE: REVIEWS LIST
 ═══════════════════════════════════ -->
-<div class="page" id="page-board">
+<div class="page" id="page-board-general">
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()" style="color:#fff;">← 戻る</button>
@@ -1566,8 +1566,24 @@
     </div>
   </header>
   <div style="padding:.75rem 1rem;">
-    <h2 id="boardPageTitle" style="margin:0 0 .8rem;font-size:1rem;color:#dff0e6;"></h2>
-    <div id="boardSection"></div>
+    <h2 id="boardGeneralPageTitle" style="margin:0 0 .8rem;font-size:1rem;color:#dff0e6;"></h2>
+    <div id="boardGeneralSection"></div>
+  </div>
+</div>
+
+<div class="page" id="page-board-value">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()" style="color:#fff;">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:.75rem 1rem;">
+    <h2 id="boardValuePageTitle" style="margin:0 0 .8rem;font-size:1rem;color:#dff0e6;"></h2>
+    <div id="boardValueSection"></div>
   </div>
 </div>
 
@@ -3976,12 +3992,19 @@
       }
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
-    if (page==='board'&&animeId) {
+    if (page==='board-general'&&animeId) {
       currentAnimeId = animeId;
       const p = getAll().find(a=>a.id===animeId);
-      const titleEl = document.getElementById('boardPageTitle');
-      if(titleEl) titleEl.textContent = (p ? getTitle(p) + ' ' : '') + t('boardEntrySectionTitle');
-      renderBoardSection(animeId).catch(console.error);
+      const titleEl = document.getElementById('boardGeneralPageTitle');
+      if(titleEl) titleEl.textContent = (p ? getTitle(p) + ' ' : '') + t('boardEntryGeneral');
+      renderBoardGeneral(animeId).catch(console.error);
+    }
+    if (page==='board-value'&&animeId) {
+      currentAnimeId = animeId;
+      const p = getAll().find(a=>a.id===animeId);
+      const titleEl = document.getElementById('boardValuePageTitle');
+      if(titleEl) titleEl.textContent = (p ? getTitle(p) + ' ' : '') + t('boardEntryValue');
+      renderBoardValue(animeId).catch(console.error);
     }
     if (page==='mypage') renderMypage();
     if (page==='user'&&animeId) { renderMypage(animeId); }
@@ -6568,46 +6591,61 @@
     `;
     el.querySelectorAll('.board-entry-btn').forEach(btn=>{
       if(btn.disabled) return; // 未投票（フラグなし）の価値観掲示板ボタンはタップしても何も起きない
-      btn.onclick = () => { _boardActiveTab = btn.dataset.tab; nav('board', animeId); };
+      btn.onclick = () => {
+        if(btn.dataset.tab === 'general') { nav('board-general', animeId); }
+        else { _boardActiveTab = btn.dataset.tab; nav('board-value', animeId); }
+      };
     });
   }
 
-  // 価値観掲示板：掲示板ページ（アニメページからは独立した専用ページ）の描画
-  let _boardActiveTab = 'general';
-  async function renderBoardSection(animeId) {
-    const el = document.getElementById('boardSection');
+  // ── 通常掲示板：単独ページ、タブなし ──
+  async function renderBoardGeneral(animeId) {
+    const el = document.getElementById('boardGeneralSection');
+    if(!el || !sb) return;
+    el.innerHTML = `<div id="boardPanel"></div>`;
+    await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, 'general', renderBoardGeneral);
+  }
+
+  // ── 価値観掲示板：単独ページ、内部でA〜Dの4つに分岐（タブ） ──
+  let _boardActiveTab = 'A';
+  async function renderBoardValue(animeId) {
+    const el = document.getElementById('boardValueSection');
     if(!el || !sb) return;
     let myGroup = null;
     if(_currentUser) {
       const mine = await db.reviewValues.getMyGroup(animeId, _currentUser.id);
       myGroup = mine ? mine.axis_group : null;
     }
+    if(!['A','B','C','D'].includes(_boardActiveTab)) _boardActiveTab = myGroup || 'A';
     const tabs = [
-      { id:'general', label: t('boardTabGeneral') },
       { id:'A', label: t('boardTabA') },
       { id:'B', label: t('boardTabB') },
       { id:'C', label: t('boardTabC') },
       { id:'D', label: t('boardTabD') },
     ];
     el.innerHTML = `
-      <h2 style="margin:0 0 .6rem;">${escapeHtml(t('boardSectionTitle'))}</h2>
       <div style="display:flex;gap:.4rem;overflow-x:auto;padding-bottom:4px;margin-bottom:.8rem;">
         ${tabs.map(tb=>`<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="white-space:nowrap;padding:.4rem .8rem;border-radius:999px;font-size:.78rem;cursor:pointer;border:1px solid var(--line,#2a3830);background:${tb.id===_boardActiveTab?'var(--card2,#141c19)':'transparent'};color:${tb.id===_boardActiveTab?'#dff0e6':'var(--muted,#9ab)'};">${escapeHtml(tb.label)}</button>`).join('')}
       </div>
       <div id="boardPanel"></div>
     `;
     el.querySelectorAll('.board-tab-btn').forEach(btn=>{
-      btn.onclick = () => { _boardActiveTab = btn.dataset.tab; renderBoardSection(animeId); };
+      btn.onclick = () => { _boardActiveTab = btn.dataset.tab; renderBoardValue(animeId); };
     });
     const panel = el.querySelector('#boardPanel');
-    if(_boardActiveTab !== 'general' && myGroup !== _boardActiveTab) {
+    if(myGroup !== _boardActiveTab) {
       panel.innerHTML = `<div style="border:1px solid var(--line,#2a3830);border-radius:12px;padding:1.6rem 1rem;text-align:center;color:var(--muted,#9ab);">
         <p style="font-weight:600;color:#dff0e6;margin:0 0 .4rem;">${escapeHtml(t('boardLockedTitle'))}</p>
         <p style="font-size:.8rem;margin:0;">${escapeHtml(t('boardLocked'+_boardActiveTab))}</p>
       </div>`;
       return;
     }
-    const posts = await db.board.list(animeId, _boardActiveTab);
+    await renderBoardPostsInto(panel, animeId, _boardActiveTab, () => renderBoardValue(animeId));
+  }
+
+  // 通常・価値観、両掲示板共通：投稿一覧＋投稿フォーム＋返信の描画
+  async function renderBoardPostsInto(panel, animeId, boardType, rerenderFn) {
+    const posts = await db.board.list(animeId, boardType);
     const topLevel = posts.filter(p=>!p.parent_id);
     const repliesOf = pid => posts.filter(p=>p.parent_id===pid);
     let html = '';
@@ -6650,9 +6688,9 @@
       const body = input.value.trim();
       if(!body) return;
       const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
-      const { error } = await db.board.post(animeId, _boardActiveTab, _currentUser.id, username, body);
+      const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body);
       if(error) { alert(t('profileSaveFailedAlert')); return; }
-      renderBoardSection(animeId);
+      rerenderFn(animeId);
     };
     panel.querySelectorAll('.board-reply-toggle').forEach(btn=>{
       btn.onclick = () => {
@@ -6667,9 +6705,9 @@
         const body = textarea.value.trim();
         if(!body) return;
         const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
-        const { error } = await db.board.post(animeId, _boardActiveTab, _currentUser.id, username, body, btn.dataset.id);
+        const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, btn.dataset.id);
         if(error) { alert(t('profileSaveFailedAlert')); return; }
-        renderBoardSection(animeId);
+        rerenderFn(animeId);
       };
     });
   }
@@ -7989,7 +8027,8 @@
         if (currentPage === 'home') { renderHome().catch(console.error); loadSeasonSection(); }
         else if (currentPage === 'search') renderSearch().catch(console.error);
         else if (currentPage === 'anime' && currentAnimeId) renderAnimePage(currentAnimeId).catch(console.error);
-        else if (currentPage === 'board' && currentAnimeId) renderBoardSection(currentAnimeId).catch(console.error);
+        else if (currentPage === 'board-general' && currentAnimeId) renderBoardGeneral(currentAnimeId).catch(console.error);
+        else if (currentPage === 'board-value' && currentAnimeId) renderBoardValue(currentAnimeId).catch(console.error);
         else if (currentPage === 'popular') {
           const grid = document.getElementById('popGrid');
           if (grid) grid.innerHTML = popState.items.map(a=>renderAnimeCard(a, {style:'g', showReviewCount:true})).join('');
