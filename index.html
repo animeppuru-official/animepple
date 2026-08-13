@@ -3128,6 +3128,12 @@
         return data || [];
       },
       // マスターグラフ対象レビューを書いた作品ID一覧の元データ（isGraphValidReviewでの厳密な有効性判定はloadMyGoldAnimeIds側で行う）
+      // 本人のレビューのみ削除できる（RLSでも二重に制限）
+      async deleteOwn(reviewId, userId) {
+        if(!sb || !reviewId || !userId) return { error: 'invalid' };
+        const { error } = await sb.from('reviews').delete().eq('id', reviewId).eq('user_id', userId);
+        return { error };
+      },
       async getMyMasterGraphCandidates(userId) {
         if(!sb || !userId) return [];
         const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,elapsed_ms').eq('user_id', userId).eq('chart_moved', true);
@@ -3746,6 +3752,7 @@
       if(!data) return;
       // Supabaseのデータ形式をLocalStorage形式に変換してマージ
       const remote = data.map(r=>({
+        id: r.id,
         animeId: r.anime_id,
         userId: r.user_id || null,
         username: r.username||'名無しのりんご',
@@ -6848,6 +6855,11 @@
   //   再利用することで、検索結果と実際のページ表示を完全に一致させている）
   let _searchMasterGraphCache = null;
   let _searchMasterGraphPromise = null;
+  // レビュー削除など、キャッシュ済みの全件マスターグラフ計算が古くなるタイミングで呼ぶ
+  function invalidateSearchMasterGraphCache() {
+    _searchMasterGraphCache = null;
+    _searchMasterGraphPromise = null;
+  }
   async function ensureSearchMasterGraphCache() {
     if(_searchMasterGraphCache) return _searchMasterGraphCache;
     if(_searchMasterGraphPromise) return _searchMasterGraphPromise;
@@ -7749,6 +7761,8 @@
     boardEntryGeneral:{ ja:'通常掲示板', en:'General board' },
     boardEntryLocked:{ ja:'未投票', en:'Not voted yet' },
     boardEntryValue:{ ja:'価値観掲示板', en:'Value board' },
+    deleteReviewBtn:{ ja:'削除', en:'Delete' },
+    deleteReviewConfirm:{ ja:'このレビューを削除しますか？削除すると、マスターグラフへの反映や価値観掲示板の権限も取り消されます。', en:'Delete this review? This also removes it from the master graph and revokes value-board access if it applied.' },
     boardLockedTitle:{ ja:'この掲示板は投票者限定です', en:'Members-only board' },
     boardLockedA:{ ja:'この作品のレビューで「作画・シリアス・かっこいい」のどれかに投票すると開放されます。', en:'Vote for Animation, Serious, or Cool when reviewing this title to unlock.' },
     boardLockedB:{ ja:'この作品のレビューで「物語・世界観・テーマ」のどれかに投票すると開放されます。', en:'Vote for Story, World, or Theme when reviewing this title to unlock.' },
@@ -10225,6 +10239,15 @@
     const sorted = [...filtered].sort((a,b)=>{
       return sortVal==='oldest'?getReviewTime(a)-getReviewTime(b):getReviewTime(b)-getReviewTime(a);
     });
+    // 本人のレビューは常に先頭にくるようにする
+    if(_currentUser) {
+      const myUid = _currentUser.id;
+      sorted.sort((a,b)=>{
+        const aMine = (a.userId||a.user_id) === myUid ? 1 : 0;
+        const bMine = (b.userId||b.user_id) === myUid ? 1 : 0;
+        return bMine - aMine;
+      });
+    }
 
     // アカウント登録済みユーザーのアイコン画像をまとめて取得
     let avatarMap = {};
@@ -10255,6 +10278,10 @@
       const flag = countryBadgeHtml(rev.country_code||rev.countryCode);
       const isClickableUser = !!userId;
       const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(userId)}')" style="cursor:pointer;"` : '';
+      const isOwnReview = _currentUser && userId === _currentUser.id;
+      const deleteBtnHtml = isOwnReview
+        ? `<button type="button" class="rc-delete-btn" data-review-id="${escapeHtml(rev.id||'')}" data-anime-id="${escapeHtml(rev.animeId||'')}" style="margin-left:auto;background:none;border:none;color:var(--muted,#9ab);font-size:.68rem;cursor:pointer;padding:.2rem .4rem;">${escapeHtml(t('deleteReviewBtn'))}</button>`
+        : '';
       return `<article class="review-card">
         <div class="rc-head">
           <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
@@ -10263,6 +10290,7 @@
               <span class="rc-name"${userOnclick}>${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
             </div>
+            ${deleteBtnHtml}
           </div>
         </div>
         ${tags?`<div style="display:flex;flex-wrap:wrap;gap:.35rem;padding:0 .75rem .5rem;">${tags}</div>`:''}
@@ -10288,6 +10316,22 @@
         if(!txt||!txt.textContent.trim()){btn.style.display='none';}
         else{btn.onclick=()=>{const o=txt.style.display!=='none';txt.style.display=o?'none':'';btn.textContent=(o?'▶ ':'▼ ')+t('commentExpandLabel');};}
       }
+    });
+    el.querySelectorAll('.rc-delete-btn').forEach(btn=>{
+      btn.onclick = async () => {
+        const reviewId = btn.dataset.reviewId;
+        const animeId = btn.dataset.animeId;
+        if(!reviewId || !_currentUser) return;
+        if(!confirm(t('deleteReviewConfirm'))) return;
+        const { error } = await db.reviews.deleteOwn(reviewId, _currentUser.id);
+        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        // マスターグラフ・カードの色・価値観投票を最新状態に揃える
+        try { await sb.from('review_values').delete().eq('anime_id', animeId).eq('user_id', _currentUser.id); } catch(e) { console.warn('review_values cleanup:', e); }
+        invalidateSearchMasterGraphCache();
+        await loadMyGoldAnimeIds();
+        await fetchRemoteReviews(animeId);
+        renderReviewsListFiltered(animeId);
+      };
     });
   }
 
