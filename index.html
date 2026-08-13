@@ -146,7 +146,7 @@
     .hcard-thumb { position:relative; width:100%; aspect-ratio:3/4; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
     .hcard-thumb img { width:100%; height:100%; object-fit:cover; }
     .hcard-body { padding:.5rem .6rem; min-height:4.6rem; display:flex; flex-direction:column; }
-    .hcard-body h3 { margin:0 0 .2rem; font-size:.86rem; line-height:1.3; }
+    .hcard-body h3 { margin:0 0 .2rem; font-size:.86rem; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .recruit-badge { display:inline-block; padding:.1rem .4rem; border-radius:6px; background:rgba(255,180,60,.15); color:#ffb43c; font-size:.62rem; font-weight:700; white-space:nowrap; }
     .thumb-badge-stack { position:absolute; top:.4rem; left:.4rem; display:flex; flex-direction:column; align-items:flex-start; gap:.3rem; z-index:2; }
     .ai-thumb-badge { padding:.1rem .45rem; border-radius:999px; background:rgba(7,21,13,.8); border:1px solid #3d8a56; font-size:.62rem; color:#b8efc8; white-space:nowrap; }
@@ -177,9 +177,9 @@
     .gcard { background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; }
     .gcard-thumb { position:relative; width:100%; aspect-ratio:16/9; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
     .gcard-thumb img { width:100%; height:100%; object-fit:cover; }
-    .gcard-body { padding:.55rem .65rem; }
-    .gcard-body h3 { margin:0 0 .15rem; font-size:.88rem; line-height:1.3; }
-    .gcard-body p { margin:0; font-size:.74rem; color:var(--muted); }
+    .gcard-body { padding:.55rem .65rem; display:flex; flex-direction:column; }
+    .gcard-body h3 { margin:0 0 .15rem; font-size:.88rem; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:2.6em; }
+    .gcard-body p { margin:0; font-size:.74rem; color:var(--muted); display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
     .badge { display:inline-block; margin-top:.3rem; padding:.15rem .5rem; border-radius:999px; background:rgba(94,201,122,.12); border:1px solid #3d8a56; font-size:.7rem; color:#b8efc8; }
     .match-badge { background:rgba(255,153,60,.12); border-color:#8a5a3d; color:#ffd0a0; }
 
@@ -677,6 +677,7 @@
     .mypage-fav-card .mypage-fav-title {
       font-size:.72rem; font-weight:700; padding:.4rem .5rem; color:#dff0e6; line-height:1.3;
       background:linear-gradient(180deg, var(--card2), #0c241a);
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
     }
     .mypage-fav-remove { position:absolute; top:.25rem; right:.25rem; background:rgba(0,0,0,.65); color:#ff8888; border:none; border-radius:7px; width:22px; height:22px; font-size:.72rem; cursor:pointer; }
     .mypage-fav-status-row { display:flex; gap:.25rem; padding:.35rem; background:#0c241a; }
