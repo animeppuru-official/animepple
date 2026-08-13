@@ -8785,6 +8785,7 @@
     { id:'global', icon:'🌍', nameEn:'Global Market', nameJa:'海外分析', color:'#c17aff', tagline:'海外で売れる場所を見つける', needsAnimeId:true, dataset:'global_market' },
     { id:'consumer', icon:'🧭', nameEn:'Consumer Behavior', nameJa:'消費者行動', color:'#f4a261', tagline:'ユーザーがどう作品を選ぶか', needsAnimeId:'optional', dataset:'consumer_behavior' },
     { id:'ip', icon:'🚀', nameEn:'IP Strategy', nameJa:'IP戦略', color:'#ff8fa3', tagline:'このIPをどう伸ばすか', needsAnimeId:'optional', dataset:'ip_strategy' },
+    { id:'overview', icon:'🗺️', nameEn:'Platform Overview', nameJa:'全体分析', color:'#8fe5ab', tagline:'プラットフォーム全体を俯瞰する', needsAnimeId:false, dataset:'platform_overview' },
   ];
   let _currentPackId = null;
 
@@ -9009,6 +9010,50 @@
     return html;
   }
 
+  // 全体分析（platform_overview）：4つの俯瞰分析をまとめて表示
+  function formatPlatformOverview(d, color) {
+    let html = '';
+    // ① マーケットマップ
+    html += subsection('マーケットマップ（ジャンル別の12軸平均）', simpleTable(
+      ['ジャンル','作品数','作画','物語','キャラ','世界観','音楽','テーマ','かっこいい','可愛い','シリアス','コメディ','アダルト','エモい'],
+      (d.marketMap||[]).map(m=>[
+        escapeHtml(m.category_ja), m.anime_count,
+        m.avg_sakuga, m.avg_monogatari, m.avg_character, m.avg_sekaikan, m.avg_ongaku, m.avg_theme,
+        m.avg_kakkoii, m.avg_kawaii, m.avg_serious, m.avg_comedy, m.avg_adult, m.avg_emo,
+      ])
+    ));
+    // ② 価値観セグメント分析（全体版）
+    const groupLabel = { A:'ビジュアル系', B:'物語系', C:'キャラ系', D:'トーン系' };
+    html += subsection('価値観セグメント分析（全体構成比）', barListHtml(
+      (d.valueSegmentOverview||[]).map(g=>({ label: (groupLabel[g.axis_group]||g.axis_group), value: g.vote_count })),
+      { showRank:true, suffix:'票', color }
+    ));
+    Object.entries(d.valueSegmentTopAnime||{}).forEach(([group, list])=>{
+      if(!list || !list.length) return;
+      html += subsection(`${groupLabel[group]||group}で支持されてる作品トップ5`, simpleTable(
+        ['作品','投票数'], list.map(a=>[escapeHtml(a.title), a.vote_count])
+      ));
+    });
+    // ③ 急上昇・急下降ランキング
+    html += subsection('急上昇ランキング（直近7日 vs 前週のレビュー数）', simpleTable(
+      ['作品','直近7日','前週','伸び率'],
+      (d.momentumRanking||[]).map(m=>[escapeHtml(m.title), m.recent_7d, m.prior_7d, m.prior_7d>0 ? `×${m.growth_ratio}` : '新規急伸'])
+    ));
+    // ④ 国別・言語別の視聴傾向マップ
+    const byCountry = {};
+    (d.countryGenreAffinity||[]).forEach(r=>{
+      if(!byCountry[r.country_code]) byCountry[r.country_code] = [];
+      byCountry[r.country_code].push(r);
+    });
+    Object.entries(byCountry).slice(0,10).forEach(([cc, rows])=>{
+      html += subsection(`${cc} が好むジャンル`, barListHtml(
+        rows.slice(0,8).map(r=>({ label: r.category_ja, value: r.pv_count })),
+        { suffix:'PV', color }
+      ));
+    });
+    return html;
+  }
+
   function formatGlobal(d) {
     let html = subsection('国別視聴熱量ランキング', simpleTable(['国','件数'], (d.countryStats||[]).slice(0,15).map(c=>[c.country_code, c.cnt])));
     html += subsection('国別の感情差分（全体平均との差が大きい軸）', simpleTable(['国','軸','その国の平均','全体平均','差'], (d.countryEmotionDiff||[]).slice(0,20).map(c=>[c.country_code, escapeHtml(c.axis), c.country_avg, c.overall_avg, (c.diff>0?'+':'')+c.diff])));
@@ -9088,6 +9133,7 @@
   const PACK_FORMATTERS = {
     sentiment: formatSentiment, fan_insight: formatFanInsight, trend: formatTrend,
     global: formatGlobal, consumer: formatConsumer, ip: formatIpStrategy,
+    overview: formatPlatformOverview,
   };
 
   let _partnerTitleToId = {};
