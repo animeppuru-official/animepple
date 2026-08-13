@@ -3227,7 +3227,7 @@
       },
       async getAllForCluster() {
         if(!sb) return [];
-        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated,username,quality,elapsed_ms');
+        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated,username,quality,elapsed_ms,tags');
         return data || [];
       },
       async getCreatedDates() {
