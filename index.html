@@ -673,7 +673,7 @@
       position:relative; transition: transform .15s, box-shadow .15s;
     }
     .mypage-fav-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.3); }
-    .mypage-fav-card img { width:100%; aspect-ratio:3/4; object-fit:cover; display:block; }
+    .mypage-fav-card img { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; }
     .mypage-fav-card .mypage-fav-title {
       font-size:.72rem; font-weight:700; padding:.4rem .5rem; color:#dff0e6; line-height:1.3;
       background:linear-gradient(180deg, var(--card2), #0c241a);
@@ -5279,7 +5279,7 @@
     if (el) el.textContent = label;
     document.getElementById('seasonScroll').innerHTML = items.map(item=>{
       const itemWithKitsuId = { ...item, kitsuId: item.kitsuId || item.id.replace('kitsu-','') };
-      return renderAnimeCard(itemWithKitsuId, { style:'h', dummy: item.dummy });
+      return renderAnimeCard(itemWithKitsuId, { style:'g', dummy: item.dummy });
     }).join('');
     initCarousel('seasonScroll','seasonDots',5);
   }
@@ -5373,7 +5373,7 @@
     const pickupPromise = getPickupItems().then(pickupItems=>{
       document.getElementById('pickupScroll').innerHTML = pickupItems.length ? pickupItems.map(item=>{
         const itemWithKitsuId = { ...item, kitsuId: item.kitsuId || (item.id.startsWith('kitsu-') ? item.id.replace('kitsu-','') : null) };
-        return renderAnimeCard(itemWithKitsuId, { style:'h' });
+        return renderAnimeCard(itemWithKitsuId, { style:'g' });
       }).join('') : '<p style="color:var(--muted);padding:.5rem;">作品が増えると表示されます</p>';
       // HTML挿入後にカルーセル初期化
       initCarousel('pickupScroll','pickupDots',5);
@@ -7112,7 +7112,7 @@
       const items = ids.map(i=>pageMap[i]).filter(Boolean);
       if(!items.length) { showEmpty(); return; }
       grid.innerHTML = items.map(item=>renderAnimeCard(item, {
-        style:'h',
+        style:'g',
         aiBadge: aiOnlyMap[item.id] ? t('aiPredictedBadge') : '',
       })).join('');
       section.style.display='';
@@ -10756,24 +10756,13 @@
   function renderReviewCards(el, reviews, pages) {
     const titleMap = {};
     pages.forEach(p => { titleMap[p.id] = currentLang==='ja' ? (p.title||p.title_en||p.id) : (p.title_en||p.title||p.id); });
-    el.innerHTML = `<div class="mr-grid">${reviews.map((r) => {
+    el.innerHTML = `<div class="grid2">${reviews.map((r) => {
       const title = titleMap[r.anime_id] || r.anime_id;
       const page = pages.find(p=>p.id===r.anime_id);
       const img = page?.image_url || '';
       const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
-      const quality = r.quality ? '<span class="mr-quality">✨</span>' : '';
-      return `
-        <div class="mr-card${r.quality?' mr-card-quality':''}" onclick="nav('anime','${r.anime_id}')">
-          <div class="mr-thumb">${img
-            ? `<img src="${escapeHtml(img)}" alt="" style="width:100%;height:100%;object-fit:cover;">`
-            : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:var(--card2);">🎌</div>`
-          }</div>
-          <div class="mr-info">
-            <div class="mr-title">${escapeHtml(title)}</div>
-            <div class="mr-date">${dateStr}${quality}</div>
-          </div>
-        </div>
-      `;
+      const cardItem = { id: r.anime_id, title, image: img, meta: (r.quality?'✨ ':'') + dateStr };
+      return renderAnimeCard(cardItem, { style:'g', showReviewCount:false, showRecruitBadge:false, dummy:false });
     }).join('')}</div>`;
   }
 
@@ -11080,11 +11069,9 @@
       const title = titleOf(f);
       const img = p?.image_url;
       const isWatched = f.status === 'watched';
-      return `<div class="mypage-fav-card">
-        <div onclick="nav('anime','${f.anime_id}')" style="cursor:pointer;">
-          ${img?`<img src="${escapeHtml(img)}" loading="lazy">`:'<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;color:var(--muted);">📺</div>'}
-          <div class="mypage-fav-title">${escapeHtml(title)}</div>
-        </div>
+      const cardItem = { id: f.anime_id, title, image: img, meta: p?.meta || '', year: p?.year };
+      return `<div>
+        ${renderAnimeCard(cardItem, { style:'g', showReviewCount:false, showRecruitBadge:false })}
         <div class="mypage-fav-status-row">
           <button class="mypage-fav-status-btn${!isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','want_to_watch')">👀 気になる</button>
           <button class="mypage-fav-status-btn${isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','watched')">✅ 視聴済み</button>
