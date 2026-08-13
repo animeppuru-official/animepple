@@ -2013,6 +2013,7 @@
     <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-geo')">🌍 国・言語</button>
     <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-revenue')">💰 収益</button>
     <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-reviews')">📝 レビュー</button>
+    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-reports')">🚨 通報</button>
   </div>
 
   <!-- パスワード画面 -->
@@ -2193,6 +2194,14 @@
       <div id="adminAnimeRanking"></div>
     </div>
     </div><!-- /admin-group-reviews -->
+
+    <div id="admin-group-reports">
+    <div class="admin-group-header">通報一覧</div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">🚨 未対応の通報</h3>
+      <div id="adminReportsList"></div>
+    </div>
+    </div><!-- /admin-group-reports -->
 
     <div class="admin-group-header">メンテナンス</div>
     <div class="admin-section">
@@ -2695,6 +2704,9 @@
     <!-- 全体価値観プロフィール -->
     <div class="mypage-section" id="mypageValueProfileSection" style="display:none;"></div>
 
+    <!-- ブロック中のユーザー -->
+    <div class="mypage-section" id="mypageBlockedSection" style="display:none;"></div>
+
     <!-- 自己紹介・好きなジャンル -->
     <div class="mypage-section" id="mypageBioSection" style="display:none;">
       <p class="mypage-bio-text" id="mypageBioText"></p>
@@ -3003,6 +3015,44 @@
     },
     // ── 価値観掲示板：12項目投票 ──
     // ── 全体価値観プロフィール：閲覧したアニメのマスターグラフから高い軸・低い軸を蓄積 ──
+    // ── ブロック：相手ユーザーの投稿・レビューを自分の画面から非表示にする ──
+    blocks: {
+      async list(userId) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('blocks').select('blocked_id, created_at').eq('blocker_id', userId);
+        return data || [];
+      },
+      async add(blockerId, blockedId) {
+        if(!sb || !blockerId || !blockedId) return { error: 'invalid' };
+        const { error } = await sb.from('blocks').insert({ blocker_id: blockerId, blocked_id: blockedId });
+        return { error };
+      },
+      async remove(blockerId, blockedId) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('blocks').delete().eq('blocker_id', blockerId).eq('blocked_id', blockedId);
+        return { error };
+      },
+    },
+    // ── 通報：掲示板投稿・レビューを通報する。閲覧は管理者ページから ──
+    reports: {
+      async submit(reporterId, targetType, targetId, reason) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('reports').insert({
+          reporter_id: reporterId || null, target_type: targetType, target_id: targetId, reason: reason || null,
+        });
+        return { error };
+      },
+      async listUnresolved() {
+        if(!sb) return [];
+        const { data } = await sb.from('reports').select('*').eq('resolved', false).order('created_at', { ascending: false });
+        return data || [];
+      },
+      async resolve(reportId) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('reports').update({ resolved: true }).eq('id', reportId);
+        return { error };
+      },
+    },
     axisSignals: {
       async upsert(userId, animeId, highAxis, lowAxis) {
         if(!sb || !userId) return { error: 'no user' };
@@ -6677,6 +6727,14 @@
 
   // 通常・価値観、両掲示板共通：投稿一覧＋投稿フォーム＋返信の描画
   // 「◯分前」のような相対時間表記
+  // ブロック中のユーザーID一覧（掲示板・レビュー表示のフィルタに使う）
+  let _blockedUserIds = null;
+  async function loadMyBlockedUserIds() {
+    if(!_currentUser) { _blockedUserIds = new Set(); return; }
+    const rows = await db.blocks.list(_currentUser.id);
+    _blockedUserIds = new Set(rows.map(r=>r.blocked_id));
+  }
+
   function formatRelativeTime(dateStr) {
     const diffMs = Date.now() - new Date(dateStr).getTime();
     const min = Math.floor(diffMs / 60000);
@@ -6689,7 +6747,11 @@
   }
 
   async function renderBoardPostsInto(panel, animeId, boardType, rerenderFn) {
-    const posts = await db.board.list(animeId, boardType);
+    let posts = await db.board.list(animeId, boardType);
+    if(_currentUser) {
+      if(_blockedUserIds === null) await loadMyBlockedUserIds();
+      posts = posts.filter(p => !_blockedUserIds.has(p.user_id));
+    }
     const topLevel = posts.filter(p=>!p.parent_id);
     const repliesOf = pid => posts.filter(p=>p.parent_id===pid);
     let html = '';
@@ -6711,6 +6773,13 @@
         const bg = name==='ゲスト' ? 'rgba(140,198,160,0.2)' : colors[name.charCodeAt(0)%colors.length];
         return `<div style="width:${size}px;height:${size}px;border-radius:${size>=28?7:6}px;overflow:hidden;background:${bg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${size>=28?'.8rem':'.65rem'};color:#0c2015;flex-shrink:0;">${escapeHtml((name||'ゲ').charAt(0))}</div>`;
       };
+      const reportBlockButtons = (targetType, targetId, targetUserId) => {
+        if(!_currentUser || targetUserId === _currentUser.id) return '';
+        return `<span style="margin-left:auto;display:flex;gap:8px;">
+          <button type="button" class="board-report-btn" data-type="${targetType}" data-id="${targetId}" style="font-size:.68rem;color:var(--muted,#9ab);background:none;border:none;cursor:pointer;">${escapeHtml(t('reportBtn'))}</button>
+          <button type="button" class="board-block-btn" data-uid="${targetUserId}" style="font-size:.68rem;color:var(--muted,#9ab);background:none;border:none;cursor:pointer;">${escapeHtml(t('blockBtn'))}</button>
+        </span>`;
+      };
       html += topLevel.map(p=>{
         const replies = repliesOf(p.id);
         const name = p.username || '名無し';
@@ -6721,6 +6790,7 @@
               <span style="font-size:.8rem;font-weight:600;">${escapeHtml(name)}</span>
               <span style="font-size:.68rem;color:var(--muted,#9ab);">${new Date(p.created_at).toLocaleString(currentLang==='ja'?'ja-JP':'en-US')}（${formatRelativeTime(p.created_at)}）</span>
             </div>
+            ${reportBlockButtons('board_post', p.id, p.user_id)}
           </div>
           <p style="font-size:.85rem;margin:0 0 .4rem;white-space:pre-wrap;">${escapeHtml(p.body)}</p>
           ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="font-size:.72rem;color:var(--muted,#9ab);background:none;border:none;cursor:pointer;padding:2px 0;">${escapeHtml(t('boardReplyBtn'))} ${replies.length||''}</button>
@@ -6764,6 +6834,23 @@
         const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
         const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, btn.dataset.id);
         if(error) { alert(t('profileSaveFailedAlert')); return; }
+        rerenderFn(animeId);
+      };
+    });
+    panel.querySelectorAll('.board-report-btn').forEach(btn=>{
+      btn.onclick = async () => {
+        if(!confirm(t('reportConfirm'))) return;
+        const { error } = await db.reports.submit(_currentUser.id, btn.dataset.type, btn.dataset.id, null);
+        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        alert(t('reportSentAlert'));
+      };
+    });
+    panel.querySelectorAll('.board-block-btn').forEach(btn=>{
+      btn.onclick = async () => {
+        if(!confirm(t('blockConfirm'))) return;
+        const { error } = await db.blocks.add(_currentUser.id, btn.dataset.uid);
+        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        await loadMyBlockedUserIds();
         rerenderFn(animeId);
       };
     });
@@ -7031,6 +7118,38 @@
   }
 
   // 全体価値観プロフィール：マイページに「あなたは○○が高く○○が低いです」＋おすすめ作品を表示
+  // マイページ：ブロック中のユーザー一覧＋解除ボタン
+  async function renderBlockedUsers(userId) {
+    const el = document.getElementById('mypageBlockedSection');
+    if(!el || !sb) return;
+    const rows = await db.blocks.list(userId);
+    if(!rows.length) { el.style.display='none'; return; }
+    el.style.display='';
+    const names = await Promise.all(rows.map(async r => ({
+      id: r.blocked_id,
+      name: (await db.profiles.getUsername(r.blocked_id)) || r.blocked_id,
+    })));
+    el.innerHTML = `
+      <h3 style="margin:0 0 .5rem;font-size:.9rem;">${escapeHtml(t('blockedUsersTitle'))}</h3>
+      <div style="display:flex;flex-direction:column;gap:.4rem;">
+        ${names.map(n=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line,#2a3830);border-radius:8px;padding:.4rem .6rem;">
+            <span style="font-size:.82rem;">${escapeHtml(n.name)}</span>
+            <button type="button" class="mypage-unblock-btn" data-uid="${escapeHtml(n.id)}" style="font-size:.72rem;padding:.3rem .7rem;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">${escapeHtml(t('unblockBtn'))}</button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    el.querySelectorAll('.mypage-unblock-btn').forEach(btn=>{
+      btn.onclick = async () => {
+        const { error } = await db.blocks.remove(userId, btn.dataset.uid);
+        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        await loadMyBlockedUserIds();
+        renderBlockedUsers(userId);
+      };
+    });
+  }
+
   async function renderValueProfile(userId) {
     const el = document.getElementById('mypageValueProfileSection');
     if(!el || !sb) return;
@@ -7859,6 +7978,14 @@
     boardEntryValue:{ ja:'価値観掲示板', en:'Value board' },
     deleteReviewBtn:{ ja:'削除', en:'Delete' },
     deleteReviewConfirm:{ ja:'このレビューを削除しますか？削除すると、マスターグラフへの反映や価値観掲示板の権限も取り消されます。', en:'Delete this review? This also removes it from the master graph and revokes value-board access if it applied.' },
+    reportBtn:{ ja:'通報', en:'Report' },
+    blockBtn:{ ja:'ブロック', en:'Block' },
+    reportConfirm:{ ja:'この投稿を通報しますか？運営が内容を確認します。', en:'Report this post? The admin will review it.' },
+    reportSentAlert:{ ja:'通報しました。ご協力ありがとうございます。', en:'Report sent. Thank you.' },
+    blockConfirm:{ ja:'このユーザーをブロックしますか？以降、このユーザーの投稿・レビューが表示されなくなります。マイページからいつでも解除できます。', en:'Block this user? Their posts and reviews will be hidden from you. You can unblock anytime from your page.' },
+    unblockBtn:{ ja:'解除', en:'Unblock' },
+    blockedUsersTitle:{ ja:'ブロック中のユーザー', en:'Blocked users' },
+    noBlockedUsers:{ ja:'ブロック中のユーザーはいません', en:'No blocked users' },
     boardLockedTitle:{ ja:'この掲示板は投票者限定です', en:'Members-only board' },
     boardLockedA:{ ja:'この作品のレビューで「作画・シリアス・かっこいい」のどれかに投票すると開放されます。', en:'Vote for Animation, Serious, or Cool when reviewing this title to unlock.' },
     boardLockedB:{ ja:'この作品のレビューで「物語・世界観・テーマ」のどれかに投票すると開放されます。', en:'Vote for Story, World, or Theme when reviewing this title to unlock.' },
@@ -10113,6 +10240,28 @@
         `).join('');
       }
 
+      // 未対応の通報
+      const reports = await db.reports.listUnresolved();
+      const reportsEl = document.getElementById('adminReportsList');
+      if(reportsEl) {
+        reportsEl.innerHTML = reports.length ? reports.map(r=>`
+          <div class="admin-row" style="flex-direction:column;align-items:flex-start;gap:.2rem;" data-report-id="${r.id}">
+            <div style="display:flex;justify-content:space-between;width:100%;">
+              <span style="font-weight:700;color:#dff0e6;">${r.target_type==='review'?'📝 レビュー':'💬 掲示板投稿'}</span>
+              <span style="color:var(--muted);font-size:.72rem;">${new Date(r.created_at).toLocaleDateString('ja-JP')}</span>
+            </div>
+            <span style="color:var(--muted);font-size:.75rem;">対象ID: ${escapeHtml(r.target_id)}</span>
+            <button type="button" class="admin-resolve-report-btn" data-report-id="${r.id}" style="margin-top:.3rem;font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">対応済みにする</button>
+          </div>
+        `).join('') : '<p style="font-size:.8rem;color:var(--muted);">未対応の通報はありません</p>';
+        reportsEl.querySelectorAll('.admin-resolve-report-btn').forEach(btn=>{
+          btn.onclick = async () => {
+            await db.reports.resolve(btn.dataset.reportId);
+            btn.closest('[data-report-id]').remove();
+          };
+        });
+      }
+
       // アニメランキング
       const allReviews = await db.reviews.getAllAnimeIds();
       if(allReviews) {
@@ -10323,7 +10472,11 @@
 
   async function renderReviewsListFiltered(id) {
     const scopedAll = getReviews().filter(r=>r.animeId===id);
-    const allRevs = filterDisplayReviews(scopedAll);
+    let allRevs = filterDisplayReviews(scopedAll);
+    if(_currentUser) {
+      if(_blockedUserIds === null) await loadMyBlockedUserIds();
+      allRevs = allRevs.filter(r => !_blockedUserIds.has(r.userId || r.user_id));
+    }
     const filtered = filterReviews(allRevs);
     const metaEl = document.getElementById('reviewsListMeta');
     if(metaEl) metaEl.textContent = `${filtered.length}件`;
@@ -10378,7 +10531,10 @@
       const isOwnReview = _currentUser && userId === _currentUser.id;
       const deleteBtnHtml = isOwnReview
         ? `<button type="button" class="rc-delete-btn" data-review-id="${escapeHtml(rev.id||'')}" data-anime-id="${escapeHtml(rev.animeId||'')}" style="margin-left:auto;background:none;border:none;color:var(--muted,#9ab);font-size:.68rem;cursor:pointer;padding:.2rem .4rem;">${escapeHtml(t('deleteReviewBtn'))}</button>`
-        : '';
+        : (_currentUser && userId ? `<span style="margin-left:auto;display:flex;gap:8px;">
+            <button type="button" class="rc-report-btn" data-review-id="${escapeHtml(rev.id||'')}" style="background:none;border:none;color:var(--muted,#9ab);font-size:.68rem;cursor:pointer;">${escapeHtml(t('reportBtn'))}</button>
+            <button type="button" class="rc-block-btn" data-uid="${escapeHtml(userId)}" style="background:none;border:none;color:var(--muted,#9ab);font-size:.68rem;cursor:pointer;">${escapeHtml(t('blockBtn'))}</button>
+          </span>` : '');
       return `<article class="review-card">
         <div class="rc-head">
           <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
@@ -10428,6 +10584,23 @@
         await loadMyGoldAnimeIds();
         await fetchRemoteReviews(animeId);
         renderReviewsListFiltered(animeId);
+      };
+    });
+    el.querySelectorAll('.rc-report-btn').forEach(btn=>{
+      btn.onclick = async () => {
+        if(!confirm(t('reportConfirm'))) return;
+        const { error } = await db.reports.submit(_currentUser.id, 'review', btn.dataset.reviewId, null);
+        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        alert(t('reportSentAlert'));
+      };
+    });
+    el.querySelectorAll('.rc-block-btn').forEach(btn=>{
+      btn.onclick = async () => {
+        if(!confirm(t('blockConfirm'))) return;
+        const { error } = await db.blocks.add(_currentUser.id, btn.dataset.uid);
+        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        await loadMyBlockedUserIds();
+        renderReviewsListFiltered(currentAnimeId);
       };
     });
   }
@@ -10599,11 +10772,12 @@
       checkOnboarding(); updateProfileCountry();
       loadMyGoldAnimeIds();
       ensureLoggedInUsername();
+      loadMyBlockedUserIds();
     }
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -10892,6 +11066,7 @@
     const bio = profileData?.bio || '';
     const genres = profileData?.favorite_genres || [];
     if(isOwnPage) renderValueProfile(targetUserId).catch(e=>console.warn('renderValueProfile:', e));
+    if(isOwnPage) renderBlockedUsers(targetUserId).catch(e=>console.warn('renderBlockedUsers:', e));
 
     document.getElementById('mypageUsernameText').textContent = username;
     if(isOwnPage) document.getElementById('mypageEmail').textContent = _currentUser.email;
