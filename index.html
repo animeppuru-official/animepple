@@ -3984,7 +3984,12 @@
     } catch(e) { console.warn('fetchRemoteReviews:', e); }
   }
   function reviewCount(id) {
-    return validReviews(id).length;
+    const local = validReviews(id).length;
+    if(local > 0) return local;
+    // 検索結果ページなどではローカルにレビューを個別取得してないため、
+    // マスターグラフの全体キャッシュ（AIシード込み）が読み込まれていればそちらを使う
+    if(_searchMasterGraphCache && _searchMasterGraphCache[id]) return _searchMasterGraphCache[id].count;
+    return 0;
   }
 
   // カード用「レビュー募集中」バッジ（マスターグラフ反映数が10件未満の場合に表示）
