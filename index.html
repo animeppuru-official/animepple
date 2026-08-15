@@ -652,6 +652,11 @@
     }
     .mypage-btn-secondary:hover { background:rgba(255,255,255,.04); color:#dff0e6; }
     .mypage-section { padding:1.1rem; border-top:1px solid var(--line); }
+    .mypage-menu-row { display:flex; align-items:center; gap:.7rem; width:100%; padding:1rem 1.1rem; background:none; border:none; border-top:1px solid var(--line); color:#dff0e6; font-size:.88rem; cursor:pointer; text-align:left; }
+    .mypage-menu-row:first-child { border-top:1px solid var(--line); }
+    .mypage-menu-row-icon { font-size:1.1rem; flex-shrink:0; }
+    .mypage-menu-row-label { flex:1; }
+    .mypage-menu-row-arrow { color:var(--muted); font-size:1.1rem; flex-shrink:0; }
     .mypage-edit-btn {
       background:var(--card2); border:1px solid var(--line); border-radius:10px; width:40px; height:40px;
       font-size:1.05rem; cursor:pointer; flex-shrink:0; align-self:flex-start; margin-top:.2rem;
@@ -874,6 +879,10 @@
     /* ── LANGUAGE SELECTOR ── */
     .lang-current-btn { padding:.38rem .65rem; border-radius:8px; background:var(--card2); border:1px solid var(--line); display:inline-flex; align-items:center; gap:.3rem; cursor:pointer; font-size:.78rem; font-weight:700; color:var(--brand); white-space:nowrap; }
     .lang-overlay { display:none; position:fixed; inset:0; z-index:300; background:rgba(2,8,5,.97); overflow-y:auto; padding:1.2rem 1rem; }
+    .match-breakdown-popover { display:none; position:fixed; inset:0; z-index:300; }
+    .match-breakdown-popover.open { display:flex; align-items:flex-end; justify-content:center; }
+    .match-breakdown-popover-inner { width:100%; max-width:320px; margin:0 1rem 1.4rem; background:var(--card, #101a15); border:1px solid var(--line); border-radius:14px; padding:.9rem 1rem; box-shadow:0 8px 28px rgba(0,0,0,.4); }
+    @media (min-width:640px) { .match-breakdown-popover { align-items:center; } }
     .lang-overlay.open { display:block; }
     .lang-overlay h2 { margin:0 0 .3rem; font-size:1.1rem; font-weight:900; }
     .lang-overlay p { margin:0 0 1rem; color:var(--muted); font-size:.82rem; }
@@ -1288,9 +1297,14 @@
 </div>
 
 <!-- 検索カードの一致度内訳（ⓘタップで表示） -->
-<div class="lang-overlay" id="matchBreakdownOverlay">
-  <h2 data-i18n="matchBreakdownTitle">一致度の内訳</h2>
-  <div id="matchBreakdownBody" style="padding:0 1rem;"></div>
+<div class="match-breakdown-popover" id="matchBreakdownOverlay">
+  <div class="match-breakdown-popover-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">
+      <span style="font-size:.78rem;font-weight:700;" data-i18n="matchBreakdownTitle">一致度の内訳</span>
+      <button type="button" onclick="document.getElementById('matchBreakdownOverlay').classList.remove('open')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;line-height:1;">✕</button>
+    </div>
+    <div id="matchBreakdownBody"></div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════
@@ -1924,6 +1938,22 @@
       </select>
     </div>
     <div id="myFavoritesFullList" class="mypage-fav-grid"></div>
+  </div>
+</div>
+
+<!-- 参加中の掲示板（専用ページ） -->
+<div class="page" id="page-my-boards">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1rem;">
+    <div id="mypageBoardsSection"></div>
   </div>
 </div>
 
@@ -2753,20 +2783,14 @@
       </div>
     </div>
 
-    <!-- 全体価値観プロフィール -->
-    <div class="mypage-section" id="mypageValueProfileSection" style="display:none;"></div>
-
-    <!-- 参加中の掲示板 -->
-    <div class="mypage-section" id="mypageBoardsSection" style="display:none;"></div>
-
-    <!-- ブロック中のユーザー -->
-    <div class="mypage-section" id="mypageBlockedSection" style="display:none;"></div>
-
     <!-- 自己紹介・好きなジャンル -->
     <div class="mypage-section" id="mypageBioSection" style="display:none;">
       <p class="mypage-bio-text" id="mypageBioText"></p>
       <div class="mypage-genre-tags" id="mypageGenreTags"></div>
     </div>
+
+    <!-- 全体価値観プロフィール -->
+    <div class="mypage-section" id="mypageValueProfileSection" style="display:none;"></div>
 
     <!-- 実績（称号進捗） -->
     <div class="mypage-section">
@@ -2774,23 +2798,27 @@
       <div id="mypageRankProgress"></div>
     </div>
 
-    <!-- お気に入り -->
-    <div class="mypage-section">
-      <h3 class="mypage-section-title" data-i18n="favoritesTitle">⭐ お気に入り</h3>
-      <div id="mypageFavoritesList" class="mypage-fav-grid"><div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">⭐</div><p data-i18n="noFavoritesYet">お気に入りはまだありません</p></div></div>
-      <button id="mypageFavSeeAllBtn" onclick="nav('my-favorites')" class="mypage-btn-secondary" style="display:none;width:100%;margin-top:.5rem;" data-i18n="btnSeeAllFavorites">お気に入りをすべて見る →</button>
+    <!-- メニュー：履歴・お気に入り・参加中の掲示板は別ページへ -->
+    <div class="mypage-section" style="padding:0;">
+      <button class="mypage-menu-row" onclick="nav('my-reviews')">
+        <span class="mypage-menu-row-icon">📊</span>
+        <span class="mypage-menu-row-label" data-i18n="reviewHistoryTitle">レビュー履歴</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+      <button class="mypage-menu-row" onclick="nav('my-favorites')">
+        <span class="mypage-menu-row-icon">⭐</span>
+        <span class="mypage-menu-row-label" data-i18n="favoritesTitle">お気に入り</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+      <button class="mypage-menu-row" onclick="nav('my-boards')">
+        <span class="mypage-menu-row-icon">💬</span>
+        <span class="mypage-menu-row-label" data-i18n="myBoardsTitle">参加中の掲示板</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
     </div>
 
-    <!-- レビュー履歴 -->
-    <div class="mypage-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <h3 class="mypage-section-title" data-i18n="reviewHistoryTitle">📊 レビュー履歴</h3>
-        <span id="mypageReviewListCountBtn" style="font-size:.8rem;color:var(--muted);"></span>
-      </div>
-      <p id="mypageReviewListPreview" style="font-size:.8rem;color:var(--muted);margin:.3rem 0 .6rem;"></p>
-      <div id="mypageReviewList"></div>
-      <button id="mypageReviewSeeAllBtn" onclick="nav('my-reviews')" class="mypage-btn-secondary" style="display:none;width:100%;margin-top:.5rem;" data-i18n="btnSeeAllReviews">レビュー履歴をすべて見る →</button>
-    </div>
+    <!-- ブロック中のユーザー -->
+    <div class="mypage-section" id="mypageBlockedSection" style="display:none;"></div>
   </div>
 
   <!-- プロフィール編集モーダル -->
@@ -4203,6 +4231,19 @@
             _currentUser = data.session.user;
           }
           renderMyFavorites().catch(console.error);
+        });
+      }
+    }
+    if (page==='my-boards') {
+      // 認証状態が確定してからレンダリング（initAuthが非同期のため）
+      if(_currentUser) {
+        renderMyBoards(_currentUser.id).catch(console.error);
+      } else {
+        sb?.auth.getSession().then(({ data }) => {
+          if(data?.session?.user) {
+            _currentUser = data.session.user;
+          }
+          if(_currentUser) renderMyBoards(_currentUser.id).catch(console.error);
         });
       }
     }
@@ -11461,8 +11502,8 @@
       document.getElementById('mypageBioSection').style.display = 'none';
       document.getElementById('mypageRankBadge').style.display = 'none';
       document.getElementById('mypageRankProgress').innerHTML = '';
-      document.getElementById('mypageFavoritesList').innerHTML = '';
-      document.getElementById('mypageReviewList').innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${t('userNotFound')}</p>`;
+      const favListElErr = document.getElementById('mypageFavoritesList'); if(favListElErr) favListElErr.innerHTML = '';
+      const revListElErr = document.getElementById('mypageReviewList'); if(revListElErr) revListElErr.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${t('userNotFound')}</p>`;
       document.getElementById('statReviewCount').textContent = '0';
       document.getElementById('statFavCount').textContent = '0';
       document.getElementById('statQualityCount').textContent = '0';
@@ -11477,7 +11518,6 @@
     const bio = profileData?.bio || '';
     const genres = profileData?.favorite_genres || [];
     if(isOwnPage) renderValueProfile(targetUserId).catch(e=>console.warn('renderValueProfile:', e));
-    if(isOwnPage) renderMyBoards(targetUserId).catch(e=>console.warn('renderMyBoards:', e));
     if(isOwnPage) renderBlockedUsers(targetUserId).catch(e=>console.warn('renderBlockedUsers:', e));
 
     document.getElementById('mypageUsernameText').textContent = username;
