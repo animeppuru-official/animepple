@@ -1958,8 +1958,196 @@
   </div>
 </div>
 
+<!-- 設定トップ -->
+<div class="page mypage-page-wrap" id="page-settings">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
+    </div>
+  </header>
+  <div style="padding-top:.5rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 1.1rem .3rem;" data-i18n="settingsTitle">⚙️ 設定</h2>
+    <div>
+      <button class="mypage-menu-row" onclick="nav('settings-account')">
+        <span class="mypage-menu-row-icon">👤</span>
+        <span class="mypage-menu-row-label" data-i18n="settingsAccount">アカウント</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+      <button class="mypage-menu-row" onclick="nav('settings-security')">
+        <span class="mypage-menu-row-icon">🔐</span>
+        <span class="mypage-menu-row-label" data-i18n="settingsSecurity">セキュリティとアカウントアクセス</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+      <button class="mypage-menu-row" onclick="nav('settings-privacy')">
+        <span class="mypage-menu-row-icon">🛡️</span>
+        <span class="mypage-menu-row-label" data-i18n="settingsPrivacy">プライバシーと安全</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+      <button class="mypage-menu-row" onclick="nav('settings-notifications')">
+        <span class="mypage-menu-row-icon">🔔</span>
+        <span class="mypage-menu-row-label" data-i18n="settingsNotifications">通知</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+      <button class="mypage-menu-row" onclick="nav('settings-display')">
+        <span class="mypage-menu-row-icon">🌐</span>
+        <span class="mypage-menu-row-label" data-i18n="settingsDisplay">アクセシビリティ、表示、言語</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+      <button class="mypage-menu-row" onclick="nav('settings-about')">
+        <span class="mypage-menu-row-icon">❓</span>
+        <span class="mypage-menu-row-label" data-i18n="settingsAbout">追加リソース・ヘルプ</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 設定：アカウント -->
+<div class="page mypage-page-wrap" id="page-settings-account">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="settingsAccount">👤 アカウント</h2>
+    <div class="mypage-section" style="border-top:none;padding:0 0 1rem;">
+      <p style="font-size:.8rem;color:var(--muted);margin:0 0 .3rem;" data-i18n="settingsUsernameLabel">ユーザー名</p>
+      <p id="settingsUsernameValue" style="font-size:.9rem;color:#dff0e6;margin:0;">—</p>
+    </div>
+    <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
+      <p style="font-size:.8rem;color:var(--muted);margin:0 0 .3rem;" data-i18n="settingsEmailLabel">メールアドレス</p>
+      <p id="settingsEmailValue" style="font-size:.9rem;color:#dff0e6;margin:0;">—</p>
+    </div>
+    <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
+      <p style="font-size:.8rem;color:var(--muted);margin:0 0 .5rem;" data-i18n="settingsDeleteAccountDesc">アカウントを削除すると、レビュー・お気に入り・掲示板投稿など、すべてのデータが完全に削除されます。この操作は取り消せません。</p>
+      <button class="mypage-btn-secondary" id="settingsDeleteAccountBtn" style="color:#ff8a8a;border-color:#7a3a3a;" data-i18n="settingsDeleteAccountBtn">アカウントを削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 設定：セキュリティとアカウントアクセス -->
+<div class="page mypage-page-wrap" id="page-settings-security">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="settingsSecurity">🔐 セキュリティとアカウントアクセス</h2>
+    <div class="mypage-section" style="border-top:none;padding:0;">
+      <p style="font-size:.8rem;color:var(--muted);margin:0 0 .3rem;" data-i18n="settingsLoginMethodLabel">ログイン方法</p>
+      <p style="font-size:.9rem;color:#dff0e6;margin:0;">Google</p>
+    </div>
+  </div>
+</div>
+
+<!-- 設定：プライバシーと安全 -->
+<div class="page mypage-page-wrap" id="page-settings-privacy">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
+    </div>
+  </header>
+  <div style="padding-top:.5rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 1.1rem 1rem;" data-i18n="settingsPrivacy">🛡️ プライバシーと安全</h2>
+    <div>
+      <button class="mypage-menu-row" onclick="nav('my-boards')">
+        <span class="mypage-menu-row-icon">💬</span>
+        <span class="mypage-menu-row-label" data-i18n="myBoardsTitle">参加中の掲示板</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+    </div>
+    <div id="settingsBlockedSection" class="mypage-section"></div>
+  </div>
+</div>
+
+<!-- 設定：通知 -->
+<div class="page mypage-page-wrap" id="page-settings-notifications">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
+    </div>
+  </header>
+  <div style="padding-top:.5rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 1.1rem 1rem;" data-i18n="settingsNotifications">🔔 通知</h2>
+    <div>
+      <button class="mypage-menu-row" onclick="nav('my-boards')">
+        <span class="mypage-menu-row-icon">💬</span>
+        <span class="mypage-menu-row-label" data-i18n="myBoardsTitle">参加中の掲示板の通知設定</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 設定：アクセシビリティ、表示、言語 -->
+<div class="page mypage-page-wrap" id="page-settings-display">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="settingsDisplay">🌐 アクセシビリティ、表示、言語</h2>
+    <div class="mypage-section" style="border-top:none;padding:0;">
+      <p style="font-size:.8rem;color:var(--muted);margin:0 0 .5rem;" data-i18n="settingsLanguageLabel">表示言語</p>
+      <button class="mypage-btn-secondary" onclick="openLang()" data-i18n="settingsChangeLanguageBtn">言語を変更</button>
+    </div>
+  </div>
+</div>
+
+<!-- 設定：追加リソース・ヘルプ -->
+<div class="page mypage-page-wrap" id="page-settings-about">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+      </div>
+    </div>
+  </header>
+  <div style="padding-top:.5rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 1.1rem 1rem;" data-i18n="settingsAbout">❓ 追加リソース・ヘルプ</h2>
+    <div>
+      <button class="mypage-menu-row" onclick="nav('privacy')">
+        <span class="mypage-menu-row-icon">📄</span>
+        <span class="mypage-menu-row-label" data-i18n="settingsPrivacyPolicyLink">プライバシーポリシー</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+    </div>
+    <p style="font-size:.75rem;color:var(--muted);margin:1rem 1.1rem;" id="settingsVersionText"></p>
+  </div>
+</div>
+
 <!-- プライバシーポリシー -->
 <div class="page" id="page-privacy">
+
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
@@ -2758,6 +2946,7 @@
           <p class="mypage-rank-badge" id="mypageRankBadge" style="display:none;"></p>
         </div>
         <button class="mypage-edit-btn mypage-owner-only" id="mypageEditBtn" onclick="openProfileEdit()">✏️</button>
+        <button class="mypage-edit-btn mypage-owner-only" onclick="nav('settings')">⚙️</button>
       </div>
 
       <!-- 統計サマリー -->
@@ -2818,8 +3007,6 @@
       </button>
     </div>
 
-    <!-- ブロック中のユーザー -->
-    <div class="mypage-section" id="mypageBlockedSection" style="display:none;"></div>
   </div>
 
   <!-- プロフィール編集モーダル -->
@@ -4247,6 +4434,20 @@
           if(_currentUser) renderMyBoards(_currentUser.id).catch(console.error);
         });
       }
+    }
+    if (page==='settings-privacy') {
+      if(_currentUser) {
+        renderBlockedUsers(_currentUser.id).catch(console.error);
+      } else {
+        sb?.auth.getSession().then(({ data }) => {
+          if(data?.session?.user) _currentUser = data.session.user;
+          if(_currentUser) renderBlockedUsers(_currentUser.id).catch(console.error);
+        });
+      }
+    }
+    if (page==='settings-about') {
+      const vEl = document.getElementById('settingsVersionText');
+      if(vEl) vEl.textContent = 'v0.57.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -7399,7 +7600,7 @@
   }
 
   async function renderBlockedUsers(userId) {
-    const el = document.getElementById('mypageBlockedSection');
+    const el = document.getElementById('settingsBlockedSection');
     if(!el || !sb) return;
     const rows = await db.blocks.list(userId);
     if(!rows.length) { el.style.display='none'; return; }
@@ -8295,6 +8496,23 @@
     unblockBtn:{ ja:'解除', en:'Unblock' },
     blockedUsersTitle:{ ja:'ブロック中のユーザー', en:'Blocked users' },
     noBlockedUsers:{ ja:'ブロック中のユーザーはいません', en:'No blocked users' },
+    settingsTitle:{ ja:'設定', en:'Settings' },
+    settingsAccount:{ ja:'アカウント', en:'Account' },
+    settingsSecurity:{ ja:'セキュリティとアカウントアクセス', en:'Security and account access' },
+    settingsPrivacy:{ ja:'プライバシーと安全', en:'Privacy and safety' },
+    settingsNotifications:{ ja:'通知', en:'Notifications' },
+    settingsDisplay:{ ja:'アクセシビリティ、表示、言語', en:'Accessibility, display, and languages' },
+    settingsAbout:{ ja:'追加リソース・ヘルプ', en:'Additional resources and help' },
+    settingsUsernameLabel:{ ja:'ユーザー名', en:'Username' },
+    settingsEmailLabel:{ ja:'メールアドレス', en:'Email' },
+    settingsLoginMethodLabel:{ ja:'ログイン方法', en:'Login method' },
+    settingsLanguageLabel:{ ja:'表示言語', en:'Display language' },
+    settingsChangeLanguageBtn:{ ja:'言語を変更', en:'Change language' },
+    settingsPrivacyPolicyLink:{ ja:'プライバシーポリシー', en:'Privacy policy' },
+    settingsDeleteAccountDesc:{ ja:'アカウントを削除すると、レビュー・お気に入り・掲示板投稿など、すべてのデータが完全に削除されます。この操作は取り消せません。', en:'Deleting your account permanently removes all your data, including reviews, favorites, and board posts. This cannot be undone.' },
+    settingsDeleteAccountBtn:{ ja:'アカウントを削除する', en:'Delete account' },
+    settingsDeleteAccountConfirm:{ ja:'本当にアカウントを削除しますか？この操作は取り消せません。', en:'Are you sure you want to delete your account? This cannot be undone.' },
+    settingsDeleteAccountNotReady:{ ja:'アカウント削除機能は現在準備中です。お問い合わせフォームからご連絡ください。', en:'Account deletion is not yet available. Please contact us instead.' },
     myBoardsTitle:{ ja:'参加中の掲示板', en:'Your boards' },
     noMyBoards:{ ja:'まだ参加してる掲示板はありません', en:'No boards yet' },
     newActivityBadge:{ ja:'新着', en:'New' },
@@ -11195,6 +11413,12 @@
     window._loggedInUsername = fetchedUsername || _currentUser.email.split('@')[0];
   }
 
+  document.getElementById('settingsDeleteAccountBtn')?.addEventListener('click', () => {
+    if(!_currentUser) return;
+    if(!confirm(t('settingsDeleteAccountConfirm'))) return;
+    alert(t('settingsDeleteAccountNotReady'));
+  });
+
   async function initAuth() {
     if(!sb) return;
 
@@ -11519,7 +11743,12 @@
     const bio = profileData?.bio || '';
     const genres = profileData?.favorite_genres || [];
     if(isOwnPage) renderValueProfile(targetUserId).catch(e=>console.warn('renderValueProfile:', e));
-    if(isOwnPage) renderBlockedUsers(targetUserId).catch(e=>console.warn('renderBlockedUsers:', e));
+    if(isOwnPage) {
+      const suEl = document.getElementById('settingsUsernameValue');
+      const seEl = document.getElementById('settingsEmailValue');
+      if(suEl) suEl.textContent = username;
+      if(seEl) seEl.textContent = _currentUser.email;
+    }
 
     document.getElementById('mypageUsernameText').textContent = username;
     if(isOwnPage) document.getElementById('mypageEmail').textContent = _currentUser.email;
