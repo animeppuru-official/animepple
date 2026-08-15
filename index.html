@@ -351,8 +351,8 @@
     }
     /* 掲示板ページ：PCでは画面中央に幅を絞って表示（スマホは全幅のまま） */
     @media (min-width: 768px) {
-      .board-page-wrap { max-width:33vw; min-width:420px; margin:0 auto; }
-      .mypage-page-wrap { width:33.333vw; margin:0 auto; }
+      .board-page-wrap { max-width:calc((100vw - 200px) / 3); min-width:420px; margin:0 auto; }
+      .mypage-page-wrap { width:calc((100vw - 200px) / 3); margin:0 auto; }
     }
     /* 検索ページの絞り込みパネルは常に幅が狭いサイドバーなので、画面幅に関係なく
        常に1列＋矢印切り替えのままにする（2列にすると狭すぎて目盛りが潰れる） */
