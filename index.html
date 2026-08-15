@@ -1281,6 +1281,12 @@
   <div class="lang-grid" id="langGrid"></div>
 </div>
 
+<!-- 検索カードの一致度内訳（ⓘタップで表示） -->
+<div class="lang-overlay" id="matchBreakdownOverlay">
+  <h2 data-i18n="matchBreakdownTitle">一致度の内訳</h2>
+  <div id="matchBreakdownBody" style="padding:0 1rem;"></div>
+</div>
+
 <!-- ═══════════════════════════════════
      SEARCH OVERLAY (global)
 ═══════════════════════════════════ -->
@@ -7624,6 +7630,20 @@
 
     if(q) list=list.filter(a=>fuzzyIncludes(`${a.title} ${a.titleEn||''} ${a.meta} ${(a.features||[]).join(' ')} ${a.description}`.toLowerCase(), q));
 
+    // 距離（0〜10の差）を0〜100%の「近さ」に変換する。距離がInfinity（データなし）はnullを返す
+    const distToPct = (dist) => (dist === Infinity || dist == null) ? null : Math.max(0, Math.round(100 - dist * 10));
+
+    // 統合一致度：優先軸(⭐)70% + 通常グラフ30%（優先軸未選択ならグラフ100%）
+    // タグはこの%には混ぜない（並び順の最優先基準はタグ一致数のまま、カード上は別枠の個数表示にする）
+    function computeMatchPercent(priorityDist, graphDist) {
+      const priorityPct = priorityAxes.size ? distToPct(priorityDist) : null;
+      const graphPct = distToPct(graphDist);
+      if(priorityPct == null && graphPct == null) return null;
+      if(priorityPct == null) return graphPct;
+      if(graphPct == null) return priorityPct;
+      return Math.round(priorityPct * 0.7 + graphPct * 0.3);
+    }
+
     const mapped=list.map(a=>({
       anime:a,
       reviews:reviewCount(a.id),
@@ -7632,6 +7652,10 @@
       tagScore:tagMatchScore(a),
       priorityDist:priorityMatchDist(a.id),
     }));
+    mapped.forEach(m=>{ m.matchPercent = computeMatchPercent(m.priorityDist, m.match); });
+    // タグ検索時：この検索結果内での最高タグ一致数を求める（この階層の作品だけ一致度%を強調表示する）
+    const maxTagScoreInResults = srTagsActive.length ? Math.max(0, ...mapped.map(m=>m.tagScore)) : 0;
+    mapped.forEach(m=>{ m.isTopTagTier = !srTagsActive.length || m.tagScore === maxTagScoreInResults; });
 
     // ── 3階層ソート: ①タグ一致数 → ②⭐優先軸の近さ → ③選んだ並び替え基準 ──
     function tieredSort(arr, sort) {
@@ -7722,11 +7746,18 @@
       const a=row.anime;
       const rank = rankMap.get(row);
       const rankBadge = rank ? `${rank}位` : '';
-      const mb=(row.match!==Infinity && hasSrProfile())?`<span class="badge match-badge">${t('graphMatchBadge').replace('{n}',Math.max(0,Math.round(100-row.match*10)))}</span>`:'';
-      const psb=(priorityAxes.size>0 && row.priorityDist!==Infinity)?`<span class="badge match-badge" style="background:rgba(255,204,51,.12);border-color:#8a7a2d;color:#ffe38a;">${t('priorityMatchBadge').replace('{n}',Math.max(0,Math.round(100-row.priorityDist*10)))}</span>`:'';
-      const tb=row.tagScore>0?`<span class="badge" style="background:rgba(94,150,255,.15);border-color:#4a6abf;color:#b8d0ff;">${t('tagMatchBadge').replace('{n}',row.tagScore)}</span>`:'';
+      // 統合一致度：タグ検索時は「その検索結果内での最高タグ一致数の階層」だけ色で強調し、
+      // それ未満の階層は数字は出すが色を付けない（タグで落ちてる時点で上位ではないことを視覚的に示す）
+      const emphasize = row.isTopTagTier;
+      const mb = row.matchPercent != null
+        ? `<span class="badge match-badge"${emphasize?'':' style="background:rgba(154,171,163,.12);border-color:#3a453f;color:#9ab;"'}>${t('graphMatchBadge').replace('{n}', row.matchPercent)} <button type="button" onclick="event.stopPropagation();openMatchBreakdown(${row.tagScore},${srTagsActive.length},${row.priorityDist===Infinity?'null':row.priorityDist},${row.match===Infinity?'null':row.match})" style="background:none;border:none;color:inherit;cursor:pointer;padding:0 0 0 2px;font-size:.85em;">ⓘ</button></span>`
+        : '';
+      const tb = srTagsActive.length
+        ? `<span class="badge" style="background:rgba(94,150,255,.15);border-color:#4a6abf;color:#b8d0ff;">${escapeHtml(String(row.tagScore))}/${escapeHtml(String(srTagsActive.length))}${currentLang==='ja'?'個一致':' matched'}</span>`
+        : '';
+      const psb = '';
       // グラフ一致がAIシード予測データのみに基づく場合は、実レビューと誤解されないよう明示する（サムネイル左上に固定表示）
-      const isAiOnlyMatch = (mb||psb) && _searchMasterGraphCache && _searchMasterGraphCache[a.id]?.isAiOnly;
+      const isAiOnlyMatch = mb && _searchMasterGraphCache && _searchMasterGraphCache[a.id]?.isAiOnly;
       const aiBadge = isAiOnlyMatch ? t('aiPredictedBadge') : '';
       return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, tagMatchBadge:tb, graphMatchBadge:mb, priorityMatchBadge:psb, aiBadge, rankBadge});
     }).join('');
@@ -8259,7 +8290,8 @@
     btnAuthCreate: { ja:'作成する',     en:'Create',        ko:'만들기',   'zh-tw':'建立',   'zh-cn':'创建',   es:'Crear',       fr:'Créer',      pt:'Criar',      de:'Erstellen',  ar:'إنشاء',th:'สร้าง',id:'Buat',ru:'Создать',it:'Crea',vi:'Tạo' },
     authSwitchLogin:{ ja:'すでにアカウントをお持ちですか？',en:'Already have an account?',ko:'이미 계정이 있으신가요?','zh-tw':'已有帳號？','zh-cn':'已有账号？',es:'¿Ya tienes cuenta?',fr:'Déjà un compte ?',pt:'Já tem uma conta?',de:'Haben Sie schon ein Konto?',ar:'لديك حساب بالفعل؟',th:'มีบัญชีอยู่แล้ว?',id:'Sudah punya akun?',ru:'Уже есть аккаунт?',it:'Hai già un account?',vi:'Đã có tài khoản?' },
     authSwitchRegister:{ ja:'アカウントがない方は',en:'No account yet?',ko:'계정이 없으신가요?','zh-tw':'沒有帳號？','zh-cn':'没有账号？',es:'¿No tienes cuenta?',fr:'Pas encore de compte ?',pt:'Não tem uma conta?',de:'Noch kein Konto?',ar:'ليس لديك حساب؟',th:'ยังไม่มีบัญชี?',id:'Belum punya akun?',ru:'Нет аккаунта?',it:'Non hai un account?',vi:'Chưa có tài khoản?' },
-    graphMatchBadge:{ ja:'好み一致 {n}%',en:'Preference match {n}%',ko:'취향 일치 {n}%','zh-tw':'喜好匹配 {n}%','zh-cn':'喜好匹配 {n}%',es:'Coincidencia de gustos {n}%',fr:'Correspondance de goût {n}%',pt:'Correspondência de preferência {n}%',de:'Geschmacksübereinstimmung {n}%',ar:'تطابق التفضيلات {n}%',th:'ตรงกับความชอบ {n}%',id:'Kecocokan preferensi {n}%',ru:'Совпадение предпочтений {n}%',it:'Corrispondenza di gusti {n}%',vi:'Khớp sở thích {n}%' },
+    graphMatchBadge:{ ja:'一致度 {n}%',en:'Match {n}%',ko:'일치도 {n}%','zh-tw':'匹配度 {n}%','zh-cn':'匹配度 {n}%',es:'Coincidencia {n}%',fr:'Correspondance {n}%',pt:'Correspondência {n}%',de:'Übereinstimmung {n}%',ar:'التطابق {n}%',th:'ความตรงกัน {n}%',id:'Kecocokan {n}%',ru:'Совпадение {n}%',it:'Corrispondenza {n}%',vi:'Khớp {n}%' },
+    matchBreakdownTitle:{ ja:'一致度の内訳', en:'Match breakdown' },
     priorityMatchBadge:{ ja:'⭐ 優先軸 {n}%',en:'⭐ Priority {n}%',ko:'⭐ 우선 {n}%','zh-tw':'⭐ 優先 {n}%','zh-cn':'⭐ 优先 {n}%',es:'⭐ Prioridad {n}%',fr:'⭐ Priorité {n}%',pt:'⭐ Prioridade {n}%',de:'⭐ Priorität {n}%',ar:'⭐ أولوية {n}%',th:'⭐ ลำดับความสำคัญ {n}%',id:'⭐ Prioritas {n}%',ru:'⭐ Приоритет {n}%',it:'⭐ Priorità {n}%',vi:'⭐ Ưu tiên {n}%' },
     priorityAxisHint:{ ja:'この軸を優先して検索',en:'Prioritize this axis in search',ko:'이 축을 우선하여 검색','zh-tw':'優先以此軸搜尋','zh-cn':'优先以此轴搜索',es:'Priorizar este eje en la búsqueda',fr:'Prioriser cet axe dans la recherche',pt:'Priorizar este eixo na busca',de:'Diese Achse bei der Suche priorisieren',ar:'إعطاء الأولوية لهذا المحور في البحث',th:'จัดลำดับความสำคัญแกนนี้ในการค้นหา',id:'Prioritaskan sumbu ini dalam pencarian',ru:'Приоритет этой оси в поиске',it:'Dai priorità a questo asse nella ricerca',vi:'Ưu tiên trục này khi tìm kiếm' },
     priorityAxisExplain:{ ja:'⭐ を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。⭐が1つも無い場合は、全軸の平均的な近さで検索します。',en:'Axes marked with ⭐ take priority: results favor anime closest to that value on those axes. With no ⭐, all axes are averaged equally.',ko:'⭐ 표시한 축은 다른 축보다 우선하여 "그 수치에 가까운 작품"을 검색합니다. ⭐가 하나도 없으면 전체 축의 평균 근접도로 검색합니다.','zh-tw':'標記⭐的軸會優先搜尋「數值最接近」的作品。若未標記任何⭐，則以全部軸的平均接近度搜尋。','zh-cn':'标记⭐的轴会优先搜索"数值最接近"的作品。若未标记任何⭐，则以全部轴的平均接近度搜索。',es:'Los ejes marcados con ⭐ tienen prioridad: se buscan animes más cercanos a ese valor. Sin ⭐, se promedian todos los ejes por igual.',fr:'Les axes marqués d\u2019une ⭐ sont prioritaires : les résultats favorisent les animes les plus proches de cette valeur. Sans ⭐, tous les axes sont moyennés également.',pt:'Eixos marcados com ⭐ têm prioridade: os resultados favorecem animes mais próximos desse valor. Sem ⭐, todos os eixos são igualmente calculados na média.',de:'Mit ⭐ markierte Achsen haben Priorität: Ergebnisse bevorzugen Anime, die diesem Wert am nächsten sind. Ohne ⭐ werden alle Achsen gleich gemittelt.',ar:'المحاور المميزة بـ ⭐ لها الأولوية: تفضل النتائج الأنمي الأقرب لتلك القيمة. بدون ⭐، يتم حساب متوسط جميع المحاور بالتساوي.',th:'แกนที่ทำเครื่องหมาย ⭐ จะถูกจัดลำดับความสำคัญ ผลลัพธ์จะเน้นอนิเมะที่ใกล้เคียงค่านั้นที่สุด หากไม่มี ⭐ เลย จะใช้ค่าเฉลี่ยของทุกแกนเท่าๆกัน',id:'Sumbu bertanda ⭐ diprioritaskan: hasil mengutamakan anime yang paling dekat dengan nilai tersebut. Tanpa ⭐, semua sumbu dirata-ratakan sama.',ru:'Оси с ⭐ имеют приоритет: результаты предпочитают аниме, наиболее близкие к этому значению. Без ⭐ все оси усредняются одинаково.',it:'Gli assi contrassegnati con ⭐ hanno la priorità: i risultati favoriscono anime più vicini a quel valore. Senza ⭐, tutti gli assi vengono mediati allo stesso modo.',vi:'Các trục đánh dấu ⭐ được ưu tiên: kết quả ưu tiên anime gần giá trị đó nhất. Không có ⭐, tất cả trục được tính trung bình như nhau.' },
@@ -8459,6 +8491,35 @@
     overlay.classList.add('open');
   }
   window.openLang = openLang;
+
+  // ── 検索カードの一致度内訳シート ──────────────────────────
+  function openMatchBreakdown(tagScore, tagTotal, priorityDist, graphDist) {
+    const overlay = document.getElementById('matchBreakdownOverlay');
+    const body = document.getElementById('matchBreakdownBody');
+    if(!overlay || !body) return;
+    const distToPct = (dist) => (dist === Infinity || dist == null) ? null : Math.max(0, Math.round(100 - dist * 10));
+    const priorityPct = priorityAxes.size ? distToPct(priorityDist) : null;
+    const graphPct = distToPct(graphDist);
+    const row = (label, val) => `
+      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem;">
+        <span style="width:70px;font-size:.8rem;color:var(--muted,#9ab);flex-shrink:0;">${escapeHtml(label)}</span>
+        <div style="flex:1;height:8px;border-radius:999px;background:var(--card2,#141c19);overflow:hidden;">
+          <div style="width:${val==null?0:val}%;height:100%;background:var(--brand,#2d8a5f);"></div>
+        </div>
+        <span style="width:44px;text-align:right;font-size:.8rem;flex-shrink:0;">${val==null?'—':val+'%'}</span>
+      </div>`;
+    body.innerHTML = `
+      ${srTagsActive.length ? row(currentLang==='ja'?'タグ':'Tags', tagTotal ? Math.round(tagScore/tagTotal*100) : null) : ''}
+      ${priorityAxes.size ? row(currentLang==='ja'?'優先軸':'Priority', priorityPct) : ''}
+      ${row(currentLang==='ja'?'グラフ':'Graph', graphPct)}
+      ${srTagsActive.length ? `<p style="font-size:.72rem;color:var(--muted,#9ab);margin-top:.4rem;">${escapeHtml(String(tagScore))}/${escapeHtml(String(tagTotal))}${currentLang==='ja'?'個一致':' matched'}</p>` : ''}
+    `;
+    overlay.classList.add('open');
+  }
+  window.openMatchBreakdown = openMatchBreakdown;
+  document.getElementById('matchBreakdownOverlay')?.addEventListener('click', (e) => {
+    if(e.target.id === 'matchBreakdownOverlay') e.currentTarget.classList.remove('open');
+  });
 
   // ── UI全体にt()を適用 ──────────────────────────
   function applyLang() {
