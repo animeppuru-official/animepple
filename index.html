@@ -807,7 +807,7 @@
 
     /* ══ MASTER BREAKDOWN ══ */
     .breakdown-item { display:flex; align-items:center; justify-content:space-between; padding:.25rem 0; border-bottom:1px solid rgba(255,255,255,.05); }
-    .breakdown-label { font-size:.8rem; color:var(--muted); }
+    .breakdown-label { font-size:.8rem; color:var(--muted); width:4.4em; flex-shrink:0; }
     .breakdown-bar-wrap { flex:1; margin:0 .6rem; height:4px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; }
     .breakdown-bar { height:100%; border-radius:2px; }
     .breakdown-val { font-size:.82rem; font-weight:700; color:#dff0e6; min-width:2rem; text-align:right; }
@@ -1497,12 +1497,6 @@
     </div>
   </div>
 
-  <!-- グッズ・関連商品（Amazonアフィリンク。マネタイズの核なので最上部に近い位置に配置） -->
-  <div class="af-section" id="afGoodsSection">
-    <div class="af-section-label" data-i18n="goodsSection">🛍 グッズ・関連商品</div>
-    <div id="afGoodsLinks"></div>
-  </div>
-
   <!-- スマホ幅：評価グラフ・世界の反応・似ている作品を3つのタブで切り替え（PC幅では使わない・従来通り縦に並ぶ） -->
   <div class="mobile-info-tabs" id="mobileInfoTabs" style="display:none;">
     <div class="mobile-info-tab-bar">
@@ -1583,6 +1577,12 @@
     <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;" data-i18n="similarAnimeDesc">好みグラフとタグの近さから算出しています</p>
     <div id="similarAnimeGrid" class="hscroll"></div>
   </section>
+
+  <!-- グッズ・関連商品（Amazonアフィリンク） -->
+  <div class="af-section" id="afGoodsSection">
+    <div class="af-section-label" data-i18n="goodsSection">🛍 グッズ・関連商品</div>
+    <div id="afGoodsLinks"></div>
+  </div>
 
   <!-- 配信サービス -->
   <div class="af-section" id="afStreamSection">
