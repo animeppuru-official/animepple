@@ -7216,6 +7216,7 @@
         cache[animeId] = { avgA, avgB, count: valid.length, tags: topTagsForAnime, isAiOnly };
       });
       _searchMasterGraphCache = cache;
+      window._debugSearchCache = cache; // デバッグ用：DevToolsコンソールから中身を確認できるようにする
       return cache;
     })();
     return _searchMasterGraphPromise;
