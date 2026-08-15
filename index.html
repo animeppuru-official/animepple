@@ -352,6 +352,7 @@
     /* 掲示板ページ：PCでは画面中央に幅を絞って表示（スマホは全幅のまま） */
     @media (min-width: 768px) {
       .board-page-wrap { max-width:33vw; min-width:420px; margin:0 auto; }
+      .mypage-page-wrap { max-width:480px; margin:0 auto; }
     }
     /* 検索ページの絞り込みパネルは常に幅が狭いサイドバーなので、画面幅に関係なく
        常に1列＋矢印切り替えのままにする（2列にすると狭すぎて目盛りが潰れる） */
@@ -2709,7 +2710,7 @@
   </div>
 </div>
 
-<div class="page" id="page-mypage">
+<div class="page mypage-page-wrap" id="page-mypage">
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" id="mypageBackBtn" data-i18n="btnBack" onclick="navBack()" style="display:none;">← 戻る</button>
