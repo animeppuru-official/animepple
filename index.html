@@ -31,7 +31,7 @@
     }
     *, *::before, *::after { box-sizing: border-box; }
     html { -webkit-text-size-adjust:100%; }
-    body { margin:0; font-family:"Hiragino Sans","Yu Gothic UI","Segoe UI",sans-serif; background:var(--bg); color:var(--text); line-height:1.55; overscroll-behavior-y:none; }
+    body { margin:0; font-family:"Hiragino Sans","Yu Gothic UI","Segoe UI",sans-serif; background:var(--bg) radial-gradient(120% 90% at 78% -5%, #16301f 0%, #0d1d13 46%, #081109 100%) fixed; color:var(--text); line-height:1.55; overscroll-behavior-y:none; }
     a { color:inherit; text-decoration:none; cursor:pointer; }
     button { font-family:inherit; }
 
@@ -116,9 +116,20 @@
 
     /* ── HERO ── */
     .hero { padding:1.4rem 1rem 1rem; background:linear-gradient(160deg,#102e1c,#07150d); border-bottom:1px solid var(--line); }
+    @media (min-width:768px) {
+      .hero {
+        margin:1.6rem 2rem 0; padding:2rem 2.2rem;
+        border:1px solid rgba(255,255,255,.1); border-radius:20px; border-bottom:1px solid rgba(255,255,255,.1);
+        box-shadow:0 18px 44px -26px rgba(0,0,0,.8);
+        max-width:1200px; margin-left:auto; margin-right:auto; margin-top:1.6rem;
+      }
+    }
     .hero h1 { margin:0 0 .5rem; font-size:clamp(1.35rem,5vw,1.85rem); line-height:1.3; font-weight:900; }
     .hero h1 em { color:var(--brand); font-style:normal; }
     .hero p { margin:0 0 .9rem; color:#c2deca; font-size:.92rem; }
+    .hero-cta-row { display:flex; gap:.6rem; flex-wrap:wrap; }
+    .hero-cta-primary { height:2.9rem; padding:0 1.3rem; border-radius:.75rem; border:none; background:var(--brand); color:#07160d; font-weight:700; font-size:.9rem; cursor:pointer; }
+    .hero-cta-secondary { height:2.9rem; padding:0 1.3rem; border-radius:.75rem; border:1px solid rgba(255,255,255,.14); background:transparent; color:var(--text); font-weight:700; font-size:.9rem; cursor:pointer; }
     .hero-btns { display:flex; gap:.55rem; flex-wrap:wrap; }
     .btn-primary { padding:.65rem 1.1rem; border-radius:12px; background:linear-gradient(120deg,var(--brand),var(--brand2)); color:#0c2015; font-weight:800; font-size:.9rem; border:none; cursor:pointer; }
     .btn-ghost { padding:.65rem 1.1rem; border-radius:12px; background:var(--card2); border:1px solid var(--line); color:var(--text); font-size:.9rem; cursor:pointer; }
@@ -142,7 +153,10 @@
     .scroll-arrow-l { left:2px; }
     .scroll-arrow-r { right:2px; }
     .scroll-arrow:active { background:var(--card2); }
-    .hcard { flex:0 0 clamp(140px,42vw,175px); scroll-snap-align:start; background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; }
+    .hcard { flex:0 0 clamp(140px,42vw,175px); scroll-snap-align:start; background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, border-color .18s ease; }
+    @media (hover:hover) {
+      .hcard:hover { transform:translateY(-4px) scale(1.02); box-shadow:0 16px 32px -16px rgba(0,0,0,.7); border-color:rgba(94,201,122,.4); z-index:2; }
+    }
     .hcard-thumb { position:relative; width:100%; aspect-ratio:3/4; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
     .hcard-thumb img { width:100%; height:100%; object-fit:cover; }
     .hcard-body { padding:.5rem .6rem; min-height:4.6rem; display:flex; flex-direction:column; }
@@ -181,7 +195,10 @@
     /* ── GRID ── */
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; padding:0 1rem; }
     #randomPickGrid { padding:0; }
-    .gcard { background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; }
+    .gcard { background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, border-color .18s ease; }
+    @media (hover:hover) {
+      .gcard:hover { transform:translateY(-4px) scale(1.02); box-shadow:0 16px 32px -16px rgba(0,0,0,.7); border-color:rgba(94,201,122,.4); z-index:2; }
+    }
     .gcard-thumb { position:relative; width:100%; aspect-ratio:16/9; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
     .gcard-thumb img { width:100%; height:100%; object-fit:cover; }
     .gcard-body { padding:.55rem .65rem; display:flex; flex-direction:column; }
@@ -351,8 +368,8 @@
     }
     /* 掲示板ページ：PCでは画面中央に幅を絞って表示（スマホは全幅のまま） */
     @media (min-width: 768px) {
-      .board-page-wrap { max-width:calc(200px + (100vw - 200px) / 3); min-width:620px; margin:0 auto; }
-      .mypage-page-wrap { width:calc(200px + (100vw - 200px) / 3); margin:0 auto; }
+      .board-page-wrap { max-width:calc(220px + (100vw - 220px) / 3); min-width:620px; margin:0 auto; }
+      .mypage-page-wrap { width:calc(220px + (100vw - 220px) / 3); margin:0 auto; }
     }
     /* 検索ページの絞り込みパネルは常に幅が狭いサイドバーなので、画面幅に関係なく
        常に1列＋矢印切り替えのままにする（2列にすると狭すぎて目盛りが潰れる） */
@@ -899,25 +916,27 @@
        サイドナビ＋ワイドコンテンツ
     ════════════════════════════ */
     @media (min-width: 768px) {
-      /* ボトムナビ → 左サイドナビ */
+      /* ボトムナビ → 左サイドナビ（Claude Design案：奥行きのあるグラデーション＋丸みのあるナビ項目） */
       .bnav {
         position:fixed; top:0; left:0; bottom:0; right:auto;
-        width:200px; flex-direction:column; justify-content:flex-start;
-        border-top:none; border-right:1px solid var(--line);
-        padding:1rem 0; gap:.25rem;
-        background:rgba(7,21,13,.97);
+        width:220px; flex-direction:column; justify-content:flex-start;
+        border-top:none; border-right:1px solid rgba(255,255,255,.05);
+        padding:1.4rem .8rem; gap:.25rem;
+        background:linear-gradient(180deg,#102919 0%,#07160d 90%);
       }
       .bnav-item {
         flex-direction:row; justify-content:flex-start;
-        width:100%; padding:.65rem 1.2rem; border-radius:0;
-        font-size:.88rem; gap:.65rem;
+        width:100%; padding:.7rem .85rem; border-radius:.7rem;
+        font-size:.88rem; gap:.75rem; font-weight:500;
+        transition:background-color .16s ease, color .16s ease;
       }
-      .bnav-item.active { background:rgba(94,201,122,.1); color:var(--brand); border-right:3px solid var(--brand); }
-      .bnav-icon { font-size:1.1rem; }
+      .bnav-item:hover { background:rgba(255,255,255,.04); }
+      .bnav-item.active { background:linear-gradient(90deg, rgba(94,201,122,.18), rgba(94,201,122,.04)); color:var(--brand); box-shadow:inset 3px 0 0 var(--brand); font-weight:700; }
+      .bnav-icon { font-size:1.15rem; }
       .bnav-create {
         flex-direction:row; justify-content:flex-start;
-        width:100%; padding:.65rem 1.2rem;
-        font-size:.88rem; gap:.65rem; color:var(--text);
+        width:100%; padding:.7rem .85rem; border-radius:.7rem;
+        font-size:.88rem; gap:.75rem; color:var(--text);
       }
       .bnav-create .bnav-icon {
         width:1.6rem; height:1.6rem; font-size:.9rem; border-radius:6px;
@@ -925,13 +944,13 @@
       /* サイドナビのロゴ */
       .bnav::before {
         content:'アニメップル'; display:block;
-        font-size:1rem; font-weight:900; color:var(--brand);
-        padding:.5rem 1.2rem 1rem; letter-spacing:.02em;
-        border-bottom:1px solid var(--line); margin-bottom:.5rem; width:100%;
+        font-size:1.15rem; font-weight:900; color:var(--brand);
+        padding:.3rem .85rem 1.3rem; letter-spacing:.02em;
+        width:100%;
       }
 
       /* 全ページにサイドナビ幅のオフセット */
-      .page { padding-bottom:0; padding-left:200px; }
+      .page { padding-bottom:0; padding-left:220px; }
       /* 管理者ページはフルページ表示（サイドナビなし） */
       body.admin-fullpage .page { padding-left:0; }
 
@@ -943,7 +962,6 @@
       .wrap-pc { max-width:1200px; margin:0 auto; }
 
       /* ヒーロー：横並び */
-      .hero { padding:2.5rem 2rem; }
       .hero-mascot-row { gap:2rem; align-items:center; max-width:1200px; margin:0 auto; }
       .hero h1 { font-size:clamp(1.8rem,3vw,2.6rem); }
       .hero p { font-size:1rem; }
@@ -1373,6 +1391,10 @@
       <div class="hero-text">
         <h1>アニメの<em>グラフ</em>で<br>ドンピシャを見つける</h1>
         <p>みんなのレビューで作品ページを育てる、可視化特化型アニメコミュニティ。</p>
+        <div class="hero-cta-row">
+          <button type="button" class="hero-cta-primary" onclick="openSearch()">🔍 作品を探す</button>
+          <button type="button" class="hero-cta-secondary" onclick="nav('popular')">人気ランキング</button>
+        </div>
 
       </div>
       <div class="hero-mascot-wrap">
