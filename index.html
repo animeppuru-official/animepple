@@ -34,6 +34,11 @@
     body { margin:0; font-family:"Hiragino Sans","Yu Gothic UI","Segoe UI",sans-serif; background:var(--bg) radial-gradient(120% 90% at 78% -5%, #16301f 0%, #0d1d13 46%, #081109 100%) fixed; color:var(--text); line-height:1.55; overscroll-behavior-y:none; }
     a { color:inherit; text-decoration:none; cursor:pointer; }
     button { font-family:inherit; }
+    /* Claude Design案：ボタン・リンク共通のホバー演出（浮き上がり＋わずかな拡大） */
+    button, a, [role="button"] { transition: transform .16s cubic-bezier(.34,1.56,.64,1), background-color .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease; }
+    a:hover { color: #93e2b7; }
+    button:hover, a:hover, [role="button"]:hover { transform: translateY(-1px) scale(1.03); }
+    button:active, a:active, [role="button"]:active { transform: translateY(0) scale(0.98); }
 
     /* ── PAGES ── */
     .page { display:none; min-height:100vh; padding-bottom:5rem; }
@@ -41,12 +46,13 @@
     .page.active { display:block; }
 
     /* ── HEADER ── */
-    .hdr { position:sticky; top:0; z-index:100; background:rgba(7,21,13,.9); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+    .hdr { position:sticky; top:0; z-index:100; background:rgba(7,21,13,.9); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,.06); }
     .hdr-inner { display:flex; align-items:center; justify-content:space-between; padding:.7rem 1rem; gap:.7rem; }
     .logo { font-size:1.18rem; font-weight:900; letter-spacing:.02em; cursor:pointer; }
     .logo em { color:var(--brand); font-style:normal; }
     .hdr-right { display:flex; align-items:center; gap:.5rem; }
-    .hdr-search-btn { width:34px; height:34px; border-radius:50%; background:var(--card2); border:1px solid var(--line); display:grid; place-items:center; cursor:pointer; font-size:.95rem; }
+    .hdr-search-btn { width:38px; height:38px; border-radius:11px; background:#5cc98e; border:none; display:grid; place-items:center; cursor:pointer; color:#07160d; }
+    .hdr-icon-btn { width:38px; height:38px; border-radius:11px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); display:grid; place-items:center; cursor:pointer; color:#bccfc3; }
     .hdr-create { display:none; }
     .back-btn { padding:.4rem .75rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); font-size:.85rem; white-space:nowrap; cursor:pointer; color:#fff; }
 
@@ -55,39 +61,127 @@
     .bnav-item { display:flex; flex-direction:column; align-items:center; gap:.18rem; padding:.2rem .8rem; border-radius:10px; font-size:.64rem; color:var(--muted); background:none; border:none; cursor:pointer; transition:color .15s; }
     .bnav-item.active { color:var(--brand); }
     .bnav-icon { font-size:1.25rem; line-height:1; }
+    .bnav-item svg { width:1.25rem; height:1.25rem; }
     .bnav-create { display:flex; flex-direction:column; align-items:center; gap:.18rem; padding:.2rem .8rem; font-size:.64rem; color:#fff; background:none; border:none; cursor:pointer; }
     .bnav-create .bnav-icon { background:var(--red); border-radius:50%; width:2.4rem; height:2.4rem; display:grid; place-items:center; font-size:1.2rem; }
 
     /* ── SEARCH OVERLAY ── */
-    .search-overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(4,12,8,.97); overflow-y:auto; padding:.75rem; }
-    .search-overlay.open { display:block; }
-    .search-close { background:none; border:1px solid var(--line); color:var(--muted); border-radius:10px; padding:.4rem .8rem; cursor:pointer; margin-bottom:.8rem; font-size:.9rem; }
-    .search-field { display:flex; gap:.5rem; margin-bottom:.9rem; }
-    .search-field input { flex:1; padding:.75rem .9rem; background:var(--card2); border:1px solid var(--line); border-radius:12px; color:var(--text); font:inherit; font-size:1rem; }
-    .search-go { padding:.75rem 1.1rem; border-radius:12px; background:var(--brand); color:#0c2015; font-weight:800; border:none; cursor:pointer; font-size:.9rem; white-space:nowrap; }
-    .filter-label { font-size:.78rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin:.8rem 0 .4rem; }
-    .filter-box { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:.75rem; margin-bottom:.6rem; }
-    .filter-box h3 { margin:0 0 .55rem; font-size:.88rem; }
-    .sl-row { display:grid; grid-template-columns:3.6rem 1fr 1.6rem; gap:.3rem; align-items:center; margin-bottom:.55rem; }
-    .sl-row.has-priority { grid-template-columns:3.6rem 1fr 1.6rem 1.5rem; }
-    .sl-row span { font-size:.77rem; color:#b8d8c6; }
-    .sl-row output { font-size:.77rem; text-align:right; color:#dff0e6; }
-    .sl-priority-btn {
-      width:1.5rem; height:1.5rem; border:none; background:transparent; cursor:pointer;
-      font-size:1rem; line-height:1; color:#4a6a58; padding:0; display:flex; align-items:center; justify-content:center;
-      transition:color .15s, transform .15s;
+    .search-overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(4,10,6,.72); overflow-y:auto; padding:.75rem; }
+    .search-overlay.open { display:flex; align-items:flex-start; justify-content:center; }
+    .search-overlay-card {
+      width:100%; max-width:920px; margin:48px auto;
+      background:#22412f;
+      border:1px solid rgba(255,255,255,.1); border-radius:20px;
+      box-shadow:0 40px 100px -30px rgba(0,0,0,.8);
+      padding:24px 26px 26px;
     }
-    .sl-priority-btn:hover { color:#e0c34a; transform:scale(1.15); }
-    .sl-priority-btn.active { color:#ffcc33; }
+    .search-close {
+      display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 15px;
+      border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03);
+      color:#dfeae3; font-weight:700; font-size:13px; cursor:pointer; margin-bottom:22px;
+    }
+    .search-close:hover { background:rgba(255,255,255,.08); }
+    .search-field { display:flex; gap:10px; margin-bottom:28px; }
+    .search-field input { flex:1 1 auto; min-width:0; height:52px; padding:0 18px; border-radius:13px; border:1px solid rgba(255,255,255,.1); background:#07150d; color:#e8f0ea; font:inherit; font-size:15px; }
+    .search-go { height:52px; padding:0 28px; border-radius:13px; background:#5cc98e; color:#07160d; font-weight:700; font-size:15px; border:none; cursor:pointer; white-space:nowrap; }
+    .search-go:hover { background:#74d7a1; }
+
+    /* ── タグセクション ── */
+    .tag-section { margin-bottom:28px; }
+    .tag-section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .tag-section-title { font-size:13.5px; font-weight:700; color:#e8f0ea; }
+    .tag-section-count { font-size:11.5px; color:#82968a; }
+    .search-tag-input-wrap { display:flex; gap:10px; margin-bottom:14px; }
+    .search-tag-input-wrap input { flex:1 1 auto; min-width:0; height:44px; padding:0 16px; border-radius:11px; border:1px solid rgba(255,255,255,.1); background:#07150d; color:#e8f0ea; font:inherit; font-size:14px; }
+    .search-tag-add-btn { height:44px; padding:0 20px; border-radius:11px; border:1px solid rgba(92,201,142,.4); background:rgba(92,201,142,.12); color:#9be3bd; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap; }
+    .search-tag-add-btn:hover { background:rgba(92,201,142,.2); }
+    .tag-selected-box { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:12px 13px; margin-bottom:16px; border-radius:12px; background:rgba(92,201,142,.06); border:1px solid rgba(92,201,142,.18); }
+    .tag-selected-label { font-size:11px; font-weight:700; color:#82968a; margin-right:2px; }
+    .tag-selected-box .tag-list { display:flex; flex-wrap:wrap; gap:8px; }
+    .tag-selected-box .tag-chip { display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 8px 0 13px; border-radius:8px; background:#5cc98e; color:#07160d; font-size:13px; font-weight:700; }
+    .tag-selected-box .tag-chip button { width:18px; height:18px; border:none; border-radius:5px; background:rgba(7,22,13,.22); color:#07160d; cursor:pointer; font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center; padding:0; }
+
+    .tag-browse-toggle {
+      display:inline-flex; align-items:center; gap:9px; height:40px; padding:0 16px; border-radius:11px;
+      border:1px solid rgba(92,201,142,.3); background:rgba(92,201,142,.08); color:#9be3bd;
+      font-size:13px; font-weight:700; cursor:pointer;
+    }
+    .tag-browse-toggle:hover { background:rgba(92,201,142,.16); }
+    .tag-browse-toggle #tagBrowseChevron { transition:transform .15s; }
+    .tag-browse-toggle.open #tagBrowseChevron { transform:rotate(180deg); }
+    .tag-browse-panel {
+      position:absolute; top:48px; left:0; right:0; z-index:30;
+      background:#2a4c38; border:1px solid rgba(255,255,255,.13); border-radius:14px;
+      box-shadow:0 28px 60px -20px rgba(0,0,0,.85);
+      padding:18px 18px 20px; max-height:340px; overflow-y:auto;
+      display:flex; flex-direction:column; gap:16px;
+    }
+    .tag-browse-group-label { margin:0 0 10px; font-size:11px; font-weight:700; letter-spacing:.08em; color:#9fb0a5; }
+    .tag-browse-chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .tag-browse-chip {
+      height:34px; padding:0 15px; border-radius:9px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.02); color:#b9cabf; font-size:13px; font-weight:500; cursor:pointer;
+      transition:background .15s, border-color .15s;
+    }
+    .tag-browse-chip.active { background:#5cc98e; border-color:#5cc98e; color:#07160d; font-weight:700; }
+
+    .sort-row { margin-bottom:22px; }
+    .sort-row label { display:block; margin:0 0 9px; font-size:12px; color:#9fb0a5; }
+    .sort-row select { width:100%; height:46px; padding:0 40px 0 16px; border-radius:11px; border:1px solid rgba(255,255,255,.1); background:#07150d; color:#e8f0ea; font:inherit; font-size:14px; appearance:none; cursor:pointer; }
+
+    .priority-note {
+      display:flex; align-items:flex-start; gap:9px; margin-bottom:20px; padding:12px 14px;
+      border-radius:11px; background:rgba(217,164,65,.08); border:1px solid rgba(217,164,65,.22);
+      font-size:12px; line-height:1.65; color:#dccaa0;
+    }
+    .priority-note svg { flex:0 0 16px; margin-top:1px; }
+
+    .filter-box { background:linear-gradient(180deg,#173026,#0f2117); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:14px 12px; margin-bottom:.6rem; box-shadow:0 10px 26px -18px rgba(0,0,0,.7); }
+    .filter-box h3 { margin:0 0 .55rem; font-size:.88rem; }
+    .sl-row { display:flex; align-items:center; gap:11px; padding:8px 8px; border-radius:9px; background:transparent; box-shadow:none; margin-bottom:2px; transition:background .15s; }
+    .sl-row.is-priority { background:rgba(217,164,65,.08); box-shadow:inset 3px 0 0 #d9a441; }
+    .sl-label { width:70px; flex:0 0 70px; display:flex; align-items:center; gap:5px; font-size:12px; color:#dfeae3; }
+    .sl-priority-badge { align-items:center; height:15px; padding:0 5px; border-radius:4px; background:#d9a441; color:#3a2a06; font-size:8.5px; font-weight:700; }
+    .sl-row output { width:22px; flex:0 0 22px; text-align:right; font-size:12.5px; font-weight:700; color:#e8f0ea; }
+    .sl-priority-btn {
+      flex:0 0 auto; width:28px; height:28px; border:none; background:transparent; cursor:pointer;
+      padding:0; display:flex; align-items:center; justify-content:center;
+      transition:transform .15s;
+    }
+    .sl-priority-btn:hover { transform:scale(1.15); }
 
     /* ── スライダーグリッド (Canvas方式) ── */
-    .sl-track-wrap { display:flex; flex-direction:column; width:100%; }
+    .sl-track-wrap { display:flex; flex-direction:column; width:100%; flex:1 1 auto; min-width:0; }
     .sl-grid-canvas { display:block; width:100%; pointer-events:none; }
     .sl-track-wrap input[type="range"] {
-      accent-color:var(--brand2); width:100%; margin-top:0; touch-action:none;
+      -webkit-appearance:none; appearance:none; background:transparent;
+      width:100%; margin-top:0; touch-action:none;
     }
-    .sl-track-wrap input[type="range"].slider-unset {
-      accent-color:#ff6b9d;
+    .sl-track-wrap input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance:none; appearance:none;
+      width:14px; height:14px; border-radius:50%;
+      background:#fff; border:none; box-shadow:0 1px 4px rgba(0,0,0,.45);
+      margin-top:-4.5px; cursor:pointer;
+    }
+    .sl-track-wrap input[type="range"]::-webkit-slider-runnable-track {
+      height:5px; border-radius:3px;
+      background:linear-gradient(to right, #5cc98e var(--fillPct,0%), rgba(255,255,255,.1) var(--fillPct,0%));
+    }
+    .sl-track-wrap input[type="range"].slider-unset::-webkit-slider-runnable-track {
+      background:rgba(255,255,255,.1);
+    }
+    .sl-track-wrap input[type="range"]::-moz-range-thumb {
+      width:14px; height:14px; border-radius:50%;
+      background:#fff; border:none; box-shadow:0 1px 4px rgba(0,0,0,.45); cursor:pointer;
+    }
+    .sl-track-wrap input[type="range"]::-moz-range-track {
+      height:5px; border-radius:3px; background:rgba(255,255,255,.1);
+    }
+    .sl-track-wrap input[type="range"]::-moz-range-progress {
+      height:5px; border-radius:3px; background:#5cc98e;
+    }
+    .sl-track-wrap input[type="range"].slider-unset::-moz-range-progress {
+      background:rgba(255,255,255,.1);
     }
     .sort-row { display:flex; flex-direction:column; gap:.35rem; margin-bottom:.7rem; }
     .sort-row label { font-size:.82rem; color:var(--muted); }
@@ -97,13 +191,15 @@
     /* ── MASCOT ── */
     .hero-mascot-row { display:flex; align-items:flex-end; gap:.5rem; }
     .hero-text { flex:1; min-width:0; }
+    .hero-eyebrow { display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700; letter-spacing:.1em; color:#e0b256; margin-bottom:18px; }
+    .hero-eyebrow-dash { width:16px; height:2px; border-radius:2px; background:#e0b256; }
     .hero-mascot-wrap { flex-shrink:0; display:flex; flex-direction:column; align-items:center; padding-bottom:.2rem; }
     .mascot-img { width:80px; height:80px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.05) drop-shadow(0 2px 6px rgba(0,0,0,.3)); }
     .mascot-balloon {
-      background:#fff; color:#1a3a24; font-size:.68rem; font-weight:700;
-      border-radius:10px 10px 10px 2px; padding:.35rem .55rem;
-      line-height:1.4; text-align:center; white-space:nowrap;
-      box-shadow:0 2px 8px rgba(0,0,0,.18);
+      background:#e8f0ea; color:#12241a; font-size:.68rem; font-weight:700;
+      border-radius:16px 16px 16px 4px; padding:.35rem .55rem;
+      line-height:1.5; text-align:center; white-space:nowrap;
+      box-shadow:0 12px 30px -14px rgba(0,0,0,.6);
       margin-bottom:.3rem; position:relative;
     }
     .mascot-balloon::after {
@@ -118,8 +214,9 @@
     .hero { padding:1.4rem 1rem 1rem; background:linear-gradient(160deg,#102e1c,#07150d); border-bottom:1px solid var(--line); }
     @media (min-width:768px) {
       .hero {
-        margin:1.6rem 2rem 0; padding:2rem 2.2rem;
-        border:1px solid rgba(255,255,255,.1); border-radius:20px; border-bottom:1px solid rgba(255,255,255,.1);
+        padding:32px 40px; margin:1.6rem 2rem 44px;
+        border-radius:20px; background:linear-gradient(#162819 0%,#0f1f16 100%);
+        border:1px solid rgba(255,255,255,.1);
         box-shadow:0 18px 44px -26px rgba(0,0,0,.8);
         max-width:1200px; margin-left:auto; margin-right:auto; margin-top:1.6rem;
       }
@@ -136,7 +233,15 @@
 
     /* ── SECTIONS ── */
     .sec { padding:1.1rem 1rem 0; }
-    .sec-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:.75rem; }
+    .sec-head { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:20px; }
+    .sec-head-left { display:flex; align-items:center; gap:12px; }
+    .sec-head-bar { width:4px; height:22px; border-radius:4px; background:#5cc98e; flex-shrink:0; }
+    .sec-head h2 { font-family:"Zen Kaku Gothic New",sans-serif; font-weight:700; font-size:22px; margin:0; }
+    .sec-head-right { display:flex; align-items:center; gap:14px; }
+    .sec-head-right small { font-size:12px; color:#82968a; }
+    .sec-nav-btn { width:34px; height:34px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03); color:#dfeae3; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .sec-nav-btn:hover { background:rgba(255,255,255,.08); }
+    .sec-nav-btn svg { width:16px; height:16px; }
     .sec-head h2 { margin:0; font-size:1.05rem; font-weight:800; }
     .sec-head small { color:var(--muted); font-size:.8rem; }
 
@@ -161,11 +266,11 @@
     .hcard-thumb img { width:100%; height:100%; object-fit:cover; }
     .hcard-body { padding:.5rem .6rem; min-height:4.6rem; display:flex; flex-direction:column; }
     .hcard-body h3 { margin:0 0 .2rem; font-size:.86rem; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .recruit-badge { display:inline-flex; align-items:center; gap:.3rem; padding:.25rem .55rem; border-radius:20px; background:rgba(10,22,15,.72); border:1px solid rgba(92,201,142,.3); color:#9be3bd; font-size:.62rem; font-weight:700; white-space:nowrap; }
+    .recruit-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:20px; background:rgba(10,22,15,.72); border:1px solid rgba(92,201,142,.3); color:#9be3bd; font-size:10.5px; font-weight:700; white-space:nowrap; }
     .recruit-badge::before { content:''; width:5px; height:5px; border-radius:50%; background:#5cc98e; flex-shrink:0; }
-    .thumb-badge-stack { position:absolute; top:.4rem; left:.4rem; display:flex; flex-direction:column; align-items:flex-start; gap:.3rem; z-index:2; }
+    .thumb-badge-stack { position:absolute; top:11px; left:11px; display:flex; flex-direction:column; align-items:flex-start; gap:6px; z-index:2; }
     .ai-thumb-badge { padding:.1rem .45rem; border-radius:999px; background:rgba(7,21,13,.8); border:1px solid #3d8a56; font-size:.62rem; color:#b8efc8; white-space:nowrap; }
-    .thumb-badge-stack .recruit-badge { background:rgba(7,21,13,.8); }
+    .thumb-badge-stack .recruit-badge { background:rgba(10,22,15,.72); }
     .card-badge-row { display:flex; align-items:center; justify-content:space-between; gap:.4rem; margin-top:.35rem; flex-wrap:wrap; }
     .card-badge-row-sub { display:flex; align-items:center; gap:.3rem; flex-wrap:wrap; }
     .badge-subtle { font-size:.66rem; color:var(--muted); white-space:nowrap; }
@@ -175,36 +280,26 @@
     .match-badge.match-strong-40 { background:rgba(94,201,122,.10); border-color:#2d6a45; color:#8ee2a5; }
     .match-badge.match-weak { background:rgba(154,171,163,.10); border-color:#3a453f; color:#9ab; font-weight:600; }
     .match-info-btn { background:none; border:none; color:inherit; cursor:pointer; padding:0 0 0 3px; font-size:.9em; opacity:.8; line-height:1; }
-    .rank-badge { position:absolute; top:.4rem; right:.4rem; padding:.15rem .5rem; border-radius:999px; background:rgba(255,204,51,.92); color:#3a2a08; font-size:.68rem; font-weight:900; white-space:nowrap; z-index:2; }
-    .no-image-placeholder {
-      position:relative; width:100%; height:100%; overflow:hidden;
-    }
-    .no-image-placeholder img {
-      width:100%; height:100%; object-fit:cover; display:block;
-    }
-    .no-image-placeholder .no-image-mobile { display:none; }
-    .no-image-placeholder span {
-      position:absolute; bottom:.4rem; left:50%; transform:translateX(-50%);
-      font-size:.68rem; color:#dff0e6; background:rgba(7,21,13,.55); padding:.1rem .5rem; border-radius:999px;
-    }
-    @media (max-width:640px) {
-      .no-image-placeholder .no-image-pc { display:none; }
-      .no-image-placeholder .no-image-mobile { display:block; }
-    }
+    .rank-badge { position:absolute; z-index:2; white-space:nowrap; }
+    .card-meta-row { display:flex; align-items:center; gap:8px; margin:0 0 11px; }
+    .card-meta-text { font-size:12px; color:#82968a; }
+    .no-image-text { font-family:ui-monospace,monospace; font-size:11px; color:#5c6d63; letter-spacing:.05em; }
     .hcard-body p { margin:0; font-size:.73rem; color:var(--muted); }
 
     /* ── GRID ── */
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; padding:0 1rem; }
+    .today-pick-grid { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; padding:0 1rem; }
     #randomPickGrid { padding:0; }
     .gcard { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; box-shadow:0 12px 30px -16px rgba(0,0,0,.8); overflow:hidden; cursor:pointer; transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, border-color .18s ease; }
     @media (hover:hover) {
-      .gcard:hover { transform:translateY(-4px) scale(1.02); box-shadow:0 16px 32px -16px rgba(0,0,0,.7); border-color:rgba(94,201,122,.4); z-index:2; }
+      .gcard:hover { transform:translateY(-4px) scale(1.035); box-shadow:0 20px 40px -16px rgba(0,0,0,.8); border-color:rgba(92,201,142,.45); z-index:2; }
+      .gcard.card-quality-gold:hover { border-color:rgba(243,215,134,.95); box-shadow:0 22px 46px -16px rgba(217,164,65,.6); }
     }
     .gcard-thumb { position:relative; width:100%; aspect-ratio:16/10; background:radial-gradient(130% 130% at 50% 22%, #3a4f43 0%, #1c2f24 62%, #12211a 100%); box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), inset 0 -26px 36px -24px rgba(0,0,0,.65); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
     .gcard-thumb img { width:100%; height:100%; object-fit:cover; }
-    .gcard-body { padding:.85rem .9rem .95rem; display:flex; flex-direction:column; border-top:1px solid rgba(255,255,255,.06); }
-    .gcard-body h3 { margin:0 0 .15rem; font-size:.88rem; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:2.6em; }
-    .gcard-body p { margin:0; font-size:.74rem; color:var(--muted); display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+    .gcard-body { padding:14px 15px 16px; display:flex; flex-direction:column; border-top:1px solid rgba(255,255,255,.06); }
+    .gcard-body h3 { margin:0 0 7px; font-size:14.5px; font-weight:700; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:2.9em; }
+    .gcard-body p { margin:0; font-size:12px; color:#82968a; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
     .badge { display:inline-block; margin-top:.3rem; padding:.15rem .5rem; border-radius:999px; background:rgba(94,201,122,.12); border:1px solid #3d8a56; font-size:.7rem; color:#b8efc8; }
     .match-badge { background:rgba(255,153,60,.12); border-color:#8a5a3d; color:#ffd0a0; }
 
@@ -255,20 +350,21 @@
     .ad-affiliate-sub { font-size:.73rem; color:#7db898; margin-top:.1rem; }
     .ad-affiliate-cta { padding:.42rem .75rem; border-radius:999px; background:linear-gradient(120deg,var(--brand),var(--brand2)); color:#0c2015; font-size:.76rem; font-weight:800; white-space:nowrap; flex-shrink:0; }
 
-    /* ── ANIME PAGE ── */
+    /* ── ANIME PAGE（Claude Design案の実測値をそのまま使用） ── */
     .anime-thumb-hero { width:100%; aspect-ratio:16/9; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; color:var(--muted); font-size:.85rem; }
     .anime-thumb-hero img { width:100%; height:100%; object-fit:cover; display:block; }
     .anime-info { padding:1rem 1rem .8rem; }
-    .anime-info h1 { margin:0 0 .3rem; font-size:1.4rem; font-weight:900; }
-    .anime-meta-text { color:var(--muted); font-size:.83rem; margin:0 0 .6rem; }
-    .anime-desc-text { color:#d0ecd8; font-size:.9rem; margin:0 0 .9rem; line-height:1.6; }
-    .review-btn { display:inline-flex; align-items:center; gap:.35rem; padding:.6rem 1.1rem; border-radius:999px; background:var(--red); color:#fff; font-weight:800; font-size:.9rem; border:none; cursor:pointer; }
+    .anime-info h1 { margin:0 0 10px; font-size:1.4rem; font-weight:900; font-family:"Zen Kaku Gothic New",sans-serif; letter-spacing:.01em; line-height:1.15; }
+    .anime-meta-text { color:#82968a; font-size:13.5px; margin:0 0 .6rem; }
+    .anime-desc-text { color:#b6c8bd; font-size:15px; margin:0 0 .9rem; line-height:1.9; }
+    .review-btn { display:flex; width:100%; align-items:center; justify-content:center; gap:.35rem; padding:.75rem 1.1rem; border-radius:12px; background:#e5484d; color:#fff; font-weight:700; font-size:15px; border:none; cursor:pointer; box-shadow:0 8px 20px -12px rgba(229,72,77,.6); }
+    .review-btn-list { width:auto; flex:1 1 auto; height:44px; padding:0 15px; border-radius:11px; background:#d9a441; color:#3a2a06; font-weight:700; font-size:13.5px; box-shadow:0 8px 20px -12px rgba(217,164,65,.6); }
 
-    /* ── お気に入りトグルボタン ── */
+    /* ── お気に入りトグルボタン（Claude Design案の実測値） ── */
     .fav-toggle-btn {
       position:relative; width:44px; height:44px; padding:0; min-width:44px;
       display:inline-flex; align-items:center; justify-content:center;
-      border-radius:50%; background:var(--card2); border:1.5px solid var(--line);
+      border-radius:11px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12);
       font-size:1.2rem; color:#ffb4cc; cursor:pointer;
       transition: background .18s, border-color .18s, transform .12s;
     }
@@ -287,8 +383,14 @@
     }
     .admin-btn { padding:.55rem .85rem; border-radius:10px; background:var(--card2); border:1px solid #7a3a3a; color:#ffcece; font-size:.78rem; cursor:pointer; }
     .reviews-section { padding:0 1rem; margin-top:.8rem; }
-    .reviews-head h2 { margin:0 0 .2rem; font-size:1.05rem; font-weight:800; }
-    .reviews-head p { margin:0 0 .65rem; color:var(--muted); font-size:.78rem; }
+    .reviews-head h2 { font-size:22px; font-weight:700; font-family:"Zen Kaku Gothic New",sans-serif; }
+    .reviews-head p { color:#82968a; font-size:11.5px; }
+    .master-highlight-box { padding:16px 20px; border-radius:16px; background:linear-gradient(120deg,rgba(92,201,142,.09),rgba(92,201,142,.015)); border:1px solid rgba(92,201,142,.2); margin-bottom:20px; }
+    .master-highlight-box:empty, .master-highlight-box.is-empty { display:none; }
+    .master-highlight-label { margin:0 0 9px; font-size:11px; font-weight:700; letter-spacing:.06em; color:#82968a; }
+    .master-tag-row { display:flex; flex-wrap:wrap; gap:8px; min-height:30px; }
+    .master-tag-strength { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(92,201,142,.16); color:#9be3bd; font-size:13px; font-weight:700; }
+    .master-tag-mood { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(240,138,138,.13); color:#eaa9a9; font-size:13px; font-weight:700; }
     .review-card { background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
     #reviewList { display:grid; grid-template-columns:1fr; gap:.6rem; align-items:start; }
     .rc-head { display:flex; justify-content:space-between; align-items:flex-start; padding:.65rem .75rem .5rem; }
@@ -336,10 +438,13 @@
       /* スマホ幅：ポスターを16:9に切り取らず、自然な縦長比率のまま小さめに表示。
          横並び(flex)だと右側の文章が短い時に画像下が空白になるため、
          画像を左にfloatさせて文章を回り込ませる（画像の高さを超えたら自動で全幅に戻る） */
-      #page-anime .anime-hero-wrap { padding:.9rem .9rem 0; overflow:hidden; }
-      #page-anime .anime-thumb-hero { float:left; width:108px; aspect-ratio:2/3; max-height:none; border-radius:12px; overflow:hidden; margin-right:.9rem; margin-bottom:.5rem; }
+      #page-anime .anime-hero-wrap { padding:.9rem .9rem 0; }
+      #page-anime .anime-side-col { display:flex; flex-direction:column; gap:12px; margin-bottom:.9rem; }
+      #page-anime .anime-thumb-hero { width:100%; max-width:220px; margin:0 auto; aspect-ratio:3/4; border-radius:12px; overflow:hidden; }
       #page-anime .anime-thumb-hero img { object-fit:cover; border-radius:12px; }
       #page-anime .anime-info { padding:0; }
+      #page-anime .anime-side-actions { display:flex; flex-direction:column; gap:10px; }
+      #page-anime .anime-side-board { margin:.2rem 0; }
       /* スマホ幅では下にマスターグラフ本体が常に表示されるようになったので、
          ボタン下の小さいプレビューグラフ（重複表示）は隠す */
       /* タブに移動済みの元セクション・スワイプUIはスマホ幅では隠す（中身はJSでタブ側に移動済み） */
@@ -370,8 +475,8 @@
     }
     /* 掲示板ページ：PCでは画面中央に幅を絞って表示（スマホは全幅のまま） */
     @media (min-width: 768px) {
-      .board-page-wrap { max-width:calc(220px + (100vw - 220px) / 3); min-width:620px; margin:0 auto; }
-      .mypage-page-wrap { width:calc(220px + (100vw - 220px) / 3); margin:0 auto; }
+      .board-page-wrap { max-width:calc(236px + (100vw - 236px) / 3); min-width:620px; margin:0 auto; }
+      .mypage-page-wrap { width:calc(236px + (100vw - 236px) / 3); margin:0 auto; }
     }
     /* 検索ページの絞り込みパネルは常に幅が狭いサイドバーなので、画面幅に関係なく
        常に1列＋矢印切り替えのままにする（2列にすると狭すぎて目盛りが潰れる） */
@@ -418,12 +523,13 @@
     .tag-input-wrap input { flex:1; padding:.6rem .75rem; background:var(--bg); border:1px solid var(--line); border-radius:10px; color:var(--text); font:inherit; font-size:.9rem; }
     .tag-add-btn { padding:.6rem .85rem; border-radius:10px; background:var(--card); border:1px solid var(--line); color:var(--brand); font-weight:700; font-size:.85rem; cursor:pointer; white-space:nowrap; }
     .tag-list { display:flex; flex-wrap:wrap; gap:.4rem; min-height:1.6rem; }
-    .tag-chip { display:inline-flex; align-items:center; gap:.3rem; padding:.22rem .6rem; border-radius:999px; background:rgba(94,201,122,.15); border:1px solid #3d8a56; font-size:.78rem; color:#b8efc8; }
+    .tag-chip { display:inline-flex; align-items:center; gap:.3rem; height:28px; padding:0 12px; border-radius:8px; background:rgba(92,201,142,.1); border:1px solid rgba(92,201,142,.25); font-size:12px; font-weight:700; color:#9be3bd; }
     .tag-chip-user { display:inline-flex; align-items:center; gap:.3rem; padding:.22rem .6rem; border-radius:999px; background:rgba(60,130,220,.18); border:1px solid #3a6fc4; font-size:.78rem; color:#9ec8f8; cursor:pointer; }
     .tag-chip button { background:none; border:none; color:#7fc48a; cursor:pointer; font-size:.8rem; padding:0; line-height:1; }
     .tag-chip-search { cursor:pointer; }
     .tag-chip-search.active { background:rgba(94,201,122,.35); border-color:var(--brand); color:#e8fff0; }
     .tag-hint { font-size:.74rem; color:var(--muted); margin:.3rem 0 0; }
+    .board-composer { position:sticky; bottom:0; margin:0 -1rem -.75rem; padding:14px 1rem 18px; border-top:1px solid rgba(255,255,255,.07); background:#0b1a11; }
     .tag-suggest-wrap { margin-top:.5rem; }
     .tag-suggest-label { font-size:.7rem; color:var(--muted); margin:0 0 .3rem; }
     .tag-suggest-list { display:flex; flex-wrap:wrap; gap:.35rem; }
@@ -449,14 +555,8 @@
 
     /* ── SEARCH OVERLAY: PC 2列レイアウト ── */
     @media (min-width: 640px) {
-      .search-overlay {
-        max-width: 960px;
-        margin: 0 auto;
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        width: 100%;
-        padding: 1.2rem 2rem;
+      .search-overlay-card {
+        padding: 1.8rem 2.2rem;
       }
       /* 2軸フィルターを左右2列 */
       .search-overlay-filters-row {
@@ -464,57 +564,34 @@
         grid-template-columns: 1fr 1fr;
         gap: 1rem;
       }
-      /* スライダーラベル幅を少し広げる */
-      .sl-row { grid-template-columns: 3.8rem 1fr 1.6rem; gap:.3rem; }
-      .sl-row.has-priority { grid-template-columns: 3.8rem 1fr 1.6rem 1.5rem; }
     }
 
     /* ══ AFFILIATE ══ */
     .af-section { padding:.9rem 1rem; border-bottom:1px solid var(--line); }
-    .af-section-label { font-size:.72rem; color:var(--muted); font-weight:600; letter-spacing:.05em; margin-bottom:.6rem; }
-    .af-stream-list { display:grid; grid-template-columns:repeat(2,1fr); gap:.45rem; }
-    @media(min-width:640px){ .af-stream-list { grid-template-columns:repeat(4,1fr); } }
+    .af-section-label { font-size:15px; color:#dfeae3; font-weight:700; font-family:"Zen Kaku Gothic New",sans-serif; letter-spacing:normal; margin-bottom:.6rem; }
+    .af-stream-list { display:flex; flex-wrap:wrap; gap:10px; }
     .af-stream-item {
-      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.3rem;
-      background:var(--card2); border:1px solid var(--line);
-      border-radius:12px; padding:.65rem .5rem;
-      text-decoration:none; color:inherit; text-align:center;
-      transition:border-color .15s;
+      display:inline-flex; align-items:center; gap:6px;
+      height:38px; padding:0 16px; border-radius:9px;
+      background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08);
+      text-decoration:none;
     }
     .af-stream-item:hover { border-color:var(--brand); }
-    .af-stream-icon { font-size:1.4rem; }
+    .af-stream-icon { display:none; }
     .af-stream-body { min-width:0; }
-    .af-stream-name { font-size:.75rem; font-weight:700; color:#dff0e6; line-height:1.2; }
+    .af-stream-name { font-size:13.5px; font-weight:700; color:#dfeae3; line-height:1.2; }
     .af-stream-sub  { display:none; }
     .af-stream-cta  { display:none; }
-    .af-stream-badge { font-size:.58rem; padding:.1rem .35rem; border-radius:999px; background:rgba(94,201,122,.15); border:1px solid #3d8a56; color:#8fe5ab; }
     /* グッズ */
-    .af-goods-list { display:flex; flex-direction:column; gap:.5rem; }
-    .af-goods-item {
-      display:flex; align-items:center; gap:.75rem;
-      background:var(--card2); border:1px solid var(--line);
-      border-radius:12px; padding:.65rem .9rem;
-      text-decoration:none; color:inherit;
-    }
-    .af-goods-item:hover { border-color:#f0a050; }
-    .af-goods-icon { font-size:1.3rem; flex:0 0 auto; }
-    .af-goods-body { flex:1; min-width:0; }
-    .af-goods-name { font-size:.88rem; font-weight:700; color:#dff0e6; }
-    .af-goods-sub  { font-size:.72rem; color:var(--muted); margin-top:.1rem; }
-    .af-goods-cta  { flex:0 0 auto; padding:.35rem .8rem; border-radius:999px; background:#f0a050; color:#1a0800; font-size:.75rem; font-weight:700; white-space:nowrap; }
     /* PA-API実装後グッズカード */
-    .af-goods-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.6rem; }
+    .af-goods-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
     @media(min-width:640px){ .af-goods-grid { grid-template-columns:repeat(4,1fr); } }
-    .af-goods-card { position:relative; background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:.6rem; text-decoration:none; color:inherit; display:block; }
+    .af-goods-card { position:relative; display:flex; align-items:center; gap:11px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.07); border-radius:12px; padding:11px; text-decoration:none; color:inherit; }
     .af-goods-card:hover { border-color:#f0a050; }
-    .af-goods-card img { width:100%; max-width:120px; aspect-ratio:1; object-fit:contain; border-radius:8px; background:#1c2e24; margin:0 auto; display:block; }
-    .af-goods-card-thumb { width:100%; max-width:120px; aspect-ratio:1; border-radius:8px; background:#1c2e24; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:0 auto; }
-    .af-goods-card-mockbadge { position:absolute; top:.4rem; left:.4rem; font-size:.58rem; padding:.1rem .4rem; border-radius:999px; background:rgba(0,0,0,.55); color:#f0a050; border:1px solid #f0a050; }
-    .af-goods-card-name { font-size:.74rem; color:#c8e6d4; margin-top:.4rem; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .af-goods-card-stars { font-size:.7rem; color:#f0a050; margin-top:.25rem; letter-spacing:.05em; }
-    .af-goods-card-stars span { color:var(--muted); font-size:.65rem; margin-left:.2rem; }
-    .af-goods-card-price { font-size:.92rem; font-weight:800; color:#f0a050; margin-top:.15rem; }
-    .af-goods-card-cta { margin-top:.4rem; text-align:center; padding:.3rem 0; border-radius:999px; background:#f0a050; color:#1a0800; font-size:.72rem; font-weight:700; }
+    .af-goods-card-thumb { width:46px; height:46px; flex:0 0 46px; border-radius:9px; background:#0f2117; border:1px solid rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
+    .af-goods-card-body { min-width:0; }
+    .af-goods-card-name { margin:0 0 3px; font-size:11.5px; font-weight:700; line-height:1.35; color:#e8f0ea; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .af-goods-card-price { margin:0; font-size:13px; font-weight:700; color:#e8a06b; }
 
     /* ══ REVIEWS LIST FILTERS ══ */
     .rl-tab, .rl-country { background:var(--card2); border:1px solid var(--line); color:var(--muted); border-radius:999px; padding:.25rem .65rem; font-size:.75rem; cursor:pointer; white-space:nowrap; flex-shrink:0; }
@@ -569,10 +646,11 @@
 
     /* ── 評価グラフ/世界の反応/似ている作品タブ（PC・スマホ共通） ── */
     #page-anime #miniGraphSection { display:none !important; }
-    #page-anime #mobileInfoTabs { display:block !important; margin:.9rem .9rem 0; }
-    #page-anime .mobile-info-tab-bar { display:flex; gap:.4rem; }
-    #page-anime .mobile-info-tab-btn { flex:1; min-width:0; padding:.6rem .3rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:#dff0e6; font-size:.72rem; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #page-anime .mobile-info-tab-btn.active { background:var(--brand); color:#0c2015; border-color:var(--brand); }
+    #page-anime #mobileInfoPaneGraph { margin:.9rem 0 0; }
+    #page-anime #mobileInfoTabs { display:block !important; margin:.9rem 0 0; }
+    #page-anime .mobile-info-tab-bar { display:flex; gap:4px; }
+    #page-anime .mobile-info-tab-btn { height:38px; padding:0 20px; border-radius:9px; border:1px solid transparent; background:transparent; color:var(--muted); font-size:13.5px; font-weight:600; cursor:pointer; white-space:nowrap; }
+    #page-anime .mobile-info-tab-btn.active { background:rgba(255,255,255,.06); color:#dfeae3; font-weight:700; }
     #page-anime #mobileInfoTabContent { margin-top:.7rem; }
     #page-anime #mobileInfoTabContent .mobile-info-pane { display:none; }
     #page-anime #mobileInfoTabContent .mobile-info-pane.active { display:block; }
@@ -834,8 +912,8 @@
 
     /* ══ WORLD STATS ══ */
     .world-period-tabs { display:flex; gap:.4rem; margin-top:.35rem; flex-wrap:wrap; }
-    .world-tab { padding:.25rem .7rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); font-size:.75rem; cursor:pointer; }
-    .world-tab.active { background:var(--brand); color:#0c2015; font-weight:700; border-color:var(--brand); }
+    .world-tab { padding:0 20px; height:38px; display:inline-flex; align-items:center; border-radius:9px; border:1px solid transparent; background:transparent; color:var(--muted); font-size:13.5px; font-weight:600; cursor:pointer; }
+    .world-tab.active { background:rgba(255,255,255,.06); color:#dfeae3; border-color:transparent; font-weight:700; }
     .world-country-list { display:flex; flex-wrap:wrap; gap:.5rem; }
     .world-country-item { display:flex; align-items:center; gap:.3rem; background:var(--card2); border-radius:8px; padding:.3rem .6rem; }
     .world-country-flag { font-size:1.2rem; line-height:1; }
@@ -897,11 +975,11 @@
     .pop-load-btn { padding:.6rem 2rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; font-size:.85rem; }
 
     /* ── LANGUAGE SELECTOR ── */
-    .lang-current-btn { padding:.38rem .65rem; border-radius:8px; background:var(--card2); border:1px solid var(--line); display:inline-flex; align-items:center; gap:.3rem; cursor:pointer; font-size:.78rem; font-weight:700; color:var(--brand); white-space:nowrap; }
+    .lang-current-btn { height:38px; padding:0 12px; border-radius:11px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12.5px; font-weight:700; color:#bccfc3; white-space:nowrap; }
     .lang-overlay { display:none; position:fixed; inset:0; z-index:300; background:rgba(2,8,5,.97); overflow-y:auto; padding:1.2rem 1rem; }
     .match-breakdown-popover { display:none; position:fixed; inset:0; z-index:300; }
     .match-breakdown-popover.open { display:flex; align-items:flex-end; justify-content:center; }
-    .match-breakdown-popover-inner { width:100%; max-width:320px; margin:0 1rem 1.4rem; background:var(--card, #101a15); border:1px solid var(--line); border-radius:14px; padding:.9rem 1rem; box-shadow:0 8px 28px rgba(0,0,0,.4); }
+    .match-breakdown-popover-inner { width:100%; max-width:280px; margin:0 1rem 1.4rem; background:#0a1c12; border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:14px 15px; box-shadow:0 20px 46px -18px rgba(0,0,0,.85); }
     @media (min-width:640px) { .match-breakdown-popover { align-items:center; } }
     .lang-overlay.open { display:block; }
     .lang-overlay h2 { margin:0 0 .3rem; font-size:1.1rem; font-weight:900; }
@@ -918,57 +996,66 @@
        サイドナビ＋ワイドコンテンツ
     ════════════════════════════ */
     @media (min-width: 768px) {
-      /* ボトムナビ → 左サイドナビ（Claude Design案：奥行きのあるグラデーション＋丸みのあるナビ項目） */
+      /* ボトムナビ → 左サイドナビ（Claude Design案の実測値をそのまま使用） */
       .bnav {
         position:fixed; top:0; left:0; bottom:0; right:auto;
-        width:220px; flex-direction:column; justify-content:flex-start;
+        width:236px; flex-direction:column; justify-content:flex-start; align-items:stretch;
         border-top:none; border-right:1px solid rgba(255,255,255,.05);
-        padding:1.4rem .8rem; gap:.25rem;
+        padding:26px 16px; gap:4px;
         background:linear-gradient(180deg,#102919 0%,#07160d 90%);
       }
       .bnav-item {
         flex-direction:row; justify-content:flex-start;
-        width:100%; padding:.7rem .85rem; border-radius:.7rem;
-        font-size:.88rem; gap:.75rem; font-weight:500;
+        width:100%; padding:11px 13px; border-radius:11px;
+        font-size:14px; gap:13px; font-weight:500;
+        color:#b6c8bd;
         transition:background-color .16s ease, color .16s ease;
       }
-      .bnav-item:hover { background:rgba(255,255,255,.04); }
-      .bnav-item.active { background:linear-gradient(90deg, rgba(94,201,122,.18), rgba(94,201,122,.04)); color:var(--brand); box-shadow:inset 3px 0 0 var(--brand); font-weight:700; }
-      .bnav-icon { font-size:1.15rem; }
-      .bnav-create {
-        flex-direction:row; justify-content:flex-start;
-        width:100%; padding:.7rem .85rem; border-radius:.7rem;
-        font-size:.88rem; gap:.75rem; color:var(--text);
+      .bnav-item svg { width:19px; height:19px; flex-shrink:0; }
+      .bnav-item:hover { background:rgba(255,255,255,.04); color:#eafbf0; }
+      .bnav-item.active { background:linear-gradient(90deg, rgba(92,201,142,.18), rgba(92,201,142,.04)); color:#eafbf0; box-shadow:inset 3px 0 0 #5cc98e; font-weight:700; }
+      .bnav-tip {
+        margin-top:auto; padding:14px 14px 14px 15px; border-radius:13px;
+        background:linear-gradient(180deg, rgba(224,178,86,.09), rgba(224,178,86,.03));
+        border:1px solid rgba(224,178,86,.22); border-left:3px solid #d9a441;
       }
-      .bnav-create .bnav-icon {
-        width:1.6rem; height:1.6rem; font-size:.9rem; border-radius:6px;
-      }
+      .bnav-tip-title { margin:0 0 4px; font-size:12.5px; font-weight:700; color:#f0e6cf; }
+      .bnav-tip-sub { margin:0; font-size:11.5px; line-height:1.6; color:#82968a; }
+      .bnav-divider { height:1px; background:rgba(255,255,255,.07); margin:8px 6px; }
+      .bnav-badge { min-width:18px; height:18px; padding:0 5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#07160d; background:#e5595d; border-radius:9px; flex-shrink:0; }
       /* サイドナビのロゴ */
       .bnav::before {
         content:'アニメップル'; display:block;
-        font-size:1.15rem; font-weight:900; color:var(--brand);
-        padding:.3rem .85rem 1.3rem; letter-spacing:.02em;
+        font-family:"Zen Kaku Gothic New",sans-serif;
+        font-size:21px; font-weight:900; color:#6fd39b;
+        padding:0 10px 28px; letter-spacing:.02em;
         width:100%;
       }
 
       /* 全ページにサイドナビ幅のオフセット */
-      .page { padding-bottom:0; padding-left:220px; }
+      .page { padding-bottom:0; padding-left:236px; }
       /* 管理者ページはフルページ表示（サイドナビなし） */
       body.admin-fullpage .page { padding-left:0; }
 
       /* ヘッダー */
-      .hdr-inner { max-width:1200px; margin:0 auto; padding:.7rem 2rem; }
-      .logo { font-size:1.3rem; }
+      .hdr-inner { max-width:1200px; margin:0 auto; padding:16px 40px; }
+      .logo { font-size:17px; font-weight:700; letter-spacing:normal; font-family:"Zen Kaku Gothic New",sans-serif; }
 
       /* コンテンツ幅制限 */
       .wrap-pc { max-width:1200px; margin:0 auto; }
 
-      /* ヒーロー：横並び */
-      .hero-mascot-row { gap:2rem; align-items:center; max-width:1200px; margin:0 auto; }
-      .hero h1 { font-size:clamp(1.8rem,3vw,2.6rem); }
-      .hero p { font-size:1rem; }
+      /* ヒーロー：カード枠つきで横並び（Design案の実測値） */
+      .hero {
+        max-width:1360px; margin:0 auto 44px; padding:32px 40px;
+        border-radius:20px; background:linear-gradient(180deg,#16281d 0%,#0f1f16 100%);
+        border:1px solid rgba(255,255,255,.1); box-shadow:0 18px 44px -26px rgba(0,0,0,.8);
+      }
+      .hero-mascot-row { gap:36px; align-items:center; max-width:none; margin:0; }
+      .hero-mascot-wrap { min-height:320px; justify-content:center; }
+      .hero h1 { font-size:46px; line-height:1.24; letter-spacing:.01em; }
+      .hero p { font-size:16px; line-height:1.8; max-width:44ch; }
       .mascot-img { width:130px; height:130px; }
-      .mascot-balloon { font-size:.82rem; padding:.5rem .8rem; }
+      .mascot-balloon { font-size:12.5px; padding:11px 15px; }
 
       /* セクション */
       .sec { padding:1.5rem 2rem 0; max-width:1200px; margin-left:auto; margin-right:auto; }
@@ -990,9 +1077,8 @@
         gap:.85rem;
       }
       /* 今日のセレクション：ピックアップと同じ枚数（5列）・同じ余白ゼロの入れ物に揃えてカード幅を一致させる */
-      #randomPickGrid { grid-template-columns:repeat(5, 1fr); padding:0; max-width:none; }
-      .gcard-body h3 { font-size:.95rem; }
-
+      #randomPickGrid { grid-template-columns:repeat(5, 1fr); padding:0; max-width:none; gap:18px; }
+      
       /* 広告 */
       .ad-wrap { margin:1rem 2rem 0; max-width:1200px; margin-left:auto; margin-right:auto; }
       .ad-banner { max-width:1200px; }
@@ -1000,9 +1086,9 @@
 
       /* 作品ページ：横2カラム */
       #page-anime .anime-thumb-hero { max-height:420px; object-fit:cover; }
-      .anime-info { padding:1.5rem 2rem; max-width:1200px; margin:0 auto; }
-      .anime-info h1 { font-size:1.8rem; }
-      .reviews-section { padding:0 2rem; max-width:1200px; margin:1rem auto 0; }
+      #page-anime .anime-info { padding:1.5rem 40px; max-width:1400px; margin:0 auto; }
+      #page-anime .anime-info h1 { font-size:42px; }
+      #page-anime .reviews-section { padding:0 40px; max-width:1400px; margin:1rem auto 0; }
 
       /* レビューカードを3列に */
       #reviewList { display:grid; grid-template-columns:repeat(2,1fr); gap:.85rem; align-items:start; }
@@ -1018,8 +1104,6 @@
       .search-bar-inner { max-width:1200px; margin:0 auto; padding:.8rem 2rem; }
       .filter-toggle-bar { max-width:1200px; margin:0 auto; padding:.6rem 2rem; }
       .filter-panel { max-width:1200px; margin:0 auto; padding:.75rem 2rem; }
-      .filter-panel .sl-row { grid-template-columns:3.6rem 1fr 2rem; gap:.3rem; }
-      .filter-panel .sl-row.has-priority { grid-template-columns:3.6rem 1fr 2rem 1.5rem; }
       .result-meta { max-width:1200px; margin:0 auto; padding:.65rem 2rem; }
       .result-grid {
         grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
@@ -1037,17 +1121,33 @@
     }
 
     @media (min-width:1024px) {
-      /* 大画面：作品ページを横2カラム */
+      /* 大画面：作品ページを横2カラム（Claude Design案の実測値をそのまま使用） */
       #page-anime .anime-hero-wrap {
-        display:grid; grid-template-columns:340px 1fr;
-        max-width:1200px; margin:0 auto; gap:0;
+        display:grid; grid-template-columns:300px minmax(0,1fr);
+        max-width:1400px; margin:0 auto; gap:40px; padding:26px 40px 0; align-items:start;
+      }
+      #page-anime .anime-side-col {
+        position:sticky; top:88px; display:flex; flex-direction:column; gap:16px; margin-bottom:0;
       }
       #page-anime .anime-thumb-hero {
-        aspect-ratio:2/3; max-height:none; height:100%;
+        max-width:none; width:100%; aspect-ratio:3/4; max-height:none; height:auto;
+        border-radius:16px; border:1px solid rgba(255,255,255,.1);
+        background:radial-gradient(130% 90% at 50% 18%, #24382c 0%, #16281d 62%, #10201700 100%);
+        box-shadow:0 18px 44px -26px rgba(0,0,0,.8);
       }
-      #page-anime #mobileInfoTabs {
-        max-width:1200px; margin:.9rem auto 0 !important; padding:0 .9rem;
+      #page-anime #mobileInfoTabs, #page-anime #mobileInfoPaneGraph {
+        max-width:none; margin:.9rem 0 0 !important; padding:0;
       }
+      /* PC幅：評価グラフは常時表示のまま。世界の反応・似ている作品はDesign案通りの小さいピル型タブに */
+      #page-anime .mobile-info-tab-bar {
+        display:inline-flex; padding:4px; border-radius:12px;
+        background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08);
+        margin-bottom:18px;
+      }
+      #page-anime .mobile-info-tab-btn { flex:none; }
+      /* グリッド側で既に余白を持つため、.anime-info/.reviews-section の余白は解除 */
+      #page-anime .anime-info { padding:0; max-width:none; margin:0; }
+      #page-anime .reviews-section { padding:0; max-width:none; margin:1rem 0 0; }
       /* 検索フィルターを常時表示サイドパネルに */
       .filter-toggle-bar { display:none; }
       .search-bar {
@@ -1070,6 +1170,7 @@
     /* ════════════════════════════ */
     .footer { padding:1.2rem 1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.78rem; text-align:center; margin-top:1rem; }
     .legal-link { background:none; border:none; color:var(--brand); font-size:.78rem; cursor:pointer; text-decoration:underline; padding:0; }
+    .legal-link:hover { color:#93e2b7; }
     .legal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem; }
     .legal-modal { background:var(--card); border:1px solid var(--line); border-radius:16px; width:100%; max-width:640px; max-height:85vh; display:flex; flex-direction:column; }
     .legal-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.2rem; border-bottom:1px solid var(--line); }
@@ -1332,18 +1433,73 @@
      SEARCH OVERLAY (global)
 ═══════════════════════════════════ -->
 <div class="search-overlay" id="searchOverlay">
-  <button class="search-close" id="closeSearch" data-i18n="btnClose">← 閉じる</button>
+  <div class="search-overlay-card">
+  <button class="search-close" id="closeSearch">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg>
+    <span data-i18n="btnClose">閉じる</span>
+  </button>
   <div class="search-field">
     <input id="overlaySearchInput" type="search" placeholder="タイトル・ジャンル・雰囲気で検索" autocomplete="off" />
     <button class="search-go" id="overlaySearchBtn" data-i18n="btnSearchGo">検索</button>
   </div>
-  <div class="filter-label">🏷 タグで絞る（最大10個）</div>
-  <div class="filter-box">
+  <div class="tag-section">
+    <div class="tag-section-head">
+      <span class="tag-section-title">🏷 タグで絞る</span>
+      <span class="tag-section-count">最大10個 ・ <span id="overlayTagCount">0/10</span></span>
+    </div>
     <div class="search-tag-input-wrap">
-      <input id="overlayTagInput" placeholder="タグを入力…例: 泣ける、鬱、神作画" maxlength="20" autocomplete="off" />
+      <input id="overlayTagInput" placeholder="キーワードでタグを追加（例: 泣ける、鬱、神作画）" maxlength="20" autocomplete="off" />
       <button class="search-tag-add-btn" id="overlayTagAddBtn" data-i18n="btnAdd">追加</button>
     </div>
-    <div class="tag-list" id="overlayTagList"></div>
+    <div class="tag-selected-box" id="overlayTagSelectedBox" style="display:none;">
+      <span class="tag-selected-label">選択中</span>
+      <div class="tag-list" id="overlayTagList"></div>
+    </div>
+    <div style="position:relative;">
+      <button type="button" class="tag-browse-toggle" id="tagBrowseToggle">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 12 22l-9-9V3h9z"/><circle cx="7.5" cy="7.5" r="1.4" fill="currentColor" stroke="none"/></svg>
+        <span id="tagBrowseToggleLabel">タグ一覧から選ぶ</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="tagBrowseChevron" style="opacity:.7;"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="tag-browse-panel" id="tagBrowsePanel" style="display:none;">
+        <div class="tag-browse-group">
+          <p class="tag-browse-group-label">ジャンル</p>
+          <div class="tag-browse-chips" data-tag-group="genre">
+            <button type="button" class="tag-browse-chip" data-tag="アクション">アクション</button>
+            <button type="button" class="tag-browse-chip" data-tag="冒険">冒険</button>
+            <button type="button" class="tag-browse-chip" data-tag="コメディ">コメディ</button>
+            <button type="button" class="tag-browse-chip" data-tag="ドラマ">ドラマ</button>
+            <button type="button" class="tag-browse-chip" data-tag="SF">SF</button>
+            <button type="button" class="tag-browse-chip" data-tag="ミステリー">ミステリー</button>
+            <button type="button" class="tag-browse-chip" data-tag="ファンタジー">ファンタジー</button>
+            <button type="button" class="tag-browse-chip" data-tag="サスペンス">サスペンス</button>
+            <button type="button" class="tag-browse-chip" data-tag="ホラー">ホラー</button>
+          </div>
+        </div>
+        <div class="tag-browse-group">
+          <p class="tag-browse-group-label">舞台・世界観</p>
+          <div class="tag-browse-chips" data-tag-group="setting">
+            <button type="button" class="tag-browse-chip" data-tag="学園">学園</button>
+            <button type="button" class="tag-browse-chip" data-tag="異世界">異世界</button>
+            <button type="button" class="tag-browse-chip" data-tag="歴史・時代劇">歴史・時代劇</button>
+            <button type="button" class="tag-browse-chip" data-tag="戦争">戦争</button>
+            <button type="button" class="tag-browse-chip" data-tag="日常">日常</button>
+            <button type="button" class="tag-browse-chip" data-tag="スポーツ">スポーツ</button>
+          </div>
+        </div>
+        <div class="tag-browse-group">
+          <p class="tag-browse-group-label">テーマ・題材</p>
+          <div class="tag-browse-chips" data-tag-group="theme">
+            <button type="button" class="tag-browse-chip" data-tag="恋愛">恋愛</button>
+            <button type="button" class="tag-browse-chip" data-tag="青春">青春</button>
+            <button type="button" class="tag-browse-chip" data-tag="音楽">音楽</button>
+            <button type="button" class="tag-browse-chip" data-tag="グルメ">グルメ</button>
+            <button type="button" class="tag-browse-chip" data-tag="ロボット">ロボット</button>
+            <button type="button" class="tag-browse-chip" data-tag="成人向け">成人向け</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="sort-row">
     <label for="overlaySortSelect" data-i18n="sortLabel">並び替え</label>
@@ -1358,7 +1514,10 @@
     <span id="ovSliderPageLabel">作品の完成度</span>
     <button type="button" id="ovSliderPageNext" aria-label="次へ">›</button>
   </div>
-  <p class="filter-label" style="text-align:left;font-weight:400;text-transform:none;letter-spacing:normal;font-size:.74rem;color:var(--muted);line-height:1.6;" data-i18n="priorityAxisExplain">⭐ を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。⭐が1つも無い場合は、全軸の平均的な近さで検索します。</p>
+  <div class="priority-note">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#d9a441" stroke="none"><polygon points="12 3 14.6 8.6 20.8 9.3 16.2 13.5 17.5 19.6 12 16.5 6.5 19.6 7.8 13.5 3.2 9.3 9.4 8.6"/></svg>
+    <span data-i18n="priorityAxisExplain"><b style="color:#d9a441;">星</b>を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。星が1つも無い場合は、全軸の平均的な近さで検索します。</span>
+  </div>
   <div class="review-slider-swiper-wrap">
     <div class="review-slider-swiper" id="ovSliderSwiper">
       <div class="review-slider-page">
@@ -1372,6 +1531,7 @@
     </div>
   </div>
   <button class="search-go" id="overlaySearchBtnBottom" data-i18n="btnSearchGoFull" style="width:100%;margin-top:.5rem;">検索する</button>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════
@@ -1380,19 +1540,27 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.57.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.58.0</span></span>
       <div class="hdr-right">
-        <button class="hdr-search-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" style="display:none;" title="あなたの価値観">🧭</button>
-        <button class="lang-current-btn" id="langBtn" onclick="openLang()">🌐</button>
-        <button class="hdr-search-btn" onclick="openSearch()">🔍</button>
+        <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
+        </button>
+        <button class="lang-current-btn" id="langBtn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
+        <button class="hdr-search-btn" onclick="openSearch()">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></svg>
+        </button>
       </div>
     </div>
   </header>
   <section class="hero">
     <div class="hero-mascot-row">
       <div class="hero-text">
-        <h1>アニメの<em>グラフ</em>で<br>ドンピシャを見つける</h1>
-        <p>みんなのレビューで作品ページを育てる、可視化特化型アニメコミュニティ。</p>
+        <span class="hero-eyebrow"><span class="hero-eyebrow-dash"></span>可視化特化型アニメコミュニティ</span>
+        <h1>アニメのグラフで<br><em>ドンピシャ</em>を見つける</h1>
+        <p>みんなのレビューが、作品ごとの評価グラフを育てる。数字ではなく「かたち」で、あなたに刺さる一本を探せます。</p>
         <div class="hero-cta-row">
           <button type="button" class="hero-cta-primary" onclick="openSearch()">🔍 作品を探す</button>
           <button type="button" class="hero-cta-secondary" onclick="nav('popular')">人気ランキング</button>
@@ -1423,8 +1591,15 @@
   <!-- PICKUP: レビュー済み作品の50%未満からランダム、30分ごと更新 -->
   <section class="sec" style="margin-top:.9rem;">
     <div class="sec-head">
-      <h2>ピックアップ</h2>
-      <small id="pickupTimer">— 後に更新</small>
+      <div class="sec-head-left">
+        <span class="sec-head-bar"></span>
+        <h2>ピックアップ</h2>
+      </div>
+      <div class="sec-head-right">
+        <small id="pickupTimer">— 後に更新</small>
+        <button type="button" class="sec-nav-btn" aria-label="前へ" onclick="carouselPrev('pickupScroll','pickupDots')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button>
+        <button type="button" class="sec-nav-btn" aria-label="次へ" onclick="carouselNext('pickupScroll','pickupDots')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button>
+      </div>
     </div>
   </section>
   <div class="carousel-wrap" id="pickupCarouselWrap">
@@ -1434,7 +1609,17 @@
 
   <!-- 今季アニメ -->
   <section class="sec" style="margin-top:1rem;">
-    <div class="sec-head"><h2>📺 今季アニメ</h2><small id="seasonLabel">—</small></div>
+    <div class="sec-head">
+      <div class="sec-head-left">
+        <span class="sec-head-bar"></span>
+        <h2>今季アニメ</h2>
+      </div>
+      <div class="sec-head-right">
+        <small id="seasonLabel">—</small>
+        <button type="button" class="sec-nav-btn" aria-label="前へ" onclick="carouselPrev('seasonScroll','seasonDots')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button>
+        <button type="button" class="sec-nav-btn" aria-label="次へ" onclick="carouselNext('seasonScroll','seasonDots')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button>
+      </div>
+    </div>
   </section>
   <div class="carousel-wrap" id="seasonCarouselWrap">
     <div class="carousel-track" id="seasonScroll"></div>
@@ -1442,10 +1627,18 @@
   </div>
 
   <section class="sec" style="margin-top:.8rem;">
-    <div class="sec-head"><h2>🎲 今日のセレクション</h2><small id="randomPickTimer">— 後に更新</small></div>
+    <div class="sec-head">
+      <div class="sec-head-left">
+        <span class="sec-head-bar"></span>
+        <h2>今日のセレクション</h2>
+      </div>
+      <div class="sec-head-right">
+        <small id="randomPickTimer">— 後に更新</small>
+      </div>
+    </div>
   </section>
   <div class="carousel-wrap" id="randomPickWrap">
-    <div class="grid2" id="randomPickGrid"></div>
+    <div class="today-pick-grid" id="randomPickGrid"></div>
   </div>
   <!-- ▼▼▼ 広告②：コンテンツ間矩形 ▼▼▼
        本番: この div ごと AdSenseコードに置換 -->
@@ -1492,25 +1685,26 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
   <div class="anime-hero-wrap">
-    <div id="animeThumbHero" class="anime-thumb-hero"></div>
-    <div class="anime-info">
-      <h1 id="animeTitle">—</h1>
-      <p class="anime-meta-text" id="animeMeta"></p>
-      <div id="animeExtraInfo" style="margin-bottom:.7rem;"></div>
-      <p class="anime-desc-text" id="animeDesc"></p>
-      <div id="boardEntrySection" style="margin:.4rem 0 .2rem;"></div>
-      <div id="boardMascotTeaser" style="margin:.2rem 0 .4rem;"></div>
-      <!-- ボタン：レビューする・レビューを見る・削除 -->
-      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.5rem;">
+    <aside class="anime-side-col">
+      <div id="animeThumbHero" class="anime-thumb-hero"></div>
+      <!-- ボタン：レビューする・レビューを見る・お気に入り -->
+      <div class="anime-side-actions">
         <button class="review-btn" id="goReviewBtn" data-i18n="btnReview">🍎 レビューする</button>
-        <button class="review-btn" id="goReviewListBtn" style="background:#f4c261;color:#3a2a08;border:none;">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
-        <button class="fav-toggle-btn" id="favToggleBtn" onclick="toggleFavorite()" aria-pressed="false" aria-label="お気に入り">♡︎</button>
+        <div style="display:flex;gap:10px;">
+          <button class="review-btn review-btn-list" id="goReviewListBtn">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
+          <button class="fav-toggle-btn" id="favToggleBtn" onclick="toggleFavorite()" aria-pressed="false" aria-label="お気に入り">♡︎</button>
+        </div>
       </div>
+      <div id="boardEntrySection" class="anime-side-board"></div>
+      <div id="boardMascotTeaser" style="margin:.2rem 0 .4rem;"></div>
       <!-- ミニグラフ（ボタン下） -->
       <div id="miniGraphSection" style="display:none;margin-top:.6rem;">
         <p id="miniGraphMeta" style="font-size:.7rem;color:var(--muted);margin:0 0 .35rem;"></p>
@@ -1519,17 +1713,23 @@
           <canvas id="miniChartB" style="width:100%;aspect-ratio:1;border-radius:8px;background:#09201b;display:block;"></canvas>
         </div>
       </div>
-    </div>
-  </div>
+    </aside>
+    <div class="anime-info">
+      <h1 id="animeTitle">—</h1>
+      <p class="anime-meta-text" id="animeMeta"></p>
+      <div id="animeExtraInfo" style="margin-bottom:.7rem;"></div>
+      <p class="anime-desc-text" id="animeDesc"></p>
 
-  <!-- スマホ幅：評価グラフ・世界の反応・似ている作品を3つのタブで切り替え（PC幅では使わない・従来通り縦に並ぶ） -->
-  <div class="mobile-info-tabs" id="mobileInfoTabs" style="display:none;">
-    <div class="mobile-info-tab-bar">
-      <button type="button" class="mobile-info-tab-btn active" data-tab="graph">📊 評価グラフ</button>
-      <button type="button" class="mobile-info-tab-btn" data-tab="world">🌍 世界の反応</button>
-      <button type="button" class="mobile-info-tab-btn" data-tab="similar">🧭 似ている作品</button>
+      <!-- 評価グラフは常時表示。世界の反応・似ている作品だけをタブで切り替え（Design案通り：概要文のすぐ下） -->
+      <div id="mobileInfoPaneGraph"></div>
+      <div class="mobile-info-tabs" id="mobileInfoTabs" style="display:none;">
+        <div class="mobile-info-tab-bar">
+          <button type="button" class="mobile-info-tab-btn active" data-tab="world">🌍 世界の反応</button>
+          <button type="button" class="mobile-info-tab-btn" data-tab="similar">🧭 似ている作品</button>
+        </div>
+        <div id="mobileInfoTabContent"></div>
+      </div>
     </div>
-    <div id="mobileInfoTabContent"></div>
   </div>
 
   <!-- マスターグラフ + 世界の反応（スマホ幅では左右スワイプで切り替え。PC幅は今まで通り縦に並ぶ） -->
@@ -1543,19 +1743,33 @@
       <div class="review-slider-page">
         <!-- マスターグラフ -->
         <section class="reviews-section" id="masterGraphSection">
-          <div class="reviews-head">
-            <h2 style="margin:0 0 .2rem;" data-i18n="masterGraphTitle">みんなの評価グラフ</h2>
-            <p id="masterGraphMeta" style="margin:0;font-size:.78rem;color:var(--muted);"></p>
+          <div class="reviews-head" style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="width:4px;height:22px;border-radius:4px;background:#5cc98e;flex:0 0 auto;"></span>
+              <h2 style="margin:0;" data-i18n="masterGraphTitle">みんなの評価グラフ</h2>
+            </div>
+            <p id="masterGraphMeta" style="margin:0;font-size:11.5px;color:#82968a;white-space:nowrap;"></p>
+          </div>
+          <!-- 際立つ強み／印象的な雰囲気 -->
+          <div id="masterHighlightBox" class="master-highlight-box">
+            <div style="margin-bottom:14px;">
+              <p class="master-highlight-label" data-i18n="masterStrengthLabel">際立つ強み</p>
+              <div id="masterStrengthTags" class="master-tag-row"></div>
+            </div>
+            <div>
+              <p class="master-highlight-label" data-i18n="masterMoodLabel">印象的な雰囲気</p>
+              <div id="masterMoodTags" class="master-tag-row"></div>
+            </div>
           </div>
           <!-- グラフ -->
-          <div style="display:flex;gap:.65rem;margin-top:.6rem;">
-            <div style="flex:1 1 0;min-width:0;">
-              <p id="masterChartALabel" data-i18n="chartATitle" style="font-size:.75rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">作品の完成度</p>
-              <canvas id="masterChartA" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+            <div style="min-width:0;background:linear-gradient(180deg,#173026,#0f2117);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 18px;box-shadow:0 10px 26px -18px rgba(0,0,0,.7);">
+              <p id="masterChartALabel" data-i18n="chartATitle" style="font-size:13px;font-weight:700;color:#9be3bd;margin:0 0 4px;text-align:center;">作品の完成度</p>
+              <canvas id="masterChartA" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
             </div>
-            <div style="flex:1 1 0;min-width:0;">
-              <p id="masterChartBLabel" data-i18n="chartBTitle" style="font-size:.75rem;color:var(--muted);margin:0 0 .3rem;text-align:center;">感情・雰囲気</p>
-              <canvas id="masterChartB" style="width:100%;aspect-ratio:300/220;border-radius:12px;background:#09201b;display:block;"></canvas>
+            <div style="min-width:0;background:linear-gradient(180deg,#2a1c20,#170f11);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 18px;box-shadow:0 10px 26px -18px rgba(0,0,0,.7);">
+              <p id="masterChartBLabel" data-i18n="chartBTitle" style="font-size:13px;font-weight:700;color:#eaa9a9;margin:0 0 4px;text-align:center;">感情・雰囲気</p>
+              <canvas id="masterChartB" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
             </div>
           </div>
           <!-- 内訳 -->
@@ -1625,7 +1839,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()" style="color:#fff;">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -1641,7 +1858,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()" style="color:#fff;">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -1657,7 +1877,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()" style="color:#fff;">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -1708,7 +1931,10 @@
       <button class="back-btn" id="reviewBackBtn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -1779,7 +2005,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -1843,7 +2072,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -1924,7 +2156,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -1949,7 +2184,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -1974,7 +2212,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -1984,13 +2225,36 @@
 </div>
 
 <!-- 設定トップ -->
+<!-- お知らせ -->
+<div class="page mypage-page-wrap" id="page-notifications">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🔔 お知らせ</h2>
+    <p style="font-size:.85rem;color:var(--muted);text-align:center;padding:2rem 0;">お知らせはまだありません</p>
+  </div>
+</div>
+
 <div class="page mypage-page-wrap" id="page-settings">
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -2038,7 +2302,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -2066,7 +2333,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -2086,7 +2356,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -2110,7 +2383,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -2133,7 +2409,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -2153,7 +2432,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -2178,7 +2460,10 @@
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -2890,7 +3175,10 @@
       <button class="back-btn" onclick="navBack()">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -2929,7 +3217,10 @@
       <button class="back-btn" id="mypageBackBtn" data-i18n="btnBack" onclick="navBack()" style="display:none;">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">🌐</button>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
       </div>
     </div>
   </header>
@@ -3164,12 +3455,38 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.57.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.58.0</div>
 <nav class="bnav" id="globalBnav">
-  <button class="bnav-item" id="bnav-home" onclick="nav('home')"><span class="bnav-icon">🏠</span>ホーム</button>
-  <button class="bnav-item" id="bnav-search" onclick="openSearch()"><span class="bnav-icon">🔍</span>検索</button>
-  <button class="bnav-item" id="bnav-ranking" onclick="navPopular()"><span class="bnav-icon">🏆</span>人気</button>
-  <button class="bnav-item" id="bnav-mypage" onclick="nav('mypage')"><span class="bnav-icon">👤</span>マイページ</button>
+  <button class="bnav-item" id="bnav-home" onclick="nav('home')">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
+    <span>ホーム</span>
+  </button>
+  <button class="bnav-item" id="bnav-search" onclick="openSearch()">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></svg>
+    <span>検索</span>
+  </button>
+  <button class="bnav-item" id="bnav-ranking" onclick="navPopular()">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="7" rx="1"/><rect x="10" y="8" width="4" height="11" rx="1"/><rect x="16" y="5" width="4" height="14" rx="1"/></svg>
+    <span>人気</span>
+  </button>
+  <button class="bnav-item" id="bnav-mypage" onclick="nav('mypage')">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg>
+    <span>マイページ</span>
+  </button>
+  <div class="bnav-divider"></div>
+  <button class="bnav-item" id="bnav-notifications" onclick="nav('notifications')">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+    <span style="flex:1 1 auto;">お知らせ</span>
+    <span class="bnav-badge" id="bnavNotifBadge" style="display:none;">0</span>
+  </button>
+  <button class="bnav-item" id="bnav-settings" onclick="nav('settings')">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>設定</span>
+  </button>
+  <div class="bnav-tip">
+    <p class="bnav-tip-title">レビューで作品を育てる</p>
+    <p class="bnav-tip-sub">あなたの評価が作品ページのグラフになります。</p>
+  </div>
 </nav>
 
 <script>
@@ -4303,14 +4620,23 @@
     const title = escapeHtml(getTitle(item) || item.title || item.titleEn || '—');
     const meta = escapeHtml([item.meta, item.year ? item.year+'年' : ''].filter(Boolean).join(' · ') || item.meta || '');
     const imgHtml = item.image
-      ? `<img src="${escapeHtml(item.image)}" alt="${title}" loading="lazy" style="${style==='h'?'width:100%;height:100%;object-fit:cover;border-radius:10px;':''}" />`
+      ? `<img src="${escapeHtml(item.image)}" alt="${title}" loading="lazy" style="width:100%;height:100%;object-fit:cover;${style==='h'?'border-radius:10px;':''}" />`
       : (typeof thumbHtml==='function' ? (thumbHtml(item)||'📺') : '📺');
 
     // ── サムネイル左上：AI予測 → その下にレビュー募集中（固定スタック） ──
     const aiThumbBadge = opts.aiBadge ? `<span class="ai-thumb-badge">${opts.aiBadge}</span>` : '';
     const recruitThumbBadge = (opts.showRecruitBadge !== false && !opts.dummy) ? recruitBadgeHtml(item.kitsuId?'kitsu-'+item.kitsuId:item.id) : '';
     const thumbStack = (aiThumbBadge || recruitThumbBadge) ? `<div class="thumb-badge-stack">${aiThumbBadge}${recruitThumbBadge}</div>` : '';
-    const rankBadgeHtml = opts.rankBadge ? `<span class="rank-badge">${opts.rankBadge}</span>` : '';
+    const rankBadgeHtml = opts.rankBadge ? `<span class="rank-badge" style="${opts.rankBadgeStyle||''}">${opts.rankBadge}</span>` : '';
+
+    // ── 検索結果カード専用レイアウト（順位・一致度ティア・進捗バー） ──
+    if (opts.matchStyle === 'search') {
+      const metaRow = `<div class="card-meta-row"><span class="card-meta-text">${meta}</span>${opts.tagMatchBadge||''}</div>`;
+      return `<div class="gcard${isGold?' card-quality-gold':''}" style="${opts.cardStyle||''}" onclick="${onclick}">
+        <div class="gcard-thumb">${imgHtml}${thumbStack}${rankBadgeHtml}</div>
+        <div class="gcard-body"><h3>${title}</h3>${metaRow}${opts.graphMatchBadge||''}</div>
+      </div>`;
+    }
 
     // ── カード下部：レビュー数・タグ一致は控えめに、一致度だけ大きく強調する1行レイアウト ──
     const reviewCountBadge = opts.showReviewCount ? `<span class="badge-subtle">${tFn('reviewCount', item._reviewCount ?? reviewCount(item.id))}</span>` : '';
@@ -4472,7 +4798,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.57.0';
+      if(vEl) vEl.textContent = 'v0.58.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -5054,6 +5380,13 @@
       el.querySelectorAll('[data-ti]').forEach(btn=>{
         btn.onclick=()=>{ tags.splice(Number(btn.dataset.ti),1); render(); };
       });
+      // 検索モーダルのタグ：選択中ボックスの表示切替と件数表示
+      if(listId === 'overlayTagList') {
+        const box = document.getElementById('overlayTagSelectedBox');
+        if(box) box.style.display = tags.length ? '' : 'none';
+        const countEl = document.getElementById('overlayTagCount');
+        if(countEl) countEl.textContent = `${tags.length}/${maxTags}`;
+      }
     }
     render();
     return render;
@@ -5062,7 +5395,8 @@
   function setupTagInput(inputId, addBtnId, listId, tags, maxTags, opts) {
     opts = opts || {};
     const input=document.getElementById(inputId), btn=document.getElementById(addBtnId);
-    const render=makeTagChipUI(listId, tags, maxTags);
+    const renderChips=makeTagChipUI(listId, tags, maxTags);
+    const render = () => { renderChips(); if(listId === 'overlayTagList') syncTagBrowseChips(); };
     async function addTag() {
       let v=input.value.trim().replace(/^#/,'');
       if (!v) return;
@@ -5337,14 +5671,15 @@
     goToPage(0);
   }
 
-  // スマホ幅：評価グラフ・世界の反応・似ている作品を3タブに集約する。
+  // 評価グラフは常時表示。世界の反応・似ている作品だけをタブに集約する。
   // 元のセクション要素をDOM移動でタブの中身として使い回すので、
   // 各セクションのレンダリング関数（renderMasterGraph等）はそのまま変更なしで動く。
   let _mobileTabsInitialized = false;
   function setupMobileInfoTabs() {
     const wrap = document.getElementById('mobileInfoTabs');
     const content = document.getElementById('mobileInfoTabContent');
-    if (!wrap || !content) return;
+    const graphPane = document.getElementById('mobileInfoPaneGraph');
+    if (!wrap || !content || !graphPane) return;
     wrap.style.display = '';
 
     const master = document.getElementById('masterGraphSection');
@@ -5353,15 +5688,14 @@
     const similar = document.getElementById('similarAnimeSection');
     if (!master || !world || !similar) return;
 
-    // 初回だけ、タブの中身（3つの枠）を作ってセクション実体を移動する
+    // 初回だけ、グラフを常時表示エリアへ、世界の反応/似ている作品をタブの中身として移動する
     if (!_mobileTabsInitialized) {
+      graphPane.appendChild(master);
+      if (adMid) graphPane.appendChild(adMid);
       content.innerHTML = `
-        <div class="mobile-info-pane active" id="mobileInfoPaneGraph"></div>
-        <div class="mobile-info-pane" id="mobileInfoPaneWorld"></div>
+        <div class="mobile-info-pane active" id="mobileInfoPaneWorld"></div>
         <div class="mobile-info-pane" id="mobileInfoPaneSimilar"></div>
       `;
-      document.getElementById('mobileInfoPaneGraph').appendChild(master);
-      if (adMid) document.getElementById('mobileInfoPaneGraph').appendChild(adMid);
       document.getElementById('mobileInfoPaneWorld').appendChild(world);
       document.getElementById('mobileInfoPaneSimilar').appendChild(similar);
 
@@ -5369,7 +5703,7 @@
         btn.onclick = () => {
           wrap.querySelectorAll('.mobile-info-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
           content.querySelectorAll('.mobile-info-pane').forEach(p => p.classList.remove('active'));
-          const paneId = { graph:'mobileInfoPaneGraph', world:'mobileInfoPaneWorld', similar:'mobileInfoPaneSimilar' }[btn.dataset.tab];
+          const paneId = { world:'mobileInfoPaneWorld', similar:'mobileInfoPaneSimilar' }[btn.dataset.tab];
           const pane = document.getElementById(paneId);
           if (pane) pane.classList.add('active');
         };
@@ -5377,9 +5711,9 @@
       _mobileTabsInitialized = true;
     } else {
       // 2回目以降（別のアニメページに移動した時）：セクション要素はそのままタブの中にあるので動かす必要はない
-      // ただしタブの選択状態は毎回グラフタブに戻す
-      wrap.querySelectorAll('.mobile-info-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'graph'));
-      content.querySelectorAll('.mobile-info-pane').forEach(p => p.classList.toggle('active', p.id === 'mobileInfoPaneGraph'));
+      // ただしタブの選択状態は毎回「世界の反応」に戻す
+      wrap.querySelectorAll('.mobile-info-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'world'));
+      content.querySelectorAll('.mobile-info-pane').forEach(p => p.classList.toggle('active', p.id === 'mobileInfoPaneWorld'));
     }
   }
 
@@ -5453,14 +5787,16 @@
       const v = store[key]!==undefined ? store[key] : -1;
       const isPriority = priorityAxes.has(key);
       return `
-      <div class="sl-row has-priority">
-        <span>${label}</span>
+      <div class="sl-row has-priority${isPriority?' is-priority':''}">
+        <span class="sl-label">${label}<span class="sl-priority-badge" style="display:${isPriority?'inline-flex':'none'};">優先</span></span>
         <div class="sl-track-wrap">
           <canvas class="sl-grid-canvas" height="18"></canvas>
           <input type="range" min="-1" max="10" step="1" value="${v}" data-key="${key}" id="${prefix}-${key}" class="${v===-1?'slider-unset':''}" />
         </div>
         <output>${v===-1?t('sliderUnset'):v}</output>
-        <button type="button" class="sl-priority-btn${isPriority?' active':''}" data-key="${key}" title="${t('priorityAxisHint')||'この軸を優先して検索'}">${isPriority?'★':'☆'}</button>
+        <button type="button" class="sl-priority-btn${isPriority?' active':''}" data-key="${key}" title="${t('priorityAxisHint')||'この軸を優先して検索'}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="${isPriority?'#d9a441':'none'}" stroke="${isPriority?'#d9a441':'#5c6d63'}" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 3 14.6 8.6 20.8 9.3 16.2 13.5 17.5 19.6 12 16.5 6.5 19.6 7.8 13.5 3.2 9.3 9.4 8.6"/></svg>
+        </button>
       </div>
     `;
     }).join('');
@@ -5471,7 +5807,13 @@
       drawGrids(wraps, 0);
     });
 
+    const setFillPct = (input) => {
+      const v = Number(input.value);
+      const pct = v <= 0 ? 0 : Math.min(100, (v/10)*100);
+      input.style.setProperty('--fillPct', pct+'%');
+    };
     el.querySelectorAll('input[type="range"]').forEach(input=>{
+      setFillPct(input);
       const key=input.dataset.key;
       const out=input.closest('.sl-row').querySelector('output');
       input.addEventListener('input',()=>{
@@ -5479,14 +5821,22 @@
         store[key]=v;
         if(out) out.textContent = v===-1?t('sliderUnset'):v;
         input.classList.toggle('slider-unset', v===-1);
+        setFillPct(input);
       });
     });
 
     el.querySelectorAll('.sl-priority-btn').forEach(btn=>{
       btn.addEventListener('click',()=>{
         const key=btn.dataset.key;
-        if(priorityAxes.has(key)) { priorityAxes.delete(key); btn.classList.remove('active'); btn.textContent='☆'; }
-        else { priorityAxes.add(key); btn.classList.add('active'); btn.textContent='★'; }
+        const row = btn.closest('.sl-row');
+        const badge = row?.querySelector('.sl-priority-badge');
+        const svg = btn.querySelector('svg');
+        const on = !priorityAxes.has(key);
+        if(on) { priorityAxes.add(key); } else { priorityAxes.delete(key); }
+        btn.classList.toggle('active', on);
+        row?.classList.toggle('is-priority', on);
+        if(badge) badge.style.display = on ? 'inline-flex' : 'none';
+        if(svg) { svg.setAttribute('fill', on?'#d9a441':'none'); svg.setAttribute('stroke', on?'#d9a441':'#5c6d63'); }
       });
     });
   }
@@ -5499,6 +5849,40 @@
   const overlayTags=[];
   let renderOverlayTags = null;
 
+  // タグ一覧から選ぶ：開閉パネル＋チップのクリックでタグ選択をトグル
+  function syncTagBrowseChips() {
+    document.querySelectorAll('.tag-browse-chip').forEach(chip => {
+      chip.classList.toggle('active', overlayTags.includes(chip.dataset.tag));
+    });
+  }
+  function setupTagBrowsePanel() {
+    const toggleBtn = document.getElementById('tagBrowseToggle');
+    const panel = document.getElementById('tagBrowsePanel');
+    const label = document.getElementById('tagBrowseToggleLabel');
+    if(toggleBtn && panel) {
+      toggleBtn.onclick = () => {
+        const willOpen = panel.style.display === 'none';
+        panel.style.display = willOpen ? '' : 'none';
+        toggleBtn.classList.toggle('open', willOpen);
+        if(label) label.textContent = willOpen ? 'タグ一覧を閉じる' : 'タグ一覧から選ぶ';
+      };
+    }
+    document.querySelectorAll('.tag-browse-chip').forEach(chip => {
+      chip.onclick = () => {
+        const tag = chip.dataset.tag;
+        const idx = overlayTags.indexOf(tag);
+        if(idx === -1) {
+          if(overlayTags.length >= 10) return;
+          overlayTags.push(tag);
+        } else {
+          overlayTags.splice(idx, 1);
+        }
+        if(renderOverlayTags) renderOverlayTags();
+        syncTagBrowseChips();
+      };
+    });
+  }
+
   function openSearch() {
     document.getElementById('searchOverlay').classList.add('open');
     // 開くたびに現在の値でスライダーを再構築する（前回の値が見た目に残らないように）
@@ -5509,8 +5893,10 @@
     if(!renderOverlayTags) {
       renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true});
       setupTagFloatSuggest('overlayTagInput','overlayTagAddBtn');
+      setupTagBrowsePanel();
     } else {
       renderOverlayTags();
+      syncTagBrowseChips();
     }
     // display確定後（iOS含む）にCanvas描画
     setTimeout(()=>{
@@ -5549,22 +5935,7 @@
   ════════════════════════════ */
   // 画像未設定時のプレースホルダー（URL参照。カード/PC作品ページ/スマホ作品ページで専用画像を出し分け）
   function noImagePlaceholderHtml(variant) {
-    variant = variant || 'card';
-    const srcMap = {
-      card:   'placeholder_card.jpg',
-      pc:     'placeholder_pc.jpg',
-      mobile: 'placeholder_mobile.jpg',
-    };
-    if (variant === 'responsive') {
-      // 作品ページ本体：CSSのmedia queryでPC/スマホ用画像を出し分ける
-      return `<div class="no-image-placeholder">
-        <img class="no-image-pc" src="${srcMap.pc}" alt="" />
-        <img class="no-image-mobile" src="${srcMap.mobile}" alt="" />
-        <span>${t('noImage')}</span>
-      </div>`;
-    }
-    const src = srcMap[variant] || srcMap.card;
-    return `<div class="no-image-placeholder"><img src="${src}" alt="" /><span>${t('noImage')}</span></div>`;
+    return `<span class="no-image-text">${t('noImage')}</span>`;
   }
 
   function thumbHtml(item) {
@@ -5842,6 +6213,24 @@
     if(carousels[trackId]) carousels[trackId].goTo(page);
   }
   window.carouselGoTo = carouselGoTo;
+  function carouselPrev(trackId, dotsId) {
+    const c = carousels[trackId];
+    if(!c) return;
+    const active = document.querySelector(`#${dotsId} .carousel-dot.active`);
+    const dots = document.querySelectorAll(`#${dotsId} .carousel-dot`);
+    let idx = active ? Array.from(dots).indexOf(active) : 0;
+    c.goTo(idx - 1);
+  }
+  function carouselNext(trackId, dotsId) {
+    const c = carousels[trackId];
+    if(!c) return;
+    const active = document.querySelector(`#${dotsId} .carousel-dot.active`);
+    const dots = document.querySelectorAll(`#${dotsId} .carousel-dot`);
+    let idx = active ? Array.from(dots).indexOf(active) : 0;
+    c.goTo(idx + 1);
+  }
+  window.carouselPrev = carouselPrev;
+  window.carouselNext = carouselNext;
 
   async function renderHome() {
     const all = getAll();
@@ -6218,6 +6607,10 @@
       if(miniSection0) miniSection0.style.display='none';
       const breakdown0 = document.getElementById('masterBreakdown');
       if(breakdown0) breakdown0.innerHTML = '';
+      const strengthEl0 = document.getElementById('masterStrengthTags');
+      const moodEl0 = document.getElementById('masterMoodTags');
+      if(strengthEl0) strengthEl0.innerHTML = '';
+      if(moodEl0) moodEl0.innerHTML = '';
       return;
     }
 
@@ -6241,6 +6634,10 @@
       if(miniSection0) miniSection0.style.display='none';
       const breakdown0 = document.getElementById('masterBreakdown');
       if(breakdown0) breakdown0.innerHTML = '';
+      const strengthEl1 = document.getElementById('masterStrengthTags');
+      const moodEl1 = document.getElementById('masterMoodTags');
+      if(strengthEl1) strengthEl1.innerHTML = '';
+      if(moodEl1) moodEl1.innerHTML = '';
       return;
     }
 
@@ -6293,6 +6690,12 @@
     if(miniMeta) miniMeta.textContent=metaText;
     if(miA) drawRadar(miA, labA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a');
     if(miB) drawRadar(miB, labB, avgB, 'rgba(255,153,153,0.38)', '#ff8888');
+
+    // 際立つ強み／印象的な雰囲気（既に集計済みのavgA/avgBの数値をそのままタグ表示するだけ）
+    const strengthEl = document.getElementById('masterStrengthTags');
+    const moodEl = document.getElementById('masterMoodTags');
+    if(strengthEl) strengthEl.innerHTML = labA.map((k,i)=>`<span class="master-tag-strength">${k} ${avgA[i]}</span>`).join('');
+    if(moodEl) moodEl.innerHTML = labB.map((k,i)=>`<span class="master-tag-mood">${k} ${avgB[i]}</span>`).join('');
 
     // 内訳表示
     const breakdown = document.getElementById('masterBreakdown');
@@ -7084,11 +7487,11 @@
       : '';
     el.innerHTML = `
       ${typeHtml}
-      <div style="display:flex;gap:.6rem;">
-        <button type="button" class="board-entry-btn" data-tab="general" style="display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:#dff0e6;font-size:.78rem;cursor:pointer;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button type="button" class="board-entry-btn" data-tab="general" style="width:100%;height:42px;display:inline-flex;align-items:center;gap:9px;padding:0 14px;border-radius:10px;border:1px solid rgba(92,201,142,.3);background:rgba(92,201,142,.08);color:#dfeae3;font-weight:700;font-size:13px;cursor:pointer;">
           <span>💬</span><span>${escapeHtml(t('boardEntryGeneral'))}</span>
         </button>
-        <button type="button" class="board-entry-btn"${myGroup?` data-tab="${myGroup}"`:''} ${myGroup?'':'disabled'} style="display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:${myGroup?'#dff0e6':'var(--muted,#9ab)'};font-size:.78rem;cursor:${myGroup?'pointer':'not-allowed'};opacity:${myGroup?'1':'.6'};">
+        <button type="button" class="board-entry-btn"${myGroup?` data-tab="${myGroup}"`:''} ${myGroup?'':'disabled'} style="width:100%;height:42px;display:inline-flex;align-items:center;gap:9px;padding:0 14px;border-radius:10px;border:1px solid rgba(217,164,65,.3);background:rgba(217,164,65,.08);color:${myGroup?'#e8c463':'var(--muted,#9ab)'};font-weight:700;font-size:13px;cursor:${myGroup?'pointer':'not-allowed'};opacity:${myGroup?'1':'.6'};">
           <span>${myGroup?'💎':'🔒'}</span><span>${escapeHtml(t('boardEntryValue'))}</span>
         </button>
       </div>
@@ -7129,8 +7532,15 @@
       { id:'D', label: t('boardTabD') },
     ];
     el.innerHTML = `
-      <div style="display:flex;gap:.4rem;overflow-x:auto;padding-bottom:4px;margin-bottom:.8rem;">
-        ${tabs.map(tb=>`<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="white-space:nowrap;padding:.4rem .8rem;border-radius:999px;font-size:.78rem;cursor:pointer;border:1px solid var(--line,#2a3830);background:${tb.id===_boardActiveTab?'var(--card2,#141c19)':'transparent'};color:${tb.id===_boardActiveTab?'#dff0e6':'var(--muted,#9ab)'};">${escapeHtml(tb.label)}</button>`).join('')}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        ${tabs.map(tb=>{
+          const active = tb.id===_boardActiveTab;
+          const locked = tb.id !== myGroup;
+          const tBg = active ? 'rgba(92,201,142,.12)' : 'transparent';
+          const tBorder = active ? 'rgba(92,201,142,.4)' : 'rgba(255,255,255,.1)';
+          const tColor = active ? '#9be3bd' : '#dfeae3';
+          return `<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:10px;background:${tBg};border:1px solid ${tBorder};color:${tColor};font-size:13px;font-weight:700;cursor:pointer;">${locked?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#82968a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>':''}${escapeHtml(tb.label)}</button>`;
+        }).join('')}
       </div>
       <div id="boardPanel"></div>
     `;
@@ -7139,9 +7549,15 @@
     });
     const panel = el.querySelector('#boardPanel');
     if(myGroup !== _boardActiveTab) {
-      panel.innerHTML = `<div style="border:1px solid var(--line,#2a3830);border-radius:12px;padding:1.6rem 1rem;text-align:center;color:var(--muted,#9ab);">
-        <p style="font-weight:600;color:#dff0e6;margin:0 0 .4rem;">${escapeHtml(t('boardLockedTitle'))}</p>
-        <p style="font-size:.8rem;margin:0;">${escapeHtml(t('boardLocked'+_boardActiveTab))}</p>
+      panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;padding:40px;">
+        <div style="max-width:440px;text-align:center;background:linear-gradient(180deg,#152a1e,#0e2016);border:1px solid rgba(217,164,65,.25);border-radius:20px;padding:38px 34px;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:16px;background:rgba(217,164,65,.12);border:1px solid rgba(217,164,65,.3);margin-bottom:18px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e8c463" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          </span>
+          <h3 style="font-family:'Zen Kaku Gothic New',sans-serif;font-weight:800;font-size:19px;margin:0 0 10px;color:#e8f0ea;">${escapeHtml(t('boardLockedTitle'))}</h3>
+          <p style="margin:0 0 22px;font-size:13.5px;line-height:1.8;color:#b6c8bd;">${escapeHtml(t('boardLocked'+_boardActiveTab))}</p>
+          <button type="button" onclick="nav('anime',currentAnimeId||'${animeId}');document.getElementById('goReviewBtn')?.click();" style="height:46px;padding:0 26px;border-radius:12px;border:none;background:#e5484d;color:#fff;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px -12px rgba(229,72,77,.6);">${escapeHtml(t('boardLockedCta')||'レビューを書いて開放する')}</button>
+        </div>
       </div>`;
       return;
     }
@@ -7178,82 +7594,81 @@
     }
     const topLevel = posts.filter(p=>!p.parent_id);
     const repliesOf = pid => posts.filter(p=>p.parent_id===pid);
-    let html = '';
-    if(_currentUser) {
-      html += `<div style="border:1px solid var(--line,#2a3830);border-radius:12px;padding:.7rem .9rem;margin-bottom:.9rem;">
-        <textarea id="boardComposeInput" rows="2" placeholder="${escapeHtml(t('boardComposePlaceholder'))}" style="width:100%;resize:none;background:transparent;border:none;color:#dff0e6;font-size:.85rem;"></textarea>
-        <div style="display:flex;justify-content:flex-end;margin-top:6px;">
-          <button type="button" id="boardComposeBtn" style="padding:.4rem .9rem;border-radius:8px;background:var(--brand,#2d8a5f);border:none;color:#fff;font-size:.78rem;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button>
-        </div>
-      </div>`;
-    } else {
-      html += `<p style="font-size:.8rem;color:var(--muted,#9ab);margin-bottom:.9rem;">${escapeHtml(t('boardLoginRequired'))}</p>`;
-    }
+    let html = '<div style="max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px;">';
     if(!topLevel.length) {
-      html += `<p style="font-size:.82rem;color:var(--muted,#9ab);">${escapeHtml(t('boardEmpty'))}</p>`;
+      html += `<p style="font-size:.82rem;color:var(--muted,#9ab);text-align:center;padding:2rem 0;">${escapeHtml(t('boardEmpty'))}</p>`;
     } else {
-      const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
-      const avatarHtml = (name, size) => {
-        const bg = name==='ゲスト' ? 'rgba(140,198,160,0.2)' : colors[name.charCodeAt(0)%colors.length];
-        return `<div style="width:${size}px;height:${size}px;border-radius:${size>=28?7:6}px;overflow:hidden;background:${bg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${size>=28?'.8rem':'.65rem'};color:#0c2015;flex-shrink:0;">${escapeHtml((name||'ゲ').charAt(0))}</div>`;
-      };
-      const reportBlockButtons = (targetType, targetId, targetUserId) => {
+      const avatarHtml = (name) => `<span style="width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:linear-gradient(150deg,#2c4436,#1d3225);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#9be3bd;">${escapeHtml((name||'ゲ').charAt(0))}</span>`;
+      const kebabMenu = (targetType, targetId, targetUserId) => {
         if(!_currentUser || targetUserId === _currentUser.id) return '';
-        return `<span style="margin-left:auto;display:flex;gap:8px;">
-          <button type="button" class="board-report-btn" data-type="${targetType}" data-id="${targetId}" style="font-size:.68rem;color:var(--muted,#9ab);background:none;border:none;cursor:pointer;">${escapeHtml(t('reportBtn'))}</button>
-          <button type="button" class="board-block-btn" data-uid="${targetUserId}" style="font-size:.68rem;color:var(--muted,#9ab);background:none;border:none;cursor:pointer;">${escapeHtml(t('blockBtn'))}</button>
-        </span>`;
+        return `<div style="position:relative;">
+          <button type="button" class="board-kebab-btn" aria-label="メニュー" style="width:24px;height:22px;display:flex;align-items:center;justify-content:center;border:none;border-radius:6px;background:transparent;color:#82968a;cursor:pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+          </button>
+          <div class="board-kebab-menu" style="display:none;position:absolute;top:28px;right:0;z-index:20;width:148px;background:#22412f;border:1px solid rgba(255,255,255,.12);border-radius:11px;box-shadow:0 20px 44px -16px rgba(0,0,0,.85);padding:5px;">
+            <button type="button" class="board-report-btn" data-type="${targetType}" data-id="${targetId}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#cdb0b0;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('reportBtn'))}</button>
+            <button type="button" class="board-block-btn" data-uid="${targetUserId}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#b6c8bd;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('blockBtn'))}</button>
+          </div>
+        </div>`;
       };
       html += topLevel.map(p=>{
         const replies = repliesOf(p.id);
         const name = p.username || '名無し';
-        return `<div style="border:1px solid var(--line,#2a3830);border-radius:12px;padding:.8rem 1rem;margin-bottom:.7rem;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-            ${avatarHtml(name, 28)}
-            <div style="display:flex;flex-direction:column;">
-              <span style="font-size:.8rem;font-weight:600;">${escapeHtml(name)}</span>
-              <span style="font-size:.68rem;color:var(--muted,#9ab);">${new Date(p.created_at).toLocaleString(currentLang==='ja'?'ja-JP':'en-US')}（${formatRelativeTime(p.created_at)}）</span>
+        const isMine = _currentUser && p.user_id === _currentUser.id;
+        const side = isMine ? 'flex-end' : 'flex-start';
+        const bubbleBg = isMine ? 'rgba(92,201,142,.18)' : 'linear-gradient(180deg,#20402d,#1a3324)';
+        const bubbleBorder = isMine ? 'rgba(92,201,142,.45)' : 'rgba(255,255,255,.14)';
+        const radius = isMine ? '16px 16px 6px 16px' : '16px 16px 16px 6px';
+        return `<div style="display:flex;flex-direction:column;align-items:${side};" data-post-id="${p.id}">
+          <div style="display:flex;align-items:flex-end;gap:10px;max-width:78%;flex-direction:${isMine?'row-reverse':'row'};">
+            ${isMine ? '' : avatarHtml(name)}
+            <div style="min-width:0;">
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;justify-content:${side};">
+                <span style="font-size:12.5px;font-weight:700;color:#dfeae3;">${escapeHtml(name)}</span>
+                <span style="font-size:10.5px;color:#82968a;">${formatRelativeTime(p.created_at)}</span>
+              </div>
+              <div style="position:relative;display:inline-block;background:${bubbleBg};border:1px solid ${bubbleBorder};color:#e8f0ea;border-radius:${radius};padding:11px 15px;font-size:14px;line-height:1.75;text-align:left;box-shadow:0 8px 20px -14px rgba(0,0,0,.7);white-space:pre-wrap;">${escapeHtml(p.body)}</div>
+              <div style="display:flex;align-items:center;gap:14px;margin-top:7px;justify-content:${side};">
+                ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="display:inline-flex;align-items:center;gap:5px;border:none;background:transparent;color:#82968a;font-size:12px;font-weight:700;cursor:pointer;padding:0;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>${escapeHtml(t('boardReplyBtn'))}${replies.length?` ${replies.length}`:''}
+                </button>` : (replies.length?`<span style="font-size:12px;color:#82968a;">${escapeHtml(t('boardReplyBtn'))} ${replies.length}</span>`:'')}
+                ${kebabMenu('board_post', p.id, p.user_id)}
+              </div>
+              ${replies.length ? `<div style="margin-top:9px;padding-left:14px;border-left:2px solid rgba(92,201,142,.25);display:flex;flex-direction:column;gap:8px;">
+                ${replies.map(r=>`<div style="display:flex;align-items:baseline;gap:8px;font-size:12.5px;"><span style="font-weight:700;color:#9be3bd;flex:0 0 auto;">${escapeHtml(r.username||'名無し')}</span><span style="color:#b6c8bd;line-height:1.6;">${escapeHtml(r.body)}</span></div>`).join('')}
+              </div>` : ''}
+              <div class="board-reply-box" data-id="${p.id}" style="display:none;margin-top:9px;gap:8px;">
+                <input type="text" class="board-reply-input" placeholder="${escapeHtml(t('boardReplyPlaceholder'))}" style="flex:1 1 auto;height:38px;padding:0 13px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#0b1a11;color:#e8f0ea;font-size:13px;font-family:inherit;" />
+                <button type="button" class="board-reply-submit" data-id="${p.id}" style="height:38px;padding:0 16px;border-radius:10px;border:none;background:#5cc98e;color:#07160d;font-size:13px;font-weight:800;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button>
+              </div>
             </div>
-            ${reportBlockButtons('board_post', p.id, p.user_id)}
           </div>
-          <p style="font-size:.85rem;margin:0 0 .4rem;white-space:pre-wrap;">${escapeHtml(p.body)}</p>
-          ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="font-size:.72rem;color:var(--muted,#9ab);background:none;border:none;cursor:pointer;padding:2px 0;">${escapeHtml(t('boardReplyBtn'))} ${replies.length||''}</button>
-          <div class="board-reply-box" data-id="${p.id}" style="display:none;margin-top:6px;">
-            <textarea rows="2" style="width:100%;resize:none;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);border-radius:8px;color:#dff0e6;font-size:.8rem;padding:.4rem;" placeholder="${escapeHtml(t('boardReplyPlaceholder'))}"></textarea>
-            <div style="display:flex;justify-content:flex-end;margin-top:4px;"><button type="button" class="board-reply-submit" data-id="${p.id}" style="padding:.3rem .7rem;border-radius:8px;background:var(--brand,#2d8a5f);border:none;color:#fff;font-size:.72rem;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button></div>
-          </div>` : (replies.length?`<span style="font-size:.72rem;color:var(--muted,#9ab);">${escapeHtml(t('boardReplyBtn'))} ${replies.length}</span>`:'')}
-          ${replies.map(r=>{
-            const rname = r.username || '名無し';
-            return `<div style="margin-top:8px;padding-left:6px;border-left:2px solid var(--line,#2a3830);display:flex;gap:8px;align-items:flex-start;">
-              ${avatarHtml(rname, 20)}
-              <div style="font-size:.78rem;"><span style="font-weight:600;">${escapeHtml(rname)}</span> <span style="color:var(--muted,#9ab);">${escapeHtml(r.body)}</span></div>
-            </div>`;
-          }).join('')}
         </div>`;
       }).join('');
     }
+    html += '</div>';
     panel.innerHTML = html;
-    const composeBtn = panel.querySelector('#boardComposeBtn');
-    if(composeBtn) composeBtn.onclick = async () => {
-      const input = panel.querySelector('#boardComposeInput');
-      const body = input.value.trim();
-      if(!body) return;
-      const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
-      const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body);
-      if(error) { alert(t('profileSaveFailedAlert')); return; }
-      rerenderFn(animeId);
-    };
+    panel.querySelectorAll('.board-kebab-btn').forEach(btn=>{
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const menu = btn.nextElementSibling;
+        const wasOpen = menu.style.display === 'block';
+        panel.querySelectorAll('.board-kebab-menu').forEach(m=>m.style.display='none');
+        menu.style.display = wasOpen ? 'none' : 'block';
+      };
+    });
+    document.addEventListener('click', () => { panel.querySelectorAll('.board-kebab-menu').forEach(m=>m.style.display='none'); }, {once:true});
     panel.querySelectorAll('.board-reply-toggle').forEach(btn=>{
       btn.onclick = () => {
         const box = panel.querySelector(`.board-reply-box[data-id="${btn.dataset.id}"]`);
-        if(box) box.style.display = box.style.display==='none' ? 'block' : 'none';
+        if(box) box.style.display = box.style.display==='none' ? 'flex' : 'none';
       };
     });
     panel.querySelectorAll('.board-reply-submit').forEach(btn=>{
       btn.onclick = async () => {
         const box = panel.querySelector(`.board-reply-box[data-id="${btn.dataset.id}"]`);
-        const textarea = box.querySelector('textarea');
-        const body = textarea.value.trim();
+        const input = box.querySelector('.board-reply-input');
+        const body = input.value.trim();
         if(!body) return;
         const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
         const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, btn.dataset.id);
@@ -7278,6 +7693,33 @@
         rerenderFn(animeId);
       };
     });
+
+    // ── 下部sticky入力欄 ──
+    const composerWrap = panel.parentElement;
+    let composer = composerWrap.querySelector('.board-composer');
+    if(!composer) {
+      composer = document.createElement('div');
+      composer.className = 'board-composer';
+      composerWrap.appendChild(composer);
+    }
+    if(_currentUser) {
+      composer.innerHTML = `
+        <div style="max-width:820px;margin:0 auto;display:flex;align-items:flex-end;gap:10px;">
+          <textarea id="boardComposeInput" placeholder="${escapeHtml(t('boardComposePlaceholder'))}" style="flex:1 1 auto;min-height:46px;max-height:120px;padding:12px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:#22412f;color:#e8f0ea;font-size:14px;line-height:1.6;font-family:inherit;resize:none;"></textarea>
+          <button type="button" id="boardComposeBtn" style="flex:0 0 auto;height:46px;padding:0 22px;border-radius:13px;border:none;background:linear-gradient(160deg,#5cc98e,#3fa96f);color:#07160d;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 10px 22px -12px rgba(92,201,142,.6);">${escapeHtml(t('boardPostBtn'))}</button>
+        </div>`;
+      composer.querySelector('#boardComposeBtn').onclick = async () => {
+        const input = composer.querySelector('#boardComposeInput');
+        const body = input.value.trim();
+        if(!body) return;
+        const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
+        const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body);
+        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        rerenderFn(animeId);
+      };
+    } else {
+      composer.innerHTML = `<p style="max-width:820px;margin:0 auto;font-size:.8rem;color:var(--muted,#9ab);text-align:center;">${escapeHtml(t('boardLoginRequired'))}</p>`;
+    }
   }
 
   /* ════════════════════════════
@@ -8017,26 +8459,43 @@
     document.getElementById('srResultGrid').innerHTML=combined.map(row=>{
       const a=row.anime;
       const rank = rankMap.get(row);
+      const top1 = rank === 1, top3 = rank && rank <= 3;
+      const rankColor = top3 ? '#07160d' : '#cfe0d5';
+      const rankBg = top1 ? '#d9a441' : (top3 ? '#5cc98e' : 'rgba(10,22,15,.82)');
+      const rankBorder = top1 ? '#d9a441' : (top3 ? '#5cc98e' : 'rgba(255,255,255,.14)');
+      const cardBorder = top1 ? 'rgba(217,164,65,.6)' : (top3 ? 'rgba(92,201,142,.5)' : 'rgba(255,255,255,.1)');
+      const cardShadow = top1 ? '0 14px 34px -16px rgba(217,164,65,.5)' : (top3 ? '0 14px 32px -18px rgba(92,201,142,.4)' : '0 12px 30px -16px rgba(0,0,0,.8)');
       const rankBadge = rank ? `${rank}位` : '';
-      // 統合一致度：タグ検索時は「その検索結果内での最高タグ一致数の階層」だけ色で強調し、
-      // それ未満の階層は数字は出すが色を付けない（タグで落ちてる時点で上位ではないことを視覚的に示す）
+      const rankBadgeStyle = rank ? `top:9px;right:9px;min-width:34px;text-align:center;font-size:11px;font-weight:700;color:${rankColor};background:${rankBg};border:1px solid ${rankBorder};padding:3px 8px;border-radius:8px;` : '';
+      const cardStyle = `border-color:${cardBorder};box-shadow:${cardShadow};`;
+      // 統合一致度：タグ検索時は「その検索結果内での最高タグ一致数の階層」だけ強調表示する
       const emphasize = row.isTopTagTier;
-      let strengthClass = 'match-weak';
-      if(emphasize && row.matchPercent != null) {
-        strengthClass = row.matchPercent >= 90 ? 'match-strong-90' : row.matchPercent >= 70 ? 'match-strong-70' : row.matchPercent >= 40 ? 'match-strong-40' : 'match-weak';
+      let mb = '';
+      if (emphasize && row.matchPercent != null) {
+        const m = row.matchPercent;
+        const grade = m >= 85
+          ? { bar:'#63e6a2', track:'rgba(99,230,162,.16)', h:'8px', pct:'#8ff0be', w:'700', tier:'ドンピシャ', tBg:'rgba(99,230,162,.16)', tColor:'#8ff0be', tBorder:'rgba(99,230,162,.5)' }
+          : m >= 80 ? { bar:'#4fbe86', track:'rgba(79,190,134,.14)', h:'6px', pct:'#79d7a6', w:'700', tier:'好相性', tBg:'rgba(79,190,134,.12)', tColor:'#79d7a6', tBorder:'rgba(79,190,134,.4)' }
+          : { bar:'#3f8f6a', track:'rgba(63,143,106,.14)', h:'4px', pct:'#7d9086', w:'600', tier:'まあまあ', tBg:'rgba(255,255,255,.04)', tColor:'#8ea296', tBorder:'rgba(255,255,255,.12)' };
+        const breakdownArgs = `${row.tagScore},${srTagsActive.length},${row.priorityDist===Infinity?'null':row.priorityDist},${row.match===Infinity?'null':row.match}`;
+        mb = `<div style="position:relative;">
+          <button type="button" style="display:block;width:100%;text-align:left;padding:0;border:none;background:transparent;cursor:pointer;" onclick="event.stopPropagation();openMatchBreakdown(${breakdownArgs});">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">
+              <span style="display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;color:${grade.tColor};background:${grade.tBg};border:1px solid ${grade.tBorder};padding:2px 8px;border-radius:6px;">${grade.tier}</span>
+              <span style="font-size:15px;font-weight:${grade.w};color:${grade.pct};font-family:'Zen Kaku Gothic New',sans-serif;">${m}%</span>
+            </div>
+            <div style="height:${grade.h};border-radius:5px;background:${grade.track};overflow:hidden;"><div style="height:100%;border-radius:5px;background:${grade.bar};width:${m}%;"></div></div>
+          </button>
+        </div>`;
       }
-      const breakdownArgs = `${row.tagScore},${srTagsActive.length},${row.priorityDist===Infinity?'null':row.priorityDist},${row.match===Infinity?'null':row.match}`;
-      const mb = row.matchPercent != null
-        ? `<span class="badge match-badge ${strengthClass}">${t('graphMatchBadge').replace('{n}', row.matchPercent)}<button type="button" class="match-info-btn" onmousedown="event.stopPropagation();" onclick="event.stopPropagation();event.preventDefault();openMatchBreakdown(${breakdownArgs});return false;">ⓘ</button></span>`
-        : '';
       const tb = srTagsActive.length
-        ? `<span class="badge-subtle">🏷️ ${escapeHtml(String(row.tagScore))}/${escapeHtml(String(srTagsActive.length))}</span>`
+        ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;color:#9be3bd;background:rgba(92,201,142,.1);border:1px solid rgba(92,201,142,.25);padding:2px 7px;border-radius:6px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>タグ ${escapeHtml(String(row.tagScore))}/${escapeHtml(String(srTagsActive.length))}一致</span>`
         : '';
       const psb = '';
       // グラフ一致がAIシード予測データのみに基づく場合は、実レビューと誤解されないよう明示する（サムネイル左上に固定表示）
       const isAiOnlyMatch = mb && _searchMasterGraphCache && _searchMasterGraphCache[a.id]?.isAiOnly;
       const aiBadge = isAiOnlyMatch ? t('aiPredictedBadge') : '';
-      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', showReviewCount:true, tagMatchBadge:tb, graphMatchBadge:mb, priorityMatchBadge:psb, aiBadge, rankBadge});
+      return renderAnimeCard({...a, _reviewCount: row.reviews}, {style:'g', matchStyle:'search', showReviewCount:true, tagMatchBadge:tb, graphMatchBadge:mb, priorityMatchBadge:psb, aiBadge, rankBadge, rankBadgeStyle, cardStyle});
     }).join('');
   }
 
@@ -8345,12 +8804,11 @@
       return `
         <a class="af-goods-card" href="${url}" target="_blank" rel="noopener noreferrer sponsored"
            onclick="adClick('goods_amazon_${cat.key}')">
-          <span class="af-goods-card-mockbadge">${t('goodsMockBadge')||'プレビュー(仮)'}</span>
-          <div class="af-goods-card-thumb">${cat.icon}</div>
-          <div class="af-goods-card-name">${escapeHtml(titleJa || titleEn)} ${escapeHtml(label)}</div>
-          <div class="af-goods-card-stars">★★★★☆ <span>(128)</span></div>
-          <div class="af-goods-card-price">${cat.mockPrice}</div>
-          <div class="af-goods-card-cta">${t('goodsSeeItem')||'商品を見る'}</div>
+          <span class="af-goods-card-thumb">${cat.icon}</span>
+          <div class="af-goods-card-body">
+            <h3 class="af-goods-card-name">${escapeHtml(titleJa || titleEn)} ${escapeHtml(label)}</h3>
+            <p class="af-goods-card-price">${cat.mockPrice}</p>
+          </div>
         </a>
       `;
     }).join('');
@@ -8398,7 +8856,7 @@
       th:'ค้นหาอนิเมะที่ใช่ด้วยกราฟ', id:'Temukan anime idealmu dengan grafik', ru:'Найдите идеальное аниме с помощью графиков', it:'Trova il tuo anime perfetto con i grafici', vi:'Tìm anime hoàn hảo qua biểu đồ',
     },
     heroSub: {
-      ja:'みんなのレビューで作品ページを育てる、可視化特化型アニメコミュニティ。',
+      ja:'みんなのレビューが、作品ごとの評価グラフを育てる。数字ではなく「かたち」で、あなたに刺さる一本を探せます。',
       en:'A community where reviews build richer anime pages through visual data.',
       ko:'리뷰로 작품 페이지를 키우는 시각화 특화 애니메이션 커뮤니티.',
       'zh-tw':'透過大家的評論，打造視覺化的動畫資料庫。',
@@ -8497,6 +8955,8 @@
     btnRefine:     { ja:'この条件で再検索',en:'Refine search',ko:'재검색', 'zh-tw':'重新搜尋','zh-cn':'重新搜索',es:'Refinar',    fr:'Affiner',    pt:'Refinar',    de:'Verfeinern', ar:'تكرار البحث',th:'ค้นหาใหม่',id:'Perhalus pencarian',ru:'Уточнить поиск',it:'Affina ricerca',vi:'Tìm kiếm lại' },
     yearPickLabel: { ja:'年代を選ぶ',   en:'Select year',   ko:'연도 선택','zh-tw':'選擇年代','zh-cn':'选择年代',es:'Año',        fr:'Année',      pt:'Ano',        de:'Jahr',       ar:'السنة',th:'เลือกปี',id:'Pilih tahun',ru:'Выбрать год',it:'Seleziona anno',vi:'Chọn năm' },
     masterGraphTitle:{ ja:'みんなの評価グラフ',en:"Everyone's Graph",ko:'모두의 평가 그래프','zh-tw':'大家的評分圖','zh-cn':'大家的评分图',es:'Gráfico de todos',fr:'Graphique de tous',pt:'Gráfico de todos',de:'Aller Bewertungen',ar:'رسم الجميع',th:'กราฟการประเมินของทุกคน',id:'Grafik Penilaian Semua Orang',ru:'График оценок всех',it:'Grafico di tutti',vi:'Biểu đồ đánh giá của mọi người' },
+    masterStrengthLabel:{ ja:'際立つ強み',en:'Standout Strengths',ko:'뛰어난 강점','zh-tw':'突出優點','zh-cn':'突出优点',es:'Puntos fuertes',fr:'Points forts',pt:'Pontos fortes',de:'Stärken',ar:'نقاط القوة',th:'จุดเด่น',id:'Keunggulan',ru:'Сильные стороны',it:'Punti di forza',vi:'Điểm mạnh nổi bật' },
+    masterMoodLabel:{ ja:'印象的な雰囲気',en:'Notable Mood',ko:'인상적인 분위기','zh-tw':'印象深刻的氛圍','zh-cn':'印象深刻的氛围',es:'Ambiente notable',fr:'Ambiance notable',pt:'Ambiente notável',de:'Bemerkenswerte Stimmung',ar:'جو ملحوظ',th:'บรรยากาศที่โดดเด่น',id:'Suasana Menonjol',ru:'Заметная атмосфера',it:'Atmosfera notevole',vi:'Bầu không khí ấn tượng' },
     boardSectionTitle:{ ja:'掲示板', en:'Board' },
     boardTabGeneral:{ ja:'通常掲示板', en:'General board' },
     boardTabA:{ ja:'ビジュアル系', en:'Visual' },
@@ -8549,6 +9009,7 @@
     pushEnableBtn:{ ja:'通知を有効にする', en:'Enable notifications' },
     pushEnableFailedAlert:{ ja:'通知の許可ができませんでした。ブラウザの通知設定を確認してください。', en:'Could not enable notifications. Check your browser settings.' },
     boardLockedTitle:{ ja:'この掲示板は投票者限定です', en:'Members-only board' },
+    boardLockedCta:{ ja:'レビューを書いて開放する', en:'Write a review to unlock' },
     boardLockedA:{ ja:'この作品のレビューで「作画・シリアス・かっこいい」のどれかに投票すると開放されます。', en:'Vote for Animation, Serious, or Cool when reviewing this title to unlock.' },
     boardLockedB:{ ja:'この作品のレビューで「物語・世界観・テーマ」のどれかに投票すると開放されます。', en:'Vote for Story, World, or Theme when reviewing this title to unlock.' },
     boardLockedC:{ ja:'この作品のレビューで「キャラクター・可愛い・コメディ」のどれかに投票すると開放されます。', en:'Vote for Characters, Cute, or Comedy when reviewing this title to unlock.' },
@@ -8794,18 +9255,18 @@
     const distToPct = (dist) => (dist === Infinity || dist == null) ? null : Math.max(0, Math.round(100 - dist * 10));
     const priorityPct = priorityAxes.size ? distToPct(priorityDist) : null;
     const graphPct = distToPct(graphDist);
-    const row = (label, val) => `
-      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem;">
-        <span style="width:70px;font-size:.8rem;color:var(--muted,#9ab);flex-shrink:0;">${escapeHtml(label)}</span>
-        <div style="flex:1;height:8px;border-radius:999px;background:var(--card2,#141c19);overflow:hidden;">
-          <div style="width:${val==null?0:val}%;height:100%;background:var(--brand,#2d8a5f);"></div>
+    const row = (label, val, color) => `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="width:42px;flex:0 0 42px;font-size:11px;color:#9fb0a5;">${escapeHtml(label)}</span>
+        <div style="flex:1 1 auto;height:6px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;">
+          <div style="height:100%;border-radius:4px;background:${color||'#5cc98e'};width:${val==null?0:val}%;"></div>
         </div>
-        <span style="width:44px;text-align:right;font-size:.8rem;flex-shrink:0;">${val==null?'—':val+'%'}</span>
+        <span style="width:34px;flex:0 0 34px;text-align:right;font-size:11px;font-weight:700;color:#dfeae3;">${val==null?'—':val+'%'}</span>
       </div>`;
     body.innerHTML = `
-      ${srTagsActive.length ? row(currentLang==='ja'?'タグ':'Tags', tagTotal ? Math.round(tagScore/tagTotal*100) : null) : ''}
-      ${priorityAxes.size ? row(currentLang==='ja'?'優先軸':'Priority', priorityPct) : ''}
-      ${row(currentLang==='ja'?'グラフ':'Graph', graphPct)}
+      ${srTagsActive.length ? row(currentLang==='ja'?'タグ':'Tags', tagTotal ? Math.round(tagScore/tagTotal*100) : null, '#5cc98e') : ''}
+      ${priorityAxes.size ? row(currentLang==='ja'?'優先軸':'Priority', priorityPct, '#d9a441') : ''}
+      ${row(currentLang==='ja'?'グラフ':'Graph', graphPct, '#5cc98e')}
       ${srTagsActive.length ? `<p style="font-size:.72rem;color:var(--muted,#9ab);margin-top:.4rem;">${escapeHtml(String(tagScore))}/${escapeHtml(String(tagTotal))}${currentLang==='ja'?'個一致':' matched'}</p>` : ''}
     `;
     overlay.classList.add('open');
@@ -8817,6 +9278,10 @@
 
   // ── UI全体にt()を適用 ──────────────────────────
   function applyLang() {
+    // ヘッダーの言語コード表示（JP/EN等）を更新
+    document.querySelectorAll('.lang-code-label').forEach(el => {
+      el.textContent = currentLang.split('-')[0].toUpperCase();
+    });
     // data-i18n属性を持つ全要素を自動翻訳
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.dataset.i18n;
@@ -8835,14 +9300,18 @@
       });
     });
     const l = LANGS.find(x => x.code === currentLang);
-    document.querySelectorAll('.lang-current-btn').forEach(btn => { btn.textContent = l ? l.flag : '🌐'; });
+    document.querySelectorAll('.lang-code-label').forEach(el => { el.textContent = currentLang.split('-')[0].toUpperCase(); });
 
     // RTL対応（アラビア語）
     document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
 
     // ヒーロー
     const heroH1 = document.querySelector('#page-home .hero h1');
-    if (heroH1) heroH1.innerHTML = t('siteTagline').replace(/(.{10,20})(で|with|con|avec|com|mit|مع|으로)/, '$1$2<br>').replace('grâce ', 'grâce<br>') || t('siteTagline');
+    if (heroH1) {
+      let heroHtml = t('siteTagline').replace(/(.{10,20})(で|with|con|avec|com|mit|مع|으로)/, '$1$2<br>').replace('grâce ', 'grâce<br>') || t('siteTagline');
+      if (currentLang === 'ja') heroHtml = heroHtml.replace('ドンピシャ', '<em>ドンピシャ</em>');
+      heroH1.innerHTML = heroHtml;
+    }
     const heroP = document.querySelector('#page-home .hero p');
     if (heroP) heroP.textContent = t('heroSub');
 
@@ -11472,14 +11941,11 @@
       ensureLoggedInUsername();
       loadMyBlockedUserIds();
     }
-    const yourValueBtn = document.getElementById('yourValueHeaderBtn');
-    if(yourValueBtn) yourValueBtn.style.display = _currentUser ? '' : 'none';
+    // yourValueHeaderBtn は常時表示（Design案通り）
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
       if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; }
-      const yourValueBtn2 = document.getElementById('yourValueHeaderBtn');
-      if(yourValueBtn2) yourValueBtn2.style.display = _currentUser ? '' : 'none';
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
