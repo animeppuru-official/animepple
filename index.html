@@ -7368,14 +7368,31 @@
   }
 
   // レビュー質スコア計算（5点満点）
+  // 同じ文字の連続や意味を成さない適当な文字列（"あああああ"「wwwwww」「abcabcabcabc」等）を検出する。
+  // 上質なレビュー判定でコメントの文字数点を与えるかどうかの判定に使う。
+  function isGarbageComment(text) {
+    const s = (text || '').replace(/\s+/g, '');
+    if (s.length < 10) return false; // 短文はそもそも文字数点が入らないので対象外
+    // 同一文字の連続が全体の大半を占める（例: 「あああああああ」）
+    const runMatch = s.match(/(.)\1{6,}/); // 同じ文字が7回以上連続
+    if (runMatch && runMatch[0].length / s.length >= 0.5) return true;
+    // 短いパターンの繰り返し（例: 「wwwwwwwwww」「あかあかあかあか」「hahahaha」）
+    if (/^(.{1,6})\1{4,}$/.test(s)) return true;
+    // 文字種の多様性が極端に低い（ユニーク文字数の割合）
+    const uniqueRatio = new Set(s).size / s.length;
+    if (s.length >= 20 && uniqueRatio < 0.15) return true;
+    return false;
+  }
+
   function calcQualityScore({isFullGraph, elapsed, tags, comment}) {
     let score = 0;
     if (!isFullGraph) return 0; // グラフ未完成なら質スコア0
     if (elapsed >= 30000) score += 1;
     if (tags.length >= 1) score += 1;
     if (tags.length >= 3) score += 1;
-    if (comment.length >= 20) score += 1;
-    if (comment.length >= 80) score += 1;
+    const commentIsGarbage = isGarbageComment(comment);
+    if (comment.length >= 20 && !commentIsGarbage) score += 1;
+    if (comment.length >= 80 && !commentIsGarbage) score += 1;
     return score;
   }
 
@@ -7677,8 +7694,12 @@
     return currentLang==='ja' ? `${day}日前` : `${day}d ago`;
   }
 
+  const BOARD_DISPLAY_EXPIRY_DAYS = 90;
   async function renderBoardPostsInto(panel, animeId, boardType, rerenderFn) {
     let posts = await db.board.list(animeId, boardType);
+    // 表示期限：古い投稿は一覧から除外（DBには残るが表示だけしない）
+    const expiryCutoff = Date.now() - BOARD_DISPLAY_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+    posts = posts.filter(p => !p.created_at || new Date(p.created_at).getTime() >= expiryCutoff);
     if(_currentUser) {
       if(_blockedUserIds === null) await loadMyBlockedUserIds();
       posts = posts.filter(p => !_blockedUserIds.has(p.user_id));
@@ -7729,7 +7750,7 @@
                 ${replies.map(r=>`<div style="display:flex;align-items:baseline;gap:8px;font-size:12.5px;"><span style="font-weight:700;color:#9be3bd;flex:0 0 auto;">${escapeHtml(r.username||'名無し')}</span><span style="color:#b6c8bd;line-height:1.6;">${escapeHtml(r.body)}</span></div>`).join('')}
               </div>` : ''}
               <div class="board-reply-box" data-id="${p.id}" style="display:none;margin-top:9px;gap:8px;">
-                <input type="text" class="board-reply-input" placeholder="${escapeHtml(t('boardReplyPlaceholder'))}" style="flex:1 1 auto;height:38px;padding:0 13px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#0b1a11;color:#e8f0ea;font-size:13px;font-family:inherit;" />
+                <input type="text" class="board-reply-input" maxlength="500" placeholder="${escapeHtml(t('boardReplyPlaceholder'))}" style="flex:1 1 auto;height:38px;padding:0 13px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#0b1a11;color:#e8f0ea;font-size:13px;font-family:inherit;" />
                 <button type="button" class="board-reply-submit" data-id="${p.id}" style="height:38px;padding:0 16px;border-radius:10px;border:none;background:#5cc98e;color:#07160d;font-size:13px;font-weight:800;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button>
               </div>
             </div>
@@ -7793,15 +7814,26 @@
       composer.className = 'board-composer';
       composerWrap.appendChild(composer);
     }
+    const BOARD_MAX_LEN = 500;
     if(_currentUser) {
       composer.innerHTML = `
-        <div style="max-width:820px;margin:0 auto;display:flex;align-items:flex-end;gap:10px;">
-          <textarea id="boardComposeInput" placeholder="${escapeHtml(t('boardComposePlaceholder'))}" style="flex:1 1 auto;min-height:46px;max-height:120px;padding:12px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:#22412f;color:#e8f0ea;font-size:14px;line-height:1.6;font-family:inherit;resize:none;"></textarea>
-          <button type="button" id="boardComposeBtn" style="flex:0 0 auto;height:46px;padding:0 22px;border-radius:13px;border:none;background:linear-gradient(160deg,#5cc98e,#3fa96f);color:#07160d;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 10px 22px -12px rgba(92,201,142,.6);">${escapeHtml(t('boardPostBtn'))}</button>
+        <div style="max-width:820px;margin:0 auto;">
+          <div style="display:flex;align-items:flex-end;gap:10px;">
+            <textarea id="boardComposeInput" maxlength="${BOARD_MAX_LEN}" placeholder="${escapeHtml(t('boardComposePlaceholder'))}" style="flex:1 1 auto;min-height:46px;max-height:120px;padding:12px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:#22412f;color:#e8f0ea;font-size:14px;line-height:1.6;font-family:inherit;resize:none;"></textarea>
+            <button type="button" id="boardComposeBtn" style="flex:0 0 auto;height:46px;padding:0 22px;border-radius:13px;border:none;background:linear-gradient(160deg,#5cc98e,#3fa96f);color:#07160d;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 10px 22px -12px rgba(92,201,142,.6);">${escapeHtml(t('boardPostBtn'))}</button>
+          </div>
+          <p id="boardComposeCount" style="max-width:820px;margin:6px 2px 0;text-align:right;font-size:11px;color:#5c6d63;">0/${BOARD_MAX_LEN}</p>
         </div>`;
+      const composeInput = composer.querySelector('#boardComposeInput');
+      const composeCount = composer.querySelector('#boardComposeCount');
+      composeInput.addEventListener('input', () => {
+        const len = composeInput.value.length;
+        composeCount.textContent = `${len}/${BOARD_MAX_LEN}`;
+        composeCount.style.color = len >= BOARD_MAX_LEN ? '#eaa9a9' : '#5c6d63';
+      });
       composer.querySelector('#boardComposeBtn').onclick = async () => {
         const input = composer.querySelector('#boardComposeInput');
-        const body = input.value.trim();
+        const body = input.value.trim().slice(0, BOARD_MAX_LEN);
         if(!body) return;
         const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
         const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body);
@@ -9044,6 +9076,7 @@
     btnMore:       { ja:'もっと見る',   en:'Load more',     ko:'더 보기',  'zh-tw':'更多',   'zh-cn':'更多',   es:'Más',         fr:'Plus',       pt:'Mais',       de:'Mehr',       ar:'المزيد',th:'ดูเพิ่มเติม',id:'Muat lagi',ru:'Показать ещё',it:'Altro',vi:'Xem thêm' },
     btnApply:      { ja:'適用',         en:'Apply',         ko:'적용',     'zh-tw':'套用',   'zh-cn':'应用',   es:'Aplicar',     fr:'Appliquer',  pt:'Aplicar',    de:'Anwenden',   ar:'تطبيق',th:'นำไปใช้',id:'Terapkan',ru:'Применить',it:'Applica',vi:'Áp dụng' },
     btnClear:      { ja:'クリア',       en:'Clear',         ko:'지우기',   'zh-tw':'清除',   'zh-cn':'清除',   es:'Borrar',      fr:'Effacer',    pt:'Limpar',     de:'Löschen',    ar:'مسح',th:'ล้าง',id:'Hapus',ru:'Очистить',it:'Cancella',vi:'Xóa' },
+    btnLoadMore:   { ja:'もっと見る',   en:'Show more',     ko:'더 보기',   'zh-tw':'顯示更多', 'zh-cn':'显示更多', es:'Ver más',     fr:'Voir plus',  pt:'Ver mais',   de:'Mehr anzeigen', ar:'عرض المزيد',th:'ดูเพิ่มเติม',id:'Lihat lainnya',ru:'Показать ещё',it:'Mostra altro',vi:'Xem thêm' },
     btnRefine:     { ja:'この条件で再検索',en:'Refine search',ko:'재검색', 'zh-tw':'重新搜尋','zh-cn':'重新搜索',es:'Refinar',    fr:'Affiner',    pt:'Refinar',    de:'Verfeinern', ar:'تكرار البحث',th:'ค้นหาใหม่',id:'Perhalus pencarian',ru:'Уточнить поиск',it:'Affina ricerca',vi:'Tìm kiếm lại' },
     yearPickLabel: { ja:'年代を選ぶ',   en:'Select year',   ko:'연도 선택','zh-tw':'選擇年代','zh-cn':'选择年代',es:'Año',        fr:'Année',      pt:'Ano',        de:'Jahr',       ar:'السنة',th:'เลือกปี',id:'Pilih tahun',ru:'Выбрать год',it:'Seleziona anno',vi:'Chọn năm' },
     masterGraphTitle:{ ja:'みんなの評価グラフ',en:"Everyone's Graph",ko:'모두의 평가 그래프','zh-tw':'大家的評分圖','zh-cn':'大家的评分图',es:'Gráfico de todos',fr:'Graphique de tous',pt:'Gráfico de todos',de:'Aller Bewertungen',ar:'رسم الجميع',th:'กราฟการประเมินของทุกคน',id:'Grafik Penilaian Semua Orang',ru:'График оценок всех',it:'Grafico di tutti',vi:'Biểu đồ đánh giá của mọi người' },
@@ -11659,6 +11692,9 @@
   // フィルター状態
   let _rlPeriod = 'all';
   let _rlCountry = 'all';
+  // 表示件数（1000件規模で描画が固まる問題への対策：初期40件、以降クリックで追加）
+  const RL_PAGE_SIZE = 40;
+  let _rlVisibleCount = RL_PAGE_SIZE;
 
   const KNOWN_COUNTRIES = ['JP','US','KR','CN','TW','FR','DE','BR','GB'];
 
@@ -11699,7 +11735,8 @@
     });
   }
 
-  async function renderReviewsListFiltered(id) {
+  async function renderReviewsListFiltered(id, resetPage) {
+    if(resetPage !== false) _rlVisibleCount = RL_PAGE_SIZE;
     const scopedAll = getReviews().filter(r=>r.animeId===id);
     let allRevs = filterDisplayReviews(scopedAll);
     if(_currentUser) {
@@ -11715,18 +11752,20 @@
     if(!filtered.length) { el.innerHTML=`<p class="empty-msg">${t('noReviewFilter')}</p>`; return; }
     const sortSel = document.getElementById('reviewSortSelect');
     const sortVal = sortSel ? sortSel.value : 'newest';
-    const sorted = [...filtered].sort((a,b)=>{
+    const sortedAll = [...filtered].sort((a,b)=>{
       return sortVal==='oldest'?getReviewTime(a)-getReviewTime(b):getReviewTime(b)-getReviewTime(a);
     });
     // 本人のレビューは常に先頭にくるようにする
     if(_currentUser) {
       const myUid = _currentUser.id;
-      sorted.sort((a,b)=>{
+      sortedAll.sort((a,b)=>{
         const aMine = (a.userId||a.user_id) === myUid ? 1 : 0;
         const bMine = (b.userId||b.user_id) === myUid ? 1 : 0;
         return bMine - aMine;
       });
     }
+    // 表示件数分だけ切り出す（1000件規模でも一度に描画しない）
+    const sorted = sortedAll.slice(0, _rlVisibleCount);
 
     // アカウント登録済みユーザーのアイコン画像をまとめて取得
     let avatarMap = {};
@@ -11793,6 +11832,19 @@
         </div>`}
       </article>`;
     }).join('');
+    // もっと見るボタン（まだ表示していない件数が残っている場合のみ）
+    if(sortedAll.length > sorted.length) {
+      const remain = sortedAll.length - sorted.length;
+      el.insertAdjacentHTML('beforeend', `
+        <div style="grid-column:1/-1;display:flex;justify-content:center;margin-top:12px;">
+          <button type="button" id="rlLoadMoreBtn" style="height:46px;padding:0 32px;border-radius:12px;border:1px solid rgba(92,201,142,.35);background:rgba(92,201,142,.08);color:#9be3bd;font-size:14px;font-weight:700;cursor:pointer;">${escapeHtml(t('btnLoadMore'))}（${remain}）</button>
+        </div>`);
+      const loadMoreBtn = document.getElementById('rlLoadMoreBtn');
+      if(loadMoreBtn) loadMoreBtn.onclick = () => {
+        _rlVisibleCount += RL_PAGE_SIZE;
+        renderReviewsListFiltered(id, false);
+      };
+    }
     sorted.forEach((rev,i)=>{
       const ca=el.querySelector(`[data-fai="${i}"]`),cb=el.querySelector(`[data-fbi="${i}"]`);
       if(ca) drawRadar(ca,labA,labA.map((_,j)=>Number(rev.chartA&&rev.chartA[axisA[j]]||0)),'rgba(88,201,132,0.35)','#8fe5ab');
