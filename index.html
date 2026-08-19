@@ -54,7 +54,8 @@
     .hdr-search-btn { width:38px; height:38px; border-radius:11px; background:#5cc98e; border:none; display:grid; place-items:center; cursor:pointer; color:#07160d; }
     .hdr-icon-btn { width:38px; height:38px; border-radius:11px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); display:grid; place-items:center; cursor:pointer; color:#bccfc3; }
     .hdr-create { display:none; }
-    .back-btn { padding:.4rem .75rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); font-size:.85rem; white-space:nowrap; cursor:pointer; color:#fff; }
+    .back-btn { display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 15px; border-radius:10px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); font-size:13px; font-weight:700; white-space:nowrap; cursor:pointer; color:#dfeae3; }
+    .back-btn:hover { background:rgba(255,255,255,.08); }
 
     /* ── BOTTOM NAV ── */
     .bnav { position:fixed; bottom:0; left:0; right:0; z-index:100; background:rgba(7,21,13,.95); backdrop-filter:blur(10px); border-top:1px solid var(--line); display:flex; justify-content:space-around; padding:.5rem 0 max(.5rem,env(safe-area-inset-bottom)); }
@@ -293,8 +294,11 @@
     .gcard { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; box-shadow:0 12px 30px -16px rgba(0,0,0,.8); overflow:hidden; cursor:pointer; transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, border-color .18s ease; }
     @media (hover:hover) {
       .gcard:hover { transform:translateY(-4px) scale(1.035); box-shadow:0 20px 40px -16px rgba(0,0,0,.8); border-color:rgba(92,201,142,.45); z-index:2; }
-      .gcard.card-quality-gold:hover { border-color:rgba(243,215,134,.95); box-shadow:0 22px 46px -16px rgba(217,164,65,.6); }
+      .gcard.card-quality-gold:hover, .hcard.card-quality-gold:hover { border-color:rgba(224,178,86,.65); box-shadow:0 20px 44px -16px rgba(224,178,86,.3); }
     }
+    .gcard.card-quality-gold, .hcard.card-quality-gold { background:linear-gradient(180deg,#3a2f14,#241c09); border-color:rgba(224,178,86,.55); }
+    .gcard.card-quality-gold .gcard-thumb, .hcard.card-quality-gold .hcard-thumb { box-shadow:inset 0 0 0 1px rgba(217,164,65,.35), inset 0 -26px 36px -24px rgba(0,0,0,.65); }
+    .quality-thumb-badge { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:800; letter-spacing:.03em; color:#2a2006; background:linear-gradient(135deg,#f3d786,#d9a441); padding:4px 10px; border-radius:20px; box-shadow:0 3px 10px -3px rgba(217,164,65,.8); }
     .gcard-thumb { position:relative; width:100%; aspect-ratio:16/10; background:radial-gradient(130% 130% at 50% 22%, #3a4f43 0%, #1c2f24 62%, #12211a 100%); box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), inset 0 -26px 36px -24px rgba(0,0,0,.65); display:grid; place-items:center; font-size:.72rem; color:var(--muted); }
     .gcard-thumb img { width:100%; height:100%; object-fit:cover; }
     .gcard-body { padding:14px 15px 16px; display:flex; flex-direction:column; border-top:1px solid rgba(255,255,255,.06); }
@@ -391,41 +395,51 @@
     .master-tag-row { display:flex; flex-wrap:wrap; gap:8px; min-height:30px; }
     .master-tag-strength { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(92,201,142,.16); color:#9be3bd; font-size:13px; font-weight:700; }
     .master-tag-mood { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(240,138,138,.13); color:#eaa9a9; font-size:13px; font-weight:700; }
-    .review-card { background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
-    #reviewList { display:grid; grid-template-columns:1fr; gap:.6rem; align-items:start; }
-    .rc-head { display:flex; justify-content:space-between; align-items:flex-start; padding:.65rem .75rem .5rem; }
-    .rc-name { font-weight:700; font-size:.9rem; }
+    .review-card { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; overflow:hidden; box-shadow:0 12px 30px -20px rgba(0,0,0,.8); }
+    #reviewList { display:grid; grid-template-columns:1fr; gap:20px; align-items:start; }
+    .rc-head { display:flex; justify-content:space-between; align-items:flex-start; padding:16px 20px 10px; }
+    .rc-name { font-weight:700; font-size:14px; color:#e8f0ea; }
     .rc-delete { background:none; border:1px solid #5a3030; color:#ffa0a0; border-radius:8px; padding:.25rem .55rem; font-size:.72rem; cursor:pointer; }
-    .rc-charts { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; padding:0 .65rem .65rem; }
+    .rc-charts { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 20px 12px; }
     .rc-chart-label { font-size:.73rem; color:var(--muted); margin:0 0 .3rem; }
     .rc-canvas { width:100%; height:auto; border:1px solid var(--line); border-radius:10px; background:#09201b; display:block; }
-    .rc-comment { border-top:1px solid var(--line); }
+    .rc-comment { border-top:1px solid rgba(255,255,255,.06); }
     .rc-share-row { display:flex; gap:.4rem; padding:.5rem .75rem .65rem; border-top:1px solid var(--line); }
     .rc-share-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:.3rem; padding:.4rem; border-radius:8px; font-size:.74rem; font-weight:700; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--muted); transition:opacity .15s; }
     .rc-share-btn:hover { opacity:.8; }
     .rc-share-btn.x-share { color:#fff; }
     .rc-share-btn.line-share { color:#06c755; border-color:rgba(6,199,85,.3); }
-    .rc-comment-btn { background:none; border:none; color:#b8e8c8; font-size:.82rem; padding:.55rem .75rem; cursor:pointer; display:block; width:100%; text-align:left; }
-    .rc-comment-text { margin:0; padding:.1rem .75rem .75rem; color:#d4edda; font-size:.86rem; line-height:1.6; }
-    .rc-comment p { margin:0; padding:.1rem .75rem .75rem; color:#d4edda; font-size:.86rem; line-height:1.6; }
+    .rc-comment-btn { background:none; border:none; color:#82968a; font-weight:700; font-size:.82rem; padding:12px 20px; cursor:pointer; display:block; width:100%; text-align:left; }
+    .rc-comment-text { margin:0; padding:.1rem 20px 16px; color:#b6c8bd; font-size:13.5px; line-height:1.8; }
+    .rc-comment p { margin:0; padding:.1rem 20px 16px; color:#b6c8bd; font-size:13.5px; line-height:1.8; }
     .empty-msg { color:var(--muted); font-size:.88rem; padding:.5rem 0; }
 
     /* ── REVIEW FORM ── */
     .page-title { font-size:1.2rem; font-weight:900; margin:0 0 .3rem; }
     .page-sub { color:var(--muted); font-size:.82rem; margin:0 0 1rem; }
     .graph-status-notice {
-      display:flex; align-items:center; gap:.5rem;
-      padding:.6rem .8rem; border-radius:10px; margin-bottom:1rem;
-      background:rgba(255,107,157,.12); border:1px solid rgba(255,107,157,.4);
+      display:block;
+      padding:15px 20px; border-radius:14px; margin-bottom:26px;
+      background:rgba(217,164,65,.08); border:1px solid rgba(217,164,65,.3);
       transition:background .3s, border-color .3s;
     }
     .graph-status-notice.graph-status-complete {
-      background:rgba(94,170,255,.14); border:1px solid rgba(94,170,255,.5);
+      background:rgba(92,201,142,.08); border:1px solid rgba(92,201,142,.3);
     }
-    .graph-status-icon { font-size:1rem; flex-shrink:0; }
-    .graph-status-text { font-size:.78rem; color:#ffb4cc; line-height:1.4; }
-    .graph-status-complete .graph-status-text { color:#9cc6ff; }
-    .chart-wrap { background:var(--card2); border:1px solid var(--line); border-radius:16px; padding:.85rem; margin-bottom:.9rem; }
+    .graph-status-notice-row { display:flex; align-items:center; gap:11px; margin-bottom:11px; }
+    .graph-status-icon { display:none; flex-shrink:0; }
+    .graph-status-complete .graph-status-icon { display:inline-flex; }
+    .graph-status-text { font-size:14px; font-weight:700; color:#f0e6cf; line-height:1.4; }
+    .graph-status-complete .graph-status-text { color:#9be3bd; }
+    .graph-status-progress { margin-left:auto; font-size:14px; font-weight:800; color:#f0e6cf; font-family:"Zen Kaku Gothic New",sans-serif; }
+    .graph-status-complete .graph-status-progress { color:#9be3bd; }
+    .graph-status-bar-track { height:7px; border-radius:5px; background:rgba(255,255,255,.08); overflow:hidden; }
+    .graph-status-bar-fill { height:100%; border-radius:5px; background:#e0b256; transition:width .25s; }
+    .graph-status-complete .graph-status-bar-fill { background:#5cc98e; }
+    .chart-wrap { background:linear-gradient(180deg,#173026,#0f2117); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:14px 14px 6px; margin-bottom:.9rem; box-shadow:0 10px 26px -18px rgba(0,0,0,.7); }
+    .chart-wrap:nth-of-type(2) { background:linear-gradient(180deg,#2a1c20,#170f11); }
+    .chart-wrap h2 { color:#9be3bd; text-align:center; font-family:"Zen Kaku Gothic New",sans-serif; font-weight:700; font-size:15px; margin:0 0 2px; }
+    .chart-wrap:nth-of-type(2) h2 { color:#eaa9a9; }
     /* スマホ幅：2つのチャートを横並びにする（縦積みだとスクロールが長くなるため） */
     @media (max-width: 767px) {
       .review-charts-row { display:grid; grid-template-columns:1fr 1fr; column-gap:.6rem; background:var(--card2); border:1px solid var(--line); border-radius:16px; padding:.85rem; margin-bottom:.9rem; }
@@ -487,18 +501,17 @@
       margin-bottom:.9rem; grid-template-columns:none !important;
     }
     .filter-panel .review-slider-page { flex:0 0 50% !important; min-width:0; }
-    .chart-wrap h2 { margin:0 0 .5rem; font-size:.97rem; }
     .chart-canvas { width:100%; aspect-ratio:420/300; height:auto; border:1px solid var(--line); border-radius:12px; background:#09201b; display:block; margin-bottom:.7rem; }
-    .form-section { background:var(--card2); border:1px solid var(--line); border-radius:16px; padding:1rem; margin-bottom:.9rem; }
-    .form-section h2 { margin:0 0 .6rem; font-size:.97rem; }
+    .form-section { background:linear-gradient(180deg,#122419,#0d1c13); border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:26px 28px; margin-bottom:.9rem; }
+    .form-section h2 { margin:0 0 20px; font-family:"Zen Kaku Gothic New",sans-serif; font-weight:700; font-size:18px; }
     .form-field { margin-bottom:.75rem; }
-    .form-field label { display:block; font-size:.82rem; color:var(--muted); margin-bottom:.3rem; }
+    .form-field label { display:block; font-size:12px; font-weight:700; letter-spacing:.05em; color:#82968a; margin-bottom:9px; }
     .form-field input, .form-field textarea, .form-field select {
-      width:100%; padding:.7rem .8rem; background:var(--bg); border:1px solid var(--line);
-      border-radius:12px; color:var(--text); font:inherit; font-size:.95rem;
+      width:100%; padding:15px 17px; background:#07150d; border:1px solid rgba(255,255,255,.1);
+      border-radius:12px; color:var(--text); font:inherit; font-size:14px; line-height:1.75;
     }
     .form-field textarea { min-height:120px; resize:vertical; }
-    .submit-btn { width:100%; padding:.85rem; border-radius:14px; background:var(--red); color:#fff; font-weight:900; font-size:1rem; border:none; cursor:pointer; letter-spacing:.04em; }
+    .submit-btn { width:100%; height:54px; display:inline-flex; align-items:center; justify-content:center; gap:9px; border-radius:14px; background:linear-gradient(180deg,#ef5b60,#e5484d); color:#fff; font-weight:700; font-size:16px; border:none; cursor:pointer; box-shadow:0 14px 30px -12px rgba(229,72,77,.7); }
     .submit-btn-green { background:linear-gradient(120deg,var(--brand),var(--brand2)); color:#0c2015; }
     .form-note { font-size:.75rem; color:var(--muted); margin-top:.55rem; text-align:center; }
     .form-hint { font-size:.74rem; color:var(--muted); margin:.3rem 0 0; }
@@ -519,9 +532,10 @@
     .refine-btn { width:100%; padding:.85rem; border-radius:12px; background:var(--brand); color:#0c2015; font-weight:800; border:none; cursor:pointer; margin-top:.75rem; font-size:1rem; }
 
     /* ── TAGS ── */
-    .tag-input-wrap { display:flex; gap:.45rem; margin-bottom:.5rem; }
-    .tag-input-wrap input { flex:1; padding:.6rem .75rem; background:var(--bg); border:1px solid var(--line); border-radius:10px; color:var(--text); font:inherit; font-size:.9rem; }
-    .tag-add-btn { padding:.6rem .85rem; border-radius:10px; background:var(--card); border:1px solid var(--line); color:var(--brand); font-weight:700; font-size:.85rem; cursor:pointer; white-space:nowrap; }
+    .tag-input-wrap { display:flex; gap:10px; margin-bottom:13px; }
+    .tag-input-wrap input { flex:1; height:46px; padding:0 16px; background:#07150d; border:1px solid rgba(255,255,255,.1); border-radius:11px; color:var(--text); font:inherit; font-size:14px; }
+    .tag-add-btn { height:46px; padding:0 22px; border-radius:11px; background:rgba(92,201,142,.12); border:1px solid rgba(92,201,142,.4); color:#9be3bd; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap; }
+    .tag-add-btn:hover { background:rgba(92,201,142,.2); }
     .tag-list { display:flex; flex-wrap:wrap; gap:.4rem; min-height:1.6rem; }
     .tag-chip { display:inline-flex; align-items:center; gap:.3rem; height:28px; padding:0 12px; border-radius:8px; background:rgba(92,201,142,.1); border:1px solid rgba(92,201,142,.25); font-size:12px; font-weight:700; color:#9be3bd; }
     .tag-chip-user { display:inline-flex; align-items:center; gap:.3rem; padding:.22rem .6rem; border-radius:999px; background:rgba(60,130,220,.18); border:1px solid #3a6fc4; font-size:.78rem; color:#9ec8f8; cursor:pointer; }
@@ -531,10 +545,10 @@
     .tag-hint { font-size:.74rem; color:var(--muted); margin:.3rem 0 0; }
     .board-composer { position:sticky; bottom:0; margin:0 -1rem -.75rem; padding:14px 1rem 18px; border-top:1px solid rgba(255,255,255,.07); background:#0b1a11; }
     .tag-suggest-wrap { margin-top:.5rem; }
-    .tag-suggest-label { font-size:.7rem; color:var(--muted); margin:0 0 .3rem; }
-    .tag-suggest-list { display:flex; flex-wrap:wrap; gap:.35rem; }
-    .tag-suggest-chip { background:var(--card2); border:1px solid var(--line); border-radius:999px; padding:.2rem .65rem; font-size:.74rem; color:#c8e6d4; cursor:pointer; transition:background .15s; }
-    .tag-suggest-chip:hover { background:rgba(94,201,122,.15); border-color:var(--brand); }
+    .tag-suggest-label { font-size:12px; font-weight:700; color:#82968a; margin:0 0 9px; }
+    .tag-suggest-list { display:flex; flex-wrap:wrap; gap:8px; }
+    .tag-suggest-chip { height:33px; display:inline-flex; align-items:center; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.12); border-radius:9px; padding:0 15px; font-size:12.5px; font-weight:600; color:#b9cabf; cursor:pointer; transition:background .15s; }
+    .tag-suggest-chip:hover { background:rgba(255,255,255,.06); }
     .tag-suggest-chip.popular { border-color:#5ec97a; color:var(--brand); }
     /* ── SEARCH TAG SECTION ── */
     .search-tag-input-wrap { display:flex; gap:.45rem; margin-bottom:.45rem; position:relative; }
@@ -596,6 +610,12 @@
     /* ══ REVIEWS LIST FILTERS ══ */
     .rl-tab, .rl-country { background:var(--card2); border:1px solid var(--line); color:var(--muted); border-radius:999px; padding:.25rem .65rem; font-size:.75rem; cursor:pointer; white-space:nowrap; flex-shrink:0; }
     .rl-tab.active, .rl-country.active { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
+    .rl-filter-btn { display:inline-flex; align-items:center; gap:8px; height:42px; padding:0 15px; border-radius:11px; background:#173322; border:1px solid rgba(255,255,255,.12); color:#dfeae3; font-size:13.5px; font-weight:700; cursor:pointer; }
+    .rl-filter-btn:hover { background:rgba(255,255,255,.06); }
+    .rl-filter-panel { position:absolute; top:48px; left:0; z-index:20; width:280px; max-height:320px; overflow-y:auto; background:#2a4c38; border:1px solid rgba(255,255,255,.13); border-radius:14px; box-shadow:0 28px 60px -20px rgba(0,0,0,.85); padding:6px; }
+    .rl-filter-option { display:block; width:100%; text-align:left; padding:10px 12px; border-radius:9px; border:none; background:transparent; color:#dfeae3; font-size:13.5px; font-weight:600; cursor:pointer; }
+    .rl-filter-option:hover { background:rgba(255,255,255,.06); }
+    .rl-filter-option.active { background:rgba(92,201,142,.16); color:#9be3bd; font-weight:700; }
 
     /* ══ ADMIN PAGE ══ */
     .admin-kpi { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:1rem; text-align:center; }
@@ -709,67 +729,88 @@
 
     /* ══ MY PAGE ══ */
     .mypage-hero-wrap-bg {
-      background: linear-gradient(160deg, rgba(94,201,122,.16), rgba(7,21,13,0) 65%);
-      border-bottom: 1px solid var(--line);
-      padding-bottom: .5rem;
+      position:relative; border-radius:22px; overflow:hidden;
+      border:1px solid rgba(255,255,255,.09);
+      background:linear-gradient(150deg,#173021 0%,#0e2015 60%,#0c1c12 100%);
+      box-shadow:0 20px 50px -28px rgba(0,0,0,.85);
+      margin:16px 16px 22px;
     }
-    .mypage-hero { display:flex; align-items:center; gap:1.1rem; padding:1.8rem 1.1rem 1rem; position:relative; }
+    .mypage-hero-cover {
+      height:110px;
+      background:radial-gradient(120% 180% at 15% 0%, rgba(92,201,142,.22), transparent 55%), radial-gradient(120% 180% at 90% 0%, rgba(217,164,65,.16), transparent 55%);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .mypage-hero { display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; padding:0 24px; margin-top:-46px; }
     .mypage-avatar {
-      width:68px; height:68px; border-radius:18px; display:flex; align-items:center; justify-content:center;
-      flex-shrink:0; box-shadow: 0 4px 16px rgba(0,0,0,.25); overflow:hidden;
+      width:88px; height:88px; border-radius:22px; display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; box-shadow:0 12px 28px -12px rgba(0,0,0,.8); overflow:hidden;
     }
-    .guest-avatar { background:var(--card2); border:1px solid var(--line); }
-    .user-avatar { background:linear-gradient(150deg, var(--brand), var(--brand2)); color:#0c2015; font-size:1.7rem; font-weight:800; overflow:hidden; }
-    .user-avatar img { width:100%; height:100%; min-width:0; min-height:0; object-fit:cover; display:block; border-radius:18px; }
+    .guest-avatar { background:linear-gradient(150deg,#2c4436,#1d3225); border:3px solid #0e2015; }
+    .user-avatar { background:linear-gradient(150deg,#2c4436,#1d3225); border:3px solid #0e2015; color:#9be3bd; font-size:1.5rem; font-weight:800; overflow:hidden; }
+    .user-avatar img { width:100%; height:100%; min-width:0; min-height:0; object-fit:cover; display:block; border-radius:19px; }
     .mypage-avatar-wrap { position:relative; flex-shrink:0; }
     .mypage-avatar-edit-btn {
       position:absolute; bottom:-4px; right:-4px; width:26px; height:26px; border-radius:50%;
-      background:var(--card); border:2px solid var(--bg); font-size:.75rem; cursor:pointer;
+      background:var(--card); border:2px solid #0e2015; font-size:.75rem; cursor:pointer;
       display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.3);
     }
     .mypage-avatar-edit-btn:hover { background:rgba(94,201,122,.2); }
-    .mypage-info { flex:1; min-width:0; }
-    .mypage-name { font-size:1.22rem; font-weight:800; color:#eafff2; margin:0 0 .2rem; letter-spacing:.01em; }
-    .mypage-sub { font-size:.78rem; color:var(--muted); margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .mypage-info { flex:1 1 220px; min-width:0; padding-bottom:6px; }
+    .mypage-name { font-family:"Zen Kaku Gothic New",sans-serif; font-size:22px; font-weight:900; color:#e8f0ea; margin:0 0 .2rem; letter-spacing:.01em; }
+    .mypage-sub { font-size:13px; color:#82968a; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .mypage-rank-badge {
-      display:inline-flex; align-items:center; gap:.25rem; margin-top:.5rem; padding:.22rem .75rem; border-radius:999px;
-      background:linear-gradient(120deg, rgba(94,201,122,.22), rgba(94,201,122,.08));
-      border:1px solid rgba(94,201,122,.4);
-      color:var(--brand); font-size:.74rem; font-weight:800; letter-spacing:.02em;
+      display:inline-flex; align-items:center; gap:5px; height:26px; margin-top:.5rem; padding:0 11px; border-radius:8px;
+      background:linear-gradient(135deg,#f3d786,#d9a441);
+      color:#2a2006; font-size:12px; font-weight:800;
     }
-    .mypage-actions { padding:.6rem 1.1rem 1.2rem; display:flex; flex-direction:column; gap:.55rem; }
+    .mypage-actions { display:flex; gap:9px; padding-bottom:6px; }
     .mypage-btn-primary {
-      width:100%; padding:.8rem; border-radius:14px; background:linear-gradient(120deg,var(--brand),var(--brand2));
-      color:#0c2015; font-weight:800; border:none; cursor:pointer; font-size:.95rem;
-      box-shadow: 0 4px 14px rgba(94,201,122,.25); transition: transform .15s, box-shadow .15s;
+      height:40px; padding:0 16px; border-radius:11px; background:linear-gradient(120deg,var(--brand),var(--brand2));
+      color:#0c2015; font-weight:800; border:none; cursor:pointer; font-size:13px;
+      box-shadow:0 4px 14px rgba(94,201,122,.25); transition:transform .15s, box-shadow .15s;
     }
-    .mypage-btn-primary:active { transform: scale(.98); }
+    .mypage-btn-primary:active { transform:scale(.98); }
     .mypage-btn-secondary {
-      width:100%; padding:.7rem; border-radius:14px; background:var(--card2); color:var(--muted);
-      border:1px solid var(--line); cursor:pointer; font-size:.9rem; transition: background .15s, color .15s;
+      height:40px; padding:0 16px; border-radius:11px; background:rgba(255,255,255,.04); color:#dfeae3;
+      border:1px solid rgba(255,255,255,.14); cursor:pointer; font-size:13px; font-weight:700; transition:background .15s;
     }
-    .mypage-btn-secondary:hover { background:rgba(255,255,255,.04); color:#dff0e6; }
+    .mypage-btn-secondary:hover { background:rgba(255,255,255,.09); }
     .mypage-section { padding:1.1rem; border-top:1px solid var(--line); }
     .mypage-menu-row { display:flex; align-items:center; gap:.7rem; width:100%; padding:1rem 1.1rem; background:none; border:none; border-top:1px solid var(--line); color:#dff0e6; font-size:.88rem; cursor:pointer; text-align:left; }
     .mypage-menu-row:first-child { border-top:1px solid var(--line); }
     .mypage-menu-row-icon { font-size:1.1rem; flex-shrink:0; }
     .mypage-menu-row-label { flex:1; }
     .mypage-menu-row-arrow { color:var(--muted); font-size:1.1rem; flex-shrink:0; }
+    .settings-row {
+      display:flex; align-items:center; gap:12px; width:100%; height:76px; padding:0 16px;
+      border-radius:14px; background:linear-gradient(180deg,#122619,#0d1e14); border:1px solid rgba(255,255,255,.08);
+      cursor:pointer; text-align:left; transition:border-color .15s, background .15s;
+    }
+    .settings-row:hover { border-color:rgba(92,201,142,.3); background:rgba(255,255,255,.02); }
+    .settings-row-icon { width:40px; height:40px; flex:0 0 40px; border-radius:11px; display:flex; align-items:center; justify-content:center; }
+    .settings-row-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+    .settings-row-title { font-size:14px; font-weight:700; color:#e8f0ea; }
+    .settings-row-sub { font-size:12px; color:#82968a; }
+    .settings-row-arrow { color:#82968a; font-size:1.3rem; flex-shrink:0; }
+    .settings-row-danger { border-color:rgba(229,72,77,.2); }
+    .settings-row-danger:hover { border-color:rgba(229,72,77,.4); background:rgba(229,72,77,.05); }
     .mypage-edit-btn {
-      background:var(--card2); border:1px solid var(--line); border-radius:10px; width:40px; height:40px;
-      font-size:1.05rem; cursor:pointer; flex-shrink:0; align-self:flex-start; margin-top:.2rem;
-      transition: background .15s, transform .15s;
+      width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center;
+      border-radius:11px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04); color:#dfeae3;
+      cursor:pointer; flex-shrink:0; transition:background .15s;
     }
-    .mypage-edit-btn:hover { background:rgba(94,201,122,.12); transform: rotate(-8deg); }
-    .mypage-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; padding:0 1.1rem; margin-top:.3rem; }
+    .mypage-edit-btn:hover { background:rgba(255,255,255,.09); }
+    .mypage-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:20px 24px 24px; }
     .mypage-stat-card {
-      background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:.85rem .5rem; text-align:center;
-      transition: border-color .15s, transform .15s;
+      background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:15px 16px;
+      transition:border-color .15s, transform .15s;
     }
-    .mypage-stat-card:hover { border-color: rgba(94,201,122,.4); transform: translateY(-1px); }
-    .mypage-stat-icon { font-size:1.1rem; margin-bottom:.2rem; opacity:.85; }
-    .mypage-stat-num { font-size:1.45rem; font-weight:800; color:var(--brand); line-height:1.1; }
-    .mypage-stat-label { font-size:.66rem; color:var(--muted); margin-top:.25rem; letter-spacing:.01em; }
+    .mypage-stat-card:hover { border-color:rgba(94,201,122,.4); transform:translateY(-1px); }
+    .mypage-stat-num { font-family:"Zen Kaku Gothic New",sans-serif; font-size:26px; font-weight:900; line-height:1.1; }
+    .mypage-stat-card:nth-child(1) .mypage-stat-num { color:#5cc98e; }
+    .mypage-stat-card:nth-child(2) .mypage-stat-num { color:#e5595d; }
+    .mypage-stat-card:nth-child(3) .mypage-stat-num { color:#e8c463; }
+    .mypage-stat-label { font-size:12px; color:#82968a; margin-top:2px; }
     .mypage-bio-text { font-size:.85rem; color:#dff0e6; line-height:1.6; margin:0 0 .65rem; white-space:pre-wrap; }
     .mypage-genre-tags { display:flex; flex-wrap:wrap; gap:.4rem; }
     .mypage-genre-tag {
@@ -809,9 +850,10 @@
     .profile-genre-chip:hover { border-color: rgba(94,201,122,.4); }
     .profile-genre-chip.selected { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
     .mypage-section-title {
-      font-size:.9rem; font-weight:800; color:#eafff2; margin:0 0 .8rem;
-      display:flex; align-items:center; gap:.4rem;
+      font-family:"Zen Kaku Gothic New",sans-serif; font-size:18px; font-weight:800; color:#e8f0ea; margin:0 0 .8rem;
+      display:flex; align-items:center; gap:10px;
     }
+    .mypage-section-title::before { content:''; width:4px; height:18px; border-radius:4px; background:#5cc98e; flex-shrink:0; }
     .mypage-review-card {
       background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:.6rem .75rem;
       margin-bottom:.5rem; transition: border-color .15s;
@@ -838,10 +880,9 @@
     .mr-card-quality .mr-info { background:linear-gradient(180deg, rgba(224,184,74,.14), transparent); }
     .mr-card-quality .mr-title { color:#f5deA0; }
     .mr-card-quality:hover { border-color:#f0cc66; }
-    .gcard.card-quality-gold, .hcard.card-quality-gold { background:#d4a72c; border-color:#b8901f; }
-    .gcard.card-quality-gold .gcard-body h3, .hcard.card-quality-gold .hcard-body h3 { color:#2a1f04; }
-    .gcard.card-quality-gold .gcard-body p, .hcard.card-quality-gold .hcard-body p { color:#4a3a10; }
-    .gcard.card-quality-gold .badge, .hcard.card-quality-gold .badge { background:rgba(42,31,4,.14); border-color:#8a6c15; color:#3a2b06; }
+    .gcard.card-quality-gold .gcard-body h3, .hcard.card-quality-gold .hcard-body h3 { color:#f0e6cf; }
+    .gcard.card-quality-gold .gcard-body p, .hcard.card-quality-gold .hcard-body p { color:#c9b78e; }
+    .gcard.card-quality-gold .badge, .hcard.card-quality-gold .badge { background:rgba(217,164,65,.14); border-color:rgba(217,164,65,.4); color:#e8c463; }
     .mypage-review-pages {
       display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
       scrollbar-width:none; gap:0;
@@ -933,20 +974,20 @@
     .world-vbar-label .world-country-name { font-size:.62rem; color:var(--muted); white-space:nowrap; }
 
     /* ══ POPULAR PAGE ══ */
-    .pop-sort-bar { position:sticky; top:52px; z-index:10; background:var(--bg); border-bottom:1px solid var(--line); padding:.5rem .75rem; }
-    .pop-quick-row { display:flex; gap:.4rem; flex-wrap:wrap; }
-    .pop-quick-pill { padding:.4rem .8rem; border-radius:999px; border:1px solid var(--line); background:var(--card2); color:var(--text); font-size:.8rem; font-weight:700; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:.25rem; }
-    .pop-quick-pill::after { content:'▾'; font-size:.65rem; color:var(--muted); }
-    .pop-quick-pill.open { border-color:var(--brand); color:var(--brand); }
-    .pop-axis-expand { max-height:0; overflow:hidden; transition:max-height .18s ease; }
-    .pop-axis-expand.open { max-height:260px; margin-top:.4rem; }
-    .pop-sort-tabs { display:flex; gap:.4rem; overflow-x:auto; scrollbar-width:none; }
-    .pop-sort-tabs::-webkit-scrollbar { display:none; }
-    .pop-sort-tab { flex:0 0 auto; padding:.4rem .85rem; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); font-size:.8rem; cursor:pointer; white-space:nowrap; }
-    .pop-sort-tab.active { background:var(--brand); color:#0c2015; font-weight:700; border-color:var(--brand); }
+    .pop-sort-bar { padding:.75rem 1rem 0; }
+    .pop-sort-bar-inner { display:flex; flex-wrap:wrap; align-items:center; gap:14px; padding:16px 18px; border-radius:16px; background:linear-gradient(180deg,#122619,#0d1e14); border:1px solid rgba(255,255,255,.08); }
+    .pop-sort-group { display:flex; align-items:center; gap:9px; }
+    .pop-sort-group-label { font-size:11px; font-weight:700; letter-spacing:.05em; color:#82968a; }
+    .pop-sort-divider { width:1px; height:28px; background:rgba(255,255,255,.09); }
+    .pop-sort-tabs { display:inline-flex; padding:4px; border-radius:11px; background:#0b1a11; border:1px solid rgba(255,255,255,.08); gap:2px; }
+    .pop-sort-tab { flex:0 0 auto; height:34px; padding:0 16px; border-radius:8px; border:none; background:transparent; color:#a9bcb0; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+    .pop-sort-tab.active { background:#5cc98e; color:#07160d; }
+    .pop-era-btn { display:inline-flex; align-items:center; gap:8px; height:42px; padding:0 15px; border-radius:11px; border:1px solid rgba(255,255,255,.12); background:#0b1a11; color:#dfeae3; font-size:13.5px; font-weight:700; cursor:pointer; }
+    .pop-axis-expand { max-height:0; overflow:hidden; transition:max-height .18s ease; position:absolute; top:48px; right:0; z-index:20; }
+    .pop-axis-expand.open { max-height:260px; }
 
     /* 年代ドラムロール */
-    .pop-year-picker { background:var(--card); padding:.6rem; border-radius:10px; margin-top:.4rem; border:1px solid var(--line); max-width:280px; }
+    .pop-year-picker { background:#2a4c38; padding:14px; border-radius:14px; border:1px solid rgba(255,255,255,.13); box-shadow:0 28px 60px -20px rgba(0,0,0,.85); max-width:280px; }
     .pop-year-picker-inner { display:flex; align-items:center; justify-content:center; gap:1rem; }
     .pop-drum-wrap { display:flex; flex-direction:column; align-items:center; gap:.3rem; }
     .pop-drum-label { font-size:.72rem; color:var(--muted); }
@@ -976,20 +1017,26 @@
 
     /* ── LANGUAGE SELECTOR ── */
     .lang-current-btn { height:38px; padding:0 12px; border-radius:11px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12.5px; font-weight:700; color:#bccfc3; white-space:nowrap; }
-    .lang-overlay { display:none; position:fixed; inset:0; z-index:300; background:rgba(2,8,5,.97); overflow-y:auto; padding:1.2rem 1rem; }
+    .lang-overlay { display:none; position:fixed; inset:0; z-index:300; background:rgba(2,8,5,.97); overflow-y:auto; padding:24px 16px 40px; }
     .match-breakdown-popover { display:none; position:fixed; inset:0; z-index:300; }
     .match-breakdown-popover.open { display:flex; align-items:flex-end; justify-content:center; }
     .match-breakdown-popover-inner { width:100%; max-width:280px; margin:0 1rem 1.4rem; background:#0a1c12; border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:14px 15px; box-shadow:0 20px 46px -18px rgba(0,0,0,.85); }
     @media (min-width:640px) { .match-breakdown-popover { align-items:center; } }
     .lang-overlay.open { display:block; }
-    .lang-overlay h2 { margin:0 0 .3rem; font-size:1.1rem; font-weight:900; }
-    .lang-overlay p { margin:0 0 1rem; color:var(--muted); font-size:.82rem; }
-    .lang-grid { display:grid; grid-template-columns:1fr 1fr; gap:.55rem; }
-    .lang-btn { display:flex; align-items:center; gap:.65rem; background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:.75rem .85rem; cursor:pointer; transition:border-color .15s,background .15s; text-align:left; width:100%; }
-    .lang-btn:active, .lang-btn.selected { background:#1a3d28; border-color:var(--brand); }
-    .lang-flag { font-size:1.5rem; line-height:1; flex-shrink:0; }
-    .lang-name { font-size:.88rem; font-weight:700; color:var(--text); }
-    .lang-native { font-size:.74rem; color:var(--muted); margin-top:.1rem; }
+    .lang-overlay-inner { max-width:640px; margin:0 auto; }
+    .lang-overlay h2 { margin:0 0 6px; font-family:"Zen Kaku Gothic New",sans-serif; font-size:22px; font-weight:900; color:#e8f0ea; }
+    .lang-overlay p { margin:0 0 22px; color:#82968a; font-size:13px; }
+    .lang-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media (max-width:480px) { .lang-grid { grid-template-columns:1fr; } }
+    .lang-btn { display:flex; align-items:center; gap:12px; height:64px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:0 16px; cursor:pointer; transition:border-color .15s,background .15s; text-align:left; width:100%; }
+    .lang-btn:hover { background:rgba(255,255,255,.06); }
+    .lang-btn.selected { background:rgba(92,201,142,.1); border-color:rgba(92,201,142,.5); }
+    .lang-code-chip { flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:24px; padding:0 6px; border-radius:6px; background:rgba(255,255,255,.08); color:#dfeae3; font-size:10.5px; font-weight:800; letter-spacing:.02em; }
+    .lang-btn.selected .lang-code-chip { background:#5cc98e; color:#07160d; }
+    .lang-name { font-size:14px; font-weight:700; color:#e8f0ea; }
+    .lang-native { font-size:12px; color:#82968a; margin-top:1px; }
+    .lang-check { margin-left:auto; flex:0 0 auto; color:#5cc98e; opacity:0; }
+    .lang-btn.selected .lang-check { opacity:1; }
 
     /* ════════════════════════════
        PC LAYOUT (768px以上)
@@ -1413,9 +1460,11 @@
      LANGUAGE SELECTOR OVERLAY
 ═══════════════════════════════════ -->
 <div class="lang-overlay" id="langOverlay">
-  <h2 id="lt-title">言語を選択 / Select Language</h2>
-  <p id="lt-sub">Select your language / 언어 선택 / 选择语言</p>
-  <div class="lang-grid" id="langGrid"></div>
+  <div class="lang-overlay-inner">
+    <h2 id="lt-title">言語を選択 / Select Language</h2>
+    <p id="lt-sub">Select your language / 언어 선택 / 选择语言</p>
+    <div class="lang-grid" id="langGrid"></div>
+  </div>
 </div>
 
 <!-- 検索カードの一致度内訳（ⓘタップで表示） -->
@@ -1697,7 +1746,10 @@
       <div id="animeThumbHero" class="anime-thumb-hero"></div>
       <!-- ボタン：レビューする・レビューを見る・お気に入り -->
       <div class="anime-side-actions">
-        <button class="review-btn" id="goReviewBtn" data-i18n="btnReview">🍎 レビューする</button>
+        <button class="review-btn" id="goReviewBtn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          <span data-i18n="btnReview">レビューする</span>
+        </button>
         <div style="display:flex;gap:10px;">
           <button class="review-btn review-btn-list" id="goReviewListBtn">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
           <button class="fav-toggle-btn" id="favToggleBtn" onclick="toggleFavorite()" aria-pressed="false" aria-label="お気に入り">♡︎</button>
@@ -1885,37 +1937,47 @@
     </div>
   </header>
   <div style="position:sticky;top:52px;z-index:10;background:var(--bg);padding:.75rem 1rem .5rem;border-bottom:1px solid var(--line);">
-    <h2 id="reviewsListTitle" style="margin:0 0 .4rem;font-size:1rem;color:#dff0e6;"></h2>
-    <!-- 期間タブ -->
-    <div class="rl-period-tabs" id="rlPeriodTabs" style="display:flex;gap:.35rem;overflow-x:auto;padding-bottom:.35rem;scrollbar-width:none;">
-      <button class="rl-tab active" data-period="all" data-i18n="periodAll">全期間</button>
-      <button class="rl-tab" data-period="year" data-i18n="periodYear">今年</button>
-      <button class="rl-tab" data-period="month" data-i18n="periodMonth">今月</button>
-      <button class="rl-tab" data-period="week" data-i18n="periodWeek">今週</button>
-      <button class="rl-tab" data-period="day" data-i18n="periodDay">今日</button>
-    </div>
-    <!-- 国フィルター -->
-    <div style="display:flex;gap:.3rem;overflow-x:auto;padding:.3rem 0;scrollbar-width:none;">
-      <button class="rl-country active" data-country="all" data-i18n="countryAll">🌍 全て</button>
-      <button class="rl-country" data-country="JP">🇯🇵 JP</button>
-      <button class="rl-country" data-country="US">🇺🇸 US</button>
-      <button class="rl-country" data-country="KR">🇰🇷 KR</button>
-      <button class="rl-country" data-country="CN">🇨🇳 CN</button>
-      <button class="rl-country" data-country="TW">🇹🇼 TW</button>
-      <button class="rl-country" data-country="FR">🇫🇷 FR</button>
-      <button class="rl-country" data-country="DE">🇩🇪 DE</button>
-      <button class="rl-country" data-country="BR">🇧🇷 BR</button>
-      <button class="rl-country" data-country="GB">🇬🇧 GB</button>
-      <button class="rl-country" data-country="OTHER" data-i18n="countryOther">🌐 その他</button>
-    </div>
-    <!-- ソート＋件数 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.3rem;">
-      <p id="reviewsListMeta" style="margin:0;font-size:.78rem;color:var(--muted);"></p>
-      <select id="reviewSortSelect" data-i18n-options="sortNewest,sortOldest" style="padding:.28rem .5rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:.75rem;">
+    <h2 id="reviewsListTitle" style="margin:0 0 .6rem;font-size:1rem;color:#dff0e6;"></h2>
+    <!-- フィルター行：期間・国のドロップダウン + 並び替え -->
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;">
+      <div style="position:relative;">
+        <button type="button" id="rlPeriodBtn" class="rl-filter-btn">
+          <span id="rlPeriodBtnLabel" data-i18n="periodAll">全期間</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="rl-filter-panel" id="rlPeriodPanel" style="display:none;">
+          <button class="rl-filter-option active" data-period="all" data-i18n="periodAll">全期間</button>
+          <button class="rl-filter-option" data-period="year" data-i18n="periodYear">今年</button>
+          <button class="rl-filter-option" data-period="month" data-i18n="periodMonth">今月</button>
+          <button class="rl-filter-option" data-period="week" data-i18n="periodWeek">今週</button>
+          <button class="rl-filter-option" data-period="day" data-i18n="periodDay">今日</button>
+        </div>
+      </div>
+      <div style="position:relative;">
+        <button type="button" id="rlCountryBtn" class="rl-filter-btn">
+          <span id="rlCountryBtnLabel" data-i18n="countryAll">すべての国</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="rl-filter-panel rl-filter-panel-scroll" id="rlCountryPanel" style="display:none;">
+          <button class="rl-filter-option active" data-country="all" data-i18n="countryAll">すべての国</button>
+          <button class="rl-filter-option" data-country="JP">🇯🇵 Japan</button>
+          <button class="rl-filter-option" data-country="US">🇺🇸 United States</button>
+          <button class="rl-filter-option" data-country="KR">🇰🇷 Korea</button>
+          <button class="rl-filter-option" data-country="CN">🇨🇳 China</button>
+          <button class="rl-filter-option" data-country="TW">🇹🇼 Taiwan</button>
+          <button class="rl-filter-option" data-country="FR">🇫🇷 France</button>
+          <button class="rl-filter-option" data-country="DE">🇩🇪 Germany</button>
+          <button class="rl-filter-option" data-country="BR">🇧🇷 Brazil</button>
+          <button class="rl-filter-option" data-country="GB">🇬🇧 United Kingdom</button>
+          <button class="rl-filter-option" data-country="OTHER" data-i18n="countryOther">🌐 その他</button>
+        </div>
+      </div>
+      <select id="reviewSortSelect" data-i18n-options="sortNewest,sortOldest" style="margin-left:auto;height:42px;padding:0 34px 0 14px;border-radius:11px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;appearance:none;cursor:pointer;">
         <option value="newest" data-i18n="sortNewest">新しい順</option>
         <option value="oldest" data-i18n="sortOldest">古い順</option>
       </select>
     </div>
+    <p id="reviewsListMeta" style="margin:.5rem 0 0;font-size:.78rem;color:var(--muted);"></p>
   </div>
   <div style="padding:.75rem 1rem 0;">
     <div id="reviewList"></div>
@@ -1939,11 +2001,15 @@
     </div>
   </header>
   <div style="padding:1rem 1rem 0;">
-    <h1 class="page-title" id="reviewPageTitle">🍎 レビュー可視化フォーム</h1>
+    <h1 class="page-title" id="reviewPageTitle">レビュー可視化フォーム</h1>
     <p class="page-sub">批評より「特徴の見える化」を目的に、各項目を0〜10で調整してください。</p>
     <div class="graph-status-notice" id="graphStatusNotice">
-      <span class="graph-status-icon">⚠️</span>
-      <span class="graph-status-text" id="graphStatusText" data-i18n="graphIncompleteMsg">この状態で投稿するとレビューとして表示されますが、みんなの評価グラフへのデータ集計はされません。</span>
+      <div class="graph-status-notice-row">
+        <svg class="graph-status-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5cc98e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span class="graph-status-text" id="graphStatusText" data-i18n="graphIncompleteMsg">この状態で投稿するとレビューとして表示されますが、みんなの評価グラフへのデータ集計はされません。</span>
+        <span class="graph-status-progress" id="graphStatusProgress">0/12</span>
+      </div>
+      <div class="graph-status-bar-track"><div class="graph-status-bar-fill" id="graphStatusBarFill" style="width:0%;"></div></div>
     </div>
     <div class="review-charts-row">
     <div class="chart-wrap">
@@ -1986,11 +2052,17 @@
         <p class="tag-hint" data-i18n="tagHint">Enterまたは「追加」で確定。タグはみんなの検索に使われます。</p>
       </div>
       <div class="form-field">
-        <label data-i18n="labelComment">コメント</label>
-        <textarea id="reviewComment" placeholder="感じた魅力やおすすめポイントを書いてください"></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">
+          <label data-i18n="labelComment" style="margin:0;">コメント</label>
+          <span id="reviewCommentCount" style="font-size:12px;color:#5c6d63;">0 字</span>
+        </div>
+        <textarea id="reviewComment" placeholder="作品の魅力や見どころを、やさしい言葉で書いてみましょう。"></textarea>
       </div>
       <div id="reviewTurnstile" style="margin:.75rem 0;"></div>
-      <button class="submit-btn" id="submitReviewBtn" data-i18n="btnSubmit">🍎 投稿する</button>
+      <button class="submit-btn" id="submitReviewBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span data-i18n="btnSubmit">投稿する</span>
+      </button>
       <p class="form-note">※ やさしい言葉での投稿をお願いします。</p>
     </div>
   </div>
@@ -2013,46 +2085,48 @@
     </div>
   </header>
 
-  <!-- ソートバー（3軸独立） -->
+  <!-- ソートバー（3軸、常時表示のセグメント型） -->
   <div class="pop-sort-bar">
-    <div class="pop-quick-row">
-      <button class="pop-quick-pill" id="popPillBase" type="button" data-axis="base">🔥 人気順</button>
-      <button class="pop-quick-pill" id="popPillPeriod" type="button" data-axis="period"><span id="popPillPeriodLabel" data-i18n="popSortAll">全期間</span></button>
-      <button class="pop-quick-pill" id="popPillEra" type="button" data-axis="era"><span id="popPillEraLabel" data-i18n="popEraNone">指定なし</span></button>
-    </div>
-
-    <!-- 軸1: 基準 -->
-    <div class="pop-axis-expand" id="popBaseExpand">
-      <div class="pop-sort-tabs" id="popBaseTabs">
-        <button class="pop-sort-tab active" data-base="popular" data-i18n="popSortPopular">🔥 人気順</button>
-        <button class="pop-sort-tab" data-base="reviews" data-i18n="popSortReviews">💬 レビュー順</button>
+    <div class="pop-sort-bar-inner">
+      <div class="pop-sort-group">
+        <span class="pop-sort-group-label" data-i18n="popSortGroupLabel">並び順</span>
+        <div class="pop-sort-tabs" id="popBaseTabs">
+          <button class="pop-sort-tab active" data-base="popular" data-i18n="popSortPopular">人気順</button>
+          <button class="pop-sort-tab" data-base="reviews" data-i18n="popSortReviews">レビュー数</button>
+        </div>
       </div>
-    </div>
-    <!-- 軸2: 期間 -->
-    <div class="pop-axis-expand" id="popPeriodExpand">
-      <div class="pop-sort-tabs" id="popPeriodTabs">
-        <button class="pop-sort-tab active" data-period="all" data-i18n="popSortAll">全期間</button>
-        <button class="pop-sort-tab" data-period="day" data-i18n="popSortToday">📈 今日</button>
-        <button class="pop-sort-tab" data-period="week" data-i18n="popSortWeek">週間</button>
-        <button class="pop-sort-tab" data-period="month" data-i18n="popSortMonth">月間</button>
-        <button class="pop-sort-tab" data-period="year" data-i18n="popSortYear">年間</button>
+      <span class="pop-sort-divider"></span>
+      <div class="pop-sort-group">
+        <span class="pop-sort-group-label" data-i18n="popPeriodGroupLabel">期間</span>
+        <div class="pop-sort-tabs" id="popPeriodTabs">
+          <button class="pop-sort-tab active" data-period="all" data-i18n="popSortAll">全期間</button>
+          <button class="pop-sort-tab" data-period="day" data-i18n="popSortToday">今日</button>
+          <button class="pop-sort-tab" data-period="week" data-i18n="popSortWeek">週間</button>
+          <button class="pop-sort-tab" data-period="month" data-i18n="popSortMonth">月間</button>
+          <button class="pop-sort-tab" data-period="year" data-i18n="popSortYear">年間</button>
+        </div>
       </div>
-    </div>
-    <!-- 軸3: 年代 -->
-    <div class="pop-axis-expand" id="popEraExpand">
-      <div class="pop-sort-tabs" id="popEraTabs">
-        <button class="pop-sort-tab active" data-era="none" data-i18n="popEraNone">指定なし</button>
-        <button class="pop-sort-tab" data-era="pick" data-i18n="popEraPick">📅 年代を選ぶ</button>
-      </div>
-      <!-- 年代ピッカー（「年代を選ぶ」を選んだ時だけ表示） -->
-      <div class="pop-year-picker" id="popYearPicker" style="display:none;">
-        <div class="pop-year-picker-inner">
-          <div class="pop-drum-wrap">
-            <div class="pop-drum-label" data-i18n="yearPickLabel">年代を選ぶ</div>
-            <input type="number" class="pop-year-input" id="popYearInput" inputmode="numeric" placeholder="例: 2010" style="width:5.5em;text-align:center;font-size:1rem;padding:.35rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);margin-bottom:.4rem;" />
-            <div class="pop-drum" id="popDrumFrom"></div>
+      <span class="pop-sort-divider"></span>
+      <div class="pop-sort-group">
+        <span class="pop-sort-group-label" data-i18n="popEraGroupLabel">年代</span>
+        <div style="position:relative;">
+          <button class="pop-era-btn" id="popPillEra" type="button">
+            <span id="popPillEraLabel" data-i18n="popEraNone">指定なし</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="pop-axis-expand" id="popEraExpand">
+            <div class="pop-year-picker" id="popYearPicker">
+              <div class="pop-year-picker-inner">
+                <div class="pop-drum-wrap">
+                  <div class="pop-drum-label" data-i18n="yearPickLabel">年代を選ぶ</div>
+                  <input type="number" class="pop-year-input" id="popYearInput" inputmode="numeric" placeholder="例: 2010" style="width:5.5em;text-align:center;font-size:1rem;padding:.35rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);margin-bottom:.4rem;" />
+                  <div class="pop-drum" id="popDrumFrom"></div>
+                </div>
+                <button class="pop-year-apply" id="popYearApply" data-i18n="btnApply">適用</button>
+                <button class="pop-year-clear" id="popYearClear" data-i18n="btnClear" style="display:block;margin:.4rem auto 0;background:none;border:none;color:var(--muted);font-size:.75rem;cursor:pointer;text-decoration:underline;">クリア</button>
+              </div>
+            </div>
           </div>
-          <button class="pop-year-apply" id="popYearApply" data-i18n="btnApply">適用</button>
         </div>
       </div>
     </div>
@@ -2258,38 +2332,42 @@
       </div>
     </div>
   </header>
-  <div style="padding-top:.5rem;">
-    <h2 style="font-size:1rem;color:#dff0e6;margin:0 1.1rem .3rem;" data-i18n="settingsTitle">⚙️ 設定</h2>
-    <div>
-      <button class="mypage-menu-row" onclick="nav('settings-account')">
-        <span class="mypage-menu-row-icon">👤</span>
-        <span class="mypage-menu-row-label" data-i18n="settingsAccount">アカウント</span>
-        <span class="mypage-menu-row-arrow">›</span>
+  <div style="padding:24px 24px 0;max-width:1000px;margin:0 auto;">
+    <h2 style="font-family:'Zen Kaku Gothic New',sans-serif;font-size:20px;font-weight:800;color:#e8f0ea;margin:0 0 16px;" data-i18n="settingsTitle">設定</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="settings-row" onclick="nav('settings-account')">
+        <span class="settings-row-icon" style="background:rgba(92,201,142,.12);color:#9be3bd;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsAccount">アカウント</span><span class="settings-row-sub" data-i18n="settingsAccountSub">プロフィール、メールアドレス</span></span>
+        <span class="settings-row-arrow">›</span>
       </button>
-      <button class="mypage-menu-row" onclick="nav('settings-security')">
-        <span class="mypage-menu-row-icon">🔐</span>
-        <span class="mypage-menu-row-label" data-i18n="settingsSecurity">セキュリティとアカウントアクセス</span>
-        <span class="mypage-menu-row-arrow">›</span>
+      <button class="settings-row" onclick="nav('settings-security')">
+        <span class="settings-row-icon" style="background:rgba(94,170,255,.12);color:#9cc6ff;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsSecurity">セキュリティとアカウントアクセス</span><span class="settings-row-sub" data-i18n="settingsSecuritySub">ログイン方法の管理</span></span>
+        <span class="settings-row-arrow">›</span>
       </button>
-      <button class="mypage-menu-row" onclick="nav('settings-privacy')">
-        <span class="mypage-menu-row-icon">🛡️</span>
-        <span class="mypage-menu-row-label" data-i18n="settingsPrivacy">プライバシーと安全</span>
-        <span class="mypage-menu-row-arrow">›</span>
+      <button class="settings-row" onclick="nav('settings-privacy')">
+        <span class="settings-row-icon" style="background:rgba(217,164,65,.12);color:#e8c463;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsPrivacy">プライバシーと安全</span><span class="settings-row-sub" data-i18n="settingsPrivacySub">ブロック中のユーザーなど</span></span>
+        <span class="settings-row-arrow">›</span>
       </button>
-      <button class="mypage-menu-row" onclick="nav('settings-notifications')">
-        <span class="mypage-menu-row-icon">🔔</span>
-        <span class="mypage-menu-row-label" data-i18n="settingsNotifications">通知</span>
-        <span class="mypage-menu-row-arrow">›</span>
+      <button class="settings-row" onclick="nav('settings-notifications')">
+        <span class="settings-row-icon" style="background:rgba(229,72,77,.12);color:#eaa9a9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsNotifications">通知</span><span class="settings-row-sub" data-i18n="settingsNotificationsSub">お知らせの受け取り方</span></span>
+        <span class="settings-row-arrow">›</span>
       </button>
-      <button class="mypage-menu-row" onclick="nav('settings-display')">
-        <span class="mypage-menu-row-icon">🌐</span>
-        <span class="mypage-menu-row-label" data-i18n="settingsDisplay">アクセシビリティ、表示、言語</span>
-        <span class="mypage-menu-row-arrow">›</span>
+      <button class="settings-row" onclick="nav('settings-display')">
+        <span class="settings-row-icon" style="background:rgba(154,171,163,.12);color:#b9cabf;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsDisplay">アクセシビリティ、表示、言語</span><span class="settings-row-sub" data-i18n="settingsDisplaySub">テーマ、フォント、言語設定</span></span>
+        <span class="settings-row-arrow">›</span>
       </button>
-      <button class="mypage-menu-row" onclick="nav('settings-about')">
-        <span class="mypage-menu-row-icon">❓</span>
-        <span class="mypage-menu-row-label" data-i18n="settingsAbout">追加リソース・ヘルプ</span>
-        <span class="mypage-menu-row-arrow">›</span>
+      <button class="settings-row" onclick="nav('settings-about')">
+        <span class="settings-row-icon" style="background:rgba(255,255,255,.06);color:#dfeae3;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsAbout">追加リソース・ヘルプ</span><span class="settings-row-sub" data-i18n="settingsAboutSub">利用規約、お問い合わせ</span></span>
+        <span class="settings-row-arrow">›</span>
+      </button>
+      <button class="settings-row settings-row-danger mypage-owner-only" onclick="signOut()">
+        <span class="settings-row-icon" style="background:rgba(234,169,169,.1);color:#eaa9a9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" style="color:#eaa9a9;" data-i18n="logoutBtn">ログアウト</span></span>
       </button>
     </div>
   </div>
@@ -3250,10 +3328,13 @@
   <!-- ログイン済み表示 -->
   <div id="mypageUser" style="display:none;">
     <div class="mypage-hero-wrap-bg">
+      <div class="mypage-hero-cover"></div>
       <div class="mypage-hero">
         <div class="mypage-avatar-wrap">
           <div class="mypage-avatar user-avatar" id="mypageAvatarIcon">か</div>
-          <button class="mypage-avatar-edit-btn mypage-owner-only" id="mypageAvatarEditBtn" onclick="document.getElementById('avatarFileInput').click()">📷</button>
+          <button class="mypage-avatar-edit-btn mypage-owner-only" id="mypageAvatarEditBtn" onclick="document.getElementById('avatarFileInput').click()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 10 3-3 3 3"/><path d="M12 7v11"/><rect x="3" y="15" width="18" height="6" rx="2"/></svg>
+          </button>
           <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)" />
         </div>
         <div class="mypage-info">
@@ -3261,30 +3342,33 @@
           <p class="mypage-sub mypage-owner-only" id="mypageEmail">email</p>
           <p class="mypage-rank-badge" id="mypageRankBadge" style="display:none;"></p>
         </div>
-        <button class="mypage-edit-btn mypage-owner-only" id="mypageEditBtn" onclick="openProfileEdit()">✏️</button>
-        <button class="mypage-edit-btn mypage-owner-only" onclick="nav('settings')">⚙️</button>
+        <div class="mypage-actions mypage-owner-only">
+          <button class="mypage-btn-secondary" id="mypageEditBtn" onclick="openProfileEdit()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:-2px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>編集
+          </button>
+          <button class="mypage-edit-btn" aria-label="設定" onclick="nav('settings')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
       </div>
 
       <!-- 統計サマリー -->
       <div class="mypage-stats-row">
         <div class="mypage-stat-card">
-          <div class="mypage-stat-icon">📝</div>
           <div class="mypage-stat-num" id="statReviewCount">0</div>
           <div class="mypage-stat-label" data-i18n="statReviews">レビュー</div>
         </div>
         <div class="mypage-stat-card">
-          <div class="mypage-stat-icon">⭐</div>
           <div class="mypage-stat-num" id="statFavCount">0</div>
           <div class="mypage-stat-label" data-i18n="statFavorites">お気に入り</div>
         </div>
         <div class="mypage-stat-card">
-          <div class="mypage-stat-icon">✨</div>
           <div class="mypage-stat-num" id="statQualityCount">0</div>
           <div class="mypage-stat-label" data-i18n="statQuality">上質レビュー</div>
         </div>
       </div>
 
-      <div class="mypage-owner-only" style="display:flex;justify-content:flex-end;padding:.4rem 1.1rem 0;">
+      <div class="mypage-owner-only" style="display:flex;justify-content:flex-end;padding:0 24px 20px;">
         <button class="mypage-logout-link" onclick="signOut()" data-i18n="logoutBtn">ログアウト</button>
       </div>
     </div>
@@ -3300,7 +3384,7 @@
 
     <!-- 実績（称号進捗） -->
     <div class="mypage-section">
-      <h3 class="mypage-section-title">🏅 実績</h3>
+      <h3 class="mypage-section-title">実績</h3>
       <div id="mypageRankProgress"></div>
     </div>
 
@@ -4578,7 +4662,7 @@
   function recruitBadgeHtml(id) {
     const n = reviewCount(id);
     if (n >= 10) return '';
-    return `<span class="recruit-badge">📢 レビュー募集中</span>`;
+    return `<span class="recruit-badge">レビュー募集中</span>`;
   }
 
   /* ════════════════════════════════════════════════════
@@ -4623,10 +4707,12 @@
       ? `<img src="${escapeHtml(item.image)}" alt="${title}" loading="lazy" style="width:100%;height:100%;object-fit:cover;${style==='h'?'border-radius:10px;':''}" />`
       : (typeof thumbHtml==='function' ? (thumbHtml(item)||'📺') : '📺');
 
-    // ── サムネイル左上：AI予測 → その下にレビュー募集中（固定スタック） ──
+    // ── サムネイル左上：上質なレビュー（ゴールド）→ AI予測 → 話題 → レビュー募集中（固定スタック） ──
+    const qualityThumbBadge = isGold ? `<span class="quality-thumb-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="#2a2006"><path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>上質なレビュー</span>` : '';
     const aiThumbBadge = opts.aiBadge ? `<span class="ai-thumb-badge">${opts.aiBadge}</span>` : '';
+    const hotThumbBadge = opts.hotBadge ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;color:#3a2a06;background:#e8c463;padding:4px 9px;border-radius:20px;">🔥 話題</span>` : '';
     const recruitThumbBadge = (opts.showRecruitBadge !== false && !opts.dummy) ? recruitBadgeHtml(item.kitsuId?'kitsu-'+item.kitsuId:item.id) : '';
-    const thumbStack = (aiThumbBadge || recruitThumbBadge) ? `<div class="thumb-badge-stack">${aiThumbBadge}${recruitThumbBadge}</div>` : '';
+    const thumbStack = (qualityThumbBadge || aiThumbBadge || hotThumbBadge || recruitThumbBadge) ? `<div class="thumb-badge-stack">${qualityThumbBadge}${aiThumbBadge}${hotThumbBadge}${recruitThumbBadge}</div>` : '';
     const rankBadgeHtml = opts.rankBadge ? `<span class="rank-badge" style="${opts.rankBadgeStyle||''}">${opts.rankBadge}</span>` : '';
 
     // ── 検索結果カード専用レイアウト（順位・一致度ティア・進捗バー） ──
@@ -5097,48 +5183,39 @@
 
   // 各ピルのラベルを現在の状態に合わせて更新
   function updatePopPillLabels() {
-    const baseBtn = document.querySelector('#popBaseTabs .pop-sort-tab.active');
-    const pillBase = document.getElementById('popPillBase');
-    if(pillBase && baseBtn) pillBase.textContent = baseBtn.textContent.trim();
-
-    const periodBtn = document.querySelector('#popPeriodTabs .pop-sort-tab.active');
-    const pillPeriodLabel = document.getElementById('popPillPeriodLabel');
-    if(pillPeriodLabel && periodBtn) pillPeriodLabel.textContent = periodBtn.textContent.trim();
-
     const pillEraLabel = document.getElementById('popPillEraLabel');
     if(pillEraLabel) pillEraLabel.textContent = popState.yearFrom ? `${popState.yearFrom}年代` : t('popEraNone');
   }
 
-  // 開いている軸だけを切り替える（他が開いていれば閉じる＝画面の動きを最小限に）
+  // 年代ボタン：クリックでポップオーバー開閉のみ（並び順・期間は常時表示のため開閉不要）
   function togglePopAxis(axis) {
-    const map = { base:['popPillBase','popBaseExpand'], period:['popPillPeriod','popPeriodExpand'], era:['popPillEra','popEraExpand'] };
-    Object.entries(map).forEach(([key,[pillId,expandId]])=>{
-      const pill = document.getElementById(pillId), expand = document.getElementById(expandId);
-      if(!pill || !expand) return;
-      if(key === axis) {
-        const willOpen = !expand.classList.contains('open');
-        pill.classList.toggle('open', willOpen);
-        expand.classList.toggle('open', willOpen);
-      } else {
-        pill.classList.remove('open');
-        expand.classList.remove('open');
-      }
-    });
+    const expand = document.getElementById('popEraExpand');
+    const pill = document.getElementById('popPillEra');
+    if(!expand || !pill) return;
+    const willOpen = !expand.classList.contains('open');
+    pill.classList.toggle('open', willOpen);
+    expand.classList.toggle('open', willOpen);
   }
   function closePopAxes() {
-    ['popPillBase','popPillPeriod','popPillEra'].forEach(id=>document.getElementById(id)?.classList.remove('open'));
-    ['popBaseExpand','popPeriodExpand','popEraExpand'].forEach(id=>document.getElementById(id)?.classList.remove('open'));
+    document.getElementById('popPillEra')?.classList.remove('open');
+    document.getElementById('popEraExpand')?.classList.remove('open');
   }
 
   async function renderPopular() {
-    // クイックピル（各軸ボタン）：押した軸だけその場でちょっと開く
-    ['popPillBase','popPillPeriod','popPillEra'].forEach(id=>{
-      const pill = document.getElementById(id);
-      if(pill && !pill.dataset.init) {
-        pill.dataset.init = '1';
-        pill.addEventListener('click', ()=> togglePopAxis(pill.dataset.axis));
-      }
-    });
+    // 年代ボタン：押したらポップオーバーを開閉
+    const eraPill = document.getElementById('popPillEra');
+    if(eraPill && !eraPill.dataset.init) {
+      eraPill.dataset.init = '1';
+      eraPill.addEventListener('click', ()=>{
+        togglePopAxis('era');
+        const willOpen = document.getElementById('popEraExpand').classList.contains('open');
+        if(willOpen) {
+          buildDrum('popDrumFrom', YEAR_LIST, popState.yearFrom||2010);
+          const yearInput = document.getElementById('popYearInput');
+          if(yearInput) yearInput.value = popState.yearFrom || '';
+        }
+      });
+    }
 
     // 軸1: 基準（人気順 / レビュー順）
     const baseTabs = document.getElementById('popBaseTabs');
@@ -5172,31 +5249,10 @@
         });
       });
     }
-    // 軸3: 年代（基準に関係なく常に選べる）
-    const eraTabs = document.getElementById('popEraTabs');
-    if(eraTabs && !eraTabs.dataset.init) {
-      eraTabs.dataset.init = '1';
-      eraTabs.querySelectorAll('.pop-sort-tab').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          eraTabs.querySelectorAll('.pop-sort-tab').forEach(b=>b.classList.remove('active'));
-          btn.classList.add('active');
-          const picker = document.getElementById('popYearPicker');
-          if(btn.dataset.era === 'pick') {
-            picker.style.display = '';
-            buildDrum('popDrumFrom', YEAR_LIST, popState.yearFrom||2010);
-            const yearInput = document.getElementById('popYearInput');
-            if(yearInput) yearInput.value = popState.yearFrom || '';
-            // 年を選んで「適用」を押すまで検索は待つ（この軸は開いたまま）
-          } else {
-            picker.style.display = 'none';
-            popState.yearFrom = null;
-            popState.page = 0; popState.items = [];
-            updatePopPillLabels();
-            loadPopularItems(true);
-            closePopAxes();
-          }
-        });
-      });
+    // 軸3: 年代（ポップオーバー内は常にドラムピッカーを表示。「クリア」で解除）
+    const yearApplyBtn0 = document.getElementById('popYearApply');
+    if(yearApplyBtn0 && !yearApplyBtn0.dataset.clearInit) {
+      yearApplyBtn0.dataset.clearInit = '1';
     }
     // 年代適用ボタン
     const yearApplyBtn = document.getElementById('popYearApply');
@@ -5223,6 +5279,18 @@
         if(e.key === 'Enter') { e.preventDefault(); jumpToTypedYear(); }
       });
       yearInput.addEventListener('blur', jumpToTypedYear);
+    }
+    // 年代クリアボタン
+    const yearClearBtn = document.getElementById('popYearClear');
+    if(yearClearBtn && !yearClearBtn.dataset.init) {
+      yearClearBtn.dataset.init = '1';
+      yearClearBtn.addEventListener('click', ()=>{
+        popState.yearFrom = null;
+        popState.page = 0; popState.items = [];
+        updatePopPillLabels();
+        loadPopularItems(true);
+        closePopAxes();
+      });
     }
     // もっと見るボタン
     const loadBtn = document.getElementById('popLoadBtn');
@@ -5341,7 +5409,15 @@
       else popState.items = [...popState.items, ...items];
 
       if(reset) grid.innerHTML='';
-      grid.innerHTML += popState.items.map(a=>renderAnimeCard(a, {style:'g', showReviewCount:true})).join('');
+      grid.innerHTML += popState.items.map((a,i)=>{
+        const globalIdx = popState.items.length - items.length + i; // 通しの順位（追加読み込み対応）
+        const top1 = globalIdx === 0, top3 = globalIdx < 3;
+        const rankBadge = top3 ? `${globalIdx+1}` : '';
+        const rankBadgeStyle = top3 ? `top:9px;right:9px;min-width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#07160d;background:linear-gradient(150deg,#e8c463,#d9a441);border-radius:8px;box-shadow:0 4px 10px -3px rgba(217,164,65,.7);` : '';
+        const rev = a._reviewCount ?? reviewCount(a.id);
+        const hot = rev >= 30;
+        return renderAnimeCard(a, {style:'g', showReviewCount:true, rankBadge, rankBadgeStyle, hotBadge: hot});
+      }).join('');
 
       const baseBtn = document.querySelector('#popBaseTabs .pop-sort-tab.active');
       const baseLabel = baseBtn ? baseBtn.textContent.trim() : '';
@@ -7053,8 +7129,8 @@
         <article class="review-card">
           <div class="rc-head">
             <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
-              <div${userOnclick} style="width:32px;height:32px;border-radius:7px;overflow:hidden;background:${avatarUrl?'transparent':(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
-                ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="width:32px;height:32px;object-fit:cover;display:block;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
+              <div${userOnclick} style="width:40px;height:40px;border-radius:11px;overflow:hidden;background:${avatarUrl?'transparent':(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
+                ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="width:40px;height:40px;object-fit:cover;display:block;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
                 <span class="rc-name"${userOnclick}>${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}${countryBadgeHtml(rev.countryCode||rev.country_code)}</span>
@@ -7159,7 +7235,7 @@
 
   function initReviewPage(id) {
     const all=getAll(), p=all.find(x=>x.id===id);
-    document.getElementById('reviewPageTitle').textContent=p?`🍎 ${p.title} — ${t('reviewFormTitle')}`:`🍎 ${t('reviewFormTitle')}`;
+    document.getElementById('reviewPageTitle').textContent=p?`${p.title} — ${t('reviewFormTitle')}`:t('reviewFormTitle');
     // ログイン状態でユーザー名欄を制御
     (async()=>{
       const loggedField = document.getElementById('reviewUserNameLoggedIn');
@@ -7205,6 +7281,15 @@
     setupTagInput('reviewTagInput','reviewTagAddBtn','reviewTagList',reviewTags,10);
     document.getElementById('reviewUserName').value='';
     document.getElementById('reviewComment').value='';
+    const commentEl = document.getElementById('reviewComment');
+    const commentCountEl = document.getElementById('reviewCommentCount');
+    if(commentEl && commentCountEl && !commentEl.dataset.countInit) {
+      commentEl.dataset.countInit = '1';
+      commentEl.addEventListener('input', () => {
+        commentCountEl.textContent = `${commentEl.value.length} 字`;
+      });
+    }
+    if(commentCountEl) commentCountEl.textContent = '0 字';
     setTimeout(()=>redrawReview(),50);
     renderTagSuggestions(id);
   }
@@ -7235,7 +7320,7 @@
 
     wrap.style.display='';
     listEl.innerHTML = suggestions.map(s=>
-      `<span class="tag-suggest-chip${s.popular?' popular':''}" data-tag="${escapeHtml(s.text)}">${s.popular?'🔥 ':''}${escapeHtml(s.text)}</span>`
+      `<span class="tag-suggest-chip${s.popular?' popular':''}" data-tag="${escapeHtml(s.text)}">#${escapeHtml(s.text)}</span>`
     ).join('');
 
     listEl.querySelectorAll('.tag-suggest-chip').forEach(chip=>{
@@ -7267,14 +7352,18 @@
     // 案内文の切り替え
     const notice = document.getElementById('graphStatusNotice');
     if (notice) {
-      const icon = notice.querySelector('.graph-status-icon');
       const text = notice.querySelector('.graph-status-text');
+      const progress = notice.querySelector('.graph-status-progress');
+      const barFill = notice.querySelector('.graph-status-bar-fill');
       notice.classList.toggle('graph-status-complete', isComplete);
-      if (icon) icon.textContent = isComplete ? '✅' : '⚠️';
       if (text) {
         text.dataset.i18n = isComplete ? 'graphCompleteMsg' : 'graphIncompleteMsg';
         text.textContent = t(text.dataset.i18n);
       }
+      const filled = vA.filter(v=>v!==-1).length + vB.filter(v=>v!==-1).length;
+      const total = vA.length + vB.length;
+      if (progress) progress.textContent = `${filled}/${total}`;
+      if (barFill) barFill.style.width = `${total?Math.round(filled/total*100):0}%`;
     }
   }
 
@@ -7430,14 +7519,14 @@
       ...axisB.map((key,i)=>({key, label: dispB[i]})),
     ];
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,10,7,.72);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;';
     const box = document.createElement('div');
-    box.style.cssText = 'background:var(--card,#1a2420);border:1px solid var(--line,#2a3830);border-radius:14px;padding:1.25rem;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;';
+    box.style.cssText = 'width:100%;max-width:520px;background:#22412f;border:1px solid rgba(255,255,255,.1);border-radius:20px;box-shadow:0 40px 100px -30px rgba(0,0,0,.85);padding:28px 28px 24px;max-height:80vh;overflow-y:auto;';
     box.innerHTML = `
-      <h3 style="margin:0 0 .3rem;font-size:1rem;">${escapeHtml(t('valuePollTitle'))}</h3>
-      <p style="margin:0 0 .8rem;font-size:.78rem;color:var(--muted,#9ab);">${escapeHtml(t('valuePollHint'))}</p>
-      <div id="valuePollGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.9rem;"></div>
-      <button type="button" id="valuePollSkipBtn" style="width:100%;padding:.5rem;border-radius:8px;background:transparent;border:1px solid var(--line,#2a3830);color:var(--muted,#9ab);font-size:.78rem;cursor:pointer;">${escapeHtml(t('valuePollSkip'))}</button>
+      <h3 style="font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:20px;margin:0 0 6px;color:#e8f0ea;">${escapeHtml(t('valuePollTitle'))}</h3>
+      <p style="margin:0 0 20px;font-size:13px;color:#82968a;">${escapeHtml(t('valuePollHint'))}</p>
+      <div id="valuePollGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;"></div>
+      <button type="button" id="valuePollSkipBtn" style="width:100%;height:44px;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#82968a;font-weight:700;font-size:13.5px;cursor:pointer;">${escapeHtml(t('valuePollSkip'))}</button>
     `;
     overlay.appendChild(box);
     document.body.appendChild(overlay);
@@ -7446,7 +7535,9 @@
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.textContent = item.label;
-      btn.style.cssText = 'padding:.55rem .3rem;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font-size:.8rem;cursor:pointer;';
+      btn.style.cssText = 'height:46px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#dfeae3;font-weight:700;font-size:13.5px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;';
+      btn.onmouseenter = () => { btn.style.background='rgba(92,201,142,.14)'; btn.style.borderColor='rgba(92,201,142,.4)'; btn.style.color='#9be3bd'; };
+      btn.onmouseleave = () => { btn.style.background='rgba(255,255,255,.03)'; btn.style.borderColor='rgba(255,255,255,.12)'; btn.style.color='#dfeae3'; };
       btn.onclick = () => { document.body.removeChild(overlay); onSelect(item.key, axisKeyToGroup(item.key)); };
       grid.appendChild(btn);
     });
@@ -8115,7 +8206,7 @@
       : `You tend to favor titles with high ${topHigh?topHigh[0]:''}${topHigh&&topLow?' and low ':''}${topLow?topLow[0]:''}`;
     el.style.display='';
     el.innerHTML = `
-      <h3 style="margin:0 0 .4rem;font-size:.9rem;">${escapeHtml(currentLang==='ja'?'あなたの価値観':'Your taste profile')}</h3>
+      <h3 class="mypage-section-title">${escapeHtml(currentLang==='ja'?'あなたの価値観':'Your taste profile')}</h3>
       <p style="margin:0 0 .8rem;font-size:.82rem;color:#dff0e6;">${escapeHtml(summaryText)}</p>
       <div id="valueProfileRecs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;"></div>
     `;
@@ -8902,7 +8993,7 @@
     secRecommendSub:{ ja:'レビューが多い順',en:'Most reviewed',ko:'리뷰 많은 순',  'zh-tw':'評論最多','zh-cn':'评论最多',es:'Más reseñados',fr:'Plus d\'avis',pt:'Mais avaliados',de:'Meistbewertet',ar:'الأكثر مراجعة',th:'รีวิวมากที่สุด',id:'Paling banyak diulas',ru:'Больше всего отзывов',it:'Più recensiti',vi:'Nhiều đánh giá nhất' },
     secAll:     { ja:'すべての作品',en:'All Anime',   ko:'모든 작품',  'zh-tw':'全部作品','zh-cn':'全部作品',es:'Todos',      fr:'Tout',       pt:'Todos',      de:'Alle',   ar:'الكل',th:'อนิเมะทั้งหมด',id:'Semua anime',ru:'Все аниме',it:'Tutti gli anime',vi:'Tất cả anime'    },
     // 作品ページ
-    btnReview:  { ja:'🍎 レビューする',en:'🍎 Write Review',ko:'🍎 리뷰하기','zh-tw':'🍎 撰寫評論','zh-cn':'🍎 写评论',es:'🍎 Reseñar',fr:'🍎 Évaluer',pt:'🍎 Avaliar',de:'🍎 Bewerten',ar:'🍎 مراجعة',th:'🍎 เขียนรีวิว',id:'🍎 Tulis Ulasan',ru:'🍎 Написать отзыв',it:'🍎 Scrivi recensione',vi:'🍎 Viết đánh giá' },
+    btnReview:  { ja:'レビューする',en:'Write Review',ko:'리뷰하기','zh-tw':'撰寫評論','zh-cn':'写评论',es:'Reseñar',fr:'Évaluer',pt:'Avaliar',de:'Bewerten',ar:'مراجعة',th:'เขียนรีวิว',id:'Tulis Ulasan',ru:'Написать отзыв',it:'Scrivi recensione',vi:'Viết đánh giá' },
     btnDelete:  { ja:'🗑 ページ削除',en:'🗑 Delete',  ko:'🗑 삭제',   'zh-tw':'🗑 刪除',  'zh-cn':'🗑 删除',  es:'🗑 Eliminar',fr:'🗑 Supprimer',pt:'🗑 Excluir',de:'🗑 Löschen',ar:'🗑 حذف',th:'🗑 ลบหน้า',id:'🗑 Hapus',ru:'🗑 Удалить',it:'🗑 Elimina',vi:'🗑 Xóa'  },
     watchOn:    { ja:'このアニメを観る',en:'Watch this anime',ko:'이 애니 보기','zh-tw':'觀看此動畫','zh-cn':'观看此动漫',es:'Ver este anime',fr:'Voir cet anime',pt:'Assistir anime',de:'Anime ansehen',ar:'شاهد هذا الأنمي',th:'ดูอนิเมะเรื่องนี้',id:'Tonton anime ini',ru:'Смотреть аниме',it:'Guarda questo anime',vi:'Xem anime này' },
     reviews:    { ja:'みんなのレビュー',en:'Reviews',    ko:'리뷰',      'zh-tw':'評論',   'zh-cn':'评论',   es:'Reseñas',   fr:'Avis',       pt:'Avaliações', de:'Bewertungen',ar:'المراجعات',th:'รีวิว',id:'Ulasan',ru:'Отзывы',it:'Recensioni',vi:'Đánh giá' },
@@ -8916,7 +9007,7 @@
     labelUsername: { ja:'ユーザー名',en:'Username',ko:'유저명','zh-tw':'使用者名稱','zh-cn':'用户名',es:'Nombre de usuario',fr:'Nom d\'utilisateur',pt:'Nome de usuário',de:'Benutzername',ar:'اسم المستخدم',th:'ชื่อผู้ใช้',id:'Nama pengguna',ru:'Имя пользователя',it:'Nome utente',vi:'Tên người dùng' },
     labelTags:    { ja:'タグ（最大10個）',en:'Tags (up to 10)',ko:'태그 (최대 10개)','zh-tw':'標籤（最多10個）','zh-cn':'标签（最多10个）',es:'Etiquetas (hasta 10)',fr:'Tags (jusqu\'à 10)',pt:'Tags (até 10)',de:'Tags (bis zu 10)',ar:'الوسوم (حتى 10)',th:'แท็ก (สูงสุด 10)',id:'Tag (maks 10)',ru:'Теги (до 10)',it:'Tag (max 10)',vi:'Thẻ (tối đa 10)' },
     labelComment: { ja:'コメント',en:'Comment',ko:'댓글','zh-tw':'留言','zh-cn':'评论',es:'Comentario',fr:'Commentaire',pt:'Comentário',de:'Kommentar',ar:'تعليق',th:'ความคิดเห็น',id:'Komentar',ru:'Комментарий',it:'Commento',vi:'Bình luận' },
-    btnSubmit:    { ja:'🍎 投稿する',en:'🍎 Submit',ko:'🍎 투고하기','zh-tw':'🍎 發佈','zh-cn':'🍎 发布',es:'🍎 Publicar',fr:'🍎 Publier',pt:'🍎 Publicar',de:'🍎 Veröffentlichen',ar:'🍎 نشر',th:'🍎 โพสต์',id:'🍎 Kirim',ru:'🍎 Отправить',it:'🍎 Pubblica',vi:'🍎 Đăng' },
+    btnSubmit:    { ja:'投稿する',en:'Submit',ko:'투고하기','zh-tw':'發佈','zh-cn':'发布',es:'Publicar',fr:'Publier',pt:'Publicar',de:'Veröffentlichen',ar:'نشر',th:'โพสต์',id:'Kirim',ru:'Отправить',it:'Pubblica',vi:'Đăng' },
     formNote:     { ja:'※ やさしい言葉での投稿をお願いします。',en:'※ Please be kind in your reviews.',ko:'※ 친절한 말로 투고해 주세요.','zh-tw':'※ 請以友善的語言發佈。','zh-cn':'※ 请以友善的语言发布。',es:'※ Por favor, sé amable.',fr:'※ Merci d\'être bienveillant.',pt:'※ Por favor, seja gentil.',de:'※ Bitte freundlich formulieren.',ar:'※ يُرجى استخدام لغة لطيفة.',th:'※ กรุณาใช้ถ้อยคำสุภาพ',id:'※ Mohon gunakan kata-kata yang baik.',ru:'※ Пожалуйста, будьте вежливы.',it:'※ Ti preghiamo di essere gentile.',vi:'※ Vui lòng dùng lời lẽ nhẹ nhàng.' },
     tagPlaceholder:{ ja:'例: 泣ける、鬱、神作画',en:'e.g. emotional, dark, stunning animation',ko:'예: 눈물, 우울, 신작화','zh-tw':'例：感人、黑暗、神作畫','zh-cn':'例：感人、黑暗、神作画',es:'ej: emotivo, oscuro, animación impresionante',fr:'ex: émouvant, sombre, animation époustouflante',pt:'ex: emocional, sombrio, animação incrível',de:'z.B. emotional, dunkel, atemberaubende Animation',ar:'مثل: مؤثر، مظلم، رسوم متحركة مذهلة',th:'เช่น อินจัด, มืดหม่น, ภาพสวย',id:'cth: mengharukan, gelap, animasi memukau',ru:'напр.: трогательно, мрачно, красивая анимация',it:'es. emozionante, cupo, animazione stupenda',vi:'vd: cảm động, u tối, hình ảnh đẹp' },
     btnTagAdd:    { ja:'追加',en:'Add',ko:'추가','zh-tw':'新增','zh-cn':'添加',es:'Añadir',fr:'Ajouter',pt:'Adicionar',de:'Hinzufügen',ar:'إضافة',th:'เพิ่ม',id:'Tambah',ru:'Добавить',it:'Aggiungi',vi:'Thêm' },
@@ -8931,8 +9022,8 @@
     periodDay:  { ja:'今日',en:'Today',ko:'오늘','zh-tw':'今天','zh-cn':'今天',es:'Hoy',fr:"Aujourd'hui",pt:'Hoje',de:'Heute',ar:'اليوم',th:'วันนี้',id:'Hari ini',ru:'Сегодня',it:'Oggi',vi:'Hôm nay' },
     sortNewest: { ja:'新しい順',en:'Newest',ko:'최신순','zh-tw':'最新','zh-cn':'最新',es:'Más reciente',fr:'Plus récent',pt:'Mais recente',de:'Neueste',ar:'الأحدث',th:'ใหม่ล่าสุด',id:'Terbaru',ru:'Сначала новые',it:'Più recenti',vi:'Mới nhất' },
     sortOldest: { ja:'古い順',en:'Oldest',ko:'오래된 순','zh-tw':'最舊','zh-cn':'最旧',es:'Más antiguo',fr:'Plus ancien',pt:'Mais antigo',de:'Älteste',ar:'الأقدم',th:'เก่าสุด',id:'Terlama',ru:'Сначала старые',it:'Meno recenti',vi:'Cũ nhất' },
-    countryAll:   { ja:'🌍 全て',en:'🌍 All',ko:'🌍 전체','zh-tw':'🌍 全部','zh-cn':'🌍 全部',es:'🌍 Todo',fr:'🌍 Tout',pt:'🌍 Tudo',de:'🌍 Alle',ar:'🌍 الكل',th:'🌍 ทั้งหมด',id:'🌍 Semua',ru:'🌍 Все',it:'🌍 Tutti',vi:'🌍 Tất cả' },
-    countryOther: { ja:'🌐 その他',en:'🌐 Other',ko:'🌐 기타','zh-tw':'🌐 其他','zh-cn':'🌐 其他',es:'🌐 Otro',fr:'🌐 Autre',pt:'🌐 Outro',de:'🌐 Andere',ar:'🌐 أخرى',th:'🌐 อื่นๆ',id:'🌐 Lainnya',ru:'🌐 Другое',it:'🌐 Altro',vi:'🌐 Khác' },
+    countryAll:   { ja:'すべての国',en:'All Countries',ko:'모든 국가','zh-tw':'所有國家','zh-cn':'所有国家',es:'Todos los países',fr:'Tous les pays',pt:'Todos os países',de:'Alle Länder',ar:'كل الدول',th:'ทุกประเทศ',id:'Semua Negara',ru:'Все страны',it:'Tutti i paesi',vi:'Tất cả quốc gia' },
+    countryOther: { ja:'その他',en:'Other',ko:'기타','zh-tw':'其他','zh-cn':'其他',es:'Otro',fr:'Autre',pt:'Outro',de:'Andere',ar:'أخرى',th:'อื่นๆ',id:'Lainnya',ru:'Другое',it:'Altro',vi:'Khác' },
     sliderUnset: { ja:'無', en:'—', ko:'무', 'zh-tw':'無', 'zh-cn':'无', es:'—', fr:'—', pt:'—', de:'—', ar:'—',th:'—',id:'—',ru:'—',it:'—',vi:'—' },
     graphIncompleteMsg: { ja:'この状態で投稿するとレビューとして表示されますが、みんなの評価グラフへのデータ集計はされません。', en:'You can post like this and it will show as a review, but it will not be counted in the master graph.', ko:'이 상태로 게시하면 리뷰로 표시되지만, 모두의 평가 그래프 집계에는 반영되지 않습니다.', 'zh-tw':'以此狀態發佈會顯示為評論，但不會計入大家的評分圖。', 'zh-cn':'以此状态发布会显示为评论，但不会计入大家的评分图。', es:'Puedes publicar así y se mostrará como reseña, pero no se contará en el gráfico general.', fr:"Vous pouvez publier ainsi, l'avis sera affiché mais ne sera pas compté dans le graphique général.", pt:'Você pode postar assim e aparecerá como avaliação, mas não será contado no gráfico geral.', de:'Du kannst so posten, es wird als Bewertung angezeigt, aber nicht in die Gesamtgrafik einberechnet.', ar:'يمكنك النشر هكذا وستظهر كمراجعة، لكنها لن تُحتسب في الرسم البياني العام.',th:'โพสต์แบบนี้จะแสดงเป็นรีวิว แต่จะไม่ถูกนับในกราฟรวม',id:'Anda bisa memposting begini, akan tampil sebagai ulasan, tapi tidak dihitung di grafik utama.',ru:'Можно опубликовать так, отзыв отобразится, но не войдёт в общий график.',it:'Puoi pubblicare così, apparirà come recensione ma non conteggiata nel grafico principale.',vi:'Bạn có thể đăng vậy, sẽ hiện là đánh giá nhưng không tính vào biểu đồ chính.' },
     graphCompleteMsg: { ja:'すべて入力済みです。', en:'All fields are filled in.', ko:'모두 입력 완료되었습니다.', 'zh-tw':'已全部填寫完成。', 'zh-cn':'已全部填写完成。', es:'Todos los campos están completos.', fr:'Tous les champs sont remplis.', pt:'Todos os campos preenchidos.', de:'Alle Felder sind ausgefüllt.', ar:'تم ملء جميع الحقول.',th:'กรอกครบทุกช่องแล้ว',id:'Semua kolom telah diisi.',ru:'Все поля заполнены.',it:'Tutti i campi sono compilati.',vi:'Đã điền đầy đủ.' },
@@ -8952,6 +9043,7 @@
     btnAdd:        { ja:'追加',         en:'Add',           ko:'추가',     'zh-tw':'添加',   'zh-cn':'添加',   es:'Añadir',      fr:'Ajouter',    pt:'Adicionar',  de:'Hinzufügen', ar:'إضافة',th:'เพิ่ม',id:'Tambah',ru:'Добавить',it:'Aggiungi',vi:'Thêm' },
     btnMore:       { ja:'もっと見る',   en:'Load more',     ko:'더 보기',  'zh-tw':'更多',   'zh-cn':'更多',   es:'Más',         fr:'Plus',       pt:'Mais',       de:'Mehr',       ar:'المزيد',th:'ดูเพิ่มเติม',id:'Muat lagi',ru:'Показать ещё',it:'Altro',vi:'Xem thêm' },
     btnApply:      { ja:'適用',         en:'Apply',         ko:'적용',     'zh-tw':'套用',   'zh-cn':'应用',   es:'Aplicar',     fr:'Appliquer',  pt:'Aplicar',    de:'Anwenden',   ar:'تطبيق',th:'นำไปใช้',id:'Terapkan',ru:'Применить',it:'Applica',vi:'Áp dụng' },
+    btnClear:      { ja:'クリア',       en:'Clear',         ko:'지우기',   'zh-tw':'清除',   'zh-cn':'清除',   es:'Borrar',      fr:'Effacer',    pt:'Limpar',     de:'Löschen',    ar:'مسح',th:'ล้าง',id:'Hapus',ru:'Очистить',it:'Cancella',vi:'Xóa' },
     btnRefine:     { ja:'この条件で再検索',en:'Refine search',ko:'재검색', 'zh-tw':'重新搜尋','zh-cn':'重新搜索',es:'Refinar',    fr:'Affiner',    pt:'Refinar',    de:'Verfeinern', ar:'تكرار البحث',th:'ค้นหาใหม่',id:'Perhalus pencarian',ru:'Уточнить поиск',it:'Affina ricerca',vi:'Tìm kiếm lại' },
     yearPickLabel: { ja:'年代を選ぶ',   en:'Select year',   ko:'연도 선택','zh-tw':'選擇年代','zh-cn':'选择年代',es:'Año',        fr:'Année',      pt:'Ano',        de:'Jahr',       ar:'السنة',th:'เลือกปี',id:'Pilih tahun',ru:'Выбрать год',it:'Seleziona anno',vi:'Chọn năm' },
     masterGraphTitle:{ ja:'みんなの評価グラフ',en:"Everyone's Graph",ko:'모두의 평가 그래프','zh-tw':'大家的評分圖','zh-cn':'大家的评分图',es:'Gráfico de todos',fr:'Graphique de tous',pt:'Gráfico de todos',de:'Aller Bewertungen',ar:'رسم الجميع',th:'กราฟการประเมินของทุกคน',id:'Grafik Penilaian Semua Orang',ru:'График оценок всех',it:'Grafico di tutti',vi:'Biểu đồ đánh giá của mọi người' },
@@ -8988,6 +9080,12 @@
     settingsNotifications:{ ja:'通知', en:'Notifications' },
     settingsDisplay:{ ja:'アクセシビリティ、表示、言語', en:'Accessibility, display, and languages' },
     settingsAbout:{ ja:'追加リソース・ヘルプ', en:'Additional resources and help' },
+    settingsAccountSub:{ ja:'プロフィール、メールアドレス', en:'Profile, email address' },
+    settingsSecuritySub:{ ja:'ログイン方法の管理', en:'Manage sign-in methods' },
+    settingsPrivacySub:{ ja:'ブロック中のユーザーなど', en:'Blocked users and more' },
+    settingsNotificationsSub:{ ja:'お知らせの受け取り方', en:'How you receive alerts' },
+    settingsDisplaySub:{ ja:'テーマ、フォント、言語設定', en:'Theme, font, language settings' },
+    settingsAboutSub:{ ja:'利用規約、お問い合わせ', en:'Terms of use, contact' },
     settingsUsernameLabel:{ ja:'ユーザー名', en:'Username' },
     settingsEmailLabel:{ ja:'メールアドレス', en:'Email' },
     settingsLoginMethodLabel:{ ja:'ログイン方法', en:'Login method' },
@@ -9070,11 +9168,14 @@
     popAxisPeriod: { ja:'期間',en:'Period',ko:'기간','zh-tw':'期間','zh-cn':'期间',es:'Periodo',fr:'Période',pt:'Período',de:'Zeitraum',ar:'الفترة',th:'ช่วงเวลา',id:'Periode',ru:'Период',it:'Periodo',vi:'Khoảng thời gian' },
     popAxisEra: { ja:'年代',en:'Era',ko:'연대','zh-tw':'年代','zh-cn':'年代',es:'Época',fr:'Époque',pt:'Época',de:'Ära',ar:'الحقبة',th:'ยุคสมัย',id:'Era',ru:'Эпоха',it:'Epoca',vi:'Thời kỳ' },
     popEraNone: { ja:'指定なし',en:'Any',ko:'지정 안 함','zh-tw':'不指定','zh-cn':'不指定',es:'Cualquiera',fr:'Toutes',pt:'Qualquer',de:'Beliebig',ar:'أي',th:'ไม่ระบุ',id:'Semua',ru:'Любая',it:'Qualsiasi',vi:'Bất kỳ' },
+    popSortGroupLabel: { ja:'並び順',en:'Sort',ko:'정렬','zh-tw':'排序','zh-cn':'排序',es:'Orden',fr:'Tri',pt:'Ordenar',de:'Sortierung',ar:'الترتيب',th:'จัดเรียง',id:'Urutkan',ru:'Сортировка',it:'Ordina',vi:'Sắp xếp' },
+    popPeriodGroupLabel: { ja:'期間',en:'Period',ko:'기간','zh-tw':'期間','zh-cn':'期间',es:'Período',fr:'Période',pt:'Período',de:'Zeitraum',ar:'الفترة',th:'ช่วงเวลา',id:'Periode',ru:'Период',it:'Periodo',vi:'Khoảng thời gian' },
+    popEraGroupLabel: { ja:'年代',en:'Decade',ko:'연대','zh-tw':'年代','zh-cn':'年代',es:'Década',fr:'Décennie',pt:'Década',de:'Jahrzehnt',ar:'العقد',th:'ทศวรรษ',id:'Dekade',ru:'Десятилетие',it:'Decennio',vi:'Thập kỷ' },
     popEraPick: { ja:'📅 年代を選ぶ',en:'📅 Pick a year',ko:'📅 연대 선택','zh-tw':'📅 選擇年代','zh-cn':'📅 选择年代',es:'📅 Elegir año',fr:'📅 Choisir une année',pt:'📅 Escolher ano',de:'📅 Jahr wählen',ar:'📅 اختر سنة',th:'📅 เลือกปี',id:'📅 Pilih tahun',ru:'📅 Выбрать год',it:'📅 Scegli anno',vi:'📅 Chọn năm' },
     popSortLabel: { ja:'並び替え:',en:'Sort:',ko:'정렬:','zh-tw':'排序:','zh-cn':'排序:',es:'Ordenar:',fr:'Trier:',pt:'Ordenar:',de:'Sortieren:',ar:'ترتيب:',th:'เรียง:',id:'Urutkan:',ru:'Сорт.:',it:'Ordina:',vi:'Sắp xếp:' },
-    popSortPopular: { ja:'🔥 人気順',en:'🔥 Popular',ko:'🔥 인기순','zh-tw':'🔥 熱門','zh-cn':'🔥 热门',es:'🔥 Popular',fr:'🔥 Populaire',pt:'🔥 Popular',de:'🔥 Beliebt',ar:'🔥 شائع',th:'🔥 ยอดนิยม',id:'🔥 Populer',ru:'🔥 Популярное',it:'🔥 Popolare',vi:'🔥 Phổ biến' },
-    popSortReviews: { ja:'💬 レビュー順',en:'💬 Most Reviewed',ko:'💬 리뷰순','zh-tw':'💬 評論數','zh-cn':'💬 评论数',es:'💬 Más reseñado',fr:'💬 Plus évalué',pt:'💬 Mais avaliado',de:'💬 Meistbewertet',ar:'💬 الأكثر تقييماً',th:'💬 รีวิวมากสุด',id:'💬 Paling banyak diulas',ru:'💬 Больше всего отзывов',it:'💬 Più recensiti',vi:'💬 Nhiều đánh giá nhất' },
-    popSortToday:  { ja:'📈 今日',en:'📈 Today',ko:'📈 오늘','zh-tw':'📈 今天','zh-cn':'📈 今天',es:'📈 Hoy',fr:"📈 Aujourd'hui",pt:'📈 Hoje',de:'📈 Heute',ar:'📈 اليوم',th:'📈 วันนี้',id:'📈 Hari ini',ru:'📈 Сегодня',it:'📈 Oggi',vi:'📈 Hôm nay' },
+    popSortPopular: { ja:'人気順',en:'Popular',ko:'🔥 인기순','zh-tw':'🔥 熱門','zh-cn':'🔥 热门',es:'🔥 Popular',fr:'🔥 Populaire',pt:'🔥 Popular',de:'🔥 Beliebt',ar:'🔥 شائع',th:'🔥 ยอดนิยม',id:'🔥 Populer',ru:'🔥 Популярное',it:'🔥 Popolare',vi:'🔥 Phổ biến' },
+    popSortReviews: { ja:'レビュー数',en:'Most Reviewed',ko:'💬 리뷰순','zh-tw':'💬 評論數','zh-cn':'💬 评论数',es:'💬 Más reseñado',fr:'💬 Plus évalué',pt:'💬 Mais avaliado',de:'💬 Meistbewertet',ar:'💬 الأكثر تقييماً',th:'💬 รีวิวมากสุด',id:'💬 Paling banyak diulas',ru:'💬 Больше всего отзывов',it:'💬 Più recensiti',vi:'💬 Nhiều đánh giá nhất' },
+    popSortToday:  { ja:'今日',en:'Today',ko:'📈 오늘','zh-tw':'📈 今天','zh-cn':'📈 今天',es:'📈 Hoy',fr:"📈 Aujourd'hui",pt:'📈 Hoje',de:'📈 Heute',ar:'📈 اليوم',th:'📈 วันนี้',id:'📈 Hari ini',ru:'📈 Сегодня',it:'📈 Oggi',vi:'📈 Hôm nay' },
     popSortWeek:   { ja:'週間',en:'Weekly',ko:'주간','zh-tw':'週間','zh-cn':'周间',es:'Semanal',fr:'Hebdomadaire',pt:'Semanal',de:'Wöchentlich',ar:'أسبوعي',th:'รายสัปดาห์',id:'Mingguan',ru:'Еженедельно',it:'Settimanale',vi:'Hàng tuần' },
     popSortMonth:  { ja:'月間',en:'Monthly',ko:'월간','zh-tw':'月間','zh-cn':'月间',es:'Mensual',fr:'Mensuel',pt:'Mensal',de:'Monatlich',ar:'شهري',th:'รายเดือน',id:'Bulanan',ru:'Ежемесячно',it:'Mensile',vi:'Hàng tháng' },
     popSortYear:   { ja:'年間',en:'Yearly',ko:'연간','zh-tw':'年間','zh-cn':'年间',es:'Anual',fr:'Annuel',pt:'Anual',de:'Jährlich',ar:'سنوي',th:'รายปี',id:'Tahunan',ru:'Ежегодно',it:'Annuale',vi:'Hàng năm' },
@@ -9219,11 +9320,12 @@
     const grid = document.getElementById('langGrid');
     grid.innerHTML = LANGS.map(l => `
       <button class="lang-btn ${l.code === currentLang ? 'selected' : ''}" data-lang="${l.code}">
-        <span class="lang-flag">${l.flag}</span>
+        <span class="lang-code-chip">${l.code.split('-')[0].toUpperCase()}</span>
         <div>
           <div class="lang-name">${l.name}</div>
           <div class="lang-native">${l.native}</div>
         </div>
+        <svg class="lang-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
     `).join('');
     grid.querySelectorAll('[data-lang]').forEach(btn => {
@@ -9365,7 +9467,7 @@
 
     // 作品ページ
     const goReviewBtn = document.getElementById('goReviewBtn');
-    if (goReviewBtn) goReviewBtn.textContent = t('btnReview');
+    if (goReviewBtn) { const s = goReviewBtn.querySelector('span'); if(s) s.textContent = t('btnReview'); }
 
     const watchLabel = document.querySelector('#adAnimePage .ad-label');
     if (watchLabel) watchLabel.textContent = t('watchOn');
@@ -9389,13 +9491,13 @@
     const labelKeys = ['labelTags','labelComment'];
     formLabels.forEach((l,i) => { if(labelKeys[i]) l.textContent = t(labelKeys[i]); });
     const submitBtn = document.getElementById('submitReviewBtn');
-    if (submitBtn) submitBtn.textContent = t('btnSubmit');
+    if (submitBtn) { const s = submitBtn.querySelector('span'); if(s) s.textContent = t('btnSubmit'); }
     // レビューページフィルター
-    document.querySelectorAll('.rl-tab').forEach(btn=>{
+    document.querySelectorAll('.rl-filter-option[data-period]').forEach(btn=>{
       const key = {all:'periodAll',year:'periodYear',month:'periodMonth',week:'periodWeek',day:'periodDay'}[btn.dataset.period];
       if(key) btn.textContent = t(key);
     });
-    document.querySelectorAll('.rl-country').forEach(btn=>{
+    document.querySelectorAll('.rl-filter-option[data-country]').forEach(btn=>{
       if(btn.dataset.country==='all') btn.textContent = t('countryAll');
       if(btn.dataset.country==='OTHER') btn.textContent = t('countryOther');
     });
@@ -9565,7 +9667,7 @@
     // 戻るボタン全部
     document.querySelectorAll('.back-btn').forEach(btn=>{ btn.textContent=t('btnBack'); });
     // アニメページ
-    const _grBtn = document.getElementById('goReviewBtn'); if(_grBtn) _grBtn.textContent=t('btnReview');
+    const _grBtn = document.getElementById('goReviewBtn'); if(_grBtn) { const s=_grBtn.querySelector('span'); if(s) s.textContent=t('btnReview'); }
     const _mgt = document.querySelector('#masterGraphSection h2'); if(_mgt) _mgt.textContent=t('masterGraphTitle');
     const _mcaL = document.getElementById('masterChartALabel'); if(_mcaL) _mcaL.textContent=t('chartATitle');
     const _mcbL = document.getElementById('masterChartBLabel'); if(_mcbL) _mcbL.textContent=t('chartBTitle');
@@ -9594,7 +9696,7 @@
     // レビューフォーム
     const _rbt = document.getElementById('reviewBackBtn'); if(_rbt) _rbt.textContent=t('btnBack');
     const _rta = document.getElementById('reviewTagAddBtn'); if(_rta) _rta.textContent=t('btnAdd');
-    const _rs = document.getElementById('submitReviewBtn'); if(_rs) _rs.textContent=t('btnSubmit');
+    const _rs = document.getElementById('submitReviewBtn'); if(_rs) { const s=_rs.querySelector('span'); if(s) s.textContent=t('btnSubmit'); }
     document.querySelectorAll('#page-review .form-section h2').forEach(h=>{
       if(h.id) return;
       const txt=h.textContent;
@@ -11658,14 +11760,19 @@
       const isOwnReview = _currentUser && userId === _currentUser.id;
       const deleteBtnHtml = isOwnReview
         ? `<button type="button" class="rc-delete-btn" data-review-id="${escapeHtml(rev.id||'')}" data-anime-id="${escapeHtml(rev.animeId||'')}" style="margin-left:auto;background:none;border:none;color:var(--muted,#9ab);font-size:.68rem;cursor:pointer;padding:.2rem .4rem;">${escapeHtml(t('deleteReviewBtn'))}</button>`
-        : (_currentUser && userId ? `<span style="margin-left:auto;display:flex;gap:8px;">
-            <button type="button" class="rc-report-btn" data-review-id="${escapeHtml(rev.id||'')}" style="background:none;border:none;color:var(--muted,#9ab);font-size:.68rem;cursor:pointer;">${escapeHtml(t('reportBtn'))}</button>
-            <button type="button" class="rc-block-btn" data-uid="${escapeHtml(userId)}" style="background:none;border:none;color:var(--muted,#9ab);font-size:.68rem;cursor:pointer;">${escapeHtml(t('blockBtn'))}</button>
-          </span>` : '');
+        : (_currentUser && userId ? `<div style="margin-left:auto;position:relative;">
+            <button type="button" class="rc-kebab-btn" aria-label="メニュー" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:transparent;color:#82968a;cursor:pointer;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+            </button>
+            <div class="rc-kebab-menu" style="display:none;position:absolute;top:36px;right:0;z-index:20;width:148px;background:#22412f;border:1px solid rgba(255,255,255,.12);border-radius:11px;box-shadow:0 20px 44px -16px rgba(0,0,0,.85);padding:5px;">
+              <button type="button" class="rc-report-btn" data-review-id="${escapeHtml(rev.id||'')}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#eaa9a9;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('reportBtn'))}</button>
+              <button type="button" class="rc-block-btn" data-uid="${escapeHtml(userId)}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#b6c8bd;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('blockBtn'))}</button>
+            </div>
+          </div>` : '');
       return `<article class="review-card">
         <div class="rc-head">
-          <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
-            <div${userOnclick} style="width:32px;height:32px;border-radius:7px;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+          <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;">
+            <div${userOnclick} style="width:40px;height:40px;border-radius:11px;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
             <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
               <span class="rc-name"${userOnclick}>${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
@@ -11681,7 +11788,7 @@
         ${rev.isAiGenerated
           ? `<div class="rc-comment"><p class="rc-comment-text" style="color:var(--muted);font-size:.74rem;line-height:1.5;">${t('aiGeneratedDisclaimer')}</p></div>`
           : `<div class="rc-comment">
-          <button class="rc-comment-btn" data-fci="${i}">▶ コメントを見る</button>
+          <button class="rc-comment-btn" data-fci="${i}">コメントを読む ▾</button>
           <p class="rc-comment-text" style="display:none;">${(rev.comment||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
         </div>`}
       </article>`;
@@ -11713,6 +11820,16 @@
         renderReviewsListFiltered(animeId);
       };
     });
+    el.querySelectorAll('.rc-kebab-btn').forEach(btn=>{
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const menu = btn.nextElementSibling;
+        const wasOpen = menu.style.display === 'block';
+        el.querySelectorAll('.rc-kebab-menu').forEach(m=>m.style.display='none');
+        menu.style.display = wasOpen ? 'none' : 'block';
+      };
+    });
+    document.addEventListener('click', () => { el.querySelectorAll('.rc-kebab-menu').forEach(m=>m.style.display='none'); }, {once:true});
     el.querySelectorAll('.rc-report-btn').forEach(btn=>{
       btn.onclick = async () => {
         if(!confirm(t('reportConfirm'))) return;
@@ -11742,29 +11859,55 @@
     _rlPeriod = 'all';
     _rlCountry = 'all';
 
-    // 期間タブ
-    const periodTabs = document.getElementById('rlPeriodTabs');
-    if(periodTabs) {
-      periodTabs.querySelectorAll('.rl-tab').forEach(btn=>{
+    // 期間ドロップダウン
+    const periodBtn = document.getElementById('rlPeriodBtn');
+    const periodPanel = document.getElementById('rlPeriodPanel');
+    const periodBtnLabel = document.getElementById('rlPeriodBtnLabel');
+    if(periodBtn && periodPanel) {
+      periodPanel.querySelectorAll('.rl-filter-option').forEach(btn=>{
         btn.classList.toggle('active', btn.dataset.period===_rlPeriod);
         btn.onclick=()=>{
           _rlPeriod=btn.dataset.period;
-          periodTabs.querySelectorAll('.rl-tab').forEach(b=>b.classList.remove('active'));
+          periodPanel.querySelectorAll('.rl-filter-option').forEach(b=>b.classList.remove('active'));
           btn.classList.add('active');
+          if(periodBtnLabel) periodBtnLabel.textContent = btn.textContent.trim();
+          periodPanel.style.display = 'none';
           renderReviewsListFiltered(id);
         };
       });
+      periodBtn.onclick = (e) => {
+        e.stopPropagation();
+        const willOpen = periodPanel.style.display === 'none';
+        document.querySelectorAll('.rl-filter-panel').forEach(p=>p.style.display='none');
+        periodPanel.style.display = willOpen ? '' : 'none';
+      };
     }
 
-    // 国フィルター
-    document.querySelectorAll('.rl-country').forEach(btn=>{
-      btn.classList.toggle('active', btn.dataset.country===_rlCountry);
-      btn.onclick=()=>{
-        _rlCountry=btn.dataset.country;
-        document.querySelectorAll('.rl-country').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        renderReviewsListFiltered(id);
+    // 国ドロップダウン
+    const countryBtn = document.getElementById('rlCountryBtn');
+    const countryPanel = document.getElementById('rlCountryPanel');
+    const countryBtnLabel = document.getElementById('rlCountryBtnLabel');
+    if(countryBtn && countryPanel) {
+      countryPanel.querySelectorAll('.rl-filter-option').forEach(btn=>{
+        btn.classList.toggle('active', btn.dataset.country===_rlCountry);
+        btn.onclick=()=>{
+          _rlCountry=btn.dataset.country;
+          countryPanel.querySelectorAll('.rl-filter-option').forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          if(countryBtnLabel) countryBtnLabel.textContent = btn.textContent.trim();
+          countryPanel.style.display = 'none';
+          renderReviewsListFiltered(id);
+        };
+      });
+      countryBtn.onclick = (e) => {
+        e.stopPropagation();
+        const willOpen = countryPanel.style.display === 'none';
+        document.querySelectorAll('.rl-filter-panel').forEach(p=>p.style.display='none');
+        countryPanel.style.display = willOpen ? '' : 'none';
       };
+    }
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.rl-filter-panel').forEach(p=>p.style.display='none');
     });
 
     // ソート変更
