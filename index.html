@@ -47,7 +47,7 @@
     button:active, a:active, [role="button"]:active { transform: translateY(0) scale(0.98); }
 
     /* ── PAGES ── */
-    .page { display:none; min-height:100vh; padding-bottom:5rem; }
+    .page { display:none; min-height:100vh; padding-bottom:1rem; }
     body.admin-fullpage .page { padding-bottom:0; }
     .page.active { display:block; }
 
@@ -64,8 +64,37 @@
     .back-btn:hover { background:rgba(255,255,255,.08); }
 
     /* ── BOTTOM NAV ── */
-    .bnav { position:fixed; bottom:0; left:0; right:0; z-index:100; background:rgba(7,21,13,.95); backdrop-filter:blur(10px); border-top:1px solid var(--line); display:flex; justify-content:space-around; padding:.5rem 0 max(.5rem,env(safe-area-inset-bottom)); }
-    .bnav-item { display:flex; flex-direction:column; align-items:center; gap:.18rem; padding:.2rem .8rem; border-radius:10px; font-size:.64rem; color:var(--muted); background:none; border:none; cursor:pointer; transition:color .15s; }
+    .bnav {
+      position:fixed; top:0; left:0; bottom:0; right:auto; z-index:200;
+      width:236px; flex-direction:column; justify-content:flex-start; align-items:stretch;
+      border-top:none; border-right:1px solid rgba(255,255,255,.05);
+      padding:26px 16px; gap:4px;
+      background:linear-gradient(180deg,#102919 0%,#07160d 90%);
+      transform:translateX(-100%); transition:transform .25s ease;
+    }
+    .bnav.mobile-open { transform:translateX(0); box-shadow:20px 0 60px -20px rgba(0,0,0,.8); }
+    .bnav-scrim {
+      display:none; position:fixed; inset:0; z-index:150;
+      background:rgba(0,0,0,.5); backdrop-filter:blur(2px);
+    }
+    .bnav-scrim.mobile-open { display:block; }
+    .mobile-hamburger-btn {
+      position:fixed; top:14px; left:14px; z-index:180;
+      width:40px; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,.14);
+      background:rgba(7,21,13,.75); backdrop-filter:blur(6px); color:#dfeae3;
+      display:flex; align-items:center; justify-content:center; cursor:pointer;
+    }
+    body.admin-fullpage .mobile-hamburger-btn { display:none; }
+    .bnav-item {
+      flex-direction:row; justify-content:flex-start;
+      width:100%; padding:11px 13px; border-radius:11px;
+      font-size:14px; gap:13px; font-weight:500;
+      color:#b6c8bd;
+      transition:background-color .16s ease, color .16s ease;
+    }
+    .bnav-item svg { width:19px; height:19px; flex-shrink:0; }
+    .bnav-item:hover { background:rgba(255,255,255,.04); color:#eafbf0; }
+    .bnav-item.active { background:linear-gradient(90deg, rgba(92,201,142,.18), rgba(92,201,142,.04)); color:#eafbf0; box-shadow:inset 3px 0 0 #5cc98e; font-weight:700; }
     .bnav-item.active { color:var(--brand); }
     .bnav-icon { font-size:1.25rem; line-height:1; }
     .bnav-item svg { width:1.25rem; height:1.25rem; }
@@ -146,8 +175,10 @@
     .filter-box { background:linear-gradient(180deg,#173026,#0f2117); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:14px 12px; margin-bottom:.6rem; box-shadow:0 10px 26px -18px rgba(0,0,0,.7); }
     .filter-box h3 { margin:0 0 .55rem; font-size:.88rem; }
     .sl-row { display:flex; align-items:center; gap:11px; padding:10px 8px; border-radius:9px; background:transparent; box-shadow:none; margin-bottom:2px; transition:background .15s; }
+    /* レビューフォームは項目数が多いので行間を詰める */
+    #reviewSliderSwiper .sl-row { padding:14px 8px; margin-bottom:0; }
     .sl-row.is-priority { background:rgba(217,164,65,.08); box-shadow:inset 3px 0 0 #d9a441; }
-    .sl-label { width:58px; flex:0 0 58px; display:flex; align-items:center; gap:4px; flex-wrap:wrap; font-size:12px; color:#dfeae3; line-height:1.2; }
+    .sl-label { width:64px; flex:0 0 64px; display:flex; align-items:center; gap:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; color:#dfeae3; line-height:1.2; }
     .sl-priority-badge { align-items:center; height:15px; padding:0 5px; border-radius:4px; background:#d9a441; color:#3a2a06; font-size:8.5px; font-weight:700; }
     .sl-row output { width:22px; flex:0 0 22px; text-align:right; font-size:12.5px; font-weight:700; color:#e8f0ea; }
     .sl-priority-btn {
@@ -158,11 +189,11 @@
     .sl-priority-btn:hover { transform:scale(1.15); }
 
     /* ── スライダーグリッド (Canvas方式) ── */
-    .sl-track-wrap { display:flex; flex-direction:column; width:100%; flex:1 1 auto; min-width:0; }
+    .sl-track-wrap { display:flex; flex-direction:column; width:100%; flex:1 1 auto; min-width:0; gap:2px; }
     .sl-grid-canvas { display:block; width:100%; pointer-events:none; }
     .sl-track-wrap input[type="range"] {
       -webkit-appearance:none; appearance:none; background:transparent;
-      width:100%; margin-top:0; touch-action:none;
+      width:100%; margin:4px 0 0; padding:0; touch-action:none; box-sizing:border-box; display:block;
     }
     .sl-track-wrap input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance:none; appearance:none;
@@ -189,6 +220,19 @@
     }
     .sl-track-wrap input[type="range"].slider-unset::-moz-range-progress {
       background:rgba(255,255,255,.1);
+    }
+    /* レビューフォームで12軸すべて埋まったらスライダーも緑→青に切り替える */
+    #reviewSliderSwiper.all-complete .sl-track-wrap input[type="range"]:not(.slider-unset)::-webkit-slider-runnable-track {
+      background:linear-gradient(to right, #6fa8ff var(--fillPct,0%), rgba(255,255,255,.1) var(--fillPct,0%));
+    }
+    #reviewSliderSwiper.all-complete .sl-track-wrap input[type="range"]:not(.slider-unset)::-moz-range-progress {
+      background:#6fa8ff;
+    }
+    #reviewSliderSwiper.all-complete .sl-track-wrap input[type="range"]:not(.slider-unset)::-webkit-slider-thumb {
+      background:#dceaff;
+    }
+    #reviewSliderSwiper.all-complete .sl-track-wrap input[type="range"]:not(.slider-unset)::-moz-range-thumb {
+      background:#dceaff;
     }
     .sort-row { display:flex; align-items:flex-end; gap:.6rem; margin-bottom:.7rem; flex-wrap:wrap; }
     .sort-row-sort { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:.35rem; }
@@ -423,10 +467,60 @@
     .master-tag-strength.is-top, .master-tag-mood.is-top { background:rgba(255,209,102,.22); color:#ffd166; box-shadow:0 0 0 1px rgba(255,209,102,.5) inset; }
     .master-tag-strength.is-worst, .master-tag-mood.is-worst { background:rgba(130,150,138,.16); color:#82968a; box-shadow:0 0 0 1px rgba(130,150,138,.3) inset; }
     .review-card { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; overflow:hidden; box-shadow:0 12px 30px -20px rgba(0,0,0,.8); }
+    /* レビューカードのフリップ（回転してコメント面を表示） */
+    .review-card-flip-wrap { perspective:1400px; }
+    .review-card-flip-inner {
+      position:relative; width:100%; transform-style:preserve-3d;
+      transition:transform .5s cubic-bezier(.4,.2,.2,1);
+    }
+    .review-card-flip-inner.flipped { /* transformはJS側で累積角度制御するためここでは指定しない */ }
+    .review-card-face {
+      width:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; position:relative;
+    }
+    .review-card-face.review-card-back {
+      position:absolute; top:0; left:0; height:100%;
+      transform:rotateY(180deg);
+      display:flex; flex-direction:column;
+      background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px;
+    }
+    .rc-flip-btn {
+      position:absolute; top:12px; right:12px; z-index:5;
+      width:34px; height:34px; border-radius:10px; border:1px solid rgba(255,255,255,.14);
+      background:rgba(7,21,13,.55); backdrop-filter:blur(4px); color:#dfeae3;
+      display:flex; align-items:center; justify-content:center; cursor:pointer;
+      transition:background .15s, transform .15s;
+    }
+    .rc-flip-btn:hover { background:rgba(92,201,142,.22); }
+    .rc-flip-btn svg { transition:transform .5s ease; }
+    .review-card-flip-inner.flipped .rc-flip-btn svg { transform:rotate(180deg); }
+    .rc-flip-btn.has-comment { border-color:rgba(92,201,142,.5); }
+    .rc-comment-label {
+      position:absolute; top:18px; right:52px; z-index:5;
+      font-size:.68rem; font-weight:700; color:var(--muted);
+      background:rgba(7,21,13,.55); border:1px solid rgba(255,255,255,.14); border-radius:8px;
+      padding:.3rem .5rem;
+    }
+    .rc-comment-label.has-comment { color:#8ee26f; border-color:rgba(92,201,142,.5); }
+    .rl-bulk-view-btn {
+      height:42px; padding:0 14px; border-radius:11px; background:#173322;
+      border:1px solid rgba(255,255,255,.12); color:#dfeae3; font:inherit; font-size:13px; font-weight:700;
+      cursor:pointer; white-space:nowrap;
+    }
+    .rl-bulk-view-btn:hover { background:rgba(92,201,142,.16); border-color:rgba(92,201,142,.4); }
+    .rl-bulk-view-btn.active { background:rgba(92,201,142,.22); border-color:rgba(92,201,142,.5); color:#8ee26f; }
+    .review-card-back-body { flex:1; padding:0 20px 20px; overflow-y:hidden; display:flex; flex-direction:column; min-height:0; }
+    .review-card-back-title { font-size:.72rem; color:var(--muted); margin:0 0 .4rem; font-weight:700; }
+    .review-card-back-window {
+      background:#09201b; border:1px solid var(--line); border-radius:10px;
+      padding:14px; display:flex; align-items:flex-start; overflow-y:auto;
+      flex:1;
+    }
+    .review-card-back-text { font-size:.85rem; line-height:1.8; color:#e8f0ea; white-space:pre-wrap; word-break:break-word; margin:0; }
     #reviewList { display:grid; grid-template-columns:1fr; gap:20px; align-items:start; }
     .rc-head { display:flex; justify-content:space-between; align-items:flex-start; padding:16px 20px 10px; }
     .rc-name { font-weight:700; font-size:14px; color:#e8f0ea; }
     .rc-delete { background:none; border:1px solid #5a3030; color:#ffa0a0; border-radius:8px; padding:.25rem .55rem; font-size:.72rem; cursor:pointer; }
+    .rc-tags-row { display:flex; flex-wrap:wrap; gap:.35rem; padding:0 .75rem .5rem; min-height:28px; }
     .rc-charts { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 20px 12px; }
     .rc-chart-label { font-size:.73rem; color:var(--muted); margin:0 0 .3rem; }
     .rc-canvas { width:100%; height:auto; border:1px solid var(--line); border-radius:10px; background:#09201b; display:block; }
@@ -443,7 +537,7 @@
 
     /* ── REVIEW FORM ── */
     .page-title { font-size:1.2rem; font-weight:900; margin:0 0 .3rem; }
-    .page-sub { color:var(--muted); font-size:.82rem; margin:0 0 1rem; }
+    .page-sub { color:var(--muted); font-size:.78rem; margin:0 0 1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .graph-status-notice {
       display:block;
       padding:15px 20px; border-radius:14px; margin-bottom:26px;
@@ -1092,24 +1186,9 @@
        サイドナビ＋ワイドコンテンツ
     ════════════════════════════ */
     @media (min-width: 768px) {
-      /* ボトムナビ → 左サイドナビ（Claude Design案の実測値をそのまま使用） */
-      .bnav {
-        position:fixed; top:0; left:0; bottom:0; right:auto;
-        width:236px; flex-direction:column; justify-content:flex-start; align-items:stretch;
-        border-top:none; border-right:1px solid rgba(255,255,255,.05);
-        padding:26px 16px; gap:4px;
-        background:linear-gradient(180deg,#102919 0%,#07160d 90%);
-      }
-      .bnav-item {
-        flex-direction:row; justify-content:flex-start;
-        width:100%; padding:11px 13px; border-radius:11px;
-        font-size:14px; gap:13px; font-weight:500;
-        color:#b6c8bd;
-        transition:background-color .16s ease, color .16s ease;
-      }
-      .bnav-item svg { width:19px; height:19px; flex-shrink:0; }
-      .bnav-item:hover { background:rgba(255,255,255,.04); color:#eafbf0; }
-      .bnav-item.active { background:linear-gradient(90deg, rgba(92,201,142,.18), rgba(92,201,142,.04)); color:#eafbf0; box-shadow:inset 3px 0 0 #5cc98e; font-weight:700; }
+      /* PC幅ではサイドバーは常時表示、ハンバーガーボタン・スクリムは不要 */
+      .bnav { transform:translateX(0) !important; box-shadow:none !important; }
+      .mobile-hamburger-btn, .bnav-scrim { display:none !important; }
       .bnav-tip {
         margin-top:auto; padding:14px 14px 14px 15px; border-radius:13px;
         background:linear-gradient(180deg, rgba(224,178,86,.09), rgba(224,178,86,.03));
@@ -1187,7 +1266,7 @@
       #page-anime .reviews-section { padding:0 40px; max-width:1400px; margin:1rem auto 0; }
 
       /* レビューカードを3列に */
-      #reviewList { display:grid; grid-template-columns:repeat(2,1fr); gap:.85rem; align-items:start; }
+      #reviewList { display:grid; grid-template-columns:repeat(2,1fr); gap:.85rem; align-items:stretch; }
       .review-card { margin-bottom:0; }
       .rc-charts { grid-template-columns:1fr 1fr; }
 
@@ -1652,7 +1731,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.91.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.119.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -2035,6 +2114,20 @@
         <option value="newest" data-i18n="sortNewest">新しい順</option>
         <option value="oldest" data-i18n="sortOldest">古い順</option>
       </select>
+      <select id="reviewRankFilterSelect" style="height:42px;padding:0 34px 0 14px;border-radius:11px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;appearance:none;cursor:pointer;">
+        <option value="all" selected>実績：全部</option>
+        <option value="0">新人</option>
+        <option value="1">駆け出しレビュアー</option>
+        <option value="2">アニメ通</option>
+        <option value="3">グラフマイスター</option>
+        <option value="4">ベテランレビュアー</option>
+        <option value="5">エキスパート</option>
+        <option value="6">レジェンド</option>
+        <option value="7">マスターオブグラフ</option>
+        <option value="8">殿堂入り</option>
+      </select>
+      <button type="button" id="rlShowAllCommentsBtn" class="rl-bulk-view-btn" title="コメントを一括表示">コメント一括表示</button>
+      <button type="button" id="rlShowAllGraphsBtn" class="rl-bulk-view-btn" title="グラフを一括表示">グラフ一括表示</button>
     </div>
     <p id="reviewsListMeta" style="margin:.5rem 0 0;font-size:.78rem;color:var(--muted);"></p>
   </div>
@@ -2061,7 +2154,6 @@
   </header>
   <div style="padding:1rem 1rem 0;">
     <h1 class="page-title" id="reviewPageTitle">レビュー可視化フォーム</h1>
-    <p class="page-sub">批評より「特徴の見える化」を目的に、各項目を0〜10で調整してください。</p>
     <div class="graph-status-notice" id="graphStatusNotice">
       <div class="graph-status-notice-row">
         <svg class="graph-status-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5cc98e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -2606,6 +2698,14 @@
       </button>
     </div>
     <div id="settingsBlockedSection" class="mypage-section"></div>
+    <div class="mypage-section" style="padding:1rem 1.1rem;">
+      <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .5rem;">レビュー一覧の初期表示</p>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .7rem;">アニメページのレビュー一覧を開いたとき、最初にグラフ面とコメント面のどちらを表示するか選べます。</p>
+      <select id="settingsReviewInitialView" style="width:100%;height:42px;padding:0 14px;border-radius:10px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;cursor:pointer;">
+        <option value="graph">グラフ</option>
+        <option value="comment">コメント</option>
+      </select>
+    </div>
   </div>
 </div>
 
@@ -3531,10 +3631,6 @@
       <div class="mypage-hero">
         <div class="mypage-avatar-wrap">
           <div class="mypage-avatar user-avatar" id="mypageAvatarIcon">か</div>
-          <button class="mypage-avatar-edit-btn mypage-owner-only" id="mypageAvatarEditBtn" onclick="document.getElementById('avatarFileInput').click()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 10 3-3 3 3"/><path d="M12 7v11"/><rect x="3" y="15" width="18" height="6" rx="2"/></svg>
-          </button>
-          <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)" />
         </div>
         <div class="mypage-info">
           <p class="mypage-name" id="mypageUsername" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span id="mypageUsernameText">ユーザー名</span><span id="mypageCountryBadge"></span></p>
@@ -3738,7 +3834,11 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.91.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.119.0</div>
+<button type="button" class="mobile-hamburger-btn" id="mobileHamburgerBtn" aria-label="メニューを開く">
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+</button>
+<div class="bnav-scrim" id="bnavScrim"></div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -3867,15 +3967,6 @@
         return count || 0;
       },
       // アバター画像をアップロードしてpublic URLを返す
-      async uploadAvatar(userId, file) {
-        if(!sb) return null;
-        const ext = file.name.split('.').pop();
-        const path = `${userId}/avatar.${ext}`;
-        const { error } = await sb.storage.from('avatars').upload(path, file, { upsert: true });
-        if(error) { console.warn('uploadAvatar error:', error); return null; }
-        const { data } = sb.storage.from('avatars').getPublicUrl(path);
-        return data?.publicUrl || null;
-      },
     },
 
     // ── アニメページ ──
@@ -4207,6 +4298,17 @@
           .eq('user_id', userId)
           .order('created_at', { ascending: false });
         return data || [];
+      },
+      // 複数ユーザーの「質の高いレビュー数」を一括取得（レビュー一覧の実績ソート用）
+      async getQualityCountsByUserIds(userIds) {
+        if(!sb || !userIds || !userIds.length) return {};
+        const { data } = await sb.from('reviews')
+          .select('user_id,quality')
+          .in('user_id', userIds)
+          .eq('quality', true);
+        const counts = {};
+        (data||[]).forEach(row => { if(row.user_id) counts[row.user_id] = (counts[row.user_id]||0) + 1; });
+        return counts;
       },
       // マスターグラフ対象レビューを書いた作品ID一覧の元データ（isGraphValidReviewでの厳密な有効性判定はloadMyGoldAnimeIds側で行う）
       // 本人のレビューのみ削除できる（RLSでも二重に制限）
@@ -4840,6 +4942,13 @@
     try { const r=localStorage.getItem(key); const p=r?JSON.parse(r):[]; return Array.isArray(p)?p:[]; } catch { return []; }
   }
   function sj(key,val) { localStorage.setItem(key,JSON.stringify(val)); }
+  // レビュー一覧の初期表示設定（未設定時は必ずグラフを初期値にする）
+  function getReviewInitialView() {
+    try {
+      const v = localStorage.getItem('animepple-review-initial-view');
+      return v === 'comment' ? 'comment' : 'graph';
+    } catch(_) { return 'graph'; }
+  }
   function getAll() {
     const d=new Set(pj(DELETED_KEY));
     return [...pj(STORAGE_KEY),...seedAnime.filter(s=>!d.has(s.id))];
@@ -5121,10 +5230,18 @@
           if(_currentUser) renderBlockedUsers(_currentUser.id).catch(console.error);
         });
       }
+      // レビュー一覧の初期表示（グラフ／コメント）設定
+      const reviewInitialViewSel = document.getElementById('settingsReviewInitialView');
+      if(reviewInitialViewSel) {
+        reviewInitialViewSel.value = getReviewInitialView();
+        reviewInitialViewSel.onchange = () => {
+          try { localStorage.setItem('animepple-review-initial-view', reviewInitialViewSel.value); } catch(_) {}
+        };
+      }
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.91.0';
+      if(vEl) vEl.textContent = 'v0.119.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -5901,9 +6018,9 @@
       const iRect = input.getBoundingClientRect();
       const wRect = wrap.getBoundingClientRect();
       if(wRect.width < 10){ allDone=false; return; }
-      const thumbR = 8;
-      const trackLeft  = (iRect.left - wRect.left) + thumbR;
-      const trackWidth = iRect.width - thumbR * 2;
+      // つまみ半径9.5px（つまみ直径19px）ぶん内側からトラックが始まる
+      const trackLeft  = iRect.left - wRect.left + 9.5;
+      const trackWidth = iRect.width - 19;
       const dpr = window.devicePixelRatio || 1;
       const cssWidth = wRect.width;
       canvas.width  = Math.round(cssWidth * dpr);
@@ -5922,7 +6039,7 @@
         if(LABELED.has(v)){
           ctx.font='9px sans-serif';
           ctx.fillStyle = v===-1 ? 'rgba(255,107,157,0.9)' : 'rgba(140,198,160,0.7)';
-          ctx.textAlign='center';
+          ctx.textAlign = v===-1 ? 'left' : (v===10 ? 'right' : 'center');
           ctx.fillText(v===-1?t('sliderUnset'):String(v), x, 9);
         }
       });
@@ -5940,7 +6057,7 @@
       const iRect = input.getBoundingClientRect();
       const wRect = wrap.getBoundingClientRect();
       if(wRect.width < 10){ allDone=false; return; }
-      const thumbR = 8;
+      const thumbR = 9.5;
       const trackLeft  = (iRect.left - wRect.left) + thumbR;
       const trackWidth = iRect.width - thumbR * 2;
       const dpr = window.devicePixelRatio || 1;
@@ -5962,7 +6079,7 @@
         if(LABELED.has(v)){
           ctx.font='9px sans-serif';
           ctx.fillStyle = v===-1 ? 'rgba(255,107,157,0.9)' : 'rgba(140,198,160,0.7)';
-          ctx.textAlign='center';
+          ctx.textAlign = v===-1 ? 'left' : (v===10 ? 'right' : 'center');
           ctx.fillText(v===-1?t('sliderUnset'):String(v), x, 9);
         }
       });
@@ -6074,7 +6191,7 @@
     const el=document.getElementById(containerId); if(!el) return;
     el.innerHTML = labels.map((label,i)=>`
       <div class="sl-row">
-        <span>${label}</span>
+        <span class="sl-label">${label}</span>
         <div class="sl-track-wrap">
           <canvas class="sl-grid-canvas" height="18"></canvas>
           <input type="range" min="-1" max="10" step="1" value="${valuesArr[i]}" data-idx="${i}" id="rv-slider-${containerId}-${i}" class="review-slider-input" />
@@ -6088,15 +6205,23 @@
       drawGridsReview(wraps, 0);
     });
 
+    // スライダーの塗りつぶし（--fillPct）を実際の値域（min=-1, max=10）に合わせて計算する
+    const setReviewFillPct = (input) => {
+      const v = Number(input.value);
+      const pct = v < 0 ? 0 : Math.min(100, Math.max(2, (v+1)/11*100));
+      input.style.setProperty('--fillPct', pct+'%');
+    };
     el.querySelectorAll('input[type="range"]').forEach(input=>{
       const idx = Number(input.dataset.idx);
       const out = input.closest('.sl-row').querySelector('output');
       input.classList.toggle('slider-unset', valuesArr[idx]===-1);
+      setReviewFillPct(input);
       input.addEventListener('input',()=>{
         const v = Number(input.value);
         valuesArr[idx]=v;
         if(out) out.textContent = v===-1?t('sliderUnset'):v;
         input.classList.toggle('slider-unset', v===-1);
+        setReviewFillPct(input);
         onInputCb();
       });
     });
@@ -6686,15 +6811,15 @@
      ユーザーの上質レビュー累計数で称号と重みを決定する
   ════════════════════════════ */
   const RANK_TIERS = [
-    { name:'新人',           min:0,  max:2,        weight:1.0 },
-    { name:'駆け出しレビュアー', min:3,  max:7,        weight:1.1 },
-    { name:'アニメ通',       min:8,  max:15,       weight:1.2 },
-    { name:'グラフマイスター', min:16, max:29,       weight:1.35 },
-    { name:'ベテランレビュアー', min:30, max:49,       weight:1.5 },
-    { name:'エキスパート',   min:50, max:69,       weight:1.65 },
-    { name:'レジェンド',     min:70, max:89,       weight:1.8 },
-    { name:'マスターオブグラフ', min:90, max:99,       weight:1.9 },
-    { name:'殿堂入り',       min:100, max:Infinity, weight:2.0 },
+    { name:'新人',           min:0,  max:2,        weight:1.0,  tier:'green',    color:'#5ec97a', colorSoft:'rgba(94,201,122,.16)' },
+    { name:'駆け出しレビュアー', min:3,  max:7,        weight:1.1,  tier:'bronze',  color:'#cd7f32', colorSoft:'rgba(205,127,50,.16)' },
+    { name:'アニメ通',       min:8,  max:15,       weight:1.2,  tier:'bronze',  color:'#cd7f32', colorSoft:'rgba(205,127,50,.16)' },
+    { name:'グラフマイスター', min:16, max:29,       weight:1.35, tier:'silver',  color:'#c0c8d0', colorSoft:'rgba(192,200,208,.18)' },
+    { name:'ベテランレビュアー', min:30, max:49,       weight:1.5,  tier:'silver',  color:'#c0c8d0', colorSoft:'rgba(192,200,208,.18)' },
+    { name:'エキスパート',   min:50, max:69,       weight:1.65, tier:'gold',    color:'#d9a441', colorSoft:'rgba(217,164,65,.18)' },
+    { name:'レジェンド',     min:70, max:89,       weight:1.8,  tier:'gold',    color:'#d9a441', colorSoft:'rgba(217,164,65,.18)' },
+    { name:'マスターオブグラフ', min:90, max:99,       weight:1.9,  tier:'platinum', color:'#c9e3e0', colorSoft:'rgba(201,227,224,.22)' },
+    { name:'殿堂入り',       min:100, max:Infinity, weight:2.0,  tier:'legend',   color:'#b18cf2', colorSoft:'rgba(177,140,242,.22)' },
   ];
 
   function getRankByQualityCount(qualityCount) {
@@ -7560,6 +7685,15 @@
     if(commentCountEl) commentCountEl.textContent = '0 字';
     setTimeout(()=>redrawReview(),50);
     renderTagSuggestions(id);
+    // 開いた瞬間にスライダー全体が画面内に収まるよう自動スクロール
+    setTimeout(()=>{
+      const swiper = document.getElementById('reviewSliderSwiper');
+      if(swiper) {
+        const rect = swiper.getBoundingClientRect();
+        const targetY = window.scrollY + rect.bottom - window.innerHeight + 24;
+        if(targetY > 0) window.scrollTo({ top: targetY, behavior:'auto' });
+      }
+    }, 80);
   }
 
   // タグ候補を表示: そのアニメの人気タグTOP3 + Kitsuジャンル（重複除去）
@@ -7616,6 +7750,9 @@
       if(ca) drawRadar(ca,getAxisA(),dispA,'rgba(88,201,132,0.35)','#8fe5ab');
       if(cb) drawRadar(cb,getAxisB(),dispB,'rgba(255,153,153,0.32)','#ffaaaa');
     }
+    // スライダー本体の色も、12軸すべて埋まったら緑→青に切り替える
+    const sliderSwiper = document.getElementById('reviewSliderSwiper');
+    if(sliderSwiper) sliderSwiper.classList.toggle('all-complete', isComplete);
 
     // 案内文の切り替え
     const notice = document.getElementById('graphStatusNotice');
@@ -9398,7 +9535,6 @@
     noReview:   { ja:'まだレビューがありません。最初の可視化レビューを投稿しましょう。',en:'No reviews yet. Be the first to post a visual review!',ko:'아직 리뷰가 없습니다. 첫 시각화 리뷰를 올려보세요.','zh-tw':'尚無評論。成為第一個發表視覺評論的人！','zh-cn':'还没有评论。成为第一个发表可视化评论的人！',es:'Sin reseñas aún. ¡Sé el primero en publicar!',fr:'Pas encore d\'avis. Soyez le premier à publier !',pt:'Sem avaliações ainda. Seja o primeiro!',de:'Noch keine Bewertungen. Sei der Erste!',ar:'لا توجد مراجعات بعد. كن أول من ينشر!',th:'ยังไม่มีรีวิว มาเป็นคนแรกกันเถอะ!',id:'Belum ada ulasan. Jadilah yang pertama!',ru:'Пока нет отзывов. Будьте первым!',it:'Nessuna recensione. Sii il primo!',vi:'Chưa có đánh giá. Hãy là người đầu tiên!' },
     // レビューフォーム
     reviewFormTitle: { ja:'レビュー可視化フォーム',en:'Visual Review Form',ko:'리뷰 시각화 폼','zh-tw':'視覺化評論表單','zh-cn':'可视化评论表单',es:'Formulario de reseña visual',fr:'Formulaire d\'avis visuel',pt:'Formulário de avaliação visual',de:'Visuelles Bewertungsformular',ar:'نموذج المراجعة البصرية',th:'แบบฟอร์มรีวิวภาพ',id:'Formulir Ulasan Visual',ru:'Форма визуального отзыва',it:'Modulo recensione visiva',vi:'Biểu mẫu đánh giá trực quan' },
-    reviewFormSub:   { ja:'批評より「特徴の見える化」を目的に、各項目を0〜10で調整してください。',en:'Adjust each item from 0–10 to visualize the anime\'s characteristics.',ko:'각 항목을 0~10으로 조정해 특성을 시각화하세요.','zh-tw':'將每個項目從0調整到10，以視覺化動畫特徵。','zh-cn':'将每个项目从0调整到10，以可视化动漫特征。',es:'Ajusta cada elemento de 0 a 10 para visualizar las características.',fr:'Réglez chaque élément de 0 à 10 pour visualiser les caractéristiques.',pt:'Ajuste cada item de 0 a 10 para visualizar as características.',de:'Stelle jeden Punkt von 0–10 ein, um die Merkmale zu visualisieren.',ar:'اضبط كل عنصر من 0 إلى 10 لتصور خصائص الأنمي.',th:'ปรับแต่ละแกน 0-10 เพื่อแสดงลักษณะของอนิเมะ',id:'Sesuaikan tiap item 0-10 untuk memvisualisasikan karakteristik anime.',ru:'Настройте каждый пункт от 0 до 10, чтобы визуализировать характеристики аниме.',it:'Regola ogni voce da 0 a 10 per visualizzare le caratteristiche.',vi:'Chỉnh mỗi mục từ 0-10 để trực quan hóa đặc điểm anime.' },
     chartATitle: { ja:'作品の完成度',en:'Production Quality',ko:'작품 완성도','zh-tw':'作品完成度','zh-cn':'作品完成度',es:'Calidad de producción',fr:'Qualité de production',pt:'Qualidade de produção',de:'Produktionsqualität',ar:'جودة الإنتاج',th:'คุณภาพงานสร้าง',id:'Kualitas Produksi',ru:'Качество продукции',it:'Qualità produttiva',vi:'Chất lượng sản xuất' },
     chartBTitle: { ja:'感情・雰囲気',en:'Mood & Atmosphere',ko:'감정·분위기','zh-tw':'情感·氛圍','zh-cn':'情感·氛围',es:'Emoción y ambiente',fr:'Émotion et ambiance',pt:'Emoção e atmosfera',de:'Stimmung & Atmosphäre',ar:'المزاج والأجواء',th:'อารมณ์และบรรยากาศ',id:'Suasana & Nuansa',ru:'Настроение и атмосфера',it:'Atmosfera ed emozione',vi:'Cảm xúc & Bầu không khí' },
     labelUsername: { ja:'ユーザー名',en:'Username',ko:'유저명','zh-tw':'使用者名稱','zh-cn':'用户名',es:'Nombre de usuario',fr:'Nom d\'utilisateur',pt:'Nome de usuário',de:'Benutzername',ar:'اسم المستخدم',th:'ชื่อผู้ใช้',id:'Nama pengguna',ru:'Имя пользователя',it:'Nome utente',vi:'Tên người dùng' },
@@ -9884,8 +10020,6 @@
     // レビューフォーム
     const rvTitle = document.getElementById('reviewPageTitle');
     // タイトルはinitReviewPage内で動的設定のため、プレフィックスのみ更新
-    const rvSub = document.querySelector('#page-review .page-sub');
-    if (rvSub) rvSub.textContent = t('reviewFormSub');
     const chartATitleEl = document.querySelector('#page-review .chart-wrap:nth-child(1) h2');
     if (chartATitleEl) chartATitleEl.textContent = t('chartATitle');
     const chartBTitleEl = document.querySelector('#page-review .chart-wrap:nth-child(2) h2');
@@ -12278,7 +12412,24 @@
       if(_blockedUserIds === null) await loadMyBlockedUserIds();
       allRevs = allRevs.filter(r => !_blockedUserIds.has(r.userId || r.user_id));
     }
-    const filtered = filterReviews(allRevs);
+    let filtered = filterReviews(allRevs);
+    const rankFilterSel = document.getElementById('reviewRankFilterSelect');
+    const rankFilterVal = rankFilterSel ? rankFilterSel.value : 'all';
+    let filteredQualityCounts = {};
+    if(rankFilterVal !== 'all') {
+      // 実績フィルター：選んだランクの投稿者のレビューだけに絞り込む
+      const allUserIds = [...new Set(filtered.map(r=>r.userId||r.user_id).filter(Boolean))];
+      if(sb && allUserIds.length) {
+        try { filteredQualityCounts = await db.reviews.getQualityCountsByUserIds(allUserIds); }
+        catch(e) { console.warn('quality counts fetch:', e); }
+      }
+      const targetRankIdx = Number(rankFilterVal);
+      filtered = filtered.filter(r => {
+        const uid = r.userId || r.user_id;
+        const qc = uid ? (filteredQualityCounts[uid] || 0) : 0;
+        return RANK_TIERS.indexOf(getRankByQualityCount(qc)) === targetRankIdx;
+      });
+    }
     const metaEl = document.getElementById('reviewsListMeta');
     if(metaEl) metaEl.textContent = `${filtered.length}件`;
     // renderReviewListをフィルター対応版で上書き的に呼び出す
@@ -12287,7 +12438,7 @@
     if(!filtered.length) { el.innerHTML=`<p class="empty-msg">${t('noReviewFilter')}</p>`; return; }
     const sortSel = document.getElementById('reviewSortSelect');
     const sortVal = sortSel ? sortSel.value : 'newest';
-    const sortedAll = [...filtered].sort((a,b)=>{
+    let sortedAll = [...filtered].sort((a,b)=>{
       return sortVal==='oldest'?getReviewTime(a)-getReviewTime(b):getReviewTime(b)-getReviewTime(a);
     });
     // 本人のレビューは常に先頭にくるようにする
@@ -12304,6 +12455,7 @@
 
     // アカウント登録済みユーザーのアイコン画像をまとめて取得
     let avatarMap = {};
+    let cardRankQualityCounts = {};
     if(sb) {
       const userIds = [...new Set(sorted.map(r=>r.userId||r.user_id).filter(Boolean))];
       if(userIds.length) {
@@ -12311,6 +12463,9 @@
           const profiles = await db.profiles.getByIds(userIds);
           profiles.forEach(p=>{ if(p.avatar_url) avatarMap[p.id]=p.avatar_url; });
         } catch(e) { console.warn('review avatar fetch:', e); }
+        try {
+          cardRankQualityCounts = (rankFilterVal !== 'all') ? filteredQualityCounts : await db.reviews.getQualityCountsByUserIds(userIds);
+        } catch(e) { console.warn('review rank fetch:', e); }
       }
     }
 
@@ -12319,6 +12474,8 @@
       const name = rev.userName||rev.username||'ゲスト';
       const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
       const userId = rev.userId || rev.user_id || null;
+      const cardQualityCount = userId ? (cardRankQualityCounts[userId] || 0) : 0;
+      const cardRank = getRankByQualityCount(cardQualityCount);
       const avatarUrl = userId ? avatarMap[userId] : null;
       const iconBg = avatarUrl ? 'transparent' : (name==='ゲスト'?'rgba(140,198,160,0.2)':colors[name.charCodeAt(0)%colors.length]);
       const iconContent = avatarUrl
@@ -12343,7 +12500,18 @@
               <button type="button" class="rc-block-btn" data-uid="${escapeHtml(userId)}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#b6c8bd;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('blockBtn'))}</button>
             </div>
           </div>` : '');
-      return `<article class="review-card">
+      const commentTextEscaped = (rev.comment||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const hasComment = !!(rev.comment && rev.comment.trim());
+      const backHtml = rev.isAiGenerated
+        ? `<p class="review-card-back-text" style="color:var(--muted);">${t('aiGeneratedDisclaimer')}</p>`
+        : `<p class="review-card-back-text">${commentTextEscaped || '<span style="color:var(--muted);">コメントはありません</span>'}</p>`;
+      return `<div class="review-card-flip-wrap">
+      <div class="review-card-flip-inner" id="rc-flip-${i}">
+        <article class="review-card review-card-face review-card-front" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
+        <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="コメントを見る">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        </button>
+        <span class="rc-comment-label${hasComment?' has-comment':''}">${hasComment?'コメントあり':'コメントなし'}</span>
         <div class="rc-head">
           <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;">
             <div${userOnclick} style="width:40px;height:40px;border-radius:11px;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
@@ -12354,18 +12522,33 @@
             ${deleteBtnHtml}
           </div>
         </div>
-        ${tags?`<div style="display:flex;flex-wrap:wrap;gap:.35rem;padding:0 .75rem .5rem;">${tags}</div>`:''}
+        <div class="rc-tags-row">${tags}</div>
         <div class="rc-charts">
           <div><p class="rc-chart-label">${t('chartATitle')}</p><canvas class="rc-canvas" data-fai="${i}" width="280" height="200"></canvas></div>
           <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-fbi="${i}" width="280" height="200"></canvas></div>
         </div>
-        ${rev.isAiGenerated
-          ? `<div class="rc-comment"><p class="rc-comment-text" style="color:var(--muted);font-size:.74rem;line-height:1.5;">${t('aiGeneratedDisclaimer')}</p></div>`
-          : `<div class="rc-comment">
-          <button class="rc-comment-btn" data-fci="${i}">コメントを読む ▾</button>
-          <p class="rc-comment-text" style="display:none;">${(rev.comment||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
-        </div>`}
-      </article>`;
+        </article>
+        <article class="review-card review-card-face review-card-back" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
+          <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="戻る">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          </button>
+          <div class="rc-head">
+            <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;">
+              <div${userOnclick} style="width:40px;height:40px;border-radius:11px;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+              <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
+                <span class="rc-name"${userOnclick}>${name}${flag}</span>
+                <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
+              </div>
+            </div>
+          </div>
+          <div class="rc-tags-row">${tags}</div>
+          <div class="review-card-back-body">
+            <p class="review-card-back-title">コメント</p>
+            <div class="review-card-back-window" id="rc-back-window-${i}">${backHtml}</div>
+          </div>
+        </article>
+      </div>
+      </div>`;
     }).join('');
     // もっと見るボタン（まだ表示していない件数が残っている場合のみ）
     if(sortedAll.length > sorted.length) {
@@ -12384,13 +12567,59 @@
       const ca=el.querySelector(`[data-fai="${i}"]`),cb=el.querySelector(`[data-fbi="${i}"]`);
       if(ca) drawRadar(ca,labA,labA.map((_,j)=>Number(rev.chartA&&rev.chartA[axisA[j]]||0)),'rgba(88,201,132,0.35)','#8fe5ab');
       if(cb) drawRadar(cb,labB,labB.map((_,j)=>Number(rev.chartB&&rev.chartB[axisB[j]]||0)),'rgba(255,153,153,0.32)','#ffaaaa');
-      const btn=el.querySelector(`[data-fci="${i}"]`);
-      if(btn){
-        const txt=btn.nextElementSibling;
-        if(!txt||!txt.textContent.trim()){btn.style.display='none';}
-        else{btn.onclick=()=>{const o=txt.style.display!=='none';txt.style.display=o?'none':'';btn.textContent=(o?'▶ ':'▼ ')+t('commentExpandLabel');};}
-      }
     });
+    // コメントウィンドウはCSSのflexで自動的に表面のグラフエリアと同じ高さまで広がる
+    // レビューカードのフリップ（カードサイズはそのまま、回転してコメント面を表示）
+    function flipCard(flipTargetId, showComment) {
+      const target = document.getElementById(flipTargetId);
+      if(!target) return;
+      const current = Number(target.dataset.flipDeg || 0);
+      const isCurrentlyFlipped = current % 360 !== 0;
+      if(showComment === isCurrentlyFlipped) return; // 既に目的の面を向いている
+      const next = current + 180;
+      target.dataset.flipDeg = next;
+      target.style.transform = `rotateY(${next}deg)`;
+      target.classList.toggle('flipped', next % 360 !== 0);
+    }
+    el.querySelectorAll('.rc-flip-btn').forEach(btn=>{
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const target = document.getElementById(btn.dataset.flipTarget);
+        if(!target) return;
+        const isCurrentlyFlipped = (Number(target.dataset.flipDeg || 0)) % 360 !== 0;
+        flipCard(btn.dataset.flipTarget, !isCurrentlyFlipped);
+      };
+    });
+    // 設定「レビュー一覧の初期表示」に応じて、開いた時点の面を揃える（未設定時は必ずグラフ・アニメーションなしで即座に反映）
+    if(getReviewInitialView() === 'comment') {
+      sorted.forEach((rev,i)=>{
+        const target = document.getElementById(`rc-flip-${i}`);
+        if(!target) return;
+        target.style.transition = 'none';
+        target.dataset.flipDeg = 180;
+        target.style.transform = 'rotateY(180deg)';
+        target.classList.add('flipped');
+        // 次のフレームでtransitionを戻す（以降のクリック操作は通常通りアニメーションさせる）
+        requestAnimationFrame(()=>{ target.style.transition = ''; });
+      });
+    }
+    // ソート隣：全カードを一括でコメント面／グラフ面に切り替えるボタン
+    const bulkCommentsBtn = document.getElementById('rlShowAllCommentsBtn');
+    const bulkGraphsBtn = document.getElementById('rlShowAllGraphsBtn');
+    if(bulkCommentsBtn) {
+      bulkCommentsBtn.onclick = () => {
+        sorted.forEach((rev,i)=>flipCard(`rc-flip-${i}`, true));
+        bulkCommentsBtn.classList.add('active');
+        if(bulkGraphsBtn) bulkGraphsBtn.classList.remove('active');
+      };
+    }
+    if(bulkGraphsBtn) {
+      bulkGraphsBtn.onclick = () => {
+        sorted.forEach((rev,i)=>flipCard(`rc-flip-${i}`, false));
+        bulkGraphsBtn.classList.add('active');
+        if(bulkCommentsBtn) bulkCommentsBtn.classList.remove('active');
+      };
+    }
     el.querySelectorAll('.rc-delete-btn').forEach(btn=>{
       btn.onclick = async () => {
         const reviewId = btn.dataset.reviewId;
@@ -12503,6 +12732,13 @@
       const newSel = sortSel.cloneNode(true);
       sortSel.parentNode.replaceChild(newSel, sortSel);
       newSel.addEventListener('change', ()=>{ renderReviewsListFiltered(id); });
+    }
+    // 実績フィルター変更
+    const rankSel = document.getElementById('reviewRankFilterSelect');
+    if(rankSel) {
+      const newRankSel = rankSel.cloneNode(true);
+      rankSel.parentNode.replaceChild(newRankSel, rankSel);
+      newRankSel.addEventListener('change', ()=>{ renderReviewsListFiltered(id); });
     }
 
     // データ取得して描画
@@ -13228,43 +13464,6 @@
   }
 
   window.showAuthModal = showAuthModal;
-  // アバター画像アップロード処理
-  async function handleAvatarUpload(event) {
-    const file = event.target.files[0];
-    if(!file) return;
-    if(!_currentUser || !sb) { showAuthModal('login'); return; }
-
-    // ファイルサイズ制限（5MB）
-    if(file.size > 5 * 1024 * 1024) {
-      alert('画像サイズは5MB以下にしてください');
-      return;
-    }
-    // 画像ファイルかどうかの簡易チェック
-    if(!file.type.startsWith('image/')) {
-      alert('画像ファイルを選択してください');
-      return;
-    }
-
-    const editBtn = document.getElementById('mypageAvatarEditBtn');
-    if(editBtn) editBtn.textContent = '…';
-
-    try {
-      const url = await db.profiles.uploadAvatar(_currentUser.id, file);
-      if(url) {
-        await db.profiles.upsert(_currentUser.id, { avatar_url: url });
-        renderMypage();
-      } else {
-        alert('アップロードに失敗しました。もう一度お試しください。');
-      }
-    } catch(e) {
-      console.warn('handleAvatarUpload error:', e);
-      alert('アップロードに失敗しました。もう一度お試しください。');
-    } finally {
-      if(editBtn) editBtn.textContent = '📷';
-      event.target.value = ''; // 同じファイルを再選択できるようリセット
-    }
-  }
-
   window.closeAuthModal = closeAuthModal;
   window.authSubmit = authSubmit;
   window.signOut = signOut;
@@ -13273,9 +13472,34 @@
   window.openProfileEdit = openProfileEdit;
   window.closeProfileEdit = closeProfileEdit;
   window.saveProfileEdit = saveProfileEdit;
-  window.handleAvatarUpload = handleAvatarUpload;
 
   document.getElementById('bnav-home').classList.add('active');
+
+  // スマホ版：左上ハンバーガーボタンでサイドバーをスライドイン
+  const _hamburgerBtn = document.getElementById('mobileHamburgerBtn');
+  const _bnavScrim = document.getElementById('bnavScrim');
+  const _globalBnav = document.getElementById('globalBnav');
+  function closeMobileNav() {
+    _globalBnav?.classList.remove('mobile-open');
+    _bnavScrim?.classList.remove('mobile-open');
+  }
+  function openMobileNav() {
+    _globalBnav?.classList.add('mobile-open');
+    _bnavScrim?.classList.add('mobile-open');
+  }
+  if(_hamburgerBtn) {
+    _hamburgerBtn.onclick = () => {
+      if(_globalBnav?.classList.contains('mobile-open')) closeMobileNav();
+      else openMobileNav();
+    };
+  }
+  if(_bnavScrim) _bnavScrim.onclick = closeMobileNav;
+  // メニュー内のボタンをタップしたら自動で閉じる（PC幅では何もしない）
+  if(_globalBnav) {
+    _globalBnav.querySelectorAll('button, a').forEach(el=>{
+      el.addEventListener('click', () => { if(window.innerWidth < 768) closeMobileNav(); });
+    });
+  }
 
 })();
 </script>
