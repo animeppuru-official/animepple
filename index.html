@@ -1603,7 +1603,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.59.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.60.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -2977,6 +2977,10 @@
             <h1>なぜ人気なのか</h1>
             <p>作品を12軸の感性データで分析し、人気形成要因を可視化します。</p>
           </div>
+          <div class="conclusion-hero" style="--pack-color:var(--brand);">
+            <div class="conclusion-hero-label">訴求力スコア</div>
+            <div class="conclusion-hero-score" id="sentimentConclusionScore">—</div>
+          </div>
           <div class="anime-hero">
             <img id="sentimentHeroImg" src="https://placehold.co/128x176/182036/8894b0?text=A" alt="" />
             <div>
@@ -3024,6 +3028,10 @@
             <h1>誰が愛しているのか</h1>
             <p>年代・性別のセグメント別に、どの感情軸が刺さっているかを分析します。</p>
           </div>
+          <div class="conclusion-hero" style="--pack-color:var(--blue);">
+            <div class="conclusion-hero-label">熱狂度スコア</div>
+            <div class="conclusion-hero-score" id="fanConclusionScore">—</div>
+          </div>
           <div class="panel">
             <div class="panel-title">年代 × 感情軸 嗜好マップ<span class="hint">濃いほど高評価</span></div>
             <div id="heatmap" class="heat"></div>
@@ -3055,6 +3063,10 @@
             <div class="eyebrow">Anime Trend Forecast</div>
             <h1>次に伸びる作品</h1>
             <p>PVの伸び・タグの勢い・市場センチメントから急上昇シグナルを検知します。</p>
+          </div>
+          <div class="conclusion-hero" style="--pack-color:var(--warn);">
+            <div class="conclusion-hero-label">勢いスコア</div>
+            <div class="conclusion-hero-score" id="trendConclusionScore">—</div>
           </div>
           <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
             <div class="kpi" style="--kc:var(--good)">
@@ -3102,6 +3114,10 @@
             <h1>どの国に売るか</h1>
             <p>国別の視聴熱量・転換率・ローカライズ適性から海外展開の優先度を判断します。</p>
           </div>
+          <div class="conclusion-hero" style="--pack-color:var(--cyan);">
+            <div class="conclusion-hero-label">海外適性スコア</div>
+            <div class="conclusion-hero-score" id="globalConclusionScore">—</div>
+          </div>
           <div class="grid-2">
             <div class="panel">
               <div class="panel-title">国別視聴熱量ランキング</div>
@@ -3137,6 +3153,10 @@
             <h1>ユーザーはどう選ぶか</h1>
             <p>流入経路・検索需要・バイラル係数から、獲得と拡散の設計を分析します。</p>
           </div>
+          <div class="conclusion-hero" style="--pack-color:#f4a261;">
+            <div class="conclusion-hero-label">動線効率スコア</div>
+            <div class="conclusion-hero-score" id="consumerConclusionScore">—</div>
+          </div>
           <div class="grid-2">
             <div class="panel">
               <div class="panel-title">流入経路</div>
@@ -3169,6 +3189,10 @@
             <div class="eyebrow">IP Strategy</div>
             <h1>このIPをどう伸ばすか</h1>
             <p>ブランド力・ファンダム寿命・続編需要から、IPの投資判断を支援します。</p>
+          </div>
+          <div class="conclusion-hero" style="--pack-color:#ff8fa3;">
+            <div class="conclusion-hero-label">将来性スコア</div>
+            <div class="conclusion-hero-score" id="ipConclusionScore">—</div>
           </div>
           <div class="kpi-row">
             <div class="kpi" style="--kc:var(--brand)"><div class="k-label">Brand Power</div><div class="k-val" id="ipKpiBrand">46.1</div><div class="k-sub">総合スコア</div></div>
@@ -3553,7 +3577,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.59.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.60.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4898,7 +4922,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.59.0';
+      if(vEl) vEl.textContent = 'v0.60.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -10675,6 +10699,20 @@
         fetchPartnerDataset('ip_strategy&animeId=' + encodeURIComponent(animeId) + countryQ),
       ]);
       const esc = (s) => (window.escapeHtml ? escapeHtml(String(s??'')) : String(s??''));
+
+      // ── 結論レイヤー：6パックの結論スコアを最上部に反映 ──
+      const setConclusion = (id, score) => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        if(score === null || score === undefined || score === '') { el.textContent = '—（データ不足）'; el.style.fontSize=''; }
+        else { el.innerHTML = (Math.round(score*10)/10) + '<span style="font-size:1.1rem;font-weight:700;margin-left:.2rem;opacity:.8;">点</span>'; }
+      };
+      setConclusion('sentimentConclusionScore', sentiment.conclusionScore);
+      setConclusion('fanConclusionScore', fanInsight.conclusionScore);
+      setConclusion('trendConclusionScore', trend.conclusionScore);
+      setConclusion('globalConclusionScore', global.conclusionScore);
+      setConclusion('consumerConclusionScore', consumer.conclusionScore);
+      setConclusion('ipConclusionScore', ip.conclusionScore);
 
       // ── ダッシュボードKPI ──
       const bp = sentiment.brandPower || {};
