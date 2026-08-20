@@ -33,7 +33,13 @@
     html { -webkit-text-size-adjust:100%; }
     body { margin:0; font-family:"Hiragino Sans","Yu Gothic UI","Segoe UI",sans-serif; background:var(--bg) radial-gradient(120% 90% at 78% -5%, #16301f 0%, #0d1d13 46%, #081109 100%) fixed; color:var(--text); line-height:1.55; overscroll-behavior-y:none; }
     a { color:inherit; text-decoration:none; cursor:pointer; }
-    button { font-family:inherit; }
+    button { font-family:inherit; cursor:pointer; }
+    button:disabled { cursor:not-allowed; }
+    a, [onclick], [role="button"], .clickable { cursor:pointer; }
+    select { cursor:pointer; }
+    input[type="checkbox"], input[type="radio"] { cursor:pointer; }
+    input[type="range"] { cursor:pointer; }
+    input[type="text"], input[type="number"], input[type="search"], input[type="email"], input[type="password"], input:not([type]), textarea { cursor:text; }
     /* Claude Design案：ボタン・リンク共通のホバー演出（浮き上がり＋わずかな拡大） */
     button, a, [role="button"] { transition: transform .16s cubic-bezier(.34,1.56,.64,1), background-color .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease; }
     a:hover { color: #93e2b7; }
@@ -139,9 +145,9 @@
 
     .filter-box { background:linear-gradient(180deg,#173026,#0f2117); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:14px 12px; margin-bottom:.6rem; box-shadow:0 10px 26px -18px rgba(0,0,0,.7); }
     .filter-box h3 { margin:0 0 .55rem; font-size:.88rem; }
-    .sl-row { display:flex; align-items:center; gap:11px; padding:8px 8px; border-radius:9px; background:transparent; box-shadow:none; margin-bottom:2px; transition:background .15s; }
+    .sl-row { display:flex; align-items:center; gap:11px; padding:10px 8px; border-radius:9px; background:transparent; box-shadow:none; margin-bottom:2px; transition:background .15s; }
     .sl-row.is-priority { background:rgba(217,164,65,.08); box-shadow:inset 3px 0 0 #d9a441; }
-    .sl-label { width:70px; flex:0 0 70px; display:flex; align-items:center; gap:5px; font-size:12px; color:#dfeae3; }
+    .sl-label { width:58px; flex:0 0 58px; display:flex; align-items:center; gap:4px; flex-wrap:wrap; font-size:12px; color:#dfeae3; line-height:1.2; }
     .sl-priority-badge { align-items:center; height:15px; padding:0 5px; border-radius:4px; background:#d9a441; color:#3a2a06; font-size:8.5px; font-weight:700; }
     .sl-row output { width:22px; flex:0 0 22px; text-align:right; font-size:12.5px; font-weight:700; color:#e8f0ea; }
     .sl-priority-btn {
@@ -160,33 +166,51 @@
     }
     .sl-track-wrap input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance:none; appearance:none;
-      width:14px; height:14px; border-radius:50%;
+      width:19px; height:19px; border-radius:50%;
       background:#fff; border:none; box-shadow:0 1px 4px rgba(0,0,0,.45);
-      margin-top:-4.5px; cursor:pointer;
+      margin-top:-7px; cursor:pointer;
     }
     .sl-track-wrap input[type="range"]::-webkit-slider-runnable-track {
-      height:5px; border-radius:3px;
+      height:7px; border-radius:4px;
       background:linear-gradient(to right, #5cc98e var(--fillPct,0%), rgba(255,255,255,.1) var(--fillPct,0%));
     }
     .sl-track-wrap input[type="range"].slider-unset::-webkit-slider-runnable-track {
       background:rgba(255,255,255,.1);
     }
     .sl-track-wrap input[type="range"]::-moz-range-thumb {
-      width:14px; height:14px; border-radius:50%;
+      width:19px; height:19px; border-radius:50%;
       background:#fff; border:none; box-shadow:0 1px 4px rgba(0,0,0,.45); cursor:pointer;
     }
     .sl-track-wrap input[type="range"]::-moz-range-track {
-      height:5px; border-radius:3px; background:rgba(255,255,255,.1);
+      height:7px; border-radius:4px; background:rgba(255,255,255,.1);
     }
     .sl-track-wrap input[type="range"]::-moz-range-progress {
-      height:5px; border-radius:3px; background:#5cc98e;
+      height:7px; border-radius:4px; background:#5cc98e;
     }
     .sl-track-wrap input[type="range"].slider-unset::-moz-range-progress {
       background:rgba(255,255,255,.1);
     }
-    .sort-row { display:flex; flex-direction:column; gap:.35rem; margin-bottom:.7rem; }
+    .sort-row { display:flex; align-items:flex-end; gap:.6rem; margin-bottom:.7rem; flex-wrap:wrap; }
+    .sort-row-sort { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:.35rem; }
     .sort-row label { font-size:.82rem; color:var(--muted); }
-    .sort-row select { padding:.6rem .75rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:var(--text); font:inherit; }
+    .sort-row select { padding:.6rem .75rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:var(--text); font:inherit; width:100%; }
+    .sort-row-era { flex:0 0 auto; display:flex; flex-direction:column; gap:.35rem; }
+    .sort-row-era-toggle { display:flex; align-items:center; gap:.35rem; font-size:.78rem; color:var(--muted); white-space:nowrap; cursor:pointer; }
+    .sort-row-era-toggle input[type="checkbox"] { accent-color:var(--brand); width:15px; height:15px; cursor:pointer; }
+    .sort-row-era-inputs { display:flex; align-items:center; gap:.3rem; }
+    .sort-row-era-inputs input[type="number"] {
+      width:5.2em; padding:.5rem .5rem; border-radius:9px; background:var(--card2); border:1px solid var(--line); color:var(--text); font:inherit; text-align:center; opacity:.4; pointer-events:none; cursor:not-allowed; transition:opacity .15s;
+    }
+    .sort-row-era-inputs input[type="number"].active { opacity:1; pointer-events:auto; cursor:text; }
+    .sort-row-era-inputs span { color:var(--muted); font-size:.78rem; }
+    /* 人気ページの年代入力欄はチェックボックス連動なし＝常に操作可能 */
+    .sort-row-era-inputs input.pop-year-input { opacity:1; pointer-events:auto; cursor:text; }
+    /* 年代入力欄はスピナー矢印を消し、完全な打ち込み入力にする */
+    .sort-row-era-inputs input[type="number"]::-webkit-outer-spin-button,
+    .sort-row-era-inputs input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance:none; margin:0;
+    }
+    .sort-row-era-inputs input[type="number"] { -moz-appearance:textfield; appearance:textfield; }
 
 
     /* ── MASCOT ── */
@@ -199,7 +223,7 @@
     .mascot-balloon {
       background:#e8f0ea; color:#12241a; font-size:.68rem; font-weight:700;
       border-radius:16px 16px 16px 4px; padding:.35rem .55rem;
-      line-height:1.5; text-align:center; white-space:nowrap;
+      line-height:1.5; text-align:center; white-space:normal; word-break:break-word; max-width:100%;
       box-shadow:0 12px 30px -14px rgba(0,0,0,.6);
       margin-bottom:.3rem; position:relative;
     }
@@ -247,9 +271,9 @@
     .sec-head small { color:var(--muted); font-size:.8rem; }
 
     /* ── HSCROLL ── */
-    .carousel-wrap { position:relative; overflow:hidden; width:100%; }
+    .carousel-wrap { position:relative; overflow:hidden; width:100%; padding-top:6px; margin-top:-6px; }
     .carousel-track { display:flex; transition:transform .15s ease; will-change:transform; padding:0; margin:0; gap:0; }
-    .carousel-page { display:flex; gap:.65rem; padding:0 1rem .75rem; flex-shrink:0; box-sizing:border-box; }
+    .carousel-page { display:flex; gap:.65rem; padding:6px 1rem .75rem; flex-shrink:0; box-sizing:border-box; }
     .carousel-dots { display:flex; justify-content:center; gap:.4rem; padding:.2rem 0 .6rem; }
     .carousel-dot { width:6px; height:6px; border-radius:50%; background:var(--line); transition:background .2s,width .2s; cursor:pointer; }
     .carousel-dot.active { background:var(--brand); width:16px; border-radius:3px; }
@@ -289,8 +313,8 @@
 
     /* ── GRID ── */
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; padding:0 1rem; }
-    .today-pick-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.65rem; padding:0 1rem; }
-    #randomPickGrid { padding:0; }
+    .today-pick-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.65rem; padding:6px 1rem .75rem; }
+    #randomPickGrid { padding:6px 1rem .75rem; }
     .gcard { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; box-shadow:0 12px 30px -16px rgba(0,0,0,.8); overflow:hidden; cursor:pointer; transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, border-color .18s ease; }
     @media (hover:hover) {
       .gcard:hover { transform:translateY(-4px) scale(1.035); box-shadow:0 20px 40px -16px rgba(0,0,0,.8); border-color:rgba(92,201,142,.45); z-index:2; }
@@ -392,9 +416,11 @@
     .master-highlight-box { padding:16px 20px; border-radius:16px; background:linear-gradient(120deg,rgba(92,201,142,.09),rgba(92,201,142,.015)); border:1px solid rgba(92,201,142,.2); margin-bottom:20px; }
     .master-highlight-box:empty, .master-highlight-box.is-empty { display:none; }
     .master-highlight-label { margin:0 0 9px; font-size:11px; font-weight:700; letter-spacing:.06em; color:#82968a; }
-    .master-tag-row { display:flex; flex-wrap:wrap; gap:8px; min-height:30px; }
-    .master-tag-strength { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(92,201,142,.16); color:#9be3bd; font-size:13px; font-weight:700; }
-    .master-tag-mood { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(240,138,138,.13); color:#eaa9a9; font-size:13px; font-weight:700; }
+    .master-tag-row { display:flex; flex-wrap:nowrap; gap:6px; min-height:30px; overflow-x:auto; scrollbar-width:none; }
+    .master-tag-row::-webkit-scrollbar { display:none; }
+    .master-tag-strength { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(92,201,142,.16); color:#9be3bd; font-size:13px; font-weight:700; flex-shrink:0; white-space:nowrap; }
+    .master-tag-mood { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(240,138,138,.13); color:#eaa9a9; font-size:13px; font-weight:700; flex-shrink:0; white-space:nowrap; }
+    .master-tag-strength.is-top { background:rgba(255,209,102,.22); color:#ffd166; box-shadow:0 0 0 1px rgba(255,209,102,.5) inset; }
     .review-card { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; overflow:hidden; box-shadow:0 12px 30px -20px rgba(0,0,0,.8); }
     #reviewList { display:grid; grid-template-columns:1fr; gap:20px; align-items:start; }
     .rc-head { display:flex; justify-content:space-between; align-items:flex-start; padding:16px 20px 10px; }
@@ -967,10 +993,11 @@
 
     /* ══ MASTER BREAKDOWN ══ */
     .breakdown-item { display:flex; align-items:center; justify-content:space-between; padding:.25rem 0; border-bottom:1px solid rgba(255,255,255,.05); }
-    .breakdown-label { font-size:.8rem; color:var(--muted); width:4.4em; flex-shrink:0; }
-    .breakdown-bar-wrap { flex:1; margin:0 .6rem; height:4px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; }
-    .breakdown-bar { height:100%; border-radius:2px; }
-    .breakdown-val { font-size:.82rem; font-weight:700; color:#dff0e6; min-width:2rem; text-align:right; }
+    .breakdown-col { display:flex; flex-direction:column; min-width:0; }
+    .breakdown-label { font-size:.85rem; color:var(--muted); width:4.4em; flex-shrink:0; }
+    .breakdown-bar-wrap { flex:1; margin:0 .6rem; height:9px; background:rgba(255,255,255,.08); border-radius:5px; overflow:hidden; }
+    .breakdown-bar { height:100%; border-radius:5px; }
+    .breakdown-val { font-size:.78rem; font-weight:700; color:#dff0e6; min-width:2rem; text-align:right; }
     .breakdown-margin { font-size:.62rem; font-weight:400; color:var(--muted); margin-left:.15rem; }
 
     /* ══ WORLD STATS ══ */
@@ -1145,7 +1172,7 @@
         gap:.85rem;
       }
       /* 今日のセレクション：ピックアップと同じ枚数・同じ余白ゼロの入れ物に揃えてカード幅を一致させる */
-      #randomPickGrid { grid-template-columns:repeat(7, 1fr); padding:0; max-width:none; gap:18px; }
+      #randomPickGrid { grid-template-columns:repeat(7, 1fr); padding:6px 2rem .75rem; max-width:none; gap:.65rem; }
       
       /* 広告 */
       .ad-wrap { margin:1rem 2rem 0; max-width:1200px; margin-left:auto; margin-right:auto; }
@@ -1192,10 +1219,11 @@
       /* 大画面：作品ページを横2カラム（Claude Design案の実測値をそのまま使用） */
       #page-anime .anime-hero-wrap {
         display:grid; grid-template-columns:300px minmax(0,1fr);
-        max-width:1400px; margin:0 auto; gap:40px; padding:26px 40px 0; align-items:start;
+        max-width:1400px; margin:0; gap:40px; padding:26px 40px 0; align-items:start;
       }
       #page-anime .anime-side-col {
         position:sticky; top:88px; display:flex; flex-direction:column; gap:16px; margin-bottom:0;
+        align-self:start; will-change:transform; contain:layout;
       }
       #page-anime .anime-thumb-hero {
         max-width:none; width:100%; aspect-ratio:3/4; max-height:none; height:auto;
@@ -1572,12 +1600,25 @@
     </div>
   </div>
   <div class="sort-row">
-    <label for="overlaySortSelect" data-i18n="sortLabel">並び替え</label>
-    <select id="overlaySortSelect" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
-      <option value="match">好みグラフに近い順</option>
-      <option value="reviews_desc">レビューが多い順</option>
-      <option value="reviews_asc">レビューが少ない順</option>
-    </select>
+    <div class="sort-row-sort">
+      <label for="overlaySortSelect" data-i18n="sortLabel">並び替え</label>
+      <select id="overlaySortSelect" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
+        <option value="match">好みグラフに近い順</option>
+        <option value="reviews_desc">レビューが多い順</option>
+        <option value="reviews_asc">レビューが少ない順</option>
+      </select>
+    </div>
+    <div class="sort-row-era">
+      <label class="sort-row-era-toggle">
+        <input type="checkbox" id="overlayEraToggle" />
+        <span data-i18n="eraFilterLabel">年代で絞る</span>
+      </label>
+      <div class="sort-row-era-inputs">
+        <input type="number" id="overlayEraFrom" inputmode="numeric" placeholder="開始年" />
+        <span>〜</span>
+        <input type="number" id="overlayEraTo" inputmode="numeric" placeholder="終了年" />
+      </div>
+    </div>
   </div>
   <div class="slider-page-nav" id="ovSliderPageNav">
     <button type="button" id="ovSliderPagePrev" aria-label="前へ">‹</button>
@@ -1610,7 +1651,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.69.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.89.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -1634,6 +1675,7 @@
         <div class="hero-cta-row">
           <button type="button" class="hero-cta-primary" onclick="openSearch()">🔍 作品を探す</button>
           <button type="button" class="hero-cta-secondary" onclick="nav('popular')">人気ランキング</button>
+          <button type="button" class="hero-cta-secondary" onclick="nav('gacha')">🎰 ガチャガチャ</button>
         </div>
 
       </div>
@@ -1802,104 +1844,95 @@
         </div>
         <div id="mobileInfoTabContent"></div>
       </div>
-    </div>
-  </div>
 
-  <!-- マスターグラフ + 世界の反応（スマホ幅では左右スワイプで切り替え。PC幅は今まで通り縦に並ぶ） -->
-  <div class="slider-page-nav" id="graphWorldPageNav">
-    <button type="button" id="graphWorldPagePrev" aria-label="前へ">‹</button>
-    <span id="graphWorldPageLabel" data-i18n="masterGraphTitle">みんなの評価グラフ</span>
-    <button type="button" id="graphWorldPageNext" aria-label="次へ">›</button>
-  </div>
-  <div class="review-slider-swiper-wrap">
-    <div class="review-slider-swiper" id="graphWorldSwiper">
-      <div class="review-slider-page">
-        <!-- マスターグラフ -->
-        <section class="reviews-section" id="masterGraphSection">
-          <div class="reviews-head" style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;">
-            <div style="display:flex;align-items:center;gap:12px;">
-              <span style="width:4px;height:22px;border-radius:4px;background:#5cc98e;flex:0 0 auto;"></span>
-              <h2 style="margin:0;" data-i18n="masterGraphTitle">みんなの評価グラフ</h2>
-            </div>
-            <p id="masterGraphMeta" style="margin:0;font-size:11.5px;color:#82968a;white-space:nowrap;"></p>
-          </div>
-          <!-- 際立つ強み／印象的な雰囲気 -->
-          <div id="masterHighlightBox" class="master-highlight-box">
-            <div style="margin-bottom:14px;">
-              <p class="master-highlight-label" data-i18n="masterStrengthLabel">際立つ強み</p>
-              <div id="masterStrengthTags" class="master-tag-row"></div>
-            </div>
-            <div>
-              <p class="master-highlight-label" data-i18n="masterMoodLabel">印象的な雰囲気</p>
-              <div id="masterMoodTags" class="master-tag-row"></div>
-            </div>
-          </div>
-          <!-- グラフ -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
-            <div style="min-width:0;background:linear-gradient(180deg,#173026,#0f2117);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 18px;box-shadow:0 10px 26px -18px rgba(0,0,0,.7);">
-              <p id="masterChartALabel" data-i18n="chartATitle" style="font-size:13px;font-weight:700;color:#9be3bd;margin:0 0 4px;text-align:center;">作品の完成度</p>
-              <canvas id="masterChartA" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
-            </div>
-            <div style="min-width:0;background:linear-gradient(180deg,#2a1c20,#170f11);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 18px;box-shadow:0 10px 26px -18px rgba(0,0,0,.7);">
-              <p id="masterChartBLabel" data-i18n="chartBTitle" style="font-size:13px;font-weight:700;color:#eaa9a9;margin:0 0 4px;text-align:center;">感情・雰囲気</p>
-              <canvas id="masterChartB" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
-            </div>
-          </div>
-          <!-- 内訳 -->
-          <div id="masterBreakdown" style="margin-top:.75rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem .75rem;"></div>
-          <p style="font-size:.62rem;color:var(--muted);margin:.5rem 0 0;" data-i18n="marginOfErrorNote">± は参考の誤差範囲です（件数が少ないほど大きくなります）</p>
-        </section>
+      <!-- マスターグラフ + 世界の反応（スマホ幅では左右スワイプで切り替え。PC幅は今まで通り縦に並ぶ） -->
+      <div class="slider-page-nav" id="graphWorldPageNav">
+        <button type="button" id="graphWorldPagePrev" aria-label="前へ">‹</button>
+        <span id="graphWorldPageLabel" data-i18n="masterGraphTitle">みんなの評価グラフ</span>
+        <button type="button" id="graphWorldPageNext" aria-label="次へ">›</button>
       </div>
-      <div class="review-slider-page">
-        <!-- 世界の反応 -->
-        <section class="reviews-section" id="worldStatsSection">
-          <div class="reviews-head">
-            <h2 style="margin:0 0 .25rem;" id="worldReactionTitle" data-i18n="worldReaction">🌍 世界の反応</h2>
-            <div class="world-period-tabs" id="worldPeriodTabs">
-              <button class="world-tab active" data-period="all" data-i18n="periodAll">全期間</button>
-              <button class="world-tab" data-period="month" data-i18n="periodMonth">今月</button>
-              <button class="world-tab" data-period="year" data-i18n="periodYear">今年</button>
-              <button class="world-tab" data-period="day" data-i18n="periodDay">今日</button>
-            </div>
+      <div class="review-slider-swiper-wrap">
+        <div class="review-slider-swiper" id="graphWorldSwiper">
+          <div class="review-slider-page">
+            <!-- マスターグラフ -->
+            <section class="reviews-section" id="masterGraphSection">
+              <div class="reviews-head" style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="width:4px;height:22px;border-radius:4px;background:#5cc98e;flex:0 0 auto;"></span>
+                  <h2 style="margin:0;" data-i18n="masterGraphTitle">みんなの評価グラフ</h2>
+                </div>
+                <p id="masterGraphMeta" style="margin:0;font-size:11.5px;color:#82968a;white-space:nowrap;"></p>
+              </div>
+              <!-- 際立つ強み／印象的な雰囲気 -->
+              <div id="masterHighlightBox" class="master-highlight-box">
+                <div class="master-tag-row" id="masterAllTags"></div>
+              </div>
+              <!-- グラフ -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+                <div style="min-width:0;background:linear-gradient(180deg,#173026,#0f2117);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 18px;box-shadow:0 10px 26px -18px rgba(0,0,0,.7);">
+                  <p id="masterChartALabel" data-i18n="chartATitle" style="font-size:13px;font-weight:700;color:#9be3bd;margin:0 0 4px;text-align:center;">作品の完成度</p>
+                  <canvas id="masterChartA" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
+                </div>
+                <div style="min-width:0;background:linear-gradient(180deg,#2a1c20,#170f11);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 18px;box-shadow:0 10px 26px -18px rgba(0,0,0,.7);">
+                  <p id="masterChartBLabel" data-i18n="chartBTitle" style="font-size:13px;font-weight:700;color:#eaa9a9;margin:0 0 4px;text-align:center;">感情・雰囲気</p>
+                  <canvas id="masterChartB" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
+                </div>
+              </div>
+              <!-- 内訳 -->
+              <div id="masterBreakdown" style="margin-top:.75rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem .75rem;"></div>
+              <p style="font-size:.62rem;color:var(--muted);margin:.5rem 0 0;" data-i18n="marginOfErrorNote">± は参考の誤差範囲です（件数が少ないほど大きくなります）</p>
+            </section>
           </div>
-          <div id="worldStatsContent" style="margin-top:.6rem;"></div>
-        </section>
+          <div class="review-slider-page">
+            <!-- 世界の反応 -->
+            <section class="reviews-section" id="worldStatsSection">
+              <div class="reviews-head">
+                <h2 style="margin:0 0 .25rem;" id="worldReactionTitle" data-i18n="worldReaction">🌍 世界の反応</h2>
+                <div class="world-period-tabs" id="worldPeriodTabs">
+                  <button class="world-tab active" data-period="all" data-i18n="periodAll">全期間</button>
+                  <button class="world-tab" data-period="month" data-i18n="periodMonth">今月</button>
+                  <button class="world-tab" data-period="year" data-i18n="periodYear">今年</button>
+                  <button class="world-tab" data-period="day" data-i18n="periodDay">今日</button>
+                </div>
+              </div>
+              <div id="worldStatsContent" style="margin-top:.6rem;"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <!-- 広告：グラフ直下（自然な流れ：見て気になった→観る？） -->
+      <div class="ad-wrap" id="adAnimeMid" style="display:none;">
+        <div class="ad-label">AD</div>
+        <div class="ad-banner" onclick="adClick('streaming_mid')">
+          <div class="ad-banner-logo">▶️</div>
+          <div class="ad-banner-body">
+            <div class="ad-banner-title">dアニメストア</div>
+            <div class="ad-banner-sub">4,000作品以上 月440円〜</div>
+          </div>
+          <div class="ad-banner-cta">無料で試す</div>
+        </div>
+      </div>
+
+      <!-- 似ている作品（好みグラフ・タグの近さで算出） -->
+      <section class="reviews-section" id="similarAnimeSection" style="display:none;">
+        <h2 style="margin:0 0 .5rem;" data-i18n="similarAnimeTitle">🧭 似ている作品</h2>
+        <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;" data-i18n="similarAnimeDesc">好みグラフとタグの近さから算出しています</p>
+        <div id="similarAnimeGrid" class="hscroll"></div>
+      </section>
+
+      <!-- グッズ・関連商品（Amazonアフィリンク） -->
+      <div class="af-section" id="afGoodsSection">
+        <div class="af-section-label" data-i18n="goodsSection">🛍 グッズ・関連商品</div>
+        <div id="afGoodsLinks"></div>
+      </div>
+
+      <!-- Blu-ray/DVD（楽天アフィリンク） -->
+      <div class="af-section" id="afRakutenSection" style="display:none;">
+        <div class="af-section-label">💿 Blu-ray・DVD（楽天市場）</div>
+        <div id="afRakutenLink"></div>
       </div>
     </div>
-  </div>
-
-  <!-- 広告：グラフ直下（自然な流れ：見て気になった→観る？） -->
-  <div class="ad-wrap" id="adAnimeMid" style="display:none;">
-    <div class="ad-label">AD</div>
-    <div class="ad-banner" onclick="adClick('streaming_mid')">
-      <div class="ad-banner-logo">▶️</div>
-      <div class="ad-banner-body">
-        <div class="ad-banner-title">dアニメストア</div>
-        <div class="ad-banner-sub">4,000作品以上 月440円〜</div>
-      </div>
-      <div class="ad-banner-cta">無料で試す</div>
-    </div>
-  </div>
-
-
-
-  <!-- 似ている作品（好みグラフ・タグの近さで算出） -->
-  <section class="reviews-section" id="similarAnimeSection" style="display:none;">
-    <h2 style="margin:0 0 .5rem;" data-i18n="similarAnimeTitle">🧭 似ている作品</h2>
-    <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;" data-i18n="similarAnimeDesc">好みグラフとタグの近さから算出しています</p>
-    <div id="similarAnimeGrid" class="hscroll"></div>
-  </section>
-
-  <!-- グッズ・関連商品（Amazonアフィリンク） -->
-  <div class="af-section" id="afGoodsSection">
-    <div class="af-section-label" data-i18n="goodsSection">🛍 グッズ・関連商品</div>
-    <div id="afGoodsLinks"></div>
-  </div>
-
-  <!-- Blu-ray/DVD（楽天アフィリンク） -->
-  <div class="af-section" id="afRakutenSection" style="display:none;">
-    <div class="af-section-label">💿 Blu-ray・DVD（楽天市場）</div>
-    <div id="afRakutenLink"></div>
   </div>
 
   <!-- 配信サービス -->
@@ -2098,6 +2131,57 @@
 <!-- ═══════════════════════════════════
      PAGE: SEARCH RESULTS
 ═══════════════════════════════════ -->
+<!-- ガチャガチャ（中身は後日実装） -->
+<div class="page" id="page-gacha">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      </div>
+    </div>
+  </header>
+  <div style="padding:3rem 1.2rem;text-align:center;color:var(--muted);">
+    <div style="font-size:3rem;margin-bottom:.6rem;">🎰</div>
+    <h2 style="color:var(--text);margin-bottom:.4rem;">ガチャガチャ</h2>
+    <p>近日公開予定です。お楽しみに！</p>
+  </div>
+</div>
+
+<!-- 掲示板（中身は後日実装） -->
+<div class="page" id="page-board">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      </div>
+    </div>
+  </header>
+  <div style="padding:3rem 1.2rem;text-align:center;color:var(--muted);">
+    <div style="font-size:3rem;margin-bottom:.6rem;">💬</div>
+    <h2 style="color:var(--text);margin-bottom:.4rem;">掲示板</h2>
+    <p>近日公開予定です。お楽しみに！</p>
+  </div>
+</div>
+
+<!-- 記事の広場（中身は後日実装） -->
+<div class="page" id="page-articles">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      </div>
+    </div>
+  </header>
+  <div style="padding:3rem 1.2rem;text-align:center;color:var(--muted);">
+    <div style="font-size:3rem;margin-bottom:.6rem;">📰</div>
+    <h2 style="color:var(--text);margin-bottom:.4rem;">記事の広場</h2>
+    <p>近日公開予定です。お楽しみに！</p>
+  </div>
+</div>
+
 <div class="page" id="page-popular">
   <header class="hdr">
     <div class="hdr-inner">
@@ -2136,24 +2220,11 @@
       <span class="pop-sort-divider"></span>
       <div class="pop-sort-group">
         <span class="pop-sort-group-label" data-i18n="popEraGroupLabel">年代</span>
-        <div style="position:relative;">
-          <button class="pop-era-btn" id="popPillEra" type="button">
-            <span id="popPillEraLabel" data-i18n="popEraNone">指定なし</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="pop-axis-expand" id="popEraExpand">
-            <div class="pop-year-picker" id="popYearPicker">
-              <div class="pop-year-picker-inner">
-                <div class="pop-drum-wrap">
-                  <div class="pop-drum-label" data-i18n="yearPickLabel">年代を選ぶ</div>
-                  <input type="number" class="pop-year-input" id="popYearInput" inputmode="numeric" placeholder="例: 2010" style="width:5.5em;text-align:center;font-size:1rem;padding:.35rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);margin-bottom:.4rem;" />
-                  <div class="pop-drum" id="popDrumFrom"></div>
-                </div>
-                <button class="pop-year-apply" id="popYearApply" data-i18n="btnApply">適用</button>
-                <button class="pop-year-clear" id="popYearClear" data-i18n="btnClear" style="display:block;margin:.4rem auto 0;background:none;border:none;color:var(--muted);font-size:.75rem;cursor:pointer;text-decoration:underline;">クリア</button>
-              </div>
-            </div>
-          </div>
+        <div class="sort-row-era-inputs">
+          <input type="number" class="pop-year-input" id="popYearFromInput" inputmode="numeric" placeholder="開始年" style="width:5.5em;text-align:center;font-size:.9rem;padding:.5rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);" />
+          <span>〜</span>
+          <input type="number" class="pop-year-input" id="popYearToInput" inputmode="numeric" placeholder="終了年" style="width:5.5em;text-align:center;font-size:.9rem;padding:.5rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);" />
+          <button class="pop-year-clear" id="popYearClear" data-i18n="btnClear" style="background:none;border:none;color:var(--muted);font-size:.75rem;cursor:pointer;text-decoration:underline;white-space:nowrap;">クリア</button>
         </div>
       </div>
     </div>
@@ -2192,12 +2263,25 @@
   </div>
   <div class="filter-panel" id="srFilterPanel">
     <div class="sort-row">
-      <label for="srSortSelect" data-i18n="sortLabel">並び替え</label>
-      <select id="srSortSelect" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
-        <option value="match">好みグラフに近い順</option>
-        <option value="reviews_desc">レビューが多い順</option>
-        <option value="reviews_asc">レビューが少ない順</option>
-      </select>
+      <div class="sort-row-sort">
+        <label for="srSortSelect" data-i18n="sortLabel">並び替え</label>
+        <select id="srSortSelect" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
+          <option value="match">好みグラフに近い順</option>
+          <option value="reviews_desc">レビューが多い順</option>
+          <option value="reviews_asc">レビューが少ない順</option>
+        </select>
+      </div>
+      <div class="sort-row-era">
+        <label class="sort-row-era-toggle">
+          <input type="checkbox" id="srEraToggle" />
+          <span data-i18n="eraFilterLabel">年代で絞る</span>
+        </label>
+        <div class="sort-row-era-inputs">
+          <input type="number" id="srEraFrom" inputmode="numeric" placeholder="開始年" />
+          <span>〜</span>
+          <input type="number" id="srEraTo" inputmode="numeric" placeholder="終了年" />
+        </div>
+      </div>
     </div>
     <div class="filter-label">🏷 タグで絞る</div>
     <div class="filter-box">
@@ -2206,6 +2290,51 @@
         <button class="search-tag-add-btn" id="srTagAddBtn" data-i18n="btnAdd">追加</button>
       </div>
       <div class="tag-list" id="srTagList"></div>
+      <div style="position:relative;">
+        <button type="button" class="tag-browse-toggle" id="srTagBrowseToggle">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 12 22l-9-9V3h9z"/><circle cx="7.5" cy="7.5" r="1.4" fill="currentColor" stroke="none"/></svg>
+          <span id="srTagBrowseToggleLabel">タグ一覧から選ぶ</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.7;"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="tag-browse-panel" id="srTagBrowsePanel" style="display:none;">
+          <div class="tag-browse-group">
+            <p class="tag-browse-group-label">ジャンル</p>
+            <div class="tag-browse-chips" data-tag-group="genre">
+              <button type="button" class="tag-browse-chip" data-tag="アクション">アクション</button>
+              <button type="button" class="tag-browse-chip" data-tag="冒険">冒険</button>
+              <button type="button" class="tag-browse-chip" data-tag="コメディ">コメディ</button>
+              <button type="button" class="tag-browse-chip" data-tag="ドラマ">ドラマ</button>
+              <button type="button" class="tag-browse-chip" data-tag="SF">SF</button>
+              <button type="button" class="tag-browse-chip" data-tag="ミステリー">ミステリー</button>
+              <button type="button" class="tag-browse-chip" data-tag="ファンタジー">ファンタジー</button>
+              <button type="button" class="tag-browse-chip" data-tag="サスペンス">サスペンス</button>
+              <button type="button" class="tag-browse-chip" data-tag="ホラー">ホラー</button>
+            </div>
+          </div>
+          <div class="tag-browse-group">
+            <p class="tag-browse-group-label">舞台・世界観</p>
+            <div class="tag-browse-chips" data-tag-group="setting">
+              <button type="button" class="tag-browse-chip" data-tag="学園">学園</button>
+              <button type="button" class="tag-browse-chip" data-tag="異世界">異世界</button>
+              <button type="button" class="tag-browse-chip" data-tag="歴史・時代劇">歴史・時代劇</button>
+              <button type="button" class="tag-browse-chip" data-tag="戦争">戦争</button>
+              <button type="button" class="tag-browse-chip" data-tag="日常">日常</button>
+              <button type="button" class="tag-browse-chip" data-tag="スポーツ">スポーツ</button>
+            </div>
+          </div>
+          <div class="tag-browse-group">
+            <p class="tag-browse-group-label">テーマ・題材</p>
+            <div class="tag-browse-chips" data-tag-group="theme">
+              <button type="button" class="tag-browse-chip" data-tag="恋愛">恋愛</button>
+              <button type="button" class="tag-browse-chip" data-tag="青春">青春</button>
+              <button type="button" class="tag-browse-chip" data-tag="音楽">音楽</button>
+              <button type="button" class="tag-browse-chip" data-tag="グルメ">グルメ</button>
+              <button type="button" class="tag-browse-chip" data-tag="ロボット">ロボット</button>
+              <button type="button" class="tag-browse-chip" data-tag="成人向け">成人向け</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="slider-page-nav" id="srSliderPageNav">
       <button type="button" id="srSliderPagePrev" aria-label="前へ">‹</button>
@@ -2216,11 +2345,11 @@
     <div class="review-slider-swiper-wrap">
       <div class="review-slider-swiper" id="srSliderSwiper">
         <div class="review-slider-page">
-          <div class="filter-label" style="text-align:center;">📊 作品の完成度（無で無視）</div>
+          <div class="filter-label" data-i18n="filterChartA" style="text-align:center;">作品の完成度（無で無視）</div>
           <div class="filter-box"><div id="srFilterA"></div></div>
         </div>
         <div class="review-slider-page">
-          <div class="filter-label" style="text-align:center;">💫 感情・雰囲気（無で無視）</div>
+          <div class="filter-label" data-i18n="filterChartB" style="text-align:center;">感情・雰囲気（無で無視）</div>
           <div class="filter-box"><div id="srFilterB"></div></div>
         </div>
       </div>
@@ -3610,7 +3739,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.69.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.89.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -3623,6 +3752,14 @@
   <button class="bnav-item" id="bnav-ranking" onclick="navPopular()">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="7" rx="1"/><rect x="10" y="8" width="4" height="11" rx="1"/><rect x="16" y="5" width="4" height="14" rx="1"/></svg>
     <span>人気</span>
+  </button>
+  <button class="bnav-item" id="bnav-board" onclick="nav('board')">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span>掲示板</span>
+  </button>
+  <button class="bnav-item" id="bnav-articles" onclick="nav('articles')">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+    <span>記事の広場</span>
   </button>
   <button class="bnav-item" id="bnav-mypage" onclick="nav('mypage')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg>
@@ -3995,6 +4132,16 @@
           .limit(limit||2000);
         return { items: data||[], count: count||0 };
       },
+      // 年代の範囲（From〜To、どちらか片方だけでも可）で作品を絞り込む
+      async getByYearRange(yearFrom, yearTo, limit) {
+        if(!sb) return { items:[], count:0 };
+        let q = sb.from('anime_pages')
+          .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year', { count: 'exact' });
+        if(yearFrom) q = q.gte('year', String(yearFrom));
+        if(yearTo) q = q.lte('year', String(yearTo));
+        const { data, count } = await q.limit(limit||2000);
+        return { items: data||[], count: count||0 };
+      },
       // キーワード検索用：件数上限を設けず、ページネーションで全件取得する
       async getAllForSearch() {
         if(!sb) return { items: [], count: 0 };
@@ -4167,6 +4314,16 @@
         const since = new Date(Date.now() - (days||30)*86400000).toISOString();
         const { data } = await sb.from('pv_logs').select('device_type,lang,referrer_type').gte('viewed_at', since);
         return data || [];
+      },
+      // 作品ごとのPV数を集計（期間指定可）。人気ページの「人気順」（PV数ベース）用
+      async getCountsByAnime(sinceIso) {
+        if(!sb) return {};
+        let q = sb.from('pv_logs').select('anime_id');
+        if(sinceIso) q = q.gte('viewed_at', sinceIso);
+        const { data } = await q;
+        const counts = {};
+        (data||[]).forEach(row => { if(row.anime_id) counts[row.anime_id] = (counts[row.anime_id]||0) + 1; });
+        return counts;
       },
     },
 
@@ -4550,6 +4707,13 @@
     for(const g in VALUE_AXIS_GROUPS) { if(VALUE_AXIS_GROUPS[g].includes(key)) return g; }
     return null;
   }
+  // 価値観タイプごとのパステルカラー（A=ビジュアル/B=ストーリー/C=キャラ/D=トーン）
+  const VALUE_TYPE_COLORS = {
+    'A': '#a7d8f0', // パステルブルー
+    'B': '#c9b6e4', // パステルパープル
+    'C': '#f5b8c4', // パステルピンク
+    'D': '#f5e3a0', // パステルイエロー
+  };
 
   const seedAnime = [];
 
@@ -4955,7 +5119,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.69.0';
+      if(vEl) vEl.textContent = 'v0.89.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -5188,7 +5352,7 @@
   /* ════════════════════════════
      POPULAR PAGE
   ════════════════════════════ */
-  const popState = { base:'popular', period:'all', yearFrom:null, page:0, items:[], loading:false };
+  const popState = { base:'popular', period:'all', yearFrom:null, yearTo:null, page:0, items:[], loading:false };
   const POP_PAGE_SIZE = 20;
   const CURRENT_YEAR = new Date().getFullYear();
   const YEAR_LIST = Array.from({length: CURRENT_YEAR - 1959}, (_,i) => CURRENT_YEAR - i);
@@ -5255,38 +5419,15 @@
   // 各ピルのラベルを現在の状態に合わせて更新
   function updatePopPillLabels() {
     const pillEraLabel = document.getElementById('popPillEraLabel');
-    if(pillEraLabel) pillEraLabel.textContent = popState.yearFrom ? `${popState.yearFrom}年代` : t('popEraNone');
-  }
-
-  // 年代ボタン：クリックでポップオーバー開閉のみ（並び順・期間は常時表示のため開閉不要）
-  function togglePopAxis(axis) {
-    const expand = document.getElementById('popEraExpand');
-    const pill = document.getElementById('popPillEra');
-    if(!expand || !pill) return;
-    const willOpen = !expand.classList.contains('open');
-    pill.classList.toggle('open', willOpen);
-    expand.classList.toggle('open', willOpen);
-  }
-  function closePopAxes() {
-    document.getElementById('popPillEra')?.classList.remove('open');
-    document.getElementById('popEraExpand')?.classList.remove('open');
+    if(pillEraLabel) {
+      if(popState.yearFrom && popState.yearTo) pillEraLabel.textContent = `${popState.yearFrom}〜${popState.yearTo}年`;
+      else if(popState.yearFrom) pillEraLabel.textContent = `${popState.yearFrom}年〜`;
+      else if(popState.yearTo) pillEraLabel.textContent = `〜${popState.yearTo}年`;
+      else pillEraLabel.textContent = t('popEraNone');
+    }
   }
 
   async function renderPopular() {
-    // 年代ボタン：押したらポップオーバーを開閉
-    const eraPill = document.getElementById('popPillEra');
-    if(eraPill && !eraPill.dataset.init) {
-      eraPill.dataset.init = '1';
-      eraPill.addEventListener('click', ()=>{
-        togglePopAxis('era');
-        const willOpen = document.getElementById('popEraExpand').classList.contains('open');
-        if(willOpen) {
-          buildDrum('popDrumFrom', YEAR_LIST, popState.yearFrom||2010);
-          const yearInput = document.getElementById('popYearInput');
-          if(yearInput) yearInput.value = popState.yearFrom || '';
-        }
-      });
-    }
 
     // 軸1: 基準（人気順 / レビュー順）
     const baseTabs = document.getElementById('popBaseTabs');
@@ -5300,7 +5441,6 @@
           popState.page = 0; popState.items = [];
           updatePopPillLabels();
           loadPopularItems(true);
-          closePopAxes();
         });
       });
     }
@@ -5316,51 +5456,43 @@
           popState.page = 0; popState.items = [];
           updatePopPillLabels();
           loadPopularItems(true);
-          closePopAxes();
         });
       });
     }
-    // 軸3: 年代（ポップオーバー内は常にドラムピッカーを表示。「クリア」で解除）
-    const yearApplyBtn0 = document.getElementById('popYearApply');
-    if(yearApplyBtn0 && !yearApplyBtn0.dataset.clearInit) {
-      yearApplyBtn0.dataset.clearInit = '1';
+    // 年代入力欄：値が変わったら（フォーカスを外した/Enter）即座に反映する
+    function applyEraFromInputs() {
+      const fromInput = document.getElementById('popYearFromInput');
+      const toInput = document.getElementById('popYearToInput');
+      const from = parseInt(fromInput?.value, 10);
+      const to = parseInt(toInput?.value, 10);
+      popState.yearFrom = from || null;
+      popState.yearTo = to || null;
+      popState.page = 0; popState.items = [];
+      updatePopPillLabels();
+      loadPopularItems(true);
     }
-    // 年代適用ボタン
-    const yearApplyBtn = document.getElementById('popYearApply');
-    if(yearApplyBtn && !yearApplyBtn.dataset.init) {
-      yearApplyBtn.dataset.init = '1';
-      yearApplyBtn.addEventListener('click', ()=>{
-        popState.yearFrom = getDrumYear('popDrumFrom');
-        popState.page = 0; popState.items = [];
-        updatePopPillLabels();
-        loadPopularItems(true);
-        closePopAxes();
-      });
-    }
-    // 年代入力欄：数字を直接タイプしてドラムをその年へジャンプさせる
-    const yearInput = document.getElementById('popYearInput');
-    if(yearInput && !yearInput.dataset.init) {
-      yearInput.dataset.init = '1';
-      const jumpToTypedYear = ()=>{
-        const y = parseInt(yearInput.value, 10);
-        if(!y || y < 1960 || y > CURRENT_YEAR) return;
-        scrollDrumToYear('popDrumFrom', y);
-      };
-      yearInput.addEventListener('keydown', (e)=>{
-        if(e.key === 'Enter') { e.preventDefault(); jumpToTypedYear(); }
-      });
-      yearInput.addEventListener('blur', jumpToTypedYear);
-    }
+    ['popYearFromInput','popYearToInput'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el && !el.dataset.init) {
+        el.dataset.init = '1';
+        el.addEventListener('blur', applyEraFromInputs);
+        el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); applyEraFromInputs(); el.blur(); } });
+      }
+    });
     // 年代クリアボタン
     const yearClearBtn = document.getElementById('popYearClear');
     if(yearClearBtn && !yearClearBtn.dataset.init) {
       yearClearBtn.dataset.init = '1';
       yearClearBtn.addEventListener('click', ()=>{
         popState.yearFrom = null;
+        popState.yearTo = null;
+        const fromInput = document.getElementById('popYearFromInput');
+        const toInput = document.getElementById('popYearToInput');
+        if(fromInput) fromInput.value = '';
+        if(toInput) toInput.value = '';
         popState.page = 0; popState.items = [];
         updatePopPillLabels();
         loadPopularItems(true);
-        closePopAxes();
       });
     }
     // もっと見るボタン
@@ -5428,11 +5560,12 @@
   // レビュー数順（期間・年代フィルタ対応）
   // 年代が指定されている場合はSupabase側(WHERE year=...)で先に絞り込んでから取得する。
   // 全件取得してJS側で絞るより通信量が少なく、500件上限の外にある作品も逃さない。
-  async function getPopularByReviews(period, yearFrom, page) {
+  // 人気順（PV数ベース）：pv_logsを期間・年代で絞って集計し、多い順に並べる
+  async function getPopularByPv(period, yearFrom, yearTo, page) {
     let all;
-    if(yearFrom && DB_MODE === 'supabase' && sb) {
+    if((yearFrom || yearTo) && DB_MODE === 'supabase' && sb) {
       try {
-        const { items: dbPages } = await db.animePages.getByYear(yearFrom);
+        const { items: dbPages } = await db.animePages.getByYearRange(yearFrom, yearTo);
         all = (dbPages||[]).map(p => ({
           id: p.id,
           kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
@@ -5443,9 +5576,51 @@
           year: p.year || '',
         }));
       } catch(e) {
-        console.warn('getByYear fetch:', e);
+        console.warn('getByYearRange fetch:', e);
         all = await getPopularCandidates();
-        all = all.filter(a => String(a.year) === String(yearFrom));
+        all = all.filter(a => {
+          const y = parseInt(a.year, 10);
+          if(!y) return false;
+          if(yearFrom && y < yearFrom) return false;
+          if(yearTo && y > yearTo) return false;
+          return true;
+        });
+      }
+    } else {
+      all = await getPopularCandidates();
+    }
+    const bound = periodBoundMs(period);
+    const sinceIso = bound ? new Date(bound).toISOString() : null;
+    const pvCounts = await db.pvLogs.getCountsByAnime(sinceIso);
+    const withCount = all.map(a=>({...a, _pvCount: pvCounts[a.id] || 0}));
+    withCount.sort((a,b)=>b._pvCount-a._pvCount);
+    return withCount.slice(page*POP_PAGE_SIZE, (page+1)*POP_PAGE_SIZE);
+  }
+
+  async function getPopularByReviews(period, yearFrom, yearTo, page) {
+    let all;
+    if((yearFrom || yearTo) && DB_MODE === 'supabase' && sb) {
+      try {
+        const { items: dbPages } = await db.animePages.getByYearRange(yearFrom, yearTo);
+        all = (dbPages||[]).map(p => ({
+          id: p.id,
+          kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+          title: p.title || p.title_en || '',
+          titleEn: p.title_en || p.title || '',
+          meta: p.meta || '',
+          image: p.image_url || '',
+          year: p.year || '',
+        }));
+      } catch(e) {
+        console.warn('getByYearRange fetch:', e);
+        all = await getPopularCandidates();
+        all = all.filter(a => {
+          const y = parseInt(a.year, 10);
+          if(!y) return false;
+          if(yearFrom && y < yearFrom) return false;
+          if(yearTo && y > yearTo) return false;
+          return true;
+        });
       }
     } else {
       all = await getPopularCandidates();
@@ -5467,13 +5642,14 @@
       const base = popState.base;
       const period = popState.period;
       const yearFrom = popState.yearFrom;
+      const yearTo = popState.yearTo;
       let items = [];
 
       if(base==='popular') {
-        // Kitsu userCount順。年代フィルタのみ対応。期間軸はKitsu側に概念が無いため人気順には効かない
-        items = await fetchKitsuPopular(popState.page * POP_PAGE_SIZE, yearFrom);
+        // 人気順：pv_logsのPV数をもとに算出（期間・年代の両方に対応）
+        items = await getPopularByPv(period, yearFrom, yearTo, popState.page);
       } else {
-        items = await getPopularByReviews(period, yearFrom, popState.page);
+        items = await getPopularByReviews(period, yearFrom, yearTo, popState.page);
       }
 
       if(reset) popState.items = items;
@@ -5543,7 +5719,8 @@
     opts = opts || {};
     const input=document.getElementById(inputId), btn=document.getElementById(addBtnId);
     const renderChips=makeTagChipUI(listId, tags, maxTags);
-    const render = () => { renderChips(); if(listId === 'overlayTagList') syncTagBrowseChips(); };
+    const browsePanelIdByList = { overlayTagList: 'tagBrowsePanel', srTagList: 'srTagBrowsePanel' };
+    const render = () => { renderChips(); const pid = browsePanelIdByList[listId]; if(pid) syncTagBrowseChips(pid, tags); };
     async function addTag() {
       let v=input.value.trim().replace(/^#/,'');
       if (!v) return;
@@ -5956,7 +6133,7 @@
 
     const setFillPct = (input) => {
       const v = Number(input.value);
-      const pct = v <= 0 ? 0 : Math.min(100, (v/10)*100);
+      const pct = v < 0 ? 0 : Math.min(100, Math.max(2, (v+1)/11*100));
       input.style.setProperty('--fillPct', pct+'%');
     };
     el.querySelectorAll('input[type="range"]').forEach(input=>{
@@ -5997,15 +6174,45 @@
   let renderOverlayTags = null;
 
   // タグ一覧から選ぶ：開閉パネル＋チップのクリックでタグ選択をトグル
-  function syncTagBrowseChips() {
-    document.querySelectorAll('.tag-browse-chip').forEach(chip => {
-      chip.classList.toggle('active', overlayTags.includes(chip.dataset.tag));
+  function syncTagBrowseChips(panelId, tagsArray) {
+    tagsArray = tagsArray || overlayTags;
+    const scope = panelId ? document.getElementById(panelId) : document;
+    if(!scope) return;
+    scope.querySelectorAll('.tag-browse-chip').forEach(chip => {
+      chip.classList.toggle('active', tagsArray.includes(chip.dataset.tag));
     });
   }
-  function setupTagBrowsePanel() {
-    const toggleBtn = document.getElementById('tagBrowseToggle');
-    const panel = document.getElementById('tagBrowsePanel');
-    const label = document.getElementById('tagBrowseToggleLabel');
+  // 年代で絞るチェックボックス：ONで開始年・終了年の入力欄を有効化する
+  function setupEraToggle(toggleId, fromId, toId) {
+    const toggle = document.getElementById(toggleId);
+    const fromInput = document.getElementById(fromId);
+    const toInput = document.getElementById(toId);
+    if(!toggle || !fromInput || !toInput) return;
+    const sync = () => {
+      fromInput.classList.toggle('active', toggle.checked);
+      toInput.classList.toggle('active', toggle.checked);
+    };
+    toggle.addEventListener('change', sync);
+    sync();
+  }
+  function getEraRange(toggleId, fromId, toId) {
+    const toggle = document.getElementById(toggleId);
+    if(!toggle || !toggle.checked) return null;
+    const from = parseInt(document.getElementById(fromId)?.value, 10);
+    const to = parseInt(document.getElementById(toId)?.value, 10);
+    if(!from && !to) return null;
+    return { from: from || null, to: to || null };
+  }
+
+  function setupTagBrowsePanel(toggleId, panelId, labelId, tagsArray, renderFn) {
+    toggleId = toggleId || 'tagBrowseToggle';
+    panelId = panelId || 'tagBrowsePanel';
+    labelId = labelId || 'tagBrowseToggleLabel';
+    tagsArray = tagsArray || overlayTags;
+    renderFn = renderFn || (() => renderOverlayTags && renderOverlayTags());
+    const toggleBtn = document.getElementById(toggleId);
+    const panel = document.getElementById(panelId);
+    const label = document.getElementById(labelId);
     if(toggleBtn && panel) {
       toggleBtn.onclick = () => {
         const willOpen = panel.style.display === 'none';
@@ -6014,20 +6221,22 @@
         if(label) label.textContent = willOpen ? 'タグ一覧を閉じる' : 'タグ一覧から選ぶ';
       };
     }
-    document.querySelectorAll('.tag-browse-chip').forEach(chip => {
-      chip.onclick = () => {
-        const tag = chip.dataset.tag;
-        const idx = overlayTags.indexOf(tag);
-        if(idx === -1) {
-          if(overlayTags.length >= 10) return;
-          overlayTags.push(tag);
-        } else {
-          overlayTags.splice(idx, 1);
-        }
-        if(renderOverlayTags) renderOverlayTags();
-        syncTagBrowseChips();
-      };
-    });
+    if(panel) {
+      panel.querySelectorAll('.tag-browse-chip').forEach(chip => {
+        chip.onclick = () => {
+          const tag = chip.dataset.tag;
+          const idx = tagsArray.indexOf(tag);
+          if(idx === -1) {
+            if(tagsArray.length >= 10) return;
+            tagsArray.push(tag);
+          } else {
+            tagsArray.splice(idx, 1);
+          }
+          renderFn();
+          syncTagBrowseChips(panelId, tagsArray);
+        };
+      });
+    }
   }
 
   function openSearch() {
@@ -6036,14 +6245,14 @@
     buildSliders('overlayFilterA',getAxisA(),overlayProfileA,'ov-a',axisA);
     buildSliders('overlayFilterB',getAxisB(),overlayProfileB,'ov-b',axisB);
     setupSliderPageSwiper('ovSliderSwiper','ovSliderPagePrev','ovSliderPageNext','ovSliderPageLabel');
+    setupEraToggle('overlayEraToggle','overlayEraFrom','overlayEraTo');
     // タグ入力の初期化もここで行う（currentLang等の初期化が全て終わった後に実行するため）
     if(!renderOverlayTags) {
       renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true});
-      setupTagFloatSuggest('overlayTagInput','overlayTagAddBtn');
       setupTagBrowsePanel();
     } else {
       renderOverlayTags();
-      syncTagBrowseChips();
+      syncTagBrowseChips('tagBrowsePanel', overlayTags);
     }
     // display確定後（iOS含む）にCanvas描画
     setTimeout(()=>{
@@ -6068,6 +6277,9 @@
     if (q) sort = 'relevance'; // キーワードがあれば関連度ベースを優先（renderSearch側で選択肢も切り替わる）
     closeSearch();
     srSearchState.q=q; srSearchState.sort=sort;
+    const overlayEra = getEraRange('overlayEraToggle','overlayEraFrom','overlayEraTo');
+    srSearchState.eraFrom = overlayEra ? overlayEra.from : null;
+    srSearchState.eraTo = overlayEra ? overlayEra.to : null;
     srTagsActive.length=0; overlayTags.forEach(t=>srTagsActive.push(t));
     const hasP=Object.values(overlayProfileA).some(v=>v!==-1)||Object.values(overlayProfileB).some(v=>v!==-1);
     if(hasP){ axisA.forEach(k=>{srProfileA[k]=overlayProfileA[k];}); axisB.forEach(k=>{srProfileB[k]=overlayProfileB[k];}); }
@@ -6754,10 +6966,8 @@
       if(miniSection0) miniSection0.style.display='none';
       const breakdown0 = document.getElementById('masterBreakdown');
       if(breakdown0) breakdown0.innerHTML = '';
-      const strengthEl0 = document.getElementById('masterStrengthTags');
-      const moodEl0 = document.getElementById('masterMoodTags');
-      if(strengthEl0) strengthEl0.innerHTML = '';
-      if(moodEl0) moodEl0.innerHTML = '';
+      const allTagsEl0 = document.getElementById('masterAllTags');
+      if(allTagsEl0) allTagsEl0.innerHTML = '';
       return;
     }
 
@@ -6781,10 +6991,8 @@
       if(miniSection0) miniSection0.style.display='none';
       const breakdown0 = document.getElementById('masterBreakdown');
       if(breakdown0) breakdown0.innerHTML = '';
-      const strengthEl1 = document.getElementById('masterStrengthTags');
-      const moodEl1 = document.getElementById('masterMoodTags');
-      if(strengthEl1) strengthEl1.innerHTML = '';
-      if(moodEl1) moodEl1.innerHTML = '';
+      const allTagsEl1 = document.getElementById('masterAllTags');
+      if(allTagsEl1) allTagsEl1.innerHTML = '';
       return;
     }
 
@@ -6838,28 +7046,33 @@
     if(miA) drawRadar(miA, labA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a');
     if(miB) drawRadar(miB, labB, avgB, 'rgba(255,153,153,0.38)', '#ff8888');
 
-    // 際立つ強み／印象的な雰囲気（既に集計済みのavgA/avgBの数値をそのままタグ表示するだけ）
-    const strengthEl = document.getElementById('masterStrengthTags');
-    const moodEl = document.getElementById('masterMoodTags');
-    if(strengthEl) strengthEl.innerHTML = labA.map((k,i)=>`<span class="master-tag-strength">${k} ${avgA[i]}</span>`).join('');
-    if(moodEl) moodEl.innerHTML = labB.map((k,i)=>`<span class="master-tag-mood">${k} ${avgB[i]}</span>`).join('');
+    // 際立つ強み／印象的な雰囲気（既に集計済みのavgA/avgBの数値をそのままタグ表示するだけ。1行に緑→赤の順で並べる）
+    const allTagsEl = document.getElementById('masterAllTags');
+    const maxAvgA = avgA.length ? Math.max(...avgA) : null;
+    if(allTagsEl) {
+      const strengthHtml = labA.map((k,i)=>`<span class="master-tag-strength${avgA[i]===maxAvgA?' is-top':''}">${k} ${avgA[i]}</span>`).join('');
+      const moodHtml = labB.map((k,i)=>`<span class="master-tag-mood">${k} ${avgB[i]}</span>`).join('');
+      allTagsEl.innerHTML = strengthHtml + moodHtml;
+    }
 
-    // 内訳表示
+    // 内訳表示（左列=緑グループ全部、右列=赤グループ全部）
     const breakdown = document.getElementById('masterBreakdown');
     if(breakdown) {
-      const allAxes = [
-        ...labA.map((k,i)=>({label:k, val:avgA[i], margin:marginA[i], color:'#5ec97a'})),
-        ...labB.map((k,i)=>({label:k, val:avgB[i], margin:marginB[i], color:'#ff8888'})),
-      ];
-      breakdown.innerHTML = allAxes.map(({label,val,margin,color})=>`
+      const greenAxes = labA.map((k,i)=>({label:k, val:avgA[i], margin:marginA[i], color:'#5ec97a'}));
+      const redAxes = labB.map((k,i)=>({label:k, val:avgB[i], margin:marginB[i], color:'#ff8888'}));
+      const renderCol = (axes) => axes.map(({label,val,margin,color})=>`
         <div class="breakdown-item">
           <span class="breakdown-label">${label}</span>
           <div class="breakdown-bar-wrap">
             <div class="breakdown-bar" style="width:${val*10}%;background:${color};"></div>
           </div>
-          <span class="breakdown-val">${val}${margin!=null?`<span class="breakdown-margin">±${margin}</span>`:''}</span>
+          <span class="breakdown-val">${val}${(margin!=null && margin!==0)?`<span class="breakdown-margin">±${margin}</span>`:''}</span>
         </div>
       `).join('');
+      breakdown.innerHTML = `
+        <div class="breakdown-col">${renderCol(greenAxes)}</div>
+        <div class="breakdown-col">${renderCol(redAxes)}</div>
+      `;
     }
   }
 
@@ -7643,7 +7856,7 @@
       myGroup = mine ? mine.axis_group : null;
     }
     const msg = myGroup
-      ? `${escapeHtml(t('valueType'+myGroup))}${currentLang==='ja'?'型の掲示板に入れるよ！':' board is open for you!'}`
+      ? `<span style="color:${VALUE_TYPE_COLORS[myGroup]};font-weight:800;">${escapeHtml(t('valueType'+myGroup))}</span>${currentLang==='ja'?'の掲示板の鍵が開いたよ！':' board is unlocked!'}`
       : (currentLang==='ja' ? 'しっかりとしたレビューを書くと、特別な掲示板に入れるよ！' : 'Write a solid review to unlock a special board!');
     el.innerHTML = `
       <div style="display:flex;align-items:flex-end;gap:.5rem;">
@@ -7662,15 +7875,16 @@
       myGroup = mine ? mine.axis_group : null;
     }
     const typeHtml = myGroup
-      ? `<p style="margin:0 0 .4rem;font-size:.8rem;color:#dff0e6;">${escapeHtml((currentLang==='ja'?'あなたの価値観は':'Your value type:'))} <strong>${escapeHtml(t('valueType'+myGroup))}</strong> ${currentLang==='ja'?'です':''}</p>`
+      ? `<p style="margin:0 0 .4rem;font-size:.8rem;color:#dff0e6;">${escapeHtml((currentLang==='ja'?'あなたの価値観は':'Your value type:'))} <strong style="color:${VALUE_TYPE_COLORS[myGroup]};">${escapeHtml(t('valueType'+myGroup))}</strong> ${currentLang==='ja'?'です':''}</p>`
       : '';
+    const valueColor = myGroup ? VALUE_TYPE_COLORS[myGroup] : null;
     el.innerHTML = `
       ${typeHtml}
       <div style="display:flex;flex-direction:column;gap:8px;">
         <button type="button" class="board-entry-btn" data-tab="general" style="width:100%;height:42px;display:inline-flex;align-items:center;gap:9px;padding:0 14px;border-radius:10px;border:1px solid rgba(92,201,142,.3);background:rgba(92,201,142,.08);color:#dfeae3;font-weight:700;font-size:13px;cursor:pointer;">
           <span>💬</span><span>${escapeHtml(t('boardEntryGeneral'))}</span>
         </button>
-        <button type="button" class="board-entry-btn"${myGroup?` data-tab="${myGroup}"`:''} ${myGroup?'':'disabled'} style="width:100%;height:42px;display:inline-flex;align-items:center;gap:9px;padding:0 14px;border-radius:10px;border:1px solid rgba(217,164,65,.3);background:rgba(217,164,65,.08);color:${myGroup?'#e8c463':'var(--muted,#9ab)'};font-weight:700;font-size:13px;cursor:${myGroup?'pointer':'not-allowed'};opacity:${myGroup?'1':'.6'};">
+        <button type="button" class="board-entry-btn"${myGroup?` data-tab="${myGroup}"`:''} ${myGroup?'':'disabled'} style="width:100%;height:42px;display:inline-flex;align-items:center;gap:9px;padding:0 14px;border-radius:10px;border:1px solid ${valueColor?valueColor+'66':'rgba(217,164,65,.3)'};background:${valueColor?valueColor+'22':'rgba(217,164,65,.08)'};color:${valueColor||'var(--muted,#9ab)'};font-weight:700;font-size:13px;cursor:${myGroup?'pointer':'not-allowed'};opacity:${myGroup?'1':'.6'};">
           <span>${myGroup?'💎':'🔒'}</span><span>${escapeHtml(t('boardEntryValue'))}</span>
         </button>
       </div>
@@ -7714,10 +7928,11 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
         ${tabs.map(tb=>{
           const active = tb.id===_boardActiveTab;
+          const tc = VALUE_TYPE_COLORS[tb.id];
+          const tBg = active ? tc+'22' : 'transparent';
+          const tBorder = active ? tc+'66' : 'rgba(255,255,255,.1)';
+          const tColor = active ? tc : '#dfeae3';
           const locked = tb.id !== myGroup;
-          const tBg = active ? 'rgba(92,201,142,.12)' : 'transparent';
-          const tBorder = active ? 'rgba(92,201,142,.4)' : 'rgba(255,255,255,.1)';
-          const tColor = active ? '#9be3bd' : '#dfeae3';
           return `<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:10px;background:${tBg};border:1px solid ${tBorder};color:${tColor};font-size:13px;font-weight:700;cursor:pointer;">${locked?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#82968a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>':''}${escapeHtml(tb.label)}</button>`;
         }).join('')}
       </div>
@@ -7942,7 +8157,7 @@
     });
     return count ? dist/count : Infinity;
   }
-  const srSearchState={q:'',sort:'relevance'};
+  const srSearchState={q:'',sort:'relevance',eraFrom:null,eraTo:null};
   const srTagsActive=[];
   // タグの日本語形→英語形の対応（Kitsuジャンル/カテゴリとの照合に使う。ジャンルは英語で保存されているため）
   let _srTagEnglishForms = {};
@@ -8352,7 +8567,7 @@
     };
     if(DB_MODE !== 'supabase' || !sb) { showEmpty(); return; }
     try {
-      const results = await computeSimilarAnime(id);
+      const results = await computeSimilarAnime(id, 5);
       if(currentAnimeId !== id) return; // 計算中に別のページへ移動していたら反映しない
       if(!results.length) { showEmpty(); return; }
       const ids = results.map(r=>r.id);
@@ -8467,8 +8682,9 @@
   }
 
   function setupSrTagInput() {
-    setupTagInput('srTagInput','srTagAddBtn','srTagList',srTagsActive,10,{translateToJa:true});
-    setupTagFloatSuggest('srTagInput','srTagAddBtn');
+    const renderSrTags = setupTagInput('srTagInput','srTagAddBtn','srTagList',srTagsActive,10,{translateToJa:true});
+    setupTagBrowsePanel('srTagBrowseToggle','srTagBrowsePanel','srTagBrowseToggleLabel',srTagsActive,renderSrTags);
+    setupEraToggle('srEraToggle','srEraFrom','srEraTo');
   }
 
   async function renderSearch() {
@@ -8537,6 +8753,17 @@
     if(hasSrProfile()) await ensureSearchMasterGraphCache();
 
     if(q) list=list.filter(a=>fuzzyIncludes(`${a.title} ${a.titleEn||''} ${a.meta} ${(a.features||[]).join(' ')} ${a.description}`.toLowerCase(), q));
+
+    // 年代で絞る（開始年・終了年のどちらか片方だけでも可）
+    if(srSearchState.eraFrom || srSearchState.eraTo) {
+      list = list.filter(a => {
+        const y = parseInt(a.year, 10);
+        if(!y) return false;
+        if(srSearchState.eraFrom && y < srSearchState.eraFrom) return false;
+        if(srSearchState.eraTo && y > srSearchState.eraTo) return false;
+        return true;
+      });
+    }
 
     // 距離（0〜10の差）を0〜100%の「近さ」に変換する。距離がInfinity（データなし）はnullを返す
     const distToPct = (dist) => (dist === Infinity || dist == null) ? null : Math.max(0, Math.round(100 - dist * 10));
@@ -8701,6 +8928,9 @@
   async function doSrSearch(){
     srSearchState.q=document.getElementById('srQuery').value.trim();
     srSearchState.sort=document.getElementById('srSortSelect').value;
+    const srEra = getEraRange('srEraToggle','srEraFrom','srEraTo');
+    srSearchState.eraFrom = srEra ? srEra.from : null;
+    srSearchState.eraTo = srEra ? srEra.to : null;
     await renderSearch().catch(console.error);
   }
   document.getElementById('srSearchBtn').onclick=doSrSearch;
@@ -9017,6 +9247,7 @@
     const section = document.getElementById('afRakutenSection');
     const el = document.getElementById('afRakutenLink');
     if(!section || !el || !page) return;
+    if((page.id || '').startsWith('test-anime-')) { section.style.display = 'none'; return; }
     const title = page.title || page.titleEn || '';
     if(!title) return;
     try {
@@ -9187,14 +9418,14 @@
     masterMoodLabel:{ ja:'印象的な雰囲気',en:'Notable Mood',ko:'인상적인 분위기','zh-tw':'印象深刻的氛圍','zh-cn':'印象深刻的氛围',es:'Ambiente notable',fr:'Ambiance notable',pt:'Ambiente notável',de:'Bemerkenswerte Stimmung',ar:'جو ملحوظ',th:'บรรยากาศที่โดดเด่น',id:'Suasana Menonjol',ru:'Заметная атмосфера',it:'Atmosfera notevole',vi:'Bầu không khí ấn tượng' },
     boardSectionTitle:{ ja:'掲示板', en:'Board' },
     boardTabGeneral:{ ja:'通常掲示板', en:'General board' },
-    boardTabA:{ ja:'ビジュアル系', en:'Visual' },
-    boardTabB:{ ja:'物語系', en:'Story' },
-    boardTabC:{ ja:'キャラ系', en:'Characters' },
-    boardTabD:{ ja:'トーン系', en:'Tone' },
-    valueTypeA:{ ja:'ビジュアル型', en:'Visual type' },
-    valueTypeB:{ ja:'物語型', en:'Story type' },
-    valueTypeC:{ ja:'キャラ型', en:'Character type' },
-    valueTypeD:{ ja:'トーン型', en:'Tone type' },
+    boardTabA:{ ja:'ビジュアルタイプ', en:'Visual' },
+    boardTabB:{ ja:'ストーリータイプ', en:'Story' },
+    boardTabC:{ ja:'キャラタイプ', en:'Characters' },
+    boardTabD:{ ja:'トーンタイプ', en:'Tone' },
+    valueTypeA:{ ja:'ビジュアルタイプ', en:'Visual type' },
+    valueTypeB:{ ja:'ストーリータイプ', en:'Story type' },
+    valueTypeC:{ ja:'キャラタイプ', en:'Character type' },
+    valueTypeD:{ ja:'トーンタイプ', en:'Tone type' },
     boardEntrySectionTitle:{ ja:'掲示板', en:'Board' },
     boardEntryGeneral:{ ja:'通常掲示板', en:'General board' },
     boardEntryLocked:{ ja:'未投票', en:'Not voted yet' },
@@ -9360,13 +9591,14 @@
     btnSearchGo:  { ja:'検索',en:'Search',ko:'검색','zh-tw':'搜尋','zh-cn':'搜索',es:'Buscar',fr:'Rechercher',pt:'Buscar',de:'Suchen',ar:'بحث',th:'ค้นหา',id:'Cari',ru:'Поиск',it:'Cerca',vi:'Tìm kiếm' },
     filterTitle:  { ja:'🎛 詳細フィルター・並び替え',en:'🎛 Filters & Sort',ko:'🎛 상세 필터·정렬','zh-tw':'🎛 詳細篩選·排序','zh-cn':'🎛 详细筛选·排序',es:'🎛 Filtros y orden',fr:'🎛 Filtres et tri',pt:'🎛 Filtros e ordenação',de:'🎛 Filter & Sortierung',ar:'🎛 الفلاتر والترتيب',th:'🎛 ตัวกรอง·การเรียง',id:'🎛 Filter & Urutkan',ru:'🎛 Фильтры и сортировка',it:'🎛 Filtri e ordinamento',vi:'🎛 Bộ lọc & Sắp xếp' },
     sortLabel:    { ja:'並び替え',en:'Sort by',ko:'정렬','zh-tw':'排序','zh-cn':'排序',es:'Ordenar',fr:'Trier',pt:'Ordenar',de:'Sortieren',ar:'ترتيب',th:'เรียงลำดับ',id:'Urutkan',ru:'Сортировка',it:'Ordina',vi:'Sắp xếp' },
+    eraFilterLabel: { ja:'年代で絞る',en:'Filter by year',ko:'연도로 좁히기','zh-tw':'依年代篩選','zh-cn':'按年代筛选',es:'Filtrar por año',fr:'Filtrer par année',pt:'Filtrar por ano',de:'Nach Jahr filtern',ar:'تصفية حسب السنة',th:'กรองตามปี',id:'Filter berdasarkan tahun',ru:'Фильтр по году',it:'Filtra per anno',vi:'Lọc theo năm' },
     sortRelevance:{ ja:'関連度順',en:'Relevance',ko:'관련도순','zh-tw':'相關度','zh-cn':'相关度',es:'Relevancia',fr:'Pertinence',pt:'Relevância',de:'Relevanz',ar:'الصلة',th:'ตามความเกี่ยวข้อง',id:'Relevansi',ru:'По релевантности',it:'Rilevanza',vi:'Liên quan nhất' },
     sortReviewsDesc:{ ja:'レビューが多い順',en:'Most reviewed',ko:'리뷰 많은 순','zh-tw':'評論最多','zh-cn':'评论最多',es:'Más reseñados',fr:'Plus d\'avis',pt:'Mais avaliados',de:'Meistbewertet',ar:'الأكثر مراجعة',th:'รีวิวมากสุด',id:'Paling banyak diulas',ru:'Больше всего отзывов',it:'Più recensiti',vi:'Nhiều đánh giá nhất' },
     sortReviewsAsc:{ ja:'レビューが少ない順',en:'Least reviewed',ko:'리뷰 적은 순','zh-tw':'評論最少','zh-cn':'评论最少',es:'Menos reseñados',fr:'Moins d\'avis',pt:'Menos avaliados',de:'Wenigstbewertet',ar:'الأقل مراجعة',th:'รีวิวน้อยสุด',id:'Paling sedikit diulas',ru:'Меньше всего отзывов',it:'Meno recensiti',vi:'Ít đánh giá nhất' },
     sortMatch:    { ja:'好みグラフに近い順',en:'Closest to my taste',ko:'취향 그래프에 가까운 순','zh-tw':'最接近喜好圖','zh-cn':'最接近喜好图',es:'Más cercano a mi gusto',fr:'Plus proche de mes goûts',pt:'Mais próximo do meu gosto',de:'Am nächsten meinem Geschmack',ar:'الأقرب لذوقي',th:'ใกล้เคียงกับรสนิยม',id:'Paling sesuai selera',ru:'Ближе всего к моему вкусу',it:'Più vicino ai miei gusti',vi:'Gần gu nhất' },
     filterTagLabel:{ ja:'🏷 タグで絞る（最大10個）',en:'🏷 Filter by tags (up to 10)',ko:'🏷 태그로 좁히기 (최대 10개)','zh-tw':'🏷 以標籤篩選（最多10個）','zh-cn':'🏷 按标签筛选（最多10个）',es:'🏷 Filtrar por etiquetas',fr:'🏷 Filtrer par tags',pt:'🏷 Filtrar por tags',de:'🏷 Nach Tags filtern',ar:'🏷 تصفية حسب الوسوم',th:'🏷 กรองด้วยแท็ก',id:'🏷 Filter dengan tag',ru:'🏷 Фильтр по тегам',it:'🏷 Filtra per tag',vi:'🏷 Lọc theo thẻ' },
-    filterChartA: { ja:'📊 作品の完成度（無で無視）',en:'📊 Production Quality (unset=ignore)',ko:'📊 작품 완성도 (미설정=무시)','zh-tw':'📊 作品完成度（未設定=忽略）','zh-cn':'📊 作品完成度（未设置=忽略）',es:'📊 Calidad (sin ajustar=ignorar)',fr:'📊 Qualité (non réglé=ignorer)',pt:'📊 Qualidade (não definido=ignorar)',de:'📊 Qualität (nicht gesetzt=ignorieren)',ar:'📊 جودة الإنتاج (غير محدد=تجاهل)',th:'📊 คุณภาพงานสร้าง (ไม่ตั้งค่า=ไม่นับ)',id:'📊 Kualitas Produksi (belum diatur=abaikan)',ru:'📊 Качество (не задано=игнор.)',it:'📊 Qualità (non impostato=ignora)',vi:'📊 Chất lượng (chưa đặt=bỏ qua)' },
-    filterChartB: { ja:'💫 感情・雰囲気（無で無視）',en:'💫 Mood & Atmosphere (unset=ignore)',ko:'💫 감정·분위기 (미설정=무시)','zh-tw':'💫 情感·氛圍（未設定=忽略）','zh-cn':'💫 情感·氛围（未设置=忽略）',es:'💫 Ambiente (sin ajustar=ignorar)',fr:'💫 Ambiance (non réglé=ignorer)',pt:'💫 Clima (não definido=ignorar)',de:'💫 Stimmung (nicht gesetzt=ignorieren)',ar:'💫 الأجواء (غير محدد=تجاهل)',th:'💫 อารมณ์และบรรยากาศ (ไม่ตั้งค่า=ไม่นับ)',id:'💫 Suasana (belum diatur=abaikan)',ru:'💫 Настроение (не задано=игнор.)',it:'💫 Atmosfera (non impostato=ignora)',vi:'💫 Cảm xúc (chưa đặt=bỏ qua)' },
+    filterChartA: { ja:'作品の完成度（無で無視）',en:'Production Quality (unset=ignore)',ko:'작품 완성도 (미설정=무시)','zh-tw':'作品完成度（未設定=忽略）','zh-cn':'作品完成度（未设置=忽略）',es:'Calidad (sin ajustar=ignorar)',fr:'Qualité (non réglé=ignorer)',pt:'Qualidade (não definido=ignorar)',de:'Qualität (nicht gesetzt=ignorieren)',ar:'جودة الإنتاج (غير محدد=تجاهل)',th:'คุณภาพงานสร้าง (ไม่ตั้งค่า=ไม่นับ)',id:'Kualitas Produksi (belum diatur=abaikan)',ru:'Качество (не задано=игнор.)',it:'Qualità (non impostato=ignora)',vi:'Chất lượng (chưa đặt=bỏ qua)' },
+    filterChartB: { ja:'感情・雰囲気（無で無視）',en:'Mood & Atmosphere (unset=ignore)',ko:'감정·분위기 (미설정=무시)','zh-tw':'情感·氛圍（未設定=忽略）','zh-cn':'情感·氛围（未设置=忽略）',es:'Ambiente (sin ajustar=ignorar)',fr:'Ambiance (non réglé=ignorer)',pt:'Clima (não definido=ignorar)',de:'Stimmung (nicht gesetzt=ignorieren)',ar:'الأجواء (غير محدد=تجاهل)',th:'อารมณ์และบรรยากาศ (ไม่ตั้งค่า=ไม่นับ)',id:'Suasana (belum diatur=abaikan)',ru:'Настроение (не задано=игнор.)',it:'Atmosfera (non impostato=ignora)',vi:'Cảm xúc (chưa đặt=bỏ qua)' },
     btnRefineSearch:{ ja:'この条件で再検索',en:'Search with these filters',ko:'이 조건으로 재검색','zh-tw':'以此條件重新搜尋','zh-cn':'以此条件重新搜索',es:'Buscar con estos filtros',fr:'Chercher avec ces filtres',pt:'Buscar com esses filtros',de:'Mit diesen Filtern suchen',ar:'البحث بهذه الفلاتر',th:'ค้นหาด้วยเงื่อนไขนี้',id:'Cari dengan filter ini',ru:'Искать с этими фильтрами',it:'Cerca con questi filtri',vi:'Tìm với bộ lọc này' },
     btnResetFilters:{ ja:'↺ リセット',en:'↺ Reset',ko:'↺ 초기화','zh-tw':'↺ 重設','zh-cn':'↺ 重置',es:'↺ Restablecer',fr:'↺ Réinitialiser',pt:'↺ Redefinir',de:'↺ Zurücksetzen',ar:'↺ إعادة تعيين',th:'↺ รีเซ็ต',id:'↺ Reset',ru:'↺ Сбросить',it:'↺ Reimposta',vi:'↺ Đặt lại' },
     btnSearchGoFull:{ ja:'検索する',en:'Search',ko:'검색하기','zh-tw':'搜尋','zh-cn':'搜索',es:'Buscar',fr:'Rechercher',pt:'Buscar',de:'Suchen',ar:'بحث',th:'ค้นหา',id:'Cari',ru:'Поиск',it:'Cerca',vi:'Tìm kiếm' },
@@ -9597,8 +9829,8 @@
     document.querySelectorAll('.filter-label').forEach(el => {
       const txt = el.textContent.trim();
       if (txt.includes('🏷')) el.textContent = t('filterTagLabel');
-      else if (txt.includes('📊')) el.textContent = t('filterChartA');
-      else if (txt.includes('💫')) el.textContent = t('filterChartB');
+      else if (txt.includes('作品の完成度') || txt.includes('📊')) el.textContent = t('filterChartA');
+      else if (txt.includes('感情・雰囲気') || txt.includes('💫')) el.textContent = t('filterChartB');
     });
 
     // 作品ページ
@@ -9792,8 +10024,8 @@
     document.querySelectorAll('.filter-label').forEach(el=>{
       const txt=el.textContent.trim();
       if(txt.includes('🏷')) el.textContent=t('filterTagLabel');
-      else if(txt.includes('📊')) el.textContent=t('filterChartA');
-      else if(txt.includes('💫')) el.textContent=t('filterChartB');
+      else if(txt.includes('作品の完成度') || txt.includes('📊')) el.textContent=t('filterChartA');
+      else if(txt.includes('感情・雰囲気') || txt.includes('💫')) el.textContent=t('filterChartB');
     });
     // ホームページ
     const _secHeads = document.querySelectorAll('#page-home .sec-head h2');
