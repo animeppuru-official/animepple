@@ -1610,7 +1610,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.66.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.68.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -1894,6 +1894,12 @@
   <div class="af-section" id="afGoodsSection">
     <div class="af-section-label" data-i18n="goodsSection">🛍 グッズ・関連商品</div>
     <div id="afGoodsLinks"></div>
+  </div>
+
+  <!-- Blu-ray/DVD（楽天アフィリンク） -->
+  <div class="af-section" id="afRakutenSection" style="display:none;">
+    <div class="af-section-label">💿 Blu-ray・DVD（楽天市場）</div>
+    <div id="afRakutenLink"></div>
   </div>
 
   <!-- 配信サービス -->
@@ -3604,7 +3610,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.66.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.68.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4949,7 +4955,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.66.0';
+      if(vEl) vEl.textContent = 'v0.68.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -6270,7 +6276,7 @@
       const itemWithKitsuId = { ...item, kitsuId: item.kitsuId || item.id.replace('kitsu-','') };
       return renderAnimeCard(itemWithKitsuId, { style:'g', dummy: item.dummy });
     }).join('');
-    initCarousel('seasonScroll','seasonDots',5);
+    initCarousel('seasonScroll','seasonDots',7);
   }
 
   async function loadSeasonSection() {
@@ -6288,7 +6294,7 @@
   ════════════════════════════ */
   const carousels = {}; // {id: {items, currentPage, timer, perPage}}
 
-  function initCarousel(trackId, dotsId, perPagePC=5) {
+  function initCarousel(trackId, dotsId, perPagePC=7) {
     if(carousels[trackId]?.timer) clearInterval(carousels[trackId].timer);
 
     const track = document.getElementById(trackId);
@@ -6298,7 +6304,7 @@
     const allItems = Array.from(track.children);
     if(!allItems.length) return;
 
-    const perPage = window.innerWidth >= 640 ? perPagePC : 2;
+    const perPage = window.innerWidth >= 640 ? perPagePC : 3;
     const wrapWidth = track.parentElement.offsetWidth || window.innerWidth - 160;
 
     // アイテムをページ単位にグループ化
@@ -6383,7 +6389,7 @@
         return renderAnimeCard(itemWithKitsuId, { style:'g' });
       }).join('') : '<p style="color:var(--muted);padding:.5rem;">作品が増えると表示されます</p>';
       // HTML挿入後にカルーセル初期化
-      initCarousel('pickupScroll','pickupDots',5);
+      initCarousel('pickupScroll','pickupDots',7);
     });
 
     startPickupTimer();
@@ -8908,6 +8914,7 @@
   function renderAffiliateLinks(page) {
     renderStreamLinks(page);
     renderGoodsLinks(page);
+    renderRakutenBluray(page);
   }
 
   // 各配信サービスのアニメ名検索URL生成
@@ -9003,6 +9010,35 @@
 
     el.innerHTML = `<div class="af-goods-grid">${items}</div>`;
     section.style.display = '';
+  }
+
+  // 楽天商品検索APIでBlu-rayを検索し、商品ページへのリンクを表示（規約上必須のリンク併設）
+  async function renderRakutenBluray(page) {
+    const section = document.getElementById('afRakutenSection');
+    const el = document.getElementById('afRakutenLink');
+    if(!section || !el || !page) return;
+    const title = page.title || page.titleEn || '';
+    if(!title) return;
+    try {
+      const res = await fetch(`https://ofbjfiuayfhdkgertxyo.supabase.co/functions/v1/fetch-rakuten-image?title=${encodeURIComponent(title)}`);
+      const data = await res.json();
+      if(!data.found) { section.style.display = 'none'; return; }
+      el.innerHTML = `
+        <a class="af-goods-card" href="${escapeHtml(data.itemUrl)}" target="_blank" rel="noopener noreferrer sponsored"
+           onclick="adClick('goods_rakuten_bluray')">
+          <span class="af-goods-card-thumb" style="padding:0;overflow:hidden;">
+            <img src="${escapeHtml(data.imageUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;">
+          </span>
+          <div class="af-goods-card-body">
+            <h3 class="af-goods-card-name">${escapeHtml(data.itemName)}</h3>
+            <p class="af-goods-card-price">楽天市場で見る →</p>
+          </div>
+        </a>
+      `;
+      section.style.display = '';
+    } catch(e) {
+      section.style.display = 'none';
+    }
   }
 
   /* ════════════════════════════
