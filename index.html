@@ -656,6 +656,20 @@
     .pack-subsection-title { font-size:.78rem; font-weight:700; color:#c2deca; margin:0 0 .5rem; display:flex; align-items:center; gap:.4rem; }
     .pack-subsection-title::before { content:''; width:.35rem; height:.35rem; border-radius:50%; background:var(--pack-color, var(--brand)); }
 
+    /* ①結論レイヤー */
+    .conclusion-hero { background:linear-gradient(135deg, color-mix(in srgb, var(--pack-color, var(--brand)) 16%, var(--card2)), var(--card2)); border:1px solid var(--pack-color, var(--brand)); border-radius:16px; padding:1.4rem 1.2rem; text-align:center; margin-bottom:1.2rem; }
+    .conclusion-hero-label { font-size:.75rem; color:var(--muted); font-weight:700; letter-spacing:.03em; margin-bottom:.4rem; }
+    .conclusion-hero-score { font-size:2.6rem; font-weight:900; color:var(--pack-color, var(--brand)); line-height:1; }
+    .conclusion-hero-unit { font-size:1.1rem; font-weight:700; margin-left:.2rem; opacity:.8; }
+    .conclusion-hero-note { font-size:.72rem; color:var(--muted); margin-top:.5rem; }
+
+    /* ③素材レイヤー（折りたたみ） */
+    .raw-data-drawer { margin-top:1.4rem; border-top:1px solid var(--line); padding-top:.8rem; }
+    .raw-data-toggle { background:none; border:none; color:var(--muted); font-size:.74rem; cursor:pointer; padding:.3rem 0; display:flex; align-items:center; gap:.4rem; }
+    .raw-data-toggle:hover { color:#dff0e6; }
+    .raw-data-arrow { font-size:.6rem; }
+    .raw-data-body { margin-top:.7rem; }
+
     .pack-simple-table { width:100%; border-collapse:collapse; font-size:.76rem; }
     .pack-simple-table th { text-align:left; color:var(--muted); font-weight:600; padding:.35rem .5rem; border-bottom:1px solid var(--line); font-size:.68rem; }
     .pack-simple-table td { padding:.4rem .5rem; border-bottom:1px solid rgba(255,255,255,.04); color:#dff0e6; }
@@ -1589,7 +1603,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.58.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.59.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -3539,7 +3553,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.58.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.59.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4884,7 +4898,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.58.0';
+      if(vEl) vEl.textContent = 'v0.59.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -10055,6 +10069,27 @@
   function subsection(title, bodyHtml) {
     return `<div class="pack-subsection"><div class="pack-subsection-title">${escapeHtml(title)}</div>${bodyHtml}</div>`;
   }
+  // ① 結論レイヤー：パック最上部に大きく表示するスコア
+  function conclusionHero(score, label, color) {
+    const hasScore = (score !== null && score !== undefined && score !== '');
+    const displayScore = hasScore ? Math.round(score * 10) / 10 : '—';
+    const note = hasScore ? '' : '（データ不足のため判定不可）';
+    return `<div class="conclusion-hero" style="--pack-color:${color||'#5ec97a'};">
+      <div class="conclusion-hero-label">${escapeHtml(label)}</div>
+      <div class="conclusion-hero-score">${displayScore}<span class="conclusion-hero-unit">${hasScore?'点':''}</span></div>
+      ${note ? `<div class="conclusion-hero-note">${escapeHtml(note)}</div>` : ''}
+    </div>`;
+  }
+  // ③ 素材レイヤー：Raw Dataは折りたたみ、デフォルト非表示
+  function rawDataDrawer(bodyHtml, drawerId) {
+    const id = drawerId || ('rawDrawer_' + Date.now() + '_' + Math.floor(Math.random()*10000));
+    return `<div class="raw-data-drawer">
+      <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('${id}'); const open = el.style.display!=='none'; el.style.display = open ? 'none' : ''; this.querySelector('.raw-data-arrow').textContent = open ? '▶' : '▼';">
+        <span class="raw-data-arrow">▶</span> 素材データを見る（内訳・Raw Data）
+      </button>
+      <div id="${id}" class="raw-data-body" style="display:none;">${bodyHtml}</div>
+    </div>`;
+  }
   function downloadCsv(jsonStr, filename) {
     try {
       const rows = JSON.parse(jsonStr);
@@ -10080,8 +10115,11 @@
     const radarId = 'sentimentRadar_' + Date.now();
     const meta = (d.animeId && _partnerAnimeMeta[d.animeId]) || {};
 
-    // ① Executive Summary
-    let html = `<div class="exec-summary">
+    // ①結論レイヤー
+    let html = conclusionHero(d.conclusionScore, '訴求力スコア', color);
+
+    // ②データレイヤー：Executive Summary
+    html += `<div class="exec-summary">
       <div class="exec-summary-title">Executive Summary${animeTitle ? ' — ' + escapeHtml(animeTitle) : ''}</div>
       <div class="exec-top-row">
         <div class="exec-anime-info">
@@ -10150,35 +10188,42 @@
       html += subsection('④ 競合作品比較（似ている上位3作品との軸比較）', tabsHtml);
     }
 
-    // ⑤ Raw Data
+    // ③素材レイヤー：Raw Data（折りたたみ、デフォルト非表示）
     const csvBtn = `<button onclick='downloadCsv(${JSON.stringify(JSON.stringify((d.masterGraphRaw||[]).map(m=>({axis:m.axis, avg_score:m.avg_score, review_count:m.review_count}))))}, "${(animeTitle||'anime').replace(/[^a-zA-Z0-9]/g,'_')}_raw12axis.csv")' style="margin-bottom:.6rem;padding:.4rem .8rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.75rem;cursor:pointer;">⬇ CSVダウンロード</button>`;
-    html += subsection('⑤ Raw Data（12軸素点）', csvBtn + simpleTable(['軸','平均値','レビュー数'], (d.masterGraphRaw||[]).map(m=>[escapeHtml(m.axis), m.avg_score, m.review_count])));
+    html += rawDataDrawer(subsection('Raw Data（12軸素点）', csvBtn + simpleTable(['軸','平均値','レビュー数'], (d.masterGraphRaw||[]).map(m=>[escapeHtml(m.axis), m.avg_score, m.review_count])))
+      + subsection('コメント頻出語', barListHtml((d.commentWordFrequency||[]).slice(0,15).map(w=>({label:w.word, value:w.occurrence_count})), {showRank:true, suffix:'回', color})));
 
     return html;
   }
 
-  function formatFanInsight(d) {
-    let html = subsection('年代×性別 嗜好マップ', simpleTable(['性別','年代','軸','平均値','サンプル数'], (d.tasteByAttribute||[]).slice(0,30).map(t=>[escapeHtml(t.gender), escapeHtml(t.age_group), escapeHtml(t.axis), t.avg_score, t.sample_size])));
-    html += subsection('視聴者クラスタ', simpleTable(['タイプ','人数','世界観','キャラ','作画'], (d.userClusters||[]).map(c=>[escapeHtml(c.cluster_type), c.user_count, c.avg_sekaikan, c.avg_character, c.avg_sakuga])));
+  function formatFanInsight(d, color) {
+    // ①結論レイヤー
+    let html = conclusionHero(d.conclusionScore, '熱狂度スコア', color);
+
+    // ②データレイヤー
     if(d.fandomDistribution && d.fandomDistribution.length) {
       html += subsection('コアファン率（この作品）', simpleTable(['層','人数','割合'], d.fandomDistribution.map(f=>[escapeHtml(f.maturity_level), f.user_count, f.ratio_pct+'%'])));
     }
-    if(d.fandomIntensity) {
-      const fi = d.fandomIntensity;
-      html += subsection('ファンダム熱量（この作品）', `<div class="stat-tile-grid">
-        ${statTile('レビュー数', fi.review_count, '')}
-        ${statTile('平均コメント長', fi.avg_comment_length, '文字')}
-        ${statTile('熱量スコア', fi.intensity_score, '')}
-      </div>`);
+    if(d.fandomIntensityBreakdown && d.fandomIntensityBreakdown.length) {
+      html += subsection('ファンダム熱量の内訳（この作品）', barListHtml(d.fandomIntensityBreakdown.map(f=>({label:f.component, value:f.contribution})), {color}));
     }
-    html += subsection('評価者タイプ（辛口/甘口）', simpleTable(['タイプ','人数','平均点','ばらつき'], (d.reviewerStrictness||[]).map(c=>[escapeHtml(c.cluster_type), c.user_count, c.avg_score, c.score_variance])));
+    html += subsection('視聴者クラスタ', simpleTable(['タイプ','人数','世界観','キャラ','作画'], (d.userClusters||[]).map(c=>[escapeHtml(c.cluster_type), c.user_count, c.avg_sekaikan, c.avg_character, c.avg_sakuga])));
+
+    // ③素材レイヤー
     const infl = (d.potentialInfluencers||[]).slice(0,10);
-    html += subsection('インフルエンサー予備軍（上位10）', simpleTable(['質の高いレビュー数','平均品質スコア','シェア数','影響力スコア'], infl.map(u=>[u.quality_review_count, u.avg_quality_score, u.share_count, u.influence_score])));
+    html += rawDataDrawer(
+      subsection('年代×性別 嗜好マップ', simpleTable(['性別','年代','軸','平均値','サンプル数'], (d.tasteByAttribute||[]).slice(0,30).map(t=>[escapeHtml(t.gender), escapeHtml(t.age_group), escapeHtml(t.axis), t.avg_score, t.sample_size])))
+      + subsection('評価者タイプ（辛口/甘口）', simpleTable(['タイプ','人数','平均点','ばらつき'], (d.reviewerStrictness||[]).map(c=>[escapeHtml(c.cluster_type), c.user_count, c.avg_score, c.score_variance])))
+      + subsection('インフルエンサー予備軍（上位10）', simpleTable(['質の高いレビュー数','平均品質スコア','シェア数','影響力スコア'], infl.map(u=>[u.quality_review_count, u.avg_quality_score, u.share_count, u.influence_score])))
+    );
     return html;
   }
 
   function formatTrend(d, color) {
-    let html = '';
+    // ①結論レイヤー
+    let html = conclusionHero(d.conclusionScore, '勢いスコア', color);
+
+    // ②データレイヤー
     if(d.hitSignal) {
       const hs = d.hitSignal;
       html += `<div class="stat-tile-grid">
@@ -10188,8 +10233,6 @@
         ${statTile('判定', hs.signal_level || '—', '')}
       </div>`;
     }
-    html += subsection('急上昇タグ', barListHtml((d.trendingTags||[]).slice(0,15).map(t=>({label:'#'+t.tag, value:t.recent_count})), {showRank:true, suffix:'件', color}));
-    html += subsection('市場トレンド指数（軸別の変化）', simpleTable(['軸','直近平均','以前平均','変化'], (d.marketTrendIndex||[]).map(m=>[escapeHtml(m.axis), m.recent_avg, m.prev_avg??'—', (m.trend_change>0?'+':'')+(m.trend_change??'—')])));
     if(d.declineSignal) {
       const ds = d.declineSignal;
       const declineDisplay = (ds.decline_rate < 0) ? '減少なし（増加中）' : ds.decline_rate + '%';
@@ -10200,54 +10243,78 @@
         ${statTile('判定', ds.signal_level || '—', '')}
       </div>`);
     }
-    html += subsection('市場センチメント指数（月別推移）', simpleTable(['月','総合スコア','レビュー数'], (d.marketSentimentIndex||[]).map(m=>[escapeHtml(m.period), m.avg_overall_score, m.review_count])));
-    html += subsection('隠れた名作検出（サイレントヒット）', simpleTable(['作品','PV数','平均品質','リピート率'], (d.silentHits||[]).slice(0,10).map(s=>[escapeHtml(s.title), s.total_pv, s.avg_quality_score, (s.repeat_viewer_ratio??'—')+'%'])));
+    html += subsection('急上昇タグ', barListHtml((d.trendingTags||[]).slice(0,15).map(t=>({label:'#'+t.tag, value:t.recent_count})), {showRank:true, suffix:'件', color}));
+
+    // ③素材レイヤー
+    html += rawDataDrawer(
+      subsection('市場トレンド指数（軸別の変化）', simpleTable(['軸','直近平均','以前平均','変化'], (d.marketTrendIndex||[]).map(m=>[escapeHtml(m.axis), m.recent_avg, m.prev_avg??'—', (m.trend_change>0?'+':'')+(m.trend_change??'—')])))
+      + subsection('年別軸推移', simpleTable(['年','軸','平均値','レビュー数'], (d.yearlyAxisTrend||[]).slice(0,50).map(y=>[y.year, escapeHtml(y.axis), y.avg_score, y.review_count])))
+      + subsection('市場センチメント指数（月別推移）', simpleTable(['月','総合スコア','レビュー数'], (d.marketSentimentIndex||[]).map(m=>[escapeHtml(m.period), m.avg_overall_score, m.review_count])))
+      + subsection('隠れた名作検出（サイレントヒット）', simpleTable(['作品','PV数','平均品質','リピート率'], (d.silentHits||[]).slice(0,10).map(s=>[escapeHtml(s.title), s.total_pv, s.avg_quality_score, (s.repeat_viewer_ratio??'—')+'%'])))
+    );
     return html;
   }
 
-  function formatGlobal(d) {
-    let html = subsection('国別視聴熱量ランキング', simpleTable(['国','件数'], (d.countryStats||[]).slice(0,15).map(c=>[c.country_code, c.cnt])));
-    html += subsection('国別の感情差分（全体平均との差が大きい軸）', simpleTable(['国','軸','その国の平均','全体平均','差'], (d.countryEmotionDiff||[]).slice(0,20).map(c=>[c.country_code, escapeHtml(c.axis), c.country_avg, c.overall_avg, (c.diff>0?'+':'')+c.diff])));
-    html += subsection('国別の関心ギャップ', simpleTable(['国','PV数','レビュー数','転換率','判定'], (d.countryInterestGap||[]).map(c=>[c.country_code, c.pv_count, c.review_count, c.review_rate+'%', escapeHtml(c.gap_type||'—')])));
-    if(d.countryMatching && d.countryMatching.length) {
-      html += subsection('海外国別マッチング（指定国での人気作品）', simpleTable(['作品','その国のPV数'], d.countryMatching.map(c=>[escapeHtml(c.title), c.country_pv_count])));
-    }
+  function formatGlobal(d, color) {
+    // ①結論レイヤー
+    let html = conclusionHero(d.conclusionScore, '海外適性スコア', color);
+
+    // ②データレイヤー
     if(d.localizationFit) {
       const lf = d.localizationFit;
-      html += subsection('ローカライズ適性スコア', `<div class="stat-tile-grid">
+      html += subsection('ローカライズ適性スコア（指定国）', `<div class="stat-tile-grid">
         ${statTile('PV数', lf.pv_count, '')}
         ${statTile('平均品質', lf.avg_quality_score, '')}
         ${statTile('タグ数', lf.tag_count, '')}
         ${statTile('適性スコア', lf.fit_score, '')}
       </div>`);
     }
+    html += subsection('国別視聴熱量ランキング', simpleTable(['国','件数'], (d.countryStats||[]).slice(0,15).map(c=>[c.country_code, c.cnt])));
     if(d.languageDemand && d.languageDemand.length) {
       html += subsection('言語別需要（字幕・吹替の目安）', barListHtml(d.languageDemand.map(l=>({label:l.lang, value:l.tag_count})), {suffix:'件'}));
     }
+
+    // ③素材レイヤー
+    html += rawDataDrawer(
+      subsection('国別の感情差分（全体平均との差が大きい軸）', simpleTable(['国','軸','その国の平均','全体平均','差'], (d.countryEmotionDiff||[]).slice(0,20).map(c=>[c.country_code, escapeHtml(c.axis), c.country_avg, c.overall_avg, (c.diff>0?'+':'')+c.diff])))
+      + subsection('国別の関心ギャップ', simpleTable(['国','PV数','レビュー数','転換率','判定'], (d.countryInterestGap||[]).map(c=>[c.country_code, c.pv_count, c.review_count, c.review_rate+'%', escapeHtml(c.gap_type||'—')])))
+      + (d.countryMatching && d.countryMatching.length ? subsection('海外国別マッチング（指定国での人気作品）', simpleTable(['作品','その国のPV数'], d.countryMatching.map(c=>[escapeHtml(c.title), c.country_pv_count]))) : '')
+    );
     return html;
   }
 
   function formatConsumer(d, color) {
+    // ①結論レイヤー
+    let html = conclusionHero(d.conclusionScore, '動線効率スコア', color);
+
+    // ②データレイヤー
     const funnel = (d.conversionFunnel||[]).slice(0,10);
-    let html = subsection('視聴転換ファネル（PV→お気に入り→レビュー、上位10作品。転換率は100%が上限）', simpleTable(['作品','PV','お気に入り','レビュー','転換率'], funnel.map(f=>[escapeHtml(f.title), f.pv_count, f.favorite_count, f.review_count, (f.fav_to_review_rate??'—')+'%'])));
-    html += subsection('検索ホワイトスペース（需要はあるが作品が少ない）', barListHtml((d.searchWhitespace||[]).slice(0,10).map(s=>({label:s.query, value:s.search_count})), {showRank:true, suffix:'回検索', color}));
-    html += subsection('フィルター利用傾向', barListHtml((d.filterUsage||[]).slice(0,10).map(f=>({label:f.filter_type+'/'+f.filter_value, value:f.usage_count})), {showRank:true, suffix:'回'}));
-    html += subsection('発見経路分析', simpleTable(['流入元','PV数','割合'], (d.discoveryPath||[]).map(p=>[escapeHtml(p.referrer_type), p.pv_count, p.ratio_pct+'%'])));
+    html += subsection('視聴転換ファネル（PV→お気に入り→レビュー、上位10作品。転換率は100%が上限）', simpleTable(['作品','PV','お気に入り','レビュー','転換率'], funnel.map(f=>[escapeHtml(f.title), f.pv_count, f.favorite_count, f.review_count, (f.fav_to_review_rate??'—')+'%'])));
     html += subsection('シェア係数（バイラル度）', simpleTable(['作品','シェア数','PV数','バイラル率'], (d.viralCoefficient||[]).slice(0,10).map(v=>[escapeHtml(v.title), v.share_count, v.pv_count, (v.viral_rate??'—')+'%'])));
-    html += subsection('広告クリエイティブ最適化', simpleTable(['ジャンル','広告枠','クリック数'], (d.adCreativePerformance||[]).slice(0,15).map(a=>[escapeHtml(a.genre), escapeHtml(a.slot_id), a.click_count])));
-    html += subsection('発見難易度スコア（隠れた名作）', simpleTable(['作品','平均品質','PV数','発見難易度'], (d.discoveryDifficulty||[]).slice(0,10).map(x=>[escapeHtml(x.title), x.avg_quality_score, x.pv_count, x.difficulty_score])));
+    html += subsection('発見経路分析', simpleTable(['流入元','PV数','割合'], (d.discoveryPath||[]).map(p=>[escapeHtml(p.referrer_type), p.pv_count, p.ratio_pct+'%'])));
+
+    // ③素材レイヤー
+    html += rawDataDrawer(
+      subsection('検索ホワイトスペース（需要はあるが作品が少ない）', barListHtml((d.searchWhitespace||[]).slice(0,10).map(s=>({label:s.query, value:s.search_count})), {showRank:true, suffix:'回検索', color}))
+      + subsection('フィルター利用傾向', barListHtml((d.filterUsage||[]).slice(0,10).map(f=>({label:f.filter_type+'/'+f.filter_value, value:f.usage_count})), {showRank:true, suffix:'回'}))
+      + subsection('広告クリエイティブ最適化', simpleTable(['ジャンル','広告枠','クリック数'], (d.adCreativePerformance||[]).slice(0,15).map(a=>[escapeHtml(a.genre), escapeHtml(a.slot_id), a.click_count])))
+      + subsection('発見難易度スコア（隠れた名作）', simpleTable(['作品','平均品質','PV数','発見難易度'], (d.discoveryDifficulty||[]).slice(0,10).map(x=>[escapeHtml(x.title), x.avg_quality_score, x.pv_count, x.difficulty_score])))
+      + subsection('次に見た作品（この作品視聴後）', simpleTable(['作品','ユーザー数','遷移率'], (d.nextWatchFlow||[]).slice(0,10).map(n=>[escapeHtml(n.next_title), n.user_count, (n.flow_rate??'—')+'%'])))
+    );
     return html;
   }
 
   function formatIpStrategy(d, color) {
-    let html = '';
-    if(d.brandPower) {
-      const bp = d.brandPower;
-      html += subsection('ブランド力（このIP）', `<div class="stat-tile-grid">
-        ${statTile('総合スコア', bp.total_score, '')}
-        ${statTile('認知', bp.recognition, '')}
-        ${statTile('熱量', bp.intensity, '')}
-        ${statTile('継続率', bp.retention, '%')}
+    // ①結論レイヤー
+    let html = conclusionHero(d.conclusionScore, '将来性スコア', color);
+
+    // ②データレイヤー
+    if(d.sequelDemand) {
+      const sd = d.sequelDemand;
+      html += subsection('続編需要（このIP）', `<div class="stat-tile-grid">
+        ${statTile('続編言及数', sd.sequel_mention_count, '')}
+        ${statTile('対象レビュー数', sd.total_reviews, '')}
+        ${statTile('続編需要率', sd.demand_ratio, '%')}
       </div>`);
     }
     if(d.fandomLongevity) {
@@ -10259,25 +10326,26 @@
         ${statTile('継続率', fl.retention_rate, '%')}
       </div>`);
     }
-    if(d.sequelDemand) {
-      const sd = d.sequelDemand;
-      html += subsection('続編需要（このIP）', `<div class="stat-tile-grid">
-        ${statTile('続編言及数', sd.sequel_mention_count, '')}
-        ${statTile('対象レビュー数', sd.total_reviews, '')}
-        ${statTile('続編需要率', sd.demand_ratio, '%')}
+    if(d.brandPower) {
+      const bp = d.brandPower;
+      html += subsection('ブランド力（このIP）', `<div class="stat-tile-grid">
+        ${statTile('総合スコア', bp.total_score, '')}
+        ${statTile('認知', bp.recognition, '')}
+        ${statTile('熱量', bp.intensity, '')}
+        ${statTile('継続率', bp.retention, '%')}
       </div>`);
     }
-    if(d.localizationFit) {
-      const lf = d.localizationFit;
-      html += subsection('海外成長可能性（指定国）', `<div class="stat-tile-grid">
-        ${statTile('PV数', lf.pv_count, '')}
-        ${statTile('適性スコア', lf.fit_score, '')}
-      </div>`);
+    if(d.genreStudioBenchmark && d.genreStudioBenchmark.length) {
+      html += subsection('スタジオ実力ベンチマーク', simpleTable(['種別','名称','軸','平均値','サンプル数'], d.genreStudioBenchmark.slice(0,15).map(g=>[escapeHtml(g.category_type), escapeHtml(g.category_name), escapeHtml(g.axis), g.avg_score, g.sample_size])));
     }
-    if(d.ipValue && d.ipValue.length) {
-      html += subsection('IP価値の内訳', barListHtml(d.ipValue.map(v=>({label:v.metric, value:v.value})), {color}));
-    }
-    html += subsection('新規IP発掘スコア（上位10）', simpleTable(['作品','レビュー数','平均品質','発掘スコア'], (d.newIpDiscovery||[]).slice(0,10).map(x=>[escapeHtml(x.title), x.review_count, x.avg_quality_score, x.discovery_score])));
+
+    // ③素材レイヤー
+    html += rawDataDrawer(
+      (d.localizationFit ? subsection('海外成長可能性（指定国）', `<div class="stat-tile-grid">${statTile('PV数', d.localizationFit.pv_count, '')}${statTile('適性スコア', d.localizationFit.fit_score, '')}</div>`) : '')
+      + (d.ipValue && d.ipValue.length ? subsection('IP価値の内訳', barListHtml(d.ipValue.map(v=>({label:v.metric, value:v.value})), {color})) : '')
+      + (d.earlyFanFormationSpeed ? subsection('初動ファン形成速度', `<div class="stat-tile-grid">${statTile('10件到達日数', d.earlyFanFormationSpeed.days_to_10_reviews, '日')}${statTile('50件到達日数', d.earlyFanFormationSpeed.days_to_50_reviews, '日')}${statTile('総レビュー数', d.earlyFanFormationSpeed.total_reviews, '')}</div>`) : '')
+      + subsection('新規IP発掘スコア（上位10）', simpleTable(['作品','レビュー数','平均品質','発掘スコア'], (d.newIpDiscovery||[]).slice(0,10).map(x=>[escapeHtml(x.title), x.review_count, x.avg_quality_score, x.discovery_score])))
+    );
     return html;
   }
 
