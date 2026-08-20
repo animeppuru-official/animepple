@@ -1603,7 +1603,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.60.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.61.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -2995,28 +2995,39 @@
               <div class="radar-wrap"><canvas id="radar" width="360" height="360"></canvas></div>
             </div>
             <div class="panel">
-              <div class="panel-title">人気貢献度（市場平均比）<span class="hint">×倍率</span></div>
-              <div id="appealBars"></div>
+              <div class="panel-title">刺さっている軸トップ3</div>
+              <div id="appealBarsTop3"></div>
             </div>
           </div>
-          <div class="grid-2">
-            <div class="panel">
-              <div class="panel-title">作品DNA（感性が近い作品）</div>
-              <div class="card-grid" id="dnaCardGrid">
-                <div class="mini-card"><div class="mc-tag">距離 2.27</div><div class="mc-name">テストアニメE</div><div class="mc-sub">世界観・エモさが近似</div></div>
-                <div class="mini-card"><div class="mc-tag">距離 3.60</div><div class="mc-name">テストアニメC</div><div class="mc-sub">キャラ・作画が近似</div></div>
+          <div class="raw-data-drawer">
+            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('sentimentRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
+              <span class="raw-data-arrow">▶</span> 内訳を見る（全軸データ・作品DNA・競合比較）
+            </button>
+            <div id="sentimentRawDrawer" class="raw-data-body" style="display:none;">
+              <div class="grid-2">
+                <div class="panel">
+                  <div class="panel-title">人気貢献度（市場平均比・全軸）<span class="hint">×倍率</span></div>
+                  <div id="appealBars"></div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title">作品DNA（感性が近い作品）</div>
+                  <div class="card-grid" id="dnaCardGrid">
+                    <div class="mini-card"><div class="mc-tag">距離 2.27</div><div class="mc-name">テストアニメE</div><div class="mc-sub">世界観・エモさが近似</div></div>
+                    <div class="mini-card"><div class="mc-tag">距離 3.60</div><div class="mc-name">テストアニメC</div><div class="mc-sub">キャラ・作画が近似</div></div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="panel">
-              <div class="panel-title">競合作品比較</div>
-              <table>
-                <thead><tr><th>作品</th><th>作画</th><th>世界観</th><th>キャラ</th><th>エモい</th></tr></thead>
-                <tbody id="competitorTableBody">
-                  <tr><td>テストアニメA</td><td>7.4</td><td>8.1</td><td>7.9</td><td class="pos">8.6</td></tr>
-                  <tr><td>テストアニメC</td><td>7.1</td><td>6.8</td><td>7.6</td><td>7.2</td></tr>
-                  <tr><td>テストアニメE</td><td>6.9</td><td>7.9</td><td>7.0</td><td>8.0</td></tr>
-                </tbody>
-              </table>
+              <div class="panel">
+                <div class="panel-title">競合作品比較</div>
+                <table>
+                  <thead><tr><th>作品</th><th>作画</th><th>世界観</th><th>キャラ</th><th>エモい</th></tr></thead>
+                  <tbody id="competitorTableBody">
+                    <tr><td>テストアニメA</td><td>7.4</td><td>8.1</td><td>7.9</td><td class="pos">8.6</td></tr>
+                    <tr><td>テストアニメC</td><td>7.1</td><td>6.8</td><td>7.6</td><td>7.2</td></tr>
+                    <tr><td>テストアニメE</td><td>6.9</td><td>7.9</td><td>7.0</td><td>8.0</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>
@@ -3033,27 +3044,38 @@
             <div class="conclusion-hero-score" id="fanConclusionScore">—</div>
           </div>
           <div class="panel">
-            <div class="panel-title">年代 × 感情軸 嗜好マップ<span class="hint">濃いほど高評価</span></div>
-            <div id="heatmap" class="heat"></div>
+            <div class="panel-title">最大クラスタ</div>
+            <div class="card-grid" id="fanClusterTop1"></div>
           </div>
-          <div class="panel">
-            <div class="panel-title">視聴者クラスタ</div>
-            <div class="card-grid" id="fanClusterGrid">
-              <div class="mini-card"><div class="mc-tag">Cluster 01</div><div class="mc-big">9<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">キャラクター愛着型</div><div class="mc-sub">キャラ評価 7.06</div></div>
-              <div class="mini-card"><div class="mc-tag">Cluster 02</div><div class="mc-big">3<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">世界観重視型</div><div class="mc-sub">世界観 7.15</div></div>
-              <div class="mini-card"><div class="mc-tag">Cluster 03</div><div class="mc-big">5<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">物語没入型</div><div class="mc-sub">物語 6.88</div></div>
+          <div class="raw-data-drawer">
+            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('fanRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
+              <span class="raw-data-arrow">▶</span> 内訳を見る（年代×性別マップ・全クラスタ・インフルエンサー）
+            </button>
+            <div id="fanRawDrawer" class="raw-data-body" style="display:none;">
+              <div class="panel">
+                <div class="panel-title">年代 × 感情軸 嗜好マップ<span class="hint">濃いほど高評価</span></div>
+                <div id="heatmap" class="heat"></div>
+              </div>
+              <div class="panel">
+                <div class="panel-title">視聴者クラスタ（全件）</div>
+                <div class="card-grid" id="fanClusterGrid">
+                  <div class="mini-card"><div class="mc-tag">Cluster 01</div><div class="mc-big">9<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">キャラクター愛着型</div><div class="mc-sub">キャラ評価 7.06</div></div>
+                  <div class="mini-card"><div class="mc-tag">Cluster 02</div><div class="mc-big">3<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">世界観重視型</div><div class="mc-sub">世界観 7.15</div></div>
+                  <div class="mini-card"><div class="mc-tag">Cluster 03</div><div class="mc-big">5<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">物語没入型</div><div class="mc-sub">物語 6.88</div></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-title">インフルエンサー予備軍<span class="hint">影響力スコア順</span></div>
+                <table>
+                  <thead><tr><th>順位</th><th>品質スコア</th><th>シェア数</th><th>影響力</th></tr></thead>
+                  <tbody id="influencerTableBody">
+                    <tr><td>1</td><td>9.2</td><td>142</td><td class="pos">88.4</td></tr>
+                    <tr><td>2</td><td>8.7</td><td>98</td><td class="pos">74.1</td></tr>
+                    <tr><td>3</td><td>8.1</td><td>61</td><td>59.6</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-          <div class="panel">
-            <div class="panel-title">インフルエンサー予備軍<span class="hint">影響力スコア順</span></div>
-            <table>
-              <thead><tr><th>順位</th><th>品質スコア</th><th>シェア数</th><th>影響力</th></tr></thead>
-              <tbody id="influencerTableBody">
-                <tr><td>1</td><td>9.2</td><td>142</td><td class="pos">88.4</td></tr>
-                <tr><td>2</td><td>8.7</td><td>98</td><td class="pos">74.1</td></tr>
-                <tr><td>3</td><td>8.1</td><td>61</td><td>59.6</td></tr>
-              </tbody>
-            </table>
           </div>
         </section>
 
@@ -3085,25 +3107,36 @@
               <div class="k-sub">PV低・品質高</div>
             </div>
           </div>
-          <div class="grid-2">
-            <div class="panel">
-              <div class="panel-title">急上昇タグ</div>
-              <div id="trendTags"></div>
-            </div>
-            <div class="panel">
-              <div class="panel-title">市場センチメント指数（月別推移）</div>
-              <div class="radar-wrap"><canvas id="trendLine" width="360" height="220"></canvas></div>
-            </div>
-          </div>
           <div class="panel">
-            <div class="panel-title">隠れた名作検出（サイレントヒット）</div>
-            <table>
-              <thead><tr><th>作品</th><th>PV数</th><th>平均品質</th><th>リピート率</th></tr></thead>
-              <tbody id="silentHitTableBody">
-                <tr><td>テストアニメG</td><td>240</td><td class="pos">8.9</td><td>34%</td></tr>
-                <tr><td>テストアニメK</td><td>180</td><td class="pos">8.6</td><td>29%</td></tr>
-              </tbody>
-            </table>
+            <div class="panel-title">急上昇タグ トップ5</div>
+            <div id="trendTagsTop5"></div>
+          </div>
+          <div class="raw-data-drawer">
+            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('trendRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
+              <span class="raw-data-arrow">▶</span> 内訳を見る（全タグ・月別推移・サイレントヒット）
+            </button>
+            <div id="trendRawDrawer" class="raw-data-body" style="display:none;">
+              <div class="grid-2">
+                <div class="panel">
+                  <div class="panel-title">急上昇タグ（全件）</div>
+                  <div id="trendTags"></div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title">市場センチメント指数（月別推移）</div>
+                  <div class="radar-wrap"><canvas id="trendLine" width="360" height="220"></canvas></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-title">隠れた名作検出（サイレントヒット）</div>
+                <table>
+                  <thead><tr><th>作品</th><th>PV数</th><th>平均品質</th><th>リピート率</th></tr></thead>
+                  <tbody id="silentHitTableBody">
+                    <tr><td>テストアニメG</td><td>240</td><td class="pos">8.9</td><td>34%</td></tr>
+                    <tr><td>テストアニメK</td><td>180</td><td class="pos">8.6</td><td>29%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -3120,8 +3153,8 @@
           </div>
           <div class="grid-2">
             <div class="panel">
-              <div class="panel-title">国別視聴熱量ランキング</div>
-              <div id="countryBars"></div>
+              <div class="panel-title">国別視聴熱量ランキング トップ5</div>
+              <div id="countryBarsTop5"></div>
             </div>
             <div class="panel">
               <div class="panel-title">ローカライズ適性スコア</div>
@@ -3131,18 +3164,29 @@
               </div>
             </div>
           </div>
-          <div class="panel">
-            <div class="panel-title">国別ランキング表</div>
-            <table>
-              <thead><tr><th>国</th><th>PV</th><th>レビュー</th><th>転換率</th><th>評価差</th></tr></thead>
-              <tbody id="countryTableBody">
-                <tr><td>🇯🇵 日本</td><td>152</td><td>60</td><td>39%</td><td class="pos">+0.0</td></tr>
-                <tr><td>🇺🇸 USA</td><td>79</td><td>31</td><td>39%</td><td class="pos">+0.4</td></tr>
-                <tr><td>🇩🇪 Germany</td><td>48</td><td>18</td><td>37%</td><td class="neg">-0.2</td></tr>
-                <tr><td>🇫🇷 France</td><td>46</td><td>17</td><td>37%</td><td class="pos">+0.1</td></tr>
-                <tr><td>🇰🇷 Korea</td><td>46</td><td>19</td><td>41%</td><td class="pos">+0.3</td></tr>
-              </tbody>
-            </table>
+          <div class="raw-data-drawer">
+            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('globalRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
+              <span class="raw-data-arrow">▶</span> 内訳を見る（全国ランキング表）
+            </button>
+            <div id="globalRawDrawer" class="raw-data-body" style="display:none;">
+              <div class="panel">
+                <div class="panel-title">国別視聴熱量ランキング（全件）</div>
+                <div id="countryBars"></div>
+              </div>
+              <div class="panel">
+                <div class="panel-title">国別ランキング表</div>
+                <table>
+                  <thead><tr><th>国</th><th>PV</th><th>レビュー</th><th>転換率</th><th>評価差</th></tr></thead>
+                  <tbody id="countryTableBody">
+                    <tr><td>🇯🇵 日本</td><td>152</td><td>60</td><td>39%</td><td class="pos">+0.0</td></tr>
+                    <tr><td>🇺🇸 USA</td><td>79</td><td>31</td><td>39%</td><td class="pos">+0.4</td></tr>
+                    <tr><td>🇩🇪 Germany</td><td>48</td><td>18</td><td>37%</td><td class="neg">-0.2</td></tr>
+                    <tr><td>🇫🇷 France</td><td>46</td><td>17</td><td>37%</td><td class="pos">+0.1</td></tr>
+                    <tr><td>🇰🇷 Korea</td><td>46</td><td>19</td><td>41%</td><td class="pos">+0.3</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -3164,22 +3208,29 @@
               <div id="donutLegend" style="margin-top:.8rem"></div>
             </div>
             <div class="panel">
-              <div class="panel-title">検索ホワイトスペース<span class="hint">需要あり・作品不足</span></div>
+              <div class="panel-title">検索ホワイトスペース トップ2<span class="hint">需要あり・作品不足</span></div>
               <div class="card-grid" id="whitespaceCardGrid">
                 <div class="mini-card"><div class="mc-tag">需要あり</div><div class="mc-name">異世界 × コメディ</div><div class="mc-sub">7 searches / 供給少</div></div>
                 <div class="mini-card"><div class="mc-tag">需要あり</div><div class="mc-name">日常 × ミステリー</div><div class="mc-sub">5 searches / 供給少</div></div>
               </div>
             </div>
           </div>
-          <div class="panel">
-            <div class="panel-title">バイラル係数（シェア率）</div>
-            <table>
-              <thead><tr><th>作品</th><th>シェア数</th><th>PV数</th><th>バイラル率</th></tr></thead>
-              <tbody id="viralTableBody">
-                <tr><td>テストアニメA</td><td>34</td><td>740</td><td class="pos">4.59%</td></tr>
-                <tr><td>テストアニメC</td><td>21</td><td>612</td><td>3.43%</td></tr>
-              </tbody>
-            </table>
+          <div class="raw-data-drawer">
+            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('consumerRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
+              <span class="raw-data-arrow">▶</span> 内訳を見る（バイラル係数の全件）
+            </button>
+            <div id="consumerRawDrawer" class="raw-data-body" style="display:none;">
+              <div class="panel">
+                <div class="panel-title">バイラル係数（シェア率）</div>
+                <table>
+                  <thead><tr><th>作品</th><th>シェア数</th><th>PV数</th><th>バイラル率</th></tr></thead>
+                  <tbody id="viralTableBody">
+                    <tr><td>テストアニメA</td><td>34</td><td>740</td><td class="pos">4.59%</td></tr>
+                    <tr><td>テストアニメC</td><td>21</td><td>612</td><td>3.43%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -3200,20 +3251,27 @@
             <div class="kpi" style="--kc:var(--warn)"><div class="k-label">続編需要率</div><div class="k-val" id="ipKpiSequel">31%</div><div class="k-sub">言及ベース</div></div>
             <div class="kpi" style="--kc:var(--cyan)"><div class="k-label">海外成長</div><div class="k-val" id="ipKpiGlobal">140.6</div><div class="k-sub">適性スコア</div></div>
           </div>
-          <div class="panel">
-            <div class="panel-title">IP価値の内訳</div>
-            <div id="ipBars"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-title">新規IP発掘スコア（上位）</div>
-            <table>
-              <thead><tr><th>作品</th><th>レビュー数</th><th>平均品質</th><th>発掘スコア</th></tr></thead>
-              <tbody id="newIpTableBody">
-                <tr><td>テストアニメG</td><td>48</td><td>8.9</td><td class="pos">91.2</td></tr>
-                <tr><td>テストアニメK</td><td>33</td><td>8.6</td><td class="pos">84.7</td></tr>
-                <tr><td>テストアニメM</td><td>27</td><td>8.2</td><td>76.3</td></tr>
-              </tbody>
-            </table>
+          <div class="raw-data-drawer">
+            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('ipRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
+              <span class="raw-data-arrow">▶</span> 内訳を見る（IP価値の内訳・新規IP発掘ランキング）
+            </button>
+            <div id="ipRawDrawer" class="raw-data-body" style="display:none;">
+              <div class="panel">
+                <div class="panel-title">IP価値の内訳</div>
+                <div id="ipBars"></div>
+              </div>
+              <div class="panel">
+                <div class="panel-title">新規IP発掘スコア（上位）</div>
+                <table>
+                  <thead><tr><th>作品</th><th>レビュー数</th><th>平均品質</th><th>発掘スコア</th></tr></thead>
+                  <tbody id="newIpTableBody">
+                    <tr><td>テストアニメG</td><td>48</td><td>8.9</td><td class="pos">91.2</td></tr>
+                    <tr><td>テストアニメK</td><td>33</td><td>8.6</td><td class="pos">84.7</td></tr>
+                    <tr><td>テストアニメM</td><td>27</td><td>8.2</td><td>76.3</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -3577,7 +3635,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.60.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.61.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4922,7 +4980,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.60.0';
+      if(vEl) vEl.textContent = 'v0.61.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -10787,6 +10845,7 @@
       // ── Sentiment: レーダー・刺さる理由・DNA・競合 ──
       if(sentiment.appealBreakdown && sentiment.appealBreakdown.length) {
         renderBars('appealBars', sentiment.appealBreakdown.map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color:'var(--brand)'});
+        renderBars('appealBarsTop3', sentiment.appealBreakdown.slice(0,3).map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color:'var(--brand)'});
       }
       if(sentiment.masterGraphRaw && sentiment.masterGraphRaw.length) {
         drawMockRadar(sentiment.masterGraphRaw.map(m=>m.axis), sentiment.masterGraphRaw.map(m=>m.avg_score));
@@ -10827,6 +10886,17 @@
               <div class="mc-sub">${c.ratio_pct != null ? c.ratio_pct+'%' : ''}</div>
             </div>`).join('') : '<p style="color:var(--muted2);">データが不足しています</p>';
       }
+      const fanGridTop1 = document.getElementById('fanClusterTop1');
+      if(fanGridTop1) {
+        const top = clusters[0];
+        fanGridTop1.innerHTML = top ? `
+            <div class="mini-card">
+              <div class="mc-tag">最大クラスタ</div>
+              <div class="mc-big">${top.user_count}<span style="font-size:.9rem;color:var(--muted)">人</span></div>
+              <div class="mc-name">${esc(top.cluster_type)}</div>
+              <div class="mc-sub">${top.ratio_pct != null ? top.ratio_pct+'%' : ''}</div>
+            </div>` : '<p style="color:var(--muted2);">データが不足しています</p>';
+      }
       const inflBody = document.getElementById('influencerTableBody');
       if(inflBody) {
         const infl = fanInsight.potentialInfluencers || [];
@@ -10838,6 +10908,7 @@
       // ── Trend Forecast: 急上昇タグ・折れ線・サイレントヒット ──
       if(trend.trendingTags && trend.trendingTags.length) {
         renderBars('trendTags', trend.trendingTags.slice(0,8).map(t=>({label:'#'+t.tag, value:t.recent_count})), {rank:true, suffix:'件', color:'var(--warn)'});
+        renderBars('trendTagsTop5', trend.trendingTags.slice(0,5).map(t=>({label:'#'+t.tag, value:t.recent_count})), {rank:true, suffix:'件', color:'var(--warn)'});
       }
       if(trend.marketSentimentIndex && trend.marketSentimentIndex.length) {
         drawMockLine(trend.marketSentimentIndex.map(m => m.avg_overall_score));
@@ -10853,6 +10924,7 @@
       // ── Global Market: 国別視聴熱量・国別ランキング表 ──
       if(global.countryStats && global.countryStats.length) {
         renderBars('countryBars', global.countryStats.slice(0,6).map(c=>({label:c.country_code, value:c.cnt})), {});
+        renderBars('countryBarsTop5', global.countryStats.slice(0,5).map(c=>({label:c.country_code, value:c.cnt})), {});
       }
       const countryBody = document.getElementById('countryTableBody');
       if(countryBody) {
