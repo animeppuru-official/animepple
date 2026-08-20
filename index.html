@@ -1610,7 +1610,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.68.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.69.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -3610,7 +3610,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.68.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.69.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4955,7 +4955,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.68.0';
+      if(vEl) vEl.textContent = 'v0.69.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -9022,6 +9022,7 @@
     try {
       const res = await fetch(`https://ofbjfiuayfhdkgertxyo.supabase.co/functions/v1/fetch-rakuten-image?title=${encodeURIComponent(title)}`);
       const data = await res.json();
+      if(!res.ok || data.error) { console.error('renderRakutenBluray API error:', res.status, data); section.style.display = 'none'; return; }
       if(!data.found) { section.style.display = 'none'; return; }
       el.innerHTML = `
         <a class="af-goods-card" href="${escapeHtml(data.itemUrl)}" target="_blank" rel="noopener noreferrer sponsored"
@@ -9037,6 +9038,7 @@
       `;
       section.style.display = '';
     } catch(e) {
+      console.error('renderRakutenBluray failed:', e);
       section.style.display = 'none';
     }
   }
