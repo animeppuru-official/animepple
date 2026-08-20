@@ -670,6 +670,12 @@
     .raw-data-arrow { font-size:.6rem; }
     .raw-data-body { margin-top:.7rem; }
 
+    /* データ枠クリックで素材（生データ）を展開 */
+    .panel.data-card { cursor:pointer; }
+    .panel.data-card:hover { border-color:var(--pack-color, var(--brand)); }
+    .material-hint { font-size:.65rem; color:var(--muted2); font-weight:400; margin-left:.5rem; }
+    .card-material { margin-top:.8rem; padding-top:.8rem; border-top:1px dashed var(--line); cursor:default; }
+
     .pack-simple-table { width:100%; border-collapse:collapse; font-size:.76rem; }
     .pack-simple-table th { text-align:left; color:var(--muted); font-weight:600; padding:.35rem .5rem; border-bottom:1px solid var(--line); font-size:.68rem; }
     .pack-simple-table td { padding:.4rem .5rem; border-bottom:1px solid rgba(255,255,255,.04); color:#dff0e6; }
@@ -1603,7 +1609,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.61.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.63.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -2990,44 +2996,37 @@
             </div>
           </div>
           <div class="grid-2">
-            <div class="panel">
-              <div class="panel-title">12軸レーダーチャート</div>
+            <div class="panel data-card" onclick="toggleCardMaterial('sentimentRadarMaterial', this)">
+              <div class="panel-title">12軸レーダーチャート<span class="material-hint">クリックで素点を表示</span></div>
               <div class="radar-wrap"><canvas id="radar" width="360" height="360"></canvas></div>
+              <div id="sentimentRadarMaterial" class="card-material" style="display:none;" onclick="event.stopPropagation();">
+                <table><thead><tr><th>軸</th><th>平均値</th><th>レビュー数</th></tr></thead><tbody id="sentimentRadarMaterialBody"></tbody></table>
+              </div>
             </div>
-            <div class="panel">
-              <div class="panel-title">刺さっている軸トップ3</div>
-              <div id="appealBarsTop3"></div>
+            <div class="panel data-card" onclick="toggleCardMaterial('sentimentAppealMaterial', this)">
+              <div class="panel-title">人気貢献度（市場平均比）<span class="hint">×倍率</span><span class="material-hint">クリックで全軸を表示</span></div>
+              <div id="appealBars"></div>
+              <div id="sentimentAppealMaterial" class="card-material" style="display:none;"></div>
             </div>
           </div>
-          <div class="raw-data-drawer">
-            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('sentimentRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
-              <span class="raw-data-arrow">▶</span> 内訳を見る（全軸データ・作品DNA・競合比較）
-            </button>
-            <div id="sentimentRawDrawer" class="raw-data-body" style="display:none;">
-              <div class="grid-2">
-                <div class="panel">
-                  <div class="panel-title">人気貢献度（市場平均比・全軸）<span class="hint">×倍率</span></div>
-                  <div id="appealBars"></div>
-                </div>
-                <div class="panel">
-                  <div class="panel-title">作品DNA（感性が近い作品）</div>
-                  <div class="card-grid" id="dnaCardGrid">
-                    <div class="mini-card"><div class="mc-tag">距離 2.27</div><div class="mc-name">テストアニメE</div><div class="mc-sub">世界観・エモさが近似</div></div>
-                    <div class="mini-card"><div class="mc-tag">距離 3.60</div><div class="mc-name">テストアニメC</div><div class="mc-sub">キャラ・作画が近似</div></div>
-                  </div>
-                </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">作品DNA（感性が近い作品）</div>
+              <div class="card-grid" id="dnaCardGrid">
+                <div class="mini-card"><div class="mc-tag">距離 2.27</div><div class="mc-name">テストアニメE</div><div class="mc-sub">世界観・エモさが近似</div></div>
+                <div class="mini-card"><div class="mc-tag">距離 3.60</div><div class="mc-name">テストアニメC</div><div class="mc-sub">キャラ・作画が近似</div></div>
               </div>
-              <div class="panel">
-                <div class="panel-title">競合作品比較</div>
-                <table>
-                  <thead><tr><th>作品</th><th>作画</th><th>世界観</th><th>キャラ</th><th>エモい</th></tr></thead>
-                  <tbody id="competitorTableBody">
-                    <tr><td>テストアニメA</td><td>7.4</td><td>8.1</td><td>7.9</td><td class="pos">8.6</td></tr>
-                    <tr><td>テストアニメC</td><td>7.1</td><td>6.8</td><td>7.6</td><td>7.2</td></tr>
-                    <tr><td>テストアニメE</td><td>6.9</td><td>7.9</td><td>7.0</td><td>8.0</td></tr>
-                  </tbody>
-                </table>
-              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">競合作品比較</div>
+              <table>
+                <thead><tr><th>作品</th><th>作画</th><th>世界観</th><th>キャラ</th><th>エモい</th></tr></thead>
+                <tbody id="competitorTableBody">
+                  <tr><td>テストアニメA</td><td>7.4</td><td>8.1</td><td>7.9</td><td class="pos">8.6</td></tr>
+                  <tr><td>テストアニメC</td><td>7.1</td><td>6.8</td><td>7.6</td><td>7.2</td></tr>
+                  <tr><td>テストアニメE</td><td>6.9</td><td>7.9</td><td>7.0</td><td>8.0</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -3043,39 +3042,31 @@
             <div class="conclusion-hero-label">熱狂度スコア</div>
             <div class="conclusion-hero-score" id="fanConclusionScore">—</div>
           </div>
-          <div class="panel">
-            <div class="panel-title">最大クラスタ</div>
-            <div class="card-grid" id="fanClusterTop1"></div>
+          <div class="panel data-card" onclick="toggleCardMaterial('fanHeatmapMaterial', this)">
+            <div class="panel-title">年代 × 感情軸 嗜好マップ<span class="hint">濃いほど高評価</span><span class="material-hint">クリックでサンプル数を表示</span></div>
+            <div id="heatmap" class="heat"></div>
+            <div id="fanHeatmapMaterial" class="card-material" style="display:none;"></div>
           </div>
-          <div class="raw-data-drawer">
-            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('fanRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
-              <span class="raw-data-arrow">▶</span> 内訳を見る（年代×性別マップ・全クラスタ・インフルエンサー）
-            </button>
-            <div id="fanRawDrawer" class="raw-data-body" style="display:none;">
-              <div class="panel">
-                <div class="panel-title">年代 × 感情軸 嗜好マップ<span class="hint">濃いほど高評価</span></div>
-                <div id="heatmap" class="heat"></div>
-              </div>
-              <div class="panel">
-                <div class="panel-title">視聴者クラスタ（全件）</div>
-                <div class="card-grid" id="fanClusterGrid">
-                  <div class="mini-card"><div class="mc-tag">Cluster 01</div><div class="mc-big">9<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">キャラクター愛着型</div><div class="mc-sub">キャラ評価 7.06</div></div>
-                  <div class="mini-card"><div class="mc-tag">Cluster 02</div><div class="mc-big">3<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">世界観重視型</div><div class="mc-sub">世界観 7.15</div></div>
-                  <div class="mini-card"><div class="mc-tag">Cluster 03</div><div class="mc-big">5<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">物語没入型</div><div class="mc-sub">物語 6.88</div></div>
-                </div>
-              </div>
-              <div class="panel">
-                <div class="panel-title">インフルエンサー予備軍<span class="hint">影響力スコア順</span></div>
-                <table>
-                  <thead><tr><th>順位</th><th>品質スコア</th><th>シェア数</th><th>影響力</th></tr></thead>
-                  <tbody id="influencerTableBody">
-                    <tr><td>1</td><td>9.2</td><td>142</td><td class="pos">88.4</td></tr>
-                    <tr><td>2</td><td>8.7</td><td>98</td><td class="pos">74.1</td></tr>
-                    <tr><td>3</td><td>8.1</td><td>61</td><td>59.6</td></tr>
-                  </tbody>
-                </table>
-              </div>
+          <div class="panel data-card" onclick="toggleCardMaterial('fanClusterMaterial', this)">
+            <div class="panel-title">視聴者クラスタ<span class="material-hint">クリックで詳細指標を表示</span></div>
+            <div class="card-grid" id="fanClusterGrid">
+              <div class="mini-card"><div class="mc-tag">Cluster 01</div><div class="mc-big">9<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">キャラクター愛着型</div><div class="mc-sub">キャラ評価 7.06</div></div>
+              <div class="mini-card"><div class="mc-tag">Cluster 02</div><div class="mc-big">3<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">世界観重視型</div><div class="mc-sub">世界観 7.15</div></div>
+              <div class="mini-card"><div class="mc-tag">Cluster 03</div><div class="mc-big">5<span style="font-size:.9rem;color:var(--muted)">人</span></div><div class="mc-name">物語没入型</div><div class="mc-sub">物語 6.88</div></div>
             </div>
+            <div id="fanClusterMaterial" class="card-material" style="display:none;"></div>
+          </div>
+          <div class="panel data-card" onclick="toggleCardMaterial('fanInfluencerMaterial', this)">
+            <div class="panel-title">インフルエンサー予備軍<span class="hint">影響力スコア順</span><span class="material-hint">クリックで元データを表示</span></div>
+            <table>
+              <thead><tr><th>順位</th><th>品質スコア</th><th>シェア数</th><th>影響力</th></tr></thead>
+              <tbody id="influencerTableBody">
+                <tr><td>1</td><td>9.2</td><td>142</td><td class="pos">88.4</td></tr>
+                <tr><td>2</td><td>8.7</td><td>98</td><td class="pos">74.1</td></tr>
+                <tr><td>3</td><td>8.1</td><td>61</td><td>59.6</td></tr>
+              </tbody>
+            </table>
+            <div id="fanInfluencerMaterial" class="card-material" style="display:none;"></div>
           </div>
         </section>
 
@@ -3107,36 +3098,28 @@
               <div class="k-sub">PV低・品質高</div>
             </div>
           </div>
-          <div class="panel">
-            <div class="panel-title">急上昇タグ トップ5</div>
-            <div id="trendTagsTop5"></div>
-          </div>
-          <div class="raw-data-drawer">
-            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('trendRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
-              <span class="raw-data-arrow">▶</span> 内訳を見る（全タグ・月別推移・サイレントヒット）
-            </button>
-            <div id="trendRawDrawer" class="raw-data-body" style="display:none;">
-              <div class="grid-2">
-                <div class="panel">
-                  <div class="panel-title">急上昇タグ（全件）</div>
-                  <div id="trendTags"></div>
-                </div>
-                <div class="panel">
-                  <div class="panel-title">市場センチメント指数（月別推移）</div>
-                  <div class="radar-wrap"><canvas id="trendLine" width="360" height="220"></canvas></div>
-                </div>
-              </div>
-              <div class="panel">
-                <div class="panel-title">隠れた名作検出（サイレントヒット）</div>
-                <table>
-                  <thead><tr><th>作品</th><th>PV数</th><th>平均品質</th><th>リピート率</th></tr></thead>
-                  <tbody id="silentHitTableBody">
-                    <tr><td>テストアニメG</td><td>240</td><td class="pos">8.9</td><td>34%</td></tr>
-                    <tr><td>テストアニメK</td><td>180</td><td class="pos">8.6</td><td>29%</td></tr>
-                  </tbody>
-                </table>
-              </div>
+          <div class="grid-2">
+            <div class="panel data-card" onclick="toggleCardMaterial('trendTagsMaterial', this)">
+              <div class="panel-title">急上昇タグ<span class="material-hint">クリックで全件を表示</span></div>
+              <div id="trendTags"></div>
+              <div id="trendTagsMaterial" class="card-material" style="display:none;"></div>
             </div>
+            <div class="panel data-card" onclick="toggleCardMaterial('trendLineMaterial', this)">
+              <div class="panel-title">市場センチメント指数（月別推移）<span class="material-hint">クリックで数値を表示</span></div>
+              <div class="radar-wrap"><canvas id="trendLine" width="360" height="220"></canvas></div>
+              <div id="trendLineMaterial" class="card-material" style="display:none;"></div>
+            </div>
+          </div>
+          <div class="panel data-card" onclick="toggleCardMaterial('silentHitMaterial', this)">
+            <div class="panel-title">隠れた名作検出（サイレントヒット）<span class="material-hint">クリックで元データを表示</span></div>
+            <table>
+              <thead><tr><th>作品</th><th>PV数</th><th>平均品質</th><th>リピート率</th></tr></thead>
+              <tbody id="silentHitTableBody">
+                <tr><td>テストアニメG</td><td>240</td><td class="pos">8.9</td><td>34%</td></tr>
+                <tr><td>テストアニメK</td><td>180</td><td class="pos">8.6</td><td>29%</td></tr>
+              </tbody>
+            </table>
+            <div id="silentHitMaterial" class="card-material" style="display:none;"></div>
           </div>
         </section>
 
@@ -3152,9 +3135,10 @@
             <div class="conclusion-hero-score" id="globalConclusionScore">—</div>
           </div>
           <div class="grid-2">
-            <div class="panel">
-              <div class="panel-title">国別視聴熱量ランキング トップ5</div>
-              <div id="countryBarsTop5"></div>
+            <div class="panel data-card" onclick="toggleCardMaterial('countryBarsMaterial', this)">
+              <div class="panel-title">国別視聴熱量ランキング<span class="material-hint">クリックで全国データを表示</span></div>
+              <div id="countryBars"></div>
+              <div id="countryBarsMaterial" class="card-material" style="display:none;"></div>
             </div>
             <div class="panel">
               <div class="panel-title">ローカライズ適性スコア</div>
@@ -3164,29 +3148,19 @@
               </div>
             </div>
           </div>
-          <div class="raw-data-drawer">
-            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('globalRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
-              <span class="raw-data-arrow">▶</span> 内訳を見る（全国ランキング表）
-            </button>
-            <div id="globalRawDrawer" class="raw-data-body" style="display:none;">
-              <div class="panel">
-                <div class="panel-title">国別視聴熱量ランキング（全件）</div>
-                <div id="countryBars"></div>
-              </div>
-              <div class="panel">
-                <div class="panel-title">国別ランキング表</div>
-                <table>
-                  <thead><tr><th>国</th><th>PV</th><th>レビュー</th><th>転換率</th><th>評価差</th></tr></thead>
-                  <tbody id="countryTableBody">
-                    <tr><td>🇯🇵 日本</td><td>152</td><td>60</td><td>39%</td><td class="pos">+0.0</td></tr>
-                    <tr><td>🇺🇸 USA</td><td>79</td><td>31</td><td>39%</td><td class="pos">+0.4</td></tr>
-                    <tr><td>🇩🇪 Germany</td><td>48</td><td>18</td><td>37%</td><td class="neg">-0.2</td></tr>
-                    <tr><td>🇫🇷 France</td><td>46</td><td>17</td><td>37%</td><td class="pos">+0.1</td></tr>
-                    <tr><td>🇰🇷 Korea</td><td>46</td><td>19</td><td>41%</td><td class="pos">+0.3</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          <div class="panel data-card" onclick="toggleCardMaterial('countryTableMaterial', this)">
+            <div class="panel-title">国別ランキング表<span class="material-hint">クリックで元データを表示</span></div>
+            <table>
+              <thead><tr><th>国</th><th>PV</th><th>レビュー</th><th>転換率</th><th>評価差</th></tr></thead>
+              <tbody id="countryTableBody">
+                <tr><td>🇯🇵 日本</td><td>152</td><td>60</td><td>39%</td><td class="pos">+0.0</td></tr>
+                <tr><td>🇺🇸 USA</td><td>79</td><td>31</td><td>39%</td><td class="pos">+0.4</td></tr>
+                <tr><td>🇩🇪 Germany</td><td>48</td><td>18</td><td>37%</td><td class="neg">-0.2</td></tr>
+                <tr><td>🇫🇷 France</td><td>46</td><td>17</td><td>37%</td><td class="pos">+0.1</td></tr>
+                <tr><td>🇰🇷 Korea</td><td>46</td><td>19</td><td>41%</td><td class="pos">+0.3</td></tr>
+              </tbody>
+            </table>
+            <div id="countryTableMaterial" class="card-material" style="display:none;"></div>
           </div>
         </section>
 
@@ -3202,35 +3176,30 @@
             <div class="conclusion-hero-score" id="consumerConclusionScore">—</div>
           </div>
           <div class="grid-2">
-            <div class="panel">
-              <div class="panel-title">流入経路</div>
+            <div class="panel data-card" onclick="toggleCardMaterial('donutMaterial', this)">
+              <div class="panel-title">流入経路<span class="material-hint">クリックで内訳を表示</span></div>
               <div class="radar-wrap"><canvas id="donut" width="220" height="220"></canvas></div>
               <div id="donutLegend" style="margin-top:.8rem"></div>
+              <div id="donutMaterial" class="card-material" style="display:none;"></div>
             </div>
             <div class="panel">
-              <div class="panel-title">検索ホワイトスペース トップ2<span class="hint">需要あり・作品不足</span></div>
+              <div class="panel-title">検索ホワイトスペース<span class="hint">需要あり・作品不足</span></div>
               <div class="card-grid" id="whitespaceCardGrid">
                 <div class="mini-card"><div class="mc-tag">需要あり</div><div class="mc-name">異世界 × コメディ</div><div class="mc-sub">7 searches / 供給少</div></div>
                 <div class="mini-card"><div class="mc-tag">需要あり</div><div class="mc-name">日常 × ミステリー</div><div class="mc-sub">5 searches / 供給少</div></div>
               </div>
             </div>
           </div>
-          <div class="raw-data-drawer">
-            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('consumerRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
-              <span class="raw-data-arrow">▶</span> 内訳を見る（バイラル係数の全件）
-            </button>
-            <div id="consumerRawDrawer" class="raw-data-body" style="display:none;">
-              <div class="panel">
-                <div class="panel-title">バイラル係数（シェア率）</div>
-                <table>
-                  <thead><tr><th>作品</th><th>シェア数</th><th>PV数</th><th>バイラル率</th></tr></thead>
-                  <tbody id="viralTableBody">
-                    <tr><td>テストアニメA</td><td>34</td><td>740</td><td class="pos">4.59%</td></tr>
-                    <tr><td>テストアニメC</td><td>21</td><td>612</td><td>3.43%</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          <div class="panel data-card" onclick="toggleCardMaterial('viralMaterial', this)">
+            <div class="panel-title">バイラル係数（シェア率）<span class="material-hint">クリックで全件を表示</span></div>
+            <table>
+              <thead><tr><th>作品</th><th>シェア数</th><th>PV数</th><th>バイラル率</th></tr></thead>
+              <tbody id="viralTableBody">
+                <tr><td>テストアニメA</td><td>34</td><td>740</td><td class="pos">4.59%</td></tr>
+                <tr><td>テストアニメC</td><td>21</td><td>612</td><td>3.43%</td></tr>
+              </tbody>
+            </table>
+            <div id="viralMaterial" class="card-material" style="display:none;"></div>
           </div>
         </section>
 
@@ -3251,27 +3220,22 @@
             <div class="kpi" style="--kc:var(--warn)"><div class="k-label">続編需要率</div><div class="k-val" id="ipKpiSequel">31%</div><div class="k-sub">言及ベース</div></div>
             <div class="kpi" style="--kc:var(--cyan)"><div class="k-label">海外成長</div><div class="k-val" id="ipKpiGlobal">140.6</div><div class="k-sub">適性スコア</div></div>
           </div>
-          <div class="raw-data-drawer">
-            <button type="button" class="raw-data-toggle" onclick="const el=document.getElementById('ipRawDrawer'); const open=el.style.display!=='none'; el.style.display=open?'none':''; this.querySelector('.raw-data-arrow').textContent=open?'▶':'▼';">
-              <span class="raw-data-arrow">▶</span> 内訳を見る（IP価値の内訳・新規IP発掘ランキング）
-            </button>
-            <div id="ipRawDrawer" class="raw-data-body" style="display:none;">
-              <div class="panel">
-                <div class="panel-title">IP価値の内訳</div>
-                <div id="ipBars"></div>
-              </div>
-              <div class="panel">
-                <div class="panel-title">新規IP発掘スコア（上位）</div>
-                <table>
-                  <thead><tr><th>作品</th><th>レビュー数</th><th>平均品質</th><th>発掘スコア</th></tr></thead>
-                  <tbody id="newIpTableBody">
-                    <tr><td>テストアニメG</td><td>48</td><td>8.9</td><td class="pos">91.2</td></tr>
-                    <tr><td>テストアニメK</td><td>33</td><td>8.6</td><td class="pos">84.7</td></tr>
-                    <tr><td>テストアニメM</td><td>27</td><td>8.2</td><td>76.3</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          <div class="panel data-card" onclick="toggleCardMaterial('ipBarsMaterial', this)">
+            <div class="panel-title">IP価値の内訳<span class="material-hint">クリックで数値を表示</span></div>
+            <div id="ipBars"></div>
+            <div id="ipBarsMaterial" class="card-material" style="display:none;"></div>
+          </div>
+          <div class="panel data-card" onclick="toggleCardMaterial('newIpMaterial', this)">
+            <div class="panel-title">新規IP発掘スコア（上位）<span class="material-hint">クリックで全件を表示</span></div>
+            <table>
+              <thead><tr><th>作品</th><th>レビュー数</th><th>平均品質</th><th>発掘スコア</th></tr></thead>
+              <tbody id="newIpTableBody">
+                <tr><td>テストアニメG</td><td>48</td><td>8.9</td><td class="pos">91.2</td></tr>
+                <tr><td>テストアニメK</td><td>33</td><td>8.6</td><td class="pos">84.7</td></tr>
+                <tr><td>テストアニメM</td><td>27</td><td>8.2</td><td>76.3</td></tr>
+              </tbody>
+            </table>
+            <div id="newIpMaterial" class="card-material" style="display:none;"></div>
           </div>
         </section>
 
@@ -3309,6 +3273,10 @@
           <div class="panel">
             <div class="panel-title">国別・好むジャンル</div>
             <div id="overviewCountryPanels"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">性別×年代別・好むジャンル</div>
+            <div id="overviewDemographicPanels"></div>
           </div>
         </section>
       </div>
@@ -3635,7 +3603,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.61.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.63.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4980,7 +4948,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.61.0';
+      if(vEl) vEl.textContent = 'v0.63.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -10188,6 +10156,15 @@
   }
   window.downloadCsv = downloadCsv;
 
+  // データ枠クリックで素材（生データ）をその場に展開
+  function toggleCardMaterial(id, cardEl) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const open = el.style.display !== 'none';
+    el.style.display = open ? 'none' : '';
+  }
+  window.toggleCardMaterial = toggleCardMaterial;
+
 
   function formatSentiment(d, color, animeTitle) {
     const bp = d.brandPower || {};
@@ -10735,6 +10712,30 @@
           </div>
         `).join('') : '<p style="color:var(--muted2);">データがありません</p>';
       }
+
+      // 性別×年代別・好むジャンル
+      const demoEl = document.getElementById('overviewDemographicPanels');
+      if(demoEl) {
+        const byDemo = {};
+        (d.demographicGenreAffinity || []).forEach(r=>{
+          const key = r.gender + ' / ' + r.age_group;
+          if(!byDemo[key]) byDemo[key] = [];
+          byDemo[key].push(r);
+        });
+        const demoEntries = Object.entries(byDemo).slice(0, 8);
+        demoEl.innerHTML = demoEntries.length ? demoEntries.map(([key, rows])=>`
+          <div style="margin-bottom:1rem;">
+            <div class="b-label" style="font-weight:700;margin-bottom:.4rem;">${esc(key)}</div>
+            ${rows.slice(0,6).map(r=>`
+              <div class="bar-row">
+                <span class="b-label">${esc(r.category_ja)}</span>
+                <div class="bar-track"><div class="bar-fill" style="width:${Math.max(4, Math.min(100, r.pv_count))}%;background:var(--blue)"></div></div>
+                <span class="b-val">${esc(r.pv_count)}PV</span>
+              </div>
+            `).join('')}
+          </div>
+        `).join('') : '<p style="color:var(--muted2);">プロフィール登録済みユーザーの閲覧データが十分に蓄積されていません</p>';
+      }
     } catch(e) {
       console.warn('loadOverviewData error:', e);
     }
@@ -10845,10 +10846,17 @@
       // ── Sentiment: レーダー・刺さる理由・DNA・競合 ──
       if(sentiment.appealBreakdown && sentiment.appealBreakdown.length) {
         renderBars('appealBars', sentiment.appealBreakdown.map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color:'var(--brand)'});
-        renderBars('appealBarsTop3', sentiment.appealBreakdown.slice(0,3).map(a=>({label:a.axis, value:a.appeal_index})), {suffix:'倍', color:'var(--brand)'});
+      }
+      const appealMaterial = document.getElementById('sentimentAppealMaterial');
+      if(appealMaterial && sentiment.appealBreakdown) {
+        appealMaterial.innerHTML = `<table><thead><tr><th>軸</th><th>倍率</th></tr></thead><tbody>${sentiment.appealBreakdown.map(a=>`<tr><td>${esc(a.axis)}</td><td>${a.appeal_index}倍</td></tr>`).join('')}</tbody></table>`;
       }
       if(sentiment.masterGraphRaw && sentiment.masterGraphRaw.length) {
         drawMockRadar(sentiment.masterGraphRaw.map(m=>m.axis), sentiment.masterGraphRaw.map(m=>m.avg_score));
+        const radarMaterialBody = document.getElementById('sentimentRadarMaterialBody');
+        if(radarMaterialBody) {
+          radarMaterialBody.innerHTML = sentiment.masterGraphRaw.map(m=>`<tr><td>${esc(m.axis)}</td><td>${m.avg_score}</td><td>${m.review_count}</td></tr>`).join('');
+        }
       }
       const dnaGrid = document.getElementById('dnaCardGrid');
       if(dnaGrid) {
@@ -10874,6 +10882,10 @@
       // ── Fan Insight: ヒートマップ・クラスタ・インフルエンサー ──
       if(fanInsight.tasteByAttribute && fanInsight.tasteByAttribute.length) {
         drawMockHeatmap(fanInsight.tasteByAttribute.filter(t => t.gender === 'female'));
+        const heatMaterial = document.getElementById('fanHeatmapMaterial');
+        if(heatMaterial) {
+          heatMaterial.innerHTML = `<table><thead><tr><th>性別</th><th>年代</th><th>軸</th><th>平均値</th><th>サンプル数</th></tr></thead><tbody>${fanInsight.tasteByAttribute.slice(0,30).map(t=>`<tr><td>${esc(t.gender)}</td><td>${esc(t.age_group)}</td><td>${esc(t.axis)}</td><td>${t.avg_score}</td><td>${t.sample_size}</td></tr>`).join('')}</tbody></table>`;
+        }
       }
       const clusters = fanInsight.userClustersWithRatio || fanInsight.userClusters || [];
       const fanGrid = document.getElementById('fanClusterGrid');
@@ -10886,16 +10898,9 @@
               <div class="mc-sub">${c.ratio_pct != null ? c.ratio_pct+'%' : ''}</div>
             </div>`).join('') : '<p style="color:var(--muted2);">データが不足しています</p>';
       }
-      const fanGridTop1 = document.getElementById('fanClusterTop1');
-      if(fanGridTop1) {
-        const top = clusters[0];
-        fanGridTop1.innerHTML = top ? `
-            <div class="mini-card">
-              <div class="mc-tag">最大クラスタ</div>
-              <div class="mc-big">${top.user_count}<span style="font-size:.9rem;color:var(--muted)">人</span></div>
-              <div class="mc-name">${esc(top.cluster_type)}</div>
-              <div class="mc-sub">${top.ratio_pct != null ? top.ratio_pct+'%' : ''}</div>
-            </div>` : '<p style="color:var(--muted2);">データが不足しています</p>';
+      const clusterMaterial = document.getElementById('fanClusterMaterial');
+      if(clusterMaterial) {
+        clusterMaterial.innerHTML = clusters.length ? `<table><thead><tr><th>タイプ</th><th>人数</th><th>世界観</th><th>キャラ</th><th>作画</th></tr></thead><tbody>${clusters.map(c=>`<tr><td>${esc(c.cluster_type)}</td><td>${c.user_count}</td><td>${c.avg_sekaikan??'—'}</td><td>${c.avg_character??'—'}</td><td>${c.avg_sakuga??'—'}</td></tr>`).join('')}</tbody></table>` : '';
       }
       const inflBody = document.getElementById('influencerTableBody');
       if(inflBody) {
@@ -10903,15 +10908,26 @@
         inflBody.innerHTML = infl.length ? infl.slice(0,10).map((u,i)=>`
           <tr><td>${i+1}</td><td>${u.avg_quality_score??'—'}</td><td>${u.share_count??'—'}</td><td class="pos">${u.influence_score??'—'}</td></tr>
         `).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+        const inflMaterial = document.getElementById('fanInfluencerMaterial');
+        if(inflMaterial) {
+          inflMaterial.innerHTML = infl.length ? `<table><thead><tr><th>質の高いレビュー数</th><th>平均品質スコア</th><th>シェア数</th><th>影響力スコア</th></tr></thead><tbody>${infl.map(u=>`<tr><td>${u.quality_review_count??'—'}</td><td>${u.avg_quality_score??'—'}</td><td>${u.share_count??'—'}</td><td>${u.influence_score??'—'}</td></tr>`).join('')}</tbody></table>` : '';
+        }
       }
 
       // ── Trend Forecast: 急上昇タグ・折れ線・サイレントヒット ──
       if(trend.trendingTags && trend.trendingTags.length) {
         renderBars('trendTags', trend.trendingTags.slice(0,8).map(t=>({label:'#'+t.tag, value:t.recent_count})), {rank:true, suffix:'件', color:'var(--warn)'});
-        renderBars('trendTagsTop5', trend.trendingTags.slice(0,5).map(t=>({label:'#'+t.tag, value:t.recent_count})), {rank:true, suffix:'件', color:'var(--warn)'});
+        const tagsMaterial = document.getElementById('trendTagsMaterial');
+        if(tagsMaterial) {
+          tagsMaterial.innerHTML = `<table><thead><tr><th>タグ</th><th>件数</th></tr></thead><tbody>${trend.trendingTags.map(t=>`<tr><td>#${esc(t.tag)}</td><td>${t.recent_count}</td></tr>`).join('')}</tbody></table>`;
+        }
       }
       if(trend.marketSentimentIndex && trend.marketSentimentIndex.length) {
         drawMockLine(trend.marketSentimentIndex.map(m => m.avg_overall_score));
+        const lineMaterial = document.getElementById('trendLineMaterial');
+        if(lineMaterial) {
+          lineMaterial.innerHTML = `<table><thead><tr><th>月</th><th>総合スコア</th><th>レビュー数</th></tr></thead><tbody>${trend.marketSentimentIndex.map(m=>`<tr><td>${esc(m.period)}</td><td>${m.avg_overall_score}</td><td>${m.review_count}</td></tr>`).join('')}</tbody></table>`;
+        }
       }
       const silentBody = document.getElementById('silentHitTableBody');
       if(silentBody) {
@@ -10919,12 +10935,19 @@
         silentBody.innerHTML = hits.length ? hits.slice(0,10).map(h=>`
           <tr><td>${esc(h.title)}</td><td>${h.total_pv}</td><td class="pos">${h.avg_quality_score}</td><td>${h.repeat_viewer_ratio??'—'}%</td></tr>
         `).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+        const silentMaterial = document.getElementById('silentHitMaterial');
+        if(silentMaterial) {
+          silentMaterial.innerHTML = hits.length ? `<table><thead><tr><th>作品</th><th>PV数</th><th>平均品質</th><th>リピート率</th></tr></thead><tbody>${hits.map(h=>`<tr><td>${esc(h.title)}</td><td>${h.total_pv}</td><td>${h.avg_quality_score}</td><td>${h.repeat_viewer_ratio??'—'}%</td></tr>`).join('')}</tbody></table>` : '';
+        }
       }
 
       // ── Global Market: 国別視聴熱量・国別ランキング表 ──
       if(global.countryStats && global.countryStats.length) {
         renderBars('countryBars', global.countryStats.slice(0,6).map(c=>({label:c.country_code, value:c.cnt})), {});
-        renderBars('countryBarsTop5', global.countryStats.slice(0,5).map(c=>({label:c.country_code, value:c.cnt})), {});
+        const countryBarsMaterial = document.getElementById('countryBarsMaterial');
+        if(countryBarsMaterial) {
+          countryBarsMaterial.innerHTML = `<table><thead><tr><th>国</th><th>件数</th></tr></thead><tbody>${global.countryStats.map(c=>`<tr><td>${esc(c.country_code)}</td><td>${c.cnt}</td></tr>`).join('')}</tbody></table>`;
+        }
       }
       const countryBody = document.getElementById('countryTableBody');
       if(countryBody) {
@@ -10932,6 +10955,10 @@
         countryBody.innerHTML = gap.length ? gap.slice(0,8).map(c=>`
           <tr><td>${c.country_code}</td><td>${c.pv_count}</td><td>${c.review_count}</td><td>${c.review_rate}%</td><td>${esc(c.gap_type||'—')}</td></tr>
         `).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+        const countryTableMaterial = document.getElementById('countryTableMaterial');
+        if(countryTableMaterial) {
+          countryTableMaterial.innerHTML = gap.length ? `<table><thead><tr><th>国</th><th>PV数</th><th>レビュー数</th><th>転換率</th><th>判定</th></tr></thead><tbody>${gap.map(c=>`<tr><td>${esc(c.country_code)}</td><td>${c.pv_count}</td><td>${c.review_count}</td><td>${c.review_rate}%</td><td>${esc(c.gap_type||'—')}</td></tr>`).join('')}</tbody></table>` : '';
+        }
       }
 
       const locScoreEl = document.getElementById('localizationFitScore');
@@ -10954,6 +10981,10 @@
         viralBody.innerHTML = viral.length ? viral.slice(0,10).map(v=>`
           <tr><td>${esc(v.title)}</td><td>${v.share_count}</td><td>${v.pv_count}</td><td class="pos">${v.viral_rate??'—'}%</td></tr>
         `).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+        const viralMaterial = document.getElementById('viralMaterial');
+        if(viralMaterial) {
+          viralMaterial.innerHTML = viral.length ? `<table><thead><tr><th>作品</th><th>シェア数</th><th>PV数</th><th>バイラル率</th></tr></thead><tbody>${viral.map(v=>`<tr><td>${esc(v.title)}</td><td>${v.share_count}</td><td>${v.pv_count}</td><td>${v.viral_rate??'—'}%</td></tr>`).join('')}</tbody></table>` : '';
+        }
       }
       const wsGrid = document.getElementById('whitespaceCardGrid');
       if(wsGrid) {
@@ -10970,6 +11001,10 @@
           v: p.ratio_pct,
           c: donutColors[i % donutColors.length]
         })));
+        const donutMaterial = document.getElementById('donutMaterial');
+        if(donutMaterial) {
+          donutMaterial.innerHTML = `<table><thead><tr><th>流入元</th><th>PV数</th><th>割合</th></tr></thead><tbody>${consumer.discoveryPath.map(p=>`<tr><td>${esc(referrerLabels[p.referrer_type] || p.referrer_type)}</td><td>${p.pv_count}</td><td>${p.ratio_pct}%</td></tr>`).join('')}</tbody></table>`;
+        }
       }
 
       // ── IP Strategy: ブランド力内訳・新規IP発掘表 ──
@@ -10979,6 +11014,16 @@
           {label:'認知度', value:b.recognition||0}, {label:'熱量', value:b.intensity||0},
           {label:'継続率', value:b.retention||0}, {label:'国際性', value:b.global||0}
         ], {color:'var(--brand)'});
+        const ipBarsMaterial = document.getElementById('ipBarsMaterial');
+        if(ipBarsMaterial) {
+          ipBarsMaterial.innerHTML = `<table><thead><tr><th>指標</th><th>値</th></tr></thead><tbody>
+            <tr><td>認知度</td><td>${b.recognition??'—'}</td></tr>
+            <tr><td>熱量</td><td>${b.intensity??'—'}</td></tr>
+            <tr><td>継続率</td><td>${b.retention??'—'}</td></tr>
+            <tr><td>国際性</td><td>${b.global??'—'}</td></tr>
+            <tr><td>総合スコア</td><td>${b.total_score??'—'}</td></tr>
+          </tbody></table>`;
+        }
         const ipKpiBrand = document.getElementById('ipKpiBrand'); if(ipKpiBrand) ipKpiBrand.textContent = b.total_score ?? '—';
         const ipKpiRetention = document.getElementById('ipKpiRetention'); if(ipKpiRetention) ipKpiRetention.textContent = (b.retention ?? '—') + (b.retention!=null?'%':'');
       }
@@ -10992,6 +11037,10 @@
         newIpBody.innerHTML = newIp.length ? newIp.slice(0,10).map(x=>`
           <tr><td>${esc(x.title)}</td><td>${x.review_count}</td><td>${x.avg_quality_score}</td><td class="pos">${x.discovery_score}</td></tr>
         `).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted2);">データがありません</td></tr>';
+        const newIpMaterial = document.getElementById('newIpMaterial');
+        if(newIpMaterial) {
+          newIpMaterial.innerHTML = newIp.length ? `<table><thead><tr><th>作品</th><th>レビュー数</th><th>平均品質</th><th>発掘スコア</th></tr></thead><tbody>${newIp.map(x=>`<tr><td>${esc(x.title)}</td><td>${x.review_count}</td><td>${x.avg_quality_score}</td><td>${x.discovery_score}</td></tr>`).join('')}</tbody></table>` : '';
+        }
       }
 
       // ── 全ビュー分、AIサマリーを実データで作成（ビュー切替で消えないよう window._realAI に保存） ──
