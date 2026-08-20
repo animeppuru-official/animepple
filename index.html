@@ -420,7 +420,8 @@
     .master-tag-row::-webkit-scrollbar { display:none; }
     .master-tag-strength { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(92,201,142,.16); color:#9be3bd; font-size:13px; font-weight:700; flex-shrink:0; white-space:nowrap; }
     .master-tag-mood { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(240,138,138,.13); color:#eaa9a9; font-size:13px; font-weight:700; flex-shrink:0; white-space:nowrap; }
-    .master-tag-strength.is-top { background:rgba(255,209,102,.22); color:#ffd166; box-shadow:0 0 0 1px rgba(255,209,102,.5) inset; }
+    .master-tag-strength.is-top, .master-tag-mood.is-top { background:rgba(255,209,102,.22); color:#ffd166; box-shadow:0 0 0 1px rgba(255,209,102,.5) inset; }
+    .master-tag-strength.is-worst, .master-tag-mood.is-worst { background:rgba(130,150,138,.16); color:#82968a; box-shadow:0 0 0 1px rgba(130,150,138,.3) inset; }
     .review-card { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; overflow:hidden; box-shadow:0 12px 30px -20px rgba(0,0,0,.8); }
     #reviewList { display:grid; grid-template-columns:1fr; gap:20px; align-items:start; }
     .rc-head { display:flex; justify-content:space-between; align-items:flex-start; padding:16px 20px 10px; }
@@ -1651,7 +1652,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.89.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.91.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -1878,8 +1879,6 @@
                   <canvas id="masterChartB" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
                 </div>
               </div>
-              <!-- 内訳 -->
-              <div id="masterBreakdown" style="margin-top:.75rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem .75rem;"></div>
               <p style="font-size:.62rem;color:var(--muted);margin:.5rem 0 0;" data-i18n="marginOfErrorNote">± は参考の誤差範囲です（件数が少ないほど大きくなります）</p>
             </section>
           </div>
@@ -3739,7 +3738,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.89.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.91.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4071,6 +4070,12 @@
         if(!sb || !userId) return null;
         const { data } = await sb.from('review_values').select('axis_group,axis_key').eq('anime_id', animeId).eq('user_id', userId).maybeSingle();
         return data || null;
+      },
+      // 上質レビュー削除時に、そのアニメでの価値観投票も一緒に消す（再投稿時は「初回投票」として扱うため）
+      async deleteForAnime(animeId, userId) {
+        if(!sb || !userId) return { error: 'no user' };
+        const { error } = await sb.from('review_values').delete().eq('anime_id', animeId).eq('user_id', userId);
+        return { error };
       },
     },
     // ── 掲示板：通常掲示板＋価値観別掲示板4個 ──
@@ -5119,7 +5124,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.89.0';
+      if(vEl) vEl.textContent = 'v0.91.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -6964,8 +6969,6 @@
       if (caB0) drawRadar(caB0, labB0, labB0.map(()=>0), 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0.15)');
       const miniSection0 = document.getElementById('miniGraphSection');
       if(miniSection0) miniSection0.style.display='none';
-      const breakdown0 = document.getElementById('masterBreakdown');
-      if(breakdown0) breakdown0.innerHTML = '';
       const allTagsEl0 = document.getElementById('masterAllTags');
       if(allTagsEl0) allTagsEl0.innerHTML = '';
       return;
@@ -6989,8 +6992,6 @@
       if (caB0) { const ctx=caB0.getContext('2d'); ctx.clearRect(0,0,caB0.width,caB0.height); }
       const miniSection0 = document.getElementById('miniGraphSection');
       if(miniSection0) miniSection0.style.display='none';
-      const breakdown0 = document.getElementById('masterBreakdown');
-      if(breakdown0) breakdown0.innerHTML = '';
       const allTagsEl1 = document.getElementById('masterAllTags');
       if(allTagsEl1) allTagsEl1.innerHTML = '';
       return;
@@ -7046,33 +7047,16 @@
     if(miA) drawRadar(miA, labA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a');
     if(miB) drawRadar(miB, labB, avgB, 'rgba(255,153,153,0.38)', '#ff8888');
 
-    // 際立つ強み／印象的な雰囲気（既に集計済みのavgA/avgBの数値をそのままタグ表示するだけ。1行に緑→赤の順で並べる）
+    // 際立つ強み／印象的な雰囲気（12軸全体からトップ・ワーストを判定し色分けする。1行に緑→赤の順で並べる）
     const allTagsEl = document.getElementById('masterAllTags');
-    const maxAvgA = avgA.length ? Math.max(...avgA) : null;
     if(allTagsEl) {
-      const strengthHtml = labA.map((k,i)=>`<span class="master-tag-strength${avgA[i]===maxAvgA?' is-top':''}">${k} ${avgA[i]}</span>`).join('');
-      const moodHtml = labB.map((k,i)=>`<span class="master-tag-mood">${k} ${avgB[i]}</span>`).join('');
+      const allVals = [...avgA, ...avgB];
+      const maxVal = allVals.length ? Math.max(...allVals) : null;
+      const minVal = allVals.length ? Math.min(...allVals) : null;
+      const tagClass = (v) => (v===maxVal && maxVal!==minVal) ? ' is-top' : (v===minVal && maxVal!==minVal) ? ' is-worst' : '';
+      const strengthHtml = labA.map((k,i)=>`<span class="master-tag-strength${tagClass(avgA[i])}">${k} ${avgA[i]}</span>`).join('');
+      const moodHtml = labB.map((k,i)=>`<span class="master-tag-mood${tagClass(avgB[i])}">${k} ${avgB[i]}</span>`).join('');
       allTagsEl.innerHTML = strengthHtml + moodHtml;
-    }
-
-    // 内訳表示（左列=緑グループ全部、右列=赤グループ全部）
-    const breakdown = document.getElementById('masterBreakdown');
-    if(breakdown) {
-      const greenAxes = labA.map((k,i)=>({label:k, val:avgA[i], margin:marginA[i], color:'#5ec97a'}));
-      const redAxes = labB.map((k,i)=>({label:k, val:avgB[i], margin:marginB[i], color:'#ff8888'}));
-      const renderCol = (axes) => axes.map(({label,val,margin,color})=>`
-        <div class="breakdown-item">
-          <span class="breakdown-label">${label}</span>
-          <div class="breakdown-bar-wrap">
-            <div class="breakdown-bar" style="width:${val*10}%;background:${color};"></div>
-          </div>
-          <span class="breakdown-val">${val}${(margin!=null && margin!==0)?`<span class="breakdown-margin">±${margin}</span>`:''}</span>
-        </div>
-      `).join('');
-      breakdown.innerHTML = `
-        <div class="breakdown-col">${renderCol(greenAxes)}</div>
-        <div class="breakdown-col">${renderCol(redAxes)}</div>
-      `;
     }
   }
 
@@ -7689,11 +7673,58 @@
       chartA: chartAObjPreCheck, chartB: chartBObjPreCheck, chartMoved: true, elapsedMs: elapsedPreCheck,
     });
     if(isValidMasterGraph && _currentUser) {
-      showValuePollModal((axisKey, axisGroup) => proceedReviewSubmit(axisKey, axisGroup));
+      (async () => {
+        const existing = await db.reviewValues.getMyGroup(currentAnimeId, _currentUser.id);
+        showValuePollModal((axisKey, axisGroup) => {
+          if(existing && existing.axis_key && existing.axis_key !== axisKey) {
+            showValueChangeConfirm(existing, axisKey, axisGroup,
+              () => proceedReviewSubmit(axisKey, axisGroup), // 上書きに同意
+              () => proceedReviewSubmit(existing.axis_key, existing.axis_group) // キャンセル＝前回の投票のまま
+            );
+          } else {
+            proceedReviewSubmit(axisKey, axisGroup);
+          }
+        });
+      })();
     } else {
       proceedReviewSubmit(null, null);
     }
   };
+  // 価値観がすでに決まっている状態で異なる項目を選んだ場合の上書き確認
+  function showValueChangeConfirm(existing, newKey, newGroup, onConfirm, onCancel) {
+    const dispA = getAxisA(), dispB = getAxisB();
+    const labelOf = (key) => {
+      const iA = axisA.indexOf(key); if(iA !== -1) return dispA[iA];
+      const iB = axisB.indexOf(key); if(iB !== -1) return dispB[iB];
+      return key;
+    };
+    const oldLabel = labelOf(existing.axis_key);
+    const newLabel = labelOf(newKey);
+    const oldTypeName = t('valueType'+existing.axis_group);
+    const newTypeName = t('valueType'+newGroup);
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,10,7,.72);backdrop-filter:blur(3px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;';
+    const box = document.createElement('div');
+    box.style.cssText = 'width:100%;max-width:460px;background:#22412f;border:1px solid rgba(217,164,65,.35);border-radius:20px;box-shadow:0 40px 100px -30px rgba(0,0,0,.85);padding:26px 26px 22px;';
+    box.innerHTML = `
+      <h3 style="font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:18px;margin:0 0 12px;color:#e8f0ea;">${escapeHtml(t('valueChangeConfirmTitle'))}</h3>
+      <p style="margin:0 0 8px;font-size:13.5px;line-height:1.8;color:#dfeae3;">
+        ${escapeHtml(t('valueChangeConfirmBefore'))} <strong style="color:#e8c463;">${escapeHtml(oldLabel)}</strong>（<strong>${escapeHtml(oldTypeName)}</strong>）
+      </p>
+      <p style="margin:0 0 16px;font-size:13.5px;line-height:1.8;color:#dfeae3;">
+        ${escapeHtml(t('valueChangeConfirmAfter'))} <strong style="color:#e8c463;">${escapeHtml(newLabel)}</strong>（<strong>${escapeHtml(newTypeName)}</strong>）
+      </p>
+      <p style="margin:0 0 20px;font-size:12.5px;color:#82968a;">${escapeHtml(t('valueChangeConfirmWarn'))}</p>
+      <div style="display:flex;gap:10px;">
+        <button type="button" id="valueChangeCancelBtn" style="flex:1;height:44px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#82968a;font-weight:700;font-size:13.5px;cursor:pointer;">${escapeHtml(t('valueChangeCancel'))}</button>
+        <button type="button" id="valueChangeConfirmBtn" style="flex:1;height:44px;border-radius:11px;border:none;background:#e5484d;color:#fff;font-weight:800;font-size:13.5px;cursor:pointer;">${escapeHtml(t('valueChangeConfirmBtn'))}</button>
+      </div>
+    `;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    box.querySelector('#valueChangeCancelBtn').onclick = () => { document.body.removeChild(overlay); onCancel(); };
+    box.querySelector('#valueChangeConfirmBtn').onclick = () => { document.body.removeChild(overlay); onConfirm(); };
+  }
   function proceedReviewSubmit(selectedAxisKey, selectedAxisGroup) {
     const comment = document.getElementById('reviewComment').value.trim();
     // タグに現在の表示言語コードをプレフィックスとして付けて保存する。
@@ -9488,6 +9519,12 @@
     valuePollTitle:{ ja:'この作品で一番重要な項目は？', en:'What matters most in this title?' },
     valuePollHint:{ ja:'選ぶと、同じ価値観の人だけの掲示板に参加できます', en:'Pick one to unlock the board for people who share your take' },
     valuePollSkip:{ ja:'選ばず投稿する', en:'Post without choosing' },
+    valueChangeConfirmTitle:{ ja:'価値観を変更しますか？', en:'Change your value type?' },
+    valueChangeConfirmBefore:{ ja:'前回は', en:'You previously voted for' },
+    valueChangeConfirmAfter:{ ja:'今回選んだのは', en:'This time you chose' },
+    valueChangeConfirmWarn:{ ja:'投票を変更すると、この作品での価値観が上書きされます。よろしいですか？', en:'Changing your vote will overwrite your value type for this title. Are you sure?' },
+    valueChangeCancel:{ ja:'前回のままにする', en:'Keep previous vote' },
+    valueChangeConfirmBtn:{ ja:'変更する', en:'Change it' },
     labelGenre:    { ja:'ジャンル',     en:'Genre',         ko:'장르',     'zh-tw':'類型',   'zh-cn':'类型',   es:'Género',      fr:'Genre',      pt:'Gênero',     de:'Genre',      ar:'النوع',th:'ประเภท',id:'Genre',ru:'Жанр',it:'Genere',vi:'Thể loại' },
     labelTag:      { ja:'タグ',         en:'Tags',          ko:'태그',     'zh-tw':'標籤',   'zh-cn':'标签',   es:'Etiquetas',   fr:'Tags',       pt:'Tags',       de:'Tags',       ar:'الوسوم',th:'แท็ก',id:'Tag',ru:'Теги',it:'Tag',vi:'Thẻ' },
     labelStudio:   { ja:'制作',         en:'Studio',        ko:'제작사',   'zh-tw':'製作',   'zh-cn':'制作',   es:'Estudio',     fr:'Studio',     pt:'Estúdio',    de:'Studio',     ar:'الاستوديو',th:'สตูดิโอ',id:'Studio',ru:'Студия',it:'Studio',vi:'Studio' },
@@ -12362,8 +12399,8 @@
         if(!confirm(t('deleteReviewConfirm'))) return;
         const { error } = await db.reviews.deleteOwn(reviewId, _currentUser.id);
         if(error) { alert(t('profileSaveFailedAlert')); return; }
-        // マスターグラフ・カードの色・価値観投票を最新状態に揃える
-        try { await sb.from('review_values').delete().eq('anime_id', animeId).eq('user_id', _currentUser.id); } catch(e) { console.warn('review_values cleanup:', e); }
+        // マスターグラフ・カードの色・価値観投票を最新状態に揃える（このアニメで書いた上質レビューが消えたら価値観もリセット＝次回投票は「初回」扱い）
+        try { await db.reviewValues.deleteForAnime(animeId, _currentUser.id); } catch(e) { console.warn('review_values cleanup:', e); }
         invalidateSearchMasterGraphCache();
         await loadMyGoldAnimeIds();
         await fetchRemoteReviews(animeId);
