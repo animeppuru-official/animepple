@@ -289,7 +289,7 @@
 
     /* ── GRID ── */
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; padding:0 1rem; }
-    .today-pick-grid { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; padding:0 1rem; }
+    .today-pick-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.65rem; padding:0 1rem; }
     #randomPickGrid { padding:0; }
     .gcard { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; box-shadow:0 12px 30px -16px rgba(0,0,0,.8); overflow:hidden; cursor:pointer; transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, border-color .18s ease; }
     @media (hover:hover) {
@@ -1144,8 +1144,8 @@
         padding:0 2rem; max-width:1200px; margin:0 auto;
         gap:.85rem;
       }
-      /* 今日のセレクション：ピックアップと同じ枚数（5列）・同じ余白ゼロの入れ物に揃えてカード幅を一致させる */
-      #randomPickGrid { grid-template-columns:repeat(5, 1fr); padding:0; max-width:none; gap:18px; }
+      /* 今日のセレクション：ピックアップと同じ枚数・同じ余白ゼロの入れ物に揃えてカード幅を一致させる */
+      #randomPickGrid { grid-template-columns:repeat(7, 1fr); padding:0; max-width:none; gap:18px; }
       
       /* 広告 */
       .ad-wrap { margin:1rem 2rem 0; max-width:1200px; margin-left:auto; margin-right:auto; }
@@ -1610,7 +1610,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.65.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.66.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -3604,7 +3604,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.65.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.66.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4949,7 +4949,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.65.0';
+      if(vEl) vEl.textContent = 'v0.66.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
