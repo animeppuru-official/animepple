@@ -1844,7 +1844,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.139.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.140.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -3944,7 +3944,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.139.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.140.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5117,6 +5117,13 @@
     const d=new Set(pj(DELETED_KEY));
     return [...pj(STORAGE_KEY),...seedAnime.filter(s=>!d.has(s.id))];
   }
+  // 検索専用：animepple-user-pages（訪問済みページの個別ローカルキャッシュ）を除いたベースリスト。
+  // Supabaseモードでは検索時に必ずgetAllForSearch()で全件を取り直すため、
+  // 個別キャッシュ由来のデータを混ぜる必要はない（無制限に肥大化するのを防ぐ目的）。
+  function getSeedOnly() {
+    const d=new Set(pj(DELETED_KEY));
+    return seedAnime.filter(s=>!d.has(s.id));
+  }
   // 検索結果として取得済みの部分的なアニメデータをメモリ上にキャッシュ。
   // 検索結果クリック時、詳細ページ初期表示をこのキャッシュから即座に行い、
   // Supabaseへの二重通信（検索直後に同じデータをもう一度取りに行く無駄）を避ける。
@@ -5431,7 +5438,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.139.0';
+      if(vEl) vEl.textContent = 'v0.140.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -7512,10 +7519,10 @@
             broadcastStart: p.broadcast_start || '',
             broadcastEnd: p.broadcast_end || '',
           };
-          // ローカルキャッシュに追加してから再レンダリング
+          // ローカルキャッシュに追加してから再レンダリング（無制限に肥大化しないよう直近200件に制限）
           const existing = JSON.parse(localStorage.getItem('animepple-user-pages') || '[]');
           if(!existing.find(x=>x.id===mapped.id)) {
-            localStorage.setItem('animepple-user-pages', JSON.stringify([mapped, ...existing]));
+            localStorage.setItem('animepple-user-pages', JSON.stringify([mapped, ...existing].slice(0, 200)));
           }
           // title_enが未設定（DBにも元々無い）場合のみ、DeepLで翻訳してSupabaseに保存する。
           // 一度保存すれば以降は p.title_en が入っているのでこの分岐自体を通らない（毎回叩かない）。
@@ -9167,7 +9174,9 @@
 
     const q=srSearchState.q.toLowerCase();
     await ensureTagMaster();
-    let list=getAll();
+    // Supabaseモードでは下でgetAllForSearch()により全件を取り直すため、
+    // animepple-user-pages（訪問済み個別キャッシュ、無制限に肥大化しうる）は使わない
+    let list = (DB_MODE === 'supabase' && sb) ? getSeedOnly() : getAll();
 
     // Supabase登録済み作品も候補プールに加える（キーワード検索・グラフ検索どちらでも対象にするため。
     // 検索は全件が対象になる必要があるため、件数上限を設けない getAllForSearch を使う）
@@ -9195,6 +9204,11 @@
     }
 
     // グラフ検索：マスターグラフキャッシュを事前ロード（未訪問作品もマッチ判定できるように）
+    // 初回のみ全作品分のクラスタリング計算が走り時間がかかるため、フリーズに見えないようローディングを出す
+    if(hasSrProfile() && !_searchMasterGraphCache) {
+      const grid = document.getElementById('srResultGrid');
+      if(grid) grid.innerHTML = `<div class="no-result"><h3>${t('loadingLabel') || '計算中…'}</h3><p>${t('searchGraphCalcNote') || '好み一致度を計算しています。初回のみ少し時間がかかります'}</p></div>`;
+    }
     if(hasSrProfile()) await ensureSearchMasterGraphCache();
 
     if(q) list=list.filter(a=>fuzzyIncludes(`${a.title} ${a.titleEn||''} ${a.meta} ${(a.features||[]).join(' ')} ${a.description}`.toLowerCase(), q));
