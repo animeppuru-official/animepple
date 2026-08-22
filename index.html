@@ -47,7 +47,7 @@
     button:active, a:active, [role="button"]:active { transform: translateY(0) scale(0.98); }
 
     /* ── PAGES ── */
-    .page { display:none; min-height:100vh; padding-bottom:1rem; }
+    .page { display:none; min-height:100vh; padding-bottom:5rem; }
     body.admin-fullpage .page { padding-bottom:0; }
     .page.active { display:block; }
 
@@ -64,42 +64,41 @@
     .back-btn:hover { background:rgba(255,255,255,.08); }
 
     /* ── BOTTOM NAV ── */
-    .bnav {
-      position:fixed; top:0; left:0; bottom:0; right:auto; z-index:200;
-      width:236px; flex-direction:column; justify-content:flex-start; align-items:stretch;
-      border-top:none; border-right:1px solid rgba(255,255,255,.05);
-      padding:26px 16px; gap:4px;
-      background:linear-gradient(180deg,#102919 0%,#07160d 90%);
-      transform:translateX(-100%); transition:transform .25s ease;
-    }
-    .bnav.mobile-open { transform:translateX(0); box-shadow:20px 0 60px -20px rgba(0,0,0,.8); }
-    .bnav-scrim {
-      display:none; position:fixed; inset:0; z-index:150;
-      background:rgba(0,0,0,.5); backdrop-filter:blur(2px);
-    }
-    .bnav-scrim.mobile-open { display:block; }
-    .mobile-hamburger-btn {
-      position:fixed; top:14px; left:14px; z-index:180;
-      width:40px; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,.14);
-      background:rgba(7,21,13,.75); backdrop-filter:blur(6px); color:#dfeae3;
-      display:flex; align-items:center; justify-content:center; cursor:pointer;
-    }
-    body.admin-fullpage .mobile-hamburger-btn { display:none; }
-    .bnav-item {
-      flex-direction:row; justify-content:flex-start;
-      width:100%; padding:11px 13px; border-radius:11px;
-      font-size:14px; gap:13px; font-weight:500;
-      color:#b6c8bd;
-      transition:background-color .16s ease, color .16s ease;
-    }
-    .bnav-item svg { width:19px; height:19px; flex-shrink:0; }
-    .bnav-item:hover { background:rgba(255,255,255,.04); color:#eafbf0; }
-    .bnav-item.active { background:linear-gradient(90deg, rgba(92,201,142,.18), rgba(92,201,142,.04)); color:#eafbf0; box-shadow:inset 3px 0 0 #5cc98e; font-weight:700; }
+    .bnav { position:fixed; bottom:0; left:0; right:0; z-index:100; background:rgba(7,21,13,.95); backdrop-filter:blur(10px); border-top:1px solid var(--line); display:flex; justify-content:space-around; padding:.5rem 0 max(.5rem,env(safe-area-inset-bottom)); }
+    .bnav-item { display:flex; flex-direction:column; align-items:center; gap:.18rem; padding:.2rem .8rem; border-radius:10px; font-size:.64rem; color:var(--muted); background:none; border:none; cursor:pointer; transition:color .15s; }
     .bnav-item.active { color:var(--brand); }
     .bnav-icon { font-size:1.25rem; line-height:1; }
     .bnav-item svg { width:1.25rem; height:1.25rem; }
     .bnav-create { display:flex; flex-direction:column; align-items:center; gap:.18rem; padding:.2rem .8rem; font-size:.64rem; color:#fff; background:none; border:none; cursor:pointer; }
     .bnav-create .bnav-icon { background:var(--red); border-radius:50%; width:2.4rem; height:2.4rem; display:grid; place-items:center; font-size:1.2rem; }
+
+    /* ── スマホ専用：下部固定・3項目ずつスワイプ切り替えナビ ── */
+    .bnav { display:none; }
+    .bnav-carousel {
+      position:fixed; bottom:0; left:0; right:0; z-index:100;
+      background:rgba(7,21,13,.95); backdrop-filter:blur(10px);
+      border-top:1px solid var(--line);
+      padding:.5rem 0 max(.3rem,env(safe-area-inset-bottom));
+    }
+    .bnav-carousel-track { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
+    .bnav-carousel-track::-webkit-scrollbar { display:none; }
+    .bnav-carousel-page {
+      flex:0 0 100%; scroll-snap-align:start;
+      display:flex; justify-content:space-around;
+    }
+    .bnav-carousel-item {
+      display:flex; flex-direction:column; align-items:center; gap:.2rem;
+      padding:.2rem .8rem; border-radius:10px; font-size:.66rem;
+      color:var(--muted); background:none; border:none; cursor:pointer; position:relative;
+    }
+    .bnav-carousel-item.active { color:var(--brand); }
+    .bnav-carousel-dots { display:flex; justify-content:center; gap:6px; margin-top:.3rem; }
+    .bnav-carousel-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.2); transition:background .2s; }
+    .bnav-carousel-dot.active { background:var(--brand); }
+    @media (min-width: 768px) {
+      .bnav { display:flex; }
+      .bnav-carousel { display:none; }
+    }
 
     /* ── SEARCH OVERLAY ── */
     .search-overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(4,10,6,.72); overflow-y:auto; padding:.75rem; }
@@ -1186,9 +1185,24 @@
        サイドナビ＋ワイドコンテンツ
     ════════════════════════════ */
     @media (min-width: 768px) {
-      /* PC幅ではサイドバーは常時表示、ハンバーガーボタン・スクリムは不要 */
-      .bnav { transform:translateX(0) !important; box-shadow:none !important; }
-      .mobile-hamburger-btn, .bnav-scrim { display:none !important; }
+      /* ボトムナビ → 左サイドナビ（Claude Design案の実測値をそのまま使用） */
+      .bnav {
+        position:fixed; top:0; left:0; bottom:0; right:auto;
+        width:236px; flex-direction:column; justify-content:flex-start; align-items:stretch;
+        border-top:none; border-right:1px solid rgba(255,255,255,.05);
+        padding:26px 16px; gap:4px;
+        background:linear-gradient(180deg,#102919 0%,#07160d 90%);
+      }
+      .bnav-item {
+        flex-direction:row; justify-content:flex-start;
+        width:100%; padding:11px 13px; border-radius:11px;
+        font-size:14px; gap:13px; font-weight:500;
+        color:#b6c8bd;
+        transition:background-color .16s ease, color .16s ease;
+      }
+      .bnav-item svg { width:19px; height:19px; flex-shrink:0; }
+      .bnav-item:hover { background:rgba(255,255,255,.04); color:#eafbf0; }
+      .bnav-item.active { background:linear-gradient(90deg, rgba(92,201,142,.18), rgba(92,201,142,.04)); color:#eafbf0; box-shadow:inset 3px 0 0 #5cc98e; font-weight:700; }
       .bnav-tip {
         margin-top:auto; padding:14px 14px 14px 15px; border-radius:13px;
         background:linear-gradient(180deg, rgba(224,178,86,.09), rgba(224,178,86,.03));
@@ -1731,7 +1745,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.119.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.121.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -3834,11 +3848,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.119.0</div>
-<button type="button" class="mobile-hamburger-btn" id="mobileHamburgerBtn" aria-label="メニューを開く">
-  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
-</button>
-<div class="bnav-scrim" id="bnavScrim"></div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.121.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -3877,6 +3887,56 @@
   <div class="bnav-tip">
     <p class="bnav-tip-title">レビューで作品を育てる</p>
     <p class="bnav-tip-sub">あなたの評価が作品ページのグラフになります。</p>
+  </div>
+</nav>
+
+<!-- スマホ専用：下部固定・3項目ずつスワイプ切り替えのナビゲーション -->
+<nav class="bnav-carousel" id="bnavCarousel">
+  <div class="bnav-carousel-track" id="bnavCarouselTrack">
+    <div class="bnav-carousel-page">
+      <button class="bnav-carousel-item" id="bnavc-home" onclick="nav('home')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
+        <span>ホーム</span>
+      </button>
+      <button class="bnav-carousel-item" id="bnavc-search" onclick="openSearch()">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></svg>
+        <span>検索</span>
+      </button>
+      <button class="bnav-carousel-item" id="bnavc-ranking" onclick="navPopular()">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="7" rx="1"/><rect x="10" y="8" width="4" height="11" rx="1"/><rect x="16" y="5" width="4" height="14" rx="1"/></svg>
+        <span>人気</span>
+      </button>
+    </div>
+    <div class="bnav-carousel-page">
+      <button class="bnav-carousel-item" id="bnavc-board" onclick="nav('board')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>掲示板</span>
+      </button>
+      <button class="bnav-carousel-item" id="bnavc-articles" onclick="nav('articles')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+        <span>記事の広場</span>
+      </button>
+      <button class="bnav-carousel-item" id="bnavc-mypage" onclick="nav('mypage')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg>
+        <span>マイページ</span>
+      </button>
+    </div>
+    <div class="bnav-carousel-page">
+      <button class="bnav-carousel-item" id="bnavc-notifications" onclick="nav('notifications')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span>お知らせ</span>
+        <span class="bnav-badge" id="bnavcNotifBadge" style="display:none;">0</span>
+      </button>
+      <button class="bnav-carousel-item" id="bnavc-settings" onclick="nav('settings')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>設定</span>
+      </button>
+    </div>
+  </div>
+  <div class="bnav-carousel-dots" id="bnavCarouselDots">
+    <span class="bnav-carousel-dot active"></span>
+    <span class="bnav-carousel-dot"></span>
+    <span class="bnav-carousel-dot"></span>
   </div>
 </nav>
 
@@ -5165,9 +5225,14 @@
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     const ab = document.getElementById('bnav-'+domPage);
     if (ab && page !== 'user') ab.classList.add('active');
+    document.querySelectorAll('.bnav-carousel-item').forEach(b=>b.classList.remove('active'));
+    const abc = document.getElementById('bnavc-'+domPage);
+    if (abc && page !== 'user') abc.classList.add('active');
     // 管理者ページ・企業向けプレビューページはフルページ表示（ナビを隠す）
     const globalNav = document.getElementById('globalBnav');
     if (globalNav) globalNav.style.display = (page === 'admin' || page === 'partner') ? 'none' : '';
+    const globalNavCarousel = document.getElementById('bnavCarousel');
+    if (globalNavCarousel) globalNavCarousel.style.display = (page === 'admin' || page === 'partner') ? 'none' : '';
     document.body.classList.toggle('admin-fullpage', page === 'admin' || page === 'partner');
     currentPage = page;
     currentAnimeId = animeId || null;
@@ -5241,7 +5306,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.119.0';
+      if(vEl) vEl.textContent = 'v0.121.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -5283,8 +5348,13 @@
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     const ab = document.getElementById('bnav-'+domPage);
     if(ab && prev.page !== 'user') ab.classList.add('active');
+    document.querySelectorAll('.bnav-carousel-item').forEach(b=>b.classList.remove('active'));
+    const abc = document.getElementById('bnavc-'+domPage);
+    if(abc && prev.page !== 'user') abc.classList.add('active');
     const globalNav = document.getElementById('globalBnav');
     if (globalNav) globalNav.style.display = (prev.page === 'admin') ? 'none' : '';
+    const globalNavCarousel = document.getElementById('bnavCarousel');
+    if (globalNavCarousel) globalNavCarousel.style.display = (prev.page === 'admin') ? 'none' : '';
     document.body.classList.toggle('admin-fullpage', prev.page === 'admin');
     currentPage = prev.page;
     currentAnimeId = prev.animeId || null;
@@ -5305,6 +5375,7 @@
     srTagsActive.length=0;
     nav('search');
     const rb=document.getElementById('bnav-ranking'); if(rb) rb.classList.add('active');
+    const rbc=document.getElementById('bnavc-ranking'); if(rbc) rbc.classList.add('active');
   }
   window.navSearch = navSearch;
 
@@ -13475,29 +13546,13 @@
 
   document.getElementById('bnav-home').classList.add('active');
 
-  // スマホ版：左上ハンバーガーボタンでサイドバーをスライドイン
-  const _hamburgerBtn = document.getElementById('mobileHamburgerBtn');
-  const _bnavScrim = document.getElementById('bnavScrim');
-  const _globalBnav = document.getElementById('globalBnav');
-  function closeMobileNav() {
-    _globalBnav?.classList.remove('mobile-open');
-    _bnavScrim?.classList.remove('mobile-open');
-  }
-  function openMobileNav() {
-    _globalBnav?.classList.add('mobile-open');
-    _bnavScrim?.classList.add('mobile-open');
-  }
-  if(_hamburgerBtn) {
-    _hamburgerBtn.onclick = () => {
-      if(_globalBnav?.classList.contains('mobile-open')) closeMobileNav();
-      else openMobileNav();
-    };
-  }
-  if(_bnavScrim) _bnavScrim.onclick = closeMobileNav;
-  // メニュー内のボタンをタップしたら自動で閉じる（PC幅では何もしない）
-  if(_globalBnav) {
-    _globalBnav.querySelectorAll('button, a').forEach(el=>{
-      el.addEventListener('click', () => { if(window.innerWidth < 768) closeMobileNav(); });
+  // スマホ専用カルーセルナビ：スクロール位置に応じてドットを同期
+  const _bnavCarouselTrack = document.getElementById('bnavCarouselTrack');
+  const _bnavCarouselDots = document.querySelectorAll('#bnavCarouselDots .bnav-carousel-dot');
+  if(_bnavCarouselTrack && _bnavCarouselDots.length) {
+    _bnavCarouselTrack.addEventListener('scroll', () => {
+      const pageIdx = Math.round(_bnavCarouselTrack.scrollLeft / _bnavCarouselTrack.clientWidth);
+      _bnavCarouselDots.forEach((d,i)=>d.classList.toggle('active', i===pageIdx));
     });
   }
 
