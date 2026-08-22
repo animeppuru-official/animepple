@@ -294,6 +294,7 @@
     .hero p { margin:0 0 .9rem; color:#c2deca; font-size:.92rem; }
     .hero-cta-row { display:flex; gap:.6rem; flex-wrap:wrap; }
     .hero-cta-primary { height:2.9rem; padding:0 1.3rem; border-radius:.75rem; border:none; background:var(--brand); color:#07160d; font-weight:700; font-size:.9rem; cursor:pointer; }
+    .hero-cta-yellow { background:#f0c94a; color:#3a2a06; }
     .hero-cta-secondary { height:2.9rem; padding:0 1.3rem; border-radius:.75rem; border:1px solid rgba(255,255,255,.14); background:transparent; color:var(--text); font-weight:700; font-size:.9rem; cursor:pointer; }
     .hero-btns { display:flex; gap:.55rem; flex-wrap:wrap; }
     .btn-primary { padding:.65rem 1.1rem; border-radius:12px; background:linear-gradient(120deg,var(--brand),var(--brand2)); color:#0c2015; font-weight:800; font-size:.9rem; border:none; cursor:pointer; }
@@ -1243,7 +1244,7 @@
       .hero-mascot-wrap { min-height:320px; justify-content:center; }
       .hero h1 { font-size:46px; line-height:1.24; letter-spacing:.01em; }
       .hero p { font-size:16px; line-height:1.8; max-width:44ch; }
-      .mascot-img { width:130px; height:130px; }
+      .mascot-img { width:190px; height:190px; }
       .mascot-balloon { font-size:12.5px; padding:11px 15px; }
 
       /* セクション */
@@ -1745,7 +1746,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.121.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.122.0</span></span>
       <div class="hdr-right">
         <button class="hdr-icon-btn" id="yourValueHeaderBtn" onclick="nav('mypage');document.getElementById('mypageValueProfileSection')?.scrollIntoView({behavior:'smooth'});" title="あなたの価値観">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 21v-9"/></svg>
@@ -1767,9 +1768,7 @@
         <h1>アニメのグラフで<br><em>ドンピシャ</em>を見つける</h1>
         <p>みんなのレビューが、作品ごとの評価グラフを育てる。数字ではなく「かたち」で、あなたに刺さる一本を探せます。</p>
         <div class="hero-cta-row">
-          <button type="button" class="hero-cta-primary" onclick="openSearch()">🔍 作品を探す</button>
-          <button type="button" class="hero-cta-secondary" onclick="nav('popular')">人気ランキング</button>
-          <button type="button" class="hero-cta-secondary" onclick="nav('gacha')">🎰 ガチャガチャ</button>
+          <button type="button" class="hero-cta-primary hero-cta-yellow" onclick="openSearch()">🔍 作品を探す</button>
         </div>
 
       </div>
@@ -3848,7 +3847,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.121.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.122.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -3861,6 +3860,10 @@
   <button class="bnav-item" id="bnav-ranking" onclick="navPopular()">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="7" rx="1"/><rect x="10" y="8" width="4" height="11" rx="1"/><rect x="16" y="5" width="4" height="14" rx="1"/></svg>
     <span>人気</span>
+  </button>
+  <button class="bnav-item" id="bnav-gacha" onclick="nav('gacha')">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+    <span>ガチャガチャ</span>
   </button>
   <button class="bnav-item" id="bnav-board" onclick="nav('board')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -3930,6 +3933,10 @@
       <button class="bnav-carousel-item" id="bnavc-settings" onclick="nav('settings')">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>設定</span>
+      </button>
+      <button class="bnav-carousel-item" id="bnavc-gacha" onclick="nav('gacha')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>ガチャガチャ</span>
       </button>
     </div>
   </div>
@@ -5306,7 +5313,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.121.0';
+      if(vEl) vEl.textContent = 'v0.122.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
