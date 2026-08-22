@@ -1850,7 +1850,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.146.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.147.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2464,10 +2464,9 @@
       <button class="search-go" id="srSearchBtn" data-i18n="btnSearchGo">検索</button>
     </div>
   </div>
-  <div class="filter-toggle-bar" id="srFilterToggle">
-    <span>🎛 詳細フィルター・並び替え</span>
-    <span id="srFilterArrow">▼</span>
-  </div>
+  <button type="button" class="filter-toggle-bar" id="srFilterToggle" style="width:100%;text-align:center;justify-content:center;background:#f0c94a;color:#3a2a06;border:none;font-weight:700;font-family:inherit;">
+    <span>🎛 条件を変えて再検索</span>
+  </button>
   <div class="filter-panel" id="srFilterPanel">
     <!-- ①スライダー -->
     <div class="slider-page-nav" id="srSliderPageNav">
@@ -3968,7 +3967,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.146.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.147.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5462,7 +5461,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.146.0';
+      if(vEl) vEl.textContent = 'v0.147.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -6617,6 +6616,25 @@
     }
   }
 
+  // 検索結果ページ（スマホ版）の「条件を変えて再検索」から開く場合：
+  // 現在の検索状態（タグ・スライダー・年代・並び替え・キーワード）をモーダル側の状態にコピーしてから開く
+  function openSearchFromResults() {
+    overlayTags.length = 0;
+    srTagsActive.forEach(tag => overlayTags.push(tag));
+    axisA.forEach(k => overlayProfileA[k] = srProfileA[k]);
+    axisB.forEach(k => overlayProfileB[k] = srProfileB[k]);
+    const overlaySearchInputEl = document.getElementById('overlaySearchInput');
+    if (overlaySearchInputEl) overlaySearchInputEl.value = srSearchState.q || '';
+    const overlaySortEl = document.getElementById('overlaySortSelect');
+    if (overlaySortEl) overlaySortEl.value = srSearchState.sort === 'relevance' ? 'match' : srSearchState.sort;
+    const overlayEraToggleEl = document.getElementById('overlayEraToggle');
+    const overlayEraFromEl = document.getElementById('overlayEraFrom');
+    const overlayEraToEl = document.getElementById('overlayEraTo');
+    if (overlayEraToggleEl) overlayEraToggleEl.checked = !!(srSearchState.eraFrom || srSearchState.eraTo);
+    if (overlayEraFromEl) overlayEraFromEl.value = srSearchState.eraFrom || '';
+    if (overlayEraToEl) overlayEraToEl.value = srSearchState.eraTo || '';
+    openSearch();
+  }
   function openSearch() {
     document.getElementById('searchOverlay').classList.add('open');
     lockBodyScroll();
@@ -9474,10 +9492,7 @@
     }).join('');
   }
 
-  document.getElementById('srFilterToggle').onclick=()=>{
-    const panel=document.getElementById('srFilterPanel'),arrow=document.getElementById('srFilterArrow');
-    panel.classList.toggle('open'); arrow.textContent=panel.classList.contains('open')?'▲':'▼';
-  };
+  document.getElementById('srFilterToggle').onclick=openSearchFromResults;
 
   async function doSrSearch(){
     srSearchState.q=document.getElementById('srQuery').value.trim();
@@ -10158,7 +10173,7 @@
     // 検索
     searchPlaceholder:{ ja:'タイトル・ジャンル・雰囲気で検索',en:'Search by title, genre, mood',ko:'제목·장르·분위기로 검색','zh-tw':'以標題·類型·氛圍搜尋','zh-cn':'以标题·类型·氛围搜索',es:'Buscar por título, género, ambiente',fr:'Rechercher par titre, genre, ambiance',pt:'Buscar por título, gênero, clima',de:'Nach Titel, Genre, Stimmung suchen',ar:'ابحث بالعنوان أو النوع أو الأجواء',th:'ค้นหาด้วยชื่อ·ประเภท·อารมณ์',id:'Cari berdasar judul, genre, suasana',ru:'Поиск по названию, жанру, настроению',it:'Cerca per titolo, genere, atmosfera',vi:'Tìm theo tựa, thể loại, không khí' },
     btnSearchGo:  { ja:'検索',en:'Search',ko:'검색','zh-tw':'搜尋','zh-cn':'搜索',es:'Buscar',fr:'Rechercher',pt:'Buscar',de:'Suchen',ar:'بحث',th:'ค้นหา',id:'Cari',ru:'Поиск',it:'Cerca',vi:'Tìm kiếm' },
-    filterTitle:  { ja:'🎛 詳細フィルター・並び替え',en:'🎛 Filters & Sort',ko:'🎛 상세 필터·정렬','zh-tw':'🎛 詳細篩選·排序','zh-cn':'🎛 详细筛选·排序',es:'🎛 Filtros y orden',fr:'🎛 Filtres et tri',pt:'🎛 Filtros e ordenação',de:'🎛 Filter & Sortierung',ar:'🎛 الفلاتر والترتيب',th:'🎛 ตัวกรอง·การเรียง',id:'🎛 Filter & Urutkan',ru:'🎛 Фильтры и сортировка',it:'🎛 Filtri e ordinamento',vi:'🎛 Bộ lọc & Sắp xếp' },
+    filterTitle:  { ja:'🎛 条件を変えて再検索',en:'🎛 Refine & Search Again',ko:'🎛 조건 변경 후 재검색','zh-tw':'🎛 變更條件重新搜尋','zh-cn':'🎛 更改条件重新搜索',es:'🎛 Ajustar y buscar de nuevo',fr:'🎛 Modifier et rechercher',pt:'🎛 Ajustar e pesquisar novamente',de:'🎛 Anpassen & erneut suchen',ar:'🎛 تعديل الشروط وإعادة البحث',th:'🎛 ปรับเงื่อนไขแล้วค้นหาอีกครั้ง',id:'🎛 Ubah kondisi & cari lagi',ru:'🎛 Изменить и искать снова',it:'🎛 Modifica e cerca di nuovo',vi:'🎛 Đổi điều kiện & tìm lại' },
     sortLabel:    { ja:'並び替え',en:'Sort by',ko:'정렬','zh-tw':'排序','zh-cn':'排序',es:'Ordenar',fr:'Trier',pt:'Ordenar',de:'Sortieren',ar:'ترتيب',th:'เรียงลำดับ',id:'Urutkan',ru:'Сортировка',it:'Ordina',vi:'Sắp xếp' },
     eraFilterLabel: { ja:'年代で絞る',en:'Filter by year',ko:'연도로 좁히기','zh-tw':'依年代篩選','zh-cn':'按年代筛选',es:'Filtrar por año',fr:'Filtrer par année',pt:'Filtrar por ano',de:'Nach Jahr filtern',ar:'تصفية حسب السنة',th:'กรองตามปี',id:'Filter berdasarkan tahun',ru:'Фильтр по году',it:'Filtra per anno',vi:'Lọc theo năm' },
     sortRelevance:{ ja:'関連度順',en:'Relevance',ko:'관련도순','zh-tw':'相關度','zh-cn':'相关度',es:'Relevancia',fr:'Pertinence',pt:'Relevância',de:'Relevanz',ar:'الصلة',th:'ตามความเกี่ยวข้อง',id:'Relevansi',ru:'По релевантности',it:'Rilevanza',vi:'Liên quan nhất' },
