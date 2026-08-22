@@ -641,7 +641,9 @@
       #page-anime h1#animeTitle { grid-column:2; grid-row:1; margin:0; align-self:start; font-size:1.05rem; line-height:1.3; }
       #page-anime #animeMeta { grid-column:2; grid-row:2; margin:.25rem 0 0; align-self:start; }
       #page-anime #animeExtraInfo { grid-column:2; grid-row:3; margin:.3rem 0 0; align-self:start; }
-      /* あらすじ以降は画像の右カラム制約から抜けて全幅に戻る（gridの自動配置で自然に続く） */
+      /* あらすじ以降は画像の右カラム制約から抜けて全幅に戻る。
+         auto placementの曖昧さを避けるため、順序をgrid-rowで明示指定する
+         （あらすじ→ボタン群→掲示板/マスコット→グラフ…の順）。 */
       #page-anime #animeDesc,
       #page-anime .anime-side-actions,
       #page-anime #boardEntrySection,
@@ -657,8 +659,19 @@
       #page-anime #afRakutenSection {
         grid-column:1 / -1;
       }
-      #page-anime #animeDesc { margin-top:.7rem; }
-      #page-anime .anime-side-actions { display:flex; flex-direction:column; gap:10px; margin-top:.3rem; }
+      #page-anime #animeDesc { grid-row:4; margin-top:.7rem; }
+      #page-anime .anime-side-actions { grid-row:5; display:flex; flex-direction:column; gap:10px; margin-top:.3rem; }
+      #page-anime #boardEntrySection { grid-row:6; }
+      #page-anime #boardMascotTeaser { grid-row:7; }
+      #page-anime #miniGraphSection { grid-row:8; }
+      #page-anime #mobileInfoPaneGraph { grid-row:9; }
+      #page-anime #mobileInfoTabs { grid-row:10; }
+      #page-anime #graphWorldPageNav { grid-row:11; }
+      #page-anime .review-slider-swiper-wrap { grid-row:12; }
+      #page-anime #adAnimeMid { grid-row:13; }
+      #page-anime #similarAnimeSection { grid-row:14; }
+      #page-anime #afGoodsSection { grid-row:15; }
+      #page-anime #afRakutenSection { grid-row:16; }
       #page-anime .anime-side-board { margin:.2rem 0; }
       /* スマホ幅では下にマスターグラフ本体が常に表示されるようになったので、
          ボタン下の小さいプレビューグラフ（重複表示）は隠す */
@@ -1884,7 +1897,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.149.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.151.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2086,12 +2099,12 @@
           <div class="review-slider-page">
             <!-- マスターグラフ -->
             <section class="reviews-section" id="masterGraphSection">
-              <div class="reviews-head" style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;">
-                <div style="display:flex;align-items:center;gap:12px;">
+              <div class="reviews-head" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:.3rem .6rem;margin-bottom:16px;">
+                <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
                   <span style="width:4px;height:22px;border-radius:4px;background:#5cc98e;flex:0 0 auto;"></span>
                   <h2 style="margin:0;" data-i18n="masterGraphTitle">みんなの評価グラフ</h2>
                 </div>
-                <p id="masterGraphMeta" style="margin:0;font-size:11.5px;color:#82968a;white-space:nowrap;"></p>
+                <p id="masterGraphMeta" style="margin:0;font-size:11.5px;color:#82968a;"></p>
               </div>
               <!-- 際立つ強み／印象的な雰囲気 -->
               <div id="masterHighlightBox" class="master-highlight-box">
@@ -4001,7 +4014,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.149.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.151.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5495,7 +5508,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.149.0';
+      if(vEl) vEl.textContent = 'v0.151.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -7496,6 +7509,7 @@
 
   function renderMasterGraph(id) {
     const reviews = validReviews(id);
+    const labA = getAxisA(), labB = getAxisB();
     const section = document.getElementById('masterGraphSection');
     const adMid = document.getElementById('adAnimeMid');
     const meta = document.getElementById('masterGraphMeta');
