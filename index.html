@@ -374,6 +374,8 @@
     .scroll-arrow-r { right:2px; }
     .scroll-arrow:active { background:var(--card2); }
     .hcard { flex:0 0 clamp(140px,42vw,175px); scroll-snap-align:start; background:var(--card2); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, border-color .18s ease; }
+    /* .hscroll内で.gcard（本来はグリッド用）を使う場合、幅指定が無いと潰れるため.hcardと同じ基準を与える */
+    .hscroll .gcard { flex:0 0 clamp(140px,42vw,175px); scroll-snap-align:start; }
     @media (hover:hover) {
       .hcard:hover { transform:translateY(-4px) scale(1.02); box-shadow:0 16px 32px -16px rgba(0,0,0,.7); border-color:rgba(94,201,122,.4); z-index:2; }
     }
@@ -697,6 +699,13 @@
       #page-anime #afGoodsSection { margin-top:1.1rem; }
       #page-anime #afStreamSection { grid-row:16; }
       #page-anime .anime-side-board { margin:.2rem 0; }
+      /* スマホ版アニメページには広告バナーを出さない */
+      #page-anime #adAnimeMid { display:none !important; }
+      /* スマホ版：「世界の反応」は情報価値が低く邪魔になるため非表示にし、
+         タブ切り替えも撤去して「似ている作品」を直接表示する（PC版はタブのまま維持） */
+      #page-anime .mobile-info-tab-bar { display:none !important; }
+      #page-anime #mobileInfoPaneWorld { display:none !important; }
+      #page-anime #mobileInfoPaneSimilar { display:block !important; }
       /* グラフの枠を大きく：2列のまま、セクション左右余白・隙間・内側余白を詰めて実寸を拡大する */
       #page-anime #masterGraphSection { padding:0 .4rem; }
       #page-anime .master-chart-grid { gap:10px !important; }
@@ -1947,7 +1956,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.157.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.159.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4059,7 +4068,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.157.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.159.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5553,7 +5562,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.157.0';
+      if(vEl) vEl.textContent = 'v0.159.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
