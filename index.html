@@ -476,7 +476,32 @@
     .anime-meta-text { color:#82968a; font-size:13.5px; margin:0 0 .6rem; }
     .anime-desc-text { color:#b6c8bd; font-size:15px; margin:0 0 .9rem; line-height:1.9; }
     .review-btn { display:flex; width:100%; align-items:center; justify-content:center; gap:.35rem; padding:.75rem 1.1rem; border-radius:12px; background:#e5484d; color:#fff; font-weight:700; font-size:15px; border:none; cursor:pointer; box-shadow:0 8px 20px -12px rgba(229,72,77,.6); }
-    .review-btn-list { width:auto; flex:1 1 auto; height:44px; padding:0 15px; border-radius:11px; background:#d9a441; color:#3a2a06; font-weight:700; font-size:13.5px; box-shadow:0 8px 20px -12px rgba(217,164,65,.6); }
+    .review-btn-list { width:auto; flex:1 1 auto; height:44px; padding:0 15px; border-radius:11px; background:#5ec97a; color:#07200f; font-weight:700; font-size:13.5px; box-shadow:0 8px 20px -12px rgba(94,201,122,.6); }
+    /* スマホ版：情報量削減のため「通常掲示板」「価値観掲示板」を1個の「掲示板」ボタンに統合。
+       押すと正方形2択のポップアップを出す（PC版は従来通りboardEntrySectionの2ボタンのまま）。 */
+    .board-entry-mobile-btn { display:none; flex:1 1 auto; width:auto; background:#d9a441; color:#3a2a06; box-shadow:0 8px 20px -12px rgba(217,164,65,.6); }
+    .board-choice-popover-overlay {
+      position:fixed; inset:0; z-index:400; display:none;
+      align-items:center; justify-content:center; background:rgba(4,10,6,.72); padding:1.2rem;
+    }
+    .board-choice-popover-box {
+      background:#0e2018; border:1px solid rgba(255,255,255,.1); border-radius:18px;
+      box-shadow:0 28px 60px -20px rgba(0,0,0,.85); padding:22px; width:100%; max-width:340px;
+    }
+    .board-choice-popover-title { margin:0 0 16px; font-size:.9rem; font-weight:700; color:#dfeae3; text-align:center; }
+    .board-choice-row { display:flex; gap:12px; }
+    .board-choice-square {
+      flex:1 1 0; aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+      border-radius:14px; border:1px solid rgba(92,201,142,.3); background:rgba(92,201,142,.08); color:#dfeae3;
+      font-weight:700; font-size:13px; cursor:pointer;
+    }
+    .board-choice-square .board-choice-icon { font-size:1.6rem; }
+    .board-choice-square-value { border-color:rgba(217,164,65,.4); background:rgba(217,164,65,.1); color:#d9a441; }
+    .board-choice-square-value.locked { opacity:.5; cursor:not-allowed; }
+    .board-choice-popover-close {
+      display:block; width:100%; margin-top:18px; height:42px; border-radius:10px; border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.03); color:#dfeae3; font-weight:700; font-size:13px; cursor:pointer;
+    }
 
     /* ── お気に入りトグルボタン（Claude Design案の実測値） ── */
     .fav-toggle-btn {
@@ -673,6 +698,9 @@
       #page-anime #afGoodsSection { grid-row:15; }
       #page-anime #afRakutenSection { grid-row:16; }
       #page-anime .anime-side-board { margin:.2rem 0; }
+      /* 情報量削減：スマホ幅では掲示板を1ボタン化し、従来の2ボタンカードは隠す */
+      #page-anime #boardEntrySection { display:none; }
+      #page-anime .board-entry-mobile-btn { display:flex; }
       /* スマホ幅では下にマスターグラフ本体が常に表示されるようになったので、
          ボタン下の小さいプレビューグラフ（重複表示）は隠す */
       /* タブに移動済みの元セクション・スワイプUIはスマホ幅では隠す（中身はJSでタブ側に移動済み） */
@@ -1891,13 +1919,31 @@
   </div>
 </div>
 
+<!-- スマホ版：掲示板ボタンから開く「通常／価値観」選択ポップアップ（グローバル配置） -->
+<div class="board-choice-popover-overlay" id="boardChoicePopoverOverlay" style="display:none;">
+  <div class="board-choice-popover-box">
+    <p class="board-choice-popover-title" data-i18n="boardEntrySectionTitle">掲示板</p>
+    <div class="board-choice-row">
+      <button type="button" class="board-choice-square" id="boardChoiceGeneral">
+        <span class="board-choice-icon">💬</span>
+        <span data-i18n="boardEntryGeneral">通常掲示板</span>
+      </button>
+      <button type="button" class="board-choice-square board-choice-square-value" id="boardChoiceValue">
+        <span class="board-choice-icon" id="boardChoiceValueIcon">🔒</span>
+        <span data-i18n="boardEntryValue">価値観掲示板</span>
+      </button>
+    </div>
+    <button type="button" class="board-choice-popover-close" id="boardChoicePopoverClose" data-i18n="btnClose">閉じる</button>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════
      PAGE: HOME (index)
 ═══════════════════════════════════ -->
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.151.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.152.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2058,6 +2104,7 @@
         </button>
         <div style="display:flex;gap:10px;">
           <button class="review-btn review-btn-list" id="goReviewListBtn">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
+          <button type="button" class="review-btn board-entry-mobile-btn" id="boardEntryMobileBtn">💬 掲示板</button>
           <button class="fav-toggle-btn" id="favToggleBtn" onclick="toggleFavorite()" aria-pressed="false" aria-label="お気に入り">♡︎</button>
         </div>
       </div>
@@ -4014,7 +4061,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.151.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.152.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5508,7 +5555,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.151.0';
+      if(vEl) vEl.textContent = 'v0.152.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -6755,6 +6802,45 @@
   if(_ovPriorityPopoverOverlay) {
     _ovPriorityPopoverOverlay.onclick = (e) => {
       if(e.target === _ovPriorityPopoverOverlay) _ovPriorityPopoverOverlay.style.display = 'none';
+    };
+  }
+  // スマホ版：「掲示板」ボタン → 正方形2択（通常／価値観）のポップアップ
+  const _boardEntryMobileBtn = document.getElementById('boardEntryMobileBtn');
+  const _boardChoicePopoverOverlay = document.getElementById('boardChoicePopoverOverlay');
+  const _boardChoiceGeneral = document.getElementById('boardChoiceGeneral');
+  const _boardChoiceValue = document.getElementById('boardChoiceValue');
+  const _boardChoiceValueIcon = document.getElementById('boardChoiceValueIcon');
+  const _boardChoicePopoverClose = document.getElementById('boardChoicePopoverClose');
+  function closeBoardChoicePopover() { if(_boardChoicePopoverOverlay) _boardChoicePopoverOverlay.style.display = 'none'; }
+  if(_boardEntryMobileBtn && _boardChoicePopoverOverlay) {
+    _boardEntryMobileBtn.onclick = () => {
+      const unlocked = !!_currentBoardMyGroup;
+      if(_boardChoiceValue) {
+        _boardChoiceValue.classList.toggle('locked', !unlocked);
+        _boardChoiceValue.dataset.tab = unlocked ? _currentBoardMyGroup : '';
+      }
+      if(_boardChoiceValueIcon) _boardChoiceValueIcon.textContent = unlocked ? '💎' : '🔒';
+      _boardChoicePopoverOverlay.style.display = 'flex';
+    };
+  }
+  if(_boardChoiceGeneral) {
+    _boardChoiceGeneral.onclick = () => {
+      closeBoardChoicePopover();
+      if(_currentBoardAnimeId) nav('board-general', _currentBoardAnimeId);
+    };
+  }
+  if(_boardChoiceValue) {
+    _boardChoiceValue.onclick = () => {
+      if(!_currentBoardMyGroup) return; // 未解放（鍵つき）はタップしても何も起きない
+      closeBoardChoicePopover();
+      _boardActiveTab = _currentBoardMyGroup;
+      if(_currentBoardAnimeId) nav('board-value', _currentBoardAnimeId);
+    };
+  }
+  if(_boardChoicePopoverClose) _boardChoicePopoverClose.onclick = closeBoardChoicePopover;
+  if(_boardChoicePopoverOverlay) {
+    _boardChoicePopoverOverlay.onclick = (e) => {
+      if(e.target === _boardChoicePopoverOverlay) closeBoardChoicePopover();
     };
   }
   // 検索結果ページ（PC）：タグ・年代の絞り込みトグル
@@ -8467,6 +8553,9 @@
     `;
   }
 
+  // スマホ版「掲示板」ボタンのポップアップが使う、直近のrenderBoardEntry判定結果のキャッシュ
+  let _currentBoardMyGroup = null;
+  let _currentBoardAnimeId = null;
   async function renderBoardEntry(animeId) {
     const el = document.getElementById('boardEntrySection');
     if(!el || !sb) return;
@@ -8475,6 +8564,9 @@
       const mine = await db.reviewValues.getMyGroup(animeId, _currentUser.id);
       myGroup = mine ? mine.axis_group : null;
     }
+    // スマホ版の「掲示板」ボタン（正方形2択ポップアップ）が同じ判定結果を使い回せるようキャッシュしておく
+    _currentBoardMyGroup = myGroup;
+    _currentBoardAnimeId = animeId;
     const typeHtml = myGroup
       ? `<p style="margin:0 0 .4rem;font-size:.8rem;color:#dff0e6;">${escapeHtml((currentLang==='ja'?'あなたの価値観は':'Your value type:'))} <strong style="color:${VALUE_TYPE_COLORS[myGroup]};">${escapeHtml(t('valueType'+myGroup))}</strong> ${currentLang==='ja'?'です':''}</p>`
       : '';
