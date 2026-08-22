@@ -653,7 +653,7 @@
          （aside/anime-infoをdisplay:contentsにして中身をanime-hero-wrap直下のgridアイテム化）。 */
       #page-anime .anime-hero-wrap {
         display:grid; grid-template-columns:96px 1fr; column-gap:12px; row-gap:2px;
-        padding:.9rem .9rem 0;
+        padding:1.6rem .9rem 0;
       }
       #page-anime .anime-side-col { display:contents; }
       #page-anime .anime-info { display:contents; }
@@ -680,8 +680,7 @@
       #page-anime .review-slider-swiper-wrap,
       #page-anime #adAnimeMid,
       #page-anime #similarAnimeSection,
-      #page-anime #afGoodsSection,
-      #page-anime #afRakutenSection {
+      #page-anime #afStreamSection {
         grid-column:1 / -1;
       }
       #page-anime #animeDesc { grid-row:4; margin-top:.7rem; }
@@ -695,8 +694,8 @@
       #page-anime .review-slider-swiper-wrap { grid-row:12; }
       #page-anime #adAnimeMid { grid-row:13; }
       #page-anime #similarAnimeSection { grid-row:14; }
-      #page-anime #afGoodsSection { grid-row:15; }
-      #page-anime #afRakutenSection { grid-row:16; }
+      #page-anime #afGoodsSection { margin-top:1.1rem; }
+      #page-anime #afStreamSection { grid-row:16; }
       #page-anime .anime-side-board { margin:.2rem 0; }
       /* グラフの枠を大きく：2列のまま、セクション左右余白・隙間・内側余白を詰めて実寸を拡大する */
       #page-anime #masterGraphSection { padding:0 .4rem; }
@@ -1948,7 +1947,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.153.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.157.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2114,7 +2113,7 @@
         </div>
       </div>
       <div id="boardEntrySection" class="anime-side-board"></div>
-      <div id="boardMascotTeaser" style="margin:.2rem 0 .4rem;"></div>
+      <div id="boardMascotTeaser" style="margin:.2rem 0 1rem;"></div>
       <!-- ミニグラフ（ボタン下） -->
       <div id="miniGraphSection" style="display:none;margin-top:.6rem;">
         <p id="miniGraphMeta" style="font-size:.7rem;color:var(--muted);margin:0 0 .35rem;"></p>
@@ -2173,7 +2172,7 @@
                   <canvas id="masterChartB" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
                 </div>
               </div>
-              <p style="font-size:.62rem;color:var(--muted);margin:.5rem 0 0;" data-i18n="marginOfErrorNote">± は参考の誤差範囲です（件数が少ないほど大きくなります）</p>
+              <p style="font-size:.62rem;color:var(--muted);margin:.5rem 0 1rem;" data-i18n="marginOfErrorNote">± は参考の誤差範囲です（件数が少ないほど大きくなります）</p>
             </section>
           </div>
           <div class="review-slider-page">
@@ -2220,18 +2219,12 @@
         <div id="afGoodsLinks"></div>
       </div>
 
-      <!-- Blu-ray/DVD（楽天アフィリンク） -->
-      <div class="af-section" id="afRakutenSection" style="display:none;">
-        <div class="af-section-label">💿 Blu-ray・DVD（楽天市場）</div>
-        <div id="afRakutenLink"></div>
+      <!-- 配信サービス -->
+      <div class="af-section" id="afStreamSection">
+        <div class="af-section-label" data-i18n="streamSection">▶ このアニメを観る</div>
+        <div id="afStreamLinks"></div>
       </div>
     </div>
-  </div>
-
-  <!-- 配信サービス -->
-  <div class="af-section" id="afStreamSection">
-    <div class="af-section-label" data-i18n="streamSection">▶ このアニメを観る</div>
-    <div id="afStreamLinks"></div>
   </div>
 </div>
 
@@ -4066,7 +4059,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.153.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.157.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5560,7 +5553,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.153.0';
+      if(vEl) vEl.textContent = 'v0.157.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -6455,6 +6448,7 @@
 
     const master = document.getElementById('masterGraphSection');
     const adMid = document.getElementById('adAnimeMid');
+    const goods = document.getElementById('afGoodsSection');
     const world = document.getElementById('worldStatsSection');
     const similar = document.getElementById('similarAnimeSection');
     if (!master || !world || !similar) return;
@@ -6463,6 +6457,9 @@
     if (!_mobileTabsInitialized) {
       graphPane.appendChild(master);
       if (adMid) graphPane.appendChild(adMid);
+      // Amazonアフィ（グッズ・関連商品）は主力の収益枠のため、
+      // 「グラフを見て気になった直後」の一番見られる位置（世界の反応/似ている作品タブより前）に置く
+      if (goods) graphPane.appendChild(goods);
       content.innerHTML = `
         <div class="mobile-info-pane active" id="mobileInfoPaneWorld"></div>
         <div class="mobile-info-pane" id="mobileInfoPaneSimilar"></div>
@@ -9868,7 +9865,6 @@
   function renderAffiliateLinks(page) {
     renderStreamLinks(page);
     renderGoodsLinks(page);
-    renderRakutenBluray(page);
   }
 
   // 各配信サービスのアニメ名検索URL生成
