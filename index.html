@@ -119,6 +119,21 @@
     .search-field { display:flex; gap:10px; margin-bottom:28px; }
     .search-field input { flex:1 1 auto; min-width:0; height:52px; padding:0 18px; border-radius:13px; border:1px solid rgba(255,255,255,.1); background:#07150d; color:#e8f0ea; font:inherit; font-size:15px; }
     .search-go { height:52px; padding:0 28px; border-radius:13px; background:#5cc98e; color:#07160d; font-weight:700; font-size:15px; border:none; cursor:pointer; white-space:nowrap; }
+    .search-go-yellow { background:#f0c94a; color:#3a2a06; }
+    .search-mode-tabs { display:flex; gap:8px; margin:.8rem 0 1rem; }
+    .search-mode-tab {
+      flex:1; height:44px; border-radius:11px; border:1px solid rgba(255,255,255,.12);
+      background:var(--card2); color:var(--muted); font:inherit; font-size:14px; font-weight:700; cursor:pointer;
+      transition:background .15s, color .15s, border-color .15s;
+    }
+    .search-mode-tab.active { background:rgba(92,201,142,.16); border-color:rgba(92,201,142,.5); color:#8ee26f; }
+    .search-refine-toggle {
+      display:flex; align-items:center; gap:8px; width:100%; height:46px; padding:0 14px;
+      border-radius:11px; border:1px solid rgba(255,255,255,.12); background:var(--card2);
+      color:#dfeae3; font:inherit; font-size:14px; font-weight:700; cursor:pointer; margin-top:.9rem;
+    }
+    .search-refine-toggle:hover { background:rgba(255,255,255,.04); }
+    .search-refine-panel { margin-top:.7rem; padding:.9rem; border-radius:12px; background:var(--card2); border:1px solid var(--line); }
     .search-go:hover { background:#74d7a1; }
 
     /* ── タグセクション ── */
@@ -279,7 +294,7 @@
     }
 
     /* ── HERO ── */
-    .hero { padding:1.4rem 1rem 1rem; background:linear-gradient(160deg,#102e1c,#07150d); border-bottom:1px solid var(--line); }
+    .hero { padding:1.4rem 1rem .2rem; background:linear-gradient(160deg,#102e1c,#07150d); border-bottom:1px solid var(--line); }
     @media (min-width:768px) {
       .hero {
         padding:32px 40px; margin:1.6rem 2rem 44px;
@@ -295,6 +310,10 @@
     .hero-cta-row { display:flex; gap:.6rem; flex-wrap:wrap; }
     .hero-cta-primary { height:2.9rem; padding:0 1.3rem; border-radius:.75rem; border:none; background:var(--brand); color:#07160d; font-weight:700; font-size:.9rem; cursor:pointer; }
     .hero-cta-yellow { background:#f0c94a; color:#3a2a06; }
+    .hero-flow-text { margin:0 0 1.1rem; }
+    .hero-flow-text p { margin:0 0 .55rem; font-size:1.5rem; line-height:1.5; color:#eef5f0; font-weight:600; }
+    .hero-flow-main { color:#f2837a; font-weight:900; font-size:1.28em; }
+    .hero-flow-sub-kw { color:#c98d88; font-weight:700; }
     .hero-cta-secondary { height:2.9rem; padding:0 1.3rem; border-radius:.75rem; border:1px solid rgba(255,255,255,.14); background:transparent; color:var(--text); font-weight:700; font-size:.9rem; cursor:pointer; }
     .hero-btns { display:flex; gap:.55rem; flex-wrap:wrap; }
     .btn-primary { padding:.65rem 1.1rem; border-radius:12px; background:linear-gradient(120deg,var(--brand),var(--brand2)); color:#0c2015; font-weight:800; font-size:.9rem; border:none; cursor:pointer; }
@@ -302,7 +321,7 @@
 
     /* ── SECTIONS ── */
     .sec { padding:1.1rem 1rem 0; }
-    .sec-head { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:20px; }
+    .sec-head { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:10px; }
     .sec-head-left { display:flex; align-items:center; gap:12px; }
     .sec-head-bar { width:4px; height:22px; border-radius:4px; background:#5cc98e; flex-shrink:0; }
     .sec-head h2 { font-family:"Zen Kaku Gothic New",sans-serif; font-weight:700; font-size:22px; margin:0; }
@@ -317,8 +336,8 @@
     /* ── HSCROLL ── */
     .carousel-wrap { position:relative; overflow:hidden; width:100%; padding-top:6px; margin-top:-6px; }
     .carousel-track { display:flex; transition:transform .15s ease; will-change:transform; padding:0; margin:0; gap:0; }
-    .carousel-page { display:flex; gap:.65rem; padding:6px 1rem .75rem; flex-shrink:0; box-sizing:border-box; }
-    .carousel-dots { display:flex; justify-content:center; gap:.4rem; padding:.2rem 0 .6rem; }
+    .carousel-page { display:flex; gap:.5rem; padding:6px .75rem .6rem; flex-shrink:0; box-sizing:border-box; }
+    .carousel-dots { display:flex; justify-content:center; gap:.4rem; padding:.15rem 0 .2rem; }
     .carousel-dot { width:6px; height:6px; border-radius:50%; background:var(--line); transition:background .2s,width .2s; cursor:pointer; }
     .carousel-dot.active { background:var(--brand); width:16px; border-radius:3px; }
     .hscroll { display:flex; gap:.65rem; overflow-x:auto; padding:0 1rem .75rem; scroll-snap-type:x mandatory; scrollbar-width:none; }
@@ -357,8 +376,8 @@
 
     /* ── GRID ── */
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; padding:0 1rem; }
-    .today-pick-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.65rem; padding:6px 1rem .75rem; }
-    #randomPickGrid { padding:6px 1rem .75rem; }
+    .today-pick-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; padding:6px .75rem .6rem; }
+    #randomPickGrid { padding:6px .75rem .6rem; }
     .gcard { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; box-shadow:0 12px 30px -16px rgba(0,0,0,.8); overflow:hidden; cursor:pointer; transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, border-color .18s ease; }
     @media (hover:hover) {
       .gcard:hover { transform:translateY(-4px) scale(1.035); box-shadow:0 20px 40px -16px rgba(0,0,0,.8); border-color:rgba(92,201,142,.45); z-index:2; }
@@ -377,7 +396,7 @@
 
     /* ── AD SLOTS ── */
     /* 本番時はこのクラスのdisplay:noneを外してAdSenseコードを挿入 */
-    .ad-wrap { margin:.5rem 1rem 0; }
+    .ad-wrap { margin:.2rem 1rem 0; }
     .ad-label { font-size:.58rem; color:#3a6a4a; text-align:right; margin-bottom:.1rem; letter-spacing:.04em; text-transform:uppercase; }
     /* バナー型（ヒーロー下・横長） */
     .ad-banner {
@@ -1234,17 +1253,22 @@
       /* コンテンツ幅制限 */
       .wrap-pc { max-width:1200px; margin:0 auto; }
 
-      /* ヒーロー：カード枠つきで横並び（Design案の実測値） */
+      /* ヒーロー：PC幅では左テキストだけをカード枠で囲み、右のマスコットは枠の外に出す */
       .hero {
-        max-width:1360px; margin:0 auto 44px; padding:32px 40px;
-        border-radius:20px; background:linear-gradient(180deg,#16281d 0%,#0f1f16 100%);
-        border:1px solid rgba(255,255,255,.1); box-shadow:0 18px 44px -26px rgba(0,0,0,.8);
+        max-width:1200px; margin:0 auto 8px; padding:0;
+        background:none; border:none; box-shadow:none;
       }
       .hero-mascot-row { gap:36px; align-items:center; max-width:none; margin:0; }
-      .hero-mascot-wrap { min-height:320px; justify-content:center; }
-      .hero h1 { font-size:46px; line-height:1.24; letter-spacing:.01em; }
+      .hero-text {
+        padding:32px 40px; border-radius:20px;
+        background:linear-gradient(180deg,#16281d 0%,#0f1f16 100%);
+        border:1px solid rgba(255,255,255,.1); box-shadow:0 18px 44px -26px rgba(0,0,0,.8);
+      }
+      .hero-mascot-wrap { min-height:260px; justify-content:center; }
+      .hero h1 { font-size:34px; line-height:1.28; letter-spacing:.01em; }
+      .hero-flow-text p { font-size:24px; }
       .hero p { font-size:16px; line-height:1.8; max-width:44ch; }
-      .mascot-img { width:190px; height:190px; }
+      .mascot-img { width:160px; height:160px; }
       .mascot-balloon { font-size:12.5px; padding:11px 15px; }
 
       /* セクション */
@@ -1631,71 +1655,127 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg>
     <span data-i18n="btnClose">閉じる</span>
   </button>
-  <div class="search-field">
-    <input id="overlaySearchInput" type="search" placeholder="タイトル・ジャンル・雰囲気で検索" autocomplete="off" />
-    <button class="search-go" id="overlaySearchBtn" data-i18n="btnSearchGo">検索</button>
+
+  <!-- タブ切り替え：お好み検索（初期表示）／タイトル検索 -->
+  <div class="search-mode-tabs">
+    <button type="button" class="search-mode-tab active" id="searchModePref" data-mode="pref">お好み検索</button>
+    <button type="button" class="search-mode-tab" id="searchModeTitle" data-mode="title">タイトル検索</button>
   </div>
-  <div class="tag-section">
-    <div class="tag-section-head">
-      <span class="tag-section-title">🏷 タグで絞る</span>
-      <span class="tag-section-count">最大10個 ・ <span id="overlayTagCount">0/10</span></span>
+
+  <!-- ── タイトル検索タブ ── -->
+  <div class="search-mode-panel" id="searchPanelTitle" style="display:none;">
+    <div class="search-field">
+      <input id="overlaySearchInput" type="search" placeholder="タイトル・ジャンル・雰囲気で検索" autocomplete="off" />
     </div>
-    <div class="search-tag-input-wrap">
-      <input id="overlayTagInput" placeholder="キーワードでタグを追加（例: 泣ける、鬱、神作画）" maxlength="20" autocomplete="off" />
-      <button class="search-tag-add-btn" id="overlayTagAddBtn" data-i18n="btnAdd">追加</button>
+    <button class="search-go search-go-yellow" id="overlaySearchBtn" data-i18n="btnSearchGo" style="width:100%;margin-top:.7rem;">検索</button>
+  </div>
+
+  <!-- ── お好み検索タブ ── -->
+  <div class="search-mode-panel" id="searchPanelPref">
+    <!-- ①スライダー -->
+    <div class="slider-page-nav" id="ovSliderPageNav">
+      <button type="button" id="ovSliderPagePrev" aria-label="前へ">‹</button>
+      <span id="ovSliderPageLabel">作品の完成度</span>
+      <button type="button" id="ovSliderPageNext" aria-label="次へ">›</button>
     </div>
-    <div class="tag-selected-box" id="overlayTagSelectedBox" style="display:none;">
-      <span class="tag-selected-label">選択中</span>
-      <div class="tag-list" id="overlayTagList"></div>
+    <div class="priority-note">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#d9a441" stroke="none"><polygon points="12 3 14.6 8.6 20.8 9.3 16.2 13.5 17.5 19.6 12 16.5 6.5 19.6 7.8 13.5 3.2 9.3 9.4 8.6"/></svg>
+      <span data-i18n="priorityAxisExplain"><b style="color:#d9a441;">星</b>を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。星が1つも無い場合は、全軸の平均的な近さで検索します。</span>
     </div>
-    <div style="position:relative;">
-      <button type="button" class="tag-browse-toggle" id="tagBrowseToggle">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 12 22l-9-9V3h9z"/><circle cx="7.5" cy="7.5" r="1.4" fill="currentColor" stroke="none"/></svg>
-        <span id="tagBrowseToggleLabel">タグ一覧から選ぶ</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="tagBrowseChevron" style="opacity:.7;"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="tag-browse-panel" id="tagBrowsePanel" style="display:none;">
-        <div class="tag-browse-group">
-          <p class="tag-browse-group-label">ジャンル</p>
-          <div class="tag-browse-chips" data-tag-group="genre">
-            <button type="button" class="tag-browse-chip" data-tag="アクション">アクション</button>
-            <button type="button" class="tag-browse-chip" data-tag="冒険">冒険</button>
-            <button type="button" class="tag-browse-chip" data-tag="コメディ">コメディ</button>
-            <button type="button" class="tag-browse-chip" data-tag="ドラマ">ドラマ</button>
-            <button type="button" class="tag-browse-chip" data-tag="SF">SF</button>
-            <button type="button" class="tag-browse-chip" data-tag="ミステリー">ミステリー</button>
-            <button type="button" class="tag-browse-chip" data-tag="ファンタジー">ファンタジー</button>
-            <button type="button" class="tag-browse-chip" data-tag="サスペンス">サスペンス</button>
-            <button type="button" class="tag-browse-chip" data-tag="ホラー">ホラー</button>
-          </div>
+    <div class="review-slider-swiper-wrap">
+      <div class="review-slider-swiper" id="ovSliderSwiper">
+        <div class="review-slider-page">
+          <div class="filter-label" style="text-align:center;">作品の完成度でしぼる</div>
+          <div class="filter-box"><div id="overlayFilterA"></div></div>
         </div>
-        <div class="tag-browse-group">
-          <p class="tag-browse-group-label">舞台・世界観</p>
-          <div class="tag-browse-chips" data-tag-group="setting">
-            <button type="button" class="tag-browse-chip" data-tag="学園">学園</button>
-            <button type="button" class="tag-browse-chip" data-tag="異世界">異世界</button>
-            <button type="button" class="tag-browse-chip" data-tag="歴史・時代劇">歴史・時代劇</button>
-            <button type="button" class="tag-browse-chip" data-tag="戦争">戦争</button>
-            <button type="button" class="tag-browse-chip" data-tag="日常">日常</button>
-            <button type="button" class="tag-browse-chip" data-tag="スポーツ">スポーツ</button>
-          </div>
-        </div>
-        <div class="tag-browse-group">
-          <p class="tag-browse-group-label">テーマ・題材</p>
-          <div class="tag-browse-chips" data-tag-group="theme">
-            <button type="button" class="tag-browse-chip" data-tag="恋愛">恋愛</button>
-            <button type="button" class="tag-browse-chip" data-tag="青春">青春</button>
-            <button type="button" class="tag-browse-chip" data-tag="音楽">音楽</button>
-            <button type="button" class="tag-browse-chip" data-tag="グルメ">グルメ</button>
-            <button type="button" class="tag-browse-chip" data-tag="ロボット">ロボット</button>
-            <button type="button" class="tag-browse-chip" data-tag="成人向け">成人向け</button>
-          </div>
+        <div class="review-slider-page">
+          <div class="filter-label" style="text-align:center;">感情・雰囲気でしぼる</div>
+          <div class="filter-box"><div id="overlayFilterB"></div></div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="sort-row">
-    <div class="sort-row-sort">
+
+    <!-- ②絞り込みボタン（押すとタグ・年代が展開） -->
+    <button type="button" class="search-refine-toggle" id="searchRefineToggle">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+      <span>絞り込み</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="searchRefineChevron" style="margin-left:auto;opacity:.7;"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="search-refine-panel" id="searchRefinePanel" style="display:none;">
+      <div class="tag-section">
+        <div class="tag-section-head">
+          <span class="tag-section-title">🏷 タグで絞る</span>
+          <span class="tag-section-count">最大10個 ・ <span id="overlayTagCount">0/10</span></span>
+        </div>
+        <div class="search-tag-input-wrap">
+          <input id="overlayTagInput" placeholder="キーワードでタグを追加（例: 泣ける、鬱、神作画）" maxlength="20" autocomplete="off" />
+          <button class="search-tag-add-btn" id="overlayTagAddBtn" data-i18n="btnAdd">追加</button>
+        </div>
+        <div class="tag-selected-box" id="overlayTagSelectedBox" style="display:none;">
+          <span class="tag-selected-label">選択中</span>
+          <div class="tag-list" id="overlayTagList"></div>
+        </div>
+        <div style="position:relative;">
+          <button type="button" class="tag-browse-toggle" id="tagBrowseToggle">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 12 22l-9-9V3h9z"/><circle cx="7.5" cy="7.5" r="1.4" fill="currentColor" stroke="none"/></svg>
+            <span id="tagBrowseToggleLabel">タグ一覧から選ぶ</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="tagBrowseChevron" style="opacity:.7;"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="tag-browse-panel" id="tagBrowsePanel" style="display:none;">
+            <div class="tag-browse-group">
+              <p class="tag-browse-group-label">ジャンル</p>
+              <div class="tag-browse-chips" data-tag-group="genre">
+                <button type="button" class="tag-browse-chip" data-tag="アクション">アクション</button>
+                <button type="button" class="tag-browse-chip" data-tag="冒険">冒険</button>
+                <button type="button" class="tag-browse-chip" data-tag="コメディ">コメディ</button>
+                <button type="button" class="tag-browse-chip" data-tag="ドラマ">ドラマ</button>
+                <button type="button" class="tag-browse-chip" data-tag="SF">SF</button>
+                <button type="button" class="tag-browse-chip" data-tag="ミステリー">ミステリー</button>
+                <button type="button" class="tag-browse-chip" data-tag="ファンタジー">ファンタジー</button>
+                <button type="button" class="tag-browse-chip" data-tag="サスペンス">サスペンス</button>
+                <button type="button" class="tag-browse-chip" data-tag="ホラー">ホラー</button>
+              </div>
+            </div>
+            <div class="tag-browse-group">
+              <p class="tag-browse-group-label">舞台・世界観</p>
+              <div class="tag-browse-chips" data-tag-group="setting">
+                <button type="button" class="tag-browse-chip" data-tag="学園">学園</button>
+                <button type="button" class="tag-browse-chip" data-tag="異世界">異世界</button>
+                <button type="button" class="tag-browse-chip" data-tag="歴史・時代劇">歴史・時代劇</button>
+                <button type="button" class="tag-browse-chip" data-tag="戦争">戦争</button>
+                <button type="button" class="tag-browse-chip" data-tag="日常">日常</button>
+                <button type="button" class="tag-browse-chip" data-tag="スポーツ">スポーツ</button>
+              </div>
+            </div>
+            <div class="tag-browse-group">
+              <p class="tag-browse-group-label">テーマ・題材</p>
+              <div class="tag-browse-chips" data-tag-group="theme">
+                <button type="button" class="tag-browse-chip" data-tag="恋愛">恋愛</button>
+                <button type="button" class="tag-browse-chip" data-tag="青春">青春</button>
+                <button type="button" class="tag-browse-chip" data-tag="音楽">音楽</button>
+                <button type="button" class="tag-browse-chip" data-tag="グルメ">グルメ</button>
+                <button type="button" class="tag-browse-chip" data-tag="ロボット">ロボット</button>
+                <button type="button" class="tag-browse-chip" data-tag="成人向け">成人向け</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sort-row-era" style="margin-top:.7rem;">
+        <label class="sort-row-era-toggle">
+          <input type="checkbox" id="overlayEraToggle" />
+          <span data-i18n="eraFilterLabel">年代で絞る</span>
+        </label>
+        <div class="sort-row-era-inputs">
+          <input type="number" id="overlayEraFrom" inputmode="numeric" placeholder="開始年" />
+          <span>〜</span>
+          <input type="number" id="overlayEraTo" inputmode="numeric" placeholder="終了年" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ソート -->
+    <div class="sort-row-sort" style="margin-top:.9rem;">
       <label for="overlaySortSelect" data-i18n="sortLabel">並び替え</label>
       <select id="overlaySortSelect" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
         <option value="match">好みグラフに近い順</option>
@@ -1703,40 +1783,10 @@
         <option value="reviews_asc">レビューが少ない順</option>
       </select>
     </div>
-    <div class="sort-row-era">
-      <label class="sort-row-era-toggle">
-        <input type="checkbox" id="overlayEraToggle" />
-        <span data-i18n="eraFilterLabel">年代で絞る</span>
-      </label>
-      <div class="sort-row-era-inputs">
-        <input type="number" id="overlayEraFrom" inputmode="numeric" placeholder="開始年" />
-        <span>〜</span>
-        <input type="number" id="overlayEraTo" inputmode="numeric" placeholder="終了年" />
-      </div>
-    </div>
+
+    <!-- ④検索ボタン -->
+    <button class="search-go search-go-yellow" id="overlaySearchBtnBottom" data-i18n="btnSearchGoFull" style="width:100%;margin-top:.8rem;">検索する</button>
   </div>
-  <div class="slider-page-nav" id="ovSliderPageNav">
-    <button type="button" id="ovSliderPagePrev" aria-label="前へ">‹</button>
-    <span id="ovSliderPageLabel">作品の完成度</span>
-    <button type="button" id="ovSliderPageNext" aria-label="次へ">›</button>
-  </div>
-  <div class="priority-note">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="#d9a441" stroke="none"><polygon points="12 3 14.6 8.6 20.8 9.3 16.2 13.5 17.5 19.6 12 16.5 6.5 19.6 7.8 13.5 3.2 9.3 9.4 8.6"/></svg>
-    <span data-i18n="priorityAxisExplain"><b style="color:#d9a441;">星</b>を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。星が1つも無い場合は、全軸の平均的な近さで検索します。</span>
-  </div>
-  <div class="review-slider-swiper-wrap">
-    <div class="review-slider-swiper" id="ovSliderSwiper">
-      <div class="review-slider-page">
-        <div class="filter-label" style="text-align:center;">📊 作品の完成度でしぼる</div>
-        <div class="filter-box"><div id="overlayFilterA"></div></div>
-      </div>
-      <div class="review-slider-page">
-        <div class="filter-label" style="text-align:center;">💫 感情・雰囲気でしぼる</div>
-        <div class="filter-box"><div id="overlayFilterB"></div></div>
-      </div>
-    </div>
-  </div>
-  <button class="search-go" id="overlaySearchBtnBottom" data-i18n="btnSearchGoFull" style="width:100%;margin-top:.5rem;">検索する</button>
   </div>
 </div>
 
@@ -1746,7 +1796,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.123.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.131.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -1760,7 +1810,11 @@
       <div class="hero-text">
         <span class="hero-eyebrow"><span class="hero-eyebrow-dash"></span>可視化特化型アニメコミュニティ</span>
         <h1>アニメのグラフで<br><em>ドンピシャ</em>を見つける</h1>
-        <p>みんなのレビューが、作品ごとの評価グラフを育てる。数字ではなく「かたち」で、あなたに刺さる一本を探せます。</p>
+        <div class="hero-flow-text">
+          <p>好みの<span class="hero-flow-sub-kw">アニメ</span>をピンポイントで<span class="hero-flow-main">検索</span></p>
+          <p>可視化<span class="hero-flow-sub-kw">レビュー</span>で価値観を<span class="hero-flow-main">創造</span></p>
+          <p>同じ<span class="hero-flow-sub-kw">価値観</span>の仲間と専用掲示板で<span class="hero-flow-main">交流</span></p>
+        </div>
         <div class="hero-cta-row">
           <button type="button" class="hero-cta-primary hero-cta-yellow" onclick="openSearch()">🔍 作品を探す</button>
         </div>
@@ -1777,7 +1831,7 @@
        アフィリエイト例: onclick先をアフィリエイトURLに変更するだけでOK -->
 
   <!-- PICKUP: レビュー済み作品の50%未満からランダム、30分ごと更新 -->
-  <section class="sec" style="margin-top:.9rem;">
+  <section class="sec" style="margin-top:0;">
     <div class="sec-head">
       <div class="sec-head-left">
         <span class="sec-head-bar"></span>
@@ -1796,7 +1850,7 @@
   </div>
 
   <!-- 今季アニメ -->
-  <section class="sec" style="margin-top:1rem;">
+  <section class="sec" style="margin-top:.2rem;">
     <div class="sec-head">
       <div class="sec-head-left">
         <span class="sec-head-bar"></span>
@@ -1826,7 +1880,7 @@
     </div>
   </div>
 
-  <section class="sec" style="margin-top:.8rem;">
+  <section class="sec" style="margin-top:.3rem;">
     <div class="sec-head">
       <div class="sec-head-left">
         <span class="sec-head-bar"></span>
@@ -3842,7 +3896,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.123.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.131.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5069,11 +5123,9 @@
     return 0;
   }
 
-  // カード用「レビュー募集中」バッジ（マスターグラフ反映数が10件未満の場合に表示）
+  // カード用「レビュー募集中」バッジ（情報過多のため廃止。関数は互換性のため残し常に非表示にする）
   function recruitBadgeHtml(id) {
-    const n = reviewCount(id);
-    if (n >= 10) return '';
-    return `<span class="recruit-badge">レビュー募集中</span>`;
+    return '';
   }
 
   /* ════════════════════════════════════════════════════
@@ -5308,7 +5360,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.123.0';
+      if(vEl) vEl.textContent = 'v0.131.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -6444,6 +6496,8 @@
 
   function openSearch() {
     document.getElementById('searchOverlay').classList.add('open');
+    // 開くたびに必ず「お好み検索」タブを初期表示にする
+    switchSearchMode('pref');
     // 開くたびに現在の値でスライダーを再構築する（前回の値が見た目に残らないように）
     buildSliders('overlayFilterA',getAxisA(),overlayProfileA,'ov-a',axisA);
     buildSliders('overlayFilterB',getAxisB(),overlayProfileB,'ov-b',axisB);
@@ -6466,6 +6520,28 @@
         drawGrids(wraps, 0);
       });
     }, 30);
+  }
+  // 「お好み検索」「タイトル検索」タブの切り替え
+  function switchSearchMode(mode) {
+    document.getElementById('searchModePref')?.classList.toggle('active', mode === 'pref');
+    document.getElementById('searchModeTitle')?.classList.toggle('active', mode === 'title');
+    const prefPanel = document.getElementById('searchPanelPref');
+    const titlePanel = document.getElementById('searchPanelTitle');
+    if(prefPanel) prefPanel.style.display = mode === 'pref' ? '' : 'none';
+    if(titlePanel) titlePanel.style.display = mode === 'title' ? '' : 'none';
+  }
+  document.getElementById('searchModePref')?.addEventListener('click', ()=>switchSearchMode('pref'));
+  document.getElementById('searchModeTitle')?.addEventListener('click', ()=>switchSearchMode('title'));
+  // 「絞り込み」ボタン：タグ・年代の展開パネルを開閉
+  const _refineToggle = document.getElementById('searchRefineToggle');
+  const _refinePanel = document.getElementById('searchRefinePanel');
+  const _refineChevron = document.getElementById('searchRefineChevron');
+  if(_refineToggle && _refinePanel) {
+    _refineToggle.onclick = () => {
+      const willOpen = _refinePanel.style.display === 'none';
+      _refinePanel.style.display = willOpen ? '' : 'none';
+      if(_refineChevron) _refineChevron.style.transform = willOpen ? 'rotate(180deg)' : '';
+    };
   }
   function closeSearch() { document.getElementById('searchOverlay').classList.remove('open'); }
   window.openSearch=openSearch;
@@ -10028,8 +10104,7 @@
       if (currentLang === 'ja') heroHtml = heroHtml.replace('ドンピシャ', '<em>ドンピシャ</em>');
       heroH1.innerHTML = heroHtml;
     }
-    const heroP = document.querySelector('#page-home .hero p');
-    if (heroP) heroP.textContent = t('heroSub');
+    // ヒーローの動線説明（3行）は日本語決め打ちでHTMLに直書きしているため、多言語切り替えでの上書きは行わない
 
     // ヒーローボタン
     const heroBtns = document.querySelectorAll('#page-home .hero-btns button');
