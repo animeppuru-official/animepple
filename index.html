@@ -477,6 +477,11 @@
     .anime-info h1 { margin:0 0 10px; font-size:1.4rem; font-weight:900; font-family:"Zen Kaku Gothic New",sans-serif; letter-spacing:.01em; line-height:1.15; }
     .anime-meta-text { color:#82968a; font-size:13.5px; margin:0 0 .6rem; }
     .anime-desc-text { color:#b6c8bd; font-size:15px; margin:0 0 .9rem; line-height:1.9; }
+    .anime-desc-btn-mobile {
+      display:none; width:100%; align-items:center; justify-content:center; gap:.4rem;
+      height:42px; margin:0 0 .9rem; border-radius:11px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04); color:#dfeae3; font-weight:700; font-size:13.5px; cursor:pointer;
+    }
     .review-btn { display:flex; width:100%; align-items:center; justify-content:center; gap:.35rem; padding:.75rem 1.1rem; border-radius:12px; background:#e5484d; color:#fff; font-weight:700; font-size:15px; border:none; cursor:pointer; box-shadow:0 8px 20px -12px rgba(229,72,77,.6); }
     .review-btn-list { width:auto; flex:1 1 auto; height:44px; padding:0 15px; border-radius:11px; background:#5ec97a; color:#07200f; font-weight:700; font-size:13.5px; box-shadow:0 8px 20px -12px rgba(94,201,122,.6); }
     /* スマホ版：情報量削減のため「通常掲示板」「価値観掲示板」を1個の「掲示板」ボタンに統合。
@@ -672,6 +677,7 @@
          auto placementの曖昧さを避けるため、順序をgrid-rowで明示指定する
          （あらすじ→ボタン群→掲示板/マスコット→グラフ…の順）。 */
       #page-anime #animeDesc,
+      #page-anime .anime-desc-btn-mobile,
       #page-anime .anime-side-actions,
       #page-anime #boardEntrySection,
       #page-anime #boardMascotTeaser,
@@ -685,7 +691,8 @@
       #page-anime #afStreamSection {
         grid-column:1 / -1;
       }
-      #page-anime #animeDesc { grid-row:4; margin-top:.7rem; }
+      #page-anime #animeDesc { grid-row:4; margin-top:.7rem; display:none; }
+      #page-anime .anime-desc-btn-mobile { grid-row:4; margin-top:.7rem; display:flex; }
       #page-anime .anime-side-actions { grid-row:5; display:flex; flex-direction:column; gap:10px; margin-top:.3rem; }
       #page-anime #boardEntrySection { grid-row:6; }
       #page-anime #boardMascotTeaser { grid-row:7; }
@@ -699,6 +706,16 @@
       #page-anime #afGoodsSection { margin-top:1.1rem; }
       #page-anime #afStreamSection { grid-row:16; }
       #page-anime .anime-side-board { margin:.2rem 0; }
+      /* スマホ版：3ブロック（画像+情報／グラフ+グッズ／似ている作品）の先頭で
+         指スクロール中にうっすら止まる感じを出す。proximityは近づいた時だけそっと吸い寄せる
+         弱めのスナップで、mandatoryのような強制停止にはならない。 */
+      body.page-anime-active { scroll-snap-type: y proximity; }
+      #page-anime .anime-hero-wrap,
+      #page-anime #mobileInfoPaneGraph,
+      #page-anime #mobileInfoTabs {
+        scroll-snap-align: start;
+        scroll-margin-top: var(--hdr-h, 60px);
+      }
       /* スマホ版アニメページには広告バナーを出さない */
       #page-anime #adAnimeMid { display:none !important; }
       /* スマホ版：「世界の反応」は情報価値が低く邪魔になるため非表示にし、
@@ -1950,13 +1967,22 @@
   </div>
 </div>
 
+<!-- スマホ版：「あらすじを見る」ボタンから開くポップアップ（グローバル配置） -->
+<div class="priority-popover-overlay" id="animeDescPopoverOverlay" style="display:none;">
+  <div class="priority-popover-box" style="max-width:380px;text-align:left;">
+    <p style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:#dfeae3;">📖 あらすじ</p>
+    <p id="animeDescPopoverText" style="margin:0 0 16px;font-size:13px;line-height:1.8;color:#dccaa0;max-height:55vh;overflow-y:auto;"></p>
+    <button type="button" id="animeDescPopoverClose">閉じる</button>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════
      PAGE: HOME (index)
 ═══════════════════════════════════ -->
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.159.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.160.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2137,6 +2163,7 @@
       <p class="anime-meta-text" id="animeMeta"></p>
       <div id="animeExtraInfo" style="margin-bottom:.7rem;"></div>
       <p class="anime-desc-text" id="animeDesc"></p>
+      <button type="button" class="anime-desc-btn-mobile" id="animeDescBtnMobile">📖 あらすじを見る</button>
 
       <!-- 評価グラフは常時表示。世界の反応・似ている作品だけをタブで切り替え（Design案通り：概要文のすぐ下） -->
       <div id="mobileInfoPaneGraph"></div>
@@ -4068,7 +4095,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.159.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.160.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5490,6 +5517,7 @@
     const globalNavCarousel = document.getElementById('bnavCarousel');
     if (globalNavCarousel) globalNavCarousel.style.display = (page === 'admin' || page === 'partner') ? 'none' : '';
     document.body.classList.toggle('admin-fullpage', page === 'admin' || page === 'partner');
+    document.body.classList.toggle('page-anime-active', page === 'anime');
     currentPage = page;
     currentAnimeId = animeId || null;
     const backBtn = document.getElementById('mypageBackBtn');
@@ -5562,7 +5590,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.159.0';
+      if(vEl) vEl.textContent = 'v0.160.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -6852,6 +6880,24 @@
   if(_boardChoicePopoverOverlay) {
     _boardChoicePopoverOverlay.onclick = (e) => {
       if(e.target === _boardChoicePopoverOverlay) closeBoardChoicePopover();
+    };
+  }
+  // スマホ版：「あらすじを見る」ボタン → ポップアップで全文表示
+  const _animeDescBtnMobile = document.getElementById('animeDescBtnMobile');
+  const _animeDescPopoverOverlay = document.getElementById('animeDescPopoverOverlay');
+  const _animeDescPopoverText = document.getElementById('animeDescPopoverText');
+  const _animeDescPopoverClose = document.getElementById('animeDescPopoverClose');
+  if(_animeDescBtnMobile && _animeDescPopoverOverlay) {
+    _animeDescBtnMobile.onclick = () => {
+      const src = document.getElementById('animeDesc');
+      if(_animeDescPopoverText) _animeDescPopoverText.textContent = src ? src.textContent : '';
+      _animeDescPopoverOverlay.style.display = 'flex';
+    };
+  }
+  if(_animeDescPopoverClose) _animeDescPopoverClose.onclick = () => { _animeDescPopoverOverlay.style.display = 'none'; };
+  if(_animeDescPopoverOverlay) {
+    _animeDescPopoverOverlay.onclick = (e) => {
+      if(e.target === _animeDescPopoverOverlay) _animeDescPopoverOverlay.style.display = 'none';
     };
   }
   // 検索結果ページ（PC）：タグ・年代の絞り込みトグル
