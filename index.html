@@ -695,6 +695,7 @@
       #page-anime .anime-side-actions { grid-row:5; display:flex; flex-direction:column; gap:10px; margin-top:.3rem; }
       #page-anime #boardEntrySection { grid-row:6; }
       #page-anime #boardMascotTeaser { grid-row:7; }
+      #page-anime #boardMascotTeaser .mascot-balloon::after { display:none; }
       #page-anime #miniGraphSection { grid-row:8; }
       #page-anime #mobileInfoPaneGraph { grid-row:9; }
       #page-anime #mobileInfoTabs { grid-row:10; }
@@ -1984,13 +1985,23 @@
   </div>
 </div>
 
+<!-- 価値観掲示板がロック中の時に開く案内ポップアップ（PC・スマホ共通・グローバル配置） -->
+<div class="priority-popover-overlay" id="valueLockedPopoverOverlay" style="display:none;">
+  <div class="priority-popover-box" style="text-align:center;">
+    <p style="margin:0 0 10px;font-size:.9rem;font-weight:700;color:#dfeae3;">🔒 価値観掲示板はまだロック中です</p>
+    <p style="margin:0 0 18px;font-size:13px;line-height:1.7;color:#dccaa0;">上質なレビューを書いて、この作品でのあなたの価値観が決まると、価値観掲示板に入れるようになります。</p>
+    <button type="button" id="valueLockedGoReviewBtn" style="width:100%;margin-bottom:8px;height:44px;border-radius:10px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:13.5px;cursor:pointer;">この作品のレビューをする？</button>
+    <button type="button" id="valueLockedPopoverClose">閉じる</button>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════
      PAGE: HOME (index)
 ═══════════════════════════════════ -->
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.166.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.168.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4103,7 +4114,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.166.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.168.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5603,7 +5614,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.166.0';
+      if(vEl) vEl.textContent = 'v0.168.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -6883,7 +6894,7 @@
   }
   if(_boardChoiceValue) {
     _boardChoiceValue.onclick = () => {
-      if(!_currentBoardMyGroup) return; // 未解放（鍵つき）はタップしても何も起きない
+      if(!_currentBoardMyGroup) { closeBoardChoicePopover(); openValueLockedPopover(_currentBoardAnimeId); return; }
       closeBoardChoicePopover();
       _boardActiveTab = _currentBoardMyGroup;
       if(_currentBoardAnimeId) nav('board-value', _currentBoardAnimeId);
@@ -6893,6 +6904,28 @@
   if(_boardChoicePopoverOverlay) {
     _boardChoicePopoverOverlay.onclick = (e) => {
       if(e.target === _boardChoicePopoverOverlay) closeBoardChoicePopover();
+    };
+  }
+  // 価値観掲示板がロック中の時に開く案内ポップアップ（PC・スマホ共通）
+  const _valueLockedPopoverOverlay = document.getElementById('valueLockedPopoverOverlay');
+  const _valueLockedGoReviewBtn = document.getElementById('valueLockedGoReviewBtn');
+  const _valueLockedPopoverClose = document.getElementById('valueLockedPopoverClose');
+  function openValueLockedPopover(animeId) {
+    if(!_valueLockedPopoverOverlay) return;
+    _valueLockedPopoverOverlay.dataset.animeId = animeId || '';
+    _valueLockedPopoverOverlay.style.display = 'flex';
+  }
+  if(_valueLockedGoReviewBtn) {
+    _valueLockedGoReviewBtn.onclick = () => {
+      const id = _valueLockedPopoverOverlay.dataset.animeId;
+      _valueLockedPopoverOverlay.style.display = 'none';
+      if(id) nav('review', id);
+    };
+  }
+  if(_valueLockedPopoverClose) _valueLockedPopoverClose.onclick = () => { _valueLockedPopoverOverlay.style.display = 'none'; };
+  if(_valueLockedPopoverOverlay) {
+    _valueLockedPopoverOverlay.onclick = (e) => {
+      if(e.target === _valueLockedPopoverOverlay) _valueLockedPopoverOverlay.style.display = 'none';
     };
   }
   // スマホ版：「あらすじを見る」ボタン → ポップアップで全文表示
@@ -8681,15 +8714,15 @@
         <button type="button" class="board-entry-btn" data-tab="general" style="width:100%;height:42px;display:inline-flex;align-items:center;gap:9px;padding:0 14px;border-radius:10px;border:1px solid rgba(92,201,142,.3);background:rgba(92,201,142,.08);color:#dfeae3;font-weight:700;font-size:13px;cursor:pointer;">
           <span>💬</span><span>${escapeHtml(t('boardEntryGeneral'))}</span>
         </button>
-        <button type="button" class="board-entry-btn"${myGroup?` data-tab="${myGroup}"`:''} ${myGroup?'':'disabled'} style="width:100%;height:42px;display:inline-flex;align-items:center;gap:9px;padding:0 14px;border-radius:10px;border:1px solid ${valueColor?valueColor+'66':'rgba(217,164,65,.3)'};background:${valueColor?valueColor+'22':'rgba(217,164,65,.08)'};color:${valueColor||'var(--muted,#9ab)'};font-weight:700;font-size:13px;cursor:${myGroup?'pointer':'not-allowed'};opacity:${myGroup?'1':'.6'};">
+        <button type="button" class="board-entry-btn" data-tab="${myGroup||''}" data-locked="${myGroup?'0':'1'}" style="width:100%;height:42px;display:inline-flex;align-items:center;gap:9px;padding:0 14px;border-radius:10px;border:1px solid ${valueColor?valueColor+'66':'rgba(217,164,65,.3)'};background:${valueColor?valueColor+'22':'rgba(217,164,65,.08)'};color:${valueColor||'var(--muted,#9ab)'};font-weight:700;font-size:13px;cursor:pointer;opacity:${myGroup?'1':'.6'};">
           <span>${myGroup?'💎':'🔒'}</span><span>${escapeHtml(t('boardEntryValue'))}</span>
         </button>
       </div>
     `;
     el.querySelectorAll('.board-entry-btn').forEach(btn=>{
-      if(btn.disabled) return; // 未投票（フラグなし）の価値観掲示板ボタンはタップしても何も起きない
       btn.onclick = () => {
         if(btn.dataset.tab === 'general') { nav('board-general', animeId); }
+        else if(btn.dataset.locked === '1') { openValueLockedPopover(animeId); }
         else { _boardActiveTab = btn.dataset.tab; nav('board-value', animeId); }
       };
     });
