@@ -677,10 +677,9 @@
       #reviewSliderSwiper .sl-row { padding:8px 8px; }
       /* タグ入力の補足文はスマホ幅では消してよい */
       #page-review .tag-hint { display:none; }
-      /* レビュー一覧の期間/国/実績フィルターを「絞り込み」ボタンで折りたたむ */
+      /* レビュー一覧：スマホ幅は期間/国/実績をモーダルへ移動し、残りは1行に収める */
+      #page-reviews #rlFilterRow { flex-wrap:nowrap; overflow-x:auto; }
       #page-reviews #rlFilterToggleBtn { display:inline-flex; }
-      #page-reviews #rlAdvancedFilters { display:none; }
-      #page-reviews #rlAdvancedFilters.open { display:flex; }
       /* スマホ幅：タイトルを全幅で上部に、その下に左＝大きめの画像、右＝年代・タグ・あらすじボタンを配置。
          HTML構造（JS参照）はそのままに、gridの配置だけで実現する
          （aside/anime-infoをdisplay:contentsにして中身をanime-hero-wrap直下のgridアイテム化）。 */
@@ -936,7 +935,6 @@
     .rl-tab.active, .rl-country.active { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
     .rl-filter-btn { display:inline-flex; align-items:center; gap:8px; height:42px; padding:0 15px; border-radius:11px; background:#173322; border:1px solid rgba(255,255,255,.12); color:#dfeae3; font-size:13.5px; font-weight:700; cursor:pointer; }
     #rlFilterToggleBtn { display:none; }
-    #rlAdvancedFilters { display:flex; }
     .rl-filter-btn:hover { background:rgba(255,255,255,.06); }
     .rl-filter-panel { position:absolute; top:48px; left:0; z-index:20; width:280px; max-height:320px; overflow-y:auto; background:#2a4c38; border:1px solid rgba(255,255,255,.13); border-radius:14px; box-shadow:0 28px 60px -20px rgba(0,0,0,.85); padding:6px; }
     .rl-filter-option { display:block; width:100%; text-align:left; padding:10px 12px; border-radius:9px; border:none; background:transparent; color:#dfeae3; font-size:13.5px; font-weight:600; cursor:pointer; }
@@ -2044,7 +2042,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.179.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.180.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2382,21 +2380,12 @@
   </header>
   <div style="position:sticky;top:52px;z-index:10;background:var(--bg);padding:.75rem 1rem .5rem;border-bottom:1px solid var(--line);">
     <h2 id="reviewsListTitle" style="margin:0 0 .6rem;font-size:1rem;color:#dff0e6;"></h2>
-    <!-- フィルター行：常時表示は「絞り込み」トグル + 並び替え + グラフ/コメント切替の1行だけ（スマホ幅） -->
-    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;">
-      <button type="button" id="rlFilterToggleBtn" class="rl-filter-btn">
+    <!-- フィルター行：PC・スマホともに1行に収める。スマホ幅は期間/国/実績をモーダルへ移動する -->
+    <div id="rlFilterRow" style="display:flex;align-items:center;gap:10px;">
+      <button type="button" id="rlFilterToggleBtn" class="rl-filter-btn" style="flex-shrink:0;">
         <span>🎛 絞り込み</span>
-        <svg id="rlFilterToggleChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <select id="reviewSortSelect" data-i18n-options="sortNewest,sortOldest" style="margin-left:auto;height:42px;padding:0 34px 0 14px;border-radius:11px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;appearance:none;cursor:pointer;">
-        <option value="newest" data-i18n="sortNewest">新しい順</option>
-        <option value="oldest" data-i18n="sortOldest">古い順</option>
-      </select>
-      <button type="button" id="rlBulkViewToggleBtn" class="rl-bulk-view-btn"></button>
-    </div>
-    <!-- 期間・国・実績フィルター（PCは常時表示、スマホ幅は「絞り込み」ボタンで開閉） -->
-    <div id="rlAdvancedFilters" style="flex-wrap:wrap;align-items:center;gap:12px;margin-top:.6rem;">
-      <div style="position:relative;">
+      <div id="rlPeriodWrap" style="position:relative;flex-shrink:0;">
         <button type="button" id="rlPeriodBtn" class="rl-filter-btn">
           <span id="rlPeriodBtnLabel" data-i18n="periodAll">全期間</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -2409,7 +2398,7 @@
           <button class="rl-filter-option" data-period="day" data-i18n="periodDay">今日</button>
         </div>
       </div>
-      <div style="position:relative;">
+      <div id="rlCountryWrap" style="position:relative;flex-shrink:0;">
         <button type="button" id="rlCountryBtn" class="rl-filter-btn">
           <span id="rlCountryBtnLabel" data-i18n="countryAll">すべての国</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -2428,7 +2417,7 @@
           <button class="rl-filter-option" data-country="OTHER" data-i18n="countryOther">🌐 その他</button>
         </div>
       </div>
-      <select id="reviewRankFilterSelect" style="height:42px;padding:0 34px 0 14px;border-radius:11px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;appearance:none;cursor:pointer;">
+      <select id="reviewRankFilterSelect" style="flex-shrink:0;height:42px;padding:0 34px 0 14px;border-radius:11px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;appearance:none;cursor:pointer;">
         <option value="all" selected>実績：全部</option>
         <option value="0">新人</option>
         <option value="1">駆け出しレビュアー</option>
@@ -2440,8 +2429,22 @@
         <option value="7">マスターオブグラフ</option>
         <option value="8">殿堂入り</option>
       </select>
+      <select id="reviewSortSelect" data-i18n-options="sortNewest,sortOldest" style="flex-shrink:0;margin-left:auto;height:42px;padding:0 34px 0 14px;border-radius:11px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;appearance:none;cursor:pointer;">
+        <option value="newest" data-i18n="sortNewest">新しい順</option>
+        <option value="oldest" data-i18n="sortOldest">古い順</option>
+      </select>
+      <button type="button" id="rlBulkViewToggleBtn" class="rl-bulk-view-btn" style="flex-shrink:0;"></button>
     </div>
     <p id="reviewsListMeta" style="margin:.5rem 0 0;font-size:.78rem;color:var(--muted);"></p>
+  </div>
+
+  <!-- スマホ版：「絞り込み」ボタンから開くモーダル（期間/国/実績を中に格納する。実体はJSで移動） -->
+  <div class="priority-popover-overlay" id="rlFilterModalOverlay" style="display:none;">
+    <div class="priority-popover-box" style="max-width:360px;text-align:left;">
+      <p style="margin:0 0 14px;font-size:.9rem;font-weight:700;color:#dfeae3;">🎛 絞り込み</p>
+      <div id="rlFilterModalBody" style="display:flex;flex-direction:column;gap:14px;"></div>
+      <button type="button" id="rlFilterModalCloseBtn" style="width:100%;margin-top:18px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#dfeae3;font-weight:700;font-size:13px;cursor:pointer;">閉じる</button>
+    </div>
   </div>
   <div style="padding:.75rem 1rem 0;">
     <div id="reviewList"></div>
@@ -4166,7 +4169,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.179.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.180.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5666,7 +5669,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.179.0';
+      if(vEl) vEl.textContent = 'v0.180.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -13469,17 +13472,36 @@
     _rlPeriod = 'all';
     _rlCountry = 'all';
 
-    // スマホ幅：期間/国/実績フィルターの折りたたみ「絞り込み」ボタン
+    // スマホ幅：期間/国/実績フィルターをモーダルへ移動する（PC幅は元の1行のまま）
     const filterToggleBtn = document.getElementById('rlFilterToggleBtn');
-    const advancedFilters = document.getElementById('rlAdvancedFilters');
-    const filterToggleChevron = document.getElementById('rlFilterToggleChevron');
-    if(filterToggleBtn && advancedFilters) {
-      advancedFilters.classList.remove('open');
-      if(filterToggleChevron) filterToggleChevron.style.transform = '';
-      filterToggleBtn.onclick = () => {
-        const willOpen = !advancedFilters.classList.contains('open');
-        advancedFilters.classList.toggle('open', willOpen);
-        if(filterToggleChevron) filterToggleChevron.style.transform = willOpen ? 'rotate(180deg)' : '';
+    const filterModalOverlay = document.getElementById('rlFilterModalOverlay');
+    const filterModalBody = document.getElementById('rlFilterModalBody');
+    const filterModalCloseBtn = document.getElementById('rlFilterModalCloseBtn');
+    const filterRow = document.getElementById('rlFilterRow');
+    const periodWrap = document.getElementById('rlPeriodWrap');
+    const countryWrap = document.getElementById('rlCountryWrap');
+    const rankSelect = document.getElementById('reviewRankFilterSelect');
+    const sortSelect = document.getElementById('reviewSortSelect');
+    if(filterModalBody && periodWrap && countryWrap && rankSelect && sortSelect) {
+      if(window.matchMedia('(max-width:767px)').matches) {
+        filterModalBody.appendChild(periodWrap);
+        filterModalBody.appendChild(countryWrap);
+        filterModalBody.appendChild(rankSelect);
+      } else if(filterRow) {
+        filterRow.insertBefore(periodWrap, sortSelect);
+        filterRow.insertBefore(countryWrap, sortSelect);
+        filterRow.insertBefore(rankSelect, sortSelect);
+      }
+    }
+    if(filterToggleBtn && filterModalOverlay) {
+      filterToggleBtn.onclick = () => { filterModalOverlay.style.display = 'flex'; };
+    }
+    if(filterModalCloseBtn && filterModalOverlay) {
+      filterModalCloseBtn.onclick = () => { filterModalOverlay.style.display = 'none'; };
+    }
+    if(filterModalOverlay) {
+      filterModalOverlay.onclick = (e) => {
+        if(e.target === filterModalOverlay) filterModalOverlay.style.display = 'none';
       };
     }
 
