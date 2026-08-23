@@ -644,19 +644,24 @@
       #page-review #reviewFormWrap { padding-top:.6rem !important; }
       #page-review .graph-status-text { display:none; }
       #page-review .graph-status-info-btn { display:inline-flex; }
+      /* 全12項目入力済みの時はインフォボタンにせず、説明文をそのまま表示する */
+      #page-review .graph-status-notice.graph-status-complete .graph-status-text { display:inline; }
+      #page-review .graph-status-notice.graph-status-complete .graph-status-info-btn { display:none; }
     }
     .chart-wrap:nth-of-type(2) { background:linear-gradient(180deg,#2a1c20,#170f11); }
     .chart-wrap h2 { color:#9be3bd; text-align:center; font-family:"Zen Kaku Gothic New",sans-serif; font-weight:700; font-size:15px; margin:0 0 2px; }
     .chart-wrap:nth-of-type(2) h2 { color:#eaa9a9; }
     /* スマホ幅：2つのチャートを横並びにする（縦積みだとスクロールが長くなるため） */
     @media (max-width: 767px) {
-      .review-charts-row { display:grid; grid-template-columns:1fr 1fr; column-gap:.6rem; background:var(--card2); border:1px solid var(--line); border-radius:16px; padding:.85rem; margin-bottom:.9rem; }
+      .review-charts-row { display:grid; grid-template-columns:1fr 1fr; column-gap:.4rem; background:var(--card2); border:1px solid var(--line); border-radius:16px; padding:.5rem; margin-bottom:.9rem; }
       .review-charts-row .chart-wrap { display:contents; }
       .review-charts-row .chart-wrap h2 { grid-row:1; font-size:.78rem; margin:0 0 .3rem; text-align:center; }
       .review-charts-row .chart-wrap:nth-of-type(1) h2 { grid-column:1; }
       .review-charts-row .chart-wrap:nth-of-type(2) h2 { grid-column:2; }
-      .review-charts-row #chartA { grid-column:1; grid-row:2; margin-bottom:0; }
-      .review-charts-row #chartB { grid-column:2; grid-row:2; margin-bottom:0; }
+      .review-charts-row #chartA { grid-column:1; grid-row:2; margin-bottom:0; aspect-ratio:1/1.05; }
+      .review-charts-row #chartB { grid-column:2; grid-row:2; margin-bottom:0; aspect-ratio:1/1.05; }
+      /* 12項目のスライダーが縦に場所を取りすぎるため、1行あたりの縦余白を詰める */
+      #reviewSliderSwiper .sl-row { padding:8px 8px; }
       /* スマホ幅：タイトルを全幅で上部に、その下に左＝大きめの画像、右＝年代・タグ・あらすじボタンを配置。
          HTML構造（JS参照）はそのままに、gridの配置だけで実現する
          （aside/anime-infoをdisplay:contentsにして中身をanime-hero-wrap直下のgridアイテム化）。 */
@@ -2018,7 +2023,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.169.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.170.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4134,7 +4139,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.169.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.170.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5634,7 +5639,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.169.0';
+      if(vEl) vEl.textContent = 'v0.170.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -8434,14 +8439,16 @@
     const dispA = vA.map(v=>v===-1?0:v);
     const dispB = vB.map(v=>v===-1?0:v);
     const isComplete = vA.every(v=>v!==-1) && vB.every(v=>v!==-1);
+    // スマホ幅のみ、グラフの軸ラベルから数値を消して項目名だけにする（PC幅はスライダー操作中の数値フィードバックを残す）
+    const showValue = !window.matchMedia('(max-width:767px)').matches;
 
     if (isComplete) {
       // 全項目入力済み → 青色に変化
-      if(ca) drawRadar(ca,getAxisA(),dispA,'rgba(94,170,255,0.38)','#9cc6ff');
-      if(cb) drawRadar(cb,getAxisB(),dispB,'rgba(94,170,255,0.32)','#9cc6ff');
+      if(ca) drawRadar(ca,getAxisA(),dispA,'rgba(94,170,255,0.38)','#9cc6ff',showValue);
+      if(cb) drawRadar(cb,getAxisB(),dispB,'rgba(94,170,255,0.32)','#9cc6ff',showValue);
     } else {
-      if(ca) drawRadar(ca,getAxisA(),dispA,'rgba(88,201,132,0.35)','#8fe5ab');
-      if(cb) drawRadar(cb,getAxisB(),dispB,'rgba(255,153,153,0.32)','#ffaaaa');
+      if(ca) drawRadar(ca,getAxisA(),dispA,'rgba(88,201,132,0.35)','#8fe5ab',showValue);
+      if(cb) drawRadar(cb,getAxisB(),dispB,'rgba(255,153,153,0.32)','#ffaaaa',showValue);
     }
     // スライダー本体の色も、12軸すべて埋まったら緑→青に切り替える
     const sliderSwiper = document.getElementById('reviewSliderSwiper');
