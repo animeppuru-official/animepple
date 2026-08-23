@@ -638,25 +638,27 @@
     .graph-status-complete .graph-status-bar-fill { background:#5cc98e; }
     .chart-wrap { background:linear-gradient(180deg,#173026,#0f2117); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:14px 14px 6px; margin-bottom:.9rem; box-shadow:0 10px 26px -18px rgba(0,0,0,.7); }
     /* スマホ幅：レビュー画面はタイトル（アニメ名＋「レビュー可視化フォーム」）を消して上詰めにし、
-       グラフ集計の説明文はインフォボタンにまとめる（進捗数字・バーはそのまま残す） */
+       グラフ集計の進捗はグラフ枠右上の小さなバッジにまとめる（説明文はインフォボタンのポップアップで） */
     @media(max-width:767px){
       #page-review #reviewPageTitle { display:none; }
-      #page-review #reviewFormWrap { padding-top:.6rem !important; display:flex; flex-direction:column; }
+      #page-review #reviewFormWrap { padding-top:.6rem !important; display:flex; flex-direction:column; position:relative; }
       #page-review .graph-status-text { display:none; }
-      #page-review .graph-status-info-btn { display:inline-flex; }
-      /* 全12項目入力済みの時はインフォボタンにせず、説明文をそのまま表示する */
-      #page-review .graph-status-notice.graph-status-complete .graph-status-text { display:inline; }
-      #page-review .graph-status-notice.graph-status-complete .graph-status-info-btn { display:none; }
-      /* 進捗メーター（グラフ集計状況）は箱デザインをやめ、グラフの下に隙間を空けて配置する。
-         グラフ自体は上詰めにするため一番上に来るようorderで並べ替える。 */
+      #page-review .graph-status-info-btn { display:inline-flex; width:20px; height:20px; }
       #page-review .review-charts-row { order:1; margin-top:0; }
-      #page-review .graph-status-notice {
-        order:2; margin-top:16px; margin-bottom:0;
-        padding:0; background:none; border:none;
-      }
       #page-review .slider-page-nav { order:3; }
       #page-review .review-slider-swiper-wrap { order:4; }
       #page-review .form-section { order:5; }
+      /* 進捗は独立した行・バーをやめ、グラフ枠右上に小さなバッジとして重ねる */
+      #page-review .graph-status-notice {
+        order:2; position:absolute; top:6px; right:6px; z-index:5;
+        width:auto; margin:0; padding:0; background:none; border:none;
+      }
+      #page-review .graph-status-notice-row {
+        margin-bottom:0; gap:4px; padding:3px 8px; border-radius:20px;
+        background:rgba(4,10,6,.55); backdrop-filter:blur(2px);
+      }
+      #page-review .graph-status-progress { font-size:11px; }
+      #page-review .graph-status-bar-track { display:none; }
     }
     .chart-wrap:nth-of-type(2) { background:linear-gradient(180deg,#2a1c20,#170f11); }
     .chart-wrap h2 { color:#9be3bd; text-align:center; font-family:"Zen Kaku Gothic New",sans-serif; font-weight:700; font-size:15px; margin:0 0 2px; }
@@ -673,6 +675,8 @@
       #page-review .slider-page-nav { margin-bottom:0; }
       /* 12項目のスライダーが縦に場所を取りすぎるため、1行あたりの縦余白を詰める */
       #reviewSliderSwiper .sl-row { padding:8px 8px; }
+      /* タグ入力の補足文はスマホ幅では消してよい */
+      #page-review .tag-hint { display:none; }
       /* スマホ幅：タイトルを全幅で上部に、その下に左＝大きめの画像、右＝年代・タグ・あらすじボタンを配置。
          HTML構造（JS参照）はそのままに、gridの配置だけで実現する
          （aside/anime-infoをdisplay:contentsにして中身をanime-hero-wrap直下のgridアイテム化）。 */
@@ -807,7 +811,7 @@
       width:100%; padding:15px 17px; background:#07150d; border:1px solid rgba(255,255,255,.1);
       border-radius:12px; color:var(--text); font:inherit; font-size:14px; line-height:1.75;
     }
-    .form-field textarea { min-height:120px; resize:vertical; }
+    .form-field textarea { min-height:180px; resize:vertical; }
     .submit-btn { width:100%; height:54px; display:inline-flex; align-items:center; justify-content:center; gap:9px; border-radius:14px; background:linear-gradient(180deg,#ef5b60,#e5484d); color:#fff; font-weight:700; font-size:16px; border:none; cursor:pointer; box-shadow:0 14px 30px -12px rgba(229,72,77,.7); }
     .submit-btn-green { background:linear-gradient(120deg,var(--brand),var(--brand2)); color:#0c2015; }
     .form-note { font-size:.75rem; color:var(--muted); margin-top:.55rem; text-align:center; }
@@ -2034,7 +2038,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.173.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.175.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2489,7 +2493,7 @@
       </div>
       <input id="reviewUserName" type="hidden" value="ゲスト" />
       <div class="form-field">
-        <label data-i18n="labelTags">タグ（最大10個）</label>
+        <label data-i18n="labelTags">タグ（最大3個）</label>
         <div class="tag-input-wrap">
           <input id="reviewTagInput" placeholder="例: 泣ける、鬱展開、神作画…" maxlength="20" />
           <button class="tag-add-btn" id="reviewTagAddBtn" data-i18n="btnAdd" type="button">追加</button>
@@ -2504,9 +2508,9 @@
       <div class="form-field">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">
           <label data-i18n="labelComment" style="margin:0;">コメント</label>
-          <span id="reviewCommentCount" style="font-size:12px;color:#5c6d63;">0 字</span>
+          <span id="reviewCommentCount" style="font-size:12px;color:#5c6d63;">0 / 500 字</span>
         </div>
-        <textarea id="reviewComment" placeholder="作品の魅力や見どころを、やさしい言葉で書いてみましょう。"></textarea>
+        <textarea id="reviewComment" maxlength="500" placeholder="作品の魅力や見どころを、やさしい言葉で書いてみましょう。"></textarea>
       </div>
       <div id="reviewTurnstile" style="margin:.75rem 0;"></div>
       <button class="submit-btn" id="submitReviewBtn">
@@ -4150,7 +4154,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.173.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.175.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5650,7 +5654,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.173.0';
+      if(vEl) vEl.textContent = 'v0.175.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -8380,7 +8384,7 @@
     setupSliderPageSwiper('reviewSliderSwiper','sliderPagePrev','sliderPageNext','sliderPageLabel');
     // reset tags
     reviewTags.length=0;
-    setupTagInput('reviewTagInput','reviewTagAddBtn','reviewTagList',reviewTags,10);
+    setupTagInput('reviewTagInput','reviewTagAddBtn','reviewTagList',reviewTags,3);
     document.getElementById('reviewUserName').value='';
     document.getElementById('reviewComment').value='';
     const commentEl = document.getElementById('reviewComment');
@@ -8388,10 +8392,10 @@
     if(commentEl && commentCountEl && !commentEl.dataset.countInit) {
       commentEl.dataset.countInit = '1';
       commentEl.addEventListener('input', () => {
-        commentCountEl.textContent = `${commentEl.value.length} 字`;
+        commentCountEl.textContent = `${commentEl.value.length} / 500 字`;
       });
     }
-    if(commentCountEl) commentCountEl.textContent = '0 字';
+    if(commentCountEl) commentCountEl.textContent = '0 / 500 字';
     setTimeout(()=>redrawReview(),50);
     renderTagSuggestions(id);
     // 開いた瞬間にスライダー全体が画面内に収まるよう自動スクロール
@@ -8440,7 +8444,7 @@
         if(reviewTags.length >= 10) return;
         if(reviewTags.includes(tag)) return;
         reviewTags.push(tag);
-        setupTagInput('reviewTagInput','reviewTagAddBtn','reviewTagList',reviewTags,10);
+        setupTagInput('reviewTagInput','reviewTagAddBtn','reviewTagList',reviewTags,3);
       };
     });
   }
@@ -10314,7 +10318,7 @@
     chartATitle: { ja:'作品の完成度',en:'Production Quality',ko:'작품 완성도','zh-tw':'作品完成度','zh-cn':'作品完成度',es:'Calidad de producción',fr:'Qualité de production',pt:'Qualidade de produção',de:'Produktionsqualität',ar:'جودة الإنتاج',th:'คุณภาพงานสร้าง',id:'Kualitas Produksi',ru:'Качество продукции',it:'Qualità produttiva',vi:'Chất lượng sản xuất' },
     chartBTitle: { ja:'感情・雰囲気',en:'Mood & Atmosphere',ko:'감정·분위기','zh-tw':'情感·氛圍','zh-cn':'情感·氛围',es:'Emoción y ambiente',fr:'Émotion et ambiance',pt:'Emoção e atmosfera',de:'Stimmung & Atmosphäre',ar:'المزاج والأجواء',th:'อารมณ์และบรรยากาศ',id:'Suasana & Nuansa',ru:'Настроение и атмосфера',it:'Atmosfera ed emozione',vi:'Cảm xúc & Bầu không khí' },
     labelUsername: { ja:'ユーザー名',en:'Username',ko:'유저명','zh-tw':'使用者名稱','zh-cn':'用户名',es:'Nombre de usuario',fr:'Nom d\'utilisateur',pt:'Nome de usuário',de:'Benutzername',ar:'اسم المستخدم',th:'ชื่อผู้ใช้',id:'Nama pengguna',ru:'Имя пользователя',it:'Nome utente',vi:'Tên người dùng' },
-    labelTags:    { ja:'タグ（最大10個）',en:'Tags (up to 10)',ko:'태그 (최대 10개)','zh-tw':'標籤（最多10個）','zh-cn':'标签（最多10个）',es:'Etiquetas (hasta 10)',fr:'Tags (jusqu\'à 10)',pt:'Tags (até 10)',de:'Tags (bis zu 10)',ar:'الوسوم (حتى 10)',th:'แท็ก (สูงสุด 10)',id:'Tag (maks 10)',ru:'Теги (до 10)',it:'Tag (max 10)',vi:'Thẻ (tối đa 10)' },
+    labelTags:    { ja:'タグ（最大3個）',en:'Tags (up to 3)',ko:'태그 (최대 3개)','zh-tw':'標籤（最多3個）','zh-cn':'标签（最多3个）',es:'Etiquetas (hasta 3)',fr:'Tags (jusqu\'à 3)',pt:'Tags (até 3)',de:'Tags (bis zu 3)',ar:'الوسوم (حتى 3)',th:'แท็ก (สูงสุด 3)',id:'Tag (maks 3)',ru:'Теги (до 3)',it:'Tag (max 3)',vi:'Thẻ (tối đa 3)' },
     labelComment: { ja:'コメント',en:'Comment',ko:'댓글','zh-tw':'留言','zh-cn':'评论',es:'Comentario',fr:'Commentaire',pt:'Comentário',de:'Kommentar',ar:'تعليق',th:'ความคิดเห็น',id:'Komentar',ru:'Комментарий',it:'Commento',vi:'Bình luận' },
     btnSubmit:    { ja:'投稿する',en:'Submit',ko:'투고하기','zh-tw':'發佈','zh-cn':'发布',es:'Publicar',fr:'Publier',pt:'Publicar',de:'Veröffentlichen',ar:'نشر',th:'โพสต์',id:'Kirim',ru:'Отправить',it:'Pubblica',vi:'Đăng' },
     formNote:     { ja:'※ やさしい言葉での投稿をお願いします。',en:'※ Please be kind in your reviews.',ko:'※ 친절한 말로 투고해 주세요.','zh-tw':'※ 請以友善的語言發佈。','zh-cn':'※ 请以友善的语言发布。',es:'※ Por favor, sé amable.',fr:'※ Merci d\'être bienveillant.',pt:'※ Por favor, seja gentil.',de:'※ Bitte freundlich formulieren.',ar:'※ يُرجى استخدام لغة لطيفة.',th:'※ กรุณาใช้ถ้อยคำสุภาพ',id:'※ Mohon gunakan kata-kata yang baik.',ru:'※ Пожалуйста, будьте вежливы.',it:'※ Ti preghiamo di essere gentile.',vi:'※ Vui lòng dùng lời lẽ nhẹ nhàng.' },
