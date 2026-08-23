@@ -723,9 +723,9 @@
       #page-anime #mobileInfoPaneWorld { display:none !important; }
       #page-anime #mobileInfoPaneSimilar { display:block !important; }
       /* グラフの枠を大きく：2列のまま、セクション左右余白・隙間・内側余白を詰めて実寸を拡大する */
-      #page-anime #masterGraphSection { padding:0 .4rem; }
-      #page-anime .master-chart-grid { gap:10px !important; }
-      #page-anime .master-chart-grid > div { padding:10px 8px 14px !important; }
+      #page-anime #masterGraphSection { padding:0; }
+      #page-anime .master-chart-grid { gap:6px !important; }
+      #page-anime .master-chart-grid > div { padding:8px 6px 12px !important; }
       #page-anime .master-chart-grid canvas { aspect-ratio:340/360; }
       /* 情報量削減：スマホ幅では掲示板を1ボタン化し、従来の2ボタンカードは隠す */
       #page-anime #boardEntrySection { display:none; }
@@ -1990,7 +1990,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.165.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.166.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2216,7 +2216,7 @@
                   <canvas id="masterChartB" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
                 </div>
               </div>
-              <p style="font-size:.62rem;color:var(--muted);margin:.5rem 0 1rem;" data-i18n="marginOfErrorNote">± は参考の誤差範囲です（件数が少ないほど大きくなります）</p>
+
             </section>
           </div>
           <div class="review-slider-page">
@@ -4103,7 +4103,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.165.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.166.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5603,7 +5603,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.165.0';
+      if(vEl) vEl.textContent = 'v0.166.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -6304,7 +6304,7 @@
   /* ════════════════════════════
      RADAR CHART
   ════════════════════════════ */
-  function drawRadar(canvas, labels, values, fill, stroke) {
+  function drawRadar(canvas, labels, values, fill, stroke, showValue=true) {
     const ctx=canvas.getContext('2d'); if(!ctx) return;
     // devicePixelRatio対応（Retina/高DPI画面でぼやけ防止）
     const dpr = window.devicePixelRatio || 1;
@@ -6356,7 +6356,7 @@
       ctx.fillStyle='#ddf2e4';
       const alignLeft = lx>=cx-0.5;
       ctx.textAlign=alignLeft?'left':'right'; ctx.textBaseline='middle';
-      const label = `${labels[i]} ${values[i]||0}`;
+      const label = showValue ? `${labels[i]} ${values[i]||0}` : `${labels[i]}`;
       const textW = ctx.measureText(label).width;
       // ラベルがcanvas幅からはみ出さないようx位置をクランプ
       if(alignLeft && lx+textW > w-2) lx = Math.max(cx, w-2-textW);
@@ -7746,8 +7746,8 @@
 
     const caA = document.getElementById('masterChartA');
     const caB = document.getElementById('masterChartB');
-    if (caA) drawRadar(caA, labA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a');
-    if (caB) drawRadar(caB, labB, avgB, 'rgba(255,153,153,0.38)', '#ff8888');
+    if (caA) drawRadar(caA, labA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a', false);
+    if (caB) drawRadar(caB, labB, avgB, 'rgba(255,153,153,0.38)', '#ff8888', false);
 
     // ミニグラフ（ボタン下）
     const miniSection = document.getElementById('miniGraphSection');
@@ -7756,8 +7756,8 @@
     const miB = document.getElementById('miniChartB');
     if(miniSection) miniSection.style.display='';
     if(miniMeta) miniMeta.textContent=metaText;
-    if(miA) drawRadar(miA, labA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a');
-    if(miB) drawRadar(miB, labB, avgB, 'rgba(255,153,153,0.38)', '#ff8888');
+    if(miA) drawRadar(miA, labA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a', false);
+    if(miB) drawRadar(miB, labB, avgB, 'rgba(255,153,153,0.38)', '#ff8888', false);
 
     // 際立つ強み／印象的な雰囲気（12軸全体からトップ・ワーストを判定し色分けする。1行に緑→赤の順で並べる）
     const allTagsEl = document.getElementById('masterAllTags');
