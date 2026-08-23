@@ -648,36 +648,28 @@
       .review-charts-row .chart-wrap:nth-of-type(2) h2 { grid-column:2; }
       .review-charts-row #chartA { grid-column:1; grid-row:2; margin-bottom:0; }
       .review-charts-row #chartB { grid-column:2; grid-row:2; margin-bottom:0; }
-      /* スマホ幅：ポスターを16:9に切り取らず、自然な縦長比率のまま小さめに表示。
-         横並び(flex)だと右側の文章が短い時に画像下が空白になるため、
-         画像を左にfloatさせて文章を回り込ませる（画像の高さを超えたら自動で全幅に戻る） */
-      /* スマホ幅：ファーストビューを「画像→タイトル→年代等→タグ→あらすじ→ボタン→掲示板/マスコット」の
-         優先順で見せるため、HTML構造（JS参照）はそのままにflex orderだけで並べ替える。
-         aside/anime-infoをdisplay:contentsにして、その中身をanime-hero-wrap直下のflexアイテムとして扱う。 */
-      /* スマホ幅：画像を左上に小さく配置し、右側の余白にタイトル・年代・タグを収める。
-         その下にあらすじが全幅で続く「ひとかたまり」レイアウト。
+      /* スマホ幅：タイトルを全幅で上部に、その下に左＝大きめの画像、右＝年代・タグ・あらすじボタンを配置。
          HTML構造（JS参照）はそのままに、gridの配置だけで実現する
          （aside/anime-infoをdisplay:contentsにして中身をanime-hero-wrap直下のgridアイテム化）。 */
       #page-anime .anime-hero-wrap {
-        display:grid; grid-template-columns:96px 1fr; column-gap:12px; row-gap:2px;
+        display:grid; grid-template-columns:132px 1fr; column-gap:14px; row-gap:2px;
         padding:1.6rem .9rem 0;
       }
       #page-anime .anime-side-col { display:contents; }
       #page-anime .anime-info { display:contents; }
+      #page-anime h1#animeTitle { grid-column:1 / -1; grid-row:1; margin:0 0 .6rem; font-size:1.15rem; line-height:1.3; }
       #page-anime #animeThumbHero {
-        grid-column:1; grid-row:1 / 4;
+        grid-column:1; grid-row:2 / 5;
         width:100%; max-width:none; aspect-ratio:3/4; margin:0;
         border-radius:10px; overflow:hidden;
       }
       #page-anime .anime-thumb-hero img { object-fit:cover; border-radius:10px; }
-      #page-anime h1#animeTitle { grid-column:2; grid-row:1; margin:0; align-self:start; font-size:1.05rem; line-height:1.3; }
-      #page-anime #animeMeta { grid-column:2; grid-row:2; margin:.25rem 0 0; align-self:start; }
+      #page-anime #animeMeta { grid-column:2; grid-row:2; margin:0; align-self:start; }
       #page-anime #animeExtraInfo { grid-column:2; grid-row:3; margin:.3rem 0 0; align-self:start; }
-      /* あらすじ以降は画像の右カラム制約から抜けて全幅に戻る。
+      /* あらすじボタンは画像の右余白に収め、あらすじ以降（本文以外）は全幅に戻る。
          auto placementの曖昧さを避けるため、順序をgrid-rowで明示指定する
-         （あらすじ→ボタン群→掲示板/マスコット→グラフ…の順）。 */
+         （あらすじボタン→ボタン群→掲示板/マスコット→グラフ…の順）。 */
       #page-anime #animeDesc,
-      #page-anime .anime-desc-btn-mobile,
       #page-anime .anime-side-actions,
       #page-anime #boardEntrySection,
       #page-anime #boardMascotTeaser,
@@ -692,7 +684,7 @@
         grid-column:1 / -1;
       }
       #page-anime #animeDesc { grid-row:4; margin-top:.7rem; display:none; }
-      #page-anime .anime-desc-btn-mobile { grid-row:4; margin-top:.7rem; display:flex; }
+      #page-anime .anime-desc-btn-mobile { grid-column:2; grid-row:4; margin:.3rem 0 0; display:flex; }
       #page-anime .anime-side-actions { grid-row:5; display:flex; flex-direction:column; gap:10px; margin-top:.3rem; }
       #page-anime #boardEntrySection { grid-row:6; }
       #page-anime #boardMascotTeaser { grid-row:7; }
@@ -1982,7 +1974,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.161.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.163.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4095,7 +4087,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.161.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.163.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5137,18 +5129,7 @@
     'D': '#f5e3a0', // パステルイエロー
   };
 
-  const seedAnime = [
-    {
-      id: 'test-shingeki-kv',
-      title: '進撃の巨人（キービジュテスト）',
-      titleEn: 'Attack on Titan (KV test)',
-      meta: 'TVアニメ',
-      image: 'https://animeppuru-official.github.io/animepple/進撃テスト.jpg',
-      description: '',
-      genres: [], categories: [], categoryIds: [], streaming: [],
-      year: '', episodes: '', broadcastStart: '', broadcastEnd: '', studios: [],
-    },
-  ];
+  const seedAnime = [];
 
   /* ════════════════════════════
      STORAGE
@@ -5601,7 +5582,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.161.0';
+      if(vEl) vEl.textContent = 'v0.163.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -7869,6 +7850,40 @@
         document.getElementById('animeTitle').textContent='ページが見つかりません';
       });
       if(!pageIsPartial) return; // 部分キャッシュがあれば、背景フェッチは待たずこのまま下の描画処理へ進む
+    } else if (page && sb) {
+      // ローカルキャッシュに既にある場合でも、Supabase側でSQL等により直接更新されているケースに対応するため、
+      // 表示はキャッシュ優先で即座に行いつつ、裏で最新データを確認して差分があれば自動的に再取得・再描画する
+      db.animePages.getByIds([id]).then(rows => {
+        if(currentAnimeId !== id) return;
+        if(rows && rows[0]) {
+          const p = rows[0];
+          const mapped = {
+            id: p.id,
+            kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+            title: p.title || p.title_en || '',
+            titleEn: p.title_en || p.title || '',
+            meta: p.meta || '',
+            image: p.image_url || '',
+            description: p.description || '',
+            genres: p.genres || [],
+            categories: p.categories || [],
+            categoryIds: p.category_ids || [],
+            streaming: p.streaming || [],
+            year: p.year || '',
+            episodes: p.episodes || '',
+            broadcastStart: p.broadcast_start || '',
+            broadcastEnd: p.broadcast_end || '',
+          };
+          const existing = JSON.parse(localStorage.getItem('animepple-user-pages') || '[]');
+          const idx = existing.findIndex(x=>x.id===mapped.id);
+          const changed = idx<0 || JSON.stringify(existing[idx]) !== JSON.stringify(mapped);
+          if(changed) {
+            if(idx>=0) existing[idx] = mapped; else existing.unshift(mapped);
+            localStorage.setItem('animepple-user-pages', JSON.stringify(existing.slice(0,200)));
+            if(currentAnimeId === id) renderAnimePage(id);
+          }
+        }
+      }).catch(()=>{});
     }
     if (!page) {
       document.getElementById('animeTitle').textContent='ページが見つかりません';
