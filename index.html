@@ -694,6 +694,11 @@
       /* レビュー一覧：スマホ幅は期間/国/実績をモーダルへ移動し、残りは1行に収める */
       #page-reviews #rlFilterRow { flex-wrap:nowrap; overflow-x:auto; }
       #page-reviews #rlFilterToggleBtn { display:inline-flex; }
+      /* 人気ページ：スマホ幅は並び順をよくあるセレクトに、期間/年代を絞り込みモーダルへ移動して上に詰める */
+      #page-popular .pop-sort-bar-inner { padding:10px 12px; gap:8px; flex-wrap:nowrap; }
+      #page-popular #popBaseGroup, #page-popular #popPeriodGroup, #page-popular #popEraGroup, #page-popular #popDivider1, #page-popular #popDivider2 { display:none; }
+      #page-popular #popBaseSelectMobile { display:inline-flex; height:38px; padding:0 30px 0 14px; font-size:13px; }
+      #page-popular #popFilterToggleBtn { display:inline-flex; height:38px; }
       /* スマホ幅：タイトルを全幅で上部に、その下に左＝大きめの画像、右＝年代・タグ・あらすじボタンを配置。
          HTML構造（JS参照）はそのままに、gridの配置だけで実現する
          （aside/anime-infoをdisplay:contentsにして中身をanime-hero-wrap直下のgridアイテム化）。 */
@@ -2078,7 +2083,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.183.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.184.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2636,18 +2641,25 @@
     </div>
   </header>
 
-  <!-- ソートバー（3軸、常時表示のセグメント型） -->
+  <!-- ソートバー（3軸、常時表示のセグメント型。スマホ幅は並び順→セレクト、期間/年代→絞り込みモーダルへ） -->
   <div class="pop-sort-bar">
     <div class="pop-sort-bar-inner">
-      <div class="pop-sort-group">
+      <select id="popBaseSelectMobile" class="rl-filter-btn" style="display:none;-webkit-appearance:none;appearance:none;">
+        <option value="popular" data-i18n="popSortPopular">人気順</option>
+        <option value="reviews" data-i18n="popSortReviews">レビュー数</option>
+      </select>
+      <button type="button" id="popFilterToggleBtn" class="rl-filter-btn" style="display:none;flex-shrink:0;">
+        <span>🎛 絞り込み</span>
+      </button>
+      <div class="pop-sort-group" id="popBaseGroup">
         <span class="pop-sort-group-label" data-i18n="popSortGroupLabel">並び順</span>
         <div class="pop-sort-tabs" id="popBaseTabs">
           <button class="pop-sort-tab active" data-base="popular" data-i18n="popSortPopular">人気順</button>
           <button class="pop-sort-tab" data-base="reviews" data-i18n="popSortReviews">レビュー数</button>
         </div>
       </div>
-      <span class="pop-sort-divider"></span>
-      <div class="pop-sort-group">
+      <span class="pop-sort-divider" id="popDivider1"></span>
+      <div class="pop-sort-group" id="popPeriodGroup">
         <span class="pop-sort-group-label" data-i18n="popPeriodGroupLabel">期間</span>
         <div class="pop-sort-tabs" id="popPeriodTabs">
           <button class="pop-sort-tab active" data-period="all" data-i18n="popSortAll">全期間</button>
@@ -2657,8 +2669,8 @@
           <button class="pop-sort-tab" data-period="year" data-i18n="popSortYear">年間</button>
         </div>
       </div>
-      <span class="pop-sort-divider"></span>
-      <div class="pop-sort-group">
+      <span class="pop-sort-divider" id="popDivider2"></span>
+      <div class="pop-sort-group" id="popEraGroup">
         <span class="pop-sort-group-label" data-i18n="popEraGroupLabel">年代</span>
         <div class="sort-row-era-inputs">
           <input type="number" class="pop-year-input" id="popYearFromInput" inputmode="numeric" placeholder="開始年" style="width:5.5em;text-align:center;font-size:.9rem;padding:.5rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);" />
@@ -2667,6 +2679,15 @@
           <button class="pop-year-clear" id="popYearClear" data-i18n="btnClear" style="background:none;border:none;color:var(--muted);font-size:.75rem;cursor:pointer;text-decoration:underline;white-space:nowrap;">クリア</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- スマホ版：「絞り込み」ボタンから開くモーダル（期間/年代を中に格納する。実体はJSで移動） -->
+  <div class="priority-popover-overlay" id="popFilterModalOverlay" style="display:none;">
+    <div class="priority-popover-box" style="max-width:360px;text-align:left;">
+      <p style="margin:0 0 14px;font-size:.9rem;font-weight:700;color:#dfeae3;">🎛 絞り込み</p>
+      <div id="popFilterModalBody" style="display:flex;flex-direction:column;gap:14px;"></div>
+      <button type="button" id="popFilterModalCloseBtn" style="width:100%;margin-top:18px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#dfeae3;font-weight:700;font-size:13px;cursor:pointer;">閉じる</button>
     </div>
   </div>
 
@@ -4200,7 +4221,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.183.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.184.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5700,7 +5721,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.183.0';
+      if(vEl) vEl.textContent = 'v0.184.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -6016,6 +6037,46 @@
 
   async function renderPopular() {
 
+    // スマホ幅：並び順→セレクト、期間/年代→絞り込みモーダルへ移動（PC幅は元の位置に戻す）
+    const popBarInner = document.querySelector('#page-popular .pop-sort-bar-inner');
+    const popFilterModalOverlay = document.getElementById('popFilterModalOverlay');
+    const popFilterModalBody = document.getElementById('popFilterModalBody');
+    const popFilterToggleBtn = document.getElementById('popFilterToggleBtn');
+    const popFilterModalCloseBtn = document.getElementById('popFilterModalCloseBtn');
+    const popPeriodGroupEl = document.getElementById('popPeriodGroup');
+    const popEraGroupEl = document.getElementById('popEraGroup');
+    const popDivider2 = document.getElementById('popDivider2');
+    if(popFilterModalBody && popPeriodGroupEl && popEraGroupEl) {
+      if(window.matchMedia('(max-width:767px)').matches) {
+        popFilterModalBody.appendChild(popPeriodGroupEl);
+        popFilterModalBody.appendChild(popEraGroupEl);
+      } else if(popBarInner && popDivider2) {
+        popBarInner.insertBefore(popPeriodGroupEl, popDivider2);
+        popBarInner.appendChild(popEraGroupEl);
+      }
+    }
+    if(popFilterToggleBtn && popFilterModalOverlay) {
+      popFilterToggleBtn.onclick = () => { popFilterModalOverlay.style.display = 'flex'; };
+    }
+    if(popFilterModalCloseBtn && popFilterModalOverlay) {
+      popFilterModalCloseBtn.onclick = () => { popFilterModalOverlay.style.display = 'none'; };
+    }
+    if(popFilterModalOverlay) {
+      popFilterModalOverlay.onclick = (e) => {
+        if(e.target === popFilterModalOverlay) popFilterModalOverlay.style.display = 'none';
+      };
+    }
+
+    // 並び順（スマホ用セレクト）：タブ側の.activeを同期させてから既存ロジックを呼ぶ
+    const popBaseSelectMobile = document.getElementById('popBaseSelectMobile');
+    if(popBaseSelectMobile && !popBaseSelectMobile.dataset.init) {
+      popBaseSelectMobile.dataset.init = '1';
+      popBaseSelectMobile.addEventListener('change', () => {
+        const targetBtn = document.querySelector(`#popBaseTabs .pop-sort-tab[data-base="${popBaseSelectMobile.value}"]`);
+        if(targetBtn) targetBtn.click();
+      });
+    }
+
     // 軸1: 基準（人気順 / レビュー順）
     const baseTabs = document.getElementById('popBaseTabs');
     if(baseTabs && !baseTabs.dataset.init) {
@@ -6024,6 +6085,8 @@
         btn.addEventListener('click', ()=>{
           baseTabs.querySelectorAll('.pop-sort-tab').forEach(b=>b.classList.remove('active'));
           btn.classList.add('active');
+          const selMobile = document.getElementById('popBaseSelectMobile');
+          if(selMobile) selMobile.value = btn.dataset.base;
           popState.base = btn.dataset.base;
           popState.page = 0; popState.items = [];
           updatePopPillLabels();
