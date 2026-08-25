@@ -1208,25 +1208,20 @@
       cursor:pointer; flex-shrink:0; transition:background .15s;
     }
     .mypage-edit-btn:hover { background:rgba(255,255,255,.09); }
-    .mypage-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:20px 24px 24px; }
+    .mypage-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:16px 24px 20px; }
     .mypage-stat-card.mypage-stat-hidden { display:none; }
     .mypage-stats-row:has(.mypage-stat-hidden) { grid-template-columns:repeat(2,1fr); }
     .mypage-stat-card {
-      background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:15px 16px;
+      background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px 12px;
       transition:border-color .15s, transform .15s;
     }
     .mypage-stat-card:hover { border-color:rgba(94,201,122,.4); transform:translateY(-1px); }
-    .mypage-stat-num { font-family:"Zen Kaku Gothic New",sans-serif; font-size:26px; font-weight:900; line-height:1.1; }
+    .mypage-stat-num { font-family:"Zen Kaku Gothic New",sans-serif; font-size:18px; font-weight:900; line-height:1.1; }
     .mypage-stat-card:nth-child(1) .mypage-stat-num { color:#5cc98e; }
     .mypage-stat-card:nth-child(2) .mypage-stat-num { color:#e5595d; }
     .mypage-stat-card:nth-child(3) .mypage-stat-num { color:#e8c463; }
     .mypage-stat-label { font-size:12px; color:#82968a; margin-top:2px; }
     .mypage-bio-text { font-size:.85rem; color:#dff0e6; line-height:1.6; margin:0 0 .65rem; white-space:pre-wrap; }
-    .mypage-genre-tags { display:flex; flex-wrap:wrap; gap:.4rem; }
-    .mypage-genre-tag {
-      background:rgba(94,201,122,.13); color:var(--brand); border-radius:999px; padding:.25rem .7rem; font-size:.72rem;
-      font-weight:700; border:1px solid rgba(94,201,122,.25);
-    }
     .mypage-fav-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
     @media (min-width:640px) { .mypage-fav-grid { grid-template-columns:repeat(5,1fr); } }
     @media (min-width:960px) { .mypage-fav-grid { grid-template-columns:repeat(7,1fr); } }
@@ -1256,10 +1251,6 @@
       height:100%; background:linear-gradient(90deg,var(--brand),var(--brand2)); border-radius:6px; transition:width .4s ease;
       box-shadow: 0 0 8px rgba(94,201,122,.5);
     }
-    .profile-genre-picker { display:flex; flex-wrap:wrap; gap:.4rem; }
-    .profile-genre-chip { background:var(--card2); border:1px solid var(--line); border-radius:999px; padding:.28rem .7rem; font-size:.75rem; color:var(--muted); cursor:pointer; transition: all .15s; }
-    .profile-genre-chip:hover { border-color: rgba(94,201,122,.4); }
-    .profile-genre-chip.selected { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
     .mypage-section-title {
       font-family:"Zen Kaku Gothic New",sans-serif; font-size:18px; font-weight:800; color:#e8f0ea; margin:0 0 .8rem;
       display:flex; align-items:center; gap:10px;
@@ -1318,11 +1309,6 @@
     .mypage-review-tile-quality { font-size:.85rem; }
     .mypage-review-pagedots { display:flex; justify-content:center; gap:.3rem; margin-top:.5rem; }
     .mypage-review-pagedot { width:5px; height:5px; border-radius:50%; background:var(--line); }
-    .mypage-logout-link {
-      background:none; border:none; color:var(--muted); font-size:.75rem; text-decoration:underline;
-      cursor:pointer; padding:.2rem .3rem;
-    }
-    .mypage-logout-link:hover { color:#dff0e6; }
     .mypage-empty-state {
       text-align:center; padding:1.5rem .5rem; color:var(--muted); font-size:.85rem;
     }
@@ -2149,7 +2135,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.198.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.199.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -3072,10 +3058,6 @@
         <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsAbout">追加リソース・ヘルプ</span><span class="settings-row-sub" data-i18n="settingsAboutSub">利用規約、お問い合わせ</span></span>
         <span class="settings-row-arrow">›</span>
       </button>
-      <button class="settings-row settings-row-danger mypage-owner-only" onclick="signOut()">
-        <span class="settings-row-icon" style="background:rgba(234,169,169,.1);color:#eaa9a9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
-        <span class="settings-row-body"><span class="settings-row-title" style="color:#eaa9a9;" data-i18n="logoutBtn">ログアウト</span></span>
-      </button>
     </div>
   </div>
 </div>
@@ -3107,6 +3089,12 @@
     <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
       <p style="font-size:.8rem;color:var(--muted);margin:0 0 .5rem;" data-i18n="settingsDeleteAccountDesc">アカウントを削除すると、レビュー・お気に入り・掲示板投稿など、すべてのデータが完全に削除されます。この操作は取り消せません。</p>
       <button class="mypage-btn-secondary" id="settingsDeleteAccountBtn" style="color:#ff8a8a;border-color:#7a3a3a;" data-i18n="settingsDeleteAccountBtn">アカウントを削除する</button>
+    </div>
+    <div class="mypage-section mypage-owner-only" style="border-top:1px solid var(--line);padding:1rem 0;">
+      <button class="settings-row settings-row-danger" onclick="signOut()" style="margin:0;">
+        <span class="settings-row-icon" style="background:rgba(234,169,169,.1);color:#eaa9a9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" style="color:#eaa9a9;" data-i18n="logoutBtn">ログアウト</span></span>
+      </button>
     </div>
   </div>
 </div>
@@ -4123,15 +4111,10 @@
         </div>
       </div>
 
-      <div class="mypage-owner-only" style="display:flex;justify-content:flex-end;padding:0 24px 20px;">
-        <button class="mypage-logout-link" onclick="signOut()" data-i18n="logoutBtn">ログアウト</button>
+      <!-- 自己紹介 -->
+      <div class="mypage-section" id="mypageBioSection" style="display:none;">
+        <p class="mypage-bio-text" id="mypageBioText"></p>
       </div>
-    </div>
-
-    <!-- 自己紹介・好きなジャンル -->
-    <div class="mypage-section" id="mypageBioSection" style="display:none;">
-      <p class="mypage-bio-text" id="mypageBioText"></p>
-      <div class="mypage-genre-tags" id="mypageGenreTags"></div>
     </div>
 
     <!-- 全体価値観プロフィール -->
@@ -4179,10 +4162,6 @@
         <div class="auth-field">
           <label data-i18n="labelBio">自己紹介</label>
           <textarea id="profileEditBio" maxlength="100" rows="3" style="padding:.65rem .9rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;font-family:inherit;resize:vertical;"></textarea>
-        </div>
-        <div class="auth-field">
-          <label data-i18n="labelFavGenres">好きなジャンル（最大5個）</label>
-          <div class="profile-genre-picker" id="profileGenrePicker"></div>
         </div>
         <button class="mypage-btn-primary" onclick="saveProfileEdit()" data-i18n="btnSave">保存する</button>
       </div>
@@ -4294,7 +4273,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.198.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.199.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5794,7 +5773,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.198.0';
+      if(vEl) vEl.textContent = 'v0.199.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -14221,10 +14200,9 @@
     renderMypage();
   }
 
-  let _myProfile = { username:'', bio:'', genres:[] };
+  let _myProfile = { username:'', bio:'' };
 
   const FAV_KEY = 'animepple-favorites'; // ローカルキャッシュ（表示高速化用）
-  const GENRE_OPTIONS = ['Action','Comedy','Drama','Fantasy','Romance','SciFi','Horror','Slice of Life','Sports','Mystery','Isekai','School'];
 
   const MYPAGE_REVIEW_PREVIEW_COUNT = 4;
 
@@ -14359,9 +14337,8 @@
       ? (_currentUser._username || profileData?.username || _currentUser.email.split('@')[0])
       : (profileData.username || t('userNotFound'));
 
-    if(isOwnPage) _myProfile = { username, bio: profileData?.bio||'', genres: profileData?.favorite_genres||[] };
+    if(isOwnPage) _myProfile = { username, bio: profileData?.bio||'' };
     const bio = profileData?.bio || '';
-    const genres = profileData?.favorite_genres || [];
     if(isOwnPage) renderValueProfile(targetUserId).catch(e=>console.warn('renderValueProfile:', e));
     if(isOwnPage) {
       const suEl = document.getElementById('settingsUsernameValue');
@@ -14373,12 +14350,11 @@
     document.getElementById('mypageUsernameText').textContent = username;
     if(isOwnPage) document.getElementById('mypageEmail').textContent = _currentUser.email;
 
-    // 自己紹介・ジャンル表示
+    // 自己紹介表示
     const bioSection = document.getElementById('mypageBioSection');
-    if(bio || genres.length) {
+    if(bio) {
       bioSection.style.display = '';
       document.getElementById('mypageBioText').textContent = bio;
-      document.getElementById('mypageGenreTags').innerHTML = genres.map(g=>`<span class="mypage-genre-tag">${escapeHtml(g)}</span>`).join('');
     } else {
       bioSection.style.display = 'none';
     }
@@ -14597,16 +14573,6 @@
     if(!_currentUser) return;
     document.getElementById('profileEditUsername').value = _myProfile.username;
     document.getElementById('profileEditBio').value = _myProfile.bio;
-    const picker = document.getElementById('profileGenrePicker');
-    picker.innerHTML = GENRE_OPTIONS.map(g=>`<span class="profile-genre-chip${_myProfile.genres.includes(g)?' selected':''}" data-genre="${g}">${g}</span>`).join('');
-    picker.querySelectorAll('.profile-genre-chip').forEach(chip=>{
-      chip.onclick = ()=>{
-        const g = chip.dataset.genre;
-        const idx = _myProfile.genres.indexOf(g);
-        if(idx>=0) { _myProfile.genres.splice(idx,1); chip.classList.remove('selected'); }
-        else if(_myProfile.genres.length<5) { _myProfile.genres.push(g); chip.classList.add('selected'); }
-      };
-    });
     document.getElementById('profileEditOverlay').style.display = 'flex';
   }
   function closeProfileEdit() {
@@ -14619,7 +14585,6 @@
     await db.profiles.upsert(_currentUser.id, {
       username,
       bio,
-      favorite_genres: _myProfile.genres,
     });
     _currentUser._username = username;
     closeProfileEdit();
