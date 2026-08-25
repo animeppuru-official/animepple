@@ -601,7 +601,7 @@
     /* 縮む演出はスマホ(回転が無い)の時だけ。PCは回転そのものが動きになるので不要 */
     @media(max-width:767px){ .rc-flip-btn.rc-flip-btn-pressed { animation:rcFlipBtnPress .32s ease; } }
     .rc-comment-label {
-      position:absolute; top:58px; right:14px; z-index:5;
+      position:absolute; top:14px; right:52px; z-index:5;
       font-size:.68rem; font-weight:700; color:var(--muted);
       background:rgba(7,21,13,.55); border:1px solid rgba(255,255,255,.14); border-radius:8px;
       padding:.3rem .5rem;
@@ -1238,6 +1238,11 @@
       transition:border-color .15s, transform .15s;
     }
     .mypage-stat-card:hover { border-color:rgba(94,201,122,.4); transform:translateY(-1px); }
+    .mypage-stat-card.mypage-stat-clickable { cursor:pointer; }
+    .mypage-btn-primary.mypage-btn-following { background:rgba(255,255,255,.04); color:#dfeae3; border:1px solid rgba(255,255,255,.14); box-shadow:none; }
+    .follow-list-row { display:flex; align-items:center; gap:.7rem; padding:.6rem; border:1px solid var(--line); border-radius:12px; }
+    .follow-list-avatar { width:44px; height:44px; border-radius:50%; flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center; font-weight:800; color:#0c2015; }
+    .follow-list-name { flex:1; min-width:0; font-weight:700; font-size:.88rem; color:#dff0e6; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
     .mypage-stat-num { font-family:"Zen Kaku Gothic New",sans-serif; font-size:18px; font-weight:900; line-height:1.1; }
     .mypage-stat-card:nth-child(1) .mypage-stat-num { color:#5cc98e; }
     .mypage-stat-card:nth-child(2) .mypage-stat-num { color:#e5595d; }
@@ -2157,7 +2162,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.202.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.204.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -3013,6 +3018,26 @@
   </div>
 </div>
 
+<!-- フォロー中／フォロワー一覧 -->
+<div class="page mypage-page-wrap" id="page-follow-list">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 id="followListTitle" style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">フォロー中</h2>
+    <div id="followListBody" style="display:flex;flex-direction:column;gap:.5rem;"></div>
+  </div>
+</div>
+
 <!-- 設定トップ -->
 <!-- お知らせ -->
 <div class="page mypage-page-wrap" id="page-notifications">
@@ -3168,6 +3193,15 @@
       </button>
     </div>
     <div id="settingsBlockedSection" class="mypage-section"></div>
+    <div class="mypage-section" style="padding:1rem 1.1rem;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;">
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .3rem;" data-i18n="showFriendsCountLabel">友達の数を表示する</p>
+          <p style="font-size:.72rem;color:var(--muted);margin:0;" data-i18n="showFriendsCountDesc">オフにすると、マイページに友達（相互フォロー）の人数を表示しません。</p>
+        </div>
+        <input type="checkbox" id="settingsShowFriendsCount" checked style="width:20px;height:20px;flex-shrink:0;margin-top:.2rem;accent-color:var(--brand);" />
+      </div>
+    </div>
     <div class="mypage-section" style="padding:1rem 1.1rem;">
       <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .5rem;">レビュー一覧の初期表示</p>
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .7rem;">アニメページのレビュー一覧を開いたとき、最初にグラフ面とコメント面のどちらを表示するか選べます。</p>
@@ -4115,6 +4149,9 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
         </div>
+        <div class="mypage-actions" id="mypageFollowActions" style="display:none;">
+          <button class="mypage-btn-primary" id="mypageFollowBtn" onclick="toggleFollowCurrentProfile()">フォローする</button>
+        </div>
       </div>
 
       <!-- 統計サマリー -->
@@ -4130,6 +4167,22 @@
         <div class="mypage-stat-card">
           <div class="mypage-stat-num" id="statQualityCount">0</div>
           <div class="mypage-stat-label" data-i18n="statQuality">上質レビュー</div>
+        </div>
+      </div>
+
+      <!-- フォロー／フォロワー／友達 -->
+      <div class="mypage-stats-row" id="mypageSocialStatsRow">
+        <div class="mypage-stat-card mypage-stat-clickable" id="statFollowingCard">
+          <div class="mypage-stat-num" id="statFollowingCount">0</div>
+          <div class="mypage-stat-label" data-i18n="statFollowing">フォロー中</div>
+        </div>
+        <div class="mypage-stat-card mypage-stat-clickable" id="statFollowerCard">
+          <div class="mypage-stat-num" id="statFollowerCount">0</div>
+          <div class="mypage-stat-label" data-i18n="statFollowers">フォロワー</div>
+        </div>
+        <div class="mypage-stat-card mypage-stat-hidden" id="statFriendsCard">
+          <div class="mypage-stat-num" id="statFriendsCount">0</div>
+          <div class="mypage-stat-label" data-i18n="statFriends">友達</div>
         </div>
       </div>
 
@@ -4295,7 +4348,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.202.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.204.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4459,12 +4512,12 @@
     profiles: {
       async get(userId) {
         if(!sb) return null;
-        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code').eq('id', userId).single();
+        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count').eq('id', userId).single();
         return data;
       },
       async getByIds(userIds) {
         if(!sb || !userIds || !userIds.length) return [];
-        const { data } = await sb.from('profiles').select('id,avatar_url').in('id', userIds);
+        const { data } = await sb.from('profiles').select('id,username,avatar_url').in('id', userIds);
         return data || [];
       },
       async getUsername(userId) {
@@ -4608,6 +4661,55 @@
         const rows = boards.map(b => ({ user_id: userId, anime_id: b.anime_id, board_type: b.board_type, notify }));
         const { error } = await sb.from('user_board_state').upsert(rows, { onConflict: 'user_id,anime_id,board_type' });
         return { error };
+      },
+    },
+    // ── フォロー ──
+    follows: {
+      async follow(followerId, followingId) {
+        if(!sb || !followerId || !followingId || followerId === followingId) return { error: 'invalid' };
+        const { error } = await sb.from('follows').insert({ follower_id: followerId, following_id: followingId });
+        return { error };
+      },
+      async unfollow(followerId, followingId) {
+        if(!sb || !followerId || !followingId) return { error: 'invalid' };
+        const { error } = await sb.from('follows').delete().eq('follower_id', followerId).eq('following_id', followingId);
+        return { error };
+      },
+      async isFollowing(followerId, followingId) {
+        if(!sb || !followerId || !followingId) return false;
+        const { data } = await sb.from('follows').select('follower_id').eq('follower_id', followerId).eq('following_id', followingId).maybeSingle();
+        return !!data;
+      },
+      async getFollowingCount(userId) {
+        if(!sb || !userId) return 0;
+        const { count } = await sb.from('follows').select('following_id', { count:'exact', head:true }).eq('follower_id', userId);
+        return count || 0;
+      },
+      async getFollowerCount(userId) {
+        if(!sb || !userId) return 0;
+        const { count } = await sb.from('follows').select('follower_id', { count:'exact', head:true }).eq('following_id', userId);
+        return count || 0;
+      },
+      async getFollowingIds(userId) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('follows').select('following_id').eq('follower_id', userId);
+        return (data||[]).map(r=>r.following_id);
+      },
+      async getFollowerIds(userId) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('follows').select('follower_id').eq('following_id', userId);
+        return (data||[]).map(r=>r.follower_id);
+      },
+      // 友達＝相互フォロー（自分がフォローしていて、かつ相手にもフォローされているユーザー）
+      async getFriendIds(userId) {
+        if(!sb || !userId) return [];
+        const [followingIds, followerIds] = await Promise.all([this.getFollowingIds(userId), this.getFollowerIds(userId)]);
+        const followerSet = new Set(followerIds);
+        return followingIds.filter(id => followerSet.has(id));
+      },
+      async getFriendCount(userId) {
+        const ids = await this.getFriendIds(userId);
+        return ids.length;
       },
     },
     blocks: {
@@ -5684,6 +5786,11 @@
   window.addEventListener('resize', updateStickyOffsets);
   window.addEventListener('load', updateStickyOffsets);
 
+  let _followListState = { userId: null, mode: 'following' };
+  function openFollowList(userId, mode) {
+    _followListState = { userId, mode };
+    nav('follow-list');
+  }
   function nav(page, animeId) {
     // アニメページを離れる時は、グッズカルーセルの自動送りタイマーを止めておく（残留動作の防止）
     if (currentPage === 'anime' && page !== 'anime') {
@@ -5775,6 +5882,9 @@
         });
       }
     }
+    if (page==='follow-list') {
+      renderFollowList(_followListState.userId, _followListState.mode).catch(console.error);
+    }
     if (page==='settings-privacy') {
       if(_currentUser) {
         renderBlockedUsers(_currentUser.id).catch(console.error);
@@ -5792,10 +5902,27 @@
           try { localStorage.setItem('animepple-review-initial-view', reviewInitialViewSel.value); } catch(_) {}
         };
       }
+      // 友達の数を表示するかどうか
+      const showFriendsCb = document.getElementById('settingsShowFriendsCount');
+      if(showFriendsCb && sb) {
+        (async () => {
+          let uid = _currentUser?.id;
+          if(!uid) {
+            const { data } = await sb.auth.getSession();
+            uid = data?.session?.user?.id;
+          }
+          if(!uid) return;
+          const profile = await db.profiles.get(uid);
+          showFriendsCb.checked = profile?.show_friends_count !== false;
+          showFriendsCb.onchange = async () => {
+            await db.profiles.upsert(uid, { show_friends_count: showFriendsCb.checked });
+          };
+        })();
+      }
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.202.0';
+      if(vEl) vEl.textContent = 'v0.204.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -9723,6 +9850,67 @@
     };
   }
 
+  // フォロー中／フォロワー一覧ページ
+  async function renderFollowList(userId, mode) {
+    const titleEl = document.getElementById('followListTitle');
+    const bodyEl = document.getElementById('followListBody');
+    if(!bodyEl || !sb || !userId) return;
+    if(titleEl) titleEl.textContent = mode === 'followers' ? t('followersTitle') : t('followingTitle');
+    bodyEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${escapeHtml(t('loadingLabel'))}</p>`;
+
+    const ids = mode === 'followers' ? await db.follows.getFollowerIds(userId) : await db.follows.getFollowingIds(userId);
+    if(!ids.length) {
+      bodyEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${escapeHtml(t('followListEmpty'))}</p>`;
+      return;
+    }
+    const profiles = await db.profiles.getByIds(ids);
+    const profileMap = {};
+    profiles.forEach(p => { profileMap[p.id] = p; });
+
+    // 自分がその人をフォロー中かどうか（ボタン表示用。自分自身の行は除く）
+    const myFollowingIds = _currentUser ? new Set(await db.follows.getFollowingIds(_currentUser.id)) : new Set();
+
+    bodyEl.innerHTML = ids.map(uid => {
+      const p = profileMap[uid] || {};
+      const name = p.username || t('userNotFound');
+      const avatarUrl = p.avatar_url;
+      const initial = (name||'?').slice(0,1);
+      const isSelf = _currentUser && uid === _currentUser.id;
+      const isFollowing = myFollowingIds.has(uid);
+      const showBtn = _currentUser && !isSelf;
+      const btnHtml = showBtn
+        ? `<button type="button" class="mypage-btn-primary follow-list-follow-btn${isFollowing?' mypage-btn-following':''}" data-uid="${escapeHtml(uid)}" data-following="${isFollowing?'1':'0'}" style="height:34px;padding:0 14px;font-size:12px;flex-shrink:0;">${isFollowing?escapeHtml(t('followingBtn')):escapeHtml(t('followBtn'))}</button>`
+        : '';
+      return `
+        <div class="follow-list-row">
+          <div class="follow-list-avatar" onclick="nav('user','${escapeHtml(uid)}')" style="cursor:pointer;background:${avatarUrl?'transparent':'#5ec97a'};">
+            ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:escapeHtml(initial)}
+          </div>
+          <span class="follow-list-name" onclick="nav('user','${escapeHtml(uid)}')">${escapeHtml(name)}</span>
+          ${btnHtml}
+        </div>
+      `;
+    }).join('');
+
+    bodyEl.querySelectorAll('.follow-list-follow-btn').forEach(btn => {
+      btn.onclick = async () => {
+        if(!_currentUser) return;
+        const targetId = btn.dataset.uid;
+        const currentlyFollowing = btn.dataset.following === '1';
+        btn.disabled = true;
+        if(currentlyFollowing) {
+          await db.follows.unfollow(_currentUser.id, targetId);
+        } else {
+          await db.follows.follow(_currentUser.id, targetId);
+        }
+        btn.disabled = false;
+        btn.dataset.following = currentlyFollowing ? '0' : '1';
+        btn.textContent = currentlyFollowing ? t('followBtn') : t('followingBtn');
+        btn.classList.toggle('mypage-btn-following', !currentlyFollowing);
+      };
+    });
+  }
+
   async function renderBlockedUsers(userId) {
     const el = document.getElementById('settingsBlockedSection');
     if(!el || !sb) return;
@@ -10819,6 +11007,17 @@
     statReviews:    { ja:'レビュー',en:'Reviews',ko:'리뷰','zh-tw':'評論','zh-cn':'评论',es:'Reseñas',fr:'Avis',pt:'Avaliações',de:'Bewertungen',ar:'مراجعات',th:'รีวิว',id:'Ulasan',ru:'Отзывы',it:'Recensioni',vi:'Đánh giá' },
     statFavorites:  { ja:'お気に入り',en:'Favorites',ko:'즐겨찾기','zh-tw':'收藏','zh-cn':'收藏',es:'Favoritos',fr:'Favoris',pt:'Favoritos',de:'Favoriten',ar:'المفضلة',th:'รายการโปรด',id:'Favorit',ru:'Избранное',it:'Preferiti',vi:'Yêu thích' },
     statQuality:    { ja:'上質レビュー',en:'Quality reviews',ko:'우수 리뷰','zh-tw':'優質評論','zh-cn':'优质评论',es:'Reseñas de calidad',fr:'Avis de qualité',pt:'Avaliações de qualidade',de:'Qualitätsbewertungen',ar:'مراجعات عالية الجودة',th:'รีวิวคุณภาพ',id:'Ulasan berkualitas',ru:'Качественные отзывы',it:'Recensioni di qualità',vi:'Đánh giá chất lượng' },
+    statFollowing:  { ja:'フォロー中', en:'Following' },
+    statFollowers:  { ja:'フォロワー', en:'Followers' },
+    statFriends:    { ja:'友達', en:'Friends' },
+    followingTitle: { ja:'フォロー中', en:'Following' },
+    followersTitle: { ja:'フォロワー', en:'Followers' },
+    followListEmpty:{ ja:'まだ誰もいません', en:'No one here yet' },
+    followBtn:      { ja:'フォローする', en:'Follow' },
+    followingBtn:   { ja:'フォロー中', en:'Following' },
+    loadingLabel:   { ja:'読み込み中…', en:'Loading…' },
+    showFriendsCountLabel: { ja:'友達の数を表示する', en:'Show friends count' },
+    showFriendsCountDesc: { ja:'オフにすると、マイページに友達（相互フォロー）の人数を表示しません。', en:'When off, your friends (mutual follows) count is hidden from your profile.' },
     rankProgressTitle: { ja:'🏅 称号の道のり',en:'🏅 Rank Progress',ko:'🏅 칭호 진행도','zh-tw':'🏅 稱號之路','zh-cn':'🏅 称号之路',es:'🏅 Progreso de rango',fr:'🏅 Progression de rang',pt:'🏅 Progresso de patente',de:'🏅 Rang-Fortschritt',ar:'🏅 تقدم الرتبة',th:'🏅 เส้นทางยศ',id:'🏅 Progres peringkat',ru:'🏅 Прогресс звания',it:'🏅 Progressi di grado',vi:'🏅 Tiến trình danh hiệu' },
     favoritesTitle: { ja:'⭐ お気に入り',en:'⭐ Favorites',ko:'⭐ 즐겨찾기','zh-tw':'⭐ 收藏','zh-cn':'⭐ 收藏',es:'⭐ Favoritos',fr:'⭐ Favoris',pt:'⭐ Favoritos',de:'⭐ Favoriten',ar:'⭐ المفضلة',th:'⭐ รายการโปรด',id:'⭐ Favorit',ru:'⭐ Избранное',it:'⭐ Preferiti',vi:'⭐ Yêu thích' },
     noFavoritesYet: { ja:'お気に入りはまだありません',en:'No favorites yet',ko:'즐겨찾기가 아직 없습니다','zh-tw':'尚無收藏','zh-cn':'还没有收藏',es:'Sin favoritos aún',fr:'Pas encore de favoris',pt:'Sem favoritos ainda',de:'Noch keine Favoriten',ar:'لا توجد مفضلة بعد',th:'ยังไม่มีรายการโปรด',id:'Belum ada favorit',ru:'Пока нет избранного',it:'Nessun preferito',vi:'Chưa có mục yêu thích' },
@@ -14393,6 +14592,9 @@
       document.getElementById('statReviewCount').textContent = '0';
       document.getElementById('statFavCount').textContent = '0';
       document.getElementById('statQualityCount').textContent = '0';
+      document.getElementById('statFollowingCount').textContent = '0';
+      document.getElementById('statFollowerCount').textContent = '0';
+      const followActionsErr = document.getElementById('mypageFollowActions'); if(followActionsErr) followActionsErr.style.display = 'none';
       return;
     }
 
@@ -14434,6 +14636,39 @@
     } else {
       avatar.style.background = colors[idx];
       avatar.textContent = initial;
+    }
+
+    // フォロー／フォロワー／友達
+    if(sb) {
+      const [followingCount, followerCount, friendCount] = await Promise.all([
+        db.follows.getFollowingCount(targetUserId),
+        db.follows.getFollowerCount(targetUserId),
+        db.follows.getFriendCount(targetUserId),
+      ]);
+      document.getElementById('statFollowingCount').textContent = followingCount;
+      document.getElementById('statFollowerCount').textContent = followerCount;
+      document.getElementById('statFriendsCount').textContent = friendCount;
+
+      const friendsCard = document.getElementById('statFriendsCard');
+      const showFriends = isOwnPage ? true : (profileData?.show_friends_count !== false);
+      friendsCard.classList.toggle('mypage-stat-hidden', !showFriends);
+
+      document.getElementById('statFollowingCard').onclick = () => openFollowList(targetUserId, 'following');
+      document.getElementById('statFollowerCard').onclick = () => openFollowList(targetUserId, 'followers');
+
+      // フォローボタン（自分以外のページを見ている時だけ）
+      const followActions = document.getElementById('mypageFollowActions');
+      const followBtn = document.getElementById('mypageFollowBtn');
+      if(!isOwnPage && _currentUser && followActions && followBtn) {
+        followActions.style.display = '';
+        const isFollowing = await db.follows.isFollowing(_currentUser.id, targetUserId);
+        followBtn.textContent = isFollowing ? t('followingBtn') : t('followBtn');
+        followBtn.classList.toggle('mypage-btn-following', isFollowing);
+        followBtn.dataset.following = isFollowing ? '1' : '0';
+        followBtn.dataset.targetUid = targetUserId;
+      } else if(followActions) {
+        followActions.style.display = 'none';
+      }
     }
 
     let qualityCount = 0, reviewTotal = 0;
@@ -14654,6 +14889,30 @@
     renderMypage();
   }
 
+  // マイページのフォローボタン用（見ているプロフィールの相手をフォロー／フォロー解除する）
+  async function toggleFollowCurrentProfile() {
+    if(!_currentUser) return;
+    const btn = document.getElementById('mypageFollowBtn');
+    if(!btn) return;
+    const targetId = btn.dataset.targetUid;
+    if(!targetId) return;
+    const currentlyFollowing = btn.dataset.following === '1';
+    btn.disabled = true;
+    if(currentlyFollowing) {
+      await db.follows.unfollow(_currentUser.id, targetId);
+    } else {
+      await db.follows.follow(_currentUser.id, targetId);
+    }
+    btn.disabled = false;
+    btn.dataset.following = currentlyFollowing ? '0' : '1';
+    btn.textContent = currentlyFollowing ? t('followBtn') : t('followingBtn');
+    btn.classList.toggle('mypage-btn-following', !currentlyFollowing);
+    // フォロワー数はすぐ変わるので、統計だけ静かに再取得（画面全体の再描画はしない）
+    const followerCount = await db.follows.getFollowerCount(targetId);
+    const followerCountEl = document.getElementById('statFollowerCount');
+    if(followerCountEl) followerCountEl.textContent = followerCount;
+  }
+
   window.showAuthModal = showAuthModal;
   window.closeAuthModal = closeAuthModal;
   window.authSubmit = authSubmit;
@@ -14663,6 +14922,8 @@
   window.openProfileEdit = openProfileEdit;
   window.closeProfileEdit = closeProfileEdit;
   window.saveProfileEdit = saveProfileEdit;
+  window.toggleFollowCurrentProfile = toggleFollowCurrentProfile;
+  window.openFollowList = openFollowList;
 
   document.getElementById('bnav-home').classList.add('active');
 
