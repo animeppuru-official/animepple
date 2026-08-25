@@ -175,6 +175,27 @@
     }
     .tag-browse-chip.active { background:#5cc98e; border-color:#5cc98e; color:#07160d; font-weight:700; }
 
+    /* ── 直近の検索ワード（タイトル検索タブ、空きスペース活用） ── */
+    .recent-search-section { margin-top:22px; padding-top:20px; border-top:1px solid rgba(255,255,255,.08); }
+    .recent-search-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .recent-search-title { font-size:13px; font-weight:700; color:#9fb0a5; }
+    .recent-search-clear { background:none; border:none; color:#82968a; font-size:11.5px; cursor:pointer; text-decoration:underline; padding:0; }
+    .recent-search-clear:hover { color:#b9cabf; }
+    .recent-search-chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .recent-search-chip {
+      display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 8px 0 15px; border-radius:10px;
+      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#dfeae3;
+      font-size:13px; font-weight:500; cursor:pointer; transition:background .15s, border-color .15s;
+      max-width:100%;
+    }
+    .recent-search-chip:hover { background:rgba(92,201,142,.14); border-color:rgba(92,201,142,.4); }
+    .recent-search-chip-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:220px; }
+    .recent-search-chip-remove {
+      flex-shrink:0; width:20px; height:20px; border-radius:6px; border:none; background:rgba(255,255,255,.08);
+      color:#9fb0a5; cursor:pointer; font-size:12px; line-height:1; display:flex; align-items:center; justify-content:center; padding:0;
+    }
+    .recent-search-chip-remove:hover { background:rgba(255,90,90,.25); color:#ffb3b3; }
+
     .sort-row { margin-bottom:22px; }
     .sort-row label { display:block; margin:0 0 9px; font-size:12px; color:#9fb0a5; }
     .sort-row select { width:100%; height:46px; padding:0 40px 0 16px; border-radius:11px; border:1px solid rgba(255,255,255,.1); background:#07150d; color:#e8f0ea; font:inherit; font-size:14px; appearance:none; cursor:pointer; }
@@ -820,7 +841,10 @@
     /* 掲示板ページ：PCでは画面中央に幅を絞って表示（スマホは全幅のまま） */
     @media (min-width: 768px) {
       .board-page-wrap { max-width:calc(236px + (100vw - 236px) / 3); min-width:620px; margin:0 auto; }
-      .mypage-page-wrap { width:calc(236px + (100vw - 236px) / 3); margin:0 auto; }
+      /* マイページはX(Twitter)のタイムラインと同じ感覚の固定幅(約600px)にして、サイドバー分を除いた余白の中央に配置する。
+         このボックス自体が.pageのpadding-left:236pxを持つ(border-box)ため、見た目の中身が600pxになるよう236pxを足した幅を指定し、
+         margin:0 autoでビューポート全体に対して中央寄せすることで、結果的にサイドバーを除いた領域の中央に来る（既存の.board-page-wrapと同じ手法） */
+      .mypage-page-wrap { width:calc(236px + 600px); max-width:calc(100vw - 32px); margin:0 auto; }
     }
     /* 検索ページの絞り込みパネルは常に幅が狭いサイドバーなので、画面幅に関係なく
        常に1列＋矢印切り替えのままにする（2列にすると狭すぎて目盛りが潰れる） */
@@ -1112,13 +1136,15 @@
       border-bottom:1px solid rgba(255,255,255,.06);
     }
     .mypage-hero { display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; padding:0 24px; margin-top:-46px; }
+    /* ゲスト表示にはカバー画像が無いため、ログイン済み用のマイナスマージンをそのまま使うとヘッダーに食い込む。ゲストのみ正の余白に上書き */
+    #mypageGuest .mypage-hero { margin-top:28px; }
     .mypage-avatar {
-      width:88px; height:88px; border-radius:22px; display:flex; align-items:center; justify-content:center;
+      width:134px; height:134px; border-radius:50%; display:flex; align-items:center; justify-content:center;
       flex-shrink:0; box-shadow:0 12px 28px -12px rgba(0,0,0,.8); overflow:hidden;
     }
     .guest-avatar { background:linear-gradient(150deg,#2c4436,#1d3225); border:3px solid #0e2015; }
     .user-avatar { background:linear-gradient(150deg,#2c4436,#1d3225); border:3px solid #0e2015; color:#9be3bd; font-size:1.5rem; font-weight:800; overflow:hidden; }
-    .user-avatar img { width:100%; height:100%; min-width:0; min-height:0; object-fit:cover; display:block; border-radius:19px; }
+    .user-avatar img { width:100%; height:100%; min-width:0; min-height:0; object-fit:cover; display:block; border-radius:50%; }
     .mypage-avatar-wrap { position:relative; flex-shrink:0; }
     .mypage-avatar-edit-btn {
       position:absolute; bottom:-4px; right:-4px; width:26px; height:26px; border-radius:50%;
@@ -1879,6 +1905,14 @@
       <input id="overlaySearchInput" type="search" placeholder="タイトル・ジャンル・雰囲気で検索" autocomplete="off" />
     </div>
     <button class="search-go search-go-yellow" id="overlaySearchBtn" data-i18n="btnSearchGo" style="width:100%;margin-top:.7rem;">検索</button>
+    <!-- 直近の検索ワード（最大10件、空いてるスペースの有効活用） -->
+    <div class="recent-search-section" id="recentSearchSection" style="display:none;">
+      <div class="recent-search-head">
+        <span class="recent-search-title">🕘 最近の検索</span>
+        <button type="button" class="recent-search-clear" id="recentSearchClearBtn">すべて消去</button>
+      </div>
+      <div class="recent-search-chips" id="recentSearchChips"></div>
+    </div>
   </div>
 
   <!-- ── お好み検索タブ ── -->
@@ -2091,7 +2125,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.189.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.192.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4008,7 +4042,7 @@
   <div id="mypageGuest">
     <div class="mypage-hero">
       <div class="mypage-avatar guest-avatar">
-        <svg viewBox="0 0 40 40" width="60" height="60">
+        <svg viewBox="0 0 40 40" width="92" height="92">
           <circle cx="20" cy="15" r="9" fill="rgba(140,198,160,0.4)"/>
           <ellipse cx="20" cy="36" rx="14" ry="9" fill="rgba(140,198,160,0.4)"/>
         </svg>
@@ -4236,7 +4270,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.189.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.192.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5736,7 +5770,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.189.0';
+      if(vEl) vEl.textContent = 'v0.192.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -7008,9 +7042,66 @@
     const titlePanel = document.getElementById('searchPanelTitle');
     if(prefPanel) prefPanel.style.display = mode === 'pref' ? '' : 'none';
     if(titlePanel) titlePanel.style.display = mode === 'title' ? '' : 'none';
+    if(mode === 'title') renderRecentTitleSearches();
   }
   document.getElementById('searchModePref')?.addEventListener('click', ()=>switchSearchMode('pref'));
   document.getElementById('searchModeTitle')?.addEventListener('click', ()=>switchSearchMode('title'));
+
+  // 直近の検索ワード（タイトル検索タブ、最大10件・重複なし・新しい順）
+  const RECENT_TITLE_SEARCH_KEY = 'animepple-recent-title-searches';
+  function getRecentTitleSearches() {
+    try { const p = JSON.parse(localStorage.getItem(RECENT_TITLE_SEARCH_KEY) || '[]'); return Array.isArray(p) ? p : []; }
+    catch(_) { return []; }
+  }
+  function saveRecentTitleSearches(list) {
+    try { localStorage.setItem(RECENT_TITLE_SEARCH_KEY, JSON.stringify(list)); } catch(_) {}
+  }
+  function addRecentTitleSearch(q) {
+    q = (q||'').trim();
+    if(!q) return;
+    let list = getRecentTitleSearches().filter(x => x.toLowerCase() !== q.toLowerCase());
+    list.unshift(q);
+    list = list.slice(0, 10);
+    saveRecentTitleSearches(list);
+  }
+  function removeRecentTitleSearch(q) {
+    const list = getRecentTitleSearches().filter(x => x !== q);
+    saveRecentTitleSearches(list);
+    renderRecentTitleSearches();
+  }
+  function renderRecentTitleSearches() {
+    const section = document.getElementById('recentSearchSection');
+    const chipsEl = document.getElementById('recentSearchChips');
+    if(!section || !chipsEl) return;
+    const list = getRecentTitleSearches();
+    if(!list.length) { section.style.display = 'none'; chipsEl.innerHTML = ''; return; }
+    section.style.display = '';
+    chipsEl.innerHTML = list.map(q => `
+      <button type="button" class="recent-search-chip" data-q="${escapeHtml(q)}">
+        <span class="recent-search-chip-label">${escapeHtml(q)}</span>
+        <span class="recent-search-chip-remove" data-remove-q="${escapeHtml(q)}" role="button" aria-label="削除">✕</span>
+      </button>
+    `).join('');
+    chipsEl.querySelectorAll('.recent-search-chip-remove').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        removeRecentTitleSearch(btn.dataset.removeQ);
+      };
+    });
+    chipsEl.querySelectorAll('.recent-search-chip').forEach(chip => {
+      chip.onclick = () => {
+        const q = chip.dataset.q;
+        const input = document.getElementById('overlaySearchInput');
+        if(input) input.value = q;
+        doOverlaySearch();
+      };
+    });
+  }
+  const _recentSearchClearBtn = document.getElementById('recentSearchClearBtn');
+  if(_recentSearchClearBtn) {
+    _recentSearchClearBtn.onclick = () => { saveRecentTitleSearches([]); renderRecentTitleSearches(); };
+  }
+
   // 「絞り込み」ボタン：タグ・年代の展開パネルを開閉
   const _refineToggle = document.getElementById('searchRefineToggle');
   const _refinePanel = document.getElementById('searchRefinePanel');
@@ -7256,6 +7347,9 @@
     const q=document.getElementById('overlaySearchInput').value.trim();
     let sort=document.getElementById('overlaySortSelect').value;
     if (q) sort = 'relevance'; // キーワードがあれば関連度ベースを優先（renderSearch側で選択肢も切り替わる）
+    // タイトル検索タブでの検索のみ「直近の検索」に記録する
+    const isTitleMode = document.getElementById('searchModeTitle')?.classList.contains('active');
+    if(isTitleMode && q) addRecentTitleSearch(q);
     closeSearch();
     srSearchState.q=q; srSearchState.sort=sort;
     const overlayEra = getEraRange('overlayEraToggle','overlayEraFrom','overlayEraTo');
@@ -8407,8 +8501,8 @@
         <article class="review-card">
           <div class="rc-head">
             <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
-              <div${userOnclick} style="width:40px;height:40px;border-radius:11px;overflow:hidden;background:${avatarUrl?'transparent':(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
-                ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="width:40px;height:40px;object-fit:cover;display:block;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
+              <div${userOnclick} style="width:48px;height:48px;border-radius:50%;overflow:hidden;background:${avatarUrl?'transparent':(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
+                ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="width:48px;height:48px;object-fit:cover;display:block;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
                 <span class="rc-name"${userOnclick}>${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}${countryBadgeHtml(rev.countryCode||rev.country_code)}</span>
@@ -9059,7 +9153,7 @@
     if(!topLevel.length) {
       html += `<p style="font-size:.82rem;color:var(--muted,#9ab);text-align:center;padding:2rem 0;">${escapeHtml(t('boardEmpty'))}</p>`;
     } else {
-      const avatarHtml = (name) => `<span style="width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:linear-gradient(150deg,#2c4436,#1d3225);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#9be3bd;">${escapeHtml((name||'ゲ').charAt(0))}</span>`;
+      const avatarHtml = (name) => `<span style="width:48px;height:48px;flex:0 0 48px;border-radius:50%;background:linear-gradient(150deg,#2c4436,#1d3225);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#9be3bd;">${escapeHtml((name||'ゲ').charAt(0))}</span>`;
       const kebabMenu = (targetType, targetId, targetUserId) => {
         if(!_currentUser || targetUserId === _currentUser.id) return '';
         return `<div style="position:relative;">
@@ -13434,9 +13528,9 @@
       const avatarUrl = userId ? avatarMap[userId] : null;
       const iconBg = avatarUrl ? 'transparent' : (name==='ゲスト'?'rgba(140,198,160,0.2)':colors[name.charCodeAt(0)%colors.length]);
       const iconContent = avatarUrl
-        ? `<img src="${escapeHtml(avatarUrl)}" alt="" style="width:32px;height:32px;object-fit:cover;display:block;">`
+        ? `<img src="${escapeHtml(avatarUrl)}" alt="" style="width:48px;height:48px;object-fit:cover;display:block;">`
         : (name==='ゲスト'
-          ?'<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>'
+          ?'<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>'
           :name.slice(0,1));
       const tags = (rev.tags||[]).map(tg=>{const ci=tg.indexOf(':');const text=ci>0?tg.slice(ci+1):tg;return `<span class="tag-chip-user">#${escapeHtml(text)}</span>`;}).join('');
       const dateStr = rev.createdAt||rev.created_at?new Date(rev.createdAt||rev.created_at).toLocaleDateString('ja-JP',{year:'numeric',month:'short',day:'numeric'}):'';
@@ -13469,7 +13563,7 @@
         <span class="rc-comment-label${hasComment?' has-comment':''}">${hasComment?'コメントあり':'コメントなし'}</span>
         <div class="rc-head">
           <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;">
-            <div${userOnclick} style="width:40px;height:40px;border-radius:11px;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+            <div${userOnclick} style="width:48px;height:48px;border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
             <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
               <span class="rc-name"${userOnclick}>${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
@@ -13489,7 +13583,7 @@
           </button>
           <div class="rc-head">
             <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;">
-              <div${userOnclick} style="width:40px;height:40px;border-radius:11px;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+              <div${userOnclick} style="width:48px;height:48px;border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
                 <span class="rc-name"${userOnclick}>${name}${flag}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
@@ -14244,7 +14338,7 @@
     const idx = targetUserId.charCodeAt(0) % colors.length;
     if (avatarUrl) {
       avatar.style.background = 'transparent';
-      avatar.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="avatar" style="width:68px;height:68px;object-fit:cover;display:block;border-radius:18px;">`;
+      avatar.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="avatar" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;">`;
     } else {
       avatar.style.background = colors[idx];
       avatar.textContent = initial;
