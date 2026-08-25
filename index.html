@@ -607,6 +607,33 @@
       padding:.3rem .5rem;
     }
     .rc-comment-label.has-comment { color:#8ee26f; border-color:rgba(92,201,142,.5); }
+
+    /* ── 実績ランクバッジ（レビューカードの名前横・マイページ共通） ── */
+    .rank-tag {
+      display:inline-flex; align-items:center; gap:.32rem;
+      font-size:.72rem; font-weight:800; padding:.28rem .68rem .28rem .58rem; border-radius:999px;
+      position:relative; overflow:hidden; isolation:isolate;
+      border:1px solid transparent; vertical-align:middle;
+    }
+    .rank-tag svg { flex-shrink:0; display:block; position:relative; z-index:3; }
+    .rank-tag span { position:relative; z-index:3; }
+    /* 上部のツヤハイライト（宝石・メタルのような光沢感） */
+    .rank-tag::before {
+      content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
+      background:linear-gradient(180deg, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 45%);
+    }
+    /* 金・プラチナ・紫だけ：斜めの光の帯が周期的に通過するきらめき演出 */
+    .rank-tag.sparkle::after {
+      content:''; position:absolute; inset:0; z-index:2; pointer-events:none;
+      background:linear-gradient(115deg, transparent 25%, rgba(255,255,255,.95) 50%, transparent 75%);
+      background-size:250% 100%; background-position:150% 0;
+      animation:rankSparkleSweep 3s ease-in-out infinite;
+    }
+    @keyframes rankSparkleSweep {
+      0%   { background-position:150% 0; }
+      32%  { background-position:-50% 0; }
+      100% { background-position:-50% 0; }
+    }
     /* コメント面（裏）を表示中はバッジ不要 */
     .review-card-flip-inner.flipped .rc-comment-label { display:none; }
     @media(max-width:767px){
@@ -1166,11 +1193,6 @@
     .mypage-info { flex:1 1 220px; min-width:0; padding-bottom:6px; }
     .mypage-name { font-family:"Zen Kaku Gothic New",sans-serif; font-size:22px; font-weight:900; color:#e8f0ea; margin:0 0 .2rem; letter-spacing:.01em; }
     .mypage-sub { font-size:13px; color:#82968a; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .mypage-rank-badge {
-      display:inline-flex; align-items:center; gap:5px; height:26px; margin-top:.5rem; padding:0 11px; border-radius:8px;
-      background:linear-gradient(135deg,#f3d786,#d9a441);
-      color:#2a2006; font-size:12px; font-weight:800;
-    }
     .mypage-actions { display:flex; gap:9px; padding-bottom:6px; }
     .mypage-btn-primary {
       height:40px; padding:0 16px; border-radius:11px; background:linear-gradient(120deg,var(--brand),var(--brand2));
@@ -2135,7 +2157,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.199.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.202.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4083,7 +4105,7 @@
         <div class="mypage-info">
           <p class="mypage-name" id="mypageUsername" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span id="mypageUsernameText">ユーザー名</span><span id="mypageCountryBadge"></span></p>
           <p class="mypage-sub" id="mypageEmail" style="display:none;">email</p>
-          <p class="mypage-rank-badge" id="mypageRankBadge" style="display:none;"></p>
+          <p id="mypageRankBadge" style="display:none;"></p>
         </div>
         <div class="mypage-actions mypage-owner-only">
           <button class="mypage-btn-secondary" id="mypageEditBtn" onclick="openProfileEdit()">
@@ -4273,7 +4295,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.199.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.202.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5773,7 +5795,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.199.0';
+      if(vEl) vEl.textContent = 'v0.202.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
@@ -7774,16 +7796,48 @@
      ユーザーの上質レビュー累計数で称号と重みを決定する
   ════════════════════════════ */
   const RANK_TIERS = [
-    { name:'新人',           min:0,  max:2,        weight:1.0,  tier:'green',    color:'#5ec97a', colorSoft:'rgba(94,201,122,.16)' },
-    { name:'駆け出しレビュアー', min:3,  max:7,        weight:1.1,  tier:'bronze',  color:'#cd7f32', colorSoft:'rgba(205,127,50,.16)' },
-    { name:'アニメ通',       min:8,  max:15,       weight:1.2,  tier:'bronze',  color:'#cd7f32', colorSoft:'rgba(205,127,50,.16)' },
-    { name:'グラフマイスター', min:16, max:29,       weight:1.35, tier:'silver',  color:'#c0c8d0', colorSoft:'rgba(192,200,208,.18)' },
-    { name:'ベテランレビュアー', min:30, max:49,       weight:1.5,  tier:'silver',  color:'#c0c8d0', colorSoft:'rgba(192,200,208,.18)' },
-    { name:'エキスパート',   min:50, max:69,       weight:1.65, tier:'gold',    color:'#d9a441', colorSoft:'rgba(217,164,65,.18)' },
-    { name:'レジェンド',     min:70, max:89,       weight:1.8,  tier:'gold',    color:'#d9a441', colorSoft:'rgba(217,164,65,.18)' },
-    { name:'マスターオブグラフ', min:90, max:99,       weight:1.9,  tier:'platinum', color:'#c9e3e0', colorSoft:'rgba(201,227,224,.22)' },
-    { name:'殿堂入り',       min:100, max:Infinity, weight:2.0,  tier:'legend',   color:'#b18cf2', colorSoft:'rgba(177,140,242,.22)' },
+    { name:'新人',           min:0,  max:2,        weight:1.0,  tier:'green',    color:'#5ec97a', colorSoft:'rgba(94,201,122,.16)',
+      badgeIcon:'circle', badgeIconColor:'#8fe0a8', badgeTextColor:'#eafdf1', badgeBg:'rgba(94,201,122,.30)', badgeBorder:'rgba(139,224,168,.5)', badgeSparkle:false },
+    { name:'駆け出しレビュアー', min:3,  max:7,        weight:1.1,  tier:'bronze',  color:'#cd7f32', colorSoft:'rgba(205,127,50,.16)',
+      badgeIcon:'hex', badgeIconColor:'#e0965a', badgeTextColor:'#fff5ea', badgeBg:'rgba(205,127,50,.32)', badgeBorder:'rgba(224,150,90,.6)', badgeSparkle:false },
+    { name:'アニメ通',       min:8,  max:15,       weight:1.2,  tier:'bronze',  color:'#cd7f32', colorSoft:'rgba(205,127,50,.16)',
+      badgeIcon:'hex', badgeIconColor:'#e0965a', badgeTextColor:'#fff5ea', badgeBg:'rgba(205,127,50,.32)', badgeBorder:'rgba(224,150,90,.6)', badgeSparkle:false },
+    { name:'グラフマイスター', min:16, max:29,       weight:1.35, tier:'silver',  color:'#c0c8d0', colorSoft:'rgba(192,200,208,.18)',
+      badgeIcon:'hex', badgeIconColor:'#d7dde3', badgeTextColor:'#f5f8fa', badgeBg:'rgba(180,190,200,.34)', badgeBorder:'rgba(215,221,227,.6)', badgeSparkle:false },
+    { name:'ベテランレビュアー', min:30, max:49,       weight:1.5,  tier:'silver',  color:'#c0c8d0', colorSoft:'rgba(192,200,208,.18)',
+      badgeIcon:'hex', badgeIconColor:'#d7dde3', badgeTextColor:'#f5f8fa', badgeBg:'rgba(180,190,200,.34)', badgeBorder:'rgba(215,221,227,.6)', badgeSparkle:false },
+    { name:'エキスパート',   min:50, max:69,       weight:1.65, tier:'gold',    color:'#d9a441', colorSoft:'rgba(217,164,65,.18)',
+      badgeIcon:'star', badgeIconColor:'#3a2508', badgeTextColor:'#2b1c05',
+      badgeBg:'linear-gradient(135deg,#b9863a 0%,#f0c35e 35%,#f7dc93 50%,#f0c35e 65%,#b9863a 100%)', badgeBorder:'rgba(255,222,140,.85)', badgeSparkle:true, badgeGlow:'rgba(255,255,255,.55)' },
+    { name:'レジェンド',     min:70, max:89,       weight:1.8,  tier:'gold',    color:'#d9a441', colorSoft:'rgba(217,164,65,.18)',
+      badgeIcon:'star', badgeIconColor:'#3a2508', badgeTextColor:'#2b1c05',
+      badgeBg:'linear-gradient(135deg,#b9863a 0%,#f0c35e 35%,#f7dc93 50%,#f0c35e 65%,#b9863a 100%)', badgeBorder:'rgba(255,222,140,.85)', badgeSparkle:true, badgeGlow:'rgba(255,255,255,.55)' },
+    { name:'マスターオブグラフ', min:90, max:99,       weight:1.9,  tier:'platinum', color:'#c9e3e0', colorSoft:'rgba(201,227,224,.22)',
+      badgeIcon:'gem', badgeIconColor:'#083030', badgeTextColor:'#052222',
+      badgeBg:'linear-gradient(135deg,#4fa3a8 0%,#8fe9ea 35%,#cdf8f7 50%,#8fe9ea 65%,#4fa3a8 100%)', badgeBorder:'rgba(200,250,250,.85)', badgeSparkle:true, badgeGlow:'rgba(255,255,255,.55)' },
+    { name:'殿堂入り',       min:100, max:Infinity, weight:2.0,  tier:'legend',   color:'#b18cf2', colorSoft:'rgba(177,140,242,.22)',
+      badgeIcon:'crown', badgeIconColor:'#2c1a4d', badgeTextColor:'#fff',
+      badgeBg:'linear-gradient(135deg,#4a2e7a 0%,#825cc4 35%,#8c74c2 50%,#825cc4 65%,#4a2e7a 100%)', badgeBorder:'rgba(230,200,255,.85)', badgeSparkle:true, badgeGlow:'rgba(0,0,0,.55)' },
   ];
+
+  // 実績ランクのアイコンSVG（種類ごとの形状。サイズは呼び出し側で指定）
+  function rankIconSvg(type, color, size) {
+    size = size || 13;
+    switch(type) {
+      case 'circle': return `<svg width="${size-2}" height="${size-2}" viewBox="0 0 24 24" fill="${color}"><circle cx="12" cy="12" r="9"/></svg>`;
+      case 'hex':    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}"><polygon points="12,2 20,7 20,17 12,22 4,17 4,7"/></svg>`;
+      case 'star':   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}"><path d="M12 1.5l3.09 6.26 6.91 1-5 4.87 1.18 6.87L12 17.27l-6.18 3.25L7 13.63l-5-4.87 6.91-1L12 1.5z"/></svg>`;
+      case 'gem':    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}"><path d="M7 3h10l4 5-9 13L2 8l5-5z"/></svg>`;
+      case 'crown':  return `<svg width="${size+1}" height="${size+1}" viewBox="0 0 24 24" fill="${color}"><path d="M3 8l4 3 5-7 5 7 4-3-2 11H5L3 8z"/></svg>`;
+      default: return '';
+    }
+  }
+  // 実績ランクバッジのHTML（レビューカードの名前横・マイページ共通で使う）
+  function rankTagHtml(rank) {
+    if(!rank) return '';
+    const glowStyle = rank.badgeGlow ? `text-shadow:0 1px 2px ${rank.badgeGlow}, 0 0 4px ${rank.badgeGlow};` : '';
+    return `<span class="rank-tag${rank.badgeSparkle?' sparkle':''}" style="background:${rank.badgeBg};color:${rank.badgeTextColor};border-color:${rank.badgeBorder};${glowStyle}">${rankIconSvg(rank.badgeIcon, rank.badgeIconColor)}<span>${escapeHtml(rank.name)}</span></span>`;
+  }
 
   function getRankByQualityCount(qualityCount) {
     return RANK_TIERS.find(r => qualityCount >= r.min && qualityCount <= r.max) || RANK_TIERS[0];
@@ -8481,6 +8535,7 @@
 
     // アカウント登録済みユーザーのアイコン画像をまとめて取得
     let avatarMap = {};
+    let cardRankQualityCounts = {};
     if(sb) {
       const userIds = [...new Set(reviews.map(r=>r.userId).filter(Boolean))];
       if(userIds.length) {
@@ -8488,6 +8543,9 @@
           const profiles = await db.profiles.getByIds(userIds);
           profiles.forEach(p=>{ if(p.avatar_url) avatarMap[p.id]=p.avatar_url; });
         } catch(e) { console.warn('review avatar fetch:', e); }
+        try {
+          cardRankQualityCounts = await db.reviews.getQualityCountsByUserIds(userIds);
+        } catch(e) { console.warn('review rank fetch:', e); }
       }
     }
 
@@ -8515,15 +8573,18 @@
       const isClickableUser = !!rev.userId;
       const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(rev.userId)}')" style="cursor:pointer;"` : '';
       const avatarUrl = rev.userId ? avatarMap[rev.userId] : null;
+      const cardQualityCount = rev.userId ? (cardRankQualityCounts[rev.userId] || 0) : 0;
+      const cardRank = getRankByQualityCount(cardQualityCount);
       return `
-        <article class="review-card">
-          <div class="rc-head">
+        <article class="review-card" style="position:relative;padding-top:14px;">
+          <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank)}</div>
+          <div class="rc-head" style="padding-top:50px;">
             <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
               <div${userOnclick} style="width:48px;height:48px;border-radius:50%;overflow:hidden;background:${avatarUrl?'transparent':(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
                 ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="width:48px;height:48px;object-fit:cover;display:block;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-                <span class="rc-name"${userOnclick}>${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}${countryBadgeHtml(rev.countryCode||rev.country_code)}</span>
+                <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}${countryBadgeHtml(rev.countryCode||rev.country_code)}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${rev.createdAt?new Date(rev.createdAt).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'}):''}</span>
               </div>
             </div>
@@ -13580,11 +13641,12 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
         </button>
         <span class="rc-comment-label${hasComment?' has-comment':''}">${hasComment?'コメントあり':'コメントなし'}</span>
-        <div class="rc-head">
+        <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank)}</div>
+        <div class="rc-head" style="padding-top:50px;">
           <div style="display:flex;align-items:flex-start;gap:.6rem;flex:1;min-width:0;">
             <div${userOnclick} style="width:48px;height:48px;border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
             <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-              <span class="rc-name"${userOnclick}>${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
+              <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
             </div>
             ${deleteBtnHtml}
@@ -13600,11 +13662,12 @@
           <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="戻る">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
           </button>
-          <div class="rc-head">
+          <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank)}</div>
+          <div class="rc-head" style="padding-top:50px;">
             <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;">
               <div${userOnclick} style="width:48px;height:48px;border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-                <span class="rc-name"${userOnclick}>${name}${flag}</span>
+                <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${name}${flag}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
               </div>
             </div>
@@ -14414,7 +14477,7 @@
       const rank = getRankByQualityCount(qualityCount);
       const badgeEl = document.getElementById('mypageRankBadge');
       if(badgeEl) {
-        badgeEl.textContent = `🏅 ${rank.name}`;
+        badgeEl.innerHTML = rankTagHtml(rank);
         badgeEl.style.display = '';
       }
 
