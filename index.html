@@ -546,9 +546,9 @@
     .master-tag-strength.is-worst, .master-tag-mood.is-worst { background:rgba(130,150,138,.16); color:#82968a; box-shadow:0 0 0 1px rgba(130,150,138,.3) inset; }
     .review-card { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; overflow:hidden; box-shadow:0 12px 30px -20px rgba(0,0,0,.8); }
     /* レビューカードのフリップ（回転してコメント面を表示） */
-    .review-card-flip-wrap { perspective:1400px; }
+    .review-card-flip-wrap { perspective:1400px; -webkit-perspective:1400px; }
     .review-card-flip-inner {
-      position:relative; width:100%; transform-style:preserve-3d;
+      position:relative; width:100%; transform-style:preserve-3d; -webkit-transform-style:preserve-3d;
       transition:transform .5s cubic-bezier(.4,.2,.2,1);
     }
     .review-card-flip-inner.flipped { /* transformはJS側で累積角度制御するためここでは指定しない */ }
@@ -570,7 +570,8 @@
     }
     .rc-flip-btn:hover { background:rgba(92,201,142,.22); }
     .rc-flip-btn svg { transition:transform .5s ease; }
-    .review-card-flip-inner.flipped .rc-flip-btn svg { transform:rotate(180deg); }
+    /* アイコンの回転は表面ボタンのみに限定（裏面は親のrotateY(180deg)で既に反転済みのため、ここに更に掛けると二重に効いて歪む＝回転方向が違って見えるバグの原因） */
+    .review-card-flip-inner.flipped .review-card-front .rc-flip-btn svg { transform:rotate(180deg); }
     .rc-flip-btn.has-comment { border-color:rgba(92,201,142,.5); }
     .rc-comment-label {
       position:absolute; top:18px; right:52px; z-index:5;
@@ -2090,7 +2091,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.188.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.189.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4235,7 +4236,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.188.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.189.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5735,7 +5736,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.188.0';
+      if(vEl) vEl.textContent = 'v0.189.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
     if (page==='board-general'&&animeId) {
