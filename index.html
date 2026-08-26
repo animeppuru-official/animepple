@@ -2179,7 +2179,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.213.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.214.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4373,7 +4373,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.213.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.214.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5973,7 +5973,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.213.0';
+      if(vEl) vEl.textContent = 'v0.214.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -9834,6 +9834,23 @@
   // マイページ：ブロック中のユーザー一覧＋解除ボタン
   // マイページ：参加中の掲示板一覧（新着順・通知設定つき）
   const _boardGroupLabel = { general:'boardGeneralLabel', A:'boardTabA', B:'boardTabB', C:'boardTabC', D:'boardTabD' };
+  const BOARD_NOTIFY_LIMIT = 20; // 通知を紐づけられる掲示板の上限（参加中の掲示板一覧そのものは無制限）
+  let _myBoardsFilter = { search: '', sort: 'newest' };
+
+  function sortMyBoards(list, sort) {
+    const arr = [...list];
+    if(sort === 'title') {
+      arr.sort((a,b)=>a.title.localeCompare(b.title));
+    } else {
+      // 新着順：新着があるものを先頭に、その中でも最新順。既読済みも最新活動順
+      arr.sort((a,b)=>{
+        if(a.isNew !== b.isNew) return a.isNew ? -1 : 1;
+        return new Date(b.latest||0) - new Date(a.latest||0);
+      });
+    }
+    return arr;
+  }
+
   async function renderMyBoards(userId) {
     const el = document.getElementById('mypageBoardsSection');
     if(!el || !sb) return;
@@ -9847,18 +9864,22 @@
     ]);
     const pageMap = {};
     animePages.forEach(p=>{ pageMap[p.id]=p; });
-    const enriched = boards.map(b=>{
+    let enriched = boards.map(b=>{
       const key = b.anime_id+'|'+b.board_type+'|'+b.lang;
       const latest = latestMap[key] || null;
       const state = stateMap[key] || null;
       const isNew = latest && (!state || !state.last_read_at || latest > state.last_read_at);
-      return { ...b, latest, isNew, notify: state ? state.notify !== false : true, title: getTitle(pageMap[b.anime_id]) || pageMap[b.anime_id]?.title || b.anime_id };
+      // 状態レコードが無い（＝一度も通知設定を明示的に触っていない）場合はOFF扱いにする。
+      // ここをtrueにすると、ただ掲示板を開く(=既読になる)だけで無制限に通知購読が作られてしまうため
+      return { ...b, latest, isNew, notify: state ? state.notify === true : false, title: getTitle(pageMap[b.anime_id]) || pageMap[b.anime_id]?.title || b.anime_id };
     });
-    // 新着があるものを先頭に、その中でも最新順。既読済みも最新活動順
-    enriched.sort((a,b)=>{
-      if(a.isNew !== b.isNew) return a.isNew ? -1 : 1;
-      return new Date(b.latest||0) - new Date(a.latest||0);
-    });
+    // 参加中の掲示板一覧そのものは無制限。通知のON/OFFだけ、最大20個までの制限を管理する
+    const notifyOnCount = () => enriched.filter(b=>b.notify).length;
+
+    enriched = sortMyBoards(enriched, _myBoardsFilter.sort);
+    const q = _myBoardsFilter.search.trim().toLowerCase();
+    const visible = q ? enriched.filter(b=>b.title.toLowerCase().includes(q)) : enriched;
+
     const hasPush = await db.pushSubscriptions.hasAny(userId);
     const pushBannerHtml = hasPush ? '' : `
       <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;border:1px solid var(--line,#2a3830);border-radius:8px;padding:.5rem .7rem;margin-bottom:.6rem;background:var(--card2,#141c19);">
@@ -9867,15 +9888,22 @@
       </div>`;
     el.innerHTML = `
       ${pushBannerHtml}
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:.4rem;">
         <h3 style="margin:0;font-size:.9rem;">${escapeHtml(t('myBoardsTitle'))}</h3>
-        <div style="display:flex;gap:.4rem;">
-          <button type="button" id="myBoardsNotifyAllOn" style="font-size:.68rem;padding:.25rem .6rem;border-radius:999px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">${escapeHtml(t('notifyAllOn'))}</button>
-          <button type="button" id="myBoardsNotifyAllOff" style="font-size:.68rem;padding:.25rem .6rem;border-radius:999px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">${escapeHtml(t('notifyAllOff'))}</button>
-        </div>
+        <span style="font-size:.7rem;color:var(--muted,#9ab);">${escapeHtml(t('notifyCountLabel'))} ${notifyOnCount()}/${BOARD_NOTIFY_LIMIT}</span>
+      </div>
+      <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;">
+        <input type="search" id="myBoardsSearchInput" placeholder="${escapeHtml(t('boardSearchPlaceholder'))}" value="${escapeHtml(_myBoardsFilter.search)}"
+          style="flex:1;min-width:140px;height:36px;padding:0 12px;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font:inherit;font-size:.78rem;" />
+        <select id="myBoardsSortSelect" style="height:36px;padding:0 10px;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font:inherit;font-size:.78rem;cursor:pointer;">
+          <option value="newest"${_myBoardsFilter.sort==='newest'?' selected':''}>${escapeHtml(t('boardSortNewest'))}</option>
+          <option value="title"${_myBoardsFilter.sort==='title'?' selected':''}>${escapeHtml(t('boardSortTitle'))}</option>
+        </select>
+        <button type="button" id="myBoardsNotifyAllOn" style="font-size:.68rem;padding:.25rem .6rem;border-radius:999px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">${escapeHtml(t('notifyAllOn'))}</button>
+        <button type="button" id="myBoardsNotifyAllOff" style="font-size:.68rem;padding:.25rem .6rem;border-radius:999px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">${escapeHtml(t('notifyAllOff'))}</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:.4rem;">
-        ${enriched.map(b=>{
+        ${visible.map(b=>{
           const langInfo = LANGS.find(l=>l.code===b.lang);
           const langChip = langInfo ? `<span style="font-size:.62rem;font-weight:800;padding:.1rem .4rem;border-radius:5px;background:rgba(255,255,255,.08);color:#9fb0a5;flex-shrink:0;">${escapeHtml(langInfo.code.split('-')[0].toUpperCase())}</span>` : '';
           return `
@@ -9906,11 +9934,36 @@
       };
     });
     el.querySelectorAll('.my-board-notify-toggle').forEach(cb=>{
-      cb.onclick = (e) => { e.stopPropagation(); db.boardState.setNotify(userId, cb.dataset.animeId, cb.dataset.boardType, cb.checked, cb.dataset.lang).catch(()=>{}); };
+      cb.onclick = async (e) => {
+        e.stopPropagation();
+        if(cb.checked && notifyOnCount() >= BOARD_NOTIFY_LIMIT) {
+          cb.checked = false;
+          alert(t('notifyLimitReachedAlert'));
+          return;
+        }
+        await db.boardState.setNotify(userId, cb.dataset.animeId, cb.dataset.boardType, cb.checked, cb.dataset.lang).catch(()=>{});
+        renderMyBoards(userId);
+      };
     });
+    const searchInput = document.getElementById('myBoardsSearchInput');
+    if(searchInput) {
+      searchInput.oninput = () => { _myBoardsFilter.search = searchInput.value; renderMyBoards(userId); };
+    }
+    const sortSelect = document.getElementById('myBoardsSortSelect');
+    if(sortSelect) {
+      sortSelect.onchange = () => { _myBoardsFilter.sort = sortSelect.value; renderMyBoards(userId); };
+    }
     const onBtn = document.getElementById('myBoardsNotifyAllOn');
     const offBtn = document.getElementById('myBoardsNotifyAllOff');
-    if(onBtn) onBtn.onclick = async () => { await db.boardState.setNotifyBulk(userId, boards, true); renderMyBoards(userId); };
+    if(onBtn) onBtn.onclick = async () => {
+      // 通知は最大20個まで。新着順（表示中の並び順）で先頭から20個だけONにする
+      const capped = enriched.slice(0, BOARD_NOTIFY_LIMIT);
+      const rest = enriched.slice(BOARD_NOTIFY_LIMIT);
+      await db.boardState.setNotifyBulk(userId, capped, true);
+      if(rest.length) await db.boardState.setNotifyBulk(userId, rest, false);
+      if(enriched.length > BOARD_NOTIFY_LIMIT) alert(t('notifyAllCappedAlert'));
+      renderMyBoards(userId);
+    };
     if(offBtn) offBtn.onclick = async () => { await db.boardState.setNotifyBulk(userId, boards, false); renderMyBoards(userId); };
     const pushBtn = document.getElementById('myBoardsEnablePushBtn');
     if(pushBtn) pushBtn.onclick = async () => {
@@ -11081,6 +11134,12 @@
     newActivityBadge:{ ja:'新着', en:'New' },
     notifyAllOn:{ ja:'すべて通知ON', en:'Notify all' },
     notifyAllOff:{ ja:'すべて通知OFF', en:'Mute all' },
+    notifyCountLabel: { ja:'通知ON', en:'Notifications on' },
+    notifyLimitReachedAlert: { ja:'通知は最大20個までです。他の掲示板の通知をオフにしてから、こちらをオンにしてください。', en:'You can enable notifications for up to 20 boards. Turn one off first to enable this one.' },
+    notifyAllCappedAlert: { ja:'通知は最大20個までのため、新しい順に20個だけ通知ONにしました。', en:'Only 20 boards can have notifications on, so the most recent 20 were enabled.' },
+    boardSearchPlaceholder: { ja:'タイトルで検索…', en:'Search by title…' },
+    boardSortNewest: { ja:'新着順', en:'Newest' },
+    boardSortTitle: { ja:'タイトル順', en:'Title' },
     boardGeneralLabel:{ ja:'通常掲示板', en:'General board' },
     yourValueBtn:{ ja:'あなたの価値観', en:'Your taste' },
     pushEnablePrompt:{ ja:'通知ONの掲示板に新着があったら、スマホ・PCに通知を届けます', en:'Get notified on your device when boards you follow have new posts' },
