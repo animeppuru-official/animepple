@@ -2207,7 +2207,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.225.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.228.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4426,7 +4426,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.225.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.228.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5686,9 +5686,15 @@
   }
   // 通知を紐づけられる掲示板の上限：固定10（調整設定なし）。対象は価値観掲示板のみ（通常掲示板は通知対象外）
   function getBoardNotifyLimit() { return 10; }
+  // getAll()は呼び出し頻度が高い割に毎回JSON.parse＋配列結合をしていたため、
+  // 結果をキャッシュして「書き込みがあった時だけ」再計算するようにする（invalidateGetAllCache参照）
+  let _getAllCache = null;
+  function invalidateGetAllCache() { _getAllCache = null; }
   function getAll() {
+    if(_getAllCache) return _getAllCache;
     const d=new Set(pj(DELETED_KEY));
-    return [...pj(STORAGE_KEY),...seedAnime.filter(s=>!d.has(s.id))];
+    _getAllCache = [...pj(STORAGE_KEY),...seedAnime.filter(s=>!d.has(s.id))];
+    return _getAllCache;
   }
   // 検索専用：animepple-user-pages（訪問済みページの個別ローカルキャッシュ）を除いたベースリスト。
   // Supabaseモードでは検索時に必ずgetAllForSearch()で全件を取り直すため、
@@ -5870,11 +5876,40 @@
   let currentAnimeId = null;
 
   /* ════════════════════════════
-     URLルーティング（アニメページのみ・第一弾）
+     URLルーティング（全ページ対応）
      GitHub Pagesはサブパス配信（/animepple/）かつ静的ホスティングなので、
      history.pushState + 404.htmlフォールバックの組み合わせでパス方式のURLを実現する
   ════════════════════════════ */
   const BASE_PATH = '/animepple';
+  // アニメの詳細に紐づかない、単純な固定URLのページ一覧
+  const STATIC_PAGE_PATHS = {
+    home: '/',
+    search: '/search',
+    popular: '/popular',
+    gacha: '/gacha',
+    articles: '/articles',
+    board: '/board',
+    mypage: '/mypage',
+    'my-reviews': '/mypage/reviews',
+    'my-favorites': '/mypage/favorites',
+    'my-boards': '/mypage/boards',
+    'my-icons': '/mypage/icons',
+    settings: '/settings',
+    'settings-account': '/settings/account',
+    'settings-security': '/settings/security',
+    'settings-privacy': '/settings/privacy',
+    'settings-notifications': '/settings/notifications',
+    'settings-display': '/settings/display',
+    'settings-about': '/settings/about',
+    notifications: '/notifications',
+    contact: '/contact',
+    privacy: '/privacy-policy',
+    admin: '/admin',
+    partner: '/partner',
+  };
+  const STATIC_PATH_TO_PAGE = {};
+  Object.entries(STATIC_PAGE_PATHS).forEach(([page, path]) => { STATIC_PATH_TO_PAGE[path] = page; });
+
   // DBの内部id（wiki-xxxxx）をそのまま外部URLに出すと「Wikipedia」を連想させてしまうため、
   // 見た目だけ中立な文字に変換する（DB側のidは一切変更しない・完全に可逆）
   function publicAnimeId(internalId) {
@@ -5893,30 +5928,67 @@
   function animeUrlPath(internalId, title) {
     const idPart = publicAnimeId(internalId);
     const slug = slugifyTitleForUrl(title);
-    return `${BASE_PATH}/anime/${idPart}${slug ? '/' + slug : ''}`;
+    return `/anime/${idPart}${slug ? '/' + slug : ''}`;
   }
-  // 現在のlocation.pathnameが /anime/<id>/... 形式なら、内部idを返す（該当しなければnull）
-  function parseAnimeIdFromPath(pathname) {
-    const rel = pathname.startsWith(BASE_PATH) ? pathname.slice(BASE_PATH.length) : pathname;
-    const m = rel.match(/^\/anime\/([^\/]+)/);
-    if(!m) return null;
-    return internalAnimeIdFromPublic(decodeURIComponent(m[1]));
+  // ページ名（＋アニメID等）から、このアプリ内での相対パス（BASE_PATHを含まない）を組み立てる。
+  // 対応するURLが無い（モーダル等）場合は null を返す
+  function buildRelativePath(page, animeId) {
+    if(page === 'anime' && animeId) {
+      const p = getAll().find(a=>a.id===animeId);
+      return animeUrlPath(animeId, p ? getTitle(p) : '');
+    }
+    if(page === 'reviews' && animeId) return `/anime/${publicAnimeId(animeId)}/reviews`;
+    if(page === 'review' && animeId) return `/anime/${publicAnimeId(animeId)}/write-review`;
+    if(page === 'board-general' && animeId) return `/anime/${publicAnimeId(animeId)}/board`;
+    if(page === 'board-value' && animeId) return `/anime/${publicAnimeId(animeId)}/board/value/${_boardActiveTab || 'A'}`;
+    if(page === 'user' && animeId) return `/user/${encodeURIComponent(animeId)}`;
+    if(page === 'follow-list') {
+      const uid = _followListState && _followListState.userId;
+      const mode = (_followListState && _followListState.mode) || 'following';
+      if(uid) return `/user/${encodeURIComponent(uid)}/follow/${mode}`;
+    }
+    if(STATIC_PAGE_PATHS[page] !== undefined) return STATIC_PAGE_PATHS[page];
+    return null;
   }
-  // タイトルが後から判明した時（非同期取得など）に、URLのスラッグ部分だけ静かに補正する
+  // location.pathnameから { page, animeId } を読み取る。該当しなければ null
+  function parseRouteFromPath(pathname) {
+    const rel = (pathname.startsWith(BASE_PATH) ? pathname.slice(BASE_PATH.length) : pathname) || '/';
+
+    let m = rel.match(/^\/anime\/([^\/]+)\/board\/value\/([A-D])(?:\/.*)?$/);
+    if(m) { _boardActiveTab = m[2]; return { page:'board-value', animeId: internalAnimeIdFromPublic(decodeURIComponent(m[1])) }; }
+
+    m = rel.match(/^\/anime\/([^\/]+)\/board(?:\/.*)?$/);
+    if(m) return { page:'board-general', animeId: internalAnimeIdFromPublic(decodeURIComponent(m[1])) };
+
+    m = rel.match(/^\/anime\/([^\/]+)\/reviews(?:\/.*)?$/);
+    if(m) return { page:'reviews', animeId: internalAnimeIdFromPublic(decodeURIComponent(m[1])) };
+
+    m = rel.match(/^\/anime\/([^\/]+)\/write-review(?:\/.*)?$/);
+    if(m) return { page:'review', animeId: internalAnimeIdFromPublic(decodeURIComponent(m[1])) };
+
+    m = rel.match(/^\/anime\/([^\/]+)(?:\/.*)?$/);
+    if(m) return { page:'anime', animeId: internalAnimeIdFromPublic(decodeURIComponent(m[1])) };
+
+    m = rel.match(/^\/user\/([^\/]+)\/follow\/(following|followers)(?:\/.*)?$/);
+    if(m) { _followListState = { userId: decodeURIComponent(m[1]), mode: m[2] }; return { page:'follow-list', animeId: null }; }
+
+    m = rel.match(/^\/user\/([^\/]+)(?:\/.*)?$/);
+    if(m) return { page:'user', animeId: decodeURIComponent(m[1]) };
+
+    if(STATIC_PATH_TO_PAGE[rel] !== undefined) return { page: STATIC_PATH_TO_PAGE[rel], animeId: null };
+    return null;
+  }
+  // タイトルが後から判明した時（非同期取得など）に、URLのスラッグ部分だけ静かに補正する（アニメページのみ）
   function correctAnimeUrlSlug(id, title) {
     if(currentPage !== 'anime' || currentAnimeId !== id) return;
-    const path = animeUrlPath(id, title);
+    const path = BASE_PATH + animeUrlPath(id, title);
     if(location.pathname !== path) history.replaceState({page:'anime', animeId:id}, '', path);
   }
   // ブラウザの戻る/進むボタンで呼ばれる。ここではURLを再度書き換えない（fromPopState指定でnav()に伝える）
   window.addEventListener('popstate', () => {
-    const animeId = parseAnimeIdFromPath(location.pathname);
-    if(animeId) {
-      nav('anime', animeId, { fromPopState: true });
-    } else {
-      const rel = location.pathname.startsWith(BASE_PATH) ? location.pathname.slice(BASE_PATH.length) : location.pathname;
-      if(rel === '' || rel === '/' || rel === '/index.html') nav('home', null, { fromPopState: true });
-    }
+    const route = parseRouteFromPath(location.pathname);
+    if(route) nav(route.page, route.animeId, { fromPopState: true });
+    else nav('home', null, { fromPopState: true });
   });
 
   let navHistory = []; // 履歴スタック
@@ -5983,16 +6055,19 @@
       overlay.classList.remove('open');
     }
     resetSearchStateIfLeaving(currentPage, page);
-    // 現在ページを履歴に積む（同じページへの連続遷移は積まない）
+    // 現在ページを履歴に積む（同じページへの連続遷移は積まない。popstate経由の呼び出しは
+    // 既にブラウザの履歴を「戻った」結果なので、ここでは二重に積まない）
     const last = navHistory[navHistory.length-1];
-    if(!last || last.page !== currentPage || last.animeId !== currentAnimeId) {
+    if(!opts.fromPopState && (!last || last.page !== currentPage || last.animeId !== currentAnimeId)) {
       navHistory.push({ page: currentPage, animeId: currentAnimeId });
     }
     // 「他ユーザーのマイページ」は専用ページを持たず、マイページのDOMを閲覧専用モードで再利用する
     const domPage = (page === 'user') ? 'mypage' : page;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('page-'+domPage).classList.add('active');
-    window.scrollTo(0,0);
+    // 戻る/進むでhome・popularに着地した時は、離れた時のスクロール位置を復元する（それ以外は先頭へ）
+    const willRestoreScroll = opts.fromPopState && (page === 'home' || page === 'popular') && _savedScroll[page] !== undefined;
+    if (willRestoreScroll) _restoreSavedScroll(page); else window.scrollTo(0,0);
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     const ab = document.getElementById('bnav-'+domPage);
     if (ab && page !== 'user') ab.classList.add('active');
@@ -6119,7 +6194,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.225.0';
+      if(vEl) vEl.textContent = 'v0.228.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -6139,62 +6214,26 @@
     if (page==='mypage') renderMypage();
     if (page==='user'&&animeId) { renderMypage(animeId); }
 
-    // URLの更新（第一弾：アニメページのみ。fromPopStateの時は戻る/進むボタン由来なのでURLを触らない）
+    // URLの更新（全ページ対応。fromPopStateの時は戻る/進むボタン由来なのでURLを触らない）
     if(!opts.fromPopState) {
-      if(page === 'anime' && animeId) {
-        const p = getAll().find(a=>a.id===animeId);
-        const title = p ? getTitle(p) : '';
-        const path = animeUrlPath(animeId, title);
-        if(location.pathname + location.search !== path) history.pushState({page:'anime', animeId}, '', path);
-      } else if(page === 'home') {
-        if(location.pathname !== BASE_PATH + '/' && location.pathname !== BASE_PATH) {
-          history.pushState({page:'home'}, '', BASE_PATH + '/');
-        }
+      const rel = buildRelativePath(page, animeId);
+      if(rel !== null) {
+        const fullPath = BASE_PATH + rel;
+        if(location.pathname !== fullPath) history.pushState({page, animeId}, '', fullPath);
       }
     }
   }
   window.nav = nav;
   function navBack() {
-    // ホーム/人気ページから他ページへ「戻る」場合も、同様にスクロール位置を覚えておく
-    if (currentPage === 'home' || currentPage === 'popular') {
-      _savedScroll[currentPage] = window.scrollY;
+    // 全ページが実URLを持つようになったので、基本はブラウザの履歴に任せる
+    // （history.back()を呼べば popstate ハンドラが正しくURLと画面を同期させてくれる）。
+    // ただしアプリ内で一度も遷移していない状態（外部リンクから直接来た等）でhistory.back()を呼ぶと
+    // アプリの外（もしくは真っ白なタブ）に出てしまうため、その時だけホームへ安全に逃がす
+    if(navHistory.length > 0) {
+      history.back();
+    } else {
+      nav('home');
     }
-    const prev = navHistory.pop();
-    if(!prev) { nav('home'); return; }
-    resetSearchStateIfLeaving(currentPage, prev.page);
-    // 履歴から戻る時はスタックに積まない
-    const overlay = document.getElementById('searchOverlay');
-    if(overlay) overlay.classList.remove('open');
-    const domPage = (prev.page === 'user') ? 'mypage' : prev.page;
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page-'+domPage).classList.add('active');
-    // ホーム/人気に戻る場合：前回表示していた内容がまだDOMに残っているので、
-    // データ再取得を待たずにこの時点で即座に位置を復元する（裏では新しいデータに差し替わる）
-    const willRestoreScroll = (prev.page === 'home' || prev.page === 'popular') && _savedScroll[prev.page] !== undefined;
-    if (willRestoreScroll) _restoreSavedScroll(prev.page); else window.scrollTo(0,0);
-    document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
-    const ab = document.getElementById('bnav-'+domPage);
-    if(ab && prev.page !== 'user') ab.classList.add('active');
-    document.querySelectorAll('.bnav-carousel-item').forEach(b=>b.classList.remove('active'));
-    const abc = document.getElementById('bnavc-'+domPage);
-    if(abc && prev.page !== 'user') abc.classList.add('active');
-    const globalNav = document.getElementById('globalBnav');
-    if (globalNav) globalNav.style.display = (prev.page === 'admin') ? 'none' : '';
-    const globalNavCarousel = document.getElementById('bnavCarousel');
-    if (globalNavCarousel) globalNavCarousel.style.display = (prev.page === 'admin') ? 'none' : '';
-    document.body.classList.toggle('admin-fullpage', prev.page === 'admin');
-    currentPage = prev.page;
-    currentAnimeId = prev.animeId || null;
-    const backBtn = document.getElementById('mypageBackBtn');
-    if(backBtn) backBtn.style.display = (prev.page === 'user') ? '' : 'none';
-    if(prev.page==='home')   renderHome().catch(console.error);
-    if(prev.page==='anime'&&prev.animeId)  { renderAnimePage(prev.animeId); }
-    if(prev.page==='review'&&prev.animeId) { initReviewPage(prev.animeId); }
-    if(prev.page==='search') renderSearch().catch(console.error);
-    if(prev.page==='popular') renderPopular().catch(console.error);
-    if(prev.page==='reviews'&&prev.animeId) { currentAnimeId=prev.animeId; renderReviewsList(prev.animeId); }
-    if(prev.page==='mypage') renderMypage();
-    if(prev.page==='user'&&prev.animeId) { renderMypage(prev.animeId); }
   }
   window.navBack = navBack;
   function navSearch(q,sort) {
@@ -8650,6 +8689,7 @@
           const existing = JSON.parse(localStorage.getItem('animepple-user-pages') || '[]');
           if(!existing.find(x=>x.id===mapped.id)) {
             localStorage.setItem('animepple-user-pages', JSON.stringify([mapped, ...existing].slice(0, 200)));
+          invalidateGetAllCache();
           }
           // title_enが未設定（DBにも元々無い）場合のみ、DeepLで翻訳してSupabaseに保存する。
           // 一度保存すれば以降は p.title_en が入っているのでこの分岐自体を通らない（毎回叩かない）。
@@ -8661,7 +8701,7 @@
                 // ローカルキャッシュとメモリ上のページ情報も更新（再取得なしで反映）
                 const cached = JSON.parse(localStorage.getItem('animepple-user-pages') || '[]');
                 const idx = cached.findIndex(x=>x.id===id);
-                if(idx>=0) { cached[idx].titleEn = translated; localStorage.setItem('animepple-user-pages', JSON.stringify(cached)); }
+                if(idx>=0) { cached[idx].titleEn = translated; localStorage.setItem('animepple-user-pages', JSON.stringify(cached)); invalidateGetAllCache(); }
                 if(currentAnimeId === id) {
                   const titleEl = document.getElementById('animeTitleEn');
                   if(titleEl) titleEl.textContent = translated;
@@ -8711,6 +8751,7 @@
           if(changed) {
             if(idx>=0) existing[idx] = mapped; else existing.unshift(mapped);
             localStorage.setItem('animepple-user-pages', JSON.stringify(existing.slice(0,200)));
+          invalidateGetAllCache();
             if(currentAnimeId === id) renderAnimePage(id);
           }
         }
@@ -12190,15 +12231,6 @@
      INIT
   ════════════════════════════ */
   applyLang();
-  // 初回読み込み時、URLが /anime/<id>/... なら直接そのアニメページを開く。それ以外は通常通りホームを表示
-  (function bootRouteFromUrl() {
-    const bootAnimeId = parseAnimeIdFromPath(location.pathname);
-    if(bootAnimeId) {
-      nav('anime', bootAnimeId, { fromPopState: true });
-    } else {
-      renderHome().catch(console.error);
-    }
-  })();
   /* ════════════════════════════
      LEGAL (利用規約・プライバシーポリシー)
   ════════════════════════════ */
@@ -15502,6 +15534,18 @@
       _bnavCarouselDots.forEach((d,i)=>d.classList.toggle('active', i===pageIdx));
     });
   }
+
+  // 初回読み込み時、URLに応じて該当ページを直接開く（該当しなければホーム）。
+  // スクリプト冒頭ではなく最後に置くのは、ここで参照する変数（_currentUser等）の
+  // let宣言がスクリプトの後半にあり、早い段階で呼ぶとTDZ（一時的なデッドゾーン）エラーになるため
+  (function bootRouteFromUrl() {
+    const route = parseRouteFromPath(location.pathname);
+    if(route) {
+      nav(route.page, route.animeId, { fromPopState: true });
+    } else {
+      renderHome().catch(console.error);
+    }
+  })();
 
 })();
 </script>
