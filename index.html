@@ -2167,7 +2167,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.205.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.208.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -3213,6 +3213,17 @@
       <select id="settingsReviewInitialView" style="width:100%;height:42px;padding:0 14px;border-radius:10px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;cursor:pointer;">
         <option value="graph">グラフ</option>
         <option value="comment">コメント</option>
+      </select>
+    </div>
+    <div class="mypage-section" style="padding:1rem 1.1rem;">
+      <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .5rem;">価値観プロフィールのおすすめ表示数</p>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .7rem;">マイページの「あなたの価値観」で、あなたの好みに近い作品を何個表示するか選べます。</p>
+      <select id="settingsValueProfileRecCount" style="width:100%;height:42px;padding:0 14px;border-radius:10px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;cursor:pointer;">
+        <option value="1">1個</option>
+        <option value="2">2個</option>
+        <option value="3">3個</option>
+        <option value="4">4個</option>
+        <option value="5">5個</option>
       </select>
     </div>
   </div>
@@ -4353,7 +4364,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.205.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.208.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4755,17 +4766,21 @@
       },
     },
     axisSignals: {
-      async upsert(userId, animeId, highAxis, lowAxis) {
-        if(!sb || !userId) return { error: 'no user' };
+      // 行動ベースの価値観シグナルを記録する。同じアニメへの行動は重みが積み上がる（複数回行動するほど確信度が上がる）。
+      // chartA/chartB: そのアニメの12軸ベクトル（レビュー投稿時は本人の入力値、それ以外はアニメのマスターグラフ平均）
+      async accumulate(userId, animeId, chartA, chartB, weightToAdd) {
+        if(!sb || !userId || !weightToAdd) return { error: 'invalid' };
+        const { data: existing } = await sb.from('user_axis_signals').select('weight').eq('user_id', userId).eq('anime_id', animeId).maybeSingle();
+        const newWeight = (existing?.weight || 0) + weightToAdd;
         const { error } = await sb.from('user_axis_signals').upsert(
-          { user_id: userId, anime_id: animeId, high_axis: highAxis, low_axis: lowAxis },
+          { user_id: userId, anime_id: animeId, chart_a: chartA, chart_b: chartB, weight: newWeight },
           { onConflict: 'user_id,anime_id' }
         );
         return { error };
       },
       async listForUser(userId) {
         if(!sb || !userId) return [];
-        const { data } = await sb.from('user_axis_signals').select('high_axis,low_axis').eq('user_id', userId);
+        const { data } = await sb.from('user_axis_signals').select('chart_a,chart_b,weight').eq('user_id', userId);
         return data || [];
       },
     },
@@ -5571,6 +5586,14 @@
       return v === 'comment' ? 'comment' : 'graph';
     } catch(_) { return 'graph'; }
   }
+  // 「あなたの価値観」おすすめ表示数：デフォルト1、設定で1〜5まで変更可能
+  function getValueProfileRecCount() {
+    try {
+      const v = parseInt(localStorage.getItem('animepple-value-profile-rec-count'), 10);
+      if(v >= 1 && v <= 5) return v;
+      return 1;
+    } catch(_) { return 1; }
+  }
   function getAll() {
     const d=new Set(pj(DELETED_KEY));
     return [...pj(STORAGE_KEY),...seedAnime.filter(s=>!d.has(s.id))];
@@ -5907,6 +5930,15 @@
           try { localStorage.setItem('animepple-review-initial-view', reviewInitialViewSel.value); } catch(_) {}
         };
       }
+      // 価値観プロフィールのおすすめ表示数（デフォルト1、最大5）
+      const valueRecCountSel = document.getElementById('settingsValueProfileRecCount');
+      if(valueRecCountSel) {
+        valueRecCountSel.value = String(getValueProfileRecCount());
+        valueRecCountSel.onchange = () => {
+          try { localStorage.setItem('animepple-value-profile-rec-count', valueRecCountSel.value); } catch(_) {}
+          if(_currentUser) renderValueProfile(_currentUser.id).catch(console.error);
+        };
+      }
       // 友達の数を表示するかどうか
       const showFriendsCb = document.getElementById('settingsShowFriendsCount');
       if(showFriendsCb && sb) {
@@ -5927,9 +5959,9 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.205.0';
+      if(vEl) vEl.textContent = 'v0.208.0';
     }
-    if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); }
+    if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
       currentAnimeId = animeId;
       const p = getAll().find(a=>a.id===animeId);
@@ -8561,7 +8593,6 @@
       if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら反映しない
       renderMasterGraph(id);
       renderUserTopTagsBox(id); // 最新レビュー反映後にタグ上位3件を再計算
-      recordAxisSignal(id); // 全体価値観プロフィール用：このアニメの高い軸・低い軸を蓄積
       // レビュー数をアニメページに表示（実レビューが3件に達したらAI参考グラフは数に含めない）
       const scopedReviews = getReviews().filter(r=>r.animeId===id);
       const allReviews = filterDisplayReviews(scopedReviews);
@@ -9158,6 +9189,8 @@
             if(error) console.warn('review_values upsert failed:', error);
           }).catch(e=>console.warn('review_values upsert failed:', e));
         }
+        // 全体価値観プロフィール：レビュー投稿は最も強いシグナル。全軸を操作した本人の入力値をそのまま使う
+        if(isFullGraph) recordValueSignal(review.animeId, 'review', review.chartA, review.chartB);
         alert(t('reviewPosted'));
         nav('anime',currentAnimeId);
       })().catch(e=>{
@@ -9629,20 +9662,24 @@
   }
 
   // 有効レビューの集計グラフ（トリム平均/中央値/平均、AGGREGATE_MODEに従う）
-  // 全体価値観プロフィール：このアニメのマスターグラフで一番高い軸・低い軸を、閲覧者の傾向として蓄積する
-  function recordAxisSignal(animeId) {
-    if(!_currentUser || !sb) return;
-    const aA = avgChart(animeId, 'chartA', axisA);
-    const aB = avgChart(animeId, 'chartB', axisB);
-    if(!aA || !aB) return; // マスターグラフがまだ形成されていない作品は対象外
-    const all = { ...aA, ...aB };
-    const entries = Object.entries(all).filter(([,v])=>typeof v === 'number' && !isNaN(v));
-    if(entries.length < 2) return;
-    entries.sort((a,b)=>b[1]-a[1]);
-    const highAxis = entries[0][0];
-    const lowAxis = entries[entries.length-1][0];
-    if(highAxis === lowAxis) return;
-    db.axisSignals.upsert(_currentUser.id, animeId, highAxis, lowAxis).catch(e=>console.warn('recordAxisSignal:', e));
+  // 全体価値観プロフィール：ページを開いただけでは記録しない。「レビュー投稿」「お気に入り追加」「レビュー一覧を開く」の
+  // 3つの行動だけをシグナルとして扱い、行動の強さに応じて重みを付けて蓄積する。
+  const VALUE_SIGNAL_WEIGHTS = { review: 3, favorite: 2, view_reviews: 1 };
+  // ownChartA/ownChartB を渡すと（レビュー投稿時など）本人の入力値をそのまま使う。
+  // 渡さない場合は、そのアニメのマスターグラフ平均を代わりに使う。
+  function recordValueSignal(animeId, actionType, ownChartA, ownChartB) {
+    if(!_currentUser || !sb || !animeId) return;
+    const weight = VALUE_SIGNAL_WEIGHTS[actionType];
+    if(!weight) return;
+    let chartA = ownChartA, chartB = ownChartB;
+    if(!chartA || !chartB) {
+      chartA = avgChart(animeId, 'chartA', axisA);
+      chartB = avgChart(animeId, 'chartB', axisB);
+    }
+    if(!chartA || !chartB) return; // マスターグラフがまだ形成されていない作品は対象外
+    db.axisSignals.accumulate(_currentUser.id, animeId, chartA, chartB, weight)
+      .then(({error})=>{ if(error) console.warn('recordValueSignal:', error); })
+      .catch(e=>console.warn('recordValueSignal:', e));
   }
 
   function avgChart(id,chartKey,labels){
@@ -9947,42 +9984,73 @@
     });
   }
 
+  // 12軸ベクトルの重み付き平均を計算（axisSignalsの各行は「そのアニメの12軸」＋「行動から積み上がった重み」を持つ）
+  function computeWeightedValueVector(signals) {
+    const sums = {}, totalWeights = {};
+    [...axisA, ...axisB].forEach(k => { sums[k] = 0; totalWeights[k] = 0; });
+    signals.forEach(s => {
+      const w = Number(s.weight) || 0;
+      if(!w) return;
+      const all = { ...(s.chart_a||{}), ...(s.chart_b||{}) };
+      Object.entries(all).forEach(([k,v])=>{
+        if(typeof v !== 'number' || isNaN(v)) return;
+        if(!(k in sums)) return;
+        sums[k] += v * w;
+        totalWeights[k] += w;
+      });
+    });
+    const profile = {};
+    [...axisA, ...axisB].forEach(k => { profile[k] = totalWeights[k] > 0 ? sums[k] / totalWeights[k] : null; });
+    return profile;
+  }
+
   async function renderValueProfile(userId) {
     const el = document.getElementById('mypageValueProfileSection');
     if(!el || !sb) return;
     const signals = await db.axisSignals.listForUser(userId);
-    if(!signals.length) { el.style.display='none'; return; }
-    const highCount = {}, lowCount = {};
-    signals.forEach(s=>{
-      if(s.high_axis) highCount[s.high_axis] = (highCount[s.high_axis]||0)+1;
-      if(s.low_axis) lowCount[s.low_axis] = (lowCount[s.low_axis]||0)+1;
-    });
-    const topHigh = Object.entries(highCount).sort((a,b)=>b[1]-a[1])[0];
-    const topLow = Object.entries(lowCount).sort((a,b)=>b[1]-a[1])[0];
-    if(!topHigh && !topLow) { el.style.display='none'; return; }
-    const summaryText = currentLang==='ja'
-      ? `あなたは${topHigh?`「${topHigh[0]}」が高く`:''}${topHigh&&topLow?'、':''}${topLow?`「${topLow[0]}」が低い`:''}作品を好む傾向があります`
-      : `You tend to favor titles with high ${topHigh?topHigh[0]:''}${topHigh&&topLow?' and low ':''}${topLow?topLow[0]:''}`;
+    const totalWeight = signals.reduce((sum,s)=>sum+(Number(s.weight)||0), 0);
+    if(!signals.length || !totalWeight) { el.style.display='none'; return; }
+
+    const profile = computeWeightedValueVector(signals);
+    const labAll = [...getAxisA(), ...getAxisB()];
+    const keysAll = [...axisA, ...axisB];
+    const valsAll = keysAll.map(k => profile[k] != null ? profile[k] : 0);
+    const hasEnoughData = axisA.some(k=>profile[k]!=null) && axisB.some(k=>profile[k]!=null);
+    if(!hasEnoughData) { el.style.display='none'; return; }
+
     el.style.display='';
     el.innerHTML = `
       <h3 class="mypage-section-title">${escapeHtml(currentLang==='ja'?'あなたの価値観':'Your taste profile')}</h3>
-      <p style="margin:0 0 .8rem;font-size:.82rem;color:#dff0e6;">${escapeHtml(summaryText)}</p>
-      <div id="valueProfileRecs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;"></div>
+      <p style="margin:0 0 .8rem;font-size:.78rem;color:var(--muted);">${escapeHtml(currentLang==='ja'?'レビュー投稿・お気に入り・レビュー閲覧などの行動から、あなたの好みを12項目で可視化しています。':'Built from your reviews, favorites, and browsing activity across 12 dimensions.')}</p>
+      <div style="max-width:340px;margin:0 auto;">
+        <canvas id="valueProfileCanvas" class="rc-canvas" width="320" height="320" style="aspect-ratio:1/1;"></canvas>
+      </div>
+      <div id="valueProfileRecs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;margin-top:1rem;"></div>
     `;
-    if(!topHigh) return;
-    // おすすめ：全体マスターグラフキャッシュの中から、あなたの好む軸が高く・苦手な軸が低い作品を探す
+    setTimeout(()=>{
+      const cEl = document.getElementById('valueProfileCanvas');
+      if(cEl) drawRadar(cEl, labAll, valsAll, 'rgba(94,201,122,0.32)', '#8fe5ab');
+    }, 30);
+
+    // おすすめ：12軸全部を使って、あなたの好みベクトルに近い作品を探す（コサイン類似度）
     const cache = await ensureSearchMasterGraphCache();
+    const profileVec = [...axisA, ...axisB].map(k => profile[k] != null ? profile[k] : 5); // データが無い軸は中間値5で補完
+    const profileNorm = Math.sqrt(profileVec.reduce((s,v)=>s+v*v, 0)) || 1;
     const recs = Object.entries(cache)
       .map(([animeId, d])=>{
-        const val = (d.avgA && d.avgA[topHigh[0]] != null) ? d.avgA[topHigh[0]] : (d.avgB && d.avgB[topHigh[0]]);
-        const lowVal = topLow ? ((d.avgA && d.avgA[topLow[0]] != null) ? d.avgA[topLow[0]] : (d.avgB && d.avgB[topLow[0]])) : null;
-        if(val == null) return null;
-        const score = val - (lowVal != null ? lowVal*0.5 : 0);
-        return { animeId, score };
+        const vec = [...axisA, ...axisB].map(k => {
+          const v = (d.avgA && d.avgA[k] != null) ? d.avgA[k] : (d.avgB && d.avgB[k] != null ? d.avgB[k] : null);
+          return v;
+        });
+        if(vec.some(v=>v==null)) return null;
+        const dot = vec.reduce((s,v,i)=>s+v*profileVec[i], 0);
+        const vecNorm = Math.sqrt(vec.reduce((s,v)=>s+v*v, 0)) || 1;
+        const similarity = dot / (profileNorm * vecNorm);
+        return { animeId, similarity };
       })
       .filter(Boolean)
-      .sort((a,b)=>b.score-a.score)
-      .slice(0,6);
+      .sort((a,b)=>b.similarity-a.similarity)
+      .slice(0, getValueProfileRecCount());
     if(!recs.length) return;
     const ids = recs.map(r=>r.animeId);
     const all = getAll();
@@ -14772,6 +14840,8 @@
       await db.favorites.add(_currentUser.id, currentAnimeId);
       if(btn) { btn.textContent = '♥\uFE0E'; btn.classList.add('fav-active'); btn.setAttribute('aria-pressed','true'); }
       if(canUseAnalytics()) db.favoriteEvents.insert(currentAnimeId, 'add');
+      // 全体価値観プロフィール：お気に入り追加はまずまず強いシグナル
+      recordValueSignal(currentAnimeId, 'favorite');
     }
   }
 
