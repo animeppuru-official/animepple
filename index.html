@@ -1180,6 +1180,11 @@
       width:144px; height:144px; border-radius:50%; display:flex; align-items:center; justify-content:center;
       flex-shrink:0; box-shadow:0 12px 28px -12px rgba(0,0,0,.8); overflow:hidden;
     }
+    /* スマホは標準サイズ(48px)の2倍=96pxに縮小（PCは3倍=144pxのまま） */
+    @media(max-width:767px){
+      .mypage-avatar { width:96px; height:96px; }
+      .mypage-avatar.guest-avatar svg { width:66px; height:66px; }
+    }
     .guest-avatar { background:linear-gradient(150deg,#2c4436,#1d3225); border:3px solid #0e2015; }
     .user-avatar { background:linear-gradient(150deg,#2c4436,#1d3225); border:3px solid #0e2015; color:#9be3bd; font-size:1.5rem; font-weight:800; overflow:hidden; }
     .user-avatar img { width:100%; height:100%; min-width:0; min-height:0; object-fit:cover; display:block; border-radius:50%; }
@@ -2192,7 +2197,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.221.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.223.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4411,7 +4416,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.221.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.223.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6038,7 +6043,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.221.0';
+      if(vEl) vEl.textContent = 'v0.223.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -9516,7 +9521,6 @@
     if(!topLevel.length) {
       html += `<p style="font-size:.82rem;color:var(--muted,#9ab);text-align:center;padding:2rem 0;">${escapeHtml(t('boardEmpty'))}</p>`;
     } else {
-      const avatarHtml = (name) => `<span style="width:48px;height:48px;flex:0 0 48px;border-radius:50%;background:linear-gradient(150deg,#2c4436,#1d3225);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#9be3bd;">${escapeHtml((name||'ゲ').charAt(0))}</span>`;
       const kebabMenu = (targetType, targetId, targetUserId) => {
         if(!_currentUser || targetUserId === _currentUser.id) return '';
         return `<div style="position:relative;">
@@ -9529,37 +9533,48 @@
           </div>
         </div>`;
       };
+      // LINEのような「枠」1つにアイコン・ユーザー名・本文をまとめたカードを作る（トップ投稿・返信共通）
+      const postCard = (item, opts) => {
+        opts = opts || {};
+        const isReply = !!opts.isReply;
+        const name = item.username || '名無し';
+        const isMine = _currentUser && item.user_id === _currentUser.id;
+        const bg = isMine ? 'rgba(92,201,142,.18)' : 'linear-gradient(180deg,#20402d,#1a3324)';
+        const border = isMine ? 'rgba(92,201,142,.45)' : 'rgba(255,255,255,.14)';
+        const radius = isMine ? '16px 16px 6px 16px' : '16px 16px 16px 6px';
+        const avatarSize = isReply ? 34 : 48;
+        const avatar = `<span style="width:${avatarSize}px;height:${avatarSize}px;flex:0 0 ${avatarSize}px;border-radius:50%;background:linear-gradient(150deg,#2c4436,#1d3225);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:${isReply?'10px':'12px'};font-weight:700;color:#9be3bd;">${escapeHtml(name.charAt(0))}</span>`;
+        return `<div style="max-width:${isReply?'92%':'78%'};display:inline-flex;flex-direction:column;background:${bg};border:1px solid ${border};border-radius:${radius};padding:${isReply?'9px 12px':'11px 14px'};box-shadow:0 8px 20px -14px rgba(0,0,0,.7);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-direction:${isMine?'row-reverse':'row'};">
+            ${avatar}
+            <span style="font-size:${isReply?'11.5px':'12.5px'};font-weight:700;color:#dfeae3;">${escapeHtml(name)}</span>
+            <span style="font-size:10.5px;color:#82968a;">${formatRelativeTime(item.created_at)}</span>
+          </div>
+          <div style="font-size:${isReply?'13px':'14px'};line-height:1.7;color:#e8f0ea;white-space:pre-wrap;text-align:left;">${escapeHtml(item.body)}</div>
+        </div>`;
+      };
       html += topLevel.map(p=>{
         const replies = repliesOf(p.id);
-        const name = p.username || '名無し';
         const isMine = _currentUser && p.user_id === _currentUser.id;
         const side = isMine ? 'flex-end' : 'flex-start';
-        const bubbleBg = isMine ? 'rgba(92,201,142,.18)' : 'linear-gradient(180deg,#20402d,#1a3324)';
-        const bubbleBorder = isMine ? 'rgba(92,201,142,.45)' : 'rgba(255,255,255,.14)';
-        const radius = isMine ? '16px 16px 6px 16px' : '16px 16px 16px 6px';
         return `<div style="display:flex;flex-direction:column;align-items:${side};" data-post-id="${p.id}">
-          <div style="display:flex;align-items:flex-end;gap:10px;max-width:78%;flex-direction:${isMine?'row-reverse':'row'};">
-            ${isMine ? '' : avatarHtml(name)}
-            <div style="min-width:0;">
-              <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;justify-content:${side};">
-                <span style="font-size:12.5px;font-weight:700;color:#dfeae3;">${escapeHtml(name)}</span>
-                <span style="font-size:10.5px;color:#82968a;">${formatRelativeTime(p.created_at)}</span>
-              </div>
-              <div style="position:relative;display:inline-block;background:${bubbleBg};border:1px solid ${bubbleBorder};color:#e8f0ea;border-radius:${radius};padding:11px 15px;font-size:14px;line-height:1.75;text-align:left;box-shadow:0 8px 20px -14px rgba(0,0,0,.7);white-space:pre-wrap;">${escapeHtml(p.body)}</div>
-              <div style="display:flex;align-items:center;gap:14px;margin-top:7px;justify-content:${side};">
-                ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="display:inline-flex;align-items:center;gap:5px;border:none;background:transparent;color:#82968a;font-size:12px;font-weight:700;cursor:pointer;padding:0;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>${escapeHtml(t('boardReplyBtn'))}${replies.length?` ${replies.length}`:''}
-                </button>` : (replies.length?`<span style="font-size:12px;color:#82968a;">${escapeHtml(t('boardReplyBtn'))} ${replies.length}</span>`:'')}
-                ${kebabMenu('board_post', p.id, p.user_id)}
-              </div>
-              ${replies.length ? `<div style="margin-top:9px;padding-left:14px;border-left:2px solid rgba(92,201,142,.25);display:flex;flex-direction:column;gap:8px;">
-                ${replies.map(r=>`<div style="display:flex;align-items:baseline;gap:8px;font-size:12.5px;"><span style="font-weight:700;color:#9be3bd;flex:0 0 auto;">${escapeHtml(r.username||'名無し')}</span><span style="color:#b6c8bd;line-height:1.6;">${escapeHtml(r.body)}</span></div>`).join('')}
-              </div>` : ''}
-              <div class="board-reply-box" data-id="${p.id}" style="display:none;margin-top:9px;gap:8px;">
-                <input type="text" class="board-reply-input" maxlength="500" placeholder="${escapeHtml(t('boardReplyPlaceholder'))}" style="flex:1 1 auto;height:38px;padding:0 13px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#0b1a11;color:#e8f0ea;font-size:13px;font-family:inherit;" />
-                <button type="button" class="board-reply-submit" data-id="${p.id}" style="height:38px;padding:0 16px;border-radius:10px;border:none;background:#5cc98e;color:#07160d;font-size:13px;font-weight:800;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button>
-              </div>
-            </div>
+          ${postCard(p)}
+          <div style="display:flex;align-items:center;gap:14px;margin-top:7px;justify-content:${side};">
+            ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="display:inline-flex;align-items:center;gap:5px;border:none;background:transparent;color:#82968a;font-size:12px;font-weight:700;cursor:pointer;padding:0;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>${escapeHtml(t('boardReplyBtn'))}${replies.length?` ${replies.length}`:''}
+            </button>` : (replies.length?`<span style="font-size:12px;color:#82968a;">${escapeHtml(t('boardReplyBtn'))} ${replies.length}</span>`:'')}
+            ${kebabMenu('board_post', p.id, p.user_id)}
+          </div>
+          ${replies.length ? `<div style="margin-top:10px;padding-left:16px;border-left:2px solid rgba(92,201,142,.25);display:flex;flex-direction:column;gap:10px;max-width:100%;">
+            ${replies.map(r=>{
+              const replyIsMine = _currentUser && r.user_id === _currentUser.id;
+              const replySide = replyIsMine ? 'flex-end' : 'flex-start';
+              return `<div style="display:flex;flex-direction:column;align-items:${replySide};">${postCard(r, {isReply:true})}</div>`;
+            }).join('')}
+          </div>` : ''}
+          <div class="board-reply-box" data-id="${p.id}" style="display:none;margin-top:9px;gap:8px;align-self:stretch;">
+            <input type="text" class="board-reply-input" maxlength="500" placeholder="${escapeHtml(t('boardReplyPlaceholder'))}" style="flex:1 1 auto;height:38px;padding:0 13px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#0b1a11;color:#e8f0ea;font-size:13px;font-family:inherit;" />
+            <button type="button" class="board-reply-submit" data-id="${p.id}" style="height:38px;padding:0 16px;border-radius:10px;border:none;background:#5cc98e;color:#07160d;font-size:13px;font-weight:800;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button>
           </div>
         </div>`;
       }).join('');
