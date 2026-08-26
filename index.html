@@ -1208,7 +1208,7 @@
     .mypage-section { padding:1.1rem; border-top:1px solid var(--line); }
     .mypage-menu-row { display:flex; align-items:center; gap:.7rem; width:100%; padding:1rem 1.1rem; background:none; border:none; border-top:1px solid var(--line); color:#dff0e6; font-size:.88rem; cursor:pointer; text-align:left; }
     .mypage-menu-row:first-child { border-top:1px solid var(--line); }
-    .mypage-menu-row-icon { font-size:1.1rem; flex-shrink:0; }
+    .mypage-menu-row-icon { flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#9fb0a5; }
     .mypage-menu-row-label { flex:1; }
     .mypage-menu-row-arrow { color:var(--muted); font-size:1.1rem; flex-shrink:0; }
     .settings-row {
@@ -1344,7 +1344,7 @@
     .mypage-empty-state {
       text-align:center; padding:1.5rem .5rem; color:var(--muted); font-size:.85rem;
     }
-    .mypage-empty-state .mypage-empty-icon { font-size:1.8rem; margin-bottom:.5rem; opacity:.5; }
+    .mypage-empty-state .mypage-empty-icon { display:flex; align-items:center; justify-content:center; margin-bottom:.5rem; opacity:.5; }
 
     /* 認証モーダル */
     .auth-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; display:flex; align-items:center; justify-content:center; padding:1rem; }
@@ -2148,6 +2148,18 @@
   </div>
 </div>
 
+<!-- マイページ：「あなたの価値観」ポップアップ（名前横のアイコンから開く。グラフ＋おすすめアニメカード） -->
+<div class="priority-popover-overlay" id="valueProfilePopoverOverlay" style="display:none;">
+  <div class="priority-popover-box" style="max-width:420px;max-height:85vh;display:flex;flex-direction:column;text-align:left;">
+    <p style="margin:0 0 4px;font-size:.95rem;font-weight:700;color:#dfeae3;">あなたの価値観</p>
+    <p style="margin:0 0 14px;font-size:.74rem;color:var(--muted);">レビュー投稿・お気に入り・レビュー閲覧などの行動から、あなたの好みを12項目で可視化しています。</p>
+    <div style="flex:1;min-height:0;overflow-y:auto;">
+      <div id="mypageValueProfileSection"></div>
+    </div>
+    <button type="button" id="valueProfilePopoverClose" onclick="closeValueProfilePopup()" style="width:100%;margin-top:16px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#dfeae3;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0;">閉じる</button>
+  </div>
+</div>
+
 <!-- マスコットをタップ/クリックすると開く「アニメップルとは」ポップアップ（グローバル配置） -->
 <div class="priority-popover-overlay" id="mascotAboutOverlay" style="display:none;">
   <div class="priority-popover-box" style="max-width:380px;">
@@ -2167,7 +2179,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.208.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.211.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4153,7 +4165,7 @@
           <div class="mypage-avatar user-avatar" id="mypageAvatarIcon">か</div>
         </div>
         <div class="mypage-info">
-          <p class="mypage-name" id="mypageUsername" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span id="mypageUsernameText">ユーザー名</span><span id="mypageCountryBadge"></span></p>
+          <p class="mypage-name" id="mypageUsername" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span id="mypageUsernameText">ユーザー名</span><span id="mypageCountryBadge"></span><button type="button" id="mypageValueProfileBtn" onclick="openValueProfilePopup()" aria-label="あなたの価値観" style="display:none;width:26px;height:26px;border-radius:50%;border:1px solid rgba(94,201,122,.4);background:rgba(94,201,122,.14);color:#8fe5ab;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg></button></p>
           <p class="mypage-sub" id="mypageEmail" style="display:none;">email</p>
           <p id="mypageRankBadge" style="display:none;"></p>
         </div>
@@ -4208,9 +4220,6 @@
       </div>
     </div>
 
-    <!-- 全体価値観プロフィール -->
-    <div class="mypage-section" id="mypageValueProfileSection" style="display:none;"></div>
-
     <!-- 実績（称号進捗） -->
     <div class="mypage-section">
       <h3 class="mypage-section-title">実績</h3>
@@ -4220,17 +4229,17 @@
     <!-- メニュー：履歴・お気に入り・参加中の掲示板は別ページへ -->
     <div class="mypage-section" style="padding:0;">
       <button class="mypage-menu-row" onclick="nav('my-reviews')">
-        <span class="mypage-menu-row-icon">📊</span>
+        <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
         <span class="mypage-menu-row-label" data-i18n="reviewHistoryTitle">レビュー履歴</span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
       <button class="mypage-menu-row" onclick="nav('my-favorites')">
-        <span class="mypage-menu-row-icon">⭐</span>
+        <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg></span>
         <span class="mypage-menu-row-label" data-i18n="favoritesTitle">お気に入り</span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
       <button class="mypage-menu-row" onclick="nav('my-boards')">
-        <span class="mypage-menu-row-icon">💬</span>
+        <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
         <span class="mypage-menu-row-label" data-i18n="myBoardsTitle">参加中の掲示板</span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
@@ -4364,7 +4373,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.208.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.211.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4618,64 +4627,68 @@
       },
     },
     boardState: {
-      // 投稿履歴＋価値観投票から「参加中の掲示板」一覧を作る（通常掲示板＋解放済みの価値観掲示板）
+      // 投稿履歴＋価値観投票から「参加中の掲示板」一覧を作る（通常掲示板＋解放済みの価値観掲示板）。言語ごとに別エントリになる
       async listMyBoards(userId) {
         if(!sb || !userId) return [];
         const [postedRes, votedRes] = await Promise.all([
-          sb.from('board_posts').select('anime_id, board_type').eq('user_id', userId),
+          sb.from('board_posts').select('anime_id, board_type, lang').eq('user_id', userId),
           sb.from('review_values').select('anime_id, axis_group').eq('user_id', userId),
         ]);
         const seen = new Set();
         const boards = [];
         (postedRes.data||[]).forEach(r=>{
-          const key = r.anime_id+'|'+r.board_type;
-          if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.board_type }); }
+          const lang = r.lang || 'ja';
+          const key = r.anime_id+'|'+r.board_type+'|'+lang;
+          if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.board_type, lang }); }
         });
         (votedRes.data||[]).forEach(r=>{
-          const key = r.anime_id+'|'+r.axis_group;
-          if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.axis_group }); }
+          // レビュー投票自体には言語の概念が無いため、現在表示中の言語の掲示板として扱う
+          const lang = currentLang;
+          const key = r.anime_id+'|'+r.axis_group+'|'+lang;
+          if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.axis_group, lang }); }
         });
         return boards;
       },
-      // 掲示板ごとの最新投稿日時（複数の(anime_id,board_type)をまとめて取得）
+      // 掲示板ごとの最新投稿日時（複数の(anime_id,board_type,lang)をまとめて取得）
       async getLatestActivity(pairs) {
         if(!sb || !pairs.length) return {};
         const animeIds = [...new Set(pairs.map(p=>p.anime_id))];
-        const { data } = await sb.from('board_posts').select('anime_id, board_type, created_at').in('anime_id', animeIds);
+        const { data } = await sb.from('board_posts').select('anime_id, board_type, lang, created_at').in('anime_id', animeIds);
         const latest = {};
         (data||[]).forEach(r=>{
-          const key = r.anime_id+'|'+r.board_type;
+          const lang = r.lang || 'ja';
+          const key = r.anime_id+'|'+r.board_type+'|'+lang;
           if(!latest[key] || r.created_at > latest[key]) latest[key] = r.created_at;
         });
         return latest;
       },
       async getState(userId) {
         if(!sb || !userId) return {};
-        const { data } = await sb.from('user_board_state').select('anime_id, board_type, last_read_at, notify').eq('user_id', userId);
+        const { data } = await sb.from('user_board_state').select('anime_id, board_type, lang, last_read_at, notify').eq('user_id', userId);
         const map = {};
-        (data||[]).forEach(r=>{ map[r.anime_id+'|'+r.board_type] = r; });
+        (data||[]).forEach(r=>{ map[r.anime_id+'|'+r.board_type+'|'+(r.lang||'ja')] = r; });
         return map;
       },
-      async markRead(userId, animeId, boardType) {
+      async markRead(userId, animeId, boardType, lang) {
         if(!sb || !userId) return { error: 'invalid' };
         const { error } = await sb.from('user_board_state').upsert(
-          { user_id: userId, anime_id: animeId, board_type: boardType, last_read_at: new Date().toISOString() },
-          { onConflict: 'user_id,anime_id,board_type' }
+          { user_id: userId, anime_id: animeId, board_type: boardType, lang: lang || 'ja', last_read_at: new Date().toISOString() },
+          { onConflict: 'user_id,anime_id,board_type,lang' }
         );
         return { error };
       },
-      async setNotify(userId, animeId, boardType, notify) {
+      async setNotify(userId, animeId, boardType, notify, lang) {
         if(!sb || !userId) return { error: 'invalid' };
         const { error } = await sb.from('user_board_state').upsert(
-          { user_id: userId, anime_id: animeId, board_type: boardType, notify },
-          { onConflict: 'user_id,anime_id,board_type' }
+          { user_id: userId, anime_id: animeId, board_type: boardType, lang: lang || 'ja', notify },
+          { onConflict: 'user_id,anime_id,board_type,lang' }
         );
         return { error };
       },
       async setNotifyBulk(userId, boards, notify) {
         if(!sb || !userId || !boards.length) return { error: 'invalid' };
-        const rows = boards.map(b => ({ user_id: userId, anime_id: b.anime_id, board_type: b.board_type, notify }));
-        const { error } = await sb.from('user_board_state').upsert(rows, { onConflict: 'user_id,anime_id,board_type' });
+        const rows = boards.map(b => ({ user_id: userId, anime_id: b.anime_id, board_type: b.board_type, lang: b.lang || 'ja', notify }));
+        const { error } = await sb.from('user_board_state').upsert(rows, { onConflict: 'user_id,anime_id,board_type,lang' });
         return { error };
       },
     },
@@ -4808,16 +4821,17 @@
     },
     // ── 掲示板：通常掲示板＋価値観別掲示板4個 ──
     board: {
-      async list(animeId, boardType) {
+      // lang: サイトの15言語コード（'ja','en'等）。同じ作品・同じ掲示板種類でも言語ごとに別スレッドになる
+      async list(animeId, boardType, lang) {
         if(!sb) return [];
-        const { data } = await sb.from('board_posts').select('*').eq('anime_id', animeId).eq('board_type', boardType).order('created_at', { ascending: true });
+        const { data } = await sb.from('board_posts').select('*').eq('anime_id', animeId).eq('board_type', boardType).eq('lang', lang || 'ja').order('created_at', { ascending: true });
         return data || [];
       },
-      async post(animeId, boardType, userId, username, body, parentId) {
+      async post(animeId, boardType, userId, username, body, parentId, lang) {
         if(!sb || !userId) return { error: 'no user' };
         const { error } = await sb.from('board_posts').insert({
           anime_id: animeId, board_type: boardType, user_id: userId,
-          username: username || null, body, parent_id: parentId || null,
+          username: username || null, body, parent_id: parentId || null, lang: lang || 'ja',
         });
         return { error };
       },
@@ -5959,7 +5973,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.208.0';
+      if(vEl) vEl.textContent = 'v0.211.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -7439,6 +7453,12 @@
   if(_rcCommentPopoverOverlay) {
     _rcCommentPopoverOverlay.onclick = (e) => {
       if(e.target === _rcCommentPopoverOverlay) _rcCommentPopoverOverlay.style.display = 'none';
+    };
+  }
+  const _valueProfilePopoverOverlay = document.getElementById('valueProfilePopoverOverlay');
+  if(_valueProfilePopoverOverlay) {
+    _valueProfilePopoverOverlay.onclick = (e) => {
+      if(e.target === _valueProfilePopoverOverlay) closeValueProfilePopup();
     };
   }
   // ホーム：マスコットをクリックすると「アニメップルとは」ポップアップを開く
@@ -9305,7 +9325,7 @@
     if(!el || !sb) return;
     el.innerHTML = `<div id="boardPanel"></div>`;
     await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, 'general', renderBoardGeneral);
-    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, 'general').catch(()=>{});
+    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, 'general', currentLang).catch(()=>{});
   }
 
   // ── 価値観掲示板：単独ページ、内部でA〜Dの4つに分岐（タブ） ──
@@ -9357,7 +9377,7 @@
       return;
     }
     await renderBoardPostsInto(panel, animeId, _boardActiveTab, () => renderBoardValue(animeId));
-    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, _boardActiveTab).catch(()=>{});
+    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, _boardActiveTab, currentLang).catch(()=>{});
   }
 
   // 通常・価値観、両掲示板共通：投稿一覧＋投稿フォーム＋返信の描画
@@ -9383,7 +9403,7 @@
 
   const BOARD_DISPLAY_EXPIRY_DAYS = 90;
   async function renderBoardPostsInto(panel, animeId, boardType, rerenderFn) {
-    let posts = await db.board.list(animeId, boardType);
+    let posts = await db.board.list(animeId, boardType, currentLang);
     // 表示期限：古い投稿は一覧から除外（DBには残るが表示だけしない）
     const expiryCutoff = Date.now() - BOARD_DISPLAY_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
     posts = posts.filter(p => !p.created_at || new Date(p.created_at).getTime() >= expiryCutoff);
@@ -9470,7 +9490,7 @@
         const body = input.value.trim();
         if(!body) return;
         const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
-        const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, btn.dataset.id);
+        const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, btn.dataset.id, currentLang);
         if(error) { alert(t('profileSaveFailedAlert')); return; }
         rerenderFn(animeId);
       };
@@ -9523,7 +9543,7 @@
         const body = input.value.trim().slice(0, BOARD_MAX_LEN);
         if(!body) return;
         const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
-        const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body);
+        const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, undefined, currentLang);
         if(error) { alert(t('profileSaveFailedAlert')); return; }
         rerenderFn(animeId);
       };
@@ -9828,7 +9848,7 @@
     const pageMap = {};
     animePages.forEach(p=>{ pageMap[p.id]=p; });
     const enriched = boards.map(b=>{
-      const key = b.anime_id+'|'+b.board_type;
+      const key = b.anime_id+'|'+b.board_type+'|'+b.lang;
       const latest = latestMap[key] || null;
       const state = stateMap[key] || null;
       const isNew = latest && (!state || !state.last_read_at || latest > state.last_read_at);
@@ -9855,29 +9875,38 @@
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:.4rem;">
-        ${enriched.map(b=>`
-          <div style="display:flex;align-items:center;gap:.5rem;border:1px solid var(--line,#2a3830);border-radius:8px;padding:.5rem .7rem;cursor:pointer;" class="my-board-row" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}">
+        ${enriched.map(b=>{
+          const langInfo = LANGS.find(l=>l.code===b.lang);
+          const langChip = langInfo ? `<span style="font-size:.62rem;font-weight:800;padding:.1rem .4rem;border-radius:5px;background:rgba(255,255,255,.08);color:#9fb0a5;flex-shrink:0;">${escapeHtml(langInfo.code.split('-')[0].toUpperCase())}</span>` : '';
+          return `
+          <div style="display:flex;align-items:center;gap:.5rem;border:1px solid var(--line,#2a3830);border-radius:8px;padding:.5rem .7rem;cursor:pointer;" class="my-board-row" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" data-lang="${escapeHtml(b.lang)}">
             <div style="flex:1;min-width:0;">
-              <div style="font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(b.title)} ・ ${escapeHtml(t(_boardGroupLabel[b.board_type]||b.board_type))}</div>
+              <div style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${langChip}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(b.title)} ・ ${escapeHtml(t(_boardGroupLabel[b.board_type]||b.board_type))}</span></div>
               <div style="font-size:.68rem;color:var(--muted,#9ab);">${b.latest ? formatRelativeTime(b.latest) : ''}</div>
             </div>
             ${b.isNew ? `<span style="font-size:.65rem;padding:.15rem .5rem;border-radius:999px;background:rgba(94,201,122,.18);color:#8ee26f;font-weight:700;flex-shrink:0;">${escapeHtml(t('newActivityBadge'))}</span>` : ''}
             <label style="display:flex;align-items:center;gap:.3rem;font-size:.68rem;color:var(--muted,#9ab);flex-shrink:0;" onclick="event.stopPropagation();">
-              <input type="checkbox" class="my-board-notify-toggle" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" ${b.notify?'checked':''} />
+              <input type="checkbox" class="my-board-notify-toggle" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" data-lang="${escapeHtml(b.lang)}" ${b.notify?'checked':''} />
             </label>
           </div>
-        `).join('')}
+        `;}).join('')}
       </div>
     `;
     el.querySelectorAll('.my-board-row').forEach(row=>{
       row.onclick = () => {
-        const animeId = row.dataset.animeId, boardType = row.dataset.boardType;
+        const animeId = row.dataset.animeId, boardType = row.dataset.boardType, lang = row.dataset.lang;
+        // その掲示板の言語に表示言語を合わせてから開く
+        if(lang && lang !== currentLang) {
+          currentLang = lang;
+          try { localStorage.setItem(LANG_KEY, currentLang); } catch(_) {}
+          applyLang();
+        }
         if(boardType === 'general') { nav('board-general', animeId); }
         else { _boardActiveTab = boardType; nav('board-value', animeId); }
       };
     });
     el.querySelectorAll('.my-board-notify-toggle').forEach(cb=>{
-      cb.onclick = (e) => { e.stopPropagation(); db.boardState.setNotify(userId, cb.dataset.animeId, cb.dataset.boardType, cb.checked).catch(()=>{}); };
+      cb.onclick = (e) => { e.stopPropagation(); db.boardState.setNotify(userId, cb.dataset.animeId, cb.dataset.boardType, cb.checked, cb.dataset.lang).catch(()=>{}); };
     });
     const onBtn = document.getElementById('myBoardsNotifyAllOn');
     const offBtn = document.getElementById('myBoardsNotifyAllOff');
@@ -10004,33 +10033,24 @@
     return profile;
   }
 
+  let _cachedValueProfile = null; // ポップアップを開いた時に使う（renderValueProfileで事前計算しておく）
+
   async function renderValueProfile(userId) {
-    const el = document.getElementById('mypageValueProfileSection');
-    if(!el || !sb) return;
+    const btn = document.getElementById('mypageValueProfileBtn');
+    if(!btn || !sb) return;
     const signals = await db.axisSignals.listForUser(userId);
     const totalWeight = signals.reduce((sum,s)=>sum+(Number(s.weight)||0), 0);
-    if(!signals.length || !totalWeight) { el.style.display='none'; return; }
+    if(!signals.length || !totalWeight) { btn.style.display='none'; _cachedValueProfile = null; return; }
 
     const profile = computeWeightedValueVector(signals);
     const labAll = [...getAxisA(), ...getAxisB()];
     const keysAll = [...axisA, ...axisB];
     const valsAll = keysAll.map(k => profile[k] != null ? profile[k] : 0);
     const hasEnoughData = axisA.some(k=>profile[k]!=null) && axisB.some(k=>profile[k]!=null);
-    if(!hasEnoughData) { el.style.display='none'; return; }
+    if(!hasEnoughData) { btn.style.display='none'; _cachedValueProfile = null; return; }
 
-    el.style.display='';
-    el.innerHTML = `
-      <h3 class="mypage-section-title">${escapeHtml(currentLang==='ja'?'あなたの価値観':'Your taste profile')}</h3>
-      <p style="margin:0 0 .8rem;font-size:.78rem;color:var(--muted);">${escapeHtml(currentLang==='ja'?'レビュー投稿・お気に入り・レビュー閲覧などの行動から、あなたの好みを12項目で可視化しています。':'Built from your reviews, favorites, and browsing activity across 12 dimensions.')}</p>
-      <div style="max-width:340px;margin:0 auto;">
-        <canvas id="valueProfileCanvas" class="rc-canvas" width="320" height="320" style="aspect-ratio:1/1;"></canvas>
-      </div>
-      <div id="valueProfileRecs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;margin-top:1rem;"></div>
-    `;
-    setTimeout(()=>{
-      const cEl = document.getElementById('valueProfileCanvas');
-      if(cEl) drawRadar(cEl, labAll, valsAll, 'rgba(94,201,122,0.32)', '#8fe5ab');
-    }, 30);
+    btn.style.display = 'inline-flex';
+    _cachedValueProfile = { labAll, valsAll, profile };
 
     // おすすめ：12軸全部を使って、あなたの好みベクトルに近い作品を探す（コサイン類似度）
     const cache = await ensureSearchMasterGraphCache();
@@ -10062,9 +10082,35 @@
       pageMap[p.id] = { id:p.id, title:p.title||p.title_en||'', titleEn:p.title_en||p.title||'', meta:p.meta||'', image:p.image_url||'', year:p.year||'' };
     });
     const items = ids.map(i=>pageMap[i]).filter(Boolean);
-    const recEl = document.getElementById('valueProfileRecs');
-    if(recEl) recEl.innerHTML = items.map(item=>renderAnimeCard(item, { style:'g' })).join('');
+    if(_cachedValueProfile) _cachedValueProfile.items = items;
   }
+
+  // マイページの価値観アイコンを押した時：グラフ＋おすすめアニメカードをポップアップで表示
+  function openValueProfilePopup() {
+    if(!_cachedValueProfile) return;
+    const { labAll, valsAll, items } = _cachedValueProfile;
+    const el = document.getElementById('mypageValueProfileSection');
+    if(!el) return;
+    el.innerHTML = `
+      <div style="max-width:340px;margin:0 auto;">
+        <canvas id="valueProfileCanvas" class="rc-canvas" width="320" height="320" style="aspect-ratio:1/1;"></canvas>
+      </div>
+      <div id="valueProfileRecs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;margin-top:1rem;"></div>
+    `;
+    document.getElementById('valueProfilePopoverOverlay').style.display = 'flex';
+    setTimeout(()=>{
+      const cEl = document.getElementById('valueProfileCanvas');
+      if(cEl) drawRadar(cEl, labAll, valsAll, 'rgba(94,201,122,0.32)', '#8fe5ab');
+      const recEl = document.getElementById('valueProfileRecs');
+      if(recEl && items) recEl.innerHTML = items.map(item=>renderAnimeCard(item, { style:'g' })).join('');
+    }, 30);
+  }
+  function closeValueProfilePopup() {
+    const overlay = document.getElementById('valueProfilePopoverOverlay');
+    if(overlay) overlay.style.display = 'none';
+  }
+  window.openValueProfilePopup = openValueProfilePopup;
+  window.closeValueProfilePopup = closeValueProfilePopup;
 
   async function renderSimilarAnime(id) {
     const section = document.getElementById('similarAnimeSection');
@@ -14550,7 +14596,7 @@
       const page = pages.find(p=>p.id===r.anime_id);
       const img = page?.image_url || '';
       const dateStr = new Date(r.created_at).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
-      const cardItem = { id: r.anime_id, title, image: img, meta: (r.quality?'✨ ':'') + dateStr };
+      const cardItem = { id: r.anime_id, title, image: img, meta: dateStr };
       return renderAnimeCard(cardItem, { style:'g', showReviewCount:false, showRecruitBadge:false, dummy:false });
     }).join('')}</div>`;
   }
@@ -14572,7 +14618,7 @@
     const allReviews = await db.reviews.getByUserId(_currentUser.id);
 
     if(!allReviews || !allReviews.length) {
-      listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">📝</div><p>${t('noReviewHistory')}</p></div>`;
+      listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></div><p>${t('noReviewHistory')}</p></div>`;
       return;
     }
     const allAnimeIds = [...new Set(allReviews.map(r=>r.anime_id))];
@@ -14592,7 +14638,7 @@
     if(sortOrder === 'old') reviews = [...reviews].reverse();
 
     if(!reviews.length) {
-      listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon">🔍</div><p>${t('noFavoritesMatch')||'該当する作品がありません'}</p></div>`;
+      listEl.innerHTML = `<div class="mypage-empty-state"><div class="mypage-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><p>${t('noFavoritesMatch')||'該当する作品がありません'}</p></div>`;
       return;
     }
     const pages = allPages;
@@ -14808,7 +14854,7 @@
     const currentIdx = RANK_TIERS.indexOf(currentRank);
     const nextRank = RANK_TIERS[currentIdx+1];
     if(!nextRank) {
-      el.innerHTML = `<div class="rank-progress-wrap"><div class="rank-progress-labels"><strong>🏆 ${currentRank.name}（最高位）</strong></div></div>`;
+      el.innerHTML = `<div class="rank-progress-wrap"><div class="rank-progress-labels"><strong style="display:inline-flex;align-items:center;gap:5px;">${rankIconSvg(currentRank.badgeIcon, currentRank.badgeIconColor, 15)} ${escapeHtml(currentRank.name)}（最高位）</strong></div></div>`;
       return;
     }
     const progress = Math.min(100, Math.round((qualityCount - currentRank.min) / (nextRank.min - currentRank.min) * 100));
@@ -14866,7 +14912,7 @@
       if(countEl) countEl.textContent = allFavs ? allFavs.length : 0;
     }
     if(!allFavs || !allFavs.length) {
-      el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">⭐</div><p>${t('noFavoritesYet')}</p></div>`;
+      el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg></div><p>${t('noFavoritesYet')}</p></div>`;
       return allFavs ? allFavs.length : 0;
     }
     // タイトル解決のため、絞り込み前に全件のページ情報を取得
@@ -14891,7 +14937,7 @@
     if(isPreview) favs = favs.slice(0, MYPAGE_FAV_PREVIEW_COUNT);
 
     if(!favs.length) {
-      el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon">🔍</div><p>${t('noFavoritesMatch')||'該当する作品がありません'}</p></div>`;
+      el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><p>${t('noFavoritesMatch')||'該当する作品がありません'}</p></div>`;
       return allFavs.length;
     }
 
@@ -14904,8 +14950,8 @@
       return `<div>
         ${renderAnimeCard(cardItem, { style:'g', showReviewCount:false, showRecruitBadge:false })}
         <div class="mypage-fav-status-row">
-          <button class="mypage-fav-status-btn${!isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','want_to_watch')">👀 気になる</button>
-          <button class="mypage-fav-status-btn${isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','watched')">✅ 視聴済み</button>
+          <button class="mypage-fav-status-btn${!isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','want_to_watch')">気になる</button>
+          <button class="mypage-fav-status-btn${isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','watched')">視聴済み</button>
         </div>
       </div>`;
     }).join('');
