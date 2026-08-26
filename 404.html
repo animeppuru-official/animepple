@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>アニメップル</title>
+  <!--
+    GitHub Pagesは静的ホスティングのため、/animepple/anime/a-xxx/slug のような
+    「実ファイルが存在しないパス」に直接アクセス・リロードされると、この404.htmlが表示される。
+    ここで元々アクセスしようとしていたURLをsessionStorageに保存してから index.html に戻し、
+    index.html側の先頭スクリプト（history.replaceStateで復元する処理）と対になって、
+    パス方式のURLをサーバー側の対応なしに実現している。
+    参考: https://github.com/rafgraph/spa-github-pages
+  -->
+  <script>
+    sessionStorage.redirect = location.href;
+  </script>
+  <meta http-equiv="refresh" content="0; URL='/animepple/'" />
+</head>
+<body>
+  <p>読み込み中…</p>
+</body>
+</html>
