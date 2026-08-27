@@ -2207,7 +2207,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.235.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.238.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4429,7 +4429,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.235.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.238.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6232,7 +6232,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.235.0';
+      if(vEl) vEl.textContent = 'v0.238.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -7833,7 +7833,11 @@
   //   Supabaseデータが全く使われずKitsuランダムに丸ごとフォールバックしてしまうため、
   //   意図的に低め（20件）に設定して確実にSupabase側が使われるようにしている。
   const PICKUP_THRESHOLD = 20;
-  const PICKUP_COUNT = 12;
+  const PICKUP_COUNT_PC = 14;
+  const PICKUP_COUNT_MOBILE = 12;
+  function getPickupCount() {
+    return window.innerWidth >= 640 ? PICKUP_COUNT_PC : PICKUP_COUNT_MOBILE;
+  }
 
   async function getPickupItems() {
     const INTERVAL_MS = 30 * 60 * 1000;
@@ -7880,7 +7884,7 @@
         if(diff !== 0) return diff;
         return seededRandom(a.id) - seededRandom(b.id); // 同数ならslotベースでランダム
       });
-      return sorted.slice(0, PICKUP_COUNT);
+      return sorted.slice(0, getPickupCount());
     }
 
     // 通常時：全体レビュー数の50%未満の作品からランダムピック
@@ -7890,7 +7894,7 @@
     const pool = candidates.length >= 4 ? candidates : allPages;
 
     const seeded = [...pool].sort((a,b)=> seededRandom(a.id) - seededRandom(b.id));
-    return seeded.slice(0, PICKUP_COUNT);
+    return seeded.slice(0, getPickupCount());
   }
 
   // アニメ10・映画10・その他10を、meta欄で判別して完全ランダムにピックする
@@ -7922,8 +7926,9 @@
   async function renderRandomPickSection() {
     const now = Date.now();
     const slot = Math.floor(now / RANDOM_PICK_INTERVAL_MS);
+    const selCount = window.innerWidth >= 640 ? 7 : 6;
     let pickedAnime, pickedMovie;
-    if (_randomPickCache.slot === slot && _randomPickCache.anime && _randomPickCache.movie) {
+    if (_randomPickCache.slot === slot && _randomPickCache.selCount === selCount && _randomPickCache.anime && _randomPickCache.movie) {
       pickedAnime = _randomPickCache.anime;
       pickedMovie = _randomPickCache.movie;
     } else {
@@ -7953,9 +7958,9 @@
         if (meta === 'movie') movie.push(item);
         else if (meta === 'tv') anime.push(item);
       });
-      pickedAnime = seededShuffle(anime, slot).slice(0, 6);
-      pickedMovie = seededShuffle(movie, slot).slice(0, 6);
-      _randomPickCache = { anime: pickedAnime, movie: pickedMovie, ts: now, slot };
+      pickedAnime = seededShuffle(anime, slot).slice(0, selCount);
+      pickedMovie = seededShuffle(movie, slot).slice(0, selCount);
+      _randomPickCache = { anime: pickedAnime, movie: pickedMovie, ts: now, slot, selCount };
     }
     const gridAnime = document.getElementById('randomPickGridAnime');
     if (gridAnime) gridAnime.innerHTML = pickedAnime.map(item => renderAnimeCard(item, { style: 'g' })).join('');
@@ -9402,6 +9407,35 @@
     box.querySelector('#valueChangeCancelBtn').onclick = () => { document.body.removeChild(overlay); onCancel(); };
     box.querySelector('#valueChangeConfirmBtn').onclick = () => { document.body.removeChild(overlay); onConfirm(); };
   }
+  // レビュー投稿完了後に出すポップアップ。従来はalert()一発だったが、
+  // ここにAmazonのグッズ・関連商品リンクを埋め込んで見せる。
+  // isVoted=true（上質レビューで価値観投票まで完了した場合）は「投票後」の文言、
+  // false（通常レビューのみ）は「レビュー後」の文言にする。
+  function showReviewPostedPopup(page, isVoted) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,10,7,.72);backdrop-filter:blur(3px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto;';
+    const box = document.createElement('div');
+    box.style.cssText = 'width:100%;max-width:460px;background:#22412f;border:1px solid rgba(217,164,65,.35);border-radius:20px;box-shadow:0 40px 100px -30px rgba(0,0,0,.85);padding:26px 26px 22px;max-height:90vh;overflow-y:auto;';
+    const titleText = isVoted ? t('reviewPostedVoted') : t('reviewPosted');
+    const goodsHtml = page ? buildGoodsCardsHtml(page) : '';
+    box.innerHTML = `
+      <h3 style="font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:17px;margin:0 0 16px;color:#e8f0ea;text-align:center;">${escapeHtml(titleText)}</h3>
+      ${goodsHtml ? `
+        <div style="font-size:.78rem;font-weight:800;color:#8db5a0;margin:0 0 8px;">🛍 ${escapeHtml(page.title || page.titleEn || '')}</div>
+        <div class="af-goods-grid" style="margin-bottom:18px;">${goodsHtml}</div>
+      ` : ''}
+      <button type="button" id="reviewPostedPopupCloseBtn" style="width:100%;height:46px;border-radius:11px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:14px;cursor:pointer;">${escapeHtml(t('btnClose'))}</button>
+    `;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    const close = () => {
+      document.body.removeChild(overlay);
+      nav('anime', currentAnimeId);
+    };
+    box.querySelector('#reviewPostedPopupCloseBtn').onclick = close;
+    overlay.onclick = (e) => { if(e.target === overlay) close(); };
+  }
+
   function proceedReviewSubmit(selectedAxisKey, selectedAxisGroup) {
     const comment = document.getElementById('reviewComment').value.trim();
     // タグに現在の表示言語コードをプレフィックスとして付けて保存する。
@@ -9507,8 +9541,7 @@
         }
         // 全体価値観プロフィール：レビュー投稿は最も強いシグナル。全軸を操作した本人の入力値をそのまま使う
         if(isFullGraph) recordValueSignal(review.animeId, 'review', review.chartA, review.chartB);
-        alert(t('reviewPosted'));
-        nav('anime',currentAnimeId);
+        showReviewPostedPopup(page, !!(selectedAxisKey && selectedAxisGroup));
       })().catch(e=>{
         console.warn('review submit:', e);
         alert(t('profileSaveFailedAlert'));
@@ -9518,8 +9551,8 @@
       // ローカルモード: LocalStorageに保存
       const ex=getReviews(); ex.unshift(review); sj(REVIEW_KEY,ex);
       invalidateReviewsCache();
-      alert(t('reviewPosted'));
-      nav('anime',currentAnimeId);
+      const localPage = getAll().find(p=>p.id===review.animeId);
+      showReviewPostedPopup(localPage, !!(selectedAxisKey && selectedAxisGroup));
     }
   }
 
@@ -11279,27 +11312,24 @@
     section.style.display = '';
   }
 
-  function renderGoodsLinks(page) {
-    const el = document.getElementById('afGoodsLinks');
-    const section = document.getElementById('afGoodsSection');
-    if(!el||!section||!page) return;
-
+  // Amazonグッズカードのhtmlを組み立てる共通関数（グッズ欄・レビュー後/投票後ポップアップの両方で使う）
+  function buildGoodsCardsHtml(page) {
     const country = geoStore.getCountry() || 'DEFAULT';
     const amz = AFFILIATE.amazonByCountry[country] || AFFILIATE.amazonByCountry.DEFAULT;
     const isJP = country === 'JP';
     const titleJa = page.title || page.titleEn || '';
     const titleEn = page.titleEn || page.title || '';
 
-    // ※ここはPA-API導入前の見た目確認用モック。実際の商品名・価格・画像・評価は入っていない。
+    // ※ここはPA-API導入前の見た目確認用モック。実際の商品名・価格・画像URL・星評価は入っていない。
     // PA-API導入後は、この4カテゴリを実際の検索結果1件目（商品名・価格・画像URL・星評価）に差し替える。
     const categories = [
-      { icon:'🧸', key:'goods',  labelJa:'グッズ・フィギュア', labelEn:'Merch & Figures', qJa:'グッズ フィギュア', qEn:'merchandise figure', mockPrice:'¥3,980' },
       { icon:'💿', key:'bluray', labelJa:'DVD・ブルーレイ',   labelEn:'DVD & Blu-ray',    qJa:'DVD ブルーレイ',   qEn:'DVD Blu-ray',       mockPrice:'¥5,478' },
-      { icon:'📖', key:'manga',  labelJa:'漫画',              labelEn:'Manga',            qJa:'漫画',             qEn:'manga',              mockPrice:'¥528' },
-      { icon:'🎽', key:'apparel',labelJa:'アパレル',          labelEn:'Apparel',          qJa:'Tシャツ',          qEn:'t-shirt',            mockPrice:'¥2,900' },
+      { icon:'🛍', key:'goods',  labelJa:'グッズ',            labelEn:'Merch',            qJa:'グッズ',           qEn:'merchandise',        mockPrice:'¥3,980' },
+      { icon:'🧸', key:'figure', labelJa:'フィギュア',        labelEn:'Figure',           qJa:'フィギュア',       qEn:'figure',             mockPrice:'¥6,980' },
+      { icon:'📖', key:'manga',  labelJa:'漫画・小説',        labelEn:'Manga & Novel',    qJa:'漫画 小説',        qEn:'manga novel',        mockPrice:'¥528' },
     ];
 
-    const items = categories.map(cat => {
+    return categories.map(cat => {
       const query = encodeURIComponent(isJP ? `${titleJa} ${cat.qJa}` : `${titleEn} ${cat.qEn}`);
       const url = `https://www.${amz.domain}/s?k=${query}`;
       const label = isJP ? cat.labelJa : cat.labelEn;
@@ -11314,7 +11344,14 @@
         </a>
       `;
     }).join('');
+  }
 
+  function renderGoodsLinks(page) {
+    const el = document.getElementById('afGoodsLinks');
+    const section = document.getElementById('afGoodsSection');
+    if(!el||!section||!page) return;
+
+    const items = buildGoodsCardsHtml(page);
     el.innerHTML = `<div class="af-goods-grid" id="afGoodsGrid">${items}</div>`;
     section.style.display = '';
     setupGoodsAutoScroll();
@@ -11786,6 +11823,7 @@
     langSelectTitle:{ ja:'言語を選択', en:'Select Language', ko:'언어 선택', 'zh-tw':'選擇語言','zh-cn':'选择语言', es:'Seleccionar idioma', fr:'Choisir la langue', pt:'Selecionar idioma', de:'Sprache wählen', ar:'اختر اللغة',th:'เลือกภาษา',id:'Pilih bahasa',ru:'Выбрать язык',it:'Seleziona lingua',vi:'Chọn ngôn ngữ' },
     confirmDelete:{ ja:'このページを削除しますか？', en:'Delete this page?', ko:'이 페이지를 삭제하시겠습니까?','zh-tw':'確定刪除此頁面？','zh-cn':'确定删除此页面？',es:'¿Eliminar esta página?',fr:'Supprimer cette page ?',pt:'Excluir esta página?',de:'Diese Seite löschen?',ar:'حذف هذه الصفحة؟',th:'ลบหน้านี้หรือไม่?',id:'Hapus halaman ini?',ru:'Удалить эту страницу?',it:'Eliminare questa pagina?',vi:'Xóa trang này?' },
     reviewPosted: { ja:'🍎 レビューを投稿しました！', en:'🍎 Review posted!', ko:'🍎 리뷰를 투고했습니다!','zh-tw':'🍎 評論已發佈！','zh-cn':'🍎 评论已发布！',es:'🍎 ¡Reseña publicada!',fr:'🍎 Avis publié !',pt:'🍎 Avaliação publicada!',de:'🍎 Bewertung veröffentlicht!',ar:'🍎 تم نشر المراجعة!',th:'🍎 โพสต์รีวิวแล้ว!',id:'🍎 Ulasan diposting!',ru:'🍎 Отзыв опубликован!',it:'🍎 Recensione pubblicata!',vi:'🍎 Đã đăng đánh giá!' },
+    reviewPostedVoted: { ja:'🎉 上質なレビュー＆価値観投票、完了しました！', en:'🎉 Quality review & value vote complete!', ko:'🎉 우수 리뷰 및 가치관 투표 완료!','zh-tw':'🎉 優質評論與價值觀投票已完成！','zh-cn':'🎉 优质评论与价值观投票已完成！',es:'🎉 ¡Reseña de calidad y voto de valores completados!',fr:'🎉 Avis de qualité et vote de valeurs terminés !',pt:'🎉 Avaliação de qualidade e voto de valores concluídos!',de:'🎉 Qualitätsbewertung & Wertevotum abgeschlossen!',ar:'🎉 اكتملت المراجعة الجيدة والتصويت على القيم!',th:'🎉 รีวิวคุณภาพและการโหวตค่านิยมเสร็จสมบูรณ์!',id:'🎉 Ulasan berkualitas & voting nilai selesai!',ru:'🎉 Качественный отзыв и голосование по ценностям завершены!',it:'🎉 Recensione di qualità e voto sui valori completati!',vi:'🎉 Đã hoàn tất đánh giá chất lượng & bình chọn giá trị!' },
     noResults:  { ja:'見つかりませんでした', en:'No results found', ko:'결과 없음','zh-tw':'找不到結果','zh-cn':'未找到结果',es:'Sin resultados',fr:'Aucun résultat',pt:'Nenhum resultado',de:'Keine Ergebnisse',ar:'لا توجد نتائج',th:'ไม่พบผลลัพธ์',id:'Tidak ada hasil',ru:'Ничего не найдено',it:'Nessun risultato',vi:'Không tìm thấy kết quả' },
     noResultsSub:{ ja:'キーワード・タグ・フィルターを変えてみてください。', en:'Try changing your keywords, tags, or filters.', ko:'키워드·태그·필터를 바꿔 보세요.','zh-tw':'請嘗試更改關鍵字、標籤或篩選條件。','zh-cn':'请尝试更改关键字、标签或筛选条件。',es:'Intenta cambiar palabras clave, etiquetas o filtros.',fr:'Essayez de changer les mots-clés, tags ou filtres.',pt:'Tente mudar palavras-chave, tags ou filtros.',de:'Versuche andere Schlüsselwörter, Tags oder Filter.',ar:'جرب تغيير الكلمات المفتاحية أو الوسوم أو الفلاتر.',th:'ลองเปลี่ยนคำค้น แท็ก หรือตัวกรอง',id:'Coba ubah kata kunci, tag, atau filter.',ru:'Попробуйте изменить ключевые слова, теги или фильтры.',it:'Prova a cambiare parole chiave, tag o filtri.',vi:'Hãy thử đổi từ khóa, thẻ hoặc bộ lọc.' },
   };
