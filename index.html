@@ -2221,7 +2221,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.245.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.247.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2744,11 +2744,7 @@
       </div>
     </div>
   </header>
-  <div style="padding:3rem 1.2rem;text-align:center;color:var(--muted);">
-    <div style="font-size:3rem;margin-bottom:.6rem;">💬</div>
-    <h2 style="color:var(--text);margin-bottom:.4rem;">掲示板</h2>
-    <p>近日公開予定です。お楽しみに！</p>
-  </div>
+  <div id="boardHubContent" style="padding:1rem 1rem 3rem;"></div>
 </div>
 
 <!-- 記事の広場（中身は後日実装） -->
@@ -4443,7 +4439,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.245.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.247.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6132,6 +6128,7 @@
     if (page==='review'&&animeId) { initReviewPage(animeId); }
     if (page==='search') renderSearch().catch(console.error);
     if (page==='popular') renderPopular().catch(console.error);
+    if (page==='board') renderBoardHub().catch(console.error);
     if (page==='admin') initAdminPage();
     if (page==='partner') initPartnerPage();
     if (page==='contact') initContactPage();
@@ -6236,7 +6233,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.245.0';
+      if(vEl) vEl.textContent = 'v0.247.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -9680,8 +9677,79 @@
     if(!el || !sb) return;
     el.innerHTML = `<div id="boardPanel"></div>`;
     await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, 'general', renderBoardGeneral);
-    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, 'general', currentLang).catch(()=>{});
+    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, 'general', currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
     startBoardRealtime(animeId, 'general', currentLang, renderBoardGeneral);
+  }
+
+  // ── 掲示板トップページ：参加中の全掲示板を一覧表示。新着があるものを上部に「通知」として見せる ──
+  function boardTypeLabel(boardType) {
+    if(boardType === 'general') return t('generalBoardLabel') || '通常掲示板';
+    return t('boardTab'+boardType) || boardType;
+  }
+  function openBoardFromHub(animeId, boardType) {
+    if(boardType === 'general') { nav('board-general', animeId); }
+    else { _boardActiveTab = boardType; nav('board-value', animeId); }
+  }
+  async function renderBoardHub() {
+    const el = document.getElementById('boardHubContent');
+    if(!el) return;
+    if(!_currentUser) {
+      el.innerHTML = `<div style="padding:3rem 1.2rem;text-align:center;color:var(--muted,#9ab);">
+        <div style="font-size:3rem;margin-bottom:.6rem;">💬</div>
+        <h2 style="color:var(--text,#e8f0ea);margin-bottom:.4rem;">${escapeHtml(t('boardHubTitle')||'掲示板')}</h2>
+        <p>${escapeHtml(t('boardLoginRequired'))}</p>
+      </div>`;
+      return;
+    }
+    el.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--muted,#9ab);">...</div>`;
+    const boards = await db.boardState.listMyBoards(_currentUser.id);
+    if(!boards.length) {
+      el.innerHTML = `<div style="padding:3rem 1.2rem;text-align:center;color:var(--muted,#9ab);">
+        <div style="font-size:3rem;margin-bottom:.6rem;">💬</div>
+        <h2 style="color:var(--text,#e8f0ea);margin-bottom:.4rem;">${escapeHtml(t('boardHubTitle')||'掲示板')}</h2>
+        <p>${escapeHtml(t('noMyBoards'))}</p>
+      </div>`;
+      return;
+    }
+    const [latestMap, stateMap, animePages] = await Promise.all([
+      db.boardState.getLatestActivity(boards),
+      db.boardState.getState(_currentUser.id),
+      Promise.resolve(getAll()),
+    ]);
+    const pageMap = {};
+    animePages.forEach(p=>{ pageMap[p.id]=p; });
+    const enriched = boards.map(b=>{
+      const key = b.anime_id+'|'+b.board_type+'|'+b.lang;
+      const latest = latestMap[key] || null;
+      const state = stateMap[key] || null;
+      const isNew = !!(latest && (!state || !state.last_read_at || latest > state.last_read_at));
+      const title = getTitle(pageMap[b.anime_id]) || pageMap[b.anime_id]?.title || b.anime_id;
+      return { ...b, latest, isNew, title };
+    }).sort((a,b)=>{
+      if(a.isNew !== b.isNew) return a.isNew ? -1 : 1;
+      return (b.latest||'').localeCompare(a.latest||'');
+    });
+    const newOnes = enriched.filter(b=>b.isNew);
+    const boardCard = (b) => `
+      <div class="board-hub-card" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:${b.isNew?'rgba(229,72,77,.08)':'rgba(255,255,255,.03)'};border:1px solid ${b.isNew?'rgba(229,72,77,.3)':'var(--line,#2a3830)'};cursor:pointer;margin-bottom:8px;">
+        ${b.isNew ? '<span style="width:8px;height:8px;border-radius:50%;background:#e5484d;flex:0 0 8px;"></span>' : '<span style="width:8px;height:8px;flex:0 0 8px;"></span>'}
+        <div style="flex:1 1 auto;min-width:0;">
+          <div style="font-size:14px;font-weight:700;color:var(--text,#e8f0ea);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(b.title)}</div>
+          <div style="font-size:12px;color:var(--muted,#9ab);">${escapeHtml(boardTypeLabel(b.board_type))}${b.latest ? ' ・ ' + escapeHtml(formatRelativeTime(b.latest)) : ''}</div>
+        </div>
+      </div>
+    `;
+    el.innerHTML = `
+      ${newOnes.length ? `
+        <h3 style="margin:0 0 10px;font-size:.95rem;color:var(--text,#e8f0ea);">🔔 ${escapeHtml(t('boardHubNewTitle')||'新着のある掲示板')}</h3>
+        <div style="margin-bottom:22px;">${newOnes.map(boardCard).join('')}</div>
+      ` : ''}
+      <h3 style="margin:0 0 10px;font-size:.95rem;color:var(--text,#e8f0ea);">${escapeHtml(t('myBoardsTitle'))}</h3>
+      <div>${enriched.map(boardCard).join('')}</div>
+    `;
+    el.querySelectorAll('.board-hub-card').forEach(card=>{
+      card.onclick = () => openBoardFromHub(card.dataset.animeId, card.dataset.boardType);
+    });
   }
 
   // ── 価値観掲示板：単独ページ、内部でA〜Dの4つに分岐（タブ） ──
@@ -9733,7 +9801,7 @@
       return;
     }
     await renderBoardPostsInto(panel, animeId, _boardActiveTab, () => renderBoardValue(animeId));
-    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, _boardActiveTab, currentLang).catch(()=>{});
+    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, _boardActiveTab, currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
     startBoardRealtime(animeId, _boardActiveTab, currentLang, () => renderBoardValue(animeId));
   }
 
@@ -11669,6 +11737,9 @@
     settingsDeleteAccountConfirm:{ ja:'本当にアカウントを削除しますか？この操作は取り消せません。', en:'Are you sure you want to delete your account? This cannot be undone.' },
     settingsDeleteAccountNotReady:{ ja:'アカウント削除機能は現在準備中です。お問い合わせフォームからご連絡ください。', en:'Account deletion is not yet available. Please contact us instead.' },
     myBoardsTitle:{ ja:'参加中の掲示板', en:'Your boards' },
+    boardHubTitle:{ ja:'掲示板', en:'Boards' },
+    boardHubNewTitle:{ ja:'新着のある掲示板', en:'Boards with new posts' },
+    generalBoardLabel:{ ja:'通常掲示板', en:'General Board' },
     mypageIconsTitle: { ja:'アイコン', en:'Icons' },
     iconDexCountLabel: { ja:'図鑑', en:'Collected' },
     iconSortRarity: { ja:'レア度順', en:'By rarity' },
@@ -15039,6 +15110,7 @@
           nav('mypage');
           checkOnboarding(); updateProfileCountry();
           ensureLoggedInUsername();
+          checkUnreadBoards();
         }
       } catch(e) { console.warn('OAuth hash handling:', e); }
     }
@@ -15050,12 +15122,13 @@
       loadMyGoldAnimeIds();
       ensureLoggedInUsername();
       loadMyBlockedUserIds();
+      checkUnreadBoards();
     }
     // yourValueHeaderBtn は常時表示（Design案通り）
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -15067,6 +15140,46 @@
     });
   }
   initAuth();
+
+  // ── 掲示板の未読バッジ（プッシュ通知に頼らず、アプリを開けば気付ける仕組み） ──
+  // ボトムナビの「掲示板」アイコンに、参加中のどれかの掲示板に新着があれば赤いドットを出す。
+  // 既存のlistMyBoards / getLatestActivity / getState（マイページの一覧で使っているのと同じ関数）を流用。
+  function setBoardBadge(show) {
+    ['bnav-board', 'bnavc-board'].forEach(id=>{
+      const btn = document.getElementById(id);
+      if(!btn) return;
+      let dot = btn.querySelector('.board-unread-dot');
+      if(show) {
+        if(!dot) {
+          dot = document.createElement('span');
+          dot.className = 'board-unread-dot';
+          dot.style.cssText = 'position:absolute;top:2px;right:calc(50% - 14px);width:8px;height:8px;border-radius:50%;background:#e5484d;border:1.5px solid var(--bg,#0e1a13);';
+          btn.style.position = 'relative';
+          btn.appendChild(dot);
+        }
+      } else if(dot) {
+        dot.remove();
+      }
+    });
+  }
+  async function checkUnreadBoards() {
+    if(!_currentUser || !sb) { setBoardBadge(false); return; }
+    try {
+      const boards = await db.boardState.listMyBoards(_currentUser.id);
+      if(!boards.length) { setBoardBadge(false); return; }
+      const [latestMap, stateMap] = await Promise.all([
+        db.boardState.getLatestActivity(boards),
+        db.boardState.getState(_currentUser.id),
+      ]);
+      const hasUnread = boards.some(b=>{
+        const key = b.anime_id+'|'+b.board_type+'|'+b.lang;
+        const latest = latestMap[key];
+        const state = stateMap[key];
+        return latest && (!state || !state.last_read_at || latest > state.last_read_at);
+      });
+      setBoardBadge(hasUnread);
+    } catch(e) { console.warn('checkUnreadBoards:', e); }
+  }
 
   // 初回ログイン時（または性別・年代が未回答のまま既存アカウントの場合）、
   // ユーザー名・性別・年代を入力するモーダルを強制的に出す（スキップ不可）
