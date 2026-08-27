@@ -2221,7 +2221,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.251.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.254.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4439,7 +4439,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.251.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.254.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4687,6 +4687,7 @@
         return { error };
       },
       async hasAny(userId) {
+        if(!PUSH_NOTIFICATIONS_ENABLED) return false; // 機能停止中は常にfalse＝バナー等は出さない
         if(!sb || !userId) return false;
         const { data } = await sb.from('push_subscriptions').select('id').eq('user_id', userId).limit(1);
         return !!(data && data.length);
@@ -6258,7 +6259,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.251.0';
+      if(vEl) vEl.textContent = 'v0.254.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -10509,7 +10510,7 @@
     const valueBoardsEligible = enriched.filter(b=>b.isValueBoard);
 
     const hasPush = await db.pushSubscriptions.hasAny(userId);
-    const pushBannerHtml = hasPush ? '' : `
+    const pushBannerHtml = (!PUSH_NOTIFICATIONS_ENABLED || hasPush) ? '' : `
       <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;border:1px solid var(--line,#2a3830);border-radius:8px;padding:.5rem .7rem;margin-bottom:.8rem;background:var(--card2,#141c19);">
         <span style="font-size:.78rem;color:#dff0e6;">${escapeHtml(t('pushEnablePrompt'))}</span>
         <button type="button" id="myBoardsEnablePushBtn" style="font-size:.72rem;padding:.3rem .7rem;border-radius:8px;background:var(--brand,#2d8a5f);border:none;color:#fff;cursor:pointer;flex-shrink:0;">${escapeHtml(t('pushEnableBtn'))}</button>
@@ -11820,6 +11821,9 @@
     boardHubTrendingTitle:{ ja:'勢いのある掲示板', en:'Trending boards' },
     boardHubNoTrending:{ ja:'まだデータがありません', en:'No data yet' },
     boardHubClearAll:{ ja:'全部消去', en:'Clear all' },
+    pushEnablePrompt:{ ja:'通知ONの掲示板に新着があったら、スマホ・PCに通知を届けます', en:'Get notified on your device when boards you follow have new posts' },
+    pushEnableBtn:{ ja:'通知を有効にする', en:'Enable notifications' },
+    pushEnableFailedAlert:{ ja:'通知の許可ができませんでした。ブラウザの通知設定を確認してください。', en:'Could not enable notifications. Check your browser settings.' },
     boardHubActiveCount:{ ja:'アクティブ', en:'Active ' },
     boardHubParticipantCount:{ ja:'参加', en:'Members ' },
     generalBoardLabel:{ ja:'通常掲示板', en:'General Board' },
@@ -11845,9 +11849,6 @@
     boardTypeValue: { ja:'価値観掲示板', en:'Value board' },
     boardGeneralLabel:{ ja:'通常掲示板', en:'General board' },
     yourValueBtn:{ ja:'あなたの価値観', en:'Your taste' },
-    pushEnablePrompt:{ ja:'通知ONの掲示板に新着があったら、スマホ・PCに通知を届けます', en:'Get notified on your device when boards you follow have new posts' },
-    pushEnableBtn:{ ja:'通知を有効にする', en:'Enable notifications' },
-    pushEnableFailedAlert:{ ja:'通知の許可ができませんでした。ブラウザの通知設定を確認してください。', en:'Could not enable notifications. Check your browser settings.' },
     boardLockedTitle:{ ja:'この掲示板は投票者限定です', en:'Members-only board' },
     boardLockedCta:{ ja:'レビューを書いて開放する', en:'Write a review to unlock' },
     boardLockedA:{ ja:'この作品のレビューで「作画・シリアス・かっこいい」のどれかに投票すると開放されます。', en:'Vote for Animation, Serious, or Cool when reviewing this title to unlock.' },
@@ -15131,7 +15132,8 @@
   });
 
   // ログイン中のユーザー名をキャッシュする（レビュー投稿・掲示板投稿など、どこからでも参照できるように）
-  // ── Web Push通知：許可リクエスト＋購読登録 ──
+  // ── Web Push通知：現在は機能を停止中（保留）。コードは残し、このフラグで一括ON/OFFする ──
+  const PUSH_NOTIFICATIONS_ENABLED = false;
   const VAPID_PUBLIC_KEY = 'BOSs13MSCQIjAqUelZL9dL3oPbXeHxY4N1zHLL7Z62Lo3LkhsBOT4DLE3cPDjcNa00dKdcZsWA7NMhZX3wPOtzM';
   function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -15142,6 +15144,7 @@
     return outputArray;
   }
   async function enablePushNotifications() {
+    if(!PUSH_NOTIFICATIONS_ENABLED) return { error: 'disabled' };
     if(!_currentUser) return { error: 'not logged in' };
     if(!('serviceWorker' in navigator) || !('PushManager' in window)) return { error: 'unsupported' };
     try {
@@ -15194,6 +15197,7 @@
           checkOnboarding(); updateProfileCountry();
           ensureLoggedInUsername();
           checkUnreadBoards();
+          startGlobalBoardNotifyWatch();
         }
       } catch(e) { console.warn('OAuth hash handling:', e); }
     }
@@ -15206,12 +15210,13 @@
       ensureLoggedInUsername();
       loadMyBlockedUserIds();
       checkUnreadBoards();
+      startGlobalBoardNotifyWatch();
     }
     // yourValueHeaderBtn は常時表示（Design案通り）
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -15227,23 +15232,12 @@
   // ── 掲示板の未読バッジ（プッシュ通知に頼らず、アプリを開けば気付ける仕組み） ──
   // ボトムナビの「掲示板」アイコン、および画面上部固定のベル、両方に反映する。
   // 対象は「ベルでONにしている（通知する掲示板リスト）」ものだけ（投稿・投票しただけの掲示板は含まない）。
-  function setBoardBadge(hasAny, hasUnread) {
-    ['bnav-board', 'bnavc-board'].forEach(id=>{
-      const btn = document.getElementById(id);
-      if(!btn) return;
-      let dot = btn.querySelector('.board-unread-dot');
-      if(hasUnread) {
-        if(!dot) {
-          dot = document.createElement('span');
-          dot.className = 'board-unread-dot';
-          dot.style.cssText = 'position:absolute;top:2px;right:calc(50% - 14px);width:8px;height:8px;border-radius:50%;background:#e5484d;border:1.5px solid var(--bg,#0e1a13);';
-          btn.style.position = 'relative';
-          btn.appendChild(dot);
-        }
-      } else if(dot) {
-        dot.remove();
-      }
-    });
+  function setBoardBadge(hasAny, hasUnread, unreadCount) {
+    const badge = document.getElementById('bnavNotifBadge');
+    if(badge) {
+      if(unreadCount > 0) { badge.textContent = unreadCount; badge.style.display = ''; }
+      else { badge.style.display = 'none'; }
+    }
   }
   // ベルでON（通知する掲示板リスト、最大BOARD_NOTIFY_LIMIT件）にしている掲示板だけを返す。
   // サイト内通知・掲示板トップの「新着」は、投稿しただけ／投票しただけの掲示板全部ではなく、
@@ -15270,6 +15264,64 @@
       });
       setBoardBadge(true, hasUnread);
     } catch(e) { console.warn('checkUnreadBoards:', e); }
+  }
+
+  // ── 画面上部に出る一時的な通知（トースト） ──
+  // 新着投稿があった瞬間、画面上部からスッと出て数秒で消える。よくあるWebサイトの通知と同じ形。
+  function showTopToast(title, body, onClick) {
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:-80px;left:50%;transform:translateX(-50%);width:min(92%,420px);z-index:9999;background:#152a1e;border:1px solid rgba(217,164,65,.3);border-radius:14px;padding:12px 14px;box-shadow:0 14px 34px -12px rgba(0,0,0,.6);cursor:pointer;transition:top .35s ease;';
+    toast.innerHTML = `
+      <div style="font-size:13px;font-weight:800;color:#e8f0ea;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(title)}</div>
+      <div style="font-size:12.5px;color:#b6c8bd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(body)}</div>
+    `;
+    toast.onclick = () => { toast.remove(); if(onClick) onClick(); };
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.top = '12px'; });
+    setTimeout(() => {
+      toast.style.top = '-80px';
+      setTimeout(() => toast.remove(), 400);
+    }, 5000);
+  }
+
+  // ログイン中、参加中の掲示板（ベルでONにしてる分）全部を横断して新着を見張り、
+  // 新着が来たら画面上部にトーストで知らせる。
+  // 注意：supabase-jsには「filterを一切指定しないpostgres_changes購読」で
+  // サーバー側(filter:null)とクライアント側(filter:undefined)の食い違いにより
+  // 購読自体が失敗することがある既知の不具合があるため、filterは必ず指定する。
+  // ここでは「通知ONにしている掲示板のanime_id」ごとに、そのanime_idを対象にした
+  // フィルタ付き購読を同じチャンネルに複数積む（1チャンネルに複数の.on()を積むのはSupabase公式の想定パターン）。
+  let _globalBoardNotifyChannel = null;
+  async function startGlobalBoardNotifyWatch() {
+    stopGlobalBoardNotifyWatch();
+    if(!sb || !_currentUser) return;
+    const boards = await getNotifyEnabledBoards(_currentUser.id);
+    if(!boards.length) return;
+    const animeIds = [...new Set(boards.map(b=>b.anime_id))];
+    let channel = sb.channel('global_board_notify_' + _currentUser.id);
+    const handleInsert = async (payload) => {
+      const row = payload.new;
+      if(!row || !_currentUser || row.user_id === _currentUser.id) return;
+      const latestBoards = await getNotifyEnabledBoards(_currentUser.id);
+      const lang = row.lang || 'ja';
+      const match = latestBoards.find(b=>b.anime_id===row.anime_id && b.board_type===row.board_type && b.lang===lang);
+      if(!match) return;
+      const page = getAll().find(p=>p.id===row.anime_id);
+      const title = getTitle(page) || page?.title || row.anime_id;
+      showTopToast(`${title} ${boardTypeLabel(row.board_type)}`, row.body || '', () => openBoardFromHub(row.anime_id, row.board_type));
+      checkUnreadBoards();
+      if(document.getElementById('page-board')?.classList.contains('active')) renderBoardHub();
+    };
+    animeIds.forEach(animeId => {
+      channel = channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'board_posts', filter: `anime_id=eq.${animeId}` }, handleInsert);
+    });
+    channel.subscribe((status, err) => {
+      if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('[global-board-notify] subscribe failed:', status, err);
+    });
+    _globalBoardNotifyChannel = channel;
+  }
+  function stopGlobalBoardNotifyWatch() {
+    if(_globalBoardNotifyChannel) { sb.removeChannel(_globalBoardNotifyChannel); _globalBoardNotifyChannel = null; }
   }
 
   // 初回ログイン時（または性別・年代が未回答のまま既存アカウントの場合）、
