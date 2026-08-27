@@ -7,10 +7,8 @@
     (function () {
       var redirect = sessionStorage.redirect;
       delete sessionStorage.redirect;
-      console.debug('[DEBUG-ROUTE] head-restore-script', {redirect, currentHref: location.href, historyLen: history.length});
       if (redirect && redirect !== location.href) {
         history.replaceState(null, null, redirect);
-        console.debug('[DEBUG-ROUTE] head-restore-script: replaceState実行', {redirect, historyLenAfter: history.length});
       }
     })();
   </script>
@@ -439,7 +437,7 @@
     /* ── GRID ── */
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; padding:0 1rem; }
     .today-pick-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; padding:6px .75rem .6rem; }
-    #randomPickGrid { padding:6px .75rem .6rem; }
+    .today-pick-grid { padding:6px .75rem .6rem; }
     .gcard { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; box-shadow:0 12px 30px -16px rgba(0,0,0,.8); overflow:hidden; cursor:pointer; transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, border-color .18s ease; }
     @media (hover:hover) {
       .gcard:hover { transform:translateY(-4px) scale(1.035); box-shadow:0 20px 40px -16px rgba(0,0,0,.8); border-color:rgba(92,201,142,.45); z-index:2; }
@@ -1589,7 +1587,7 @@
         gap:.85rem;
       }
       /* 今日のセレクション：ピックアップと同じ枚数・同じ余白ゼロの入れ物に揃えてカード幅を一致させる */
-      #randomPickGrid { grid-template-columns:repeat(7, 1fr); padding:6px 2rem .75rem; max-width:none; gap:.65rem; }
+      .today-pick-grid { grid-template-columns:repeat(7, 1fr); padding:6px 2rem .75rem; max-width:none; gap:.65rem; }
       
       /* 広告 */
       .ad-wrap { margin:1rem 2rem 0; max-width:1200px; margin-left:auto; margin-right:auto; }
@@ -2209,7 +2207,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.232.0-debug</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.233.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2300,7 +2298,10 @@
     </div>
   </section>
   <div class="carousel-wrap" id="randomPickWrap">
-    <div class="today-pick-grid" id="randomPickGrid"></div>
+    <div style="font-size:.78rem;font-weight:800;color:var(--muted);padding:.5rem .9rem .2rem;">アニメ</div>
+    <div class="today-pick-grid" id="randomPickGridAnime"></div>
+    <div style="font-size:.78rem;font-weight:800;color:var(--muted);padding:.6rem .9rem .2rem;">映画</div>
+    <div class="today-pick-grid" id="randomPickGridMovie"></div>
   </div>
   <!-- ▼▼▼ 広告②：コンテンツ間矩形 ▼▼▼
        本番: この div ごと AdSenseコードに置換 -->
@@ -4428,7 +4429,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.232.0-debug</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.233.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4965,6 +4966,20 @@
         if(yearFrom) q = q.gte('year', String(yearFrom));
         if(yearTo) q = q.lte('year', String(yearTo));
         const { data, count } = await q.limit(limit||2000);
+        return { items: data||[], count: count||0 };
+      },
+      // 放送開始日が指定した年月（'YYYY-MM'）に該当する作品を取得する（今期アニメ用）
+      async getBySeasonStart(yearMonth, limit) {
+        if(!sb) return { items:[], count:0 };
+        const from = `${yearMonth}-01`;
+        // 月末日を跨いでも問題ないよう、翌月1日未満（<）で絞る
+        const [y, m] = yearMonth.split('-').map(Number);
+        const nextMonth = m === 12 ? `${y+1}-01-01` : `${y}-${String(m+1).padStart(2,'0')}-01`;
+        const { data, count } = await sb.from('anime_pages')
+          .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year,broadcast_start', { count: 'exact' })
+          .gte('broadcast_start', from)
+          .lt('broadcast_start', nextMonth)
+          .limit(limit||500);
         return { items: data||[], count: count||0 };
       },
       // キーワード検索用：件数上限を設けず、ページネーションで全件取得する
@@ -5984,13 +5999,11 @@
   function correctAnimeUrlSlug(id, title) {
     if(currentPage !== 'anime' || currentAnimeId !== id) return;
     const path = BASE_PATH + animeUrlPath(id, title);
-    if(location.pathname !== path) { console.debug('[DEBUG-ROUTE] correctAnimeUrlSlug replaceState ->', path, 'history.length=', history.length); history.replaceState({page:'anime', animeId:id}, '', path); }
+    if(location.pathname !== path) history.replaceState({page:'anime', animeId:id}, '', path);
   }
   // ブラウザの戻る/進むボタンで呼ばれる。ここではURLを再度書き換えない（fromPopState指定でnav()に伝える）
-  window.addEventListener('popstate', (ev) => {
-    console.debug('[DEBUG-ROUTE] popstate fired. pathname=', location.pathname, 'state=', ev.state, 'history.length=', history.length);
+  window.addEventListener('popstate', () => {
     const route = parseRouteFromPath(location.pathname);
-    console.debug('[DEBUG-ROUTE] parseRouteFromPath ->', route);
     if(route) nav(route.page, route.animeId, { fromPopState: true });
     else nav('home', null, { fromPopState: true });
   });
@@ -6099,17 +6112,8 @@
       const rel = buildRelativePath(page, animeId);
       if(rel !== null) {
         const fullPath = BASE_PATH + rel;
-        if(location.pathname !== fullPath) {
-          console.debug('[DEBUG-ROUTE] nav() pushState', {from: location.pathname, to: fullPath, page, animeId, historyLenBefore: history.length, navHistoryLen: navHistory.length});
-          history.pushState({page, animeId}, '', fullPath);
-        } else {
-          console.debug('[DEBUG-ROUTE] nav() pushState SKIPPED (pathname unchanged)', {page, animeId, pathname: location.pathname});
-        }
-      } else {
-        console.debug('[DEBUG-ROUTE] nav() buildRelativePath returned null (URL not updated)', {page, animeId});
+        if(location.pathname !== fullPath) history.pushState({page, animeId}, '', fullPath);
       }
-    } else {
-      console.debug('[DEBUG-ROUTE] nav() called fromPopState, URL untouched', {page, animeId, pathname: location.pathname});
     }
     const backBtn = document.getElementById('mypageBackBtn');
     if(backBtn) backBtn.style.display = (page === 'user') ? '' : 'none';
@@ -6222,7 +6226,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.232.0-debug';
+      if(vEl) vEl.textContent = 'v0.233.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -6248,7 +6252,6 @@
     // （history.back()を呼べば popstate ハンドラが正しくURLと画面を同期させてくれる）。
     // ただしアプリ内で一度も遷移していない状態（外部リンクから直接来た等）でhistory.back()を呼ぶと
     // アプリの外（もしくは真っ白なタブ）に出てしまうため、その時だけホームへ安全に逃がす
-    console.debug('[DEBUG-ROUTE] navBack() called', {navHistoryLen: navHistory.length, navHistory: navHistory.slice(), historyLen: history.length, pathname: location.pathname});
     if(navHistory.length > 0) {
       history.back();
     } else {
@@ -7824,6 +7827,7 @@
   //   Supabaseデータが全く使われずKitsuランダムに丸ごとフォールバックしてしまうため、
   //   意図的に低め（20件）に設定して確実にSupabase側が使われるようにしている。
   const PICKUP_THRESHOLD = 20;
+  const PICKUP_COUNT = 12;
 
   async function getPickupItems() {
     const INTERVAL_MS = 30 * 60 * 1000;
@@ -7843,14 +7847,7 @@
           year: p.year || '',
         }));
       }
-
-      // 件数が少ない場合も、Kitsuへのフォールバックはせず自社DBの範囲でそのまま返す
-      if(allPages.length < PICKUP_THRESHOLD) {
-        return allPages.slice(0, 8);
-      }
     }
-
-    // Supabase100件以上：レビュー50%未満をランダムピック
     if(!allPages.length) allPages = getAll();
     if(!allPages.length) return [];
 
@@ -7862,17 +7859,32 @@
       getReviews().forEach(r=>{ reviewCounts[r.animeId]=(reviewCounts[r.animeId]||0)+1; });
     }
 
+    // 同じslot内では毎回同じ順序になる、種（seed）付きシャッフル用の疑似乱数
+    const seededRandom = (id) => {
+      const h = Math.sin(slot * 9301 + hashStr(id) * 49297) * 233280;
+      return h - Math.floor(h);
+    };
+
+    // データ件数が少なくてSupabase側の母数が薄い場合（PICKUP_THRESHOLD未満）は、
+    // 50%しきい値で絞り込むと候補がほぼ0件になりがちなので、
+    // 代わりに「レビュー数が少ない順」に並べて上位からピックする（＝レビューが少ない作品を優先的に見せる）
+    if(allPages.length < PICKUP_THRESHOLD) {
+      const sorted = [...allPages].sort((a,b)=>{
+        const diff = (reviewCounts[a.id]||0) - (reviewCounts[b.id]||0);
+        if(diff !== 0) return diff;
+        return seededRandom(a.id) - seededRandom(b.id); // 同数ならslotベースでランダム
+      });
+      return sorted.slice(0, PICKUP_COUNT);
+    }
+
+    // 通常時：全体レビュー数の50%未満の作品からランダムピック
     const totalReviews = Object.values(reviewCounts).reduce((a,b)=>a+b,0);
     const threshold = Math.max(totalReviews * 0.5, 1);
     const candidates = allPages.filter(a=>(reviewCounts[a.id]||0) < threshold);
     const pool = candidates.length >= 4 ? candidates : allPages;
 
-    const seeded = [...pool].sort((a,b)=>{
-      const ha = Math.sin(slot * 9301 + a.id.charCodeAt(0) * 49297) * 233280;
-      const hb = Math.sin(slot * 9301 + b.id.charCodeAt(0) * 49297) * 233280;
-      return (ha - Math.floor(ha)) - (hb - Math.floor(hb));
-    });
-    return seeded.slice(0, 15);
+    const seeded = [...pool].sort((a,b)=> seededRandom(a.id) - seededRandom(b.id));
+    return seeded.slice(0, PICKUP_COUNT);
   }
 
   // アニメ10・映画10・その他10を、meta欄で判別して完全ランダムにピックする
@@ -7887,7 +7899,7 @@
   }
   let randomPickTimerInterval = null;
   const RANDOM_PICK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24時間に1回
-  let _randomPickCache = { items: null, ts: 0, slot: null };
+  let _randomPickCache = { anime: null, movie: null, ts: 0, slot: null };
   // 日付ベースの決定的シャッフル（ページ更新しても同じ24時間枠内なら同じ選出結果になる）
   function seededShuffle(arr, slot) {
     return [...arr].sort((a,b)=>{
@@ -7904,9 +7916,10 @@
   async function renderRandomPickSection() {
     const now = Date.now();
     const slot = Math.floor(now / RANDOM_PICK_INTERVAL_MS);
-    let shuffled;
-    if (_randomPickCache.items && _randomPickCache.slot === slot) {
-      shuffled = _randomPickCache.items;
+    let pickedAnime, pickedMovie;
+    if (_randomPickCache.slot === slot && _randomPickCache.anime && _randomPickCache.movie) {
+      pickedAnime = _randomPickCache.anime;
+      pickedMovie = _randomPickCache.movie;
     } else {
       const all = getAll();
       let pool = [...all];
@@ -7928,23 +7941,20 @@
           pool = [...pool, ...dbItems];
         } catch (e) { console.warn('randomPick Supabase fetch:', e); }
       }
-      const anime = [], movie = [], other = [];
+      const anime = [], movie = [];
       pool.forEach(item => {
         const meta = (item.meta || '').toLowerCase();
         if (meta === 'movie') movie.push(item);
         else if (meta === 'tv') anime.push(item);
-        else other.push(item);
       });
-      const picked = [
-        ...seededShuffle(anime, slot).slice(0, 10),
-        ...seededShuffle(movie, slot).slice(0, 10),
-        ...seededShuffle(other, slot).slice(0, 10),
-      ];
-      shuffled = seededShuffle(picked, slot); // 種類ごとに固まらないよう最後にもう一度混ぜる（同じslotなら結果は毎回同じ）
-      _randomPickCache = { items: shuffled, ts: now, slot };
+      pickedAnime = seededShuffle(anime, slot).slice(0, 6);
+      pickedMovie = seededShuffle(movie, slot).slice(0, 6);
+      _randomPickCache = { anime: pickedAnime, movie: pickedMovie, ts: now, slot };
     }
-    const grid = document.getElementById('randomPickGrid');
-    if (grid) grid.innerHTML = shuffled.map(item => renderAnimeCard(item, { style: 'g' })).join('');
+    const gridAnime = document.getElementById('randomPickGridAnime');
+    if (gridAnime) gridAnime.innerHTML = pickedAnime.map(item => renderAnimeCard(item, { style: 'g' })).join('');
+    const gridMovie = document.getElementById('randomPickGridMovie');
+    if (gridMovie) gridMovie.innerHTML = pickedMovie.map(item => renderAnimeCard(item, { style: 'g' })).join('');
   }
   function startRandomPickRefresh() {
     const initialRender = renderRandomPickSection().catch(console.error);
@@ -7975,7 +7985,7 @@
     pickupTimerInterval = setInterval(update, 1000);
   }
 
-  // 今季アニメ（AniList APIから取得、失敗時はダミー表示）
+  // 今季アニメ：自社DB（anime_pages）の broadcast_start が今シーズン開始月に一致する作品を表示
   const SEASON_DUMMY = [
     {id:'s1', title:'葬送のフリーレン（再放送）', meta:'ファンタジー / 叙情 / 冒険', image:'', dummy:true},
     {id:'s2', title:'ダンジョン飯', meta:'ファンタジー / コメディ / 冒険', image:'', dummy:true},
@@ -7985,18 +7995,36 @@
     {id:'s6', title:'転スラ Season3', meta:'ファンタジー / 異世界 / 成長', image:'', dummy:true},
   ];
 
+  // 日本のアニメ放送期（1月/4月/7月/10月開始）に基づいて、今シーズンの開始年月（'YYYY-MM'）を返す
   function getCurrentSeason() {
     const m = new Date().getMonth() + 1;
     const y = new Date().getFullYear();
-    if (m >= 1 && m <= 3)  return { season:'WINTER', label:`${y}年冬アニメ` };
-    if (m >= 4 && m <= 6)  return { season:'SPRING', label:`${y}年春アニメ` };
-    if (m >= 7 && m <= 9)  return { season:'SUMMER', label:`${y}年夏アニメ` };
-    return { season:'FALL', label:`${y}年秋アニメ` };
+    if (m >= 1 && m <= 3)  return { season:'WINTER', label:`${y}年冬アニメ`, startYearMonth:`${y}-01` };
+    if (m >= 4 && m <= 6)  return { season:'SPRING', label:`${y}年春アニメ`, startYearMonth:`${y}-04` };
+    if (m >= 7 && m <= 9)  return { season:'SUMMER', label:`${y}年夏アニメ`, startYearMonth:`${y}-07` };
+    return { season:'FALL', label:`${y}年秋アニメ`, startYearMonth:`${y}-10` };
   }
 
-  // Kitsu API依存を撤去。今期アニメの自動取得は行わない（自社DB登録作品のみで運用）。
+  // 自社DBのbroadcast_startを見て、今シーズン開始月に該当する作品を全件取得する
   async function fetchSeasonalAnime() {
-    return [];
+    if(DB_MODE !== 'supabase' || !sb) return [];
+    const { startYearMonth } = getCurrentSeason();
+    try {
+      const { items } = await db.animePages.getBySeasonStart(startYearMonth);
+      return (items||[]).map(p => ({
+        id: p.id,
+        kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+        title: p.title || p.title_en || '',
+        titleEn: p.title_en || p.title || '',
+        meta: p.meta || '',
+        image: p.image_url || '',
+        year: p.year || '',
+        genres: p.genres || [],
+      }));
+    } catch(e) {
+      console.warn('fetchSeasonalAnime:', e);
+      return [];
+    }
   }
 
   function renderSeasonSection(items, label) {
@@ -15572,7 +15600,6 @@
       const navEntries = performance.getEntriesByType('navigation');
       if(navEntries && navEntries[0] && navEntries[0].type) navType = navEntries[0].type;
     } catch(_) {}
-    console.debug('[DEBUG-ROUTE] bootRouteFromUrl', {pathname: location.pathname, route, navType, historyLenAtBoot: history.length});
     if(route && route.page !== 'home' && navType === 'navigate') {
       // 外部リンク（Google検索結果等）から深いURLに直接着地した場合、
       // ブラウザの実際のセッション履歴には着地元の1エントリしか無い。
@@ -15582,7 +15609,6 @@
         history.replaceState({page:'home'}, '', BASE_PATH + '/');
         const rel = buildRelativePath(route.page, route.animeId);
         if(rel !== null) history.pushState({page: route.page, animeId: route.animeId}, '', BASE_PATH + rel);
-        console.debug('[DEBUG-ROUTE] boot: home下敷き完了', {historyLenAfter: history.length});
       } catch(_) {}
       nav(route.page, route.animeId, { fromPopState: true });
     } else if(route) {
