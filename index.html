@@ -2221,7 +2221,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.240.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.241.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4443,7 +4443,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.240.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.241.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4738,6 +4738,14 @@
         const map = {};
         (data||[]).forEach(r=>{ map[r.anime_id+'|'+r.board_type+'|'+(r.lang||'ja')] = r; });
         return map;
+      },
+      // 特定1件のnotify状態だけを取得（掲示板入室時に「元の設定」を覚えておくため）
+      async getNotify(userId, animeId, boardType, lang) {
+        if(!sb || !userId) return null;
+        const { data } = await sb.from('user_board_state').select('notify')
+          .eq('user_id', userId).eq('anime_id', animeId).eq('board_type', boardType).eq('lang', lang || 'ja')
+          .maybeSingle();
+        return data ? !!data.notify : false; // レコード無し＝OFF扱い（一覧側の既存の扱いと合わせる）
       },
       async markRead(userId, animeId, boardType, lang) {
         if(!sb || !userId) return { error: 'invalid' };
@@ -6246,7 +6254,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.240.0';
+      if(vEl) vEl.textContent = 'v0.241.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -9665,15 +9673,34 @@
   // ── 通常掲示板：単独ページ、タブなし ──
   // 「今この掲示板を開いている」ハートビート：開いたら即送信＋以後20秒おき、離れたら停止する
   let _boardHeartbeatTimer = null;
+  // 入室時に「元のnotify設定」を覚えておき、退室時に復元するための退避先
+  // （通常掲示板はそもそもnotify概念が無いのでnullのまま扱う）
+  let _boardNotifyRestore = null; // { animeId, boardType, lang, prevNotify } | null
   function startBoardHeartbeat(animeId, boardType) {
     stopBoardHeartbeat();
     if(!_currentUser) return;
     const send = () => db.boardState.heartbeat(_currentUser.id, animeId, boardType, currentLang).catch(()=>{});
     send();
     _boardHeartbeatTimer = setInterval(send, 20000);
+    // 掲示板内にいる間だけ、その掲示板の通知設定を自動でOFFにする（元の値は退室時に戻す）。
+    // 対象は価値観掲示板のみ（通常掲示板はA〜D等のboard_typeを取らずnotify概念自体が無いため、
+    // ここでは一律試みるが、通常掲示板側は元々notify行が無いのでOFF→OFFの空振りになるだけで害はない）
+    (async () => {
+      const prevNotify = await db.boardState.getNotify(_currentUser.id, animeId, boardType, currentLang);
+      _boardNotifyRestore = { animeId, boardType, lang: currentLang, prevNotify };
+      if(prevNotify) {
+        await db.boardState.setNotify(_currentUser.id, animeId, boardType, false, currentLang).catch(()=>{});
+      }
+    })();
   }
   function stopBoardHeartbeat() {
     if(_boardHeartbeatTimer) { clearInterval(_boardHeartbeatTimer); _boardHeartbeatTimer = null; }
+    // 入室時に退避しておいたnotify設定を復元する
+    if(_currentUser && _boardNotifyRestore && _boardNotifyRestore.prevNotify) {
+      const { animeId, boardType, lang } = _boardNotifyRestore;
+      db.boardState.setNotify(_currentUser.id, animeId, boardType, true, lang).catch(()=>{});
+    }
+    _boardNotifyRestore = null;
   }
 
   async function renderBoardGeneral(animeId) {
@@ -9857,13 +9884,17 @@
             <button type="button" class="board-reply-submit" data-id="${p.id}" style="height:38px;padding:0 16px;border-radius:10px;border:none;background:#5cc98e;color:#07160d;font-size:13px;font-weight:800;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button>
           </div>
         </div>`;
-        // トップレベル投稿8件ごとに広告を1枠挟む（返信はカウントしない。0件目には出さない）
+        // トップレベル投稿15件ごとに広告を1枠挟む（返信はカウントしない。0件目には出さない）
         const shouldInsertAd = (idx + 1) % BOARD_AD_INTERVAL === 0;
         return shouldInsertAd ? postHtml + boardAdSlotHtml() : postHtml;
       }).join('');
     }
     html += '</div>';
     panel.innerHTML = html;
+    // チャット的な掲示板なので、開いた時・投稿した時は常に一番下（＝最新の投稿）が見える位置にする。
+    // 投稿は作成日時の昇順（古い→新しい）で並んでいるため、一番下が最新になる。
+    // renderするたびに毎回呼ばれるので、初回オープン時も投稿後の再描画時も両方これでカバーされる。
+    requestAnimationFrame(() => window.scrollTo(0, document.body.scrollHeight));
     panel.querySelectorAll('.board-kebab-btn').forEach(btn=>{
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -9881,7 +9912,7 @@
       };
     });
     panel.querySelectorAll('.board-reply-submit').forEach(btn=>{
-      btn.onclick = async () => {
+      const submitReply = async () => {
         const box = panel.querySelector(`.board-reply-box[data-id="${btn.dataset.id}"]`);
         const input = box.querySelector('.board-reply-input');
         const body = input.value.trim();
@@ -9891,6 +9922,17 @@
         if(error) { alert(t('profileSaveFailedAlert')); return; }
         rerenderFn(animeId);
       };
+      btn.onclick = submitReply;
+      const replyBox = panel.querySelector(`.board-reply-box[data-id="${btn.dataset.id}"]`);
+      const replyInput = replyBox?.querySelector('.board-reply-input');
+      if(replyInput) {
+        replyInput.addEventListener('keydown', (e) => {
+          if(e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+            e.preventDefault();
+            submitReply();
+          }
+        });
+      }
     });
     panel.querySelectorAll('.board-report-btn').forEach(btn=>{
       btn.onclick = async () => {
@@ -9935,7 +9977,7 @@
         composeCount.textContent = `${len}/${BOARD_MAX_LEN}`;
         composeCount.style.color = len >= BOARD_MAX_LEN ? '#eaa9a9' : '#5c6d63';
       });
-      composer.querySelector('#boardComposeBtn').onclick = async () => {
+      const submitCompose = async () => {
         const input = composer.querySelector('#boardComposeInput');
         const body = input.value.trim().slice(0, BOARD_MAX_LEN);
         if(!body) return;
@@ -9944,6 +9986,14 @@
         if(error) { alert(t('profileSaveFailedAlert')); return; }
         rerenderFn(animeId);
       };
+      composer.querySelector('#boardComposeBtn').onclick = submitCompose;
+      // Enterで投稿、Shift+Enterで改行（LINE等のチャットアプリと同じ挙動）
+      composeInput.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+          e.preventDefault();
+          submitCompose();
+        }
+      });
     } else {
       composer.innerHTML = `<p style="max-width:820px;margin:0 auto;font-size:.8rem;color:var(--muted,#9ab);text-align:center;">${escapeHtml(t('boardLoginRequired'))}</p>`;
     }
