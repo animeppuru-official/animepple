@@ -2221,7 +2221,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.244.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.245.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4443,7 +4443,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.244.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.245.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6070,6 +6070,10 @@
       if (typeof _goodsAutoScrollTimer !== 'undefined' && _goodsAutoScrollTimer) { clearInterval(_goodsAutoScrollTimer); _goodsAutoScrollTimer = null; }
       if (typeof _goodsAutoScrollResumeTimer !== 'undefined' && _goodsAutoScrollResumeTimer) { clearTimeout(_goodsAutoScrollResumeTimer); _goodsAutoScrollResumeTimer = null; }
     }
+    // 掲示板ページを離れる時は、リアルタイム購読を止める（不要な購読を残さない）
+    if ((currentPage === 'board-general' || currentPage === 'board-value') && page !== currentPage) {
+      stopBoardRealtime();
+    }
     // ページを離れる時は、後で「戻る」で復元できるようスクロール位置を覚えておく（全ページ対応）
     _savedScroll[_scrollKey(currentPage, currentAnimeId)] = window.scrollY;
     // 検索オーバーレイが開いていたら閉じる
@@ -6232,7 +6236,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.244.0';
+      if(vEl) vEl.textContent = 'v0.245.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -9649,8 +9653,27 @@
   }
 
   // ── 通常掲示板：単独ページ、タブなし ──
-  // 「今見ている人には通知しない」というハートビート機構は撤去した。
-  // シンプルに「投稿者以外の通知ONユーザー全員に送る」方式にする。
+  // 掲示板を開いている間、新着投稿をリアルタイムで受け取って自動的に一覧を更新する。
+  // Realtimeのフィルタはサーバー側でanime_id一本しか指定できないため、
+  // board_type・langの絞り込みはコールバック内でJS側で行う。
+  let _boardRealtimeChannel = null;
+  function startBoardRealtime(animeId, boardType, lang, rerenderFn) {
+    stopBoardRealtime();
+    if(!sb) return;
+    _boardRealtimeChannel = sb
+      .channel(`board_posts_${animeId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'board_posts', filter: `anime_id=eq.${animeId}` }, (payload) => {
+        const row = payload.new;
+        if(!row || row.board_type !== boardType || (row.lang || 'ja') !== (lang || 'ja')) return;
+        // 自分自身の投稿は、投稿直後に既に自前で再描画済みなので二重更新を避ける
+        if(_currentUser && row.user_id === _currentUser.id) return;
+        rerenderFn(animeId);
+      })
+      .subscribe();
+  }
+  function stopBoardRealtime() {
+    if(_boardRealtimeChannel) { sb.removeChannel(_boardRealtimeChannel); _boardRealtimeChannel = null; }
+  }
 
   async function renderBoardGeneral(animeId) {
     const el = document.getElementById('boardGeneralSection');
@@ -9658,6 +9681,7 @@
     el.innerHTML = `<div id="boardPanel"></div>`;
     await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, 'general', renderBoardGeneral);
     if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, 'general', currentLang).catch(()=>{});
+    startBoardRealtime(animeId, 'general', currentLang, renderBoardGeneral);
   }
 
   // ── 価値観掲示板：単独ページ、内部でA〜Dの4つに分岐（タブ） ──
@@ -9710,6 +9734,7 @@
     }
     await renderBoardPostsInto(panel, animeId, _boardActiveTab, () => renderBoardValue(animeId));
     if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, _boardActiveTab, currentLang).catch(()=>{});
+    startBoardRealtime(animeId, _boardActiveTab, currentLang, () => renderBoardValue(animeId));
   }
 
   // 通常・価値観、両掲示板共通：投稿一覧＋投稿フォーム＋返信の描画
