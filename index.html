@@ -2207,7 +2207,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.234.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.235.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4429,7 +4429,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.234.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.235.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6009,11 +6009,19 @@
   });
 
   let navHistory = []; // 履歴スタック
-  const _savedScroll = {}; // ホーム/人気ページを離れる時のスクロール位置（{home:number, popular:number}）
-  function _restoreSavedScroll(page) {
-    const y = _savedScroll[page];
+  // ページを離れる時のスクロール位置を、ページ内容ごと（ページ名＋アニメID等）に区別して覚えておく。
+  // 例えば「アニメA」と「アニメB」を別々に見た後どちらも「戻る」で正しい位置に復元できるよう、
+  // 単純な page 名だけでなく animeId も含めたキーにする
+  const _savedScroll = {};
+  function _scrollKey(page, animeId) {
+    return page + (animeId ? ('|' + animeId) : '');
+  }
+  function _restoreSavedScroll(key) {
+    const y = _savedScroll[key];
     if (y === undefined) return;
     window.scrollTo(0, y);
+    // ページ内容が非同期で後から追加・変化する場合に備え、次フレームでもう一度合わせる
+    requestAnimationFrame(() => window.scrollTo(0, y));
   }
 
   // ホーム/人気/マイページなど検索と無関係なページに移動した時、検索の状態を消す
@@ -6062,10 +6070,8 @@
     if ((currentPage === 'board-general' || currentPage === 'board-value') && page !== currentPage) {
       stopBoardHeartbeat();
     }
-    // ホーム/人気ページを離れる時は、後で「戻る」で復元できるようスクロール位置を覚えておく
-    if (currentPage === 'home' || currentPage === 'popular') {
-      _savedScroll[currentPage] = window.scrollY;
-    }
+    // ページを離れる時は、後で「戻る」で復元できるようスクロール位置を覚えておく（全ページ対応）
+    _savedScroll[_scrollKey(currentPage, currentAnimeId)] = window.scrollY;
     // 検索オーバーレイが開いていたら閉じる
     const overlay = document.getElementById('searchOverlay');
     if(overlay && overlay.classList.contains('open')) {
@@ -6082,9 +6088,9 @@
     const domPage = (page === 'user') ? 'mypage' : page;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('page-'+domPage).classList.add('active');
-    // 戻る/進むでhome・popularに着地した時は、離れた時のスクロール位置を復元する（それ以外は先頭へ）
-    const willRestoreScroll = opts.fromPopState && (page === 'home' || page === 'popular') && _savedScroll[page] !== undefined;
-    if (willRestoreScroll) _restoreSavedScroll(page); else window.scrollTo(0,0);
+    // 戻る/進むで着地した時は、離れた時のスクロール位置を復元する（全ページ対応。それ以外は先頭へ）
+    const willRestoreScroll = opts.fromPopState && _savedScroll[_scrollKey(page, animeId)] !== undefined;
+    if (willRestoreScroll) _restoreSavedScroll(_scrollKey(page, animeId)); else window.scrollTo(0,0);
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     const ab = document.getElementById('bnav-'+domPage);
     if (ab && page !== 'user') ab.classList.add('active');
@@ -6226,7 +6232,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.234.0';
+      if(vEl) vEl.textContent = 'v0.235.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
