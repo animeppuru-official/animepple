@@ -1028,6 +1028,20 @@
     .af-goods-card-name { margin:0 0 3px; font-size:11.5px; font-weight:700; line-height:1.35; color:#e8f0ea; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .af-goods-card-price { margin:0; font-size:13px; font-weight:700; color:#e8a06b; }
 
+    /* レビュー投稿完了ポップアップ内のグッズ欄：
+       .af-goods-gridはビューポート640px以上で4列になる作りだが、
+       モーダルの箱幅は460px固定なのでそのまま流用すると4列がぎゅう詰めになる。
+       ここではモーダルの箱幅を基準に、常に2列で組む専用クラスにする。
+       （モバイル用の横スクロールカルーセルCSSも意図せず引き継がないよう独立させている） */
+    .review-posted-goods-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    .review-posted-goods-grid .af-goods-card { padding:9px; gap:9px; }
+    .review-posted-goods-grid .af-goods-card-thumb { width:38px; height:38px; flex:0 0 38px; font-size:1.1rem; }
+    .review-posted-goods-grid .af-goods-card-name { font-size:10.5px; }
+    .review-posted-goods-grid .af-goods-card-price { font-size:12px; }
+    @media(max-width:380px){
+      .review-posted-goods-grid { grid-template-columns:1fr; }
+    }
+
     /* ══ REVIEWS LIST FILTERS ══ */
     .rl-tab, .rl-country { background:var(--card2); border:1px solid var(--line); color:var(--muted); border-radius:999px; padding:.25rem .65rem; font-size:.75rem; cursor:pointer; white-space:nowrap; flex-shrink:0; }
     .rl-tab.active, .rl-country.active { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
@@ -2207,7 +2221,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.238.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.240.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4429,7 +4443,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.238.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.240.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6232,7 +6246,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.238.0';
+      if(vEl) vEl.textContent = 'v0.240.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -9419,10 +9433,10 @@
     const titleText = isVoted ? t('reviewPostedVoted') : t('reviewPosted');
     const goodsHtml = page ? buildGoodsCardsHtml(page) : '';
     box.innerHTML = `
-      <h3 style="font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:17px;margin:0 0 16px;color:#e8f0ea;text-align:center;">${escapeHtml(titleText)}</h3>
+      <h3 style="font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:16.5px;margin:0 0 18px;color:#e8f0ea;text-align:center;line-height:1.5;">${escapeHtml(titleText)}</h3>
       ${goodsHtml ? `
-        <div style="font-size:.78rem;font-weight:800;color:#8db5a0;margin:0 0 8px;">🛍 ${escapeHtml(page.title || page.titleEn || '')}</div>
-        <div class="af-goods-grid" style="margin-bottom:18px;">${goodsHtml}</div>
+        <div style="font-size:.78rem;font-weight:800;color:#8db5a0;margin:0 0 10px;">${escapeHtml(t('goodsSection'))}</div>
+        <div class="review-posted-goods-grid" style="margin-bottom:20px;">${goodsHtml}</div>
       ` : ''}
       <button type="button" id="reviewPostedPopupCloseBtn" style="width:100%;height:46px;border-radius:11px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:14px;cursor:pointer;">${escapeHtml(t('btnClose'))}</button>
     `;
@@ -9746,6 +9760,24 @@
   }
 
   const BOARD_DISPLAY_EXPIRY_DAYS = 90;
+  // 掲示板の会話中に挟む広告バナー：トップレベル投稿15件ごとに1回。
+  // 既存のad-wrap/ad-rectスタイル（ホーム・アニメページ中間広告と同じ見た目）をそのまま使う。
+  const BOARD_AD_INTERVAL = 15;
+  function boardAdSlotHtml() {
+    return `
+      <div class="ad-wrap" style="margin:.4rem 0 0;">
+        <div class="ad-label">AD</div>
+        <div class="ad-rect" onclick="adClick('streaming_board_mid')">
+          <div class="ad-rect-inner">
+            <div class="ad-rect-badge">🎬 PR</div>
+            <div class="ad-rect-title">U-NEXT — 31日間無料トライアル</div>
+            <div class="ad-rect-sub">アニメ・映画・漫画が見放題。今すぐ試せます。</div>
+            <div class="ad-rect-cta">無料で試す</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
   async function renderBoardPostsInto(panel, animeId, boardType, rerenderFn) {
     let posts = await db.board.list(animeId, boardType, currentLang);
     // 表示期限：古い投稿は一覧から除外（DBには残るが表示だけしない）
@@ -9801,11 +9833,11 @@
           <div style="font-size:${isReply?'13px':'14px'};line-height:1.7;color:${textColor};white-space:pre-wrap;text-align:left;">${escapeHtml(item.body)}</div>
         </div>`;
       };
-      html += topLevel.map(p=>{
+      html += topLevel.map((p, idx)=>{
         const replies = repliesOf(p.id);
         const isMine = _currentUser && p.user_id === _currentUser.id;
         const side = isMine ? 'flex-end' : 'flex-start';
-        return `<div style="display:flex;flex-direction:column;align-items:${side};" data-post-id="${p.id}">
+        const postHtml = `<div style="display:flex;flex-direction:column;align-items:${side};" data-post-id="${p.id}">
           ${postCard(p)}
           <div style="display:flex;align-items:center;gap:14px;margin-top:7px;justify-content:${side};">
             ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="display:inline-flex;align-items:center;gap:5px;border:none;background:transparent;color:#82968a;font-size:12px;font-weight:700;cursor:pointer;padding:0;">
@@ -9825,6 +9857,9 @@
             <button type="button" class="board-reply-submit" data-id="${p.id}" style="height:38px;padding:0 16px;border-radius:10px;border:none;background:#5cc98e;color:#07160d;font-size:13px;font-weight:800;cursor:pointer;">${escapeHtml(t('boardPostBtn'))}</button>
           </div>
         </div>`;
+        // トップレベル投稿8件ごとに広告を1枠挟む（返信はカウントしない。0件目には出さない）
+        const shouldInsertAd = (idx + 1) % BOARD_AD_INTERVAL === 0;
+        return shouldInsertAd ? postHtml + boardAdSlotHtml() : postHtml;
       }).join('');
     }
     html += '</div>';
