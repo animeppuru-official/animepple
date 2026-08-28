@@ -2226,7 +2226,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.260.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.261.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4444,7 +4444,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.260.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.261.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6266,7 +6266,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.260.0';
+      if(vEl) vEl.textContent = 'v0.261.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -9957,6 +9957,16 @@
     }
     const topLevel = posts.filter(p=>!p.parent_id);
     const repliesOf = pid => posts.filter(p=>p.parent_id===pid);
+    // 投稿者全員分のプロフィールアイコンを、毎回描画時にまとめて取得する（投稿時点のスナップショットではなく、
+    // 常に「今現在設定されている」アイコンを表示するため。過去の投稿でも、後でアイコンを変えれば反映される）
+    let boardAvatarMap = {};
+    if(DB_MODE === 'supabase' && sb && posts.length) {
+      try {
+        const posterIds = [...new Set(posts.map(p=>p.user_id).filter(Boolean))];
+        const profiles = await db.profiles.getByIds(posterIds);
+        profiles.forEach(p=>{ if(p.avatar_url) boardAvatarMap[p.id] = p.avatar_url; });
+      } catch(e) { console.warn('board avatar fetch:', e); }
+    }
     let html = '<div style="max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px;">';
     if(!topLevel.length) {
       html += `<p style="font-size:.82rem;color:var(--muted,#9ab);text-align:center;padding:2rem 0;">${escapeHtml(t('boardEmpty'))}</p>`;
@@ -9991,7 +10001,10 @@
         const avatarBg = isMine ? 'rgba(12,32,21,.18)' : 'linear-gradient(150deg,#2c4436,#1d3225)';
         const avatarBorder = isMine ? 'rgba(12,32,21,.25)' : 'rgba(255,255,255,.1)';
         const avatarText = isMine ? '#0c2015' : '#9be3bd';
-        const avatar = `<span style="width:${avatarSize}px;height:${avatarSize}px;flex:0 0 ${avatarSize}px;border-radius:50%;background:${avatarBg};border:1px solid ${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:${isReply?'10px':'12px'};font-weight:700;color:${avatarText};">${escapeHtml(name.charAt(0))}</span>`;
+        const avatarUrl = boardAvatarMap[item.user_id];
+        const avatar = avatarUrl
+          ? `<img src="${escapeHtml(avatarUrl)}" style="width:${avatarSize}px;height:${avatarSize}px;flex:0 0 ${avatarSize}px;border-radius:50%;object-fit:cover;border:1px solid ${avatarBorder};">`
+          : `<span style="width:${avatarSize}px;height:${avatarSize}px;flex:0 0 ${avatarSize}px;border-radius:50%;background:${avatarBg};border:1px solid ${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:${isReply?'10px':'12px'};font-weight:700;color:${avatarText};">${escapeHtml(name.charAt(0))}</span>`;
         return `<div style="max-width:${isReply?'92%':'78%'};display:inline-flex;flex-direction:column;background:${bg};border:1px solid ${border};border-radius:${radius};padding:${isReply?'9px 12px':'11px 14px'};box-shadow:0 8px 20px -14px rgba(0,0,0,.7);">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-direction:${isMine?'row-reverse':'row'};">
             ${avatar}
