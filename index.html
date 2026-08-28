@@ -2226,7 +2226,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.261.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.263.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4444,7 +4444,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.261.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.263.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6266,7 +6266,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.261.0';
+      if(vEl) vEl.textContent = 'v0.263.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -10452,6 +10452,116 @@
     return arr;
   }
 
+  // アイコンの「位置・拡大率」をユーザー自身で調整できるクロップモーダル。
+  // 画像処理はブラウザ内のcanvasだけで完結させ、確定した結果を正方形JPEGのdata URLとして返す
+  // （Supabase Storageのバケット等を新設せず、profiles.avatar_url（テキスト列）にそのまま保存できるようにするため）
+  function openIconCropModal(imageUrl, onConfirm) {
+    const OUTPUT_SIZE = 320; // 保存する正方形画像の一辺（px）
+    const VIEWPORT_SIZE = 260; // 画面上でのプレビュー枠の一辺（px）
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,10,7,.78);backdrop-filter:blur(3px);z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;';
+    const box = document.createElement('div');
+    box.style.cssText = 'width:100%;max-width:360px;background:#152a1e;border:1px solid rgba(217,164,65,.3);border-radius:20px;padding:22px;box-shadow:0 40px 100px -30px rgba(0,0,0,.85);';
+    box.innerHTML = `
+      <h3 style="margin:0 0 14px;font-size:15px;font-weight:700;color:#e8f0ea;text-align:center;">${escapeHtml(t('iconCropTitle'))}</h3>
+      <div id="iconCropViewport" style="width:${VIEWPORT_SIZE}px;height:${VIEWPORT_SIZE}px;margin:0 auto 10px;border-radius:50%;overflow:hidden;background:#0b1a11;border:2px solid rgba(217,164,65,.4);position:relative;touch-action:none;cursor:ns-resize;">
+        <img id="iconCropImg" src="${escapeHtml(imageUrl)}" style="position:absolute;top:0;left:0;transform-origin:0 0;user-select:none;pointer-events:none;" draggable="false">
+      </div>
+      <p style="text-align:center;font-size:11px;color:#82968a;margin:0 0 16px;">${escapeHtml(t('iconCropHint'))}</p>
+      <div style="display:flex;gap:10px;">
+        <button type="button" id="iconCropCancelBtn" style="flex:1;height:44px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#b6c8bd;font-weight:700;font-size:14px;cursor:pointer;">${escapeHtml(t('iconCropCancel'))}</button>
+        <button type="button" id="iconCropConfirmBtn" style="flex:1;height:44px;border-radius:11px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:14px;cursor:pointer;">${escapeHtml(t('iconCropConfirm'))}</button>
+      </div>
+    `;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    const viewport = box.querySelector('#iconCropViewport');
+    const imgEl = box.querySelector('#iconCropImg');
+    const centerX = VIEWPORT_SIZE / 2, centerY = VIEWPORT_SIZE / 2;
+
+    // 状態：baseScale=画像がビューポートいっぱいに収まる基準倍率、zoom=そこからの追加倍率（中心固定）
+    let baseScale = 1, zoom = 1, naturalW = 0, naturalH = 0;
+    const MIN_ZOOM = 1, MAX_ZOOM = 4;
+
+    function applyTransform() {
+      const scale = baseScale * zoom;
+      const w = naturalW * scale, h = naturalH * scale;
+      imgEl.style.width = w + 'px';
+      imgEl.style.height = h + 'px';
+      // 常に中心固定（ビューポート中央 = 画像の中央）で拡大縮小する
+      imgEl.style.transform = `translate(${(VIEWPORT_SIZE - w) / 2}px, ${(VIEWPORT_SIZE - h) / 2}px)`;
+    }
+
+    const initImg = new Image();
+    initImg.crossOrigin = 'anonymous';
+    initImg.onload = () => {
+      naturalW = initImg.naturalWidth; naturalH = initImg.naturalHeight;
+      baseScale = Math.max(VIEWPORT_SIZE / naturalW, VIEWPORT_SIZE / naturalH);
+      applyTransform();
+    };
+    initImg.src = imageUrl;
+
+    // ── PC：マウスをドラッグして、中心からの距離が「遠ざかる→拡大／近づく→縮小」（中心固定） ──
+    let mouseDragging = false, mouseStartDist = 0, mouseStartZoom = 1;
+    const distFromCenter = (x, y) => {
+      const rect = viewport.getBoundingClientRect();
+      const dx = (x - rect.left) - centerX, dy = (y - rect.top) - centerY;
+      return Math.hypot(dx, dy) || 1;
+    };
+    viewport.addEventListener('mousedown', e => {
+      mouseDragging = true;
+      mouseStartDist = distFromCenter(e.clientX, e.clientY);
+      mouseStartZoom = zoom;
+    });
+    window.addEventListener('mousemove', e => {
+      if(!mouseDragging) return;
+      const d = distFromCenter(e.clientX, e.clientY);
+      zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, mouseStartZoom * (d / mouseStartDist)));
+      applyTransform();
+    });
+    window.addEventListener('mouseup', () => { mouseDragging = false; });
+
+    // ── スマホ：2本指ピンチで拡大縮小（中心固定） ──
+    let pinchStartDist = 0, pinchStartZoom = 1;
+    const touchDist = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+    viewport.addEventListener('touchstart', e => {
+      if(e.touches.length === 2) { pinchStartDist = touchDist(e.touches); pinchStartZoom = zoom; }
+    }, { passive: true });
+    viewport.addEventListener('touchmove', e => {
+      if(e.touches.length === 2) {
+        const d = touchDist(e.touches);
+        zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, pinchStartZoom * (d / pinchStartDist)));
+        applyTransform();
+      }
+    }, { passive: true });
+
+    const close = () => { document.body.removeChild(overlay); };
+    box.querySelector('#iconCropCancelBtn').onclick = close;
+    box.querySelector('#iconCropConfirmBtn').onclick = () => {
+      // ビューポートに実際に見えている範囲（常に中心固定なので画像の中央部分）を、正方形canvasに焼き付けて書き出す
+      const scale = baseScale * zoom;
+      const canvas = document.createElement('canvas');
+      canvas.width = OUTPUT_SIZE; canvas.height = OUTPUT_SIZE;
+      const ctx = canvas.getContext('2d');
+      const sSize = VIEWPORT_SIZE / scale;
+      const sx = (naturalW - sSize) / 2, sy = (naturalH - sSize) / 2;
+      try {
+        ctx.drawImage(initImg, sx, sy, sSize, sSize, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+        close();
+        onConfirm(dataUrl);
+      } catch(e) {
+        // crossOrigin付きで読み込めない画像（CORS未対応のホスト）の場合はcanvasが汚染されてtoDataURLが失敗する。
+        // その時は元のURLをそのまま使う（クロップ無し）でフォールバックする
+        console.warn('icon crop canvas failed (likely CORS):', e);
+        close();
+        onConfirm(imageUrl);
+      }
+    };
+  }
+
   // アイコン図鑑
   let _myIconsSort = 'rarity';
   function starsHtml(rarity) {
@@ -10514,12 +10624,13 @@
     el.querySelectorAll('.icon-dex-cell[data-icon-image]:not(.is-locked)').forEach(cell=>{
       const imageUrl = cell.dataset.iconImage;
       if(!imageUrl) return;
-      cell.onclick = async () => {
-        if(!confirm(t('iconSetAsProfileConfirm'))) return;
-        await db.profiles.upsert(userId, { avatar_url: imageUrl });
-        const avatarIconEl = document.getElementById('mypageAvatarIcon');
-        if(avatarIconEl) avatarIconEl.innerHTML = `<img src="${escapeHtml(imageUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-        alert(t('iconSetAsProfileDone'));
+      cell.onclick = () => {
+        openIconCropModal(imageUrl, async (croppedDataUrl) => {
+          await db.profiles.upsert(userId, { avatar_url: croppedDataUrl });
+          const avatarIconEl = document.getElementById('mypageAvatarIcon');
+          if(avatarIconEl) avatarIconEl.innerHTML = `<img src="${escapeHtml(croppedDataUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+          alert(t('iconSetAsProfileDone'));
+        });
       };
     });
   }
@@ -11882,6 +11993,10 @@
     iconComingSoon: { ja:'準備中', en:'Coming soon' },
     iconSetAsProfileConfirm: { ja:'このアイコンをプロフィール画像に設定しますか？', en:'Set this icon as your profile picture?' },
     iconSetAsProfileDone: { ja:'プロフィール画像を設定しました！', en:'Profile picture updated!' },
+    iconCropTitle: { ja:'位置と大きさを調整', en:'Adjust position & zoom' },
+    iconCropHint: { ja:'ドラッグで拡大縮小（PC）／2本指でピンチ（スマホ）', en:'Drag to zoom (PC) / Pinch with two fingers (mobile)' },
+    iconCropCancel: { ja:'キャンセル', en:'Cancel' },
+    iconCropConfirm: { ja:'これに決定', en:'Confirm' },
     noMyBoards:{ ja:'まだ参加してる掲示板はありません', en:'No boards yet' },
     newActivityBadge:{ ja:'新着', en:'New' },
     notifyListTitle: { ja:'通知する掲示板', en:'Notified boards' },
