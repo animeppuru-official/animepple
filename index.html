@@ -2226,7 +2226,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.259.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.260.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4444,7 +4444,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.259.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.260.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6266,7 +6266,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.259.0';
+      if(vEl) vEl.textContent = 'v0.260.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -10487,7 +10487,7 @@
             ? `<img src="${escapeHtml(ic.image)}" alt="#${ic.id}">`
             : `<span class="icon-dex-cell-pending">${escapeHtml(t('iconComingSoon'))}</span>`;
           return `
-          <div class="icon-dex-cell" title="#${ic.id}">
+          <div class="icon-dex-cell" title="#${ic.id}" data-icon-id="${ic.id}" data-icon-image="${escapeHtml(ic.image||'')}" style="${ic.image?'cursor:pointer;':''}">
             <span class="icon-dex-cell-id">#${ic.id}</span>
             ${inner}
             <span class="icon-dex-cell-stars">${starsHtml(ic.rarity)}</span>
@@ -10497,6 +10497,18 @@
     `;
     const sortSelect = document.getElementById('myIconsSortSelect');
     if(sortSelect) sortSelect.onchange = () => { _myIconsSort = sortSelect.value; renderMyIcons(userId); };
+    // 入手済み＆画像があるセルをタップすると、プロフィールアイコンとして設定できる
+    el.querySelectorAll('.icon-dex-cell[data-icon-image]:not(.is-locked)').forEach(cell=>{
+      const imageUrl = cell.dataset.iconImage;
+      if(!imageUrl) return;
+      cell.onclick = async () => {
+        if(!confirm(t('iconSetAsProfileConfirm'))) return;
+        await db.profiles.upsert(userId, { avatar_url: imageUrl });
+        const avatarIconEl = document.getElementById('mypageAvatarIcon');
+        if(avatarIconEl) avatarIconEl.innerHTML = `<img src="${escapeHtml(imageUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        alert(t('iconSetAsProfileDone'));
+      };
+    });
   }
 
   async function renderMyBoards(userId) {
@@ -11855,6 +11867,8 @@
     iconSortObtained: { ja:'入手順', en:'By obtained date' },
     iconLockedTitle: { ja:'未入手', en:'Not obtained yet' },
     iconComingSoon: { ja:'準備中', en:'Coming soon' },
+    iconSetAsProfileConfirm: { ja:'このアイコンをプロフィール画像に設定しますか？', en:'Set this icon as your profile picture?' },
+    iconSetAsProfileDone: { ja:'プロフィール画像を設定しました！', en:'Profile picture updated!' },
     noMyBoards:{ ja:'まだ参加してる掲示板はありません', en:'No boards yet' },
     newActivityBadge:{ ja:'新着', en:'New' },
     notifyListTitle: { ja:'通知する掲示板', en:'Notified boards' },
