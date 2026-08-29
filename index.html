@@ -478,6 +478,14 @@
     .badge { display:inline-block; margin-top:.3rem; padding:.15rem .5rem; border-radius:999px; background:rgba(94,201,122,.12); border:1px solid #3d8a56; font-size:.7rem; color:#b8efc8; }
     .match-badge { background:rgba(255,153,60,.12); border-color:#8a5a3d; color:#ffd0a0; }
 
+    /* ── BOARD HUB ── */
+    /* 参加中（左）と勢い（右400px）の2カラム。スマホは1カラムで縦積み */
+    @media (min-width:900px) {
+      .board-hub-grid { grid-template-columns:1fr 400px !important; }
+    }
+    .board-hub-card { transition:transform .16s cubic-bezier(.34,1.56,.64,1), border-color .16s ease; }
+    .board-hub-card:hover { transform:translateY(-2px); border-color:rgba(92,201,142,.45) !important; }
+
     /* ── BOARD CHAT ── */
     /* 操作（返信・リアクション・⋮）は常設せず、PCはホバー時に時刻と入れ替えて出す。
        スマホ（ホバー不可）は常時表示にフォールバックし、時刻を隠さないよう横並びにする */
@@ -4933,13 +4941,20 @@
       async getLatestActivity(pairs) {
         if(!sb || !pairs.length) return {};
         const animeIds = [...new Set(pairs.map(p=>p.anime_id))];
-        const { data } = await sb.from('board_posts').select('anime_id, board_type, lang, body, created_at').in('anime_id', animeIds);
+        const { data } = await sb.from('board_posts').select('anime_id, board_type, lang, body, created_at, user_id, username').in('anime_id', animeIds);
         const latest = {};
+        const counts = {};
+        const dayAgo = new Date(Date.now() - 24*60*60*1000).toISOString();
         (data||[]).forEach(r=>{
           const lang = r.lang || 'ja';
           const key = r.anime_id+'|'+r.board_type+'|'+lang;
-          if(!latest[key] || r.created_at > latest[key].created_at) latest[key] = { created_at: r.created_at, body: r.body || '' };
+          if(r.created_at >= dayAgo) counts[key] = (counts[key]||0) + 1;
+          if(!latest[key] || r.created_at > latest[key].created_at) {
+            latest[key] = { created_at: r.created_at, body: r.body || '', user_id: r.user_id, username: r.username || '' };
+          }
         });
+        // 24時間の投稿件数も同じ通信で拾っておく（カードの「今日 N件」用）
+        Object.keys(latest).forEach(k=>{ latest[k].dayCount = counts[k] || 0; });
         return latest;
       },
       // 「勢いのある掲示板」ランキング用：直近の投稿をまとめて取得し、
@@ -4971,14 +4986,14 @@
         (data||[]).forEach(r=>{
           const lang = r.lang || 'ja';
           const key = r.anime_id+'|'+r.board_type+'|'+lang;
-          if(!groups[key]) groups[key] = { anime_id: r.anime_id, board_type: r.board_type, lang, participants: new Set(), active: new Set(), postCount: 0 };
+          if(!groups[key]) groups[key] = { anime_id: r.anime_id, board_type: r.board_type, lang, participants: new Set(), active: new Set(), postCount: 0, dayPostCount: 0 };
           groups[key].participants.add(r.user_id);
           groups[key].postCount++;
-          if(r.created_at >= dayAgo) groups[key].active.add(r.user_id);
+          if(r.created_at >= dayAgo) { groups[key].active.add(r.user_id); groups[key].dayPostCount++; }
         });
         return Object.values(groups)
-          .map(g => ({ anime_id: g.anime_id, board_type: g.board_type, lang: g.lang, activeCount: g.active.size, participantCount: g.participants.size, postCount: g.postCount }))
-          .sort((a,b)=> b.activeCount - a.activeCount || b.postCount - a.postCount)
+          .map(g => ({ anime_id: g.anime_id, board_type: g.board_type, lang: g.lang, activeCount: g.active.size, participantCount: g.participants.size, postCount: g.postCount, dayPostCount: g.dayPostCount }))
+          .sort((a,b)=> b.dayPostCount - a.dayPostCount || b.postCount - a.postCount || b.activeCount - a.activeCount)
           .slice(0, limit || 10);
       },
       // タブの赤バッジ用：last_read_at以降に届いた投稿の件数（自分以外の投稿のみ）
@@ -10635,85 +10650,185 @@
     const el = document.getElementById('boardHubContent');
     if(!el) return;
     if(!_currentUser) {
-      el.innerHTML = `<div style="padding:3rem 1.2rem;text-align:center;color:var(--muted,#9ab);">
-        <h2 style="color:var(--text,#e8f0ea);margin-bottom:.4rem;">${escapeHtml(t('boardHubTitle')||'掲示板')}</h2>
-        <p>${escapeHtml(t('boardLoginRequired'))}</p>
+      // 未ログイン：勢いだけは見せて、参加中の枠にログイン導線を置く
+      el.innerHTML = `<div style="max-width:1080px;margin:0 auto;padding:20px 16px 32px;">
+        <div style="margin-bottom:18px;">
+          <div style="font-size:19px;font-weight:800;color:#eaf6ee;">${escapeHtml(t('boardHubTitle')||'掲示板')}</div>
+        </div>
+        <div style="border-radius:14px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);padding:16px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;">
+          <span style="flex:1 1 200px;font-size:12.5px;color:#8db5a0;">${escapeHtml(t('boardHubGuestHint')||'ログインすると参加中の掲示板と未読が表示されます')}</span>
+          <button type="button" id="boardHubLoginBtn" style="flex:0 0 auto;height:36px;padding:0 14px;border-radius:10px;border:none;background:#eaf6ee;color:#0d2415;font-size:12px;font-weight:800;cursor:pointer;">${escapeHtml(t('login')||'ログイン')}</button>
+        </div>
+        <div id="boardHubTrendingGuest" style="margin-top:22px;"></div>
       </div>`;
-      return;
+      const lg = el.querySelector('#boardHubLoginBtn');
+      if(lg) lg.onclick = () => showAuthModal('login');
     }
-    el.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--muted,#9ab);">...</div>`;
 
-    // ① 新着：ベルでON（通知する掲示板リスト）にしている掲示板だけが対象。最大20件、新しい順
-    const notifyBoards = await getNotifyEnabledBoards(_currentUser.id);
-    // ② 勢いのある掲示板：直近の投稿数・アクティブ人数でランキング（サイト全体、参加してるかは問わない）
+    if(_currentUser) el.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--muted,#9ab);">...</div>`;
+
+    // ① 参加中の掲示板（投稿履歴＋価値観投票から作られる。ベルONに限定しない）
+    const myBoards = _currentUser ? await db.boardState.listMyBoards(_currentUser.id) : [];
+    const stateMap = _currentUser ? await db.boardState.getState(_currentUser.id) : {};
+    // ② 勢いのある掲示板：24時間の投稿数でランキング（参加してるかは問わない）
     const trending = await db.boardState.getTrendingBoards(10);
-    // ①②両方に出てくるアニメのタイトルを、手元キャッシュに無い分はDBから補ってまとめて解決する
     const pageMap = await resolveAnimeTitleMap([
-      ...notifyBoards.map(b=>b.anime_id),
+      ...myBoards.map(b=>b.anime_id),
       ...trending.map(b=>b.anime_id),
     ]);
+    const latestMap = myBoards.length ? await db.boardState.getLatestActivity(myBoards) : {};
 
-    let newOnes = [];
-    if(notifyBoards.length) {
-      const latestMap = await db.boardState.getLatestActivity(notifyBoards);
-      newOnes = notifyBoards.map(b=>{
-        const key = b.anime_id+'|'+b.board_type+'|'+b.lang;
-        const latest = latestMap[key] || null;
-        const isNew = !!(latest && (!b.last_read_at || latest.created_at > b.last_read_at));
-        const title = getTitle(pageMap[b.anime_id]) || pageMap[b.anime_id]?.title || b.anime_id;
-        return { ...b, latest, isNew, title };
-      }).filter(b=>b.isNew).sort((a,b)=> (b.latest?.created_at||'').localeCompare(a.latest?.created_at||'')).slice(0, BOARD_NOTIFY_LIMIT);
-    }
-    _boardHubNewOnes = newOnes; // 全消去ボタンから参照するため保持しておく
+    const titleOf = id => getTitle(pageMap[id]) || pageMap[id]?.title || id;
+    const thumbOf = (id, w, hh, r) => {
+      const img = pageMap[id]?.image;
+      const base = `width:${w}px;height:${hh}px;flex:0 0 ${w}px;border-radius:${r}px;border:1px solid rgba(255,255,255,.08);`;
+      return img
+        ? `<img src="${escapeHtml(img)}" loading="lazy" alt="" style="${base}object-fit:cover;background:#1d3225;">`
+        : `<span style="${base}background:repeating-linear-gradient(135deg,#1c2f24,#1c2f24 4px,#16261d 4px,#16261d 8px);display:inline-block;"></span>`;
+    };
+    // 価値観掲示板は 💎＋金バッジ、通常掲示板は控えめなグレー（鍵つきの特別な板だと形で分かるように）
+    const typeBadge = bt => {
+      const label = boardTypeLabel(bt);
+      const isValue = ['A','B','C','D'].includes(bt);
+      return isValue
+        ? `<span style="flex:0 0 auto;display:inline-flex;align-items:center;height:19px;padding:0 7px;border-radius:5px;background:rgba(217,164,65,.14);border:1px solid rgba(217,164,65,.3);font-size:10px;font-weight:800;color:#e8c463;white-space:nowrap;">💎 ${escapeHtml(label)}</span>`
+        : `<span style="flex:0 0 auto;font-size:11px;color:#66786d;white-space:nowrap;">${escapeHtml(label)}</span>`;
+    };
 
-    const trendingHtml = trending.map((b, idx) => {
-      const title = getTitle(pageMap[b.anime_id]) || pageMap[b.anime_id]?.title || b.anime_id;
-      return `
-        <div class="board-hub-card" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line,#2a3830);cursor:pointer;margin-bottom:8px;">
-          <div style="width:26px;flex:0 0 26px;text-align:center;font-size:14px;font-weight:800;color:${idx<3?'#e8c463':'var(--muted,#9ab)'};">${idx+1}</div>
-          <div style="flex:1 1 auto;min-width:0;">
-            <div style="font-size:14px;font-weight:700;color:var(--text,#e8f0ea);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(title)}</div>
-            <div style="font-size:12px;color:var(--muted,#9ab);">${escapeHtml(boardTypeLabel(b.board_type))} ・ ${escapeHtml(t('boardHubActiveCount')||'アクティブ')}${b.activeCount} ・ ${escapeHtml(t('boardHubParticipantCount')||'参加')}${b.participantCount}</div>
+    // 未読の有無で厚みを変える：未読あり=最新発言プレビュー付きカード／既読=1行
+    const rows = myBoards.map(b => {
+      const key = b.anime_id+'|'+b.board_type+'|'+(b.lang||'ja');
+      const st = stateMap[key];
+      const latest = latestMap[key] || null;
+      const lastRead = st?.last_read_at || null;
+      const isMineLatest = !!(latest && _currentUser && latest.user_id === _currentUser.id);
+      const unread = !!(latest && !isMineLatest && (!lastRead || latest.created_at > lastRead));
+      return { ...b, latest, unread, lastRead, title: titleOf(b.anime_id) };
+    }).sort((a,b)=> {
+      if(a.unread !== b.unread) return a.unread ? -1 : 1;
+      return (b.latest?.created_at||'').localeCompare(a.latest?.created_at||'');
+    });
+    const unreadRows = rows.filter(r=>r.unread);
+    _boardHubNewOnes = unreadRows;
+
+    const unreadCardHtml = b => `
+      <div class="board-hub-card" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" style="border-radius:13px;border:1px solid rgba(92,201,142,.35);background:linear-gradient(180deg,rgba(92,201,142,.09),rgba(92,201,142,.03));padding:13px 15px;display:flex;gap:13px;cursor:pointer;">
+        ${thumbOf(b.anime_id, 44, 60, 7)}
+        <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="flex:0 1 auto;min-width:0;font-size:13.5px;font-weight:800;color:#eaf6ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(b.title)}</span>
+            ${typeBadge(b.board_type)}
+            <span style="margin-left:auto;flex:0 0 auto;font-size:10.5px;color:#82968a;">${b.latest ? escapeHtml(formatRelativeTime(b.latest.created_at)) : ''}</span>
           </div>
+          ${b.latest && b.latest.body ? `<div style="display:flex;align-items:center;gap:7px;min-width:0;">
+            <span style="width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:linear-gradient(150deg,#2c4436,#1d3225);border:1px solid rgba(255,255,255,.1);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#9be3bd;">${escapeHtml((b.latest.username||'?').charAt(0))}</span>
+            <span style="min-width:0;font-size:12.5px;color:#c3d4c9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.latest.username ? escapeHtml(b.latest.username)+': ' : ''}${escapeHtml(b.latest.body)}</span>
+          </div>` : ''}
+          ${b.latest && b.latest.dayCount ? `<div><span style="display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;background:rgba(255,255,255,.03);font-size:11px;color:#82968a;">${escapeHtml(t('boardHubTodayCount')||'今日')} ${b.latest.dayCount}${escapeHtml(t('boardHubPostsUnit')||'件')}</span></div>` : ''}
         </div>
-      `;
-    }).join('');
+      </div>`;
+
+    const readRowHtml = b => `
+      <div class="board-hub-card" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" style="border-radius:13px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);padding:11px 15px;display:flex;align-items:center;gap:11px;cursor:pointer;">
+        ${thumbOf(b.anime_id, 30, 30, 6)}
+        <span style="flex:1 1 auto;min-width:0;font-size:13px;font-weight:700;color:#c3d4c9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(b.title)}</span>
+        ${typeBadge(b.board_type)}
+        <span style="flex:0 0 auto;font-size:10.5px;color:#5c6d63;">${b.latest ? escapeHtml(formatRelativeTime(b.latest.created_at)) : ''}</span>
+      </div>`;
+
+    // 1〜3位はサムネ付きカード、4位以下は1行リスト（上位に目が行くようにする）
+    const joinedKeys = new Set(myBoards.map(b=> b.anime_id+'|'+b.board_type+'|'+(b.lang||'ja')));
+    const trendTop = trending.slice(0,3), trendRest = trending.slice(3);
+    const trendCardHtml = (b, idx) => {
+      const joined = joinedKeys.has(b.anime_id+'|'+b.board_type+'|'+(b.lang||'ja'));
+      const first = idx === 0;
+      return `
+      <div class="board-hub-card" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" style="border-radius:13px;border:1px solid ${first?'rgba(240,201,74,.3)':'rgba(255,255,255,.09)'};background:${first?'linear-gradient(180deg,rgba(240,201,74,.07),rgba(240,201,74,.015))':'rgba(255,255,255,.028)'};padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
+        <span style="width:26px;flex:0 0 26px;text-align:center;font-size:${first?'19px':'17px'};font-weight:900;color:${first?'#f0c94a':'#c3d4c9'};">${idx+1}</span>
+        ${thumbOf(b.anime_id, 34, 46, 6)}
+        <span style="flex:1 1 auto;min-width:0;">
+          <span style="display:block;font-size:13px;font-weight:800;color:#eaf6ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(titleOf(b.anime_id))}</span>
+          <span style="display:block;margin-top:2px;font-size:11px;color:#8db5a0;">${['A','B','C','D'].includes(b.board_type)?'💎 ':''}${escapeHtml(boardTypeLabel(b.board_type))} · ${escapeHtml(t('boardHubTodayCount')||'今日')} ${b.dayPostCount||0}${escapeHtml(t('boardHubPostsUnit')||'件')}</span>
+        </span>
+        ${joined
+          ? `<span style="flex:0 0 auto;display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;background:rgba(92,201,142,.14);border:1px solid rgba(92,201,142,.3);font-size:10.5px;font-weight:800;color:#a7ecc4;white-space:nowrap;">${escapeHtml(t('boardHubJoined')||'参加中')}</span>`
+          : (b.activeCount ? `<span style="flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;background:rgba(229,72,77,.14);border:1px solid rgba(229,72,77,.3);font-size:10.5px;font-weight:800;color:#f0a0a3;white-space:nowrap;">🔥 ${b.activeCount}${escapeHtml(t('boardHubPeopleUnit')||'人')}</span>` : '')}
+      </div>`;
+    };
+    const trendRestHtml = trendRest.length ? `
+      <div style="display:flex;flex-direction:column;border-radius:13px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.015);overflow:hidden;">
+        ${trendRest.map((b, i) => `
+          ${i ? '<span style="height:1px;background:rgba(255,255,255,.05);"></span>' : ''}
+          <div class="board-hub-card" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" style="display:flex;align-items:center;gap:11px;padding:10px 14px;cursor:pointer;">
+            <span style="width:20px;flex:0 0 20px;text-align:center;font-size:12px;font-weight:800;color:#66786d;">${i+4}</span>
+            <span style="flex:1 1 auto;min-width:0;font-size:12.5px;font-weight:700;color:#dfeae3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(titleOf(b.anime_id))}</span>
+            <span style="flex:0 0 auto;font-size:11px;color:#82968a;">${b.dayPostCount||0}${escapeHtml(t('boardHubPostsUnit')||'件')}</span>
+          </div>`).join('')}
+      </div>` : '';
+
+    const trendingBlock = `
+      <div style="min-width:0;display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <span style="font-size:14px;font-weight:800;color:#eaf6ee;">${escapeHtml(t('boardHubTrendingTitle')||'勢いのある掲示板')}</span>
+          <span style="margin-left:auto;display:inline-flex;align-items:center;height:25px;padding:0 10px;border-radius:7px;background:rgba(92,201,142,.18);border:1px solid rgba(92,201,142,.5);font-size:11px;font-weight:800;color:#a7ecc4;">${escapeHtml(t('boardHub24h')||'24時間')}</span>
+        </div>
+        ${trending.length
+          ? trendTop.map((b,i)=>trendCardHtml(b,i)).join('') + trendRestHtml
+          : `<p style="margin:0;font-size:.82rem;color:var(--muted,#9ab);">${escapeHtml(t('boardHubNoTrending')||'まだデータがありません')}</p>`}
+      </div>`;
+
+    if(!_currentUser) {
+      const guest = el.querySelector('#boardHubTrendingGuest');
+      if(guest) {
+        guest.innerHTML = trendingBlock;
+        guest.querySelectorAll('.board-hub-card').forEach(card=>{
+          card.onclick = () => openBoardFromHub(card.dataset.animeId, card.dataset.boardType);
+        });
+      }
+      return;
+    }
+
+    // 参加中リストの空状態：0件（探す導線）／未読0件（最後の投稿を伝える）
+    const emptyJoined = `
+      <div style="border-radius:14px;border:1px dashed rgba(255,255,255,.14);background:rgba(255,255,255,.02);padding:22px 20px;text-align:center;">
+        <p style="margin:0 0 8px;font-size:13.5px;font-weight:800;color:#dfeae3;">${escapeHtml(t('boardHubEmptyTitle')||'まだ参加している掲示板がありません')}</p>
+        <p style="margin:0;font-size:12px;line-height:1.75;color:#8db5a0;">${escapeHtml(t('boardHubEmptyBody')||'下の勢いのある掲示板から入るか、作品ページの「掲示板」から参加できます。')}</p>
+      </div>`;
+    const allRead = rows.length && !unreadRows.length;
+    const allReadNote = allRead ? `
+      <div style="border-radius:14px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);padding:16px;display:flex;align-items:center;gap:11px;">
+        <span style="width:32px;height:32px;flex:0 0 32px;border-radius:9px;background:rgba(92,201,142,.12);display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#a7ecc4;">✓</span>
+        <span style="flex:1 1 auto;font-size:12.5px;line-height:1.7;color:#b6c8bd;">${escapeHtml(t('boardHubAllRead')||'すべて読みました。')}${rows[0]?.latest ? escapeHtml(rows[0].title) + ' · ' + escapeHtml(formatRelativeTime(rows[0].latest.created_at)) : ''}</span>
+      </div>` : '';
 
     el.innerHTML = `
-      <div style="margin-bottom:24px;">
-        <button type="button" id="boardNewNotifIcon" style="display:flex;align-items:center;gap:10px;width:100%;padding:14px;border-radius:14px;background:${newOnes.length?'rgba(229,72,77,.08)':'rgba(255,255,255,.03)'};border:1px solid ${newOnes.length?'rgba(229,72,77,.3)':'var(--line,#2a3830)'};cursor:pointer;color:inherit;font:inherit;text-align:left;">
-          <span style="position:relative;flex:0 0 auto;display:inline-flex;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:${newOnes.length?'#e5484d':'var(--muted,#9ab)'};"><path d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22zm7-5.6V11c0-3.2-1.7-5.9-4.8-6.6V3.6a2.2 2.2 0 1 0-4.4 0v.8C6.7 5.1 5 7.7 5 11v5.4L3 18.6V20h18v-1.4l-2-2.2z"/></svg>
-            ${newOnes.length ? `<span style="position:absolute;top:-6px;right:-8px;min-width:16px;height:16px;padding:0 3px;border-radius:8px;background:#e5484d;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;">${newOnes.length}</span>` : ''}
+      <div style="max-width:1080px;margin:0 auto;padding:20px 16px 32px;">
+        <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px;">
+          <span style="flex:1 1 auto;min-width:0;">
+            <span style="display:block;font-size:19px;font-weight:800;color:#eaf6ee;">${escapeHtml(t('boardHubTitle')||'掲示板')}</span>
+            <span style="display:block;margin-top:3px;font-size:12px;color:#8db5a0;">${escapeHtml(t('boardHubJoinedCount')||'参加中')} ${rows.length}${escapeHtml(t('boardHubBoardsUnit')||'件')}${unreadRows.length ? ' · ' + escapeHtml(t('boardHubUnreadCount')||'未読') + ' ' + unreadRows.length + escapeHtml(t('boardHubBoardsUnit')||'件') : ''}</span>
           </span>
-          <span style="font-size:.95rem;font-weight:700;color:var(--text,#e8f0ea);">${escapeHtml(t('boardHubNewTitle')||'新着')}${newOnes.length ? ` (${newOnes.length})` : ''}</span>
-        </button>
-        <div id="boardNewNotifPanel" style="display:none;margin-top:8px;">
-          ${newOnes.length ? `<button type="button" id="boardNewNotifClearAll" style="width:100%;height:36px;margin-bottom:8px;border-radius:10px;border:1px solid var(--line,#2a3830);background:transparent;color:var(--muted,#9ab);font-size:.78rem;font-weight:700;cursor:pointer;">${escapeHtml(t('boardHubClearAll')||'全部消去')}</button>` : ''}
-          ${newOnes.length ? newOnes.map(b => `
-            <div class="board-hub-card" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" style="display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:14px;background:rgba(229,72,77,.08);border:1px solid rgba(229,72,77,.3);cursor:pointer;margin-bottom:8px;">
-              <span style="width:8px;height:8px;border-radius:50%;background:#e5484d;flex:0 0 8px;margin-top:5px;"></span>
-              <div style="flex:1 1 auto;min-width:0;">
-                <div style="font-size:14px;font-weight:700;color:var(--text,#e8f0ea);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(b.title)}</div>
-                <div style="font-size:12px;color:var(--muted,#9ab);margin-bottom:4px;">${escapeHtml(boardTypeLabel(b.board_type))}${b.latest ? ' ・ ' + escapeHtml(formatRelativeTime(b.latest.created_at)) : ''}</div>
-                ${b.latest && b.latest.body ? `<div style="font-size:13px;color:#c9d6ce;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(b.latest.body)}</div>` : ''}
-              </div>
-            </div>
-          `).join('') : `<p style="font-size:.82rem;color:var(--muted,#9ab);padding:0 4px;">${escapeHtml(t('boardHubNoNew')||'新着はありません')}</p>`}
         </div>
-      </div>
-      <h3 style="margin:0 0 10px;font-size:.95rem;color:var(--text,#e8f0ea);">${escapeHtml(t('boardHubTrendingTitle')||'勢いのある掲示板')}</h3>
-      <div>${trendingHtml || `<p style="font-size:.82rem;color:var(--muted,#9ab);">${escapeHtml(t('boardHubNoTrending')||'まだデータがありません')}</p>`}</div>
-    `;
-    const notifIconBtn = el.querySelector('#boardNewNotifIcon');
-    const notifPanel = el.querySelector('#boardNewNotifPanel');
-    if(notifIconBtn && notifPanel) {
-      notifIconBtn.onclick = () => { notifPanel.style.display = notifPanel.style.display === 'none' ? 'block' : 'none'; };
-    }
+        <div class="board-hub-grid" style="display:grid;grid-template-columns:1fr;gap:26px;align-items:start;">
+          <div style="min-width:0;display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;gap:9px;">
+              <span style="font-size:14px;font-weight:800;color:#eaf6ee;">${escapeHtml(t('boardHubMineTitle')||'参加中の掲示板')}</span>
+              ${unreadRows.length ? `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 6px;border-radius:10px;background:#e5484d;color:#fff;font-size:10.5px;font-weight:800;">${unreadRows.length}</span>` : ''}
+              ${unreadRows.length ? `<button type="button" id="boardNewNotifClearAll" style="margin-left:auto;height:26px;padding:0 10px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#82968a;font-size:11px;font-weight:700;cursor:pointer;">${escapeHtml(t('boardHubClearAll')||'全部消去')}</button>` : ''}
+            </div>
+            ${rows.length ? '' : emptyJoined}
+            ${allReadNote}
+            ${rows.map(b => b.unread ? unreadCardHtml(b) : readRowHtml(b)).join('')}
+            ${rows.length ? boardAdSlotHtml() : ''}
+          </div>
+          ${trendingBlock}
+        </div>
+      </div>`;
+
     const clearAllBtn = el.querySelector('#boardNewNotifClearAll');
     if(clearAllBtn) {
-      clearAllBtn.onclick = async (e) => {
-        e.stopPropagation();
+      clearAllBtn.onclick = async (ev) => {
+        ev.stopPropagation();
         clearAllBtn.disabled = true;
         await Promise.all(_boardHubNewOnes.map(b =>
           db.boardState.markRead(_currentUser.id, b.anime_id, b.board_type, b.lang, b.latest?.created_at).catch(()=>{})
@@ -13047,6 +13162,19 @@
     boardHubTrendingTitle:{ ja:'勢いのある掲示板', en:'Trending boards' },
     boardHubNoTrending:{ ja:'まだデータがありません', en:'No data yet' },
     boardHubClearAll:{ ja:'全部消去', en:'Clear all' },
+    boardHubMineTitle:{ ja:'参加中の掲示板', en:'Your boards' },
+    boardHubJoinedCount:{ ja:'参加中', en:'Joined' },
+    boardHubUnreadCount:{ ja:'未読', en:'Unread' },
+    boardHubBoardsUnit:{ ja:'件', en:'' },
+    boardHubPostsUnit:{ ja:'件', en:' posts' },
+    boardHubPeopleUnit:{ ja:'人', en:'' },
+    boardHubTodayCount:{ ja:'今日', en:'Today' },
+    boardHubJoined:{ ja:'参加中', en:'Joined' },
+    boardHub24h:{ ja:'24時間', en:'24h' },
+    boardHubEmptyTitle:{ ja:'まだ参加している掲示板がありません', en:'You have not joined any board yet' },
+    boardHubEmptyBody:{ ja:'下の勢いのある掲示板から入るか、作品ページの「掲示板」から参加できます。', en:'Join from the trending boards below, or from a work page.' },
+    boardHubAllRead:{ ja:'すべて読みました。', en:'All caught up. ' },
+    boardHubGuestHint:{ ja:'ログインすると参加中の掲示板と未読が表示されます', en:'Log in to see your boards and unread posts' },
     settingsPlan: { ja:'プラン', en:'Plan' },
     settingsPlanSub: { ja:'アニメップル+・クリエイタープラン', en:'Animepple+ & Creator plan' },
     settingsSupport: { ja:'開発を応援する', en:'Support development' },
