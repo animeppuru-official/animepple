@@ -2246,7 +2246,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.279.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.281.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4554,7 +4554,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.279.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.281.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6380,7 +6380,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.279.0';
+      if(vEl) vEl.textContent = 'v0.281.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -16080,147 +16080,154 @@
     bnavCarousel.addEventListener('touchcancel', clearTimers);
   })();
 
-  // カスタマイズモーダル：3列グリッドで表示。長押し（実質:押したまま動かす）でドラッグして
-  // 好きな位置に入れ替えられる。上の行から順に、ツールバーの左から並ぶ順序になる
+  // カスタマイズ画面：フルスクリーンで、画面全体が暗くなった上に3列グリッドでアイコンを表示する
+  // （iPhoneのホーム画面の並び替えと同じ考え方）。長押ししたアイコンは指にそのまま追従し、
+  // 他のアイコンに重なるとその場でDOM要素同士を入れ替える（作り直しはしない。作り直すと
+  // ドラッグ中のタッチイベントの紐付けが切れて追従が壊れるバグがあったため）。
+  // 上の行から順に、ツールバーの左から並ぶ順序になる
   function openBnavCustomizeModal() {
     const order = getBnavOrder();
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,10,7,.8);backdrop-filter:blur(3px);z-index:10002;display:flex;align-items:flex-end;justify-content:center;';
-    const box = document.createElement('div');
-    box.style.cssText = 'width:100%;max-width:480px;background:#152a1e;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px -20px rgba(0,0,0,.7);';
-    box.innerHTML = `
-      <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:#e8f0ea;text-align:center;">${escapeHtml(t('bnavCustomizeTitle'))}</h3>
-      <p style="margin:0 0 16px;font-size:11.5px;color:#82968a;text-align:center;line-height:1.5;">${escapeHtml(t('bnavCustomizeHint'))}</p>
-      <div id="bnavCustomizeGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
-      <button type="button" id="bnavCustomizeDoneBtn" style="width:100%;height:46px;border-radius:12px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:14px;cursor:pointer;">${escapeHtml(t('bnavCustomizeDoneBtn'))}</button>
+    overlay.style.cssText = 'position:fixed;inset:0;background:#07150d;z-index:10002;display:flex;flex-direction:column;';
+    overlay.innerHTML = `
+      <div style="flex:0 0 auto;padding:calc(16px + env(safe-area-inset-top)) 20px 10px;text-align:center;">
+        <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;color:#e8f0ea;">${escapeHtml(t('bnavCustomizeTitle'))}</h3>
+        <p style="margin:0;font-size:12px;color:#82968a;line-height:1.5;">${escapeHtml(t('bnavCustomizeHint'))}</p>
+      </div>
+      <div style="flex:1 1 auto;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:10px 24px;">
+        <div id="bnavCustomizeGrid" style="width:100%;max-width:420px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;"></div>
+      </div>
+      <div style="flex:0 0 auto;padding:10px 24px calc(20px + env(safe-area-inset-bottom));">
+        <button type="button" id="bnavCustomizeDoneBtn" style="width:100%;height:48px;border-radius:13px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:15px;cursor:pointer;">${escapeHtml(t('bnavCustomizeDoneBtn'))}</button>
+      </div>
     `;
-    overlay.appendChild(box);
     document.body.appendChild(overlay);
 
-    const grid = box.querySelector('#bnavCustomizeGrid');
+    const grid = overlay.querySelector('#bnavCustomizeGrid');
     let currentOrder = order.slice();
 
-    let draggingId = null; // 現在ドラッグ中のアイテムID（再描画をまたいで持ち上げ状態を維持するため）
-    let dragDX = 0, dragDY = 0; // 指の現在位置までのズレ（再描画で要素が作り直されても、この値を使って追従位置を復元する）
+    // 初回描画：ここだけinnerHTMLで組み立てる。以降はDOM要素そのものを動かして並び替える
+    grid.innerHTML = currentOrder.map(id => {
+      const item = BNAV_ITEMS.find(x=>x.id===id);
+      if(!item) return '';
+      return `
+        <div class="bnav-customize-cell" data-id="${item.id}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 6px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line,#2a3830);color:var(--muted,#8db5a0);touch-action:none;user-select:none;">
+          <span style="pointer-events:none;">${item.icon}</span>
+          <span style="pointer-events:none;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${escapeHtml(item.label)}</span>
+        </div>
+      `;
+    }).join('');
 
-    function renderGrid() {
-      // FLIP：再描画前に各セルの現在位置を記録しておく
+    // 現在のDOM上の並び順から、currentOrder配列を作り直す
+    function syncOrderFromDom() {
+      currentOrder = Array.from(grid.querySelectorAll('.bnav-customize-cell')).map(c => c.dataset.id);
+    }
+
+    // cellAとcellBの「DOM上の位置」を入れ替える。他のセルも巻き込んでズレるので、
+    // 巻き込まれた全セルにFLIPで滑らかな移動アニメーションを付ける（ドラッグ中の本人は除く）
+    function swapCells(cellA, cellB) {
+      const allCells = Array.from(grid.querySelectorAll('.bnav-customize-cell'));
       const firstRects = {};
-      grid.querySelectorAll('.bnav-customize-cell').forEach(cell => {
-        firstRects[cell.dataset.id] = cell.getBoundingClientRect();
-      });
+      allCells.forEach(c => { firstRects[c.dataset.id] = c.getBoundingClientRect(); });
 
-      grid.innerHTML = currentOrder.map(id => {
-        const item = BNAV_ITEMS.find(x=>x.id===id);
-        if(!item) return '';
-        return `
-          <div class="bnav-customize-cell${id===draggingId?' is-dragging':''}" data-id="${item.id}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line,#2a3830);color:var(--muted,#8db5a0);touch-action:none;user-select:none;">
-            <span style="pointer-events:none;">${item.icon}</span>
-            <span style="pointer-events:none;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${escapeHtml(item.label)}</span>
-          </div>
-        `;
-      }).join('');
+      // 実際の入れ替え：cellAの直前にダミーを置き、cellAをcellBの位置へ、
+      // cellBを元cellAの位置（ダミーの場所）へ移動する
+      const placeholder = document.createComment('');
+      cellA.parentNode.insertBefore(placeholder, cellA);
+      cellB.parentNode.insertBefore(cellA, cellB);
+      placeholder.parentNode.insertBefore(cellB, placeholder);
+      placeholder.remove();
 
-      // FLIP：新しい位置との差分ぶん逆方向にずらしておいてから、transitionで0へアニメーションさせる。
-      // ただしドラッグ中のセル自身は、グリッド上の位置ではなく「指の現在位置」に常に追従させたいので
-      // FLIPの対象から外し、代わりに現在のdragDX/dragDYをそのまま再適用する
-      grid.querySelectorAll('.bnav-customize-cell').forEach(cell => {
-        const id = cell.dataset.id;
-        if(id === draggingId) {
-          cell.style.transition = 'none';
-          cell.style.transform = `translate(${dragDX}px, ${dragDY}px)`;
-          return;
-        }
-        const first = firstRects[id];
-        if(!first) return; // 初回描画（差分なし）
-        const last = cell.getBoundingClientRect();
+      syncOrderFromDom();
+
+      allCells.forEach(c => {
+        if(c === cellA) return; // ドラッグ中の本人はこの後も指に追従させ続けるので対象外
+        const first = firstRects[c.dataset.id];
+        if(!first) return;
+        const last = c.getBoundingClientRect();
         const dx = first.left - last.left, dy = first.top - last.top;
         if(dx === 0 && dy === 0) return;
-        cell.style.transition = 'none';
-        cell.style.transform = `translate(${dx}px, ${dy}px)`;
+        c.style.transition = 'none';
+        c.style.transform = `translate(${dx}px, ${dy}px)`;
         requestAnimationFrame(() => {
-          cell.style.transition = '';
-          cell.style.transform = '';
+          c.style.transition = 'transform .22s cubic-bezier(.34,1.56,.64,1)';
+          c.style.transform = '';
+          setTimeout(() => { c.style.transition = ''; }, 240);
         });
       });
-      wireDrag();
     }
 
-    function wireDrag() {
-      grid.querySelectorAll('.bnav-customize-cell').forEach(cell => {
-        let dragging = false, longPressTimer = null, moved = false;
-        let startX = 0, startY = 0;
-        const startDrag = (x, y) => {
-          dragging = true;
-          draggingId = cell.dataset.id;
-          dragDX = 0; dragDY = 0;
-          cell.classList.add('is-dragging');
-          navigator.vibrate && navigator.vibrate(15);
-        };
-        const findCellUnder = (x, y) => {
-          // ドラッグ中のセル自身にpointer-events:noneをかけずとも、elementFromPointは
-          // その要素を拾ってしまうことがあるため、一旦非表示にしてから判定する
-          cell.style.visibility = 'hidden';
-          const el = document.elementFromPoint(x, y);
-          cell.style.visibility = '';
-          return el ? el.closest('.bnav-customize-cell') : null;
-        };
-        const onMove = (x, y) => {
-          if(Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) moved = true;
-          if(!dragging) return;
-          // 指の動きにそのまま追従させる（iPhoneのホーム画面の並び替えと同じ挙動）
-          dragDX = x - startX; dragDY = y - startY;
-          cell.style.transform = `translate(${dragDX}px, ${dragDY}px)`;
-          const target = findCellUnder(x, y);
-          if(target && target !== cell) {
-            const fromId = cell.dataset.id, toId = target.dataset.id;
-            const fromIdx = currentOrder.indexOf(fromId), toIdx = currentOrder.indexOf(toId);
-            if(fromIdx !== -1 && toIdx !== -1) {
-              currentOrder.splice(fromIdx, 1);
-              currentOrder.splice(toIdx, 0, fromId);
-              renderGrid();
-            }
-          }
-        };
-        const endDrag = () => {
-          if(longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-          dragging = false;
-          draggingId = null;
-          dragDX = 0; dragDY = 0;
-          cell.classList.remove('is-dragging');
-          cell.style.transform = '';
-        };
-        cell.addEventListener('touchstart', (e) => {
-          moved = false;
-          const tt = e.touches[0];
-          startX = tt.clientX; startY = tt.clientY;
-          longPressTimer = setTimeout(() => { if(!moved) startDrag(tt.clientX, tt.clientY); }, 300);
-        }, { passive: true });
-        cell.addEventListener('touchmove', (e) => {
-          const tt = e.touches[0];
-          onMove(tt.clientX, tt.clientY);
-        }, { passive: true });
-        cell.addEventListener('touchend', endDrag);
-        cell.addEventListener('touchcancel', endDrag);
-        // PC（マウス）でも一応操作できるようにしておく
-        cell.addEventListener('mousedown', (e) => {
-          moved = false;
-          startX = e.clientX; startY = e.clientY;
-          longPressTimer = setTimeout(() => { if(!moved) startDrag(e.clientX, e.clientY); }, 300);
-        });
-        window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
-        window.addEventListener('mouseup', endDrag);
+    grid.querySelectorAll('.bnav-customize-cell').forEach(cell => {
+      let dragging = false, longPressTimer = null, moved = false;
+      let startX = 0, startY = 0;
+      const startDrag = () => {
+        dragging = true;
+        cell.classList.add('is-dragging');
+        navigator.vibrate && navigator.vibrate(15);
+      };
+      const findCellUnder = (x, y) => {
+        cell.style.visibility = 'hidden';
+        const el = document.elementFromPoint(x, y);
+        cell.style.visibility = '';
+        return el ? el.closest('.bnav-customize-cell') : null;
+      };
+      // 指の絶対座標と、要素の「変形無しの現在位置」から、そのつどtransformを計算し直す。
+      // 入れ替え（DOM上の位置移動）が起きるとこの「現在位置」自体が変わるので、
+      // 入れ替え直後にもこれを呼び直さないと、古いtransformが新しい位置に上乗せされて
+      // 画面外へ二重にズレて飛んでいくバグになる
+      const applyDragTransform = (x, y) => {
+        const prevTransform = cell.style.transform;
+        cell.style.transform = 'none';
+        const rect = cell.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2, centerY = rect.top + rect.height / 2;
+        cell.style.transform = prevTransform;
+        cell.style.transform = `translate(${x - centerX}px, ${y - centerY}px)`;
+      };
+      const onMove = (x, y) => {
+        if(Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) moved = true;
+        if(!dragging) return;
+        applyDragTransform(x, y);
+        const target = findCellUnder(x, y);
+        if(target && target !== cell) {
+          swapCells(cell, target);
+          applyDragTransform(x, y); // 入れ替えで自分の基準位置が変わった分を、同じ指の位置で計算し直す
+        }
+      };
+      const endDrag = () => {
+        if(longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+        dragging = false;
+        cell.classList.remove('is-dragging');
+        cell.style.transform = '';
+      };
+      cell.addEventListener('touchstart', (e) => {
+        moved = false;
+        const tt = e.touches[0];
+        startX = tt.clientX; startY = tt.clientY;
+        longPressTimer = setTimeout(() => { if(!moved) startDrag(); }, 300);
+      }, { passive: true });
+      cell.addEventListener('touchmove', (e) => {
+        const tt = e.touches[0];
+        onMove(tt.clientX, tt.clientY);
+      }, { passive: true });
+      cell.addEventListener('touchend', endDrag);
+      cell.addEventListener('touchcancel', endDrag);
+      // PC（マウス）でも一応操作できるようにしておく
+      cell.addEventListener('mousedown', (e) => {
+        moved = false;
+        startX = e.clientX; startY = e.clientY;
+        longPressTimer = setTimeout(() => { if(!moved) startDrag(); }, 300);
       });
-    }
-    renderGrid();
+      window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+      window.addEventListener('mouseup', endDrag);
+    });
 
     const close = () => { document.body.removeChild(overlay); };
-    box.querySelector('#bnavCustomizeDoneBtn').onclick = () => {
+    overlay.querySelector('#bnavCustomizeDoneBtn').onclick = () => {
+      syncOrderFromDom();
       saveBnavOrder(currentOrder);
       rebuildBnavCarousel();
       close();
     };
-    overlay.onclick = (e) => { if(e.target === overlay) close(); };
   }
   window.openBnavCustomizeModal = openBnavCustomizeModal;
   rebuildBnavCarousel();
