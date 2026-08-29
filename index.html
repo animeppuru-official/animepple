@@ -2227,7 +2227,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.267.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.269.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -3179,6 +3179,16 @@
         <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsNotifications">通知</span><span class="settings-row-sub" data-i18n="settingsNotificationsSub">お知らせの受け取り方</span></span>
         <span class="settings-row-arrow">›</span>
       </button>
+      <button class="settings-row" onclick="nav('settings-plan')">
+        <span class="settings-row-icon" style="background:rgba(217,164,65,.12);color:#e8c463;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsPlan">プラン</span><span class="settings-row-sub" data-i18n="settingsPlanSub">アニメップル+・クリエイタープラン</span></span>
+        <span class="settings-row-arrow">›</span>
+      </button>
+      <button class="settings-row" onclick="nav('tip')">
+        <span class="settings-row-icon" style="background:rgba(232,74,74,.12);color:#f0a3a3;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsSupport">開発を応援する</span><span class="settings-row-sub" data-i18n="settingsSupportSub">投げ銭でアニメップルを支援</span></span>
+        <span class="settings-row-arrow">›</span>
+      </button>
       <button class="settings-row" onclick="nav('settings-display')">
         <span class="settings-row-icon" style="background:rgba(154,171,163,.12);color:#b9cabf;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg></span>
         <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsDisplay">アクセシビリティ、表示、言語</span><span class="settings-row-sub" data-i18n="settingsDisplaySub">テーマ、フォント、言語設定</span></span>
@@ -3354,6 +3364,58 @@
       <p style="font-size:.8rem;color:var(--muted);margin:0 0 .5rem;" data-i18n="settingsLanguageLabel">表示言語</p>
       <button class="mypage-btn-secondary" onclick="openLang()" data-i18n="settingsChangeLanguageBtn">言語を変更</button>
     </div>
+  </div>
+</div>
+
+<!-- 設定：プラン（アニメップル+・クリエイタープラン） -->
+<div class="page mypage-page-wrap" id="page-settings-plan">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;max-width:640px;margin:0 auto;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 .3rem;" data-i18n="settingsPlan">プラン</h2>
+    <p style="font-size:.82rem;color:var(--muted);margin:0 0 1.2rem;" data-i18n="planComingSoonNote">サブスクプランは近日公開予定です。公開までしばらくお待ちください。</p>
+    <div style="display:flex;flex-direction:column;gap:.9rem;">
+      <div style="border:1px solid var(--line,#2a3830);border-radius:14px;padding:16px;opacity:.6;">
+        <div style="font-weight:800;color:#dfeae3;margin-bottom:4px;" data-i18n="planFreeTitle">無料プラン</div>
+        <div style="font-size:.8rem;color:var(--muted);" data-i18n="planFreeDesc">現在利用中のプランです</div>
+      </div>
+      <div style="border:1px solid rgba(217,164,65,.3);border-radius:14px;padding:16px;opacity:.6;">
+        <div style="font-weight:800;color:#e8c463;margin-bottom:4px;">アニメップル+ — ¥500/月</div>
+        <div style="font-size:.8rem;color:var(--muted);" data-i18n="planPlusDesc">準備中</div>
+      </div>
+      <div style="border:1px solid rgba(217,164,65,.3);border-radius:14px;padding:16px;opacity:.6;">
+        <div style="font-weight:800;color:#e8c463;margin-bottom:4px;">クリエイタープラン — ¥1,500/月</div>
+        <div style="font-size:.8rem;color:var(--muted);" data-i18n="planCreatorDesc">準備中</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 投げ銭（開発を応援する） -->
+<div class="page mypage-page-wrap" id="page-tip">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;max-width:480px;margin:0 auto;text-align:center;">
+    <h2 style="font-size:1.1rem;color:#dff0e6;margin:0 0 .4rem;" data-i18n="tipTitle">開発を応援する</h2>
+    <p style="font-size:.82rem;color:var(--muted);margin:0 0 1.4rem;" data-i18n="tipDesc">アニメップルの開発・運営を応援していただける方は、こちらから投げ銭ができます。金額はいくらでも、いつでも大丈夫です。</p>
+    <div id="tipAmountGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;">
+      <input id="tipCustomAmount" type="number" min="500" step="100" placeholder="¥500以上で自由に入力" style="flex:1 1 auto;height:44px;padding:0 14px;border-radius:11px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:#dff0e6;font:inherit;font-size:.85rem;">
+    </div>
+    <button type="button" id="tipConfirmBtn" style="width:100%;height:48px;border-radius:12px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:15px;cursor:pointer;" data-i18n="tipConfirmBtn">この金額で応援する</button>
+    <p style="font-size:.7rem;color:var(--muted);margin-top:14px;" data-i18n="tipComingSoonNote">決済機能は準備中です。もうしばらくお待ちください。</p>
   </div>
 </div>
 
@@ -4293,6 +4355,20 @@
       <div id="mypageRankProgress"></div>
     </div>
 
+    <!-- 開発を応援する（投げ銭への導線） -->
+    <div class="mypage-section mypage-owner-only">
+      <button onclick="nav('tip')" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px;border-radius:14px;border:1px solid rgba(232,74,74,.25);background:rgba(232,74,74,.06);color:inherit;font:inherit;text-align:left;cursor:pointer;">
+        <span style="flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:rgba(232,74,74,.12);display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </span>
+        <span style="flex:1 1 auto;">
+          <span style="display:block;font-weight:800;font-size:.88rem;color:#dfeae3;" data-i18n="settingsSupport">開発を応援する</span>
+          <span style="display:block;font-size:.76rem;color:var(--muted,#9ab);" data-i18n="settingsSupportSub">投げ銭でアニメップルを支援</span>
+        </span>
+        <span style="flex:0 0 auto;color:var(--muted,#9ab);font-size:1.1rem;">›</span>
+      </button>
+    </div>
+
     <!-- メニュー：履歴・お気に入り・参加中の掲示板は別ページへ -->
     <div class="mypage-section" style="padding:0;">
       <button class="mypage-menu-row" onclick="nav('my-reviews')">
@@ -4445,7 +4521,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.267.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.269.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5950,8 +6026,10 @@
     'settings-security': '/settings/security',
     'settings-privacy': '/settings/privacy',
     'settings-notifications': '/settings/notifications',
+    'settings-plan': '/settings/plan',
     'settings-display': '/settings/display',
     'settings-about': '/settings/about',
+    tip: '/tip',
     notifications: '/notifications',
     contact: '/contact',
     privacy: '/privacy-policy',
@@ -6163,6 +6241,7 @@
     if (page==='search') renderSearch().catch(console.error);
     if (page==='popular') renderPopular().catch(console.error);
     if (page==='board') renderBoardHub().catch(console.error);
+    if (page==='tip') renderTipPage();
     if (page==='admin') initAdminPage();
     if (page==='partner') initPartnerPage();
     if (page==='contact') initContactPage();
@@ -6267,7 +6346,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.267.0';
+      if(vEl) vEl.textContent = 'v0.269.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -9778,6 +9857,55 @@
     return pageMap;
   }
   let _boardHubNewOnes = []; // 「全部消去」ボタンから参照するため、直近の描画結果を保持しておく
+  // ── 投げ銭（開発を応援する）：金額選択UIのみ先行実装。実際の決済（Paddle連携）は
+  // アカウント審査完了後に接続する。押した時の見た目・選択状態までは今のうちに作っておく ──
+  const TIP_AMOUNTS = [500, 1000, 3000, 5000, 10000];
+  const TIP_HIGHLIGHT = [1000, 3000]; // 目立たせる金額
+  let _tipSelectedAmount = null;
+  function renderTipPage() {
+    const grid = document.getElementById('tipAmountGrid');
+    if(!grid) return;
+    _tipSelectedAmount = null;
+    grid.innerHTML = TIP_AMOUNTS.map(amount => {
+      const isHighlight = TIP_HIGHLIGHT.includes(amount);
+      return `
+        <button type="button" class="tip-amount-btn" data-amount="${amount}" style="height:${isHighlight?'56px':'48px'};border-radius:12px;border:1px solid ${isHighlight?'rgba(217,164,65,.5)':'var(--line,#2a3830)'};background:${isHighlight?'rgba(217,164,65,.1)':'var(--card2,#141c19)'};color:#dfeae3;font-weight:800;font-size:${isHighlight?'16px':'14px'};cursor:pointer;position:relative;">
+          ${isHighlight ? `<span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:9px;background:#e8c463;color:#221a05;padding:1px 6px;border-radius:6px;font-weight:800;">${escapeHtml(t('tipPopularLabel'))}</span>` : ''}
+          ¥${amount.toLocaleString()}
+        </button>
+      `;
+    }).join('');
+    const customInput = document.getElementById('tipCustomAmount');
+    const confirmBtn = document.getElementById('tipConfirmBtn');
+    const selectAmount = (amount, btnEl) => {
+      _tipSelectedAmount = amount;
+      grid.querySelectorAll('.tip-amount-btn').forEach(b=>{ b.style.outline = 'none'; });
+      if(btnEl) btnEl.style.outline = '2px solid #5ec97a';
+      if(customInput) customInput.value = '';
+    };
+    grid.querySelectorAll('.tip-amount-btn').forEach(btn=>{
+      btn.onclick = () => selectAmount(Number(btn.dataset.amount), btn);
+    });
+    if(customInput) {
+      customInput.oninput = () => {
+        const v = Number(customInput.value);
+        _tipSelectedAmount = v >= 500 ? v : null;
+        grid.querySelectorAll('.tip-amount-btn').forEach(b=>{ b.style.outline = 'none'; });
+      };
+    }
+    if(confirmBtn) {
+      confirmBtn.onclick = () => {
+        if(!_tipSelectedAmount || _tipSelectedAmount < 500) {
+          alert(t('tipAmountRequiredAlert'));
+          return;
+        }
+        // TODO: Paddleアカウント審査完了後、ここでPaddle Checkoutを開き、
+        // 成功時にpurchasesテーブルへ記録するEdge Functionを呼ぶ
+        alert(t('tipComingSoonNote'));
+      };
+    }
+  }
+
   async function renderBoardHub() {
     const el = document.getElementById('boardHubContent');
     if(!el) return;
@@ -11996,6 +12124,21 @@
     boardHubTrendingTitle:{ ja:'勢いのある掲示板', en:'Trending boards' },
     boardHubNoTrending:{ ja:'まだデータがありません', en:'No data yet' },
     boardHubClearAll:{ ja:'全部消去', en:'Clear all' },
+    settingsPlan: { ja:'プラン', en:'Plan' },
+    settingsPlanSub: { ja:'アニメップル+・クリエイタープラン', en:'Animepple+ & Creator plan' },
+    settingsSupport: { ja:'開発を応援する', en:'Support development' },
+    settingsSupportSub: { ja:'投げ銭でアニメップルを支援', en:'Send a tip to support us' },
+    planComingSoonNote: { ja:'サブスクプランは近日公開予定です。公開までしばらくお待ちください。', en:'Subscription plans are coming soon.' },
+    planFreeTitle: { ja:'無料プラン', en:'Free plan' },
+    planFreeDesc: { ja:'現在利用中のプランです', en:'Your current plan' },
+    planPlusDesc: { ja:'準備中', en:'Coming soon' },
+    planCreatorDesc: { ja:'準備中', en:'Coming soon' },
+    tipTitle: { ja:'開発を応援する', en:'Support development' },
+    tipDesc: { ja:'アニメップルの開発・運営を応援していただける方は、こちらから投げ銭ができます。金額はいくらでも、いつでも大丈夫です。', en:'Support Animepple\'s development with a one-time tip of any amount, any time.' },
+    tipPopularLabel: { ja:'人気', en:'Popular' },
+    tipConfirmBtn: { ja:'この金額で応援する', en:'Support with this amount' },
+    tipComingSoonNote: { ja:'決済機能は準備中です。もうしばらくお待ちください。', en:'Payments are coming soon. Please check back later.' },
+    tipAmountRequiredAlert: { ja:'金額を選択するか、¥500以上を入力してください。', en:'Please select or enter an amount of ¥500 or more.' },
     pushEnablePrompt:{ ja:'通知ONの掲示板に新着があったら、スマホ・PCに通知を届けます', en:'Get notified on your device when boards you follow have new posts' },
     pushEnableBtn:{ ja:'通知を有効にする', en:'Enable notifications' },
     pushEnableFailedAlert:{ ja:'通知の許可ができませんでした。ブラウザの通知設定を確認してください。', en:'Could not enable notifications. Check your browser settings.' },
