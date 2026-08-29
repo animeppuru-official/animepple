@@ -110,6 +110,19 @@
     .bnav-carousel-dots { display:flex; justify-content:center; gap:6px; margin-top:.3rem; }
     .bnav-carousel-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.2); transition:background .2s; }
     .bnav-carousel-dot.active { background:var(--brand); }
+    /* 長押しでツールバー全体がポップに拡大する演出 */
+    .bnav-carousel { transition:transform .18s cubic-bezier(.34,1.56,.64,1); transform-origin:center bottom; }
+    .bnav-carousel.bnav-longpress-pop { transform:scale(1.04); }
+    /* カスタマイズモーダル内、つまんでるアイコンが持ち上がる演出 */
+    .bnav-customize-cell {
+      transition:transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease, opacity .18s ease;
+    }
+    .bnav-customize-cell.is-dragging {
+      transform:scale(1.12) translateY(-6px);
+      box-shadow:0 14px 26px -8px rgba(0,0,0,.55);
+      opacity:.95;
+      z-index:5;
+    }
     @media (min-width: 768px) {
       .bnav { display:flex; }
       .bnav-carousel { display:none; }
@@ -2230,7 +2243,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.276.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.277.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4538,7 +4551,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.276.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.277.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6363,7 +6376,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.276.0';
+      if(vEl) vEl.textContent = 'v0.277.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -16032,24 +16045,35 @@
     if(typeof initCarousel === 'function') initCarousel('bnavCarouselTrack', 'bnavCarouselDots', 3);
   }
 
-  // 長押し検知：ツールバー上でポインターを580ms以上動かさず押し続けたらカスタマイズモーダルを開く
+  // 長押し検知：ツールバー上でポインターを580ms以上動かさず押し続けたらカスタマイズモーダルを開く。
+  // 220ms経過した時点で「ポップに拡大」する演出を先に入れ、押し続けている実感を出す
   (function setupBnavLongPress() {
     const bnavCarousel = document.getElementById('bnavCarousel');
     if(!bnavCarousel) return;
-    let pressTimer = null, startX = 0, startY = 0, moved = false;
-    const clear = () => { if(pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
+    let popTimer = null, openTimer = null, startX = 0, startY = 0, moved = false;
+    const clearTimers = () => {
+      if(popTimer) { clearTimeout(popTimer); popTimer = null; }
+      if(openTimer) { clearTimeout(openTimer); openTimer = null; }
+      bnavCarousel.classList.remove('bnav-longpress-pop');
+    };
     bnavCarousel.addEventListener('touchstart', (e) => {
       moved = false;
       const t = e.touches[0];
       startX = t.clientX; startY = t.clientY;
-      pressTimer = setTimeout(() => { if(!moved) openBnavCustomizeModal(); }, 580);
+      popTimer = setTimeout(() => { if(!moved) { bnavCarousel.classList.add('bnav-longpress-pop'); navigator.vibrate && navigator.vibrate(10); } }, 220);
+      openTimer = setTimeout(() => {
+        if(!moved) {
+          openBnavCustomizeModal();
+          setTimeout(() => bnavCarousel.classList.remove('bnav-longpress-pop'), 150);
+        }
+      }, 580);
     }, { passive: true });
     bnavCarousel.addEventListener('touchmove', (e) => {
       const t = e.touches[0];
-      if(Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) { moved = true; clear(); }
+      if(Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) { moved = true; clearTimers(); }
     }, { passive: true });
-    bnavCarousel.addEventListener('touchend', clear);
-    bnavCarousel.addEventListener('touchcancel', clear);
+    bnavCarousel.addEventListener('touchend', clearTimers);
+    bnavCarousel.addEventListener('touchcancel', clearTimers);
   })();
 
   // カスタマイズモーダル：3列グリッドで表示。長押し（実質:押したまま動かす）でドラッグして
@@ -16072,17 +16096,41 @@
     const grid = box.querySelector('#bnavCustomizeGrid');
     let currentOrder = order.slice();
 
+    let draggingId = null; // 現在ドラッグ中のアイテムID（再描画をまたいで持ち上げ状態を維持するため）
+
     function renderGrid() {
+      // FLIP：再描画前に各セルの現在位置を記録しておく
+      const firstRects = {};
+      grid.querySelectorAll('.bnav-customize-cell').forEach(cell => {
+        firstRects[cell.dataset.id] = cell.getBoundingClientRect();
+      });
+
       grid.innerHTML = currentOrder.map(id => {
         const item = BNAV_ITEMS.find(x=>x.id===id);
         if(!item) return '';
         return `
-          <div class="bnav-customize-cell" data-id="${item.id}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line,#2a3830);color:#dfeae3;touch-action:none;user-select:none;">
+          <div class="bnav-customize-cell${id===draggingId?' is-dragging':''}" data-id="${item.id}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line,#2a3830);color:#dfeae3;touch-action:none;user-select:none;">
             <span style="pointer-events:none;">${item.icon}</span>
             <span style="pointer-events:none;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${escapeHtml(item.label)}</span>
           </div>
         `;
       }).join('');
+
+      // FLIP：新しい位置との差分ぶん逆方向にずらしておいてから、transitionで0へアニメーションさせる
+      grid.querySelectorAll('.bnav-customize-cell').forEach(cell => {
+        const id = cell.dataset.id;
+        const first = firstRects[id];
+        if(!first) return; // 初回描画（差分なし）
+        const last = cell.getBoundingClientRect();
+        const dx = first.left - last.left, dy = first.top - last.top;
+        if(dx === 0 && dy === 0) return;
+        cell.style.transition = 'none';
+        cell.style.transform = `translate(${dx}px, ${dy}px)`;
+        requestAnimationFrame(() => {
+          cell.style.transition = '';
+          cell.style.transform = (id === draggingId) ? '' : ''; // is-draggingのscale等はCSSクラス側に任せる
+        });
+      });
       wireDrag();
     }
 
@@ -16092,8 +16140,8 @@
         let startX = 0, startY = 0;
         const startDrag = () => {
           dragging = true;
-          cell.style.opacity = '.5';
-          cell.style.transform = 'scale(1.05)';
+          draggingId = cell.dataset.id;
+          cell.classList.add('is-dragging');
           navigator.vibrate && navigator.vibrate(15);
         };
         const findCellUnder = (x, y) => {
@@ -16117,6 +16165,8 @@
         const endDrag = () => {
           if(longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
           dragging = false;
+          draggingId = null;
+          cell.classList.remove('is-dragging');
         };
         cell.addEventListener('touchstart', (e) => {
           moved = false;
