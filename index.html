@@ -478,6 +478,93 @@
     .badge { display:inline-block; margin-top:.3rem; padding:.15rem .5rem; border-radius:999px; background:rgba(94,201,122,.12); border:1px solid #3d8a56; font-size:.7rem; color:#b8efc8; }
     .match-badge { background:rgba(255,153,60,.12); border-color:#8a5a3d; color:#ffd0a0; }
 
+    /* ── MYPAGE LAYOUT ── */
+    /* 狭い画面：ラッパーを透過させて従来どおり1カラムで縦に流す */
+    .mypage-col-main, .mypage-col-side { display:contents; }
+    @media (min-width:1100px) {
+      /* .pageのpadding-left:236pxを含む幅を指定し、サイドバーを除いた領域の中央に1080pxが来るようにする */
+      #page-mypage.mypage-page-wrap { width:calc(236px + 1080px); max-width:calc(100vw - 32px); }
+      #mypageUser {
+        display:grid; grid-template-columns:minmax(0,1fr) 372px; gap:0 26px;
+        align-items:start; padding:0 16px 40px;
+      }
+      .mypage-col-main, .mypage-col-side { display:block; min-width:0; }
+      .mypage-col-side { position:sticky; top:64px; }
+      /* 2カラムでは各ブロックを独立したカードとして見せる（区切り線だけの連結をやめる） */
+      #mypageUser .mypage-section {
+        border-top:none; border:1px solid rgba(255,255,255,.08);
+        border-radius:16px; background:rgba(255,255,255,.02); margin-top:18px;
+      }
+      #mypageUser .mypage-section:has(.mypage-menu-row) { padding:0; overflow:hidden; }
+      #mypageUser .mypage-menu-row:first-child { border-top:none; }
+      #mypageValueInlineSection { padding:18px; }
+    }
+
+    /* ── MYPAGE 記録リスト・件数 ── */
+    .mypage-record-list { border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.07); }
+    .mypage-record-list .mypage-menu-row { border-top:1px solid rgba(255,255,255,.06); padding:.85rem 1rem; }
+    .mypage-record-list .mypage-menu-row:first-child { border-top:none; }
+    .mypage-menu-row-count { flex:0 0 auto; font-size:11.5px; color:#82968a; }
+    .mypage-menu-row-badge {
+      flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
+      min-width:18px; height:18px; padding:0 5px; border-radius:9px;
+      background:#e5484d; color:#fff; font-size:10px; font-weight:800;
+    }
+    /* 狭い画面：右カラムに移した価値観を、カードの直後に見せる（案のスマホ順） */
+    @media (max-width:1099px) {
+      #mypageUser { display:flex; flex-direction:column; }
+      #mypageUser > .mypage-col-main, #mypageUser > .mypage-col-side { display:contents; }
+      .mypage-hero-wrap-bg { order:1; }
+      #mypageValueInlineSection { order:2; }
+      #mypageUser .mypage-section:has(#mypageRankProgress) { order:3; }
+      #mypageUser .mypage-section:has(#mypageShareCardBtn) { order:4; }
+      .mypage-record-section { order:5; }
+      #mypageUser .mypage-section:has([data-i18n="settingsSupport"]) { order:6; }
+    }
+    .mypage-share-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .mypage-share-more {
+      flex:0 0 auto; width:32px; height:32px; border-radius:50%;
+      border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06);
+      color:#c3d4c9; font-size:13px; cursor:pointer; align-items:center; justify-content:center;
+    }
+    .mypage-share-more[style*="inline-flex"] { display:inline-flex !important; }
+
+    /* ── MYPAGE 実績・シェア ── */
+    .mypage-rank-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:11px; }
+    .mypage-rank-chip {
+      display:inline-flex; align-items:center; gap:5px; height:24px; padding:0 10px; border-radius:6px;
+      background:linear-gradient(135deg,#f3d786,#d9a441); color:#2a2006; font-size:11.5px; font-weight:800;
+    }
+    .mypage-rank-next { margin-left:auto; font-size:11.5px; color:#8db5a0; }
+    .mypage-rank-next b { color:#dfeae3; }
+    .mypage-rank-ticks { display:flex; justify-content:space-between; margin-top:6px; font-size:10.5px; color:#66786d; }
+    .mypage-rank-badges { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-top:14px; }
+    .mypage-rank-badge {
+      display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 6px;
+      border-radius:11px; text-align:center;
+    }
+    .mypage-rank-badge.is-got { border:1px solid rgba(240,201,74,.28); background:rgba(240,201,74,.06); }
+    .mypage-rank-badge.is-locked { border:1px solid rgba(255,255,255,.07); background:rgba(255,255,255,.02); opacity:.5; }
+    .mypage-rank-badge-icon { display:flex; align-items:center; justify-content:center; height:19px; font-size:15px; }
+    .mypage-rank-badge-name { font-size:10.5px; font-weight:700; color:#dccaa0; line-height:1.3; }
+    .mypage-rank-badge.is-locked .mypage-rank-badge-name { color:#82968a; }
+
+    .mypage-share-row { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
+    .mypage-share-preview {
+      flex:0 0 96px; height:96px; border-radius:11px; border:1px solid rgba(255,255,255,.1);
+      background:radial-gradient(130% 110% at 12% 0%, #17402a 0%, #0b1f14 60%, #061109 100%);
+      padding:9px; box-sizing:border-box; display:flex; flex-direction:column; gap:5px;
+    }
+    .mypage-share-preview-head { display:flex; align-items:center; gap:5px; }
+    .mypage-share-preview-dot { width:16px; height:16px; flex:0 0 16px; border-radius:50%; background:linear-gradient(150deg,#4a2f6d,#241a2c); border:1px solid rgba(240,201,74,.6); }
+    .mypage-share-preview-bar { flex:1 1 auto; height:5px; border-radius:3px; background:rgba(255,255,255,.22); }
+    .mypage-share-preview-graph { flex:1 1 auto; min-height:0; width:100%; }
+    .mypage-share-preview-foot { height:4px; width:60%; border-radius:2px; background:rgba(142,226,165,.4); }
+    .mypage-share-copy { flex:1 1 auto; min-width:0; }
+    .mypage-share-title { display:block; font-size:13px; font-weight:800; color:#eaf6ee; }
+    .mypage-share-sub { display:block; margin-top:3px; font-size:11.5px; line-height:1.65; color:#8db5a0; }
+    .mypage-share-icons.is-collapsed > *:nth-child(n+4) { display:none; }
+
     /* ── MYPAGE CARD ── */
     .mypage-stats-strip { display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid rgba(255,255,255,.07); }
     .mypage-stats-strip:has(.mypage-stat-cell:nth-child(5).mypage-stat-hidden) { grid-template-columns:repeat(4,1fr); }
@@ -3430,6 +3517,7 @@
       <button class="mypage-menu-row" onclick="nav('my-boards')">
         <span class="mypage-menu-row-icon">💬</span>
         <span class="mypage-menu-row-label" data-i18n="myBoardsTitle">参加中の掲示板</span>
+        <span class="mypage-menu-row-badge" id="menuBadgeBoards" style="display:none;"></span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
     </div>
@@ -4439,6 +4527,9 @@
 
   <!-- ログイン済み表示 -->
   <div id="mypageUser" style="display:none;">
+    <!-- PC(1100px以上)は左右2カラム。狭い画面ではラッパーを display:contents にして
+         DOM順（カード → 価値観 → 実績 → シェア → 応援 → メニュー）どおり縦に流す -->
+    <div class="mypage-col-main">
     <div class="mypage-hero-wrap-bg">
       <div class="mypage-hero-cover"></div>
       <div class="mypage-hero">
@@ -4501,6 +4592,42 @@
       </div>
     </div>
 
+
+    <!-- 実績（称号進捗） -->
+    <div class="mypage-section">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:.8rem;">
+        <h3 class="mypage-section-title" style="margin:0;">実績</h3>
+        <span id="mypageRankCount" style="font-size:11.5px;color:#82968a;"></span>
+      </div>
+      <div id="mypageRankProgress"></div>
+    </div>
+
+    <!-- マイページカードを共有 -->
+    <div class="mypage-section mypage-owner-only">
+      <div class="mypage-share-row">
+        <span class="mypage-share-preview" aria-hidden="true">
+          <span class="mypage-share-preview-head"><span class="mypage-share-preview-dot"></span><span class="mypage-share-preview-bar"></span></span>
+          <svg viewBox="0 0 100 100" class="mypage-share-preview-graph"><polygon points="50,14 68,18.8 81.2,32 86,50 81.2,68 68,81.2 50,86 32,81.2 18.8,68 14,50 18.8,32 32,18.8" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/><polygon points="50,21.2 66.2,21.9 74.9,35.6 78.8,50 74.9,64.4 66.2,78.1 50,75.2 44.6,59.4 18.8,68 42.8,50 46.9,48.2 37.4,28.2" fill="rgba(92,201,142,.3)" stroke="#5cc98e" stroke-width="2"/></svg>
+          <span class="mypage-share-preview-foot"></span>
+        </span>
+        <span class="mypage-share-copy">
+          <span class="mypage-share-title">カードをシェア</span>
+          <span class="mypage-share-sub">12角形グラフ入りの画像を保存して投稿できます</span>
+        </span>
+      </div>
+      <div class="mypage-share-actions">
+      <button type="button" id="mypageShareCardBtn" style="flex:0 0 auto;height:38px;padding:0 16px;border-radius:10px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+        <span data-i18n="mypageShareCardBtn">マイページカードをシェア</span>
+      </button>
+      <div id="mypageShareIconsRow" class="mypage-share-icons" style="display:none;flex-wrap:wrap;gap:8px;"></div>
+      <button type="button" id="mypageShareMoreBtn" class="mypage-share-more" style="display:none;">⋯</button>
+      </div>
+    </div>
+
+    </div><!-- /.mypage-col-main -->
+
+    <div class="mypage-col-side">
     <!-- あなたの価値観：モーダルから出して常設に（12角形グラフはこのサイト固有の絵なので隠さない） -->
     <div class="mypage-section" id="mypageValueInlineSection" style="display:none;">
       <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px;">
@@ -4510,23 +4637,6 @@
       <p style="margin:0 0 10px;font-size:11.5px;line-height:1.6;color:#8db5a0;">レビュー投稿・お気に入り・レビュー閲覧などの行動から、あなたの好みを12項目で可視化しています。</p>
       <div id="mypageValueInlineBody"></div>
     </div>
-
-    <!-- 実績（称号進捗） -->
-    <div class="mypage-section">
-      <h3 class="mypage-section-title">実績</h3>
-      <div id="mypageRankProgress"></div>
-    </div>
-
-    <!-- マイページカードを共有 -->
-    <div class="mypage-section mypage-owner-only">
-      <p style="margin:0 0 8px;font-size:11.5px;line-height:1.6;color:#8db5a0;">12角形グラフ入りの画像を保存して投稿できます。</p>
-      <button type="button" id="mypageShareCardBtn" style="width:100%;height:44px;border-radius:11px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
-        <span data-i18n="mypageShareCardBtn">マイページカードをシェア</span>
-      </button>
-      <div id="mypageShareIconsRow" style="display:none;flex-wrap:wrap;gap:10px;margin-top:12px;"></div>
-    </div>
-
     <!-- 開発を応援する（投げ銭への導線） -->
     <div class="mypage-section mypage-owner-only">
       <button onclick="nav('tip')" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px;border-radius:14px;border:1px solid rgba(232,74,74,.25);background:rgba(232,74,74,.06);color:inherit;font:inherit;text-align:left;cursor:pointer;">
@@ -4542,28 +4652,36 @@
     </div>
 
     <!-- メニュー：履歴・お気に入り・参加中の掲示板は別ページへ -->
-    <div class="mypage-section" style="padding:0;">
+    <div class="mypage-section mypage-record-section">
+      <h3 class="mypage-section-title" style="margin:0 0 .6rem;">記録</h3>
+      <div class="mypage-record-list">
       <button class="mypage-menu-row" onclick="nav('my-reviews')">
         <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
         <span class="mypage-menu-row-label" data-i18n="reviewHistoryTitle">レビュー履歴</span>
+        <span class="mypage-menu-row-count" id="menuCountReviews"></span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
       <button class="mypage-menu-row" onclick="nav('my-favorites')">
         <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg></span>
         <span class="mypage-menu-row-label" data-i18n="favoritesTitle">お気に入り</span>
+        <span class="mypage-menu-row-count" id="menuCountFavorites"></span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
       <button class="mypage-menu-row" onclick="nav('my-boards')">
         <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
         <span class="mypage-menu-row-label" data-i18n="myBoardsTitle">参加中の掲示板</span>
+        <span class="mypage-menu-row-badge" id="menuBadgeBoards" style="display:none;"></span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
       <button class="mypage-menu-row" onclick="nav('my-icons')">
         <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
         <span class="mypage-menu-row-label" data-i18n="mypageIconsTitle">アイコン</span>
+        <span class="mypage-menu-row-count" id="menuCountIcons"></span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
+      </div>
     </div>
+    </div><!-- /.mypage-col-side -->
 
   </div>
 
@@ -9974,6 +10092,17 @@
     if(iconsRow) {
       iconsRow.innerHTML = buildShareIconsHtmlGeneric();
       iconsRow.style.display = 'flex';
+      // 主要3つだけ出して残りは「他のSNSも表示」で開く（7個並べると選べない）
+      iconsRow.classList.add('is-collapsed');
+      const moreBtn = document.getElementById('mypageShareMoreBtn');
+      if(moreBtn) {
+        const hidden = Math.max(0, iconsRow.children.length - 3);
+        moreBtn.style.display = hidden ? 'inline-flex' : 'none';
+        moreBtn.onclick = () => {
+          const open = iconsRow.classList.toggle('is-collapsed');
+          moreBtn.textContent = open ? '⋯' : '✕';
+        };
+      }
       iconsRow.querySelectorAll('.share-target-btn').forEach(iconBtn => {
         const target = SHARE_TARGETS.find(s => s.key === iconBtn.dataset.key);
         if(!target) return;
@@ -17509,6 +17638,9 @@
     // 統計サマリー更新
     document.getElementById('statReviewCount').textContent = reviewTotal;
     document.getElementById('statQualityCount').textContent = qualityCount;
+    // 記録リストの件数（開く前に中身があるか分かるように）
+    const mcRev = document.getElementById('menuCountReviews');
+    if(mcRev) mcRev.textContent = reviewTotal || '';
 
     // お気に入り一覧
     await renderFavoritesList(targetUserId);
@@ -17521,15 +17653,31 @@
     const currentIdx = RANK_TIERS.indexOf(currentRank);
     const nextRank = RANK_TIERS[currentIdx+1];
     if(!nextRank) {
-      el.innerHTML = `<div class="rank-progress-wrap"><div class="rank-progress-labels"><strong style="display:inline-flex;align-items:center;gap:5px;">${rankIconSvg(currentRank.badgeIcon, currentRank.badgeIconColor, 15)} ${escapeHtml(currentRank.name)}（最高位）</strong></div></div>`;
+      el.innerHTML = `<div class="mypage-rank-head"><span class="mypage-rank-chip">${rankIconSvg(currentRank.badgeIcon, currentRank.badgeIconColor, 14)} ${escapeHtml(currentRank.name)}</span><span class="mypage-rank-next">最高位</span></div>
+        <div class="mypage-rank-badges">${RANK_TIERS.map(r=>`<span class="mypage-rank-badge is-got"><span class="mypage-rank-badge-icon">${rankIconSvg(r.badgeIcon, r.badgeIconColor, 17)}</span><span class="mypage-rank-badge-name">${escapeHtml(r.name)}</span></span>`).join('')}</div>`;
+      const cntMax = document.getElementById('mypageRankCount');
+      if(cntMax) cntMax.textContent = '称号 ' + RANK_TIERS.length + ' / ' + RANK_TIERS.length + ' 獲得';
       return;
     }
     const progress = Math.min(100, Math.round((qualityCount - currentRank.min) / (nextRank.min - currentRank.min) * 100));
+    // 称号バッジ一覧：獲得済みは金枠、未獲得は🔒で薄く。集める対象として見せる
+    const badges = RANK_TIERS.map((r, i) => {
+      const got = i <= currentIdx;
+      return `<span class="mypage-rank-badge ${got ? 'is-got' : 'is-locked'}">
+        <span class="mypage-rank-badge-icon">${got ? rankIconSvg(r.badgeIcon, r.badgeIconColor, 17) : '🔒'}</span>
+        <span class="mypage-rank-badge-name">${escapeHtml(r.name)}</span>
+      </span>`;
+    }).join('');
     el.innerHTML = `
-      <div class="rank-progress-wrap">
-        <div class="rank-progress-labels"><strong>${currentRank.name}</strong><span>${nextRank.name}まであと${nextRank.min - qualityCount}件</span></div>
-        <div class="rank-progress-bar-bg"><div class="rank-progress-bar-fill" style="width:${progress}%;"></div></div>
-      </div>`;
+      <div class="mypage-rank-head">
+        <span class="mypage-rank-chip">${rankIconSvg(currentRank.badgeIcon, currentRank.badgeIconColor, 14)} ${escapeHtml(currentRank.name)}</span>
+        <span class="mypage-rank-next">次: <b>${escapeHtml(nextRank.name)}</b> まであと ${nextRank.min - qualityCount}件</span>
+      </div>
+      <div class="rank-progress-bar-bg"><div class="rank-progress-bar-fill" style="width:${progress}%;"></div></div>
+      <div class="mypage-rank-ticks"><span>${qualityCount}件</span><span>${nextRank.min}件</span></div>
+      <div class="mypage-rank-badges">${badges}</div>`;
+    const cnt = document.getElementById('mypageRankCount');
+    if(cnt) cnt.textContent = '称号 ' + (currentIdx + 1) + ' / ' + RANK_TIERS.length + ' 獲得';
   }
 
   /* ════════════════════════════
@@ -17577,6 +17725,8 @@
     if(isPreview) {
       const countEl = document.getElementById('statFavCount');
       if(countEl) countEl.textContent = allFavs ? allFavs.length : 0;
+      const mcFav = document.getElementById('menuCountFavorites');
+      if(mcFav) mcFav.textContent = (allFavs && allFavs.length) ? allFavs.length : '';
     }
     if(!allFavs || !allFavs.length) {
       el.innerHTML = `<div class="mypage-empty-state" style="grid-column:1/-1;"><div class="mypage-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg></div><p>${t('noFavoritesYet')}</p></div>`;
