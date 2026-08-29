@@ -2246,7 +2246,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.281.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.283.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2752,10 +2752,33 @@
       </div>
     </div>
   </header>
-  <div style="padding:3rem 1.2rem;text-align:center;color:var(--muted);">
-    <div style="font-size:3rem;margin-bottom:.6rem;">🎰</div>
-    <h2 style="color:var(--text);margin-bottom:.4rem;">ガチャガチャ</h2>
-    <p>近日公開予定です。お楽しみに！</p>
+  <div style="padding:1.1rem;max-width:480px;margin:0 auto;">
+    <h2 style="font-size:1.1rem;color:#dff0e6;margin:0 0 1rem;text-align:center;" data-i18n="gachaTitle">ガチャガチャ</h2>
+
+    <!-- 演出枠：引いた結果のアイコンがここに表示される（動画は無いので、光る→出現の簡易アニメーションにする） -->
+    <div id="gachaStage" style="width:100%;aspect-ratio:1/1;max-width:280px;margin:0 auto 1.2rem;border-radius:20px;background:radial-gradient(circle at 50% 40%,#1c3d28,#0b1a11);border:1px solid rgba(217,164,65,.3);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+      <span id="gachaStagePlaceholder" style="font-size:.82rem;color:var(--muted,#9ab);text-align:center;padding:0 20px;" data-i18n="gachaStageIdle">ボタンを押して引いてみよう</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:.7rem;margin-bottom:1rem;">
+      <button type="button" id="gachaFreeBtn" style="height:52px;border-radius:13px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:14px;cursor:pointer;">
+        <span data-i18n="gachaFreeBtn">1日1回 無料で引く</span>
+      </button>
+      <button type="button" id="gachaAdBtn" style="height:52px;border-radius:13px;border:1px solid rgba(217,164,65,.4);background:rgba(217,164,65,.1);color:#e8c463;font-weight:800;font-size:14px;cursor:pointer;">
+        <span id="gachaAdBtnLabel" data-i18n="gachaAdBtn">広告を見て引く（3/3）</span>
+      </button>
+    </div>
+
+    <button type="button" id="gachaProbBtn" style="width:100%;height:42px;border-radius:11px;border:1px solid var(--line,#2a3830);background:transparent;color:var(--muted,#9ab);font-size:.8rem;cursor:pointer;" data-i18n="gachaProbBtn">確率と景品一覧</button>
+  </div>
+</div>
+
+<!-- 確率と景品一覧のポップアップ -->
+<div id="gachaProbOverlay" style="display:none;position:fixed;inset:0;background:rgba(4,10,7,.78);z-index:10003;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:420px;max-height:80vh;overflow-y:auto;background:#152a1e;border:1px solid rgba(217,164,65,.3);border-radius:20px;padding:22px;">
+    <h3 style="margin:0 0 14px;font-size:15px;font-weight:700;color:#e8f0ea;text-align:center;" data-i18n="gachaProbTitle">確率と景品一覧</h3>
+    <div id="gachaProbList"></div>
+    <button type="button" id="gachaProbCloseBtn" style="width:100%;height:44px;margin-top:14px;border-radius:11px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:14px;cursor:pointer;" data-i18n="gachaCloseBtn">閉じる</button>
   </div>
 </div>
 
@@ -4554,7 +4577,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.281.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.283.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6277,6 +6300,7 @@
     if (page==='board') renderBoardHub().catch(console.error);
     if (page==='tip') renderTipPage();
     if (page==='admin') initAdminPage();
+    if (page==='gacha') initGachaPage();
     if (page==='partner') initPartnerPage();
     if (page==='contact') initContactPage();
     if (page==='privacy') {} // 静的ページなのでレンダリング関数不要
@@ -6380,7 +6404,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.281.0';
+      if(vEl) vEl.textContent = 'v0.283.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -8490,6 +8514,150 @@
         await db.icons.obtain(userId, ic.id).catch(()=>{});
       }
     } catch(e) { console.warn('checkIconUnlocks:', e); }
+  }
+
+  // ── ガチャガチャ ──
+  // 景品プールは「画像がある」かつ「デフォルト付与(id:1)でも実績報酬(unlockMinQuality)でもない」アイコンだけ。
+  // 現状はicon2〜6が全部実績報酬に予約済みのため、ガチャの景品は今のところ空。
+  // 今後 id:7以降 に画像を追加すれば、そのままガチャの景品として自動的に対象になる。
+  const GACHA_RARITY_WEIGHT = { 1: 60, 2: 25, 3: 10, 4: 4, 5: 1 }; // レア度が高いほど出にくい
+  function getGachaPool() {
+    return ICON_CATALOG.filter(ic => ic.image && !ic.default && ic.unlockMinQuality == null);
+  }
+  function drawGachaItem() {
+    const pool = getGachaPool();
+    if(!pool.length) return null;
+    const weighted = pool.map(ic => ({ ic, w: GACHA_RARITY_WEIGHT[ic.rarity] || 1 }));
+    const total = weighted.reduce((s, x) => s + x.w, 0);
+    let r = Math.random() * total;
+    for(const { ic, w } of weighted) {
+      if(r < w) return ic;
+      r -= w;
+    }
+    return weighted[weighted.length - 1].ic;
+  }
+  function gachaTodayKey(userId) {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD（端末のローカル日付）
+    return { free: `animepple_gacha_free_${userId}_${today}`, ad: `animepple_gacha_ad_${userId}_${today}` };
+  }
+  const GACHA_AD_LIMIT = 3;
+  function getGachaState(userId) {
+    const keys = gachaTodayKey(userId);
+    return {
+      freeUsed: localStorage.getItem(keys.free) === '1',
+      adUsedCount: Number(localStorage.getItem(keys.ad) || 0),
+    };
+  }
+  function markGachaFreeUsed(userId) {
+    localStorage.setItem(gachaTodayKey(userId).free, '1');
+  }
+  function markGachaAdUsed(userId) {
+    const keys = gachaTodayKey(userId);
+    const count = Number(localStorage.getItem(keys.ad) || 0) + 1;
+    localStorage.setItem(keys.ad, String(count));
+  }
+  function updateGachaButtons() {
+    const freeBtn = document.getElementById('gachaFreeBtn');
+    const adBtn = document.getElementById('gachaAdBtn');
+    const adBtnLabel = document.getElementById('gachaAdBtnLabel');
+    if(!freeBtn || !adBtn) return;
+    if(!_currentUser) {
+      freeBtn.disabled = true; adBtn.disabled = true;
+      freeBtn.style.opacity = adBtn.style.opacity = '.5';
+      freeBtn.querySelector('span').textContent = t('gachaFreeBtn');
+      if(adBtnLabel) adBtnLabel.textContent = t('gachaAdBtn').replace('{n}', 0).replace('{max}', GACHA_AD_LIMIT);
+      return;
+    }
+    const state = getGachaState(_currentUser.id);
+    freeBtn.disabled = state.freeUsed;
+    freeBtn.style.opacity = state.freeUsed ? '.5' : '';
+    freeBtn.querySelector('span').textContent = state.freeUsed ? t('gachaFreeBtnUsed') : t('gachaFreeBtn');
+    const remaining = Math.max(0, GACHA_AD_LIMIT - state.adUsedCount);
+    adBtn.disabled = remaining <= 0;
+    adBtn.style.opacity = remaining <= 0 ? '.5' : '';
+    if(adBtnLabel) adBtnLabel.textContent = t('gachaAdBtn').replace('{n}', state.adUsedCount).replace('{max}', GACHA_AD_LIMIT);
+  }
+  async function playGachaResult(item) {
+    const stage = document.getElementById('gachaStage');
+    const placeholder = document.getElementById('gachaStagePlaceholder');
+    if(!stage) return;
+    if(placeholder) placeholder.style.display = 'none';
+    // 演出：光ってから景品が出現する簡易アニメーション（動画素材は無いのでCSSだけで代用）
+    stage.style.transition = 'none';
+    stage.style.background = 'radial-gradient(circle at 50% 40%,#e8c463,#0b1a11)';
+    stage.style.opacity = '.4';
+    await new Promise(r => setTimeout(r, 260));
+    stage.style.transition = 'opacity .4s ease, background .4s ease';
+    stage.style.opacity = '1';
+    stage.style.background = 'radial-gradient(circle at 50% 40%,#1c3d28,#0b1a11)';
+    if(!item) {
+      stage.innerHTML = `<span style="font-size:.82rem;color:var(--muted,#9ab);text-align:center;padding:0 20px;">${escapeHtml(t('gachaEmptyPool'))}</span>`;
+      return;
+    }
+    stage.innerHTML = `
+      <div style="text-align:center;">
+        <img src="${escapeHtml(item.image)}" style="width:140px;height:140px;object-fit:cover;border-radius:16px;box-shadow:0 14px 34px -12px rgba(0,0,0,.6);margin-bottom:10px;">
+        <div style="font-size:.85rem;font-weight:800;color:#e8f0ea;">#${item.id}</div>
+        <div style="font-size:.78rem;color:#e8c463;">${starsHtml(item.rarity)}</div>
+      </div>
+    `;
+    if(_currentUser) {
+      await db.icons.obtain(_currentUser.id, item.id).catch(()=>{});
+    }
+  }
+  async function runGacha(kind) {
+    if(!_currentUser) { alert(t('loginRequiredAlert')); return; }
+    const state = getGachaState(_currentUser.id);
+    if(kind === 'free') {
+      if(state.freeUsed) return;
+      markGachaFreeUsed(_currentUser.id);
+    } else {
+      if(state.adUsedCount >= GACHA_AD_LIMIT) return;
+      // 実際の広告SDKは未接続。ここでは「広告を見ている体」の待機だけ再現する
+      const adBtn = document.getElementById('gachaAdBtn');
+      if(adBtn) { adBtn.disabled = true; adBtn.querySelector('span')?.remove(); adBtn.textContent = t('gachaAdPlaying'); }
+      await new Promise(r => setTimeout(r, 1200));
+      markGachaAdUsed(_currentUser.id);
+    }
+    const item = drawGachaItem();
+    await playGachaResult(item);
+    updateGachaButtons();
+  }
+  function renderGachaProbList() {
+    const listEl = document.getElementById('gachaProbList');
+    if(!listEl) return;
+    const pool = getGachaPool();
+    if(!pool.length) {
+      listEl.innerHTML = `<p style="font-size:.8rem;color:var(--muted,#9ab);text-align:center;">${escapeHtml(t('gachaEmptyPool'))}</p>`;
+      return;
+    }
+    const total = pool.reduce((s, ic) => s + (GACHA_RARITY_WEIGHT[ic.rarity] || 1), 0);
+    listEl.innerHTML = pool.map(ic => {
+      const pct = (((GACHA_RARITY_WEIGHT[ic.rarity] || 1) / total) * 100).toFixed(1);
+      return `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line,#2a3830);">
+          <img src="${escapeHtml(ic.image)}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px;">
+          <div style="flex:1 1 auto;">
+            <div style="font-size:.8rem;font-weight:700;color:#dfeae3;">#${ic.id}</div>
+            <div style="font-size:.72rem;color:#e8c463;">${starsHtml(ic.rarity)}</div>
+          </div>
+          <div style="font-size:.85rem;font-weight:800;color:#8fe5ab;">${pct}%</div>
+        </div>
+      `;
+    }).join('');
+  }
+  function initGachaPage() {
+    updateGachaButtons();
+    const freeBtn = document.getElementById('gachaFreeBtn');
+    const adBtn = document.getElementById('gachaAdBtn');
+    const probBtn = document.getElementById('gachaProbBtn');
+    const probOverlay = document.getElementById('gachaProbOverlay');
+    const probCloseBtn = document.getElementById('gachaProbCloseBtn');
+    if(freeBtn) freeBtn.onclick = () => runGacha('free');
+    if(adBtn) adBtn.onclick = () => runGacha('ad');
+    if(probBtn) probBtn.onclick = () => { renderGachaProbList(); if(probOverlay) probOverlay.style.display = 'flex'; };
+    if(probCloseBtn) probCloseBtn.onclick = () => { if(probOverlay) probOverlay.style.display = 'none'; };
+    if(probOverlay) probOverlay.onclick = (e) => { if(e.target === probOverlay) probOverlay.style.display = 'none'; };
   }
 
   // レビューの重み（ユーザーの上質レビュー累計数から導出）
@@ -12574,6 +12742,17 @@
     iconSortNo: { ja:'NO順', en:'By No.' },
     iconSortRarity: { ja:'レア度順', en:'By rarity' },
     iconSortObtained: { ja:'入手順', en:'By obtained date' },
+    loginRequiredAlert: { ja:'ログインが必要です。', en:'Please log in first.' },
+    gachaTitle: { ja:'ガチャガチャ', en:'Gacha' },
+    gachaStageIdle: { ja:'ボタンを押して引いてみよう', en:'Tap a button to try your luck!' },
+    gachaFreeBtn: { ja:'1日1回 無料で引く', en:'Free pull (1/day)' },
+    gachaFreeBtnUsed: { ja:'本日は引き終わりました', en:'Already used today' },
+    gachaAdBtn: { ja:'広告を見て引く（{n}/{max}）', en:'Watch ad to pull ({n}/{max})' },
+    gachaAdPlaying: { ja:'広告を再生中…', en:'Playing ad…' },
+    gachaProbBtn: { ja:'確率と景品一覧', en:'Odds & prize list' },
+    gachaProbTitle: { ja:'確率と景品一覧', en:'Odds & prize list' },
+    gachaEmptyPool: { ja:'景品は準備中です。もうしばらくお待ちください。', en:'Prizes are coming soon.' },
+    gachaCloseBtn: { ja:'閉じる', en:'Close' },
     iconLockedTitle: { ja:'未入手', en:'Not obtained yet' },
     iconComingSoon: { ja:'準備中', en:'Coming soon' },
     iconSetAsProfileConfirm: { ja:'このアイコンをプロフィール画像に設定しますか？', en:'Set this icon as your profile picture?' },
@@ -16088,7 +16267,7 @@
   function openBnavCustomizeModal() {
     const order = getBnavOrder();
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:#07150d;z-index:10002;display:flex;flex-direction:column;';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,10,7,.88);z-index:10002;display:flex;flex-direction:column;';
     overlay.innerHTML = `
       <div style="flex:0 0 auto;padding:calc(16px + env(safe-area-inset-top)) 20px 10px;text-align:center;">
         <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;color:#e8f0ea;">${escapeHtml(t('bnavCustomizeTitle'))}</h3>
@@ -16096,9 +16275,6 @@
       </div>
       <div style="flex:1 1 auto;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:10px 24px;">
         <div id="bnavCustomizeGrid" style="width:100%;max-width:420px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;"></div>
-      </div>
-      <div style="flex:0 0 auto;padding:10px 24px calc(20px + env(safe-area-inset-bottom));">
-        <button type="button" id="bnavCustomizeDoneBtn" style="width:100%;height:48px;border-radius:13px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:15px;cursor:pointer;">${escapeHtml(t('bnavCustomizeDoneBtn'))}</button>
       </div>
     `;
     document.body.appendChild(overlay);
@@ -16221,13 +16397,16 @@
       window.addEventListener('mouseup', endDrag);
     });
 
-    const close = () => { document.body.removeChild(overlay); };
-    overlay.querySelector('#bnavCustomizeDoneBtn').onclick = () => {
+    const close = () => {
       syncOrderFromDom();
       saveBnavOrder(currentOrder);
       rebuildBnavCarousel();
-      close();
+      document.body.removeChild(overlay);
     };
+    // アイコン自体（.bnav-customize-cell）以外の場所をタップしたら、保存して閉じる
+    overlay.addEventListener('click', (e) => {
+      if(!e.target.closest('.bnav-customize-cell')) close();
+    });
   }
   window.openBnavCustomizeModal = openBnavCustomizeModal;
   rebuildBnavCarousel();
