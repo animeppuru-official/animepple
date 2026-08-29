@@ -2246,7 +2246,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.283.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.286.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -2542,9 +2542,12 @@
       </div>
     </div>
   </header>
-  <div class="board-page-wrap" style="padding:.75rem 1rem;">
-    <h2 id="boardGeneralPageTitle" style="margin:0 0 .8rem;font-size:1rem;color:#dff0e6;"></h2>
-    <div id="boardGeneralSection"></div>
+  <div class="board-page-wrap" style="padding:0;">
+    <div style="position:sticky;top:52px;z-index:20;background:var(--bg);border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem .6rem;">
+      <h2 id="boardGeneralPageTitle" style="margin:0 0 3px;font-size:1rem;color:#eaf6ee;"></h2>
+      <p id="boardGeneralPageSub" style="margin:0;font-size:10.5px;color:#e8c463;"></p>
+    </div>
+    <div id="boardGeneralSection" style="padding:.75rem 1rem;"></div>
   </div>
 </div>
 
@@ -2561,9 +2564,13 @@
       </div>
     </div>
   </header>
-  <div class="board-page-wrap" style="padding:.75rem 1rem;">
-    <h2 id="boardValuePageTitle" style="margin:0 0 .8rem;font-size:1rem;color:#dff0e6;"></h2>
-    <div id="boardValueSection"></div>
+  <div class="board-page-wrap" style="padding:0;">
+    <div style="position:sticky;top:52px;z-index:20;background:var(--bg);border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem 0;">
+      <h2 id="boardValuePageTitle" style="margin:0 0 3px;font-size:1rem;color:#eaf6ee;"></h2>
+      <p id="boardValuePageSub" style="margin:0 0 8px;font-size:10.5px;color:#e8c463;"></p>
+      <div id="boardValueTabsRow" style="display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;"></div>
+    </div>
+    <div id="boardValueSection" style="padding:.75rem 1rem;"></div>
   </div>
 </div>
 
@@ -4577,7 +4584,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.283.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.286.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -4747,7 +4754,7 @@
       },
       async getByIds(userIds) {
         if(!sb || !userIds || !userIds.length) return [];
-        const { data } = await sb.from('profiles').select('id,username,avatar_url').in('id', userIds);
+        const { data } = await sb.from('profiles').select('id,username,avatar_url,is_admin').in('id', userIds);
         return data || [];
       },
       async getUsername(userId) {
@@ -4872,6 +4879,21 @@
       // 「勢いのある掲示板」ランキング用：直近の投稿をまとめて取得し、
       // 掲示板（anime_id+board_type+lang）ごとに「アクティブ人数（直近24時間の投稿者数）」
       // 「参加人数（取得できた範囲内での投稿者の異なり数）」を集計する
+      // 板ヘッダーのサブ行用：特定の1掲示板（アニメ×タイプ×言語）だけの参加人数・アクティブ人数
+      async getBoardStats(animeId, boardType, lang) {
+        if(!sb) return { participantCount: 0, activeCount: 0 };
+        const { data } = await sb.from('board_posts')
+          .select('user_id, created_at')
+          .eq('anime_id', animeId).eq('board_type', boardType).eq('lang', lang || 'ja')
+          .limit(1000);
+        const dayAgo = new Date(Date.now() - 24*60*60*1000).toISOString();
+        const participants = new Set(), active = new Set();
+        (data||[]).forEach(r=>{
+          participants.add(r.user_id);
+          if(r.created_at >= dayAgo) active.add(r.user_id);
+        });
+        return { participantCount: participants.size, activeCount: active.size };
+      },
       async getTrendingBoards(limit) {
         if(!sb) return [];
         const { data } = await sb.from('board_posts')
@@ -4923,6 +4945,35 @@
         const rows = boards.map(b => ({ user_id: userId, anime_id: b.anime_id, board_type: b.board_type, lang: b.lang || 'ja', notify }));
         const { error } = await sb.from('user_board_state').upsert(rows, { onConflict: 'user_id,anime_id,board_type,lang' });
         return { error };
+      },
+    },
+    // ── 掲示板のリアクション（絵文字5種、1人1投稿1絵文字まで） ──
+    boardReactions: {
+      REACTION_EMOJIS: ['👍','😂','😮','🔥','🤔'],
+      // 複数投稿ぶんをまとめて取得し、{ postId: { emoji: { count, mine } } } の形にして返す
+      async listForPosts(postIds, userId) {
+        if(!sb || !postIds || !postIds.length) return {};
+        const { data } = await sb.from('board_reactions').select('post_id, user_id, emoji').in('post_id', postIds);
+        const map = {};
+        (data||[]).forEach(r=>{
+          if(!map[r.post_id]) map[r.post_id] = {};
+          if(!map[r.post_id][r.emoji]) map[r.post_id][r.emoji] = { count: 0, mine: false };
+          map[r.post_id][r.emoji].count++;
+          if(userId && r.user_id === userId) map[r.post_id][r.emoji].mine = true;
+        });
+        return map;
+      },
+      // 既に自分が押してれば取り消し、押してなければ追加する
+      async toggle(postId, userId, emoji) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const { data: existing } = await sb.from('board_reactions').select('id').eq('post_id', postId).eq('user_id', userId).eq('emoji', emoji).maybeSingle();
+        if(existing) {
+          const { error } = await sb.from('board_reactions').delete().eq('id', existing.id);
+          return { error, added: false };
+        } else {
+          const { error } = await sb.from('board_reactions').insert({ post_id: postId, user_id: userId, emoji });
+          return { error, added: true };
+        }
       },
     },
     // ── フォロー ──
@@ -6404,7 +6455,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.283.0';
+      if(vEl) vEl.textContent = 'v0.286.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -10402,6 +10453,11 @@
     const el = document.getElementById('boardGeneralSection');
     if(!el || !sb) return;
     el.innerHTML = `<div id="boardPanel"></div>`;
+    // 板ヘッダーのサブ行：参加人数・今アクティブ人数
+    db.boardState.getBoardStats(animeId, 'general', currentLang).then(stats => {
+      const subEl = document.getElementById('boardGeneralPageSub');
+      if(subEl) subEl.textContent = t('boardStatsLine').replace('{participants}', stats.participantCount).replace('{active}', stats.activeCount);
+    }).catch(()=>{});
     await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, 'general', renderBoardGeneral);
     if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, 'general', currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
     startBoardRealtime(animeId, 'general', currentLang, renderBoardGeneral);
@@ -10594,23 +10650,27 @@
       { id:'C', label: t('boardTabC') },
       { id:'D', label: t('boardTabD') },
     ];
-    el.innerHTML = `
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-        ${tabs.map(tb=>{
-          const active = tb.id===_boardActiveTab;
-          const tc = VALUE_TYPE_COLORS[tb.id];
-          const tBg = active ? tc+'22' : 'transparent';
-          const tBorder = active ? tc+'66' : 'rgba(255,255,255,.1)';
-          const tColor = active ? tc : '#dfeae3';
-          const locked = tb.id !== myGroup;
-          return `<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:10px;background:${tBg};border:1px solid ${tBorder};color:${tColor};font-size:13px;font-weight:700;cursor:pointer;">${locked?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#82968a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>':''}${escapeHtml(tb.label)}</button>`;
-        }).join('')}
-      </div>
-      <div id="boardPanel"></div>
-    `;
-    el.querySelectorAll('.board-tab-btn').forEach(btn=>{
-      btn.onclick = () => { _boardActiveTab = btn.dataset.tab; renderBoardValue(animeId); };
-    });
+    // タブ：チップ形式（自分のタイプ=緑ハイライト、他タイプ=ロックアイコン付きグレー）
+    const tabsRow = document.getElementById('boardValueTabsRow');
+    if(tabsRow) {
+      tabsRow.innerHTML = tabs.map(tb=>{
+        const active = tb.id===_boardActiveTab;
+        const locked = tb.id !== myGroup;
+        const bg = active ? 'rgba(92,201,142,.18)' : 'rgba(255,255,255,.02)';
+        const border = active ? 'rgba(92,201,142,.55)' : 'rgba(255,255,255,.07)';
+        const color = active ? '#a7ecc4' : '#66786d';
+        return `<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:31px;padding:0 12px;border-radius:9px;background:${bg};border:1px solid ${border};color:${color};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">${locked?'🔒':''}${escapeHtml(tb.label)}</button>`;
+      }).join('');
+      tabsRow.querySelectorAll('.board-tab-btn').forEach(btn=>{
+        btn.onclick = () => { _boardActiveTab = btn.dataset.tab; renderBoardValue(animeId); };
+      });
+    }
+    // 板ヘッダーのサブ行：参加人数・今アクティブ人数（選択中のタイプの掲示板について）
+    db.boardState.getBoardStats(animeId, _boardActiveTab, currentLang).then(stats => {
+      const subEl = document.getElementById('boardValuePageSub');
+      if(subEl) subEl.textContent = t('boardStatsLine').replace('{participants}', stats.participantCount).replace('{active}', stats.activeCount);
+    }).catch(()=>{});
+    el.innerHTML = `<div id="boardPanel"></div>`;
     const panel = el.querySelector('#boardPanel');
     if(myGroup !== _boardActiveTab) {
       panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;padding:40px;">
@@ -10684,12 +10744,23 @@
     // 投稿者全員分のプロフィールアイコンを、毎回描画時にまとめて取得する（投稿時点のスナップショットではなく、
     // 常に「今現在設定されている」アイコンを表示するため。過去の投稿でも、後でアイコンを変えれば反映される）
     let boardAvatarMap = {};
+    let boardIsAdminMap = {};
     if(DB_MODE === 'supabase' && sb && posts.length) {
       try {
         const posterIds = [...new Set(posts.map(p=>p.user_id).filter(Boolean))];
         const profiles = await db.profiles.getByIds(posterIds);
-        profiles.forEach(p=>{ if(p.avatar_url) boardAvatarMap[p.id] = p.avatar_url; });
+        profiles.forEach(p=>{
+          if(p.avatar_url) boardAvatarMap[p.id] = p.avatar_url;
+          if(p.is_admin) boardIsAdminMap[p.id] = true;
+        });
       } catch(e) { console.warn('board avatar fetch:', e); }
+    }
+    // リアクション：投稿全部ぶんをまとめて取得（{ postId: { emoji: { count, mine } } }）
+    let boardReactionsMap = {};
+    if(DB_MODE === 'supabase' && sb && posts.length) {
+      try {
+        boardReactionsMap = await db.boardReactions.listForPosts(posts.map(p=>p.id), _currentUser?.id);
+      } catch(e) { console.warn('board reactions fetch:', e); }
     }
     let html = '<div style="max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px;">';
     if(!topLevel.length) {
@@ -10715,28 +10786,52 @@
         const isReply = !!opts.isReply;
         const name = item.username || '名無し';
         const isMine = _currentUser && item.user_id === _currentUser.id;
-        const bg = isMine ? '#5cc98e' : '#2b3238';
-        const border = isMine ? '#4db67c' : 'rgba(255,255,255,.1)';
-        const textColor = isMine ? '#0c2015' : '#e8f0ea';
-        const nameColor = isMine ? '#0c2015' : '#dfeae3';
-        const timeColor = isMine ? 'rgba(12,32,21,.65)' : '#82968a';
-        const radius = isMine ? '16px 16px 6px 16px' : '16px 16px 16px 6px';
-        const avatarSize = isReply ? 34 : 48;
-        const avatarBg = isMine ? 'rgba(12,32,21,.18)' : 'linear-gradient(150deg,#2c4436,#1d3225)';
-        const avatarBorder = isMine ? 'rgba(12,32,21,.25)' : 'rgba(255,255,255,.1)';
-        const avatarText = isMine ? '#0c2015' : '#9be3bd';
+        const isOfficial = !!boardIsAdminMap[item.user_id];
+        // 仕様書のカラートークンに準拠：自分=#2f7d55(緑)、相手=#262e33(ニュートラルグレー)
+        const bg = isMine ? '#2f7d55' : '#262e33';
+        const border = isMine ? 'rgba(92,201,142,.35)' : 'rgba(255,255,255,.1)';
+        const textColor = isMine ? '#f2fbf5' : '#e6efe9';
+        const nameColor = isOfficial ? '#c9a7e6' : '#9db3a5';
+        const timeColor = '#5f7268';
+        // 吹き出しの角丸：相手は左下、自分は右下に「しっぽ」を作る
+        const radius = isMine ? '14px 14px 4px 14px' : '14px 14px 14px 4px';
+        const shadow = isMine ? '0 10px 22px -16px rgba(0,0,0,.8)' : '0 8px 18px -16px rgba(0,0,0,.8)';
+        const avatarSize = 34;
+        const avatarBg = isMine ? 'linear-gradient(150deg,#2f7d55,#1d3225)' : 'linear-gradient(150deg,#2c4436,#1d3225)';
+        const avatarBorder = isMine ? 'rgba(92,201,142,.28)' : 'rgba(255,255,255,.14)';
+        const avatarText = isMine ? '#eafdf1' : '#9be3bd';
         const avatarUrl = boardAvatarMap[item.user_id];
         const avatar = avatarUrl
           ? `<img src="${escapeHtml(avatarUrl)}" style="width:${avatarSize}px;height:${avatarSize}px;flex:0 0 ${avatarSize}px;border-radius:50%;object-fit:cover;border:1px solid ${avatarBorder};">`
-          : `<span style="width:${avatarSize}px;height:${avatarSize}px;flex:0 0 ${avatarSize}px;border-radius:50%;background:${avatarBg};border:1px solid ${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:${isReply?'10px':'12px'};font-weight:700;color:${avatarText};">${escapeHtml(name.charAt(0))}</span>`;
-        return `<div style="max-width:${isReply?'92%':'78%'};display:inline-flex;flex-direction:column;background:${bg};border:1px solid ${border};border-radius:${radius};padding:${isReply?'9px 12px':'11px 14px'};box-shadow:0 8px 20px -14px rgba(0,0,0,.7);">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-direction:${isMine?'row-reverse':'row'};">
-            ${avatar}
-            <span style="font-size:${isReply?'11.5px':'12.5px'};font-weight:700;color:${nameColor};">${escapeHtml(name)}</span>
-            <span style="font-size:10.5px;color:${timeColor};">${formatRelativeTime(item.created_at)}</span>
-          </div>
-          <div style="font-size:${isReply?'13px':'14px'};line-height:1.7;color:${textColor};white-space:pre-wrap;text-align:left;">${escapeHtml(item.body)}</div>
+          : `<span style="width:${avatarSize}px;height:${avatarSize}px;flex:0 0 ${avatarSize}px;border-radius:50%;background:${avatarBg};border:1px solid ${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${avatarText};">${escapeHtml(name.charAt(0))}</span>`;
+        // 相手：名前を吹き出しの上に表示。自分：名前は出さず時刻だけ
+        const nameRowHtml = (!isMine) ? `<div style="font-size:11.5px;font-weight:700;color:${nameColor};margin-bottom:3px;">${escapeHtml(name)}</div>` : '';
+        const bubble = `<div style="display:inline-block;max-width:min(440px,68vw);background:${bg};border:1px solid ${border};border-radius:${radius};padding:9px 13px;box-shadow:${shadow};">
+          ${nameRowHtml}
+          <div style="font-size:14px;line-height:1.65;color:${textColor};white-space:pre-wrap;word-break:break-word;text-align:left;">${escapeHtml(item.body)}</div>
         </div>`;
+        const timeHtml = `<span style="font-size:10.5px;color:${timeColor};flex-shrink:0;padding-bottom:2px;">${formatRelativeTime(item.created_at)}</span>`;
+        // 行全体の並び：相手=[アイコン][吹き出し+名前][時刻]／自分=[時刻][吹き出し][アイコン]
+        return `<div style="display:flex;align-items:flex-end;gap:9px;flex-direction:${isMine?'row-reverse':'row'};">
+          ${avatar}
+          ${bubble}
+          ${timeHtml}
+        </div>`;
+      };
+      // リアクション行：既に付いてる絵文字をチップで表示（押すと自分の分だけON/OFF）＋「+」で新しい絵文字を選ぶ
+      const reactionsRow = (item, isMine) => {
+        const reactions = boardReactionsMap[item.id] || {};
+        const chips = db.boardReactions.REACTION_EMOJIS
+          .filter(e => reactions[e] && reactions[e].count > 0)
+          .map(e => {
+            const r = reactions[e];
+            const bg = r.mine ? 'rgba(92,201,142,.18)' : 'rgba(255,255,255,.05)';
+            const border = r.mine ? 'rgba(92,201,142,.5)' : 'rgba(255,255,255,.1)';
+            return `<button type="button" class="board-reaction-chip" data-post-id="${item.id}" data-emoji="${e}" style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:12px;background:${bg};border:1px solid ${border};color:#dfeae3;font-size:11.5px;cursor:pointer;">${e} ${r.count}</button>`;
+          }).join('');
+        const addBtn = _currentUser ? `<button type="button" class="board-reaction-add-btn" data-post-id="${item.id}" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#5f7268;font-size:13px;cursor:pointer;line-height:1;">+</button>` : '';
+        if(!chips && !addBtn) return '';
+        return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;position:relative;justify-content:${isMine?'flex-end':'flex-start'};padding:${isMine?'0 43px 0 0':'0 0 0 43px'};">${chips}${addBtn}</div>`;
       };
       html += topLevel.map((p, idx)=>{
         const replies = repliesOf(p.id);
@@ -10744,17 +10839,18 @@
         const side = isMine ? 'flex-end' : 'flex-start';
         const postHtml = `<div style="display:flex;flex-direction:column;align-items:${side};" data-post-id="${p.id}">
           ${postCard(p)}
-          <div style="display:flex;align-items:center;gap:14px;margin-top:7px;justify-content:${side};">
-            ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="display:inline-flex;align-items:center;gap:5px;border:none;background:transparent;color:#82968a;font-size:12px;font-weight:700;cursor:pointer;padding:0;">
+          ${reactionsRow(p, isMine)}
+          <div style="display:flex;align-items:center;gap:14px;margin-top:5px;justify-content:${side};padding:${isMine?'0 43px 0 0':'0 0 0 43px'};">
+            ${_currentUser ? `<button type="button" class="board-reply-toggle" data-id="${p.id}" style="display:inline-flex;align-items:center;gap:5px;border:none;background:transparent;color:#5f7268;font-size:12px;font-weight:700;cursor:pointer;padding:0;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>${escapeHtml(t('boardReplyBtn'))}${replies.length?` ${replies.length}`:''}
-            </button>` : (replies.length?`<span style="font-size:12px;color:#82968a;">${escapeHtml(t('boardReplyBtn'))} ${replies.length}</span>`:'')}
+            </button>` : (replies.length?`<span style="font-size:12px;color:#5f7268;">${escapeHtml(t('boardReplyBtn'))} ${replies.length}</span>`:'')}
             ${kebabMenu('board_post', p.id, p.user_id)}
           </div>
-          ${replies.length ? `<div style="margin-top:10px;padding-left:16px;border-left:2px solid rgba(92,201,142,.25);display:flex;flex-direction:column;gap:10px;max-width:100%;">
+          ${replies.length ? `<div style="margin-top:8px;padding-left:16px;border-left:2px solid rgba(92,201,142,.25);display:flex;flex-direction:column;gap:9px;max-width:100%;">
             ${replies.map(r=>{
               const replyIsMine = _currentUser && r.user_id === _currentUser.id;
               const replySide = replyIsMine ? 'flex-end' : 'flex-start';
-              return `<div style="display:flex;flex-direction:column;align-items:${replySide};">${postCard(r, {isReply:true})}</div>`;
+              return `<div style="display:flex;flex-direction:column;align-items:${replySide};">${postCard(r, {isReply:true})}${reactionsRow(r, replyIsMine)}</div>`;
             }).join('')}
           </div>` : ''}
           <div class="board-reply-box" data-id="${p.id}" style="display:none;margin-top:9px;gap:8px;align-self:stretch;">
@@ -10773,6 +10869,40 @@
     // 投稿は作成日時の昇順（古い→新しい）で並んでいるため、一番下が最新になる。
     // renderするたびに毎回呼ばれるので、初回オープン時も投稿後の再描画時も両方これでカバーされる。
     requestAnimationFrame(() => window.scrollTo(0, document.body.scrollHeight));
+    // 既存チップ：押すと自分の分だけON/OFF切り替え
+    panel.querySelectorAll('.board-reaction-chip').forEach(chip=>{
+      chip.onclick = async () => {
+        if(!_currentUser) return;
+        chip.style.opacity = '.5';
+        await db.boardReactions.toggle(chip.dataset.postId, _currentUser.id, chip.dataset.emoji).catch(()=>{});
+        rerenderFn();
+      };
+    });
+    // 「+」：5種類の絵文字ピッカーをその場に出す
+    panel.querySelectorAll('.board-reaction-add-btn').forEach(addBtn=>{
+      addBtn.onclick = (e) => {
+        e.stopPropagation();
+        panel.querySelectorAll('.board-reaction-picker').forEach(p=>p.remove());
+        const picker = document.createElement('div');
+        picker.className = 'board-reaction-picker';
+        picker.style.cssText = 'position:absolute;bottom:100%;left:0;margin-bottom:6px;display:flex;gap:4px;background:#152a1e;border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:6px 8px;box-shadow:0 10px 24px -10px rgba(0,0,0,.7);z-index:15;';
+        picker.innerHTML = db.boardReactions.REACTION_EMOJIS.map(e=>`<button type="button" class="board-reaction-pick" data-emoji="${e}" style="border:none;background:transparent;font-size:18px;cursor:pointer;padding:2px 3px;">${e}</button>`).join('');
+        addBtn.parentElement.style.position = 'relative';
+        addBtn.parentElement.appendChild(picker);
+        picker.querySelectorAll('.board-reaction-pick').forEach(pickBtn=>{
+          pickBtn.onclick = async (ev) => {
+            ev.stopPropagation();
+            if(!_currentUser) return;
+            await db.boardReactions.toggle(addBtn.dataset.postId, _currentUser.id, pickBtn.dataset.emoji).catch(()=>{});
+            rerenderFn();
+          };
+        });
+        const closeOnOutsideClick = (ev) => {
+          if(!picker.contains(ev.target)) { picker.remove(); document.removeEventListener('click', closeOnOutsideClick); }
+        };
+        setTimeout(() => document.addEventListener('click', closeOnOutsideClick), 0);
+      };
+    });
     panel.querySelectorAll('.board-kebab-btn').forEach(btn=>{
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -10843,17 +10973,21 @@
       composer.innerHTML = `
         <div style="max-width:820px;margin:0 auto;">
           <div style="display:flex;align-items:flex-end;gap:10px;">
-            <textarea id="boardComposeInput" maxlength="${BOARD_MAX_LEN}" placeholder="${escapeHtml(t('boardComposePlaceholder'))}" style="flex:1 1 auto;min-height:46px;max-height:120px;padding:12px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:#22412f;color:#e8f0ea;font-size:14px;line-height:1.6;font-family:inherit;resize:none;"></textarea>
-            <button type="button" id="boardComposeBtn" style="flex:0 0 auto;height:46px;padding:0 22px;border-radius:13px;border:none;background:linear-gradient(160deg,#5cc98e,#3fa96f);color:#07160d;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 10px 22px -12px rgba(92,201,142,.6);">${escapeHtml(t('boardPostBtn'))}</button>
+            <textarea id="boardComposeInput" maxlength="${BOARD_MAX_LEN}" placeholder="${escapeHtml(t('boardComposePlaceholder'))}" style="flex:1 1 auto;min-height:46px;max-height:132px;padding:13px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:#12291d;color:#e8f0ea;font-size:14px;line-height:1.6;font-family:inherit;resize:none;"></textarea>
+            <button type="button" id="boardComposeBtn" aria-label="${escapeHtml(t('boardPostBtn'))}" style="flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:none;background:linear-gradient(160deg,#5cc98e,#3fa96f);color:#07160d;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 22px -12px rgba(92,201,142,.6);transition:transform .16s cubic-bezier(.34,1.56,.64,1),opacity .16s ease;opacity:.45;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
           </div>
           <p id="boardComposeCount" style="max-width:820px;margin:6px 2px 0;text-align:right;font-size:11px;color:#5c6d63;">0/${BOARD_MAX_LEN}</p>
         </div>`;
       const composeInput = composer.querySelector('#boardComposeInput');
       const composeCount = composer.querySelector('#boardComposeCount');
+      const composeBtn = composer.querySelector('#boardComposeBtn');
       composeInput.addEventListener('input', () => {
         const len = composeInput.value.length;
         composeCount.textContent = `${len}/${BOARD_MAX_LEN}`;
         composeCount.style.color = len >= BOARD_MAX_LEN ? '#eaa9a9' : '#5c6d63';
+        if(composeBtn) composeBtn.style.opacity = len > 0 ? '1' : '.45';
       });
       const submitCompose = async () => {
         const input = composer.querySelector('#boardComposeInput');
@@ -12753,6 +12887,7 @@
     gachaProbTitle: { ja:'確率と景品一覧', en:'Odds & prize list' },
     gachaEmptyPool: { ja:'景品は準備中です。もうしばらくお待ちください。', en:'Prizes are coming soon.' },
     gachaCloseBtn: { ja:'閉じる', en:'Close' },
+    boardStatsLine: { ja:'掲示板・参加{participants}人・今アクティブ{active}人', en:'Board · {participants} participants · {active} active now' },
     iconLockedTitle: { ja:'未入手', en:'Not obtained yet' },
     iconComingSoon: { ja:'準備中', en:'Coming soon' },
     iconSetAsProfileConfirm: { ja:'このアイコンをプロフィール画像に設定しますか？', en:'Set this icon as your profile picture?' },
