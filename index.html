@@ -478,6 +478,138 @@
     .badge { display:inline-block; margin-top:.3rem; padding:.15rem .5rem; border-radius:999px; background:rgba(94,201,122,.12); border:1px solid #3d8a56; font-size:.7rem; color:#b8efc8; }
     .match-badge { background:rgba(255,153,60,.12); border-color:#8a5a3d; color:#ffd0a0; }
 
+    /* ── PLAN（サブスク登録） ── */
+    .plan-layout { padding:1.1rem; max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:20px; }
+    .plan-head { display:flex; align-items:flex-end; gap:18px; flex-wrap:wrap; }
+    .plan-head-copy { flex:1 1 auto; min-width:0; }
+    .plan-title { font-size:1.35rem; font-weight:800; color:#eaf6ee; margin:0; }
+    .plan-lead { margin:5px 0 0; font-size:12.5px; line-height:1.8; color:#a9bcb0; text-wrap:pretty; }
+    .plan-current-chip {
+      flex:0 0 auto; display:inline-flex; align-items:center; gap:9px; height:36px; padding:0 14px;
+      border-radius:10px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); white-space:nowrap;
+    }
+    .plan-current-label { font-size:11.5px; color:#8db5a0; }
+    .plan-current-value { font-size:12.5px; font-weight:800; color:#dfeae3; }
+    .plan-grid { display:grid; grid-template-columns:1fr; gap:14px; align-items:stretch; }
+    .plan-card {
+      position:relative; border-radius:16px; border:1px solid rgba(255,255,255,.09);
+      background:rgba(255,255,255,.02); padding:20px 18px;
+      display:flex; flex-direction:column; gap:15px;
+    }
+    /* 3つ横並びは中央が選ばれる。＋だけ緑2px枠＋外側光彩で推しとして立てる */
+    .plan-card.is-featured {
+      border:2px solid rgba(92,201,142,.55);
+      background:linear-gradient(180deg,rgba(92,201,142,.1),rgba(92,201,142,.02));
+      box-shadow:0 0 0 5px rgba(92,201,142,.07);
+    }
+    .plan-card.is-creators {
+      border-color:rgba(217,164,65,.35);
+      background:linear-gradient(180deg,rgba(240,201,74,.07),rgba(240,201,74,.015));
+    }
+    .plan-ribbon {
+      position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+      display:inline-flex; align-items:center; height:22px; padding:0 11px; border-radius:11px;
+      background:#5cc98e; color:#07200f; font-size:10.5px; font-weight:800; white-space:nowrap;
+    }
+    .plan-card-name { margin:0; font-size:14.5px; font-weight:800; color:#dfeae3; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+    .plan-card.is-featured .plan-card-name { color:#eafdf1; }
+    .plan-card.is-creators .plan-card-name { color:#f6ecd2; }
+    .plan-plus-badge {
+      display:inline-flex; align-items:center; height:19px; padding:0 7px; border-radius:5px;
+      background:rgba(92,201,142,.2); border:1px solid rgba(92,201,142,.45);
+      font-size:9.5px; font-weight:800; color:#a7ecc4;
+    }
+    .plan-card-price { margin:9px 0 0; display:flex; align-items:baseline; gap:4px; }
+    .plan-card-amount { font-family:"Zen Kaku Gothic New",sans-serif; font-size:30px; font-weight:900; line-height:1; color:#eaf6ee; }
+    .plan-card.is-featured .plan-card-amount { color:#eafdf1; }
+    .plan-card.is-creators .plan-card-amount { color:#f6ecd2; }
+    .plan-card-per { font-size:12px; color:#8db5a0; }
+    .plan-card.is-creators .plan-card-per { color:#dccaa0; }
+    .plan-card-desc { margin:7px 0 0; font-size:11.5px; line-height:1.7; color:#8db5a0; }
+    .plan-card-desc.is-accent { color:#a7ecc4; }
+    .plan-card-desc.is-gold { color:#dccaa0; }
+    .plan-feats { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+    .plan-feat { display:flex; gap:9px; align-items:flex-start; font-size:12px; line-height:1.65; color:#c3d4c9; }
+    .plan-card.is-featured .plan-feat { color:#dfeae3; }
+    .plan-feat.is-gold { color:#f0e4c8; }
+    .plan-feat b { color:#eafdf1; }
+    .plan-feat.is-gold b { color:#f6ecd2; }
+    .plan-feat-check { flex:0 0 auto; margin-top:1px; font-size:12px; color:#5cc98e; }
+    .plan-feat.is-gold .plan-feat-check { color:#e8c463; }
+    /* CTAは下端揃え：カード高さが揃うので3枚のボタンが一直線に並ぶ */
+    .plan-card-foot { margin-top:auto; display:flex; flex-direction:column; gap:8px; }
+    .plan-btn {
+      display:flex; align-items:center; justify-content:center; height:44px; border-radius:11px;
+      border:none; font:inherit; font-size:13px; font-weight:800; cursor:pointer;
+      transition:transform .16s cubic-bezier(.34,1.56,.64,1);
+    }
+    .plan-btn:hover { transform:translateY(-2px); }
+    .plan-btn-current { border:1px solid rgba(255,255,255,.12); background:transparent; color:#8db5a0; font-size:12.5px; font-weight:700; cursor:default; }
+    .plan-btn-current:hover { transform:none; }
+    .plan-btn-primary { background:#5ec97a; color:#07200f; }
+    .plan-btn-gold { background:linear-gradient(135deg,#f3d786,#d9a441); color:#2a2006; }
+    .plan-btn.is-soon { background:rgba(94,201,122,.28); color:rgba(7,32,15,.55); cursor:default; }
+    .plan-btn-gold.is-soon { background:rgba(217,164,65,.3); color:rgba(42,32,6,.5); }
+    .plan-btn.is-soon:hover { transform:none; }
+    .plan-cancel-note { margin:0; font-size:10.5px; text-align:center; color:#8db5a0; }
+    .plan-cancel-note.is-gold { color:#dccaa0; }
+    .plan-soon-banner {
+      display:flex; align-items:center; gap:13px; flex-wrap:wrap;
+      padding:14px 17px; border-radius:13px;
+      background:rgba(217,164,65,.09); border:1px solid rgba(217,164,65,.26);
+    }
+    .plan-soon-icon { flex:0 0 auto; font-size:15px; }
+    .plan-soon-copy { flex:1 1 260px; min-width:0; }
+    .plan-soon-title { display:block; font-size:12.5px; font-weight:800; color:#f0e4c8; }
+    .plan-soon-sub { display:block; margin-top:2px; font-size:11.5px; line-height:1.7; color:#dccaa0; }
+    .plan-notify-btn {
+      flex:0 0 auto; height:36px; padding:0 14px; border-radius:10px;
+      border:1px solid rgba(240,201,74,.4); background:rgba(240,201,74,.12);
+      color:#f0c94a; font:inherit; font-size:12px; font-weight:800; cursor:pointer;
+    }
+    .plan-notify-btn:disabled { opacity:.6; cursor:default; }
+    .plan-compare-toggle {
+      width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.02); padding:14px 17px;
+      display:flex; align-items:center; gap:12px; cursor:pointer;
+      font:inherit; font-size:12.5px; font-weight:700; color:#dfeae3; text-align:left;
+    }
+    .plan-compare-arrow { margin-left:auto; font-size:12px; font-weight:700; color:#93e2b7; white-space:nowrap; }
+    .plan-compare-table { margin-top:10px; border-radius:14px; border:1px solid rgba(255,255,255,.08); overflow:hidden; }
+    .plan-compare-row { display:grid; grid-template-columns:minmax(0,1fr) 52px 52px 68px; border-top:1px solid rgba(255,255,255,.05); }
+    .plan-compare-row:first-child { border-top:none; }
+    .plan-compare-row > span { padding:10px 4px; text-align:center; font-size:11.5px; color:#c3d4c9; }
+    .plan-compare-row > span:first-child { padding-left:12px; padding-right:12px; text-align:left; }
+    .plan-compare-head { background:rgba(255,255,255,.04); }
+    .plan-compare-head > span { font-size:10.5px; font-weight:800; color:#8db5a0; }
+    .plan-compare-head .is-accent { color:#a7ecc4; }
+    .plan-compare-head .is-gold { color:#e8c463; }
+    .plan-compare-row .ok { color:#5cc98e; font-size:12px; }
+    .plan-compare-row .no { color:#4a5a51; font-size:12px; }
+    .plan-compare-row .partial { color:#82968a; font-size:10.5px; }
+    .plan-compare-row .num { font-size:11px; }
+    .plan-compare-row .num.is-accent { color:#a7ecc4; font-weight:800; }
+    .plan-compare-row .num.is-gold { color:#e8c463; font-weight:800; }
+    .plan-faq-title { margin:0 0 10px; font-size:13px; font-weight:800; color:#eaf6ee; }
+    .plan-faq-list { display:flex; flex-direction:column; border-radius:14px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.02); overflow:hidden; }
+    .plan-faq-item { border-top:1px solid rgba(255,255,255,.05); }
+    .plan-faq-item:first-child { border-top:none; }
+    .plan-faq-item > summary {
+      list-style:none; cursor:pointer; padding:13px 15px;
+      font-size:12px; font-weight:700; color:#dfeae3;
+      display:flex; align-items:center; gap:10px;
+    }
+    .plan-faq-item > summary::-webkit-details-marker { display:none; }
+    .plan-faq-item > summary::after { content:'＋'; margin-left:auto; color:#5c6d63; font-weight:400; }
+    .plan-faq-item[open] > summary::after { content:'−'; }
+    .plan-faq-item > p { margin:0; padding:0 15px 14px; font-size:11.5px; line-height:1.8; color:#a9bcb0; }
+
+    @media (min-width:1000px) {
+      #page-settings-plan.mypage-page-wrap { width:calc(236px + 1000px); max-width:calc(100vw - 32px); }
+      .plan-layout { max-width:none; padding:24px 16px 40px; }
+      .plan-grid { grid-template-columns:repeat(3,1fr); }
+    }
+
     /* ── TIP（開発を応援する） ── */
     .tip-layout { padding:1.1rem; max-width:620px; margin:0 auto; display:flex; flex-direction:column; gap:20px; }
     .tip-title { font-size:1.35rem; font-weight:800; color:#eaf6ee; margin:0 0 .45rem; letter-spacing:.01em; }
@@ -3746,21 +3878,123 @@
       </div>
     </div>
   </header>
-  <div style="padding:1.1rem;max-width:640px;margin:0 auto;">
-    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 .3rem;" data-i18n="settingsPlan">プラン</h2>
-    <p style="font-size:.82rem;color:var(--muted);margin:0 0 1.2rem;" data-i18n="planComingSoonNote">サブスクプランは近日公開予定です。公開までしばらくお待ちください。</p>
-    <div style="display:flex;flex-direction:column;gap:.9rem;">
-      <div style="border:1px solid var(--line,#2a3830);border-radius:14px;padding:16px;opacity:.6;">
-        <div style="font-weight:800;color:#dfeae3;margin-bottom:4px;" data-i18n="planFreeTitle">無料プラン</div>
-        <div style="font-size:.8rem;color:var(--muted);" data-i18n="planFreeDesc">現在利用中のプランです</div>
+  <div class="plan-layout">
+    <!-- 見出し：現在のプランは右上のチップで常に見せる（カード内の一文だとスクロールで消える） -->
+    <div class="plan-head">
+      <div class="plan-head-copy">
+        <h2 class="plan-title" data-i18n="settingsPlan">プラン</h2>
+        <p class="plan-lead" data-i18n="planLead">アニメップルをもっと使いたい方向けの有料プランです。無料でできることは、これからも無料のままです。</p>
       </div>
-      <div style="border:1px solid rgba(217,164,65,.3);border-radius:14px;padding:16px;opacity:.6;">
-        <div style="font-weight:800;color:#e8c463;margin-bottom:4px;">アニメップル+ — ¥500/月</div>
-        <div style="font-size:.8rem;color:var(--muted);" data-i18n="planPlusDesc">準備中</div>
+      <span class="plan-current-chip">
+        <span class="plan-current-label" data-i18n="planCurrentLabel">現在のプラン</span>
+        <span class="plan-current-value" id="planCurrentValue" data-i18n="planFreeTitle">無料プラン</span>
+      </span>
+    </div>
+
+    <!-- 3枚横並び。高さを揃えてCTAを1本の線に並べる -->
+    <div class="plan-grid">
+      <!-- 無料 -->
+      <div class="plan-card">
+        <div class="plan-card-head">
+          <p class="plan-card-name" data-i18n="planFreeTitle">無料プラン</p>
+          <p class="plan-card-price"><span class="plan-card-amount">¥0</span></p>
+          <p class="plan-card-desc" data-i18n="planFreeDesc2">レビュー・掲示板・グラフはすべて無料で使えます。</p>
+        </div>
+        <ul class="plan-feats">
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span>レビュー投稿・12軸グラフ</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span>掲示板・価値観掲示板</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span>お気に入り・ガチャガチャ</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span>カードのシェア</span></li>
+        </ul>
+        <div class="plan-card-foot">
+          <span class="plan-btn plan-btn-current" id="planFreeBtn" data-i18n="planInUse">利用中</span>
+        </div>
       </div>
-      <div style="border:1px solid rgba(217,164,65,.3);border-radius:14px;padding:16px;opacity:.6;">
-        <div style="font-weight:800;color:#e8c463;margin-bottom:4px;">クリエイタープラン — ¥1,500/月</div>
-        <div style="font-size:.8rem;color:var(--muted);" data-i18n="planCreatorDesc">準備中</div>
+
+      <!-- アニメップル＋（おすすめ） -->
+      <div class="plan-card is-featured">
+        <span class="plan-ribbon" data-i18n="planRecommended">おすすめ</span>
+        <div class="plan-card-head">
+          <p class="plan-card-name">アニメップル＋<span class="plan-plus-badge">＋</span></p>
+          <p class="plan-card-price"><span class="plan-card-amount">¥500</span><span class="plan-card-per" data-i18n="planPerMonth">/ 月</span></p>
+          <p class="plan-card-desc is-accent" data-i18n="planPlusDesc2">広告なしで、グラフをもっと深く見たい人へ。</p>
+        </div>
+        <ul class="plan-feats">
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span><b>広告なし</b></span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span>世界の反応を全期間・国別で見る</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span>自分のグラフと作品の重ね合わせ</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span>お気に入り・履歴の無制限保存</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span>限定アイコン・＋バッジ</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span>ガチャの回数が1日3回</span></li>
+        </ul>
+        <div class="plan-card-foot">
+          <button type="button" class="plan-btn plan-btn-primary plan-subscribe-btn" data-plan="plus" data-i18n="planChooseBtn">このプランにする</button>
+          <p class="plan-cancel-note" data-i18n="planCancelNote">いつでも解約できます</p>
+        </div>
+      </div>
+
+      <!-- アニメップルクリエイターズ -->
+      <div class="plan-card is-creators">
+        <div class="plan-card-head">
+          <p class="plan-card-name">アニメップルクリエイターズ</p>
+          <p class="plan-card-price"><span class="plan-card-amount">¥1,500</span><span class="plan-card-per" data-i18n="planPerMonth">/ 月</span></p>
+          <p class="plan-card-desc is-gold" data-i18n="planCreatorDesc2">記事を書く人・データを使う人へ。＋の全機能を含みます。</p>
+        </div>
+        <ul class="plan-feats">
+          <li class="plan-feat is-gold"><span class="plan-feat-check">✓</span><span><b>アニメップル＋のすべて</b></span></li>
+          <li class="plan-feat is-gold"><span class="plan-feat-check">✓</span><span>記事の広場に投稿・下書き保存</span></li>
+          <li class="plan-feat is-gold"><span class="plan-feat-check">✓</span><span>記事・レビューのアクセス解析</span></li>
+          <li class="plan-feat is-gold"><span class="plan-feat-check">✓</span><span>グラフデータのCSV書き出し</span></li>
+          <li class="plan-feat is-gold"><span class="plan-feat-check">✓</span><span>グラフ画像の商用利用・ロゴなし出力</span></li>
+          <li class="plan-feat is-gold"><span class="plan-feat-check">✓</span><span>クリエイターバッジ</span></li>
+        </ul>
+        <div class="plan-card-foot">
+          <button type="button" class="plan-btn plan-btn-gold plan-subscribe-btn" data-plan="creators" data-i18n="planChooseBtn">このプランにする</button>
+          <p class="plan-cancel-note is-gold" data-i18n="planCancelNote">いつでも解約できます</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 準備中：各カードから外して画面に1回だけ告知する -->
+    <div class="plan-soon-banner">
+      <span class="plan-soon-icon">🛠</span>
+      <span class="plan-soon-copy">
+        <span class="plan-soon-title" data-i18n="planSoonTitle">サブスクは近日公開予定です</span>
+        <span class="plan-soon-sub" data-i18n="planSoonSub">開始したらお知らせします。今は特典の内容だけ確認できます。</span>
+      </span>
+      <button type="button" id="planNotifyBtn" class="plan-notify-btn" data-i18n="planNotifyBtn">開始したら通知する</button>
+    </div>
+
+    <!-- 比較表：常時出すと重いので開閉 -->
+    <div class="plan-compare">
+      <button type="button" id="planCompareToggle" class="plan-compare-toggle">
+        <span data-i18n="planCompareTitle">3つのプランを並べて比べる</span>
+        <span class="plan-compare-arrow" id="planCompareArrow" data-i18n="planCompareOpen">開く ▾</span>
+      </button>
+      <div id="planCompareBody" class="plan-compare-body" style="display:none;">
+        <div class="plan-compare-table">
+          <div class="plan-compare-row plan-compare-head">
+            <span data-i18n="planCompareFeature">機能</span><span data-i18n="planFreeShort">無料</span><span class="is-accent">＋</span><span class="is-gold">Creators</span>
+          </div>
+          <div class="plan-compare-row"><span>レビュー・12軸グラフ</span><span class="ok">✓</span><span class="ok">✓</span><span class="ok">✓</span></div>
+          <div class="plan-compare-row"><span>掲示板・価値観掲示板</span><span class="ok">✓</span><span class="ok">✓</span><span class="ok">✓</span></div>
+          <div class="plan-compare-row"><span>広告なし</span><span class="no">—</span><span class="ok">✓</span><span class="ok">✓</span></div>
+          <div class="plan-compare-row"><span>世界の反応（全期間・国別）</span><span class="partial">一部</span><span class="ok">✓</span><span class="ok">✓</span></div>
+          <div class="plan-compare-row"><span>ガチャの回数（1日）</span><span class="num">1</span><span class="num is-accent">3</span><span class="num is-gold">3</span></div>
+          <div class="plan-compare-row"><span>記事の広場に投稿</span><span class="no">—</span><span class="no">—</span><span class="ok">✓</span></div>
+          <div class="plan-compare-row"><span>CSV書き出し・商用利用</span><span class="no">—</span><span class="no">—</span><span class="ok">✓</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="plan-faq">
+      <p class="plan-faq-title" data-i18n="planFaqTitle">よくある質問</p>
+      <div class="plan-faq-list">
+        <details class="plan-faq-item"><summary data-i18n="planFaqQ1">解約するとどうなりますか</summary><p data-i18n="planFaqA1">解約後も期間の終わりまで有料機能を使えます。その後は無料プランに戻り、投稿したレビューや記事はそのまま残ります。</p></details>
+        <details class="plan-faq-item"><summary data-i18n="planFaqQ2">無料でできることは減りますか</summary><p data-i18n="planFaqA2">減りません。レビュー投稿・12軸グラフ・掲示板は今後も無料で使えます。</p></details>
+        <details class="plan-faq-item"><summary data-i18n="planFaqQ3">＋とクリエイターズは併用できますか</summary><p data-i18n="planFaqA3">併用は不要です。クリエイターズにはアニメップル＋のすべての機能が含まれます。</p></details>
+        <details class="plan-faq-item"><summary data-i18n="planFaqQ4">支払い方法は何が使えますか</summary><p data-i18n="planFaqA4">クレジットカードに対応予定です。詳細は公開時にお知らせします。</p></details>
       </div>
     </div>
   </div>
@@ -6778,6 +7012,7 @@
     if (page==='popular') renderPopular().catch(console.error);
     if (page==='board') renderBoardHub().catch(console.error);
     if (page==='tip') renderTipPage();
+    if (page==='settings-plan') renderPlanPage();
     if (page==='admin') initAdminPage();
     if (page==='gacha') initGachaPage();
     if (page==='partner') initPartnerPage();
@@ -10941,6 +11176,56 @@
   const TIP_AMOUNTS = [500, 1000, 3000, 5000, 10000];
   const TIP_HIGHLIGHT = [1000, 3000]; // 目立たせる金額
   let _tipSelectedAmount = null;
+  // ── プラン（サブスク）：決済が繋がるまでは「準備中」の状態として見せる。
+  // ボタンを押せる見た目のまま無反応にせず、代わりに通知登録を受け取る ──
+  function renderPlanPage() {
+    const root = document.getElementById('page-settings-plan');
+    if(!root) return;
+    const paymentsReady = false; // Paddle審査完了後に true にすると本来のフローに戻る
+    const currentPlan = 'free';  // 将来 purchases / subscriptions から取得
+
+    const currentEl = document.getElementById('planCurrentValue');
+    if(currentEl) {
+      currentEl.textContent = currentPlan === 'plus' ? 'アニメップル＋'
+        : currentPlan === 'creators' ? 'アニメップルクリエイターズ'
+        : t('planFreeTitle');
+    }
+
+    root.querySelectorAll('.plan-subscribe-btn').forEach(btn => {
+      btn.classList.toggle('is-soon', !paymentsReady);
+      btn.textContent = paymentsReady ? t('planChooseBtn') : t('planSoonBtn');
+      btn.onclick = () => {
+        if(!paymentsReady) return;
+        // TODO: Paddle Checkout を開き、成功時に subscriptions を更新する Edge Function を呼ぶ
+        alert(t('planSoonTitle'));
+      };
+    });
+
+    const notifyBtn = document.getElementById('planNotifyBtn');
+    if(notifyBtn) {
+      notifyBtn.disabled = false;
+      notifyBtn.textContent = t('planNotifyBtn');
+      notifyBtn.onclick = () => {
+        notifyBtn.textContent = t('planNotifyDone');
+        notifyBtn.disabled = true;
+      };
+    }
+
+    // 比較表：常時表示は重いので開閉
+    const toggle = document.getElementById('planCompareToggle');
+    const body = document.getElementById('planCompareBody');
+    const arrow = document.getElementById('planCompareArrow');
+    if(toggle && body) {
+      body.style.display = 'none';
+      if(arrow) arrow.textContent = t('planCompareOpen');
+      toggle.onclick = () => {
+        const open = body.style.display === 'none';
+        body.style.display = open ? '' : 'none';
+        if(arrow) arrow.textContent = open ? t('planCompareClose') : t('planCompareOpen');
+      };
+    }
+  }
+
   function renderTipPage() {
     const grid = document.getElementById('tipAmountGrid');
     if(!grid) return;
@@ -13643,6 +13928,35 @@
     boardHubAllRead:{ ja:'すべて読みました。', en:'All caught up. ' },
     boardHubGuestHint:{ ja:'ログインすると参加中の掲示板と未読が表示されます', en:'Log in to see your boards and unread posts' },
     settingsPlan: { ja:'プラン', en:'Plan' },
+    planLead: { ja:'アニメップルをもっと使いたい方向けの有料プランです。無料でできることは、これからも無料のままです。', en:'Paid plans for people who want more. Everything free stays free.' },
+    planCurrentLabel: { ja:'現在のプラン', en:'Current plan' },
+    planFreeDesc2: { ja:'レビュー・掲示板・グラフはすべて無料で使えます。', en:'Reviews, boards and graphs are all free.' },
+    planPlusDesc2: { ja:'広告なしで、グラフをもっと深く見たい人へ。', en:'No ads, and a deeper look at the graphs.' },
+    planCreatorDesc2: { ja:'記事を書く人・データを使う人へ。＋の全機能を含みます。', en:'For writers and data users. Includes everything in Plus.' },
+    planPerMonth: { ja:'/ 月', en:'/ mo' },
+    planInUse: { ja:'利用中', en:'Current' },
+    planRecommended: { ja:'おすすめ', en:'Recommended' },
+    planChooseBtn: { ja:'このプランにする', en:'Choose this plan' },
+    planCancelNote: { ja:'いつでも解約できます', en:'Cancel anytime' },
+    planSoonBtn: { ja:'準備中', en:'Coming soon' },
+    planSoonTitle: { ja:'サブスクは近日公開予定です', en:'Subscriptions are coming soon' },
+    planSoonSub: { ja:'開始したらお知らせします。今は特典の内容だけ確認できます。', en:'We will let you know when they open. For now you can review what each plan includes.' },
+    planNotifyBtn: { ja:'開始したら通知する', en:'Notify me when it opens' },
+    planNotifyDone: { ja:'通知を受け取ります', en:"You'll be notified" },
+    planCompareTitle: { ja:'3つのプランを並べて比べる', en:'Compare all three plans' },
+    planCompareOpen: { ja:'開く ▾', en:'Open ▾' },
+    planCompareClose: { ja:'閉じる ▴', en:'Close ▴' },
+    planCompareFeature: { ja:'機能', en:'Feature' },
+    planFreeShort: { ja:'無料', en:'Free' },
+    planFaqTitle: { ja:'よくある質問', en:'FAQ' },
+    planFaqQ1: { ja:'解約するとどうなりますか', en:'What happens when I cancel?' },
+    planFaqA1: { ja:'解約後も期間の終わりまで有料機能を使えます。その後は無料プランに戻り、投稿したレビューや記事はそのまま残ります。', en:'You keep paid features until the end of the period, then return to the free plan. Your reviews and articles stay.' },
+    planFaqQ2: { ja:'無料でできることは減りますか', en:'Will free features be reduced?' },
+    planFaqA2: { ja:'減りません。レビュー投稿・12軸グラフ・掲示板は今後も無料で使えます。', en:'No. Reviews, the 12-axis graph and boards stay free.' },
+    planFaqQ3: { ja:'＋とクリエイターズは併用できますか', en:'Can I have both Plus and Creators?' },
+    planFaqA3: { ja:'併用は不要です。クリエイターズにはアニメップル＋のすべての機能が含まれます。', en:'No need. Creators includes everything in Animepple+.' },
+    planFaqQ4: { ja:'支払い方法は何が使えますか', en:'What payment methods can I use?' },
+    planFaqA4: { ja:'クレジットカードに対応予定です。詳細は公開時にお知らせします。', en:'Credit cards are planned. Details at launch.' },
     settingsPlanSub: { ja:'アニメップル+・クリエイタープラン', en:'Animepple+ & Creator plan' },
     settingsSupport: { ja:'開発を応援する', en:'Support development' },
     settingsSupportSub: { ja:'投げ銭でアニメップルを支援', en:'Send a tip to support us' },
