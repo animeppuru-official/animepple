@@ -975,20 +975,29 @@
 
     /* ── BOARD MOBILE（スマホの掲示板チャット：会話に集中させる） ── */
     @media (max-width:767px) {
-      /* 下部ナビは常時消す。会話に使える高さを62px増やし、入力バーとの二重の下部帯もなくなる */
-      body.board-chat-mobile .bnav { display:none !important; }
-      body.board-chat-mobile .page { padding-bottom:0 !important; }
+      /* 下部ナビ（スマホは .bnav-carousel）を消す。会話に使える高さが約72px増える */
+      body.board-chat-mobile .bnav,
+      body.board-chat-mobile .bnav-carousel { display:none !important; }
       /* 画面を3段に固定：ヘッダー／会話（ここだけスクロール）／入力バー。
-         ページ全体がスクロールしないので、打っている間に会話が押し出されない */
+         ページ自体はスクロールしないので、打っている間に会話が押し出されない。
+         --board-vh は visualViewport の高さ（キーボードが出ると縮む）*/
       body.board-chat-mobile { overflow:hidden; }
-      body.board-chat-mobile .board-page-wrap {
-        display:flex; flex-direction:column;
-        height:calc(var(--board-vh, 100vh) - 52px);
-        overflow:hidden;
+      body.board-chat-mobile #page-board-value.active,
+      body.board-chat-mobile #page-board-general.active {
+        display:flex !important; flex-direction:column;
+        height:var(--board-vh, 100vh);
+        min-height:0; padding-bottom:0 !important; overflow:hidden;
+      }
+      body.board-chat-mobile #page-board-value.active .hdr,
+      body.board-chat-mobile #page-board-general.active .hdr { flex:0 0 auto; position:static !important; }
+      /* 中間ラッパー：ここにも flex を通さないと会話部が縮まず3段にならない */
+      body.board-chat-mobile #page-board-value.active .board-page-wrap,
+      body.board-chat-mobile #page-board-general.active .board-page-wrap {
+        flex:1 1 auto; min-height:0; display:flex; flex-direction:column;
+        max-width:none !important; width:100% !important; padding:0 !important; overflow:hidden;
       }
       body.board-chat-mobile .board-chat-head {
-        position:static !important; flex:0 0 auto;
-        padding:9px 12px 0 !important;
+        flex:0 0 auto; position:static !important; padding:9px 12px 0 !important;
       }
       body.board-chat-mobile .board-chat-scroll {
         flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain;
@@ -998,15 +1007,20 @@
         flex:0 0 auto; position:static !important; margin:0 !important;
         padding:8px 10px calc(10px + env(safe-area-inset-bottom)) !important;
       }
-      /* ヘッダー：サムネ32px・タイトル13.5px に詰めて1段48pxに収める */
+      /* ヘッダーを1段に詰める */
       body.board-chat-mobile #boardValuePageThumb,
       body.board-chat-mobile #boardGeneralPageThumb { width:32px !important; height:32px !important; flex:0 0 32px !important; }
       body.board-chat-mobile #boardValuePageTitle,
       body.board-chat-mobile #boardGeneralPageTitle { font-size:13.5px !important; }
       body.board-chat-mobile #boardValueTabsRow { padding-bottom:9px !important; }
-      /* 打っている間はタブ段を畳んで会話をさらに52px広げる */
+      /* 打っている間はタブ段とヒントを畳んで会話をさらに広げる */
       body.board-chat-mobile.board-kb-open #boardValueTabsRow { display:none !important; }
       body.board-chat-mobile.board-kb-open .board-enter-hint { display:none !important; }
+      /* 操作島（😊 ↩ ⋮）はスマホでは絶対に出さない。全メッセージに並んで会話が読めなくなる。
+         リアクション・返信・通報はすべて長押しシートから。 */
+      .board-action-island { display:none !important; }
+      .board-msg-row:hover .board-action-island { display:none !important; }
+      .board-msg-row .board-time { display:inline !important; }
     }
 
     /* ── BOARD KEYBOARD（スマホ：キーボード表示中の詰まりを解消） ── */
@@ -1059,9 +1073,10 @@
        スマホ（ホバー不可）は常時表示にフォールバックし、時刻を隠さないよう横並びにする */
     .board-msg-row:hover .board-time { display:none; }
     .board-msg-row:hover .board-action-island { display:flex !important; }
+    /* タップ端末では操作島を出さない（全メッセージに常設されて会話が読めなくなる）。
+       リアクション・返信・通報はすべて長押しシートから。 */
     @media (hover:none) {
-      .board-msg-row .board-action-island { display:flex !important; }
-      .board-msg-row .board-time { display:inline !important; margin-right:6px; }
+      .board-msg-row .board-time { display:inline !important; }
     }
     .board-action-island button:hover { background:rgba(255,255,255,.08) !important; }
     .board-reaction-chip { transition:transform .14s cubic-bezier(.34,1.56,.64,1); }
@@ -1215,6 +1230,11 @@
     @media (hover:hover) and (pointer:fine) {
       .board-action-island { opacity:0; transition:opacity 160ms ease; }
       .board-msg-row:hover .board-action-island { opacity:1; }
+    }
+    /* タッチ端末では島を完全に消す（opacity:0 だけだとタップ領域が残り、
+       hover:none 判定に漏れる環境では見えてしまう） */
+    @media (hover:none), (max-width:767px) {
+      .board-action-island { display:none !important; }
     }
     .admin-btn { padding:.55rem .85rem; border-radius:10px; background:var(--card2); border:1px solid #7a3a3a; color:#ffcece; font-size:.78rem; cursor:pointer; }
     .reviews-section { padding:0 1rem; margin-top:.8rem; }
@@ -7211,6 +7231,24 @@
     _followListState = { userId, mode };
     nav('follow-list');
   }
+  // 掲示板チャット（スマホ）の高さ基準。visualViewport はキーボード＋予測変換を除いた
+  // 実際に見えている高さを返すので、これを --board-vh に流せば入力バーが隠れない。
+  // iOS Safari の 100vh はツールバー込みで実際より大きいため、必ずこちらを使う。
+  (function initBoardVh(){
+    const vv = window.visualViewport;
+    window._boardSyncVh = () => {
+      const hpx = vv ? vv.height : window.innerHeight;
+      document.body.style.setProperty('--board-vh', hpx + 'px');
+    };
+    if(vv) {
+      vv.addEventListener('resize', window._boardSyncVh);
+      vv.addEventListener('scroll', window._boardSyncVh);
+    }
+    window.addEventListener('resize', window._boardSyncVh);
+    window.addEventListener('orientationchange', () => setTimeout(window._boardSyncVh, 200));
+    window._boardSyncVh();
+  })();
+
   function nav(page, animeId, opts) {
     opts = opts || {};
     // アニメページを離れる時は、グッズカルーセルの自動送りタイマーを止めておく（残留動作の防止）
@@ -12509,18 +12547,6 @@
       // 同時にタブ段とEnterヒントを畳んで会話の見える高さを稼ぐ（CSS側で処理）。
       if(!window._boardKbBound) {
         window._boardKbBound = true;
-        const vv = window.visualViewport;
-        // 3段レイアウトの総高さを visualViewport に合わせる。キーボード（＋予測変換）で
-        // 高さが縮むと、最下段の入力バーがそのぶん自然に持ち上がる
-        window._boardSyncVh = () => {
-          const hpx = vv ? vv.height : window.innerHeight;
-          document.body.style.setProperty('--board-vh', hpx + 'px');
-        };
-        if(vv) {
-          vv.addEventListener('resize', window._boardSyncVh);
-          vv.addEventListener('scroll', window._boardSyncVh);
-        }
-        window.addEventListener('resize', window._boardSyncVh);
         const stickBottom = () => {
           const sec = document.querySelector('#page-board-value.active .board-chat-scroll, #page-board-general.active .board-chat-scroll');
           if(sec) sec.scrollTop = sec.scrollHeight;
@@ -12543,7 +12569,7 @@
           }
         });
       }
-      window._boardSyncVh();
+      if(window._boardSyncVh) window._boardSyncVh();
       const composeInput = composer.querySelector('#boardComposeInput');
       // 1行38pxから内容に応じて伸ばす（最大120px＝約5行）
       const growCompose = () => {
