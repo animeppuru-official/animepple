@@ -981,12 +981,15 @@
       /* 画面を3段に固定：ヘッダー／会話（ここだけスクロール）／入力バー。
          ページ自体はスクロールしないので、打っている間に会話が押し出されない。
          --board-vh は visualViewport の高さ（キーボードが出ると縮む）*/
-      body.board-chat-mobile { overflow:hidden; }
+      /* body ごと固定する。iOS はキーボードが出るとページを勝手にスクロールアップし、
+         入力欄が画面外へ飛んでしまうため、スクロール自体を成立させない */
+      body.board-chat-mobile { position:fixed; inset:0; width:100%; overflow:hidden; }
       body.board-chat-mobile #page-board-value.active,
       body.board-chat-mobile #page-board-general.active {
+        position:fixed; top:0; left:0; right:0; z-index:90;
         display:flex !important; flex-direction:column;
-        height:var(--board-vh, 100vh);
-        min-height:0; padding-bottom:0 !important; overflow:hidden;
+        height:var(--board-vh, 100vh); max-height:var(--board-vh, 100vh);
+        min-height:0 !important; padding-bottom:0 !important; overflow:hidden;
       }
       body.board-chat-mobile #page-board-value.active .hdr,
       body.board-chat-mobile #page-board-general.active .hdr { flex:0 0 auto; position:static !important; }
@@ -1016,10 +1019,6 @@
       /* 打っている間はタブ段とヒントを畳んで会話をさらに広げる */
       body.board-chat-mobile.board-kb-open #boardValueTabsRow { display:none !important; }
       body.board-chat-mobile.board-kb-open .board-enter-hint { display:none !important; }
-      /* 操作島（😊 ↩ ⋮）はスマホでは絶対に出さない。全メッセージに並んで会話が読めなくなる。
-         リアクション・返信・通報はすべて長押しシートから。 */
-      .board-action-island { display:none !important; }
-      .board-msg-row:hover .board-action-island { display:none !important; }
       .board-msg-row .board-time { display:inline !important; }
     }
 
@@ -1031,6 +1030,37 @@
          入力バーは3段レイアウトの最下段なので、高さが縮めば自然に持ち上がる */
       body.board-kb-open .board-composer { padding-bottom:8px !important; }
     }
+
+    /* ── BOARD MORE（三点リーダー：返信・リアクション・コピーの入口） ── */
+    .board-more-btn {
+      flex:0 0 auto; width:28px; height:28px; padding:0; border:none; border-radius:8px;
+      background:transparent; color:#5f7268; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      opacity:.5; transition:opacity .14s ease, background-color .14s ease, color .14s ease;
+    }
+    .board-msg-row:hover .board-more-btn { opacity:1; }
+    .board-more-btn:hover, .board-more-btn.is-open { background:rgba(255,255,255,.08); color:#c3d4c9; opacity:1; }
+    @media (hover:none) { .board-more-btn { opacity:.65; } }
+    /* メニュー：吹き出しの近くに出す小さなポップオーバー */
+    .board-more-menu {
+      position:fixed; z-index:10007; min-width:172px; padding:6px;
+      border-radius:14px; background:#14261c; border:1px solid rgba(255,255,255,.14);
+      box-shadow:0 20px 44px -16px rgba(0,0,0,.95);
+      animation:boardPopIn .16s ease both;
+    }
+    .board-more-emojis { display:flex; gap:2px; padding:2px 2px 7px; border-bottom:1px solid rgba(255,255,255,.07); }
+    .board-more-emojis button {
+      width:36px; height:36px; border:none; border-radius:50%; background:transparent;
+      font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    }
+    .board-more-emojis button:hover { background:rgba(255,255,255,.08); }
+    .board-more-menu-item {
+      width:100%; display:flex; align-items:center; gap:10px; padding:11px 10px;
+      border:none; border-radius:9px; background:transparent; color:#e6efe9;
+      font:inherit; font-size:13.5px; font-weight:700; cursor:pointer; text-align:left;
+    }
+    .board-more-menu-item:hover { background:rgba(255,255,255,.06); }
+    .board-more-menu-item span:first-child { width:18px; text-align:center; opacity:.85; }
 
     /* ── BOARD COMPOSER（1行38pxの丸型。左に自分のアイコン） ── */
     .board-compose-row { display:flex; align-items:flex-end; gap:7px; }
@@ -1069,16 +1099,12 @@
     .board-hub-card:hover { transform:translateY(-2px); border-color:rgba(92,201,142,.45) !important; }
 
     /* ── BOARD CHAT ── */
-    /* 操作（返信・リアクション・⋮）は常設せず、PCはホバー時に時刻と入れ替えて出す。
-       スマホ（ホバー不可）は常時表示にフォールバックし、時刻を隠さないよう横並びにする */
-    .board-msg-row:hover .board-time { display:none; }
-    .board-msg-row:hover .board-action-island { display:flex !important; }
+    /* 操作は三点リーダー1つに集約する。以前は😊/↩/⋮が常に並んでいて会話が読めなかった */
     /* タップ端末では操作島を出さない（全メッセージに常設されて会話が読めなくなる）。
        リアクション・返信・通報はすべて長押しシートから。 */
     @media (hover:none) {
       .board-msg-row .board-time { display:inline !important; }
     }
-    .board-action-island button:hover { background:rgba(255,255,255,.08) !important; }
     .board-reaction-chip { transition:transform .14s cubic-bezier(.34,1.56,.64,1); }
     .board-reaction-chip:hover { transform:translateY(-1px); }
     @keyframes boardMsgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
@@ -1221,21 +1247,6 @@
     }
     .board-action-btn:hover, .board-reaction-chip:hover, .board-reaction-add-btn:hover { transform: translateY(-2px) scale(1.04); }
     .board-action-btn:active, .board-reaction-chip:active, .board-reaction-add-btn:active, #boardComposeBtn:active { transform: scale(.94); }
-    /* アクションバー（吹き出しの外・時刻と同じスロットにある「島」）：PCはホバーで表示、スマホは常時表示 */
-    .board-action-island {
-      display:inline-flex; align-items:center; gap:10px; height:32px; padding:0 10px;
-      border-radius:16px; background:#13201b; border:1px solid rgba(255,255,255,.1);
-      animation: boardPopIn 180ms ease;
-    }
-    @media (hover:hover) and (pointer:fine) {
-      .board-action-island { opacity:0; transition:opacity 160ms ease; }
-      .board-msg-row:hover .board-action-island { opacity:1; }
-    }
-    /* タッチ端末では島を完全に消す（opacity:0 だけだとタップ領域が残り、
-       hover:none 判定に漏れる環境では見えてしまう） */
-    @media (hover:none), (max-width:767px) {
-      .board-action-island { display:none !important; }
-    }
     .admin-btn { padding:.55rem .85rem; border-radius:10px; background:var(--card2); border:1px solid #7a3a3a; color:#ffcece; font-size:.78rem; cursor:pointer; }
     .reviews-section { padding:0 1rem; margin-top:.8rem; }
     .reviews-head h2 { font-size:22px; font-weight:700; font-family:"Zen Kaku Gothic New",sans-serif; }
@@ -7241,8 +7252,13 @@
       document.body.style.setProperty('--board-vh', hpx + 'px');
     };
     if(vv) {
-      vv.addEventListener('resize', window._boardSyncVh);
-      vv.addEventListener('scroll', window._boardSyncVh);
+      const onVv = () => {
+        window._boardSyncVh();
+        // 掲示板チャットを開いている間は、ページが動かないよう常に原点へ戻す
+        if(document.body.classList.contains('board-chat-mobile')) window.scrollTo(0, 0);
+      };
+      vv.addEventListener('resize', onVv);
+      vv.addEventListener('scroll', onVv);
     }
     window.addEventListener('resize', window._boardSyncVh);
     window.addEventListener('orientationchange', () => setTimeout(window._boardSyncVh, 200));
@@ -12292,13 +12308,16 @@
           ${quoteHtml}
           <div style="font-size:14px;line-height:1.65;color:${textColor};white-space:pre-wrap;word-break:break-word;text-align:left;">${escapeHtml(item.body)}</div>
         </div>`;
-        // 時刻スロット：既定は時刻。行にホバーすると同じ位置に操作島が入れ替わりで出る（位置が動かない）
-        const replyBtn = _currentUser ? `<button type="button" class="board-reply-toggle" data-id="${item.id}" title="${escapeHtml(t('boardReplyBtn'))}" style="width:26px;height:26px;border:none;border-radius:7px;background:transparent;color:#a9bcb0;font-size:12px;cursor:pointer;">↩</button>` : '';
-        const reactBtn = _currentUser ? `<button type="button" class="board-reaction-add-btn" data-post-id="${item.id}" style="width:26px;height:26px;border:none;border-radius:7px;background:transparent;font-size:13px;cursor:pointer;">😊</button>` : '';
-        const island = `<div class="board-action-island" style="display:none;flex:0 0 auto;align-items:center;gap:2px;padding:3px;border-radius:9px;background:#132018;border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 20px -14px rgba(0,0,0,.9);animation:boardPopIn .18s ease both;">${reactBtn}${replyBtn}${kebabMenu('board_post', item.id, item.user_id)}</div>`;
-        const timeSlot = `<div class="board-time-slot" style="flex:0 0 auto;display:flex;align-items:flex-end;padding-bottom:2px;">
+        // 操作は三点リーダー1つに集約する。以前は 😊 / ↩ / ⋮ が全メッセージに並び、
+        // タップ端末では常に見えていて会話が読めなかった。押すとメニューが開く。
+        const moreBtn = _currentUser
+          ? `<button type="button" class="board-more-btn" data-post-id="${item.id}" aria-label="${escapeHtml(t('boardMoreLabel'))}">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+            </button>`
+          : '';
+        const timeSlot = `<div class="board-time-slot" style="flex:0 0 auto;display:flex;align-items:center;gap:2px;align-self:flex-end;padding-bottom:1px;">
           <span class="board-time" style="font-size:10.5px;color:#5f7268;white-space:nowrap;">${formatRelativeTime(item.created_at)}</span>
-          ${island}
+          ${moreBtn}
         </div>`;
         return `<div style="display:flex;align-items:flex-end;gap:${isMine?5:7}px;flex-direction:${isMine?'row-reverse':'row'};">
           ${avatar}
@@ -12454,23 +12473,14 @@
         setTimeout(() => document.addEventListener('click', closeOnOutsideClick), 0);
       };
     });
-    // ── 長押し（スマホ）：対象の吹き出しだけ暗転の上に浮かせて残し、
-    //    真上にリアクション5種、下にアクションシートを出す。どれを操作しているか分かる
-    if(window.matchMedia('(hover:none)').matches) {
-      panel.querySelectorAll('.board-msg-row').forEach(row=>{
-        let timer = null;
-        const start = () => {
-          clearTimeout(timer);
-          timer = setTimeout(() => openBoardLongPressSheet(row, posts, rerenderFn), 480);
-        };
-        const cancel = () => clearTimeout(timer);
-        row.addEventListener('pointerdown', start);
-        row.addEventListener('pointerup', cancel);
-        row.addEventListener('pointercancel', cancel);
-        row.addEventListener('pointerleave', cancel);
-        row.addEventListener('pointermove', cancel);
-      });
-    }
+    // ── 三点リーダー：押すとリアクション・返信・コピーのメニューを開く。
+    //    長押しは使わない（気づかれにくく、スクロール中に誤発火する）
+    panel.querySelectorAll('.board-more-btn').forEach(btn=>{
+      btn.onclick = (ev) => {
+        ev.stopPropagation();
+        openBoardMoreMenu(btn, posts, rerenderFn);
+      };
+    });
     panel.querySelectorAll('.board-kebab-btn').forEach(btn=>{
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -12554,9 +12564,16 @@
         document.addEventListener('focusin', (e) => {
           if(e.target && e.target.id === 'boardComposeInput') {
             document.body.classList.add('board-kb-open');
-            window._boardSyncVh();
-            setTimeout(() => { window._boardSyncVh(); stickBottom(); }, 80);
-            setTimeout(() => { window._boardSyncVh(); stickBottom(); }, 320);
+            // iOS はキーボードを出すときページ自体をスクロールアップする。
+            // ページを fixed にしたうえで、ここでも 0 に戻して入力欄が飛ぶのを防ぐ
+            const settle = () => {
+              window._boardSyncVh();
+              window.scrollTo(0, 0);
+              document.documentElement.scrollTop = 0;
+              stickBottom();
+            };
+            settle();
+            [60, 180, 340, 600].forEach(ms => setTimeout(settle, ms));
           }
         });
         document.addEventListener('focusout', (e) => {
@@ -12565,6 +12582,7 @@
               if(document.activeElement && document.activeElement.id === 'boardComposeInput') return;
               document.body.classList.remove('board-kb-open');
               window._boardSyncVh();
+              window.scrollTo(0, 0);
             }, 80);
           }
         });
@@ -13516,83 +13534,70 @@
     }));
   }
 
-  // 長押しシート：対象の吹き出しのクローンを暗転の上に置き、リアクションとアクションを並べる
-  function openBoardLongPressSheet(row, posts, rerenderFn) {
-    if(document.getElementById('boardLongPressSheet')) return;
-    if(navigator.vibrate) navigator.vibrate(12);
-    const postId = row.dataset.postId;
+  // 三点リーダーのメニュー：リアクション5種＋返信＋コピー。
+  // 通報・ブロックは一旦外している（ヘッダーの⋮から板ごとに行える）。
+  function openBoardMoreMenu(btn, posts, rerenderFn) {
+    closeBoardMoreMenu();
+    const postId = btn.dataset.postId;
     const post = (posts || []).find(p => String(p.id) === String(postId));
     if(!post) return;
-    const isMine = _currentUser && post.user_id === _currentUser.id;
-    const bubbleSrc = row.querySelector('div[style*="border-radius"]');
-    const clone = row.cloneNode(true);
-    clone.querySelectorAll('.board-action-island, .board-time-slot, .board-kebab-menu').forEach(n=>n.remove());
-    clone.style.margin = '0';
-    clone.style.animation = 'none';
+    btn.classList.add('is-open');
 
-    const ov = document.createElement('div');
-    ov.id = 'boardLongPressSheet';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:10006;background:rgba(4,10,6,.78);display:flex;flex-direction:column;justify-content:flex-end;animation:boardFadeIn .18s ease both;';
+    const menu = document.createElement('div');
+    menu.id = 'boardMoreMenu';
+    menu.className = 'board-more-menu';
     const emojis = db.boardReactions.REACTION_EMOJIS;
-    ov.innerHTML = `
-      <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:0 12px 10px;">
-        <div id="blpTarget" style="filter:drop-shadow(0 18px 40px rgba(0,0,0,.95));"></div>
-        <div style="align-self:${isMine?'flex-end':'flex-start'};display:flex;align-items:center;gap:2px;padding:6px;border-radius:26px;background:#14261c;border:1px solid rgba(255,255,255,.14);box-shadow:0 16px 36px -14px rgba(0,0,0,.9);">
-          ${emojis.map(e=>`<button type="button" class="blp-react" data-emoji="${e}" style="width:40px;height:40px;border:none;border-radius:50%;background:transparent;font-size:22px;cursor:pointer;">${e}</button>`).join('')}
-        </div>
+    menu.innerHTML = `
+      <div class="board-more-emojis">
+        ${emojis.map(e=>`<button type="button" data-emoji="${e}">${e}</button>`).join('')}
       </div>
-      <div style="flex:0 0 auto;padding:0 12px calc(14px + env(safe-area-inset-bottom));">
-        <div style="border-radius:16px;background:#14261c;border:1px solid rgba(255,255,255,.12);overflow:hidden;">
-          <button type="button" id="blpReply" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 16px;border:none;border-bottom:1px solid rgba(255,255,255,.06);background:transparent;color:#e6efe9;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left;"><span style="width:20px;text-align:center;">↩</span>${escapeHtml(t('boardSheetReply'))}</button>
-          <button type="button" id="blpCopy" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 16px;border:none;background:transparent;color:#e6efe9;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left;"><span style="width:20px;text-align:center;">⧉</span>${escapeHtml(t('boardSheetCopy'))}</button>
-        </div>
-        ${isMine ? '' : `<div style="margin-top:9px;border-radius:16px;background:#14261c;border:1px solid rgba(229,72,77,.28);overflow:hidden;">
-          <button type="button" id="blpReport" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 16px;border:none;border-bottom:1px solid rgba(255,255,255,.06);background:transparent;color:#eaa9a9;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left;"><span style="width:20px;text-align:center;">⚑</span>${escapeHtml(t('reportBtn'))}</button>
-          <button type="button" id="blpBlock" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 16px;border:none;background:transparent;color:#eaa9a9;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left;"><span style="width:20px;text-align:center;">⊘</span>${escapeHtml(t('blockBtn'))}</button>
-        </div>`}
-        <button type="button" id="blpCancel" style="width:100%;height:48px;margin-top:9px;border-radius:16px;background:#14261c;border:1px solid rgba(255,255,255,.12);color:#b6c8bd;font:inherit;font-size:14px;font-weight:800;cursor:pointer;">${escapeHtml(t('cancelBtn'))}</button>
-      </div>`;
-    document.body.appendChild(ov);
-    ov.querySelector('#blpTarget').appendChild(clone);
-    const close = () => ov.remove();
-    ov.addEventListener('click', (e) => { if(e.target === ov) close(); });
-    ov.querySelector('#blpCancel').onclick = close;
-    ov.querySelectorAll('.blp-react').forEach(b=>{
+      <button type="button" class="board-more-menu-item" data-act="reply"><span>↩</span><span>${escapeHtml(t('boardSheetReply'))}</span></button>
+      <button type="button" class="board-more-menu-item" data-act="copy"><span>⧉</span><span>${escapeHtml(t('boardSheetCopy'))}</span></button>`;
+    document.body.appendChild(menu);
+
+    // ボタンの近くに出す。画面外にはみ出す場合は内側へ寄せる
+    const r = btn.getBoundingClientRect();
+    const mw = menu.offsetWidth, mh = menu.offsetHeight;
+    let left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8);
+    let top = r.top - mh - 8;
+    if(top < 8) top = Math.min(r.bottom + 8, window.innerHeight - mh - 8);
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+
+    menu.querySelectorAll('.board-more-emojis button').forEach(b=>{
       b.onclick = async () => {
-        close();
+        closeBoardMoreMenu();
         if(!_currentUser) return;
         await db.boardReactions.toggle(post.id, _currentUser.id, b.dataset.emoji).catch(()=>{});
         rerenderFn();
       };
     });
-    ov.querySelector('#blpReply').onclick = () => {
-      close();
+    menu.querySelector('[data-act="reply"]').onclick = () => {
+      closeBoardMoreMenu();
       setBoardReplyTarget({ id: post.id, username: post.username || '名無し', body: post.body });
       const inp = document.getElementById('boardComposeInput');
       if(inp) inp.focus();
     };
-    ov.querySelector('#blpCopy').onclick = () => {
-      close();
+    menu.querySelector('[data-act="copy"]').onclick = () => {
+      closeBoardMoreMenu();
       if(navigator.clipboard) navigator.clipboard.writeText(post.body || '').catch(()=>{});
     };
-    // 通報・ブロックは既存のケバブメニューと同じ処理・同じ確認文を使う
-    const rep = ov.querySelector('#blpReport');
-    if(rep) rep.onclick = async () => {
-      close();
-      if(!_currentUser || !confirm(t('reportConfirm'))) return;
-      const { error } = await db.reports.submit(_currentUser.id, 'board_post', post.id, null);
-      if(error) { alert(t('profileSaveFailedAlert')); return; }
-      alert(t('reportSentAlert'));
-    };
-    const blk = ov.querySelector('#blpBlock');
-    if(blk) blk.onclick = async () => {
-      close();
-      if(!_currentUser || !confirm(t('blockConfirm'))) return;
-      const { error } = await db.blocks.add(_currentUser.id, post.user_id);
-      if(error) { alert(t('profileSaveFailedAlert')); return; }
-      await loadMyBlockedUserIds();
-      rerenderFn();
-    };
+
+    setTimeout(() => {
+      document.addEventListener('pointerdown', boardMoreOutside, true);
+      window.addEventListener('scroll', closeBoardMoreMenu, true);
+    }, 0);
+  }
+  function boardMoreOutside(ev) {
+    const menu = document.getElementById('boardMoreMenu');
+    if(menu && !menu.contains(ev.target)) closeBoardMoreMenu();
+  }
+  function closeBoardMoreMenu() {
+    const menu = document.getElementById('boardMoreMenu');
+    if(menu) menu.remove();
+    document.querySelectorAll('.board-more-btn.is-open').forEach(b=>b.classList.remove('is-open'));
+    document.removeEventListener('pointerdown', boardMoreOutside, true);
+    window.removeEventListener('scroll', closeBoardMoreMenu, true);
   }
 
   // マイページの価値観アイコンを押した時：常設セクションへスクロールする（旧ポップアップは残置）
@@ -14746,6 +14751,7 @@
     gachaEmptyPool: { ja:'景品は準備中です。もうしばらくお待ちください。', en:'Prizes are coming soon.' },
     gachaCloseBtn: { ja:'閉じる', en:'Close' },
     cancelBtn: { ja:'キャンセル', en:'Cancel' },
+    boardMoreLabel: { ja:'この投稿の操作', en:'Post actions' },
     boardSheetReply: { ja:'引用して返信', en:'Reply with quote' },
     boardSheetCopy: { ja:'コピー', en:'Copy' },
     boardStatsParticipants: { ja:'参加 {n}人', en:'{n} members' },
