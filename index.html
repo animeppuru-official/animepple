@@ -973,6 +973,64 @@
       background:rgba(92,201,142,.08); border:1px solid rgba(92,201,142,.24);
     }
 
+    /* ── BNAV CUSTOMIZE（iPhoneのホーム画面と同じ並び替え） ── */
+    @keyframes bnavJiggle { 0%,100% { transform:rotate(-1.6deg); } 50% { transform:rotate(1.6deg); } }
+    .bnav-cz-sheet {
+      margin:0 10px calc(10px + env(safe-area-inset-bottom));
+      border-radius:22px; background:#0e2116; border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 -20px 50px -20px rgba(0,0,0,.9); padding:16px 14px 14px;
+    }
+    .bnav-cz-gridwrap { position:relative; }
+    /* 行の境界＝ボトムナビのスワイプページの境界。どの3つが1ページ目かを見せる */
+    .bnav-cz-divider {
+      position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:center; pointer-events:none;
+    }
+    .bnav-cz-divider span {
+      padding:0 8px; background:#0e2116; font-size:9.5px; font-weight:700; color:#66786d; white-space:nowrap;
+    }
+    .bnav-customize-cell {
+      position:relative; touch-action:none; user-select:none;
+      animation:bnavJiggle 1.1s ease-in-out infinite;
+    }
+    .bnav-customize-cell.is-dragging {
+      animation:none; z-index:5;
+      transform-origin:center; box-shadow:0 24px 50px -14px rgba(0,0,0,.95);
+      border-color:rgba(92,201,142,.8) !important; background:#1c4530 !important;
+    }
+    /* 1〜3番＝ナビに最初から見える3つ。緑枠で区別する */
+    .bnav-customize-cell.is-onbar { border-color:rgba(92,201,142,.55) !important; background:rgba(92,201,142,.1) !important; }
+    .bnav-cz-num {
+      position:absolute; top:5px; left:6px; width:16px; height:16px; border-radius:50%;
+      background:rgba(255,255,255,.12); color:#c3d4c9;
+      font-size:9px; font-weight:900; display:flex; align-items:center; justify-content:center;
+    }
+    .bnav-customize-cell.is-onbar .bnav-cz-num { background:#5cc98e; color:#07200f; }
+    .bnav-cz-badge {
+      position:absolute; top:5px; right:6px; min-width:16px; height:16px; padding:0 4px;
+      border-radius:8px; background:#e5484d; color:#fff;
+      font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;
+    }
+    /* 「−」は消すのではなく末尾（9番）へ送る。9個は常に保持する */
+    .bnav-cz-minus {
+      position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:50%;
+      background:#e5484d; border:2px solid #0e2116; color:#fff; padding:0;
+      font-size:12px; font-weight:800; line-height:1; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; z-index:2;
+    }
+    /* ドラッグが苦手な人向けの2タップ入れ替え：1つ目を選ぶと実線の緑枠になる */
+    .bnav-customize-cell.is-picked { outline:2px solid #5cc98e; outline-offset:2px; animation:none; }
+    @media (prefers-reduced-motion:reduce) {
+      .bnav-customize-cell { animation:none; border-style:dashed !important; }
+    }
+    .bnav-cz-toast {
+      position:fixed; left:14px; right:14px; z-index:10003;
+      bottom:calc(76px + env(safe-area-inset-bottom));
+      padding:11px 14px; border-radius:12px; background:#153524; border:1px solid rgba(92,201,142,.4);
+      display:flex; align-items:center; gap:10px; animation:boardPillIn .22s cubic-bezier(.22,1,.36,1) both;
+    }
+    .bnav-cz-hint { margin:6px 0 0; text-align:center; font-size:10px; color:#66786d; }
+
     /* ── BOARD MOBILE（スマホの掲示板チャット：会話に集中させる） ── */
     @media (max-width:767px) {
       /* 下部ナビ（スマホは .bnav-carousel）を消す。会話に使える高さが約72px増える */
@@ -14689,7 +14747,14 @@
     mypageShareCardBtn: { ja:'マイページカードをシェア', en:'Share my page card' },
     shareProfileText: { ja:'アニメップルで「{username}」のマイページを見てみて！ #アニメップル', en:'Check out {username}\'s profile on Animepple! #Animepple' },
     bnavCustomizeTitle: { ja:'ツールバーの並び替え', en:'Reorder toolbar' },
-    bnavCustomizeHint: { ja:'アイコンを長押ししたまま動かすと、位置を入れ替えられます。一番上の行がツールバーの左側になります。', en:'Press and hold an icon to drag and reorder it. The top row becomes the left side of the toolbar.' },
+    bnavCustomizeHint: { ja:'ドラッグして並べ替え。左上の3つがナビに出ます。', en:'Press and hold an icon to drag and reorder it. The top row becomes the left side of the toolbar.' },
+    bnavCzPage2: { ja:'スワイプ2ページ目', en:'Swipe page 2' },
+    bnavCzPage3: { ja:'スワイプ3ページ目', en:'Swipe page 3' },
+    bnavCzTapHint: { ja:'タップでも並べ替えできます（− で末尾へ）', en:'You can also tap two icons to swap (− sends to the end)' },
+    bnavCzToEnd: { ja:'末尾へ送る', en:'Send to end' },
+    bnavCzSaved: { ja:'ナビの並びを保存しました', en:'Saved your nav order' },
+    bnavCzUndo: { ja:'元に戻す', en:'Undo' },
+    bnavCzLongPressHint: { ja:'長押しで並べ替え', en:'Hold to rearrange' },
     bnavCustomizeDoneBtn: { ja:'完了', en:'Done' },
     bnavCustomizeSettingsTitle: { ja:'ツールバーのカスタマイズ', en:'Customize toolbar' },
     bnavCustomizeSettingsDesc: { ja:'下部ツールバーのアイコンの並び順を変更できます。ツールバーを長押しすることでも同じ操作ができます。', en:'Change the order of icons in the bottom toolbar. You can also do this by long-pressing the toolbar itself.' },
@@ -18170,6 +18235,24 @@
   // ツールバー本体（bnavCarousel）は3個ずつのページに分かれた構造のまま、
   // 保存された並び順に応じてページを組み直す。並び順はlocalStorageに端末ごとに保存する。
   const BNAV_ORDER_KEY = 'animepple_bnav_order_v1';
+  const BNAV_HINT_KEY = 'animepple_bnav_hint_v1';   // 「長押しで並べ替え」を出した回数
+  // 長押しで並べ替えられることは見ただけでは分からないので、最初の3回だけ
+  // ページドットの下に一文を出す。一度編集したら出さない
+  function updateBnavHint() {
+    const dots = document.getElementById('bnavCarouselDots');
+    if(!dots || !dots.parentElement) return;
+    const state = localStorage.getItem(BNAV_HINT_KEY);
+    let el = document.getElementById('bnavCzHint');
+    if(state === 'done' || (state && Number(state) >= 3)) { if(el) el.remove(); return; }
+    localStorage.setItem(BNAV_HINT_KEY, String((Number(state) || 0) + 1));
+    if(!el) {
+      el = document.createElement('p');
+      el.id = 'bnavCzHint';
+      el.className = 'bnav-cz-hint';
+      dots.parentElement.insertBefore(el, dots.nextSibling);
+    }
+    el.textContent = t('bnavCzLongPressHint');
+  }
   const BNAV_ITEMS = [
     { id:'home', label:'ホーム', onclick:"nav('home')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>' },
@@ -18274,36 +18357,79 @@
   // ドラッグ中のタッチイベントの紐付けが切れて追従が壊れるバグがあったため）。
   // 上の行から順に、ツールバーの左から並ぶ順序になる
   function openBnavCustomizeModal() {
-    const order = getBnavOrder();
+    if(document.getElementById('bnavCzOverlay')) return;
+    const prevOrder = getBnavOrder();      // 「元に戻す」用に開いた時点の並びを覚えておく
+    let currentOrder = prevOrder.slice();
+    localStorage.setItem(BNAV_HINT_KEY, 'done'); // 一度開いたらヒントは出さない
+
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,10,7,.88);z-index:10002;display:flex;flex-direction:column;';
+    overlay.id = 'bnavCzOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,10,6,.82);backdrop-filter:blur(2px);z-index:10002;display:flex;flex-direction:column;justify-content:flex-end;';
     overlay.innerHTML = `
-      <div style="flex:0 0 auto;padding:calc(16px + env(safe-area-inset-top)) 20px 10px;text-align:center;">
-        <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;color:#e8f0ea;">${escapeHtml(t('bnavCustomizeTitle'))}</h3>
-        <p style="margin:0;font-size:12px;color:#82968a;line-height:1.5;">${escapeHtml(t('bnavCustomizeHint'))}</p>
-      </div>
-      <div style="flex:1 1 auto;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:10px 24px;">
-        <div id="bnavCustomizeGrid" style="width:100%;max-width:420px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;"></div>
-      </div>
-    `;
+      <div class="bnav-cz-sheet">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <span style="flex:1 1 auto;font-size:14px;font-weight:800;color:#eaf6ee;">${escapeHtml(t('bnavCustomizeTitle'))}</span>
+          <button type="button" id="bnavCzDone" style="flex:0 0 auto;height:30px;padding:0 14px;border:none;border-radius:9px;background:#5ec97a;color:#07200f;font:inherit;font-size:12px;font-weight:800;cursor:pointer;">${escapeHtml(t('bnavCustomizeDoneBtn'))}</button>
+        </div>
+        <p style="margin:0 0 14px;font-size:11px;line-height:1.7;color:#8db5a0;">${escapeHtml(t('bnavCustomizeHint'))}</p>
+        <div class="bnav-cz-gridwrap">
+          <div id="bnavCustomizeGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
+          <div class="bnav-cz-divider" data-row="1"><span>${escapeHtml(t('bnavCzPage2'))}</span></div>
+          <div class="bnav-cz-divider" data-row="2"><span>${escapeHtml(t('bnavCzPage3'))}</span></div>
+        </div>
+        <p style="margin:13px 0 0;font-size:10.5px;color:#66786d;text-align:center;">${escapeHtml(t('bnavCzTapHint'))}</p>
+      </div>`;
     document.body.appendChild(overlay);
 
     const grid = overlay.querySelector('#bnavCustomizeGrid');
-    let currentOrder = order.slice();
 
     // 初回描画：ここだけinnerHTMLで組み立てる。以降はDOM要素そのものを動かして並び替える
-    grid.innerHTML = currentOrder.map(id => {
+    grid.innerHTML = currentOrder.map((id, i) => {
       const item = BNAV_ITEMS.find(x=>x.id===id);
       if(!item) return '';
       return `
-        <div class="bnav-customize-cell" data-id="${item.id}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 6px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line,#2a3830);color:var(--muted,#8db5a0);touch-action:none;user-select:none;">
-          <span style="pointer-events:none;">${item.icon}</span>
-          <span style="pointer-events:none;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${escapeHtml(item.label)}</span>
-        </div>
-      `;
+        <div class="bnav-customize-cell" data-id="${item.id}" style="display:flex;flex-direction:column;align-items:center;gap:7px;padding:13px 5px 10px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#c3d4c9;animation-delay:${(i % 3) * .12 + Math.floor(i / 3) * .03}s;">
+          <span class="bnav-cz-num">${i + 1}</span>
+          ${item.hasBadge ? '<span class="bnav-cz-badge bnav-cz-badge-slot" style="display:none;">0</span>' : ''}
+          <button type="button" class="bnav-cz-minus" aria-label="${escapeHtml(t('bnavCzToEnd'))}">−</button>
+          <span style="pointer-events:none;display:flex;">${item.icon}</span>
+          <span style="pointer-events:none;font-size:9.5px;font-weight:700;line-height:1.2;text-align:center;">${escapeHtml(item.label)}</span>
+        </div>`;
     }).join('');
 
-    // 現在のDOM上の並び順から、currentOrder配列を作り直す
+    // 行の境界線を実際の行の高さに合わせて置く（3行×等高なので1/3・2/3の位置）
+    function layoutDividers() {
+      const cells = grid.querySelectorAll('.bnav-customize-cell');
+      if(cells.length < 7) return;
+      const gTop = grid.getBoundingClientRect().top;
+      overlay.querySelectorAll('.bnav-cz-divider').forEach(d => {
+        const row = Number(d.dataset.row);
+        const above = cells[row * 3 - 1].getBoundingClientRect();
+        const below = cells[row * 3].getBoundingClientRect();
+        d.style.top = Math.round((above.bottom + below.top) / 2 - gTop) + 'px';
+      });
+    }
+
+    // 並び順が変わるたびに番号と「ナビに出る3つ」の緑枠を振り直す
+    function renumber() {
+      const cells = Array.from(grid.querySelectorAll('.bnav-customize-cell'));
+      cells.forEach((c, i) => {
+        const num = c.querySelector('.bnav-cz-num');
+        if(num) num.textContent = i + 1;
+        c.classList.toggle('is-onbar', i < 3);
+        // お知らせのバッジは未読があるときだけ出す（ナビ側と同じ条件）
+        const slot = c.querySelector('.bnav-cz-badge-slot');
+        if(slot) {
+          // 未読数はナビ側のバッジ要素からそのまま持ってくる（値の持ち主は既存の処理）
+          const navBadge = document.querySelector('#bnavCarouselTrack .bnav-badge');
+          const txt = (navBadge && navBadge.offsetParent !== null) ? navBadge.textContent.trim() : '';
+          slot.textContent = txt;
+          slot.style.display = txt ? 'flex' : 'none';
+        }
+      });
+      layoutDividers();
+    }
+
     function syncOrderFromDom() {
       currentOrder = Array.from(grid.querySelectorAll('.bnav-customize-cell')).map(c => c.dataset.id);
     }
@@ -18315,8 +18441,6 @@
       const firstRects = {};
       allCells.forEach(c => { firstRects[c.dataset.id] = c.getBoundingClientRect(); });
 
-      // 実際の入れ替え：cellAの直前にダミーを置き、cellAをcellBの位置へ、
-      // cellBを元cellAの位置（ダミーの場所）へ移動する
       const placeholder = document.createComment('');
       cellA.parentNode.insertBefore(placeholder, cellA);
       cellB.parentNode.insertBefore(cellA, cellB);
@@ -18324,6 +18448,7 @@
       placeholder.remove();
 
       syncOrderFromDom();
+      renumber();
 
       allCells.forEach(c => {
         if(c === cellA) return; // ドラッグ中の本人はこの後も指に追従させ続けるので対象外
@@ -18332,15 +18457,42 @@
         const last = c.getBoundingClientRect();
         const dx = first.left - last.left, dy = first.top - last.top;
         if(dx === 0 && dy === 0) return;
+        c.style.animation = 'none';
         c.style.transition = 'none';
         c.style.transform = `translate(${dx}px, ${dy}px)`;
         requestAnimationFrame(() => {
-          c.style.transition = 'transform .22s cubic-bezier(.34,1.56,.64,1)';
+          c.style.transition = 'transform .2s cubic-bezier(.22,1,.36,1)';
           c.style.transform = '';
-          setTimeout(() => { c.style.transition = ''; }, 240);
+          setTimeout(() => { c.style.transition = ''; c.style.transform = ''; c.style.animation = ''; }, 220);
         });
       });
     }
+
+    // 末尾へ送る（「−」）：消さずに9番へ回すので迷子にならない
+    function sendToEnd(cell) {
+      const cells = Array.from(grid.querySelectorAll('.bnav-customize-cell'));
+      const firstRects = {};
+      cells.forEach(c => { firstRects[c.dataset.id] = c.getBoundingClientRect(); });
+      grid.appendChild(cell);
+      syncOrderFromDom();
+      renumber();
+      cells.forEach(c => {
+        const first = firstRects[c.dataset.id];
+        const last = c.getBoundingClientRect();
+        const dx = first.left - last.left, dy = first.top - last.top;
+        if(dx === 0 && dy === 0) return;
+        c.style.animation = 'none';
+        c.style.transition = 'none';
+        c.style.transform = `translate(${dx}px, ${dy}px)`;
+        requestAnimationFrame(() => {
+          c.style.transition = 'transform .24s cubic-bezier(.22,1,.36,1)';
+          c.style.transform = '';
+          setTimeout(() => { c.style.transition = ''; c.style.transform = ''; c.style.animation = ''; }, 260);
+        });
+      });
+    }
+
+    let pickedCell = null; // 2タップ入れ替えの1つ目
 
     grid.querySelectorAll('.bnav-customize-cell').forEach(cell => {
       let dragging = false, longPressTimer = null, moved = false;
@@ -18348,7 +18500,8 @@
       const startDrag = () => {
         dragging = true;
         cell.classList.add('is-dragging');
-        navigator.vibrate && navigator.vibrate(15);
+        if(pickedCell) { pickedCell.classList.remove('is-picked'); pickedCell = null; }
+        navigator.vibrate && navigator.vibrate(12);
       };
       const findCellUnder = (x, y) => {
         cell.style.visibility = 'hidden';
@@ -18357,38 +18510,41 @@
         return el ? el.closest('.bnav-customize-cell') : null;
       };
       // 指の絶対座標と、要素の「変形無しの現在位置」から、そのつどtransformを計算し直す。
-      // 入れ替え（DOM上の位置移動）が起きるとこの「現在位置」自体が変わるので、
-      // 入れ替え直後にもこれを呼び直さないと、古いtransformが新しい位置に上乗せされて
-      // 画面外へ二重にズレて飛んでいくバグになる
+      // 入れ替えでこの「現在位置」自体が変わるので、入れ替え直後にも呼び直さないと
+      // 古いtransformが新しい位置に上乗せされて画面外へ飛んでいく
       const applyDragTransform = (x, y) => {
         const prevTransform = cell.style.transform;
         cell.style.transform = 'none';
         const rect = cell.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2, centerY = rect.top + rect.height / 2;
         cell.style.transform = prevTransform;
-        cell.style.transform = `translate(${x - centerX}px, ${y - centerY}px)`;
+        cell.style.transform = `translate(${x - centerX}px, ${y - centerY}px) scale(1.14) rotate(-4deg)`;
       };
       const onMove = (x, y) => {
-        if(Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) moved = true;
+        if(Math.abs(x - startX) > 8 || Math.abs(y - startY) > 8) moved = true;
         if(!dragging) return;
         applyDragTransform(x, y);
         const target = findCellUnder(x, y);
         if(target && target !== cell) {
           swapCells(cell, target);
-          applyDragTransform(x, y); // 入れ替えで自分の基準位置が変わった分を、同じ指の位置で計算し直す
+          applyDragTransform(x, y);
         }
       };
       const endDrag = () => {
         if(longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+        if(!dragging) return;
         dragging = false;
-        cell.classList.remove('is-dragging');
+        // 元のグリッド位置へ吸い付かせる
+        cell.style.transition = 'transform .2s cubic-bezier(.22,1,.36,1)';
         cell.style.transform = '';
+        setTimeout(() => { cell.style.transition = ''; cell.classList.remove('is-dragging'); }, 210);
       };
+      // モーダルは既に編集モードなので、掴むまでの待ちは短くする（140ms）
       cell.addEventListener('touchstart', (e) => {
         moved = false;
         const tt = e.touches[0];
         startX = tt.clientX; startY = tt.clientY;
-        longPressTimer = setTimeout(() => { if(!moved) startDrag(); }, 300);
+        longPressTimer = setTimeout(() => { if(!moved) startDrag(); }, 140);
       }, { passive: true });
       cell.addEventListener('touchmove', (e) => {
         const tt = e.touches[0];
@@ -18396,29 +18552,75 @@
       }, { passive: true });
       cell.addEventListener('touchend', endDrag);
       cell.addEventListener('touchcancel', endDrag);
-      // PC（マウス）でも一応操作できるようにしておく
       cell.addEventListener('mousedown', (e) => {
         moved = false;
         startX = e.clientX; startY = e.clientY;
-        longPressTimer = setTimeout(() => { if(!moved) startDrag(); }, 300);
+        longPressTimer = setTimeout(() => { if(!moved) startDrag(); }, 140);
       });
       window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
       window.addEventListener('mouseup', endDrag);
+
+      // 「−」で末尾へ
+      const minus = cell.querySelector('.bnav-cz-minus');
+      if(minus) minus.addEventListener('click', (ev) => { ev.stopPropagation(); sendToEnd(cell); });
+
+      // タップ2回で入れ替え（ドラッグが苦手な人向け）
+      cell.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if(moved || dragging) return;
+        if(!pickedCell) { pickedCell = cell; cell.classList.add('is-picked'); return; }
+        if(pickedCell === cell) { cell.classList.remove('is-picked'); pickedCell = null; return; }
+        const a = pickedCell;
+        a.classList.remove('is-picked');
+        pickedCell = null;
+        swapCells(a, cell);
+      });
     });
 
+    renumber();
+    requestAnimationFrame(layoutDividers);
+    window.addEventListener('resize', layoutDividers);
+
     const close = () => {
+      window.removeEventListener('resize', layoutDividers);
       syncOrderFromDom();
+      const changed = currentOrder.join(',') !== prevOrder.join(',');
       saveBnavOrder(currentOrder);
       rebuildBnavCarousel();
-      document.body.removeChild(overlay);
+      overlay.remove();
+      if(changed) showBnavSavedToast(prevOrder);
     };
-    // アイコン自体（.bnav-customize-cell）以外の場所をタップしたら、保存して閉じる
+    overlay.querySelector('#bnavCzDone').onclick = (ev) => { ev.stopPropagation(); close(); };
+    // シートの外側をタップしたら、保存して閉じる（完了と同じ扱い）
     overlay.addEventListener('click', (e) => {
-      if(!e.target.closest('.bnav-customize-cell')) close();
+      if(!e.target.closest('.bnav-cz-sheet')) close();
     });
   }
+
+  // 保存トースト：4秒だけ「元に戻す」を出す。間違えて並べ替えても戻せる
+  function showBnavSavedToast(prevOrder) {
+    const old = document.getElementById('bnavCzToast');
+    if(old) old.remove();
+    const toast = document.createElement('div');
+    toast.id = 'bnavCzToast';
+    toast.className = 'bnav-cz-toast';
+    toast.innerHTML = `
+      <span style="flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:rgba(92,201,142,.2);display:flex;align-items:center;justify-content:center;font-size:11px;color:#a7ecc4;">✓</span>
+      <span style="flex:1 1 auto;font-size:12px;color:#dfeae3;">${escapeHtml(t('bnavCzSaved'))}</span>
+      <button type="button" id="bnavCzUndo" style="flex:0 0 auto;border:none;background:transparent;color:#93e2b7;font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:0;">${escapeHtml(t('bnavCzUndo'))}</button>`;
+    document.body.appendChild(toast);
+    const timer = setTimeout(() => toast.remove(), 4000);
+    toast.querySelector('#bnavCzUndo').onclick = () => {
+      clearTimeout(timer);
+      saveBnavOrder(prevOrder);
+      rebuildBnavCarousel();
+      toast.remove();
+    };
+  }
+
   window.openBnavCustomizeModal = openBnavCustomizeModal;
   rebuildBnavCarousel();
+  updateBnavHint();
 
 
 
