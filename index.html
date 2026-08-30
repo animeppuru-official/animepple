@@ -973,19 +973,49 @@
       background:rgba(92,201,142,.08); border:1px solid rgba(92,201,142,.24);
     }
 
+    /* ── BOARD MOBILE（スマホの掲示板チャット：会話に集中させる） ── */
+    @media (max-width:767px) {
+      /* 下部ナビは常時消す。会話に使える高さを62px増やし、入力バーとの二重の下部帯もなくなる */
+      body.board-chat-mobile .bnav { display:none !important; }
+      body.board-chat-mobile .page { padding-bottom:0 !important; }
+      /* 画面を3段に固定：ヘッダー／会話（ここだけスクロール）／入力バー。
+         ページ全体がスクロールしないので、打っている間に会話が押し出されない */
+      body.board-chat-mobile { overflow:hidden; }
+      body.board-chat-mobile .board-page-wrap {
+        display:flex; flex-direction:column;
+        height:calc(var(--board-vh, 100vh) - 52px);
+        overflow:hidden;
+      }
+      body.board-chat-mobile .board-chat-head {
+        position:static !important; flex:0 0 auto;
+        padding:9px 12px 0 !important;
+      }
+      body.board-chat-mobile .board-chat-scroll {
+        flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain;
+        padding:10px 12px 8px !important;
+      }
+      body.board-chat-mobile .board-composer {
+        flex:0 0 auto; position:static !important; margin:0 !important;
+        padding:8px 10px calc(10px + env(safe-area-inset-bottom)) !important;
+      }
+      /* ヘッダー：サムネ32px・タイトル13.5px に詰めて1段48pxに収める */
+      body.board-chat-mobile #boardValuePageThumb,
+      body.board-chat-mobile #boardGeneralPageThumb { width:32px !important; height:32px !important; flex:0 0 32px !important; }
+      body.board-chat-mobile #boardValuePageTitle,
+      body.board-chat-mobile #boardGeneralPageTitle { font-size:13.5px !important; }
+      body.board-chat-mobile #boardValueTabsRow { padding-bottom:9px !important; }
+      /* 打っている間はタブ段を畳んで会話をさらに52px広げる */
+      body.board-chat-mobile.board-kb-open #boardValueTabsRow { display:none !important; }
+      body.board-chat-mobile.board-kb-open .board-enter-hint { display:none !important; }
+    }
+
     /* ── BOARD KEYBOARD（スマホ：キーボード表示中の詰まりを解消） ── */
     /* 日本語入力ではキーボード216px＋予測変換42px＝約258pxが下から消える。
        visualViewport の高さに合わせて入力バーを持ち上げ、会話は最下部に貼り付けたまま固定する */
     @media (max-width:767px) {
-      body.board-kb-open #boardValueTabsRow { display:none !important; }
-      body.board-kb-open .board-enter-hint { display:none !important; }
-      body.board-kb-open .board-composer {
-        position:fixed; left:0; right:0; margin:0; z-index:40;
-        bottom:var(--board-kb-inset, 0px);
-        padding:9px 1rem 9px;
-      }
-      body.board-kb-open #boardValueSection { padding-bottom:var(--board-kb-pad, 110px) !important; }
-      body.board-kb-open .bnav, body.board-kb-open .bottom-nav { display:none !important; }
+      /* キーボードは visualViewport の高さを --board-vh に流し込んで吸収する。
+         入力バーは3段レイアウトの最下段なので、高さが縮めば自然に持ち上がる */
+      body.board-kb-open .board-composer { padding-bottom:8px !important; }
     }
 
     /* ── BOARD COMPOSER（1行38pxの丸型。左に自分のアイコン） ── */
@@ -3143,7 +3173,7 @@
     </div>
   </header>
   <div class="board-page-wrap" style="padding:0;">
-    <div style="position:sticky;top:52px;z-index:20;background:var(--bg);border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem .6rem;">
+    <div class="board-chat-head" style="position:sticky;top:52px;z-index:20;background:var(--bg);border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem .6rem;">
       <div style="display:flex;align-items:center;gap:10px;">
         <img id="boardGeneralPageThumb" src="" style="width:34px;height:34px;border-radius:8px;object-fit:cover;flex:0 0 34px;background:#1d3225;">
         <div style="flex:1 1 auto;min-width:0;">
@@ -3153,7 +3183,7 @@
         <button type="button" id="boardGeneralHeaderKebab" class="board-kebab-btn-header" style="flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:none;background:transparent;color:#8a9c92;font-size:18px;cursor:pointer;">⋮</button>
       </div>
     </div>
-    <div id="boardGeneralSection" style="padding:.75rem 1rem;"></div>
+    <div id="boardGeneralSection" class="board-chat-scroll" style="padding:.75rem 1rem;"></div>
   </div>
 </div>
 
@@ -3171,7 +3201,7 @@
     </div>
   </header>
   <div class="board-page-wrap" style="padding:0;">
-    <div style="position:sticky;top:52px;z-index:20;background:var(--bg);border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem 0;">
+    <div class="board-chat-head" style="position:sticky;top:52px;z-index:20;background:var(--bg);border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem 0;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
         <img id="boardValuePageThumb" src="" style="width:34px;height:34px;border-radius:8px;object-fit:cover;flex:0 0 34px;background:#1d3225;">
         <div style="flex:1 1 auto;min-width:0;">
@@ -3182,7 +3212,7 @@
       </div>
       <div id="boardValueTabsRow" style="display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;"></div>
     </div>
-    <div id="boardValueSection" style="padding:.75rem 1rem;"></div>
+    <div id="boardValueSection" class="board-chat-scroll" style="padding:.75rem 1rem;"></div>
   </div>
 </div>
 
@@ -7210,6 +7240,16 @@
     const domPage = (page === 'user') ? 'mypage' : page;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('page-'+domPage).classList.add('active');
+    // 掲示板チャットのスマホ表示：下部ナビを消し、ヘッダー／会話／入力バーの3段固定にする。
+    // 会話だけがスクロールするので、打っている間に会話が押し出されない
+    const isBoardChat = (domPage === 'board-value' || domPage === 'board-general');
+    document.body.classList.toggle('board-chat-mobile', isBoardChat);
+    if(!isBoardChat) {
+      document.body.classList.remove('board-kb-open');
+      document.body.style.removeProperty('--board-vh');
+    } else if(window._boardSyncVh) {
+      window._boardSyncVh();
+    }
     // 戻る/進むで着地した時は、離れた時のスクロール位置を復元する（全ページ対応。それ以外は先頭へ）
     const willRestoreScroll = opts.fromPopState && _savedScroll[_scrollKey(page, animeId)] !== undefined;
     if (willRestoreScroll) _restoreSavedScroll(_scrollKey(page, animeId)); else window.scrollTo(0,0);
@@ -12054,9 +12094,12 @@
       pill = document.createElement('button');
       pill.type = 'button';
       pill.className = 'board-new-pill';
-      pill.style.cssText = 'position:sticky;bottom:12px;left:50%;transform:translateX(-50%);height:34px;padding:0 16px;border-radius:18px;background:#153524;border:1px solid rgba(92,201,142,.4);color:#a7ecc4;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px -10px rgba(0,0,0,.6);z-index:12;display:flex;align-items:center;margin-left:auto;margin-right:auto;width:fit-content;';
+      pill.style.cssText = 'position:sticky;bottom:8px;left:50%;transform:translateX(-50%);z-index:15;height:34px;padding:0 16px;border-radius:18px;background:#153524;border:1px solid rgba(92,201,142,.4);color:#a7ecc4;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px -10px rgba(0,0,0,.6);z-index:12;display:flex;align-items:center;margin-left:auto;margin-right:auto;width:fit-content;';
       pill.onclick = () => {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        // スマホの3段構成では会話コンテナ側、PCではページ側をスクロールする
+        const sc = panel.closest('.board-chat-scroll') || panel;
+        if(sc && sc.scrollHeight > sc.clientHeight + 8) sc.scrollTo({ top: sc.scrollHeight, behavior: 'smooth' });
+        else window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         _boardNewSincePill = 0;
         pill.remove();
       };
@@ -12306,11 +12349,19 @@
     // いた時だけ追従する。読んでる途中で新着が来ても、離れて読んでる時は勝手に飛ばさず
     // 「新着へ移動」ピルで知らせる（LINE等のチャットと同じ考え方）
     const isFirstRender = !panel.dataset.boardRendered;
-    const wasNearBottom = isFirstRender || (document.body.scrollHeight - window.scrollY - window.innerHeight) < 100;
+    // スマホの3段構成では会話コンテナ自身がスクロールコンテナ。PCはページ。
+    const isPanelScroller = panel.scrollHeight > panel.clientHeight + 8
+      || document.body.classList.contains('board-chat-mobile');
+    const wasNearBottom = isFirstRender || (isPanelScroller
+      ? (panel.scrollHeight - panel.scrollTop - panel.clientHeight) < 100
+      : (document.body.scrollHeight - window.scrollY - window.innerHeight) < 100);
     panel.innerHTML = html;
     panel.dataset.boardRendered = '1';
     if(isFirstRender || wasNearBottom) {
-      requestAnimationFrame(() => window.scrollTo(0, document.body.scrollHeight));
+      requestAnimationFrame(() => {
+        if(document.body.classList.contains('board-chat-mobile')) panel.scrollTop = panel.scrollHeight;
+        else window.scrollTo(0, document.body.scrollHeight);
+      });
       _boardNewSincePill = 0;
       updateBoardNewPill(panel);
     } else {
@@ -12459,21 +12510,27 @@
       if(!window._boardKbBound) {
         window._boardKbBound = true;
         const vv = window.visualViewport;
-        const syncKb = () => {
-          if(!document.body.classList.contains('board-kb-open')) return;
-          const inset = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
-          document.body.style.setProperty('--board-kb-inset', inset + 'px');
-          document.body.style.setProperty('--board-kb-pad', (inset + 110) + 'px');
-          // 打ち始めたら最新に貼り付ける
-          const sec = document.getElementById('boardValueSection');
-          if(sec) window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' });
+        // 3段レイアウトの総高さを visualViewport に合わせる。キーボード（＋予測変換）で
+        // 高さが縮むと、最下段の入力バーがそのぶん自然に持ち上がる
+        window._boardSyncVh = () => {
+          const hpx = vv ? vv.height : window.innerHeight;
+          document.body.style.setProperty('--board-vh', hpx + 'px');
         };
-        if(vv) { vv.addEventListener('resize', syncKb); vv.addEventListener('scroll', syncKb); }
+        if(vv) {
+          vv.addEventListener('resize', window._boardSyncVh);
+          vv.addEventListener('scroll', window._boardSyncVh);
+        }
+        window.addEventListener('resize', window._boardSyncVh);
+        const stickBottom = () => {
+          const sec = document.querySelector('#page-board-value.active .board-chat-scroll, #page-board-general.active .board-chat-scroll');
+          if(sec) sec.scrollTop = sec.scrollHeight;
+        };
         document.addEventListener('focusin', (e) => {
           if(e.target && e.target.id === 'boardComposeInput') {
             document.body.classList.add('board-kb-open');
-            setTimeout(syncKb, 60);
-            setTimeout(syncKb, 300);
+            window._boardSyncVh();
+            setTimeout(() => { window._boardSyncVh(); stickBottom(); }, 80);
+            setTimeout(() => { window._boardSyncVh(); stickBottom(); }, 320);
           }
         });
         document.addEventListener('focusout', (e) => {
@@ -12481,12 +12538,12 @@
             setTimeout(() => {
               if(document.activeElement && document.activeElement.id === 'boardComposeInput') return;
               document.body.classList.remove('board-kb-open');
-              document.body.style.removeProperty('--board-kb-inset');
-              document.body.style.removeProperty('--board-kb-pad');
+              window._boardSyncVh();
             }, 80);
           }
         });
       }
+      window._boardSyncVh();
       const composeInput = composer.querySelector('#boardComposeInput');
       // 1行38pxから内容に応じて伸ばす（最大120px＝約5行）
       const growCompose = () => {
@@ -12537,6 +12594,12 @@
         if(error) { alert(t('profileSaveFailedAlert')); return; }
         _boardReplyTarget = null;
         rerenderFn(animeId);
+        // 投稿後は必ず最新に貼り付ける（3段構成では会話コンテナ側）
+        requestAnimationFrame(() => {
+          const sc = document.querySelector('.page.active .board-chat-scroll');
+          if(sc && document.body.classList.contains('board-chat-mobile')) sc.scrollTop = sc.scrollHeight;
+          else window.scrollTo(0, document.body.scrollHeight);
+        });
       };
       composer.querySelector('#boardComposeBtn').onclick = submitCompose;
       // Enterで投稿、Shift+Enterで改行（LINE等のチャットアプリと同じ挙動）
