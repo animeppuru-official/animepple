@@ -973,6 +973,49 @@
       background:rgba(92,201,142,.08); border:1px solid rgba(92,201,142,.24);
     }
 
+    /* ── BOARD KEYBOARD（スマホ：キーボード表示中の詰まりを解消） ── */
+    /* 日本語入力ではキーボード216px＋予測変換42px＝約258pxが下から消える。
+       visualViewport の高さに合わせて入力バーを持ち上げ、会話は最下部に貼り付けたまま固定する */
+    @media (max-width:767px) {
+      body.board-kb-open #boardValueTabsRow { display:none !important; }
+      body.board-kb-open .board-enter-hint { display:none !important; }
+      body.board-kb-open .board-composer {
+        position:fixed; left:0; right:0; margin:0; z-index:40;
+        bottom:var(--board-kb-inset, 0px);
+        padding:9px 1rem 9px;
+      }
+      body.board-kb-open #boardValueSection { padding-bottom:var(--board-kb-pad, 110px) !important; }
+      body.board-kb-open .bnav, body.board-kb-open .bottom-nav { display:none !important; }
+    }
+
+    /* ── BOARD COMPOSER（1行38pxの丸型。左に自分のアイコン） ── */
+    .board-compose-row { display:flex; align-items:flex-end; gap:7px; }
+    .board-my-avatar { position:relative; flex:0 0 34px; height:34px; margin-bottom:2px; }
+    .board-my-avatar-badge {
+      position:absolute; right:-2px; bottom:-2px; width:15px; height:15px; border-radius:50%;
+      background:#0b1a11; border:1px solid rgba(255,255,255,.18);
+      display:flex; align-items:center; justify-content:center; font-size:9px; color:#a9bcb0;
+    }
+    .board-compose-field { position:relative; flex:1 1 auto; min-width:0; }
+    .board-compose-field textarea {
+      width:100%; box-sizing:border-box; min-height:38px; max-height:120px;
+      padding:9px 44px 9px 15px; border-radius:19px;
+      border:1px solid rgba(255,255,255,.14); background:#12291d; color:#e8f0ea;
+      font-size:14px; line-height:1.5; font-family:inherit; resize:none; outline:none;
+      transition:border-color .16s ease;
+    }
+    .board-compose-field textarea:focus { border-color:rgba(92,201,142,.5); }
+    .board-compose-count { position:absolute; right:14px; bottom:9px; font-size:9px; color:#5c6d63; pointer-events:none; }
+    #boardComposeBtn {
+      flex:0 0 38px; width:38px; height:38px; margin-bottom:2px; border-radius:50%; border:none;
+      background:linear-gradient(160deg,#5cc98e,#3fa96f); color:#07160d;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:.45;
+      box-shadow:0 10px 22px -12px rgba(92,201,142,.6);
+    }
+    .board-enter-hint { margin:6px 2px 0; font-size:10px; color:#5c6d63; }
+    /* スマホは改行キーがあるのでEnterヒントは不要。縦を稼ぐ */
+    @media (max-width:767px) { .board-enter-hint { display:none; } }
+
     /* ── BOARD HUB ── */
     /* 参加中（左）と勢い（右400px）の2カラム。スマホは1カラムで縦積み */
     @media (min-width:900px) {
@@ -11951,7 +11994,8 @@
         const bg = active ? 'rgba(92,201,142,.18)' : 'rgba(255,255,255,.02)';
         const border = active ? 'rgba(92,201,142,.55)' : 'rgba(255,255,255,.07)';
         const color = active ? '#a7ecc4' : '#66786d';
-        return `<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:31px;padding:0 12px;border-radius:9px;background:${bg};border:1px solid ${border};color:${color};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">${locked?'🔒':''}${escapeHtml(tb.label)}<span class="board-tab-badge" data-tab-badge="${tb.id}" style="display:none;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#e5484d;color:#fff;font-size:10px;font-weight:800;align-items:center;justify-content:center;"></span></button>`;
+        // 角丸ピル型。自分のタイプは💎、他タイプは🔒。横スクロールで全部触れる
+        return `<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px;border-radius:14px;background:${bg};border:1px solid ${border};color:${color};font-size:11.5px;font-weight:${active?'800':'700'};cursor:pointer;white-space:nowrap;">${locked?'🔒':'💎'}${escapeHtml(tb.label)}<span class="board-tab-badge" data-tab-badge="${tb.id}" style="display:none;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:#e5484d;color:#fff;font-size:9px;font-weight:800;align-items:center;justify-content:center;"></span></button>`;
       }).join('');
       tabsRow.querySelectorAll('.board-tab-btn').forEach(btn=>{
         btn.onclick = () => { _boardActiveTab = btn.dataset.tab; renderBoardValue(animeId); };
@@ -11967,7 +12011,10 @@
     // 板ヘッダーのサブ行：参加人数・今アクティブ人数（選択中のタイプの掲示板について）
     db.boardState.getBoardStats(animeId, _boardActiveTab, currentLang).then(stats => {
       const subEl = document.getElementById('boardValuePageSub');
-      if(subEl) subEl.textContent = t('boardStatsLine').replace('{participants}', stats.participantCount).replace('{active}', stats.activeCount);
+      // 「今アクティブ」は緑の点を付ける（同じ灰色の文字に埋もれていた）
+      if(subEl) subEl.innerHTML = escapeHtml(t('boardStatsParticipants').replace('{n}', stats.participantCount))
+        + ' · <span style="color:#5cc98e;">●</span> '
+        + escapeHtml(t('boardStatsActive').replace('{n}', stats.activeCount));
     }).catch(()=>{});
     el.innerHTML = `<div id="boardPanel"></div>`;
     const panel = el.querySelector('#boardPanel');
@@ -12137,16 +12184,19 @@
         // 角丸：しっぽは相手=左下4px／自分=右下4px。連投2件目以降はしっぽを付けない（全角14px）
         const radius = grouped ? '14px' : (isMine ? '14px 14px 4px 14px' : '14px 14px 14px 4px');
         const shadow = isMine ? '0 10px 22px -16px rgba(0,0,0,.8)' : '0 8px 18px -16px rgba(0,0,0,.8)';
-        const avatarBg = isMine ? 'linear-gradient(150deg,#2f5a41,#1d3225)' : 'linear-gradient(150deg,#2c4436,#1d3225)';
-        const avatarBorder = isMine ? 'rgba(92,201,142,.45)' : 'rgba(255,255,255,.1)';
-        const avatarText = isMine ? '#a7ecc4' : '#9be3bd';
+        // アイコンはガチャで集めるものなので会話中も必ず出す。
+        // 自分側は26px＋金リング（マイページで設定したアイコンがそのまま出る）、相手は30px。
+        const avSize = isMine ? 26 : 30;
+        const avatarBg = isMine ? 'linear-gradient(150deg,#4a2f6d,#241a2c)' : 'linear-gradient(150deg,#2c4436,#1d3225)';
+        const avatarBorder = isMine ? '1.5px solid rgba(240,201,74,.55)' : '1px solid rgba(255,255,255,.1)';
+        const avatarText = isMine ? '#d9c2ef' : '#9be3bd';
         const avatarUrl = boardAvatarMap[item.user_id];
-        // 連投2件目以降は34pxのスペーサーだけ残して列を揃える
+        // 連投2件目以降は同幅のスペーサーだけ残して列を揃える
         const avatar = grouped
-          ? '<span style="width:34px;flex:0 0 34px;"></span>'
+          ? `<span style="width:${avSize}px;flex:0 0 ${avSize}px;"></span>`
           : (avatarUrl
-            ? `<img src="${escapeHtml(avatarUrl)}" style="width:34px;height:34px;flex:0 0 34px;border-radius:50%;object-fit:cover;border:1px solid ${avatarBorder};">`
-            : `<span style="width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:${avatarBg};border:1px solid ${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:${avatarText};">${escapeHtml(name.charAt(0))}</span>`);
+            ? `<img src="${escapeHtml(avatarUrl)}" style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;object-fit:cover;border:${avatarBorder};">`
+            : `<span style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;background:${avatarBg};border:${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:${isMine?10:11.5}px;font-weight:800;color:${avatarText};">${escapeHtml(name.charAt(0))}</span>`);
         // 名前は相手のみ（自分はアイコンの緑枠で判別できる）。連投時は省略
         const nameHtml = (!isMine && !grouped)
           ? `<span style="font-size:11.5px;font-weight:700;color:${nameColor};padding-left:2px;">${escapeHtml(name)}${isOfficial?' <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">公式</span>':''}</span>`
@@ -12157,7 +12207,7 @@
             <span style="display:block;font-size:10.5px;font-weight:800;color:${isMine?'#d6f2e2':'#9be3bd'};">${escapeHtml(q.name)}</span>
             <span style="display:block;font-size:11.5px;color:${isMine?'#cfe8da':'#b6c8bd'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(300px,54vw);">${escapeHtml(q.body)}</span>
           </div>` : '';
-        const bubble = `<div style="max-width:min(440px,68vw);background:${bg};border:1px solid ${border};border-radius:${radius};padding:9px 13px;box-shadow:${shadow};">
+        const bubble = `<div style="max-width:min(440px,${isMine?74:70}vw);background:${bg};border:1px solid ${border};border-radius:${radius};padding:9px 13px;box-shadow:${shadow};">
           ${quoteHtml}
           <div style="font-size:14px;line-height:1.65;color:${textColor};white-space:pre-wrap;word-break:break-word;text-align:left;">${escapeHtml(item.body)}</div>
         </div>`;
@@ -12169,7 +12219,7 @@
           <span class="board-time" style="font-size:10.5px;color:#5f7268;white-space:nowrap;">${formatRelativeTime(item.created_at)}</span>
           ${island}
         </div>`;
-        return `<div style="display:flex;align-items:flex-end;gap:9px;flex-direction:${isMine?'row-reverse':'row'};">
+        return `<div style="display:flex;align-items:flex-end;gap:${isMine?5:7}px;flex-direction:${isMine?'row-reverse':'row'};">
           ${avatar}
           <div style="min-width:0;display:flex;flex-direction:column;gap:4px;align-items:${isMine?'flex-end':'flex-start'};">${nameHtml}${bubble}</div>
           ${timeSlot}
@@ -12186,9 +12236,14 @@
             const border = r.mine ? 'rgba(92,201,142,.5)' : 'rgba(255,255,255,.1)';
             return `<button type="button" class="board-reaction-chip" data-post-id="${item.id}" data-emoji="${e}" style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:12px;background:${bg};border:1px solid ${border};color:#dfeae3;font-size:11.5px;cursor:pointer;">${e} ${r.count}</button>`;
           }).join('');
-        const addBtn = _currentUser ? `<button type="button" class="board-reaction-add-btn" data-post-id="${item.id}" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#5f7268;font-size:13px;cursor:pointer;line-height:1;">+</button>` : '';
-        if(!chips && !addBtn) return '';
-        return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;position:relative;justify-content:${isMine?'flex-end':'flex-start'};padding:${isMine?'0 43px 0 0':'0 0 0 43px'};">${chips}${addBtn}</div>`;
+        // 常設の「＋」は置かない（全メッセージに付いて散らかり、タップ領域も小さかった）。
+        // 追加はスマホ=長押しシート、PC=ホバーの操作島から。
+        if(!chips) return '';
+        // 自分側は時刻を同じ行に並べて縦を節約する
+        const timeInline = isMine
+          ? `<span class="board-time-inline" style="font-size:9.5px;color:#5f7268;white-space:nowrap;">${formatRelativeTime(item.created_at)}</span>`
+          : '';
+        return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;position:relative;justify-content:${isMine?'flex-end':'flex-start'};padding:${isMine?'0 31px 0 0':'0 0 0 37px'};">${chips}${timeInline}</div>`;
       };
       // 表示順：返信も本流に混ぜて時系列に並べる（入れ子は幅が潰れて折り返しが崩れるため）。
       // 返信は吹き出し内の引用ブロックで「誰への返信か」を示す。データ側の parent_id は変更なし。
@@ -12310,6 +12365,23 @@
         setTimeout(() => document.addEventListener('click', closeOnOutsideClick), 0);
       };
     });
+    // ── 長押し（スマホ）：対象の吹き出しだけ暗転の上に浮かせて残し、
+    //    真上にリアクション5種、下にアクションシートを出す。どれを操作しているか分かる
+    if(window.matchMedia('(hover:none)').matches) {
+      panel.querySelectorAll('.board-msg-row').forEach(row=>{
+        let timer = null;
+        const start = () => {
+          clearTimeout(timer);
+          timer = setTimeout(() => openBoardLongPressSheet(row, posts, rerenderFn), 480);
+        };
+        const cancel = () => clearTimeout(timer);
+        row.addEventListener('pointerdown', start);
+        row.addEventListener('pointerup', cancel);
+        row.addEventListener('pointercancel', cancel);
+        row.addEventListener('pointerleave', cancel);
+        row.addEventListener('pointermove', cancel);
+      });
+    }
     panel.querySelectorAll('.board-kebab-btn').forEach(btn=>{
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -12355,18 +12427,74 @@
     }
     const BOARD_MAX_LEN = 500;
     if(_currentUser) {
+      // 自分のアイコン（マイページで設定したもの）を入力欄の左に常時置く。
+      // 打っている間ずっと自分のアイコンが見える＝コレクションが活きる場面になる。
+      const myAv = _currentUser ? boardAvatarMap[_currentUser.id] : null;
+      const myInitial = (_currentUser && _currentUser.username) ? _currentUser.username.charAt(0) : '？';
+      const myAvatarHtml = myAv
+        ? `<img src="${escapeHtml(myAv)}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(240,201,74,.55);display:block;">`
+        : `<span style="width:34px;height:34px;border-radius:50%;background:linear-gradient(150deg,#4a2f6d,#241a2c);border:1.5px solid rgba(240,201,74,.55);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#d9c2ef;">${escapeHtml(myInitial)}</span>`;
       composer.innerHTML = `
         <div style="max-width:760px;margin:0 auto;">
           <div id="boardReplyChipWrap"></div>
-          <div style="display:flex;align-items:flex-end;gap:10px;">
-            <textarea id="boardComposeInput" maxlength="${BOARD_MAX_LEN}" placeholder="${escapeHtml(t('boardComposePlaceholder'))}" style="flex:1 1 auto;min-height:46px;max-height:132px;padding:13px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:#12291d;color:#e8f0ea;font-size:14px;line-height:1.6;font-family:inherit;resize:none;"></textarea>
-            <button type="button" id="boardComposeBtn" aria-label="${escapeHtml(t('boardPostBtn'))}" style="flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:none;background:linear-gradient(160deg,#5cc98e,#3fa96f);color:#07160d;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 22px -12px rgba(92,201,142,.6);transition:transform .16s cubic-bezier(.34,1.56,.64,1),opacity .16s ease;opacity:.45;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          <div class="board-compose-row">
+            <span class="board-my-avatar" title="${escapeHtml(t('boardMyIconTitle'))}">
+              ${myAvatarHtml}
+              <span class="board-my-avatar-badge">＋</span>
+            </span>
+            <span class="board-compose-field">
+              <textarea id="boardComposeInput" maxlength="${BOARD_MAX_LEN}" placeholder="${escapeHtml(t('boardComposePlaceholder'))}" rows="1"></textarea>
+              <span id="boardComposeCount" class="board-compose-count">0/${BOARD_MAX_LEN}</span>
+            </span>
+            <button type="button" id="boardComposeBtn" aria-label="${escapeHtml(t('boardPostBtn'))}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
           </div>
-          <p id="boardComposeCount" style="max-width:760px;margin:6px 2px 0;text-align:right;font-size:11px;color:#5c6d63;">0/${BOARD_MAX_LEN}</p>
+          <p class="board-enter-hint">${escapeHtml(t('boardEnterHint'))}</p>
         </div>`;
+      // ── キーボード対応（スマホ）──
+      // 日本語入力ではキーボード＋予測変換で下から約258px消える。visualViewport の
+      // 差分ぶんだけ入力バーを持ち上げ、会話は最下部に貼り付けたまま動かさない。
+      // 同時にタブ段とEnterヒントを畳んで会話の見える高さを稼ぐ（CSS側で処理）。
+      if(!window._boardKbBound) {
+        window._boardKbBound = true;
+        const vv = window.visualViewport;
+        const syncKb = () => {
+          if(!document.body.classList.contains('board-kb-open')) return;
+          const inset = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
+          document.body.style.setProperty('--board-kb-inset', inset + 'px');
+          document.body.style.setProperty('--board-kb-pad', (inset + 110) + 'px');
+          // 打ち始めたら最新に貼り付ける
+          const sec = document.getElementById('boardValueSection');
+          if(sec) window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' });
+        };
+        if(vv) { vv.addEventListener('resize', syncKb); vv.addEventListener('scroll', syncKb); }
+        document.addEventListener('focusin', (e) => {
+          if(e.target && e.target.id === 'boardComposeInput') {
+            document.body.classList.add('board-kb-open');
+            setTimeout(syncKb, 60);
+            setTimeout(syncKb, 300);
+          }
+        });
+        document.addEventListener('focusout', (e) => {
+          if(e.target && e.target.id === 'boardComposeInput') {
+            setTimeout(() => {
+              if(document.activeElement && document.activeElement.id === 'boardComposeInput') return;
+              document.body.classList.remove('board-kb-open');
+              document.body.style.removeProperty('--board-kb-inset');
+              document.body.style.removeProperty('--board-kb-pad');
+            }, 80);
+          }
+        });
+      }
       const composeInput = composer.querySelector('#boardComposeInput');
+      // 1行38pxから内容に応じて伸ばす（最大120px＝約5行）
+      const growCompose = () => {
+        if(!composeInput) return;
+        composeInput.style.height = 'auto';
+        composeInput.style.height = Math.min(120, composeInput.scrollHeight) + 'px';
+      };
+      if(composeInput) composeInput.addEventListener('input', growCompose);
       const composeCount = composer.querySelector('#boardComposeCount');
       const composeBtn = composer.querySelector('#boardComposeBtn');
       // 返信チップ：入力欄のすぐ上に「〇〇に返信」＋引用本文を表示。✕で解除できる
@@ -13297,6 +13425,85 @@
       const recEl = document.getElementById('valueProfileInlineRecs');
       if(recEl && items) recEl.innerHTML = items.map(item=>renderAnimeCard(item, { style:'g' })).join('');
     }));
+  }
+
+  // 長押しシート：対象の吹き出しのクローンを暗転の上に置き、リアクションとアクションを並べる
+  function openBoardLongPressSheet(row, posts, rerenderFn) {
+    if(document.getElementById('boardLongPressSheet')) return;
+    if(navigator.vibrate) navigator.vibrate(12);
+    const postId = row.dataset.postId;
+    const post = (posts || []).find(p => String(p.id) === String(postId));
+    if(!post) return;
+    const isMine = _currentUser && post.user_id === _currentUser.id;
+    const bubbleSrc = row.querySelector('div[style*="border-radius"]');
+    const clone = row.cloneNode(true);
+    clone.querySelectorAll('.board-action-island, .board-time-slot, .board-kebab-menu').forEach(n=>n.remove());
+    clone.style.margin = '0';
+    clone.style.animation = 'none';
+
+    const ov = document.createElement('div');
+    ov.id = 'boardLongPressSheet';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10006;background:rgba(4,10,6,.78);display:flex;flex-direction:column;justify-content:flex-end;animation:boardFadeIn .18s ease both;';
+    const emojis = db.boardReactions.REACTION_EMOJIS;
+    ov.innerHTML = `
+      <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:0 12px 10px;">
+        <div id="blpTarget" style="filter:drop-shadow(0 18px 40px rgba(0,0,0,.95));"></div>
+        <div style="align-self:${isMine?'flex-end':'flex-start'};display:flex;align-items:center;gap:2px;padding:6px;border-radius:26px;background:#14261c;border:1px solid rgba(255,255,255,.14);box-shadow:0 16px 36px -14px rgba(0,0,0,.9);">
+          ${emojis.map(e=>`<button type="button" class="blp-react" data-emoji="${e}" style="width:40px;height:40px;border:none;border-radius:50%;background:transparent;font-size:22px;cursor:pointer;">${e}</button>`).join('')}
+        </div>
+      </div>
+      <div style="flex:0 0 auto;padding:0 12px calc(14px + env(safe-area-inset-bottom));">
+        <div style="border-radius:16px;background:#14261c;border:1px solid rgba(255,255,255,.12);overflow:hidden;">
+          <button type="button" id="blpReply" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 16px;border:none;border-bottom:1px solid rgba(255,255,255,.06);background:transparent;color:#e6efe9;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left;"><span style="width:20px;text-align:center;">↩</span>${escapeHtml(t('boardSheetReply'))}</button>
+          <button type="button" id="blpCopy" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 16px;border:none;background:transparent;color:#e6efe9;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left;"><span style="width:20px;text-align:center;">⧉</span>${escapeHtml(t('boardSheetCopy'))}</button>
+        </div>
+        ${isMine ? '' : `<div style="margin-top:9px;border-radius:16px;background:#14261c;border:1px solid rgba(229,72,77,.28);overflow:hidden;">
+          <button type="button" id="blpReport" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 16px;border:none;border-bottom:1px solid rgba(255,255,255,.06);background:transparent;color:#eaa9a9;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left;"><span style="width:20px;text-align:center;">⚑</span>${escapeHtml(t('reportBtn'))}</button>
+          <button type="button" id="blpBlock" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 16px;border:none;background:transparent;color:#eaa9a9;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left;"><span style="width:20px;text-align:center;">⊘</span>${escapeHtml(t('blockBtn'))}</button>
+        </div>`}
+        <button type="button" id="blpCancel" style="width:100%;height:48px;margin-top:9px;border-radius:16px;background:#14261c;border:1px solid rgba(255,255,255,.12);color:#b6c8bd;font:inherit;font-size:14px;font-weight:800;cursor:pointer;">${escapeHtml(t('cancelBtn'))}</button>
+      </div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('#blpTarget').appendChild(clone);
+    const close = () => ov.remove();
+    ov.addEventListener('click', (e) => { if(e.target === ov) close(); });
+    ov.querySelector('#blpCancel').onclick = close;
+    ov.querySelectorAll('.blp-react').forEach(b=>{
+      b.onclick = async () => {
+        close();
+        if(!_currentUser) return;
+        await db.boardReactions.toggle(post.id, _currentUser.id, b.dataset.emoji).catch(()=>{});
+        rerenderFn();
+      };
+    });
+    ov.querySelector('#blpReply').onclick = () => {
+      close();
+      setBoardReplyTarget({ id: post.id, username: post.username || '名無し', body: post.body });
+      const inp = document.getElementById('boardComposeInput');
+      if(inp) inp.focus();
+    };
+    ov.querySelector('#blpCopy').onclick = () => {
+      close();
+      if(navigator.clipboard) navigator.clipboard.writeText(post.body || '').catch(()=>{});
+    };
+    // 通報・ブロックは既存のケバブメニューと同じ処理・同じ確認文を使う
+    const rep = ov.querySelector('#blpReport');
+    if(rep) rep.onclick = async () => {
+      close();
+      if(!_currentUser || !confirm(t('reportConfirm'))) return;
+      const { error } = await db.reports.submit(_currentUser.id, 'board_post', post.id, null);
+      if(error) { alert(t('profileSaveFailedAlert')); return; }
+      alert(t('reportSentAlert'));
+    };
+    const blk = ov.querySelector('#blpBlock');
+    if(blk) blk.onclick = async () => {
+      close();
+      if(!_currentUser || !confirm(t('blockConfirm'))) return;
+      const { error } = await db.blocks.add(_currentUser.id, post.user_id);
+      if(error) { alert(t('profileSaveFailedAlert')); return; }
+      await loadMyBlockedUserIds();
+      rerenderFn();
+    };
   }
 
   // マイページの価値観アイコンを押した時：常設セクションへスクロールする（旧ポップアップは残置）
@@ -14449,6 +14656,11 @@
     gachaProbTitle: { ja:'確率と景品一覧', en:'Odds & prize list' },
     gachaEmptyPool: { ja:'景品は準備中です。もうしばらくお待ちください。', en:'Prizes are coming soon.' },
     gachaCloseBtn: { ja:'閉じる', en:'Close' },
+    cancelBtn: { ja:'キャンセル', en:'Cancel' },
+    boardSheetReply: { ja:'引用して返信', en:'Reply with quote' },
+    boardSheetCopy: { ja:'コピー', en:'Copy' },
+    boardStatsParticipants: { ja:'参加 {n}人', en:'{n} members' },
+    boardStatsActive: { ja:'アクティブ {n}人', en:'{n} active' },
     boardStatsLine: { ja:'掲示板・参加{participants}人・今アクティブ{active}人', en:'Board · {participants} participants · {active} active now' },
     boardNewPill: { ja:'↓ 新着{n}件', en:'↓ {n} new' },
     boardReplyingTo: { ja:'{name} に返信', en:'Replying to {name}' },
@@ -14483,6 +14695,8 @@
     boardLockedB:{ ja:'この作品のレビューで「物語・世界観・テーマ」のどれかに投票すると開放されます。', en:'Vote for Story, World, or Theme when reviewing this title to unlock.' },
     boardLockedC:{ ja:'この作品のレビューで「キャラクター・可愛い・コメディ」のどれかに投票すると開放されます。', en:'Vote for Characters, Cute, or Comedy when reviewing this title to unlock.' },
     boardLockedD:{ ja:'この作品のレビューで「音楽・エモい・セクシー」のどれかに投票すると開放されます。', en:'Vote for Music, Emotional, or Sexy when reviewing this title to unlock.' },
+    boardMyIconTitle: { ja:'自分のアイコン（マイページで変更）', en:'Your icon (change on My Page)' },
+    boardEnterHint: { ja:'Enterで送信 · Shift+Enterで改行', en:'Enter to send · Shift+Enter for a new line' },
     boardComposePlaceholder:{ ja:'この作品について話そう', en:'Talk about this title' },
     boardPostBtn:{ ja:'投稿', en:'Post' },
     boardReplyBtn:{ ja:'返信', en:'Reply' },
