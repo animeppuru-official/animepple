@@ -478,6 +478,135 @@
     .badge { display:inline-block; margin-top:.3rem; padding:.15rem .5rem; border-radius:999px; background:rgba(94,201,122,.12); border:1px solid #3d8a56; font-size:.7rem; color:#b8efc8; }
     .match-badge { background:rgba(255,153,60,.12); border-color:#8a5a3d; color:#ffd0a0; }
 
+    /* ── TIP（開発を応援する） ── */
+    .tip-layout { padding:1.1rem; max-width:620px; margin:0 auto; display:flex; flex-direction:column; gap:20px; }
+    .tip-title { font-size:1.35rem; font-weight:800; color:#eaf6ee; margin:0 0 .45rem; letter-spacing:.01em; }
+    .tip-desc { font-size:.8rem; line-height:1.85; color:#a9bcb0; margin:0 0 1.1rem; text-wrap:pretty; }
+    .tip-field-label { font-size:11.5px; font-weight:800; color:#8db5a0; letter-spacing:.04em; margin:0 0 9px; }
+    .tip-field-label-row { display:flex; align-items:baseline; gap:8px; }
+    .tip-field-note { font-size:10.5px; font-weight:400; color:#66786d; letter-spacing:0; }
+    .tip-amount-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    /* 金額ボタン：全て同じ高さ。選択中=緑2px枠＋薄緑地＋右上チェック、人気=金リボン（役割を分ける） */
+    .tip-amount-btn {
+      position:relative; height:64px; border-radius:12px; border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.03); color:#dfeae3; font:inherit; font-size:17px; font-weight:800;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:transform .16s cubic-bezier(.34,1.56,.64,1), border-color .16s ease, background .16s ease;
+    }
+    .tip-amount-btn:hover { transform:translateY(-2px); border-color:rgba(92,201,142,.4); }
+    .tip-amount-btn.is-popular { border-color:rgba(217,164,65,.3); }
+    .tip-amount-btn.is-selected {
+      border:2px solid #5cc98e; background:rgba(92,201,142,.16); color:#eafdf1;
+      font-size:19px; font-weight:900; box-shadow:0 0 0 4px rgba(92,201,142,.1);
+    }
+    .tip-amount-ribbon {
+      position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+      display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:9px;
+      background:linear-gradient(135deg,#f3d786,#d9a441); color:#2a2006;
+      font-size:9.5px; font-weight:800; white-space:nowrap;
+    }
+    .tip-amount-check {
+      position:absolute; right:9px; top:9px; width:17px; height:17px; border-radius:50%;
+      background:#5cc98e; color:#07200f; font-size:9px; font-weight:900;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .tip-amount-btn.tip-amount-custom {
+      border:1px dashed rgba(255,255,255,.16); background:transparent;
+      flex-direction:column; gap:2px; font-size:13px; color:#b6c8bd;
+    }
+    .tip-amount-btn.tip-amount-custom.is-selected { border:2px solid #5cc98e; background:rgba(92,201,142,.16); }
+    .tip-amount-custom-sub { font-size:10px; font-weight:400; color:#66786d; }
+    .tip-custom-wrap { display:none; }
+    .tip-custom-wrap.is-open { display:block; }
+    .tip-custom-field {
+      display:flex; align-items:center; height:52px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.14); background:#12291d; padding:0 15px;
+      transition:border-color .16s ease;
+    }
+    .tip-custom-field:focus-within { border-color:rgba(92,201,142,.55); }
+    .tip-custom-field.is-error { border-color:rgba(229,72,77,.5); }
+    .tip-custom-yen { flex:0 0 auto; font-size:17px; font-weight:800; color:#8db5a0; margin-right:8px; }
+    .tip-custom-input {
+      flex:1 1 auto; min-width:0; height:100%; border:none; background:transparent;
+      color:#e8f0ea; font:inherit; font-size:17px; font-weight:800; outline:none;
+    }
+    .tip-custom-error { margin:6px 0 0; font-size:11px; color:#f0a0a3; }
+    .tip-msg-input {
+      width:100%; box-sizing:border-box; min-height:64px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.12); background:#12291d; padding:12px 14px;
+      color:#e8f0ea; font:inherit; font-size:13px; line-height:1.7; resize:vertical; outline:none;
+      transition:border-color .16s ease;
+    }
+    .tip-msg-input:focus { border-color:rgba(92,201,142,.5); }
+    .tip-summary {
+      border-radius:16px; border:1px solid rgba(92,201,142,.28);
+      background:linear-gradient(180deg,rgba(92,201,142,.08),rgba(92,201,142,.02)); padding:18px;
+    }
+    .tip-summary-label { margin:0; font-size:11.5px; color:#8db5a0; }
+    .tip-summary-amount { margin:5px 0 0; font-size:34px; font-weight:900; color:#eafdf1; line-height:1; font-family:"Zen Kaku Gothic New",sans-serif; }
+    .tip-summary-once { margin:11px 0 0; padding-top:13px; border-top:1px solid rgba(255,255,255,.09); font-size:11.5px; line-height:1.8; color:#a9bcb0; }
+    .tip-confirm-btn {
+      width:100%; height:48px; margin-top:14px; border-radius:12px; border:none;
+      background:#5ec97a; color:#07200f; font:inherit; font-size:14px; font-weight:800; cursor:pointer;
+      transition:transform .16s cubic-bezier(.34,1.56,.64,1), background .16s ease, color .16s ease;
+    }
+    .tip-confirm-btn:hover { transform:translateY(-2px); }
+    /* 決済準備中：押せる見た目をやめ、状態として見せる */
+    .tip-confirm-btn.is-soon { background:rgba(94,201,122,.28); color:rgba(7,32,15,.55); cursor:default; }
+    .tip-confirm-btn.is-soon:hover { transform:none; }
+    .tip-soon-note {
+      display:flex; align-items:center; gap:7px; margin-top:10px; padding:9px 11px; border-radius:9px;
+      background:rgba(217,164,65,.09); border:1px solid rgba(217,164,65,.26);
+      font-size:10.5px; line-height:1.6; color:#dccaa0;
+    }
+    .tip-soon-icon { flex:0 0 auto; font-size:12px; }
+    .tip-notify-btn {
+      width:100%; height:36px; margin-top:9px; border-radius:9px;
+      border:1px solid rgba(255,255,255,.12); background:transparent;
+      color:#dfeae3; font:inherit; font-size:11.5px; font-weight:700; cursor:pointer;
+      transition:background .16s ease;
+    }
+    .tip-notify-btn:hover { background:rgba(255,255,255,.06); }
+    .tip-use-card, .tip-alt-card { border-radius:14px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.02); padding:15px 16px; }
+    .tip-use-title { margin:0 0 9px; font-size:12px; font-weight:800; color:#dfeae3; }
+    .tip-use-item { display:flex; align-items:flex-start; gap:9px; margin:0 0 7px; font-size:11.5px; line-height:1.7; color:#b6c8bd; }
+    .tip-use-item:last-child { margin-bottom:0; }
+    .tip-use-dot { flex:0 0 auto; width:5px; height:5px; margin-top:6px; border-radius:50%; background:#5cc98e; }
+    .tip-alt-card { border-color:rgba(255,255,255,.07); background:rgba(255,255,255,.015); }
+    .tip-alt-text { margin:0; font-size:11.5px; line-height:1.8; color:#8db5a0; }
+    .tip-alt-btn {
+      height:32px; margin-top:10px; padding:0 13px; border-radius:9px;
+      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03);
+      color:#dfeae3; font:inherit; font-size:11.5px; font-weight:700; cursor:pointer;
+    }
+    .tip-col-side { display:flex; flex-direction:column; gap:12px; }
+
+    /* PC：左（説明と金額）＋右320px（確認と実行・追従） */
+    @media (min-width:1000px) {
+      #page-tip.mypage-page-wrap { width:calc(236px + 940px); max-width:calc(100vw - 32px); }
+      .tip-layout { max-width:none; display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:24px; align-items:start; padding:26px 16px 40px; }
+      .tip-col-main { min-width:0; }
+      .tip-col-side { position:sticky; top:64px; }
+    }
+    /* スマホ：金額と実行ボタンを下部固定バーにしてスクロールせず押せるようにする */
+    @media (max-width:999px) {
+      #page-tip { padding-bottom:8.5rem; }
+      .tip-col-side .tip-summary {
+        position:fixed; left:0; right:0; bottom:0; z-index:40;
+        border-radius:0; border:none; border-top:1px solid rgba(255,255,255,.08);
+        background:rgba(9,25,16,.97); backdrop-filter:blur(12px);
+        padding:11px 16px max(18px, env(safe-area-inset-bottom));
+        display:grid; grid-template-columns:auto 1fr; gap:0 10px; align-items:baseline;
+      }
+      .tip-summary-label { grid-column:1; }
+      .tip-summary-amount { grid-column:2; text-align:right; font-size:23px; }
+      .tip-summary-once { display:none; }
+      .tip-confirm-btn { grid-column:1 / -1; margin-top:9px; }
+      .tip-soon-note { grid-column:1 / -1; justify-content:center; text-align:center; padding:6px 10px; }
+      .tip-notify-btn { grid-column:1 / -1; }
+      .tip-col-side { gap:14px; }
+    }
+
     /* ── MYPAGE LAYOUT ── */
     /* 狭い画面：ラッパーを透過させて従来どおり1カラムで縦に流す */
     .mypage-col-main, .mypage-col-side { display:contents; }
@@ -3647,15 +3776,60 @@
       </div>
     </div>
   </header>
-  <div style="padding:1.1rem;max-width:480px;margin:0 auto;text-align:center;">
-    <h2 style="font-size:1.1rem;color:#dff0e6;margin:0 0 .4rem;" data-i18n="tipTitle">開発を応援する</h2>
-    <p style="font-size:.82rem;color:var(--muted);margin:0 0 1.4rem;" data-i18n="tipDesc">アニメップルの開発・運営を応援していただける方は、こちらから投げ銭ができます。金額はいくらでも、いつでも大丈夫です。</p>
-    <div id="tipAmountGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;"></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;">
-      <input id="tipCustomAmount" type="number" min="500" step="100" placeholder="¥500以上で自由に入力" style="flex:1 1 auto;height:44px;padding:0 14px;border-radius:11px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:#dff0e6;font:inherit;font-size:.85rem;">
+  <div class="tip-layout">
+    <!-- 左：説明と金額選択 -->
+    <div class="tip-col-main">
+      <h2 class="tip-title" data-i18n="tipTitle">開発を応援する</h2>
+      <p class="tip-desc" data-i18n="tipDesc">アニメップルの開発・運営を応援していただける方は、こちらから投げ銭ができます。金額はいくらでも、いつでも大丈夫です。</p>
+
+      <p class="tip-field-label" data-i18n="tipPickLabel">金額を選ぶ</p>
+      <!-- 6枠目に「自由に入力」を置いて3列を埋める（1段目3・2段目2で行がずれるのを解消） -->
+      <div id="tipAmountGrid" class="tip-amount-grid"></div>
+
+      <div id="tipCustomWrap" class="tip-custom-wrap">
+        <p class="tip-field-label" data-i18n="tipCustomLabel">金額を自分で決める</p>
+        <div class="tip-custom-field" id="tipCustomField">
+          <span class="tip-custom-yen">¥</span>
+          <input id="tipCustomAmount" type="number" min="500" step="100" placeholder="500以上で自由に入力" class="tip-custom-input">
+        </div>
+        <p id="tipCustomError" class="tip-custom-error" style="display:none;" data-i18n="tipCustomError">¥500以上で入力してください</p>
+      </div>
+
+      <div class="tip-msg-wrap">
+        <p class="tip-field-label tip-field-label-row">
+          <span data-i18n="tipMessageLabel">ひとことメッセージ</span>
+          <span class="tip-field-note" data-i18n="tipMessageNote">任意 · 開発者にだけ届きます</span>
+        </p>
+        <textarea id="tipMessage" maxlength="200" rows="3" class="tip-msg-input" placeholder="開発者に届くメッセージ（任意）"></textarea>
+      </div>
     </div>
-    <button type="button" id="tipConfirmBtn" style="width:100%;height:48px;border-radius:12px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:15px;cursor:pointer;" data-i18n="tipConfirmBtn">この金額で応援する</button>
-    <p style="font-size:.7rem;color:var(--muted);margin-top:14px;" data-i18n="tipComingSoonNote">決済機能は準備中です。もうしばらくお待ちください。</p>
+
+    <!-- 右：金額の確認と実行（PCでは追従） -->
+    <div class="tip-col-side">
+      <div class="tip-summary">
+        <p class="tip-summary-label" data-i18n="tipSummaryLabel">応援する金額</p>
+        <p class="tip-summary-amount" id="tipSummaryAmount">—</p>
+        <p class="tip-summary-once" data-i18n="tipOnceNote">1回のみのお支払いです。継続課金にはなりません。</p>
+        <button type="button" id="tipConfirmBtn" class="tip-confirm-btn" data-i18n="tipConfirmBtn">この金額で応援する</button>
+        <div class="tip-soon-note">
+          <span class="tip-soon-icon">🛠</span>
+          <span data-i18n="tipComingSoonNote">決済機能は準備中です。もうしばらくお待ちください。</span>
+        </div>
+        <button type="button" id="tipNotifyBtn" class="tip-notify-btn" data-i18n="tipNotifyBtn">開始したら通知する</button>
+      </div>
+
+      <div class="tip-use-card">
+        <p class="tip-use-title" data-i18n="tipUseTitle">いただいた分の使いみち</p>
+        <p class="tip-use-item"><span class="tip-use-dot"></span><span data-i18n="tipUse1">サーバー・データベースの維持</span></p>
+        <p class="tip-use-item"><span class="tip-use-dot"></span><span data-i18n="tipUse2">作品データの追加と更新</span></p>
+        <p class="tip-use-item"><span class="tip-use-dot"></span><span data-i18n="tipUse3">新機能の開発</span></p>
+      </div>
+
+      <div class="tip-alt-card">
+        <p class="tip-alt-text" data-i18n="tipAltText">お金をかけずに応援したい方は、レビューを書く・掲示板で話す・友達に教える、でも十分に助かります。</p>
+        <button type="button" class="tip-alt-btn" onclick="nav('search')" data-i18n="tipAltBtn">レビューを書く</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -10771,42 +10945,109 @@
     const grid = document.getElementById('tipAmountGrid');
     if(!grid) return;
     _tipSelectedAmount = null;
+    const customWrap = document.getElementById('tipCustomWrap');
+    const customField = document.getElementById('tipCustomField');
+    const customInput = document.getElementById('tipCustomAmount');
+    const customError = document.getElementById('tipCustomError');
+    const confirmBtn = document.getElementById('tipConfirmBtn');
+    const notifyBtn = document.getElementById('tipNotifyBtn');
+    const summaryEl = document.getElementById('tipSummaryAmount');
+    const msgEl = document.getElementById('tipMessage');
+    if(msgEl) msgEl.value = '';
+
+    // 定額5つ ＋ 6枠目「自由に入力」で3列を埋める
     grid.innerHTML = TIP_AMOUNTS.map(amount => {
       const isHighlight = TIP_HIGHLIGHT.includes(amount);
       return `
-        <button type="button" class="tip-amount-btn" data-amount="${amount}" style="height:${isHighlight?'56px':'48px'};border-radius:12px;border:1px solid ${isHighlight?'rgba(217,164,65,.5)':'var(--line,#2a3830)'};background:${isHighlight?'rgba(217,164,65,.1)':'var(--card2,#141c19)'};color:#dfeae3;font-weight:800;font-size:${isHighlight?'16px':'14px'};cursor:pointer;position:relative;">
-          ${isHighlight ? `<span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:9px;background:#e8c463;color:#221a05;padding:1px 6px;border-radius:6px;font-weight:800;">${escapeHtml(t('tipPopularLabel'))}</span>` : ''}
+        <button type="button" class="tip-amount-btn${isHighlight?' is-popular':''}" data-amount="${amount}">
+          ${isHighlight ? `<span class="tip-amount-ribbon">${escapeHtml(t('tipPopularLabel'))}</span>` : ''}
           ¥${amount.toLocaleString()}
-        </button>
-      `;
-    }).join('');
-    const customInput = document.getElementById('tipCustomAmount');
-    const confirmBtn = document.getElementById('tipConfirmBtn');
-    const selectAmount = (amount, btnEl) => {
-      _tipSelectedAmount = amount;
-      grid.querySelectorAll('.tip-amount-btn').forEach(b=>{ b.style.outline = 'none'; });
-      if(btnEl) btnEl.style.outline = '2px solid #5ec97a';
-      if(customInput) customInput.value = '';
+        </button>`;
+    }).join('') + `
+      <button type="button" class="tip-amount-btn tip-amount-custom" data-amount="custom">
+        <span>${escapeHtml(t('tipCustomBtn'))}</span>
+        <span class="tip-amount-custom-sub">${escapeHtml(t('tipCustomMin'))}</span>
+      </button>`;
+
+    const buttons = [...grid.querySelectorAll('.tip-amount-btn')];
+    const setSummary = () => {
+      if(!summaryEl) return;
+      summaryEl.textContent = _tipSelectedAmount ? ('¥' + _tipSelectedAmount.toLocaleString()) : '—';
     };
-    grid.querySelectorAll('.tip-amount-btn').forEach(btn=>{
-      btn.onclick = () => selectAmount(Number(btn.dataset.amount), btn);
+    const clearMarks = () => buttons.forEach(b=>{
+      b.classList.remove('is-selected');
+      const chk = b.querySelector('.tip-amount-check');
+      if(chk) chk.remove();
     });
+    const mark = btnEl => {
+      btnEl.classList.add('is-selected');
+      if(!btnEl.querySelector('.tip-amount-check') && !btnEl.classList.contains('tip-amount-custom')) {
+        const chk = document.createElement('span');
+        chk.className = 'tip-amount-check';
+        chk.textContent = '✓';
+        btnEl.appendChild(chk);
+      }
+    };
+    const showCustomError = show => {
+      if(customField) customField.classList.toggle('is-error', !!show);
+      if(customError) customError.style.display = show ? '' : 'none';
+    };
+
+    buttons.forEach(btn => {
+      btn.onclick = () => {
+        clearMarks();
+        mark(btn);
+        if(btn.dataset.amount === 'custom') {
+          // 自由入力を選んだときだけ入力欄を開く
+          if(customWrap) customWrap.classList.add('is-open');
+          if(customInput) customInput.focus();
+          const v = Number(customInput && customInput.value);
+          _tipSelectedAmount = v >= 500 ? v : null;
+        } else {
+          if(customWrap) customWrap.classList.remove('is-open');
+          if(customInput) customInput.value = '';
+          showCustomError(false);
+          _tipSelectedAmount = Number(btn.dataset.amount);
+        }
+        setSummary();
+      };
+    });
+
     if(customInput) {
       customInput.oninput = () => {
-        const v = Number(customInput.value);
+        const raw = customInput.value;
+        const v = Number(raw);
         _tipSelectedAmount = v >= 500 ? v : null;
-        grid.querySelectorAll('.tip-amount-btn').forEach(b=>{ b.style.outline = 'none'; });
+        showCustomError(!!raw && v < 500);
+        clearMarks();
+        const customBtn = buttons.find(b=>b.dataset.amount === 'custom');
+        if(customBtn) mark(customBtn);
+        setSummary();
       };
     }
+    setSummary();
+
     if(confirmBtn) {
+      // 決済が繋がるまでは「準備中」の状態として見せる（押せる見た目で無反応にしない）
+      const paymentsReady = false;
+      confirmBtn.classList.toggle('is-soon', !paymentsReady);
+      confirmBtn.textContent = paymentsReady ? t('tipConfirmBtn') : t('tipSoonBtn');
       confirmBtn.onclick = () => {
+        if(!paymentsReady) return;
         if(!_tipSelectedAmount || _tipSelectedAmount < 500) {
           alert(t('tipAmountRequiredAlert'));
           return;
         }
         // TODO: Paddleアカウント審査完了後、ここでPaddle Checkoutを開き、
-        // 成功時にpurchasesテーブルへ記録するEdge Functionを呼ぶ
+        // 成功時にpurchasesテーブルへ記録するEdge Functionを呼ぶ（メッセージも同送）
         alert(t('tipComingSoonNote'));
+      };
+    }
+    if(notifyBtn) {
+      notifyBtn.onclick = () => {
+        notifyBtn.textContent = t('tipNotifyDone');
+        notifyBtn.disabled = true;
+        notifyBtn.style.opacity = '.6';
       };
     }
   }
@@ -13415,6 +13656,24 @@
     tipPopularLabel: { ja:'人気', en:'Popular' },
     tipConfirmBtn: { ja:'この金額で応援する', en:'Support with this amount' },
     tipComingSoonNote: { ja:'決済機能は準備中です。もうしばらくお待ちください。', en:'Payments are coming soon. Please check back later.' },
+    tipPickLabel: { ja:'金額を選ぶ', en:'Choose an amount' },
+    tipCustomLabel: { ja:'金額を自分で決める', en:'Enter your own amount' },
+    tipCustomBtn: { ja:'自由に入力', en:'Custom' },
+    tipCustomMin: { ja:'¥500以上', en:'¥500+' },
+    tipCustomError: { ja:'¥500以上で入力してください', en:'Please enter ¥500 or more' },
+    tipMessageLabel: { ja:'ひとことメッセージ', en:'Message' },
+    tipMessageNote: { ja:'任意 · 開発者にだけ届きます', en:'Optional · only the developer sees this' },
+    tipSummaryLabel: { ja:'応援する金額', en:'Your support' },
+    tipOnceNote: { ja:'1回のみのお支払いです。継続課金にはなりません。', en:'One-time payment. This is not a subscription.' },
+    tipSoonBtn: { ja:'準備中', en:'Coming soon' },
+    tipNotifyBtn: { ja:'開始したら通知する', en:'Notify me when it opens' },
+    tipNotifyDone: { ja:'通知を受け取ります', en:"You'll be notified" },
+    tipUseTitle: { ja:'いただいた分の使いみち', en:'How your support is used' },
+    tipUse1: { ja:'サーバー・データベースの維持', en:'Servers and database' },
+    tipUse2: { ja:'作品データの追加と更新', en:'Adding and updating titles' },
+    tipUse3: { ja:'新機能の開発', en:'Building new features' },
+    tipAltText: { ja:'お金をかけずに応援したい方は、レビューを書く・掲示板で話す・友達に教える、でも十分に助かります。', en:'You can also help for free: write a review, join a board, or tell a friend.' },
+    tipAltBtn: { ja:'レビューを書く', en:'Write a review' },
     tipAmountRequiredAlert: { ja:'金額を選択するか、¥500以上を入力してください。', en:'Please select or enter an amount of ¥500 or more.' },
     shareSectionTitle: { ja:'共有する', en:'Share' },
     shareHint: { ja:'今回のレビューを画像カードにして共有できます。', en:'Share this review as an image card.' },
