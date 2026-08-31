@@ -2284,7 +2284,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.290.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.292.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4634,7 +4634,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.290.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.292.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6525,7 +6525,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.290.0';
+      if(vEl) vEl.textContent = 'v0.292.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -10052,125 +10052,194 @@
     return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   }
 
+  // レビュー共有カード：デザイン仕様書（review-card-layout.html、900×1100・座標確定版）通りに実装。
+  // 高解像度対応のためcanvas自体は2倍(1800×2200)で作り、ctx.scale(2,2)してから
+  // 以下すべて仕様書記載の等倍座標のまま描く（Xのタイムライン等で文字が潰れないように）
   async function generateReviewCardImage(page, review, isQuality) {
-    const W = 900, H = 1100;
+    const W = 900, H = 660; // ポスター無しの分、高さを詰めた（元は1100、ポスター440+余白を除いた）
     const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
+    canvas.width = W * 2; canvas.height = H * 2;
     const ctx = canvas.getContext('2d');
-    // 背景：実際のレビューカード（.gcard／.card-quality-gold）と同じ配色をそのまま流用する。
-    // 通常レビュー＝緑系グラデーション、上質レビュー＝金系グラデーション+金の枠
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    if(isQuality) { grad.addColorStop(0, '#3a2f14'); grad.addColorStop(1, '#241c09'); }
-    else { grad.addColorStop(0, '#20392b'); grad.addColorStop(1, '#16291d'); }
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = isQuality ? 'rgba(224,178,86,.55)' : 'rgba(255,255,255,.1)';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(2, 2, W - 4, H - 4);
-    if(isQuality) {
-      // 上質レビューのバッジ（実際のカードの.badge.card-quality-goldと同じ配色）
-      ctx.fillStyle = 'rgba(217,164,65,.14)';
-      ctx.strokeStyle = 'rgba(217,164,65,.4)';
-      const bx = W - 150, by = 30, bw = 120, bh = 34;
+    ctx.scale(2, 2);
+
+    const COL = isQuality
+      ? { bgTop:'#3a2f14', bgBottom:'#241c09', border:'rgba(224,178,86,.55)', panelBorder:'rgba(224,178,86,.18)',
+          accent:'#e8c463', footerLine:'rgba(224,178,86,.22)', logoBg:'#e0b256' }
+      : { bgTop:'#20392b', bgBottom:'#16291d', border:'rgba(255,255,255,.1)', panelBorder:'rgba(255,255,255,.07)',
+          accent:'#8fe5ab', footerLine:'rgba(255,255,255,.09)', logoBg:'#5ec97a' };
+
+    // カード全体（角丸28・枠2px）
+    function roundRectPath(x, y, w, h, r) {
       ctx.beginPath();
-      ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, 17) : ctx.rect(bx, by, bw, bh);
-      ctx.fill(); ctx.stroke();
+      if(ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+      ctx.moveTo(x+r, y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+    }
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, COL.bgTop); grad.addColorStop(1, COL.bgBottom);
+    roundRectPath(1, 1, W-2, H-2, 28);
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = COL.border; ctx.stroke();
+    ctx.save();
+    roundRectPath(1, 1, W-2, H-2, 28); ctx.clip(); // 以降の描画をカードの角丸からはみ出させない
+    const title = getTitle(page) || page.title || page.titleEn || '';
+
+    // 上質バッジ（右上48,32・高さ48・radius24）。通常レビューでは描かない
+    if (isQuality) {
+      const bw = 172, bh = 48, bx = W - 48 - bw, by = 32;
+      roundRectPath(bx, by, bw, bh, 24);
+      ctx.fillStyle = 'rgba(217,164,65,.14)'; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(217,164,65,.4)'; ctx.stroke();
       ctx.fillStyle = '#e8c463';
-      ctx.font = "bold 15px 'Zen Kaku Gothic New', sans-serif";
+      ctx.font = "800 20px 'Zen Kaku Gothic New', sans-serif";
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('★ ' + (t('qualityReviewBadge') || '上質レビュー'), bx + 22, by + 32);
+    }
+
+    // ④ タイトル（x48, baseline508）。1行固定：804pxに収まるよう46→40→36pxの順で縮小、それでも
+    // 収まらなければ末尾を「…」で省略する（2行に折り返すとこの下の座標計算が全部崩れるため）
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#e8f0ea';
+    let titleSize = 46;
+    const fitTitle = (text, maxW) => {
+      for(const size of [46, 40, 36]) {
+        ctx.font = `700 ${size}px 'Zen Kaku Gothic New', sans-serif`;
+        if(ctx.measureText(text).width <= maxW) { titleSize = size; return text; }
+      }
+      titleSize = 36;
+      ctx.font = `700 36px 'Zen Kaku Gothic New', sans-serif`;
+      let truncated = text;
+      while(truncated.length > 1 && ctx.measureText(truncated + '…').width > maxW) truncated = truncated.slice(0, -1);
+      return truncated + '…';
+    };
+    const fittedTitle = fitTitle(title, 804);
+    ctx.font = `700 ${titleSize}px 'Zen Kaku Gothic New', sans-serif`;
+    ctx.fillText(fittedTitle, 48, 48);
+
+    // ⑤ ユーザー名（x48, baseline92）：名前は420pxで省略、直後に薄字で「のレビュー」
+    if (review.userName) {
+      ctx.font = "700 26px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillStyle = COL.accent;
+      let name = review.userName;
+      while(name.length > 1 && ctx.measureText(name).width > 420) name = name.slice(0, -1) + '…';
+      ctx.fillText(name, 48, 92);
+      const nameWidth = ctx.measureText(name).width;
+      ctx.font = "400 20px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillStyle = '#8db5a0';
+      ctx.fillText('のレビュー', 48 + nameWidth + 6, 92);
+    }
+
+    // ⑥ グラフ2枚を対等な角丸パネルに入れる（左48,584,392×306／右460,584,392×306・radius20）
+    const labA = getAxisA(), labB = getAxisB();
+    function drawPanelRadar(px, py, heading, labels, keys, dataObj, fillColor, strokeColor) {
+      roundRectPath(px, py, 392, 306, 20);
+      ctx.fillStyle = 'rgba(255,255,255,.035)'; ctx.fill();
+      ctx.lineWidth = 1; ctx.strokeStyle = COL.panelBorder; ctx.stroke();
+      ctx.fillStyle = '#e8f0ea';
+      ctx.font = "700 22px 'Zen Kaku Gothic New', sans-serif";
       ctx.textAlign = 'center';
-      ctx.fillText(t('qualityReviewBadge') || '上質レビュー', bx + bw / 2, by + 23);
+      ctx.fillText(heading, px + 196, py + 34);
+
+      const cx = px + 196, cy = py + 176, r = 84, labelR = 110;
+      const values = labels.map((_, j) => Number((dataObj && dataObj[keys[j]]) || 0));
+      // グリッド六角形3枚（r=84/56/28）＋軸線
+      [84, 56, 28].forEach(rr => {
+        ctx.beginPath();
+        for(let i = 0; i <= 6; i++) {
+          const a = -Math.PI/2 + i * Math.PI/3;
+          const x = cx + rr * Math.cos(a), y = cy + rr * Math.sin(a);
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.stroke();
+      });
+      for(let i = 0; i < 6; i++) {
+        const a = -Math.PI/2 + i * Math.PI/3;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + r*Math.cos(a), cy + r*Math.sin(a));
+        ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 1; ctx.stroke();
+      }
+      // データ形状
+      ctx.beginPath();
+      values.forEach((v, i) => {
+        const a = -Math.PI/2 + i * Math.PI/3;
+        const rr = r * Math.min(v, 10) / 10;
+        const x = cx + rr*Math.cos(a), y = cy + rr*Math.sin(a);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = fillColor; ctx.fill();
+      ctx.strokeStyle = strokeColor; ctx.lineWidth = 3; ctx.stroke();
+      // 頂点の点
+      values.forEach((v, i) => {
+        const a = -Math.PI/2 + i * Math.PI/3;
+        const rr = r * Math.min(v, 10) / 10;
+        ctx.beginPath(); ctx.arc(cx + rr*Math.cos(a), cy + rr*Math.sin(a), 4, 0, Math.PI*2);
+        ctx.fillStyle = strokeColor; ctx.fill();
+      });
+      // 軸ラベル（位置ごとに揃えを変える。数値は描かず形だけで読ませる）
+      ctx.font = "600 17px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillStyle = '#8db5a0';
+      const anchors = [
+        { align:'center', dx:0,   dy:-labelR+34 },
+        { align:'left',   dx:labelR*Math.cos(-Math.PI/2+Math.PI/3),  dy:labelR*Math.sin(-Math.PI/2+Math.PI/3) },
+        { align:'left',   dx:labelR*Math.cos(-Math.PI/2+2*Math.PI/3),dy:labelR*Math.sin(-Math.PI/2+2*Math.PI/3) },
+        { align:'center', dx:0,   dy:labelR-84+66 },
+        { align:'right',  dx:labelR*Math.cos(-Math.PI/2+4*Math.PI/3),dy:labelR*Math.sin(-Math.PI/2+4*Math.PI/3) },
+        { align:'right',  dx:labelR*Math.cos(-Math.PI/2+5*Math.PI/3),dy:labelR*Math.sin(-Math.PI/2+5*Math.PI/3) },
+      ];
+      labels.forEach((label, i) => {
+        ctx.textAlign = anchors[i].align;
+        ctx.fillText(label, cx + anchors[i].dx, cy + anchors[i].dy);
+      });
       ctx.textAlign = 'left';
     }
+    drawPanelRadar(48, 124, t('radarTitleA') || '作品の完成度', labA, axisA, review.chartA, 'rgba(94,201,122,.30)', '#5ec97a');
+    drawPanelRadar(460, 124, t('radarTitleB') || '感情・雰囲気', labB, axisB, review.chartB, 'rgba(232,106,106,.30)', '#e86a6a');
 
-    // ポスター画像（読み込めればカードの上半分に敷く）。
-    // 外部サイトの画像はCORSに対応してないことがあり、その場合そのままdrawImageすると
-    // canvas自体が「汚染」され、以降のtoBlob()がエラーも出さず黙って失敗する（＝画像が保存されない）
-    // 重大なバグの原因になっていた。なので、まず1x1の使い捨てcanvasで安全に描画できるか
-    // 事前テストしてから、問題ない場合だけ本番のcanvasに描画する
-    const title = getTitle(page) || page.title || page.titleEn || '';
-    let posterImg = null;
-    if (page.image) {
-      try {
-        const img = await new Promise((resolve, reject) => {
-          const im = new Image();
-          im.crossOrigin = 'anonymous';
-          im.onload = () => resolve(im);
-          im.onerror = reject;
-          im.src = page.image;
-        });
-        const testCanvas = document.createElement('canvas');
-        testCanvas.width = 1; testCanvas.height = 1;
-        const testCtx = testCanvas.getContext('2d');
-        testCtx.drawImage(img, 0, 0, 1, 1);
-        testCtx.getImageData(0, 0, 1, 1); // 汚染されていればここで例外が飛ぶ
-        posterImg = img;
-      } catch(e) {
-        console.warn('review card poster skipped (likely CORS-tainted):', e);
-        posterImg = null;
-      }
-    }
-    if (posterImg) {
-      const posterH = 480;
-      const scale = Math.max(W / posterImg.naturalWidth, posterH / posterImg.naturalHeight);
-      const dw = posterImg.naturalWidth * scale, dh = posterImg.naturalHeight * scale;
-      ctx.save();
-      ctx.beginPath(); ctx.rect(0, 0, W, posterH); ctx.clip();
-      ctx.drawImage(posterImg, (W - dw) / 2, 0, dw, dh);
-      ctx.restore();
-      // 下側にグラデーションでフェードさせ、タイトルと馴染ませる
-      const fade = ctx.createLinearGradient(0, posterH - 140, 0, posterH);
-      fade.addColorStop(0, 'rgba(11,26,17,0)'); fade.addColorStop(1, 'rgba(11,26,17,1)');
-      ctx.fillStyle = fade; ctx.fillRect(0, posterH - 140, W, 140);
-    }
-
-    // タイトル
-    ctx.fillStyle = '#e8f0ea';
-    ctx.font = "bold 40px 'Zen Kaku Gothic New', sans-serif";
-    ctx.textAlign = 'left';
-    wrapText(ctx, title, 40, 540, W - 80, 48);
-
-    // ユーザー名（このレビューを書いた人）
-    if(review.userName) {
-      ctx.fillStyle = isQuality ? '#e8c463' : '#8fe5ab';
-      ctx.font = "600 20px 'Zen Kaku Gothic New', sans-serif";
-      ctx.fillText(review.userName, 40, 585);
-    }
-
-    // 評価チャート：実際のレビューカードと全く同じdrawRadar()を使い、同じ配色で描画する。
-    // drawRadar()はcanvasのgetBoundingClientRect()（＝実際のレイアウトサイズ）を見て描画するため、
-    // 画面外に一時的にDOM配置してサイズを持たせてから描画し、完成したらdrawImageで転写して破棄する
-    const labA = getAxisA(), labB = getAxisB();
-    const chartSize = 340;
-    const drawOneRadar = (labels, keys, dataObj, fill, stroke) => {
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.style.cssText = `position:fixed;left:-9999px;top:0;width:${chartSize}px;height:${chartSize}px;`;
-      document.body.appendChild(tempCanvas);
-      const values = labels.map((_, j) => Number((dataObj && dataObj[keys[j]]) || 0));
-      drawRadar(tempCanvas, labels, values, fill, stroke, false, true);
-      const result = tempCanvas;
-      return result;
-    };
-    const chartATempCanvas = drawOneRadar(labA, axisA, review.chartA, 'rgba(88,201,132,0.35)', '#8fe5ab');
-    const chartBTempCanvas = drawOneRadar(labB, axisB, review.chartB, 'rgba(255,153,153,0.32)', '#ffaaaa');
-    const chartY = 620;
-    ctx.drawImage(chartATempCanvas, 20, chartY, (W - 40) / 2, chartSize);
-    ctx.drawImage(chartBTempCanvas, 20 + (W - 40) / 2, chartY, (W - 40) / 2, chartSize);
-    document.body.removeChild(chartATempCanvas);
-    document.body.removeChild(chartBTempCanvas);
-
-    // コメント抜粋
-    let y = chartY + chartSize + 44;
+    // ⑦ コメント（縦罫 x48,y472,3×88／本文 x69,幅783）：2行で打ち切り、鍵カッコで囲む
     if (review.comment) {
-      ctx.fillStyle = '#dfeae3';
-      ctx.font = "22px 'Zen Kaku Gothic New', sans-serif";
-      const excerpt = review.comment.length > 60 ? review.comment.slice(0, 60) + '…' : review.comment;
-      wrapText(ctx, `「${excerpt}」`, 40, y, W - 80, 32);
+      ctx.fillStyle = isQuality ? 'rgba(224,178,86,.55)' : 'rgba(94,201,122,.5)';
+      ctx.fillRect(48, 472, 3, 88);
+      ctx.font = "400 28px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillStyle = '#e8f0ea';
+      const lineHeight = 42, maxWidth = 783;
+      const text = `「${review.comment}」`;
+      const lines = [];
+      let line = '';
+      for(const ch of text) {
+        const test = line + ch;
+        if(ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = ch; if(lines.length===2) break; }
+        else line = test;
+      }
+      if(lines.length < 2 && line) lines.push(line);
+      if(lines.length === 2 && (line || text.length > lines.join('').length)) {
+        let last = lines[1];
+        while(last.length > 1 && ctx.measureText(last + '…').width > maxWidth) last = last.slice(0, -1);
+        if(text.length > lines[0].length + last.replace('…','').length) lines[1] = last + '…';
+      }
+      if(lines.length === 1) ctx.fillText(lines[0], 69, 502); // 1行の時は上寄せ
+      else { ctx.fillText(lines[0], 69, 502); ctx.fillText(lines[1], 69, 544); }
     }
 
-    // ブランディング
+    // ⑧ フッター（罫線 48,576,804×1／ロゴ 48,598,26×26／ブランド文字／右端にURL）
+    ctx.fillStyle = COL.footerLine;
+    ctx.fillRect(48, 576, 804, 1);
+    roundRectPath(48, 598, 26, 26, 8);
+    ctx.fillStyle = COL.logoBg; ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = "900 15px 'Zen Kaku Gothic New', sans-serif";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('A', 48 + 13, 598 + 14);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#e8f0ea';
+    ctx.font = "800 24px 'Zen Kaku Gothic New', sans-serif";
+    ctx.fillText('アニメップル', 48 + 26 + 10, 618);
     ctx.fillStyle = '#8db5a0';
-    ctx.font = "bold 24px 'Zen Kaku Gothic New', sans-serif";
-    ctx.fillText('アニメップル', 40, H - 36);
+    ctx.font = "400 18px 'Zen Kaku Gothic New', sans-serif";
+    ctx.textAlign = 'right';
+    ctx.fillText('animepple.com', 852, 618);
+    ctx.textAlign = 'left';
 
+    ctx.restore(); // クリップ解除
     return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   }
   function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -13063,6 +13132,8 @@
     boardReplyingTo: { ja:'{name} に返信', en:'Replying to {name}' },
     boardReadCount: { ja:'既読{n}・{time}', en:'Read {n} · {time}' },
     qualityReviewBadge: { ja:'上質レビュー', en:'Quality review' },
+    radarTitleA: { ja:'作品の完成度', en:'Craftsmanship' },
+    radarTitleB: { ja:'感情・雰囲気', en:'Mood & Feel' },
     iconLockedTitle: { ja:'未入手', en:'Not obtained yet' },
     iconComingSoon: { ja:'準備中', en:'Coming soon' },
     iconSetAsProfileConfirm: { ja:'このアイコンをプロフィール画像に設定しますか？', en:'Set this icon as your profile picture?' },
