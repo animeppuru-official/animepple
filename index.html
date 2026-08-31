@@ -2965,7 +2965,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.289.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.298.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -5578,7 +5578,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.289.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.298.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -7510,7 +7510,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.289.0';
+      if(vEl) vEl.textContent = 'v0.298.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -11088,34 +11088,27 @@
     if(iconsRow) {
       iconsRow.innerHTML = buildShareIconsHtmlGeneric();
       iconsRow.style.display = 'flex';
-      // 主要3つだけ出して残りは「他のSNSも表示」で開く（7個並べると選べない）
-      iconsRow.classList.add('is-collapsed');
-      const moreBtn = document.getElementById('mypageShareMoreBtn');
-      if(moreBtn) {
-        const hidden = Math.max(0, iconsRow.children.length - 3);
-        moreBtn.style.display = hidden ? 'inline-flex' : 'none';
-        moreBtn.onclick = () => {
-          const open = iconsRow.classList.toggle('is-collapsed');
-          moreBtn.textContent = open ? '⋯' : '✕';
-        };
-      }
       iconsRow.querySelectorAll('.share-target-btn').forEach(iconBtn => {
         const target = SHARE_TARGETS.find(s => s.key === iconBtn.dataset.key);
         if(!target) return;
         iconBtn.onclick = async () => {
           adClick('share_profile_' + target.key);
           iconBtn.style.opacity = '.5';
+          let urlToUse = shareUrl;
           try {
             const blob = await generateProfileCardImage(data);
             if(!blob) throw new Error('blob is null');
-            const dlUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = dlUrl; a.download = 'animepple-profile.png';
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
+            const cardUrl = await uploadShareCard(blob, data.username || 'アニメップル', shareUrl);
+            if(cardUrl) {
+              urlToUse = cardUrl; // 画像が自動でプレビューに乗るOGPリンクに切り替え
+            } else {
+              // アップロードできなかった時はこれまで通りクリップボードコピー＋通常のリンクにフォールバック
+              const result = await copyImageToClipboardOrDownload(blob, 'animepple-profile.png');
+              alert(result === 'copied' ? t('shareIconCopiedNote') : t('shareIconDownloadedNote'));
+            }
           } catch(e) { console.warn('profile share icon image generation failed:', e); alert(t('shareCardFailedAlert')); }
           finally { iconBtn.style.opacity = ''; }
-          window.open(target.url(shareUrl, shareText), '_blank', 'noopener,noreferrer');
+          window.open(target.url(urlToUse, shareText), '_blank', 'noopener,noreferrer');
         };
       });
     }
@@ -11130,13 +11123,14 @@
         if(navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ files: [file], title: 'アニメップル', text: shareText + ' ' + shareUrl });
         } else {
-          const dlUrl = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = dlUrl; a.download = 'animepple-profile.png';
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-          setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
-          window.open(SHARE_TARGETS[0].url(shareUrl, shareText), '_blank', 'noopener,noreferrer');
-          alert(t('shareCardDesktopNote'));
+          const cardUrl = await uploadShareCard(blob, data.username || 'アニメップル', shareUrl);
+          if(cardUrl) {
+            window.open(SHARE_TARGETS[0].url(cardUrl, shareText), '_blank', 'noopener,noreferrer');
+          } else {
+            const result = await copyImageToClipboardOrDownload(blob, 'animepple-profile.png');
+            window.open(SHARE_TARGETS[0].url(shareUrl, shareText), '_blank', 'noopener,noreferrer');
+            alert(result === 'copied' ? t('shareIconCopiedNote') : t('shareIconDownloadedNote'));
+          }
         }
       } catch(e) {
         if(e && e.name !== 'AbortError') { console.warn('profile card share failed:', e); alert(t('shareCardFailedAlert')); }
@@ -11147,6 +11141,44 @@
     };
   }
   // buildShareIconsHtmlはanime_id前提の内部URLを組み立てないシンプル版（呼び出し側でurlを都度渡す）
+  // 画像をクリップボードにコピーする（対応してれば）。これができれば、各SNSの投稿画面を
+  // 開いた後、ユーザーは貼り付ける（Ctrl+V／⌘+V）だけで済む。対応してないブラウザでは
+  // 従来通りダウンロードにフォールバックする。戻り値でどちらだったかを呼び出し側に伝える。
+  // 共有ボタンを押した時だけ画像をストレージにアップロードし、OGPページ（share-card Edge Function）の
+  // URLを返す。レビュー投稿時ではなく「実際に共有される時」だけ保存することで、誰にも共有されなかった
+  // 画像がストレージを圧迫しないようにする。アップロードに失敗したら（未ログイン・オフライン等）nullを返し、
+  // 呼び出し側はこれまで通りの直接リンク（画像無しの通常のURL）にフォールバックする
+  const SHARE_CARD_EDGE_URL = 'https://animepple-share-card.animeppuru.workers.dev';
+  async function uploadShareCard(blob, title, redirectUrl) {
+    if(!sb || !_currentUser) return null;
+    try {
+      const path = `${_currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.png`;
+      const { error: uploadError } = await sb.storage.from('share-cards').upload(path, blob, { contentType: 'image/png' });
+      if(uploadError) throw uploadError;
+      const { data, error } = await sb.from('share_cards').insert({
+        user_id: _currentUser.id, image_path: path, title, redirect_url: redirectUrl,
+      }).select('id').single();
+      if(error || !data) throw error || new Error('insert failed');
+      return `${SHARE_CARD_EDGE_URL}/${data.id}`;
+    } catch(e) {
+      console.warn('uploadShareCard failed, falling back to direct link:', e);
+      return null;
+    }
+  }
+  async function copyImageToClipboardOrDownload(blob, filename) {
+    if(navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+        return 'copied';
+      } catch(e) { console.warn('clipboard write failed, falling back to download:', e); }
+    }
+    const dlUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = dlUrl; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
+    return 'downloaded';
+  }
   function buildShareIconsHtmlGeneric() {
     return SHARE_TARGETS.map(s => `
       <button type="button" class="share-target-btn" data-key="${s.key}" title="${escapeHtml(s.label)}"
@@ -11244,115 +11276,196 @@
     return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   }
 
-  async function generateReviewCardImage(page, review) {
-    const W = 900, H = 1000;
+  // レビュー共有カード：デザイン仕様書（review-card-layout.html、900×1100・座標確定版）通りに実装。
+  // 高解像度対応のためcanvas自体は2倍(1800×2200)で作り、ctx.scale(2,2)してから
+  // 以下すべて仕様書記載の等倍座標のまま描く（Xのタイムライン等で文字が潰れないように）
+  // レビュー共有カード：Xの推奨サイズ1200×630（1.91:1、summary_large_image規格）に合わせたレイアウト。
+  async function generateReviewCardImage(page, review, isQuality) {
+    const W = 1200, H = 630;
     const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
+    canvas.width = W * 2; canvas.height = H * 2;
     const ctx = canvas.getContext('2d');
-    // 背景
+    ctx.scale(2, 2);
+
+    const COL = isQuality
+      ? { bgTop:'#3a2f14', bgBottom:'#241c09', border:'rgba(224,178,86,.55)', panelBorder:'rgba(224,178,86,.18)',
+          accent:'#e8c463', footerLine:'rgba(224,178,86,.22)', logoBg:'#e0b256' }
+      : { bgTop:'#20392b', bgBottom:'#16291d', border:'rgba(255,255,255,.1)', panelBorder:'rgba(255,255,255,.07)',
+          accent:'#8fe5ab', footerLine:'rgba(255,255,255,.09)', logoBg:'#5ec97a' };
+
+    function roundRectPath(x, y, w, h, r) {
+      ctx.beginPath();
+      if(ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+      ctx.moveTo(x+r, y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+    }
     const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, '#173625'); grad.addColorStop(1, '#0b1a11');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-
-    // ポスター画像（読み込めればカードの上半分に敷く）。
-    // 外部サイトの画像はCORSに対応してないことがあり、その場合そのままdrawImageすると
-    // canvas自体が「汚染」され、以降のtoBlob()がエラーも出さず黙って失敗する（＝画像が保存されない）
-    // 重大なバグの原因になっていた。なので、まず1x1の使い捨てcanvasで安全に描画できるか
-    // 事前テストしてから、問題ない場合だけ本番のcanvasに描画する
+    grad.addColorStop(0, COL.bgTop); grad.addColorStop(1, COL.bgBottom);
+    roundRectPath(1, 1, W-2, H-2, 24);
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = COL.border; ctx.stroke();
+    ctx.save();
+    roundRectPath(1, 1, W-2, H-2, 24); ctx.clip();
     const title = getTitle(page) || page.title || page.titleEn || '';
-    let posterImg = null;
-    if (page.image) {
-      try {
-        const img = await new Promise((resolve, reject) => {
-          const im = new Image();
-          im.crossOrigin = 'anonymous';
-          im.onload = () => resolve(im);
-          im.onerror = reject;
-          im.src = page.image;
-        });
-        const testCanvas = document.createElement('canvas');
-        testCanvas.width = 1; testCanvas.height = 1;
-        const testCtx = testCanvas.getContext('2d');
-        testCtx.drawImage(img, 0, 0, 1, 1);
-        testCtx.getImageData(0, 0, 1, 1); // 汚染されていればここで例外が飛ぶ
-        posterImg = img;
-      } catch(e) {
-        console.warn('review card poster skipped (likely CORS-tainted):', e);
-        posterImg = null;
-      }
-    }
-    if (posterImg) {
-      const posterH = 480;
-      const scale = Math.max(W / posterImg.naturalWidth, posterH / posterImg.naturalHeight);
-      const dw = posterImg.naturalWidth * scale, dh = posterImg.naturalHeight * scale;
-      ctx.save();
-      ctx.beginPath(); ctx.rect(0, 0, W, posterH); ctx.clip();
-      ctx.drawImage(posterImg, (W - dw) / 2, 0, dw, dh);
-      ctx.restore();
-      // 下側にグラデーションでフェードさせ、タイトルと馴染ませる
-      const fade = ctx.createLinearGradient(0, posterH - 140, 0, posterH);
-      fade.addColorStop(0, 'rgba(11,26,17,0)'); fade.addColorStop(1, 'rgba(11,26,17,1)');
-      ctx.fillStyle = fade; ctx.fillRect(0, posterH - 140, W, 140);
+
+    // 上質バッジ（右上）
+    if (isQuality) {
+      const bw = 156, bh = 40, bx = W - 40 - bw, by = 28;
+      roundRectPath(bx, by, bw, bh, 20);
+      ctx.fillStyle = 'rgba(217,164,65,.14)'; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(217,164,65,.4)'; ctx.stroke();
+      ctx.fillStyle = '#e8c463';
+      ctx.font = "800 17px 'Zen Kaku Gothic New', sans-serif";
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('★ ' + (t('qualityReviewBadge') || '上質レビュー'), bx + 18, by + 27);
     }
 
-    // タイトル
+    // タイトル（1行固定・幅900pxに収める）
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = '#e8f0ea';
-    ctx.font = "bold 40px 'Zen Kaku Gothic New', sans-serif";
-    ctx.textAlign = 'left';
-    wrapText(ctx, title, 40, 540, W - 80, 48);
-
-    // 評価チャート：実際のレビューカードと全く同じdrawRadar()を使い、同じ配色で描画する。
-    // drawRadar()はcanvasのgetBoundingClientRect()（＝実際のレイアウトサイズ）を見て描画するため、
-    // 画面外に一時的にDOM配置してサイズを持たせてから描画し、完成したらdrawImageで転写して破棄する
-    const labA = getAxisA(), labB = getAxisB();
-    const chartSize = 380;
-    const drawOneRadar = (labels, keys, dataObj, fill, stroke) => {
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.style.cssText = `position:fixed;left:-9999px;top:0;width:${chartSize}px;height:${chartSize}px;`;
-      document.body.appendChild(tempCanvas);
-      const values = labels.map((_, j) => Number((dataObj && dataObj[keys[j]]) || 0));
-      drawRadar(tempCanvas, labels, values, fill, stroke, false, true);
-      const result = tempCanvas;
-      return result;
+    let titleSize = 40;
+    const fitTitle = (text, maxW) => {
+      for(const size of [40, 34, 30]) {
+        ctx.font = `700 ${size}px 'Zen Kaku Gothic New', sans-serif`;
+        if(ctx.measureText(text).width <= maxW) { titleSize = size; return text; }
+      }
+      titleSize = 30;
+      ctx.font = `700 30px 'Zen Kaku Gothic New', sans-serif`;
+      let truncated = text;
+      while(truncated.length > 1 && ctx.measureText(truncated + '…').width > maxW) truncated = truncated.slice(0, -1);
+      return truncated + '…';
     };
-    const chartATempCanvas = drawOneRadar(labA, axisA, review.chartA, 'rgba(88,201,132,0.35)', '#8fe5ab');
-    const chartBTempCanvas = drawOneRadar(labB, axisB, review.chartB, 'rgba(255,153,153,0.32)', '#ffaaaa');
-    const chartY = 600;
-    ctx.drawImage(chartATempCanvas, 20, chartY, (W - 40) / 2, chartSize);
-    ctx.drawImage(chartBTempCanvas, 20 + (W - 40) / 2, chartY, (W - 40) / 2, chartSize);
-    document.body.removeChild(chartATempCanvas);
-    document.body.removeChild(chartBTempCanvas);
+    const fittedTitle = fitTitle(title, isQuality ? 780 : 1120);
+    ctx.font = `700 ${titleSize}px 'Zen Kaku Gothic New', sans-serif`;
+    ctx.fillText(fittedTitle, 40, 56);
 
-    // コメント抜粋
-    let y = chartY + chartSize + 44;
-    if (review.comment) {
-      ctx.fillStyle = '#dfeae3';
-      ctx.font = "22px 'Zen Kaku Gothic New', sans-serif";
-      const excerpt = review.comment.length > 60 ? review.comment.slice(0, 60) + '…' : review.comment;
-      wrapText(ctx, `「${excerpt}」`, 40, y, W - 80, 32);
-    }
-
-    // ブランディング
-    ctx.fillStyle = '#8db5a0';
-    ctx.font = "bold 24px 'Zen Kaku Gothic New', sans-serif";
-    ctx.fillText('アニメップル', 40, H - 36);
-
-    return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-  }
-  function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-    let line = '';
-    let cy = y;
-    for (const ch of text) {
-      const test = line + ch;
-      if (ctx.measureText(test).width > maxWidth && line) {
-        ctx.fillText(line, x, cy);
-        line = ch;
-        cy += lineHeight;
-      } else {
-        line = test;
+    // ユーザー名（言語によって「{name}のレビュー」/「Review by {name}」のように前後が変わるため、
+    // テンプレートを{name}で分割し、前半・本体・後半の順で描画する）
+    if (review.userName) {
+      let name = review.userName;
+      ctx.font = "700 22px 'Zen Kaku Gothic New', sans-serif";
+      while(name.length > 1 && ctx.measureText(name).width > 380) name = name.slice(0, -1) + '…';
+      const template = t('cardByLine') || '{name}のレビュー';
+      const [before, after] = template.split('{name}');
+      let x = 40;
+      if(before) {
+        ctx.font = "400 17px 'Zen Kaku Gothic New', sans-serif";
+        ctx.fillStyle = '#8db5a0';
+        ctx.fillText(before, x, 90);
+        x += ctx.measureText(before).width;
+      }
+      ctx.font = "700 22px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillStyle = COL.accent;
+      ctx.fillText(name, x, 90);
+      x += ctx.measureText(name).width;
+      if(after) {
+        ctx.font = "400 17px 'Zen Kaku Gothic New', sans-serif";
+        ctx.fillStyle = '#8db5a0';
+        ctx.fillText(after, x + 6, 90);
       }
     }
-    if (line) ctx.fillText(line, x, cy);
+
+    // グラフ2枚を横並びの角丸パネルに（幅を活かして横長パネルにする）
+    const labA = getAxisA(), labB = getAxisB();
+    const panelY = 112, panelH = 250, panelW = 552;
+    function drawPanelRadar(px, py, pw, ph, heading, labels, keys, dataObj, fillColor, strokeColor) {
+      roundRectPath(px, py, pw, ph, 18);
+      ctx.fillStyle = 'rgba(255,255,255,.035)'; ctx.fill();
+      ctx.lineWidth = 1; ctx.strokeStyle = COL.panelBorder; ctx.stroke();
+      ctx.fillStyle = '#e8f0ea';
+      ctx.font = "700 18px 'Zen Kaku Gothic New', sans-serif";
+      ctx.textAlign = 'center';
+      ctx.fillText(heading, px + pw / 2, py + 28);
+
+      const cx = px + pw / 2, cy = py + ph / 2 + 16, r = 70, labelR = 92;
+      const values = labels.map((_, j) => Number((dataObj && dataObj[keys[j]]) || 0));
+      [70, 46.6, 23.3].forEach(rr => {
+        ctx.beginPath();
+        for(let i = 0; i <= 6; i++) {
+          const a = -Math.PI/2 + i * Math.PI/3;
+          const x = cx + rr * Math.cos(a), y = cy + rr * Math.sin(a);
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.stroke();
+      });
+      for(let i = 0; i < 6; i++) {
+        const a = -Math.PI/2 + i * Math.PI/3;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + r*Math.cos(a), cy + r*Math.sin(a));
+        ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 1; ctx.stroke();
+      }
+      ctx.beginPath();
+      values.forEach((v, i) => {
+        const a = -Math.PI/2 + i * Math.PI/3;
+        const rr = r * Math.min(v, 10) / 10;
+        const x = cx + rr*Math.cos(a), y = cy + rr*Math.sin(a);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = fillColor; ctx.fill();
+      ctx.strokeStyle = strokeColor; ctx.lineWidth = 3; ctx.stroke();
+      values.forEach((v, i) => {
+        const a = -Math.PI/2 + i * Math.PI/3;
+        const rr = r * Math.min(v, 10) / 10;
+        ctx.beginPath(); ctx.arc(cx + rr*Math.cos(a), cy + rr*Math.sin(a), 3.5, 0, Math.PI*2);
+        ctx.fillStyle = strokeColor; ctx.fill();
+      });
+      ctx.font = "600 14px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillStyle = '#8db5a0';
+      const anchors = [
+        { align:'center', dx:0,   dy:-labelR+28 },
+        { align:'left',   dx:labelR*Math.cos(-Math.PI/2+Math.PI/3),  dy:labelR*Math.sin(-Math.PI/2+Math.PI/3) },
+        { align:'left',   dx:labelR*Math.cos(-Math.PI/2+2*Math.PI/3),dy:labelR*Math.sin(-Math.PI/2+2*Math.PI/3) },
+        { align:'center', dx:0,   dy:labelR-70+54 },
+        { align:'right',  dx:labelR*Math.cos(-Math.PI/2+4*Math.PI/3),dy:labelR*Math.sin(-Math.PI/2+4*Math.PI/3) },
+        { align:'right',  dx:labelR*Math.cos(-Math.PI/2+5*Math.PI/3),dy:labelR*Math.sin(-Math.PI/2+5*Math.PI/3) },
+      ];
+      labels.forEach((label, i) => {
+        ctx.textAlign = anchors[i].align;
+        ctx.fillText(label, cx + anchors[i].dx, cy + anchors[i].dy);
+      });
+      ctx.textAlign = 'left';
+    }
+    drawPanelRadar(40, panelY, panelW, panelH, t('radarTitleA') || '作品の完成度', labA, axisA, review.chartA, 'rgba(94,201,122,.30)', '#5ec97a');
+    drawPanelRadar(W - 40 - panelW, panelY, panelW, panelH, t('radarTitleB') || '感情・雰囲気', labB, axisB, review.chartB, 'rgba(232,106,106,.30)', '#e86a6a');
+
+    // コメント（1行のみ、短く）
+    if (review.comment) {
+      const commentY = panelY + panelH + 34;
+      ctx.fillStyle = isQuality ? 'rgba(224,178,86,.55)' : 'rgba(94,201,122,.5)';
+      ctx.fillRect(40, commentY - 20, 3, 26);
+      ctx.font = "400 20px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillStyle = '#e8f0ea';
+      const maxWidth = 1120;
+      let text = `「${review.comment}」`;
+      while(text.length > 2 && ctx.measureText(text).width > maxWidth) text = text.slice(0, -2) + '…」';
+      ctx.fillText(text, 58, commentY);
+    }
+
+    // フッター
+    const footerY = H - 60;
+    ctx.fillStyle = COL.footerLine;
+    ctx.fillRect(40, footerY, W - 80, 1);
+    roundRectPath(40, footerY + 18, 24, 24, 7);
+    ctx.fillStyle = COL.logoBg; ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = "900 13px 'Zen Kaku Gothic New', sans-serif";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('A', 40 + 12, footerY + 18 + 13);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#e8f0ea';
+    ctx.font = "800 21px 'Zen Kaku Gothic New', sans-serif";
+    ctx.fillText('アニメップル', 40 + 24 + 10, footerY + 36);
+    const brandWidth = ctx.measureText('アニメップル').width;
+    ctx.fillStyle = '#8db5a0';
+    ctx.font = "400 15px 'Zen Kaku Gothic New', sans-serif";
+    ctx.fillText(' ｜ ' + (t('cardTagline') || 'アニメのグラフでドンピシャを見つける'), 40 + 24 + 10 + brandWidth, footerY + 36);
+    ctx.font = "400 16px 'Zen Kaku Gothic New', sans-serif";
+    ctx.textAlign = 'right';
+    ctx.fillText('animepple.com', W - 40, footerY + 36);
+    ctx.textAlign = 'left';
+
+    ctx.restore();
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   }
 
   function buildShareIconsHtml(page) {
@@ -11366,7 +11479,7 @@
   // 各SNSアイコンをクリックした時の共通処理：レビューカード画像をダウンロードしてから、
   // そのSNS固有の投稿画面（テキスト+リンクを事前入力した状態）を新しいタブで開く。
   // （各SNSの共有用URLはどれも画像の事前添付に対応していないため、この2段階が現状取れる最善の形）
-  function wireShareIconButtons(box, page, review) {
+  function wireShareIconButtons(box, page, review, isVoted) {
     box.querySelectorAll('.share-target-btn').forEach(btn => {
       const target = SHARE_TARGETS.find(s => s.key === btn.dataset.key);
       if(!target) return;
@@ -11375,20 +11488,23 @@
         const title = getTitle(page) || page.title || page.titleEn || '';
         const shareText = t('shareReviewText').replace('{title}', title);
         const shareUrl = `https://animeppuru-official.github.io/animepple/anime/${page.id}/reviews`;
+        let urlToUse = shareUrl;
         if(review) {
           btn.style.opacity = '.5';
           try {
-            const blob = await generateReviewCardImage(page, review);
+            const blob = await generateReviewCardImage(page, review, isVoted);
             if(!blob) throw new Error('blob is null');
-            const dlUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = dlUrl; a.download = 'animepple-review.png';
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
+            const cardUrl = await uploadShareCard(blob, title, shareUrl);
+            if(cardUrl) {
+              urlToUse = cardUrl;
+            } else {
+              const result = await copyImageToClipboardOrDownload(blob, 'animepple-review.png');
+              alert(result === 'copied' ? t('shareIconCopiedNote') : t('shareIconDownloadedNote'));
+            }
           } catch(e) { console.warn('share icon image generation failed:', e); alert(t('shareCardFailedAlert')); }
           finally { btn.style.opacity = ''; }
         }
-        window.open(target.url(shareUrl, shareText), '_blank', 'noopener,noreferrer');
+        window.open(target.url(urlToUse, shareText), '_blank', 'noopener,noreferrer');
       };
     });
   }
@@ -11428,7 +11544,7 @@
     };
     box.querySelector('#reviewPostedPopupCloseBtn').onclick = close;
     overlay.onclick = (e) => { if(e.target === overlay) close(); };
-    if(shareIconsHtml && page) wireShareIconButtons(box, page, review);
+    if(shareIconsHtml && page) wireShareIconButtons(box, page, review, isVoted);
     const cardShareBtn = box.querySelector('#reviewCardShareBtn');
     if(cardShareBtn && page && review) {
       cardShareBtn.onclick = async () => {
@@ -11436,7 +11552,7 @@
         const originalLabel = cardShareBtn.innerHTML;
         cardShareBtn.innerHTML = t('shareCardGenerating');
         try {
-          const blob = await generateReviewCardImage(page, review);
+          const blob = await generateReviewCardImage(page, review, isVoted);
           if(!blob) throw new Error('blob is null');
           const title = getTitle(page) || page.title || page.titleEn || '';
           const shareText = t('shareReviewText').replace('{title}', title);
@@ -11446,15 +11562,16 @@
           if(navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({ files: [file], title: 'アニメップル', text: shareText + ' ' + shareUrl });
           } else {
-            // PC等、画像付き共有シートに対応してない環境：画像はダウンロードしてもらい、
-            // 投稿画面はテキスト+リンクだけの状態で別タブに開く（手動で画像を添付してもらう）
-            const dlUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = dlUrl; a.download = 'animepple-review.png';
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
-            window.open(SHARE_TARGETS[0].url(shareUrl, shareText), '_blank', 'noopener,noreferrer');
-            alert(t('shareCardDesktopNote'));
+            // PC等、画像付き共有シートに対応してない環境：まずOGPリンク（自動で画像付きに見える）を
+            // 試し、アップロードできなかった時だけクリップボードコピー／ダウンロードにフォールバックする
+            const cardUrl = await uploadShareCard(blob, title, shareUrl);
+            if(cardUrl) {
+              window.open(SHARE_TARGETS[0].url(cardUrl, shareText), '_blank', 'noopener,noreferrer');
+            } else {
+              const result = await copyImageToClipboardOrDownload(blob, 'animepple-review.png');
+              window.open(SHARE_TARGETS[0].url(shareUrl, shareText), '_blank', 'noopener,noreferrer');
+              alert(result === 'copied' ? t('shareIconCopiedNote') : t('shareIconDownloadedNote'));
+            }
           }
         } catch(e) {
           if(e && e.name !== 'AbortError') { console.warn('review card share failed:', e); alert(t('shareCardFailedAlert')); }
@@ -11465,7 +11582,6 @@
       };
     }
   }
-
   function proceedReviewSubmit(selectedAxisKey, selectedAxisGroup) {
     const comment = document.getElementById('reviewComment').value.trim();
     // タグに現在の表示言語コードをプレフィックスとして付けて保存する。
@@ -14763,6 +14879,13 @@
     shareCardBtn: { ja:'レビューカードをシェア', en:'Share review card' },
     shareCardGenerating: { ja:'作成中…', en:'Generating…' },
     shareCardDesktopNote: { ja:'画像をダウンロードしました。開いた投稿画面に手動で添付してください。', en:'Image downloaded. Please attach it manually in the post window that opened.' },
+    shareIconCopiedNote: { ja:'画像をコピーしました。開いた投稿画面に貼り付けて（Ctrl+V／⌘+V）ください。', en:'Image copied. Paste it (Ctrl+V / ⌘+V) into the post window that opened.' },
+    shareIconDownloadedNote: { ja:'画像をダウンロードしました。開いた投稿画面に手動で添付してください。', en:'Image downloaded. Please attach it manually in the post window that opened.' },
+    qualityReviewBadge: { ja:'上質レビュー', en:'Quality review' },
+    radarTitleA: { ja:'作品の完成度', en:'Craftsmanship' },
+    radarTitleB: { ja:'感情・雰囲気', en:'Mood & Feel' },
+    cardTagline: { ja:'アニメのグラフでドンピシャを見つける', en:'Find your perfect anime with visual charts' },
+    cardByLine: { ja:'{name}のレビュー', en:'Review by {name}' },
     shareCardFailedAlert: { ja:'画像の作成に失敗しました。時間をおいて再度お試しください。', en:'Failed to create the image. Please try again later.' },
     pushEnablePrompt:{ ja:'通知ONの掲示板に新着があったら、スマホ・PCに通知を届けます', en:'Get notified on your device when boards you follow have new posts' },
     pushEnableBtn:{ ja:'通知を有効にする', en:'Enable notifications' },
