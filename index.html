@@ -2965,7 +2965,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.305.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.307.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -3388,6 +3388,50 @@
   </div>
   <div style="padding:.75rem 1rem 0;">
     <div id="reviewList"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PAGE: IMAGE SUBMIT（画像投稿）
+═══════════════════════════════════ -->
+<div class="page" id="page-image-submit">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.2rem;max-width:480px;margin:0 auto;">
+    <h2 id="imageSubmitTitle" style="margin:0 0 4px;font-size:1rem;color:#dff0e6;"></h2>
+    <p style="margin:0 0 18px;font-size:.8rem;color:var(--muted,#9ab);" data-i18n="imageSubmitLead">この作品のポスター画像を投稿できます。管理者の確認後、公開されます。</p>
+
+    <div style="border-radius:12px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);padding:14px;margin-bottom:18px;">
+      <p style="margin:0 0 8px;font-size:.78rem;font-weight:800;color:#dfeae3;" data-i18n="imageSubmitSpecTitle">画像の条件</p>
+      <ul style="margin:0;padding-left:1.1rem;font-size:.76rem;line-height:1.8;color:#8db5a0;">
+        <li data-i18n="imageSubmitSpec1">縦長のポスター比率(だいたい2:3〜3:4)</li>
+        <li data-i18n="imageSubmitSpec2">推奨サイズ：横600px以上・縦840px以上</li>
+        <li data-i18n="imageSubmitSpec3">ファイルサイズ：最大5MBまで</li>
+        <li data-i18n="imageSubmitSpec4">形式：JPG・PNG・WebPのいずれか</li>
+      </ul>
+    </div>
+
+    <div style="border-radius:12px;border:1px dashed rgba(217,164,65,.3);background:rgba(217,164,65,.05);padding:14px;margin-bottom:18px;">
+      <p style="margin:0;font-size:.72rem;line-height:1.8;color:#c9a86a;" data-i18n="imageSubmitRightsText">投稿する画像は、あなた自身が著作権を持つもの、または利用が許可されているものに限ります。第三者の著作物を無断で使用しないでください。投稿された画像は、アニメップル上での表示・利用に使われます。管理者の判断で掲載を見送る場合があります。</p>
+    </div>
+
+    <div id="imageSubmitPreviewWrap" style="display:none;margin-bottom:14px;">
+      <img id="imageSubmitPreview" style="width:100%;max-width:240px;display:block;margin:0 auto;border-radius:10px;border:1px solid var(--line,#2a3830);">
+    </div>
+
+    <label for="imageSubmitFileInput" style="display:flex;align-items:center;justify-content:center;height:48px;border-radius:11px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:#dfeae3;font-size:.85rem;font-weight:700;cursor:pointer;margin-bottom:12px;">
+      <span id="imageSubmitFileLabel" data-i18n="imageSubmitChooseFile">画像を選ぶ</span>
+    </label>
+    <input type="file" id="imageSubmitFileInput" accept="image/png,image/jpeg,image/webp" style="display:none;">
+
+    <button type="button" id="imageSubmitBtn" disabled style="width:100%;height:48px;border-radius:11px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:.9rem;cursor:pointer;opacity:.5;" data-i18n="imageSubmitBtn">この画像を投稿する</button>
+    <p id="imageSubmitStatus" style="margin:10px 0 0;font-size:.76rem;color:var(--muted,#9ab);text-align:center;"></p>
   </div>
 </div>
 
@@ -4561,13 +4605,11 @@
 
   <!-- パスワード画面 -->
   <div id="adminLoginSection" style="padding:2rem 1rem;">
-    <div style="max-width:320px;margin:0 auto;">
-      <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem;">管理者パスワードを入力してください</p>
-      <input type="password" id="adminPasswordInput" placeholder="パスワード"
-        style="width:100%;padding:.7rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.95rem;box-sizing:border-box;margin-bottom:.75rem;" />
-      <button onclick="adminLogin()"
-        style="width:100%;padding:.75rem;border-radius:10px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">ログイン</button>
-      <p id="adminLoginError" style="color:#ff6b6b;font-size:.78rem;margin-top:.5rem;"></p>
+    <div style="max-width:320px;margin:0 auto;text-align:center;">
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.2rem;line-height:1.7;">管理者アカウントでログインしてください。パスワードは廃止し、アカウントの権限だけで判定するようになりました。</p>
+      <button id="adminGoLoginBtn" onclick="showAuthModal('login')"
+        style="width:100%;padding:.75rem;border-radius:10px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">ログインする</button>
+      <p id="adminLoginError" style="color:#ff6b6b;font-size:.78rem;margin-top:.75rem;"></p>
     </div>
   </div>
 
@@ -4575,6 +4617,12 @@
   <div id="adminDashboard" style="display:none;padding:1rem;">
     <div id="admin-group-overview">
     <div class="admin-group-header">概要</div>
+    <!-- 画像投稿：承認待ち一覧 -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🖼️ 画像投稿の承認待ち</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">ユーザーから投稿されたポスター画像。承認するとその作品のページに反映されます。</p>
+      <div id="adminImageSubmissionsList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
+    </div>
     <!-- サイト監視 -->
     <div class="admin-section">
       <h3 class="admin-section-title">🩺 サイト監視（直近のエラー）</h3>
@@ -5582,7 +5630,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.305.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.307.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -5999,6 +6047,56 @@
           const { error } = await sb.from('board_reactions').insert({ post_id: postId, user_id: userId, emoji });
           return { error, added: true };
         }
+      },
+    },
+    // ── 画像投稿（アニメページのポスター画像。管理者承認制） ──
+    imageSubmissions: {
+      // 直近5分以内に同じ作品へ投稿済みなら弾く（簡易的な連投対策。厳密な制限はRLS/DB側でも別途必要）
+      async hasRecentSubmission(userId, animeId) {
+        if(!sb || !userId) return false;
+        const fiveMinAgo = new Date(Date.now() - 5*60*1000).toISOString();
+        const { data } = await sb.from('image_submissions').select('id').eq('user_id', userId).eq('anime_id', animeId).gte('created_at', fiveMinAgo).limit(1);
+        return !!(data && data.length);
+      },
+      async submit(userId, animeId, blob) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const path = `${userId}/${animeId}-${Date.now()}.jpg`;
+        const { error: uploadError } = await sb.storage.from('anime-image-submissions').upload(path, blob, { contentType: 'image/jpeg' });
+        if(uploadError) return { error: uploadError };
+        const { error } = await sb.from('image_submissions').insert({ anime_id: animeId, user_id: userId, image_path: path });
+        return { error };
+      },
+      // 管理者向け：承認待ち一覧（画像は非公開バケットのため、表示用に一時的な署名付きURLを発行する）
+      async listPending() {
+        if(!sb) return [];
+        const { data } = await sb.from('image_submissions').select('id, anime_id, user_id, image_path, created_at').eq('status', 'pending').order('created_at', { ascending: true });
+        if(!data || !data.length) return [];
+        const withUrls = await Promise.all(data.map(async row => {
+          const { data: signed } = await sb.storage.from('anime-image-submissions').createSignedUrl(row.image_path, 600);
+          return { ...row, previewUrl: signed?.signedUrl || null };
+        }));
+        return withUrls;
+      },
+      // 承認：非公開バケットから読み出し、公開バケットへコピーしてから anime_pages.image を更新する
+      async approve(submissionId) {
+        if(!sb) return { error: 'invalid' };
+        const { data: row, error: fetchError } = await sb.from('image_submissions').select('anime_id, image_path').eq('id', submissionId).single();
+        if(fetchError || !row) return { error: fetchError || new Error('not found') };
+        const { data: fileData, error: downloadError } = await sb.storage.from('anime-image-submissions').download(row.image_path);
+        if(downloadError) return { error: downloadError };
+        const publicPath = `${row.anime_id}-${Date.now()}.jpg`;
+        const { error: uploadError } = await sb.storage.from('anime-images').upload(publicPath, fileData, { contentType: 'image/jpeg' });
+        if(uploadError) return { error: uploadError };
+        const { data: pub } = sb.storage.from('anime-images').getPublicUrl(publicPath);
+        const { error: updateAnimeError } = await sb.from('anime_pages').update({ image_url: pub.publicUrl }).eq('id', row.anime_id);
+        if(updateAnimeError) return { error: updateAnimeError };
+        const { error } = await sb.from('image_submissions').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', submissionId);
+        return { error };
+      },
+      async reject(submissionId, note) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('image_submissions').update({ status: 'rejected', reviewer_note: note || null, reviewed_at: new Date().toISOString() }).eq('id', submissionId);
+        return { error };
       },
     },
     // ── フォロー ──
@@ -7203,6 +7301,7 @@
     if(page === 'review' && animeId) return `/anime/${publicAnimeId(animeId)}/write-review`;
     if(page === 'board-general' && animeId) return `/anime/${publicAnimeId(animeId)}/board`;
     if(page === 'board-value' && animeId) return `/anime/${publicAnimeId(animeId)}/board/value/${_boardActiveTab || 'A'}`;
+    if(page === 'image-submit' && animeId) return `/anime/${publicAnimeId(animeId)}/image-submit`;
     if(page === 'user' && animeId) return `/user/${encodeURIComponent(animeId)}`;
     if(page === 'follow-list') {
       const uid = _followListState && _followListState.userId;
@@ -7227,6 +7326,9 @@
 
     m = rel.match(/^\/anime\/([^\/]+)\/write-review(?:\/.*)?$/);
     if(m) return { page:'review', animeId: internalAnimeIdFromPublic(decodeURIComponent(m[1])) };
+
+    m = rel.match(/^\/anime\/([^\/]+)\/image-submit(?:\/.*)?$/);
+    if(m) return { page:'image-submit', animeId: internalAnimeIdFromPublic(decodeURIComponent(m[1])) };
 
     m = rel.match(/^\/anime\/([^\/]+)(?:\/.*)?$/);
     if(m) return { page:'anime', animeId: internalAnimeIdFromPublic(decodeURIComponent(m[1])) };
@@ -7404,6 +7506,7 @@
     if (page==='home')   renderHome().catch(console.error);
     if (page==='anime'&&animeId)  { renderAnimePage(animeId); }
     if (page==='review'&&animeId) { initReviewPage(animeId); }
+    if (page==='image-submit'&&animeId) { initImageSubmitPage(animeId); }
     if (page==='search') renderSearch().catch(console.error);
     if (page==='popular') renderPopular().catch(console.error);
     if (page==='board') renderBoardHub().catch(console.error);
@@ -7514,7 +7617,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.305.0';
+      if(vEl) vEl.textContent = 'v0.307.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -10552,6 +10655,15 @@
     document.getElementById('goReviewBtn').style.display='';
     const thumb=document.getElementById('animeThumbHero');
     thumb.innerHTML=page.image?`<img src="${page.image}" alt="${page.title}" style="width:100%;height:100%;object-fit:cover;display:block;" />`:noImagePlaceholderHtml('responsive');
+    // 画像が無い（プレースホルダーの）時だけ、タップで画像投稿ページへ行けるようにする
+    if(!page.image) {
+      thumb.style.cursor = 'pointer';
+      thumb.onclick = () => nav('image-submit', id);
+      thumb.title = t('imageSubmitTapHint') || '画像を投稿する';
+    } else {
+      thumb.style.cursor = '';
+      thumb.onclick = null;
+    }
     document.getElementById('goReviewBtn').onclick=()=>nav('review',id);
     updateFavButtonState(id);
     renderAffiliateLinks(page);
@@ -10817,6 +10929,88 @@
       sitekey: TURNSTILE_SITE_KEY,
       theme: 'dark',
     });
+  }
+
+  // ── 画像投稿ページ ──
+  // 選ばれた画像はcanvasに一度焼き直してから送信する。これにより：
+  // ① EXIF等の位置情報メタデータが自動的に消える ② 画像として実際にデコードできるものだけを通す
+  //   （偽装ファイルを弾く簡易チェックにもなる） ③ 大きすぎる画像は縮小してから送るのでストレージ節約になる
+  const IMAGE_SUBMIT_MAX_SIZE_MB = 5;
+  const IMAGE_SUBMIT_MAX_DIM = 1200; // 長辺の上限（縮小の基準）
+  let _imageSubmitBlob = null;
+  function initImageSubmitPage(animeId) {
+    const page = getAll().find(a=>a.id===animeId);
+    const titleEl = document.getElementById('imageSubmitTitle');
+    if(titleEl) titleEl.textContent = (page ? getTitle(page) : '') + ' ' + (t('imageSubmitTitleSuffix') || '画像を投稿');
+    _imageSubmitBlob = null;
+    const fileInput = document.getElementById('imageSubmitFileInput');
+    const fileLabel = document.getElementById('imageSubmitFileLabel');
+    const previewWrap = document.getElementById('imageSubmitPreviewWrap');
+    const previewImg = document.getElementById('imageSubmitPreview');
+    const submitBtn = document.getElementById('imageSubmitBtn');
+    const statusEl = document.getElementById('imageSubmitStatus');
+    if(fileLabel) fileLabel.textContent = t('imageSubmitChooseFile');
+    if(previewWrap) previewWrap.style.display = 'none';
+    if(submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = '.5'; }
+    if(statusEl) statusEl.textContent = '';
+    if(!fileInput) return;
+    fileInput.value = '';
+    fileInput.onchange = async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if(!file) return;
+      if(file.size > IMAGE_SUBMIT_MAX_SIZE_MB * 1024 * 1024) {
+        alert(t('imageSubmitTooLargeAlert'));
+        fileInput.value = '';
+        return;
+      }
+      if(statusEl) statusEl.textContent = t('imageSubmitProcessing') || '処理中…';
+      try {
+        const img = await new Promise((resolve, reject) => {
+          const im = new Image();
+          im.onload = () => resolve(im);
+          im.onerror = () => reject(new Error('not a valid image'));
+          im.src = URL.createObjectURL(file);
+        });
+        // canvasに焼き直す（大きすぎれば長辺IMAGE_SUBMIT_MAX_DIMに収まるよう縮小）
+        const scale = Math.min(1, IMAGE_SUBMIT_MAX_DIM / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.round(img.naturalWidth * scale), h = Math.round(img.naturalHeight * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+        if(!blob) throw new Error('failed to encode');
+        _imageSubmitBlob = blob;
+        if(previewImg) previewImg.src = URL.createObjectURL(blob);
+        if(previewWrap) previewWrap.style.display = '';
+        if(fileLabel) fileLabel.textContent = file.name;
+        if(submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = ''; }
+        if(statusEl) statusEl.textContent = '';
+      } catch(e) {
+        console.warn('image submit preview failed:', e);
+        alert(t('imageSubmitInvalidFileAlert'));
+        fileInput.value = '';
+        _imageSubmitBlob = null;
+      }
+    };
+    if(submitBtn) {
+      submitBtn.onclick = async () => {
+        if(!_currentUser) { alert(t('loginRequiredAlert')); return; }
+        if(!_imageSubmitBlob) return;
+        submitBtn.disabled = true; submitBtn.style.opacity = '.5';
+        if(statusEl) statusEl.textContent = t('imageSubmitSending') || '送信中…';
+        try {
+          const recent = await db.imageSubmissions.hasRecentSubmission(_currentUser.id, animeId);
+          if(recent) { alert(t('imageSubmitTooSoonAlert')); return; }
+          const { error } = await db.imageSubmissions.submit(_currentUser.id, animeId, _imageSubmitBlob);
+          if(error) { console.error('image submit failed:', error); alert(t('imageSubmitFailedAlert')); return; }
+          alert(t('imageSubmitDoneAlert'));
+          nav('anime', animeId);
+        } finally {
+          submitBtn.disabled = false; submitBtn.style.opacity = '';
+        }
+      };
+    }
   }
 
   function initReviewPage(id) {
@@ -14943,6 +15137,25 @@
     radarTitleB: { ja:'感情・雰囲気', en:'Mood & Feel' },
     cardTagline: { ja:'アニメのグラフでドンピシャを見つける', en:'Find your perfect anime with visual charts' },
     cardByLine: { ja:'{name}のレビュー', en:'Review by {name}' },
+    imageSubmitTapHint: { ja:'画像を投稿する', en:'Submit an image' },
+    imageSubmitTitleSuffix: { ja:'画像を投稿', en:'Submit image' },
+    imageSubmitLead: { ja:'この作品のポスター画像を投稿できます。管理者の確認後、公開されます。', en:'You can submit a poster image for this title. It will be published after admin review.' },
+    imageSubmitSpecTitle: { ja:'画像の条件', en:'Image requirements' },
+    imageSubmitSpec1: { ja:'縦長のポスター比率(だいたい2:3〜3:4)', en:'Portrait poster ratio (roughly 2:3 to 3:4)' },
+    imageSubmitSpec2: { ja:'推奨サイズ：横600px以上・縦840px以上', en:'Recommended: at least 600px wide and 840px tall' },
+    imageSubmitSpec3: { ja:'ファイルサイズ：最大5MBまで', en:'File size: up to 5MB' },
+    imageSubmitSpec4: { ja:'形式：JPG・PNG・WebPのいずれか', en:'Format: JPG, PNG, or WebP' },
+    imageSubmitRightsText: { ja:'投稿する画像は、あなた自身が著作権を持つもの、または利用が許可されているものに限ります。第三者の著作物を無断で使用しないでください。投稿された画像は、アニメップル上での表示・利用に使われます。管理者の判断で掲載を見送る場合があります。', en:'Only submit images you own the rights to, or are permitted to use. Do not use third-party copyrighted material without permission. Submitted images will be used for display on Animepple. We may decline to publish a submission at our discretion.' },
+    imageSubmitChooseFile: { ja:'画像を選ぶ', en:'Choose an image' },
+    imageSubmitBtn: { ja:'この画像を投稿する', en:'Submit this image' },
+    imageSubmitProcessing: { ja:'処理中…', en:'Processing…' },
+    imageSubmitSending: { ja:'送信中…', en:'Sending…' },
+    imageSubmitTooLargeAlert: { ja:'ファイルサイズが大きすぎます(5MBまで)。', en:'File is too large (max 5MB).' },
+    imageSubmitInvalidFileAlert: { ja:'画像として読み込めませんでした。別のファイルをお試しください。', en:'Could not read this as an image. Please try another file.' },
+    imageSubmitTooSoonAlert: { ja:'少し時間をおいてから、もう一度お試しください。', en:'Please wait a bit before trying again.' },
+    imageSubmitFailedAlert: { ja:'投稿に失敗しました。時間をおいて再度お試しください。', en:'Submission failed. Please try again later.' },
+    imageSubmitDoneAlert: { ja:'投稿しました。管理者の確認をお待ちください。', en:'Submitted. Please wait for admin review.' },
+    adminNotAdminAccount: { ja:'このアカウントには管理者権限がありません。', en:'This account does not have admin access.' },
     shareCardFailedAlert: { ja:'画像の作成に失敗しました。時間をおいて再度お試しください。', en:'Failed to create the image. Please try again later.' },
     pushEnablePrompt:{ ja:'通知ONの掲示板に新着があったら、スマホ・PCに通知を届けます', en:'Get notified on your device when boards you follow have new posts' },
     pushEnableBtn:{ ja:'通知を有効にする', en:'Enable notifications' },
@@ -15791,9 +16004,6 @@
   // パスワードはSHA-256ハッシュ化して保持（平文をソースに残さない）
   // 新しいパスワードに変更する場合は、ブラウザのConsoleで以下を実行してハッシュを取得し、下の値を置き換えてください:
   // crypto.subtle.digest('SHA-256', new TextEncoder().encode('新しいパスワード')).then(b=>console.log(Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')))
-  const ADMIN_PASSWORD_HASH = '8999f81eec5815ac2bbeb8309b488a5c4bb5e7bf3549e7a14e61d6f0725572b3';
-  const ADMIN_SESSION_KEY = 'animepple-admin-session';
-  let _adminAuthed = localStorage.getItem(ADMIN_SESSION_KEY) === '1';
 
   async function sha256Hex(text) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -16992,11 +17202,19 @@
   window.partnerLogin = partnerLogin;
   document.getElementById('partnerKeyInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') partnerLogin(); });
 
-  function initAdminPage() {
+  async function initAdminPage() {
     const login = document.getElementById('adminLoginSection');
     const dash = document.getElementById('adminDashboard');
     const navBar = document.getElementById('adminNavBar');
-    if(_adminAuthed) {
+    // パスワードではなく、ログイン中のアカウントの is_admin フラグだけで判定する
+    let isAdmin = false;
+    if(_currentUser && sb) {
+      try {
+        const profile = await db.profiles.get(_currentUser.id);
+        isAdmin = !!profile?.is_admin;
+      } catch(e) { console.warn('admin check failed:', e); }
+    }
+    if(isAdmin) {
       login.style.display='none';
       dash.style.display='';
       if(navBar) navBar.style.display='flex';
@@ -17007,26 +17225,8 @@
       login.style.display='';
       dash.style.display='none';
       if(navBar) navBar.style.display='none';
-      document.getElementById('adminPasswordInput').value='';
-      document.getElementById('adminLoginError').textContent='';
-    }
-  }
-
-  async function adminLogin() {
-    const pw = document.getElementById('adminPasswordInput').value;
-    const hash = await sha256Hex(pw);
-    if(hash === ADMIN_PASSWORD_HASH) {
-      _adminAuthed = true;
-      localStorage.setItem(ADMIN_SESSION_KEY, '1');
-      document.getElementById('adminLoginSection').style.display='none';
-      document.getElementById('adminDashboard').style.display='';
-      const navBar = document.getElementById('adminNavBar');
-      if(navBar) navBar.style.display='flex';
-      loadAdminData();
-      initAdminCountryCompare();
-      setupAdminAnimeSearch();
-    } else {
-      document.getElementById('adminLoginError').textContent='パスワードが違います';
+      const errEl = document.getElementById('adminLoginError');
+      if(errEl) errEl.textContent = _currentUser ? t('adminNotAdminAccount') : '';
     }
   }
   document.getElementById('adminPasswordInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') adminLogin(); });
@@ -17428,8 +17628,56 @@
     });
   });
 
+  // 管理者向け：画像投稿の承認待ち一覧
+  async function renderAdminImageSubmissions() {
+    const el = document.getElementById('adminImageSubmissionsList');
+    if(!el) return;
+    try {
+      const pending = await db.imageSubmissions.listPending();
+      if(!pending.length) { el.innerHTML = `<p style="font-size:.78rem;color:var(--muted);">承認待ちはありません。</p>`; return; }
+      const pageMap = await resolveAnimeTitleMap(pending.map(p=>p.anime_id));
+      el.innerHTML = pending.map(p => {
+        const title = getTitle(pageMap[p.anime_id]) || pageMap[p.anime_id]?.title || p.anime_id;
+        return `
+          <div style="display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line,#2a3830);border-radius:10px;padding:10px;margin-bottom:8px;">
+            ${p.previewUrl ? `<img src="${escapeHtml(p.previewUrl)}" style="width:80px;height:112px;object-fit:cover;border-radius:6px;flex:0 0 80px;background:#141c19;">` : `<div style="width:80px;height:112px;flex:0 0 80px;background:#141c19;border-radius:6px;"></div>`}
+            <div style="flex:1 1 auto;min-width:0;">
+              <div style="font-size:.82rem;font-weight:800;color:#dfeae3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(title)}</div>
+              <div style="font-size:.7rem;color:var(--muted);margin-bottom:8px;">${escapeHtml(formatRelativeTime(p.created_at))}</div>
+              <div style="display:flex;gap:6px;">
+                <button type="button" class="admin-img-approve-btn" data-id="${p.id}" style="height:32px;padding:0 12px;border-radius:8px;border:none;background:#5ec97a;color:#07200f;font-size:.75rem;font-weight:800;cursor:pointer;">承認する</button>
+                <button type="button" class="admin-img-reject-btn" data-id="${p.id}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid rgba(229,72,77,.4);background:rgba(229,72,77,.1);color:#eaa9a9;font-size:.75rem;font-weight:700;cursor:pointer;">却下する</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      el.querySelectorAll('.admin-img-approve-btn').forEach(btn=>{
+        btn.onclick = async () => {
+          btn.disabled = true; btn.textContent = '処理中…';
+          const { error } = await db.imageSubmissions.approve(btn.dataset.id);
+          if(error) { console.error('approve failed:', error); alert('承認に失敗しました。ログインしてる管理者アカウントを確認してください。'); btn.disabled = false; btn.textContent = '承認する'; return; }
+          renderAdminImageSubmissions();
+        };
+      });
+      el.querySelectorAll('.admin-img-reject-btn').forEach(btn=>{
+        btn.onclick = async () => {
+          const note = prompt('却下理由（任意）') || '';
+          btn.disabled = true;
+          const { error } = await db.imageSubmissions.reject(btn.dataset.id, note);
+          if(error) { console.error('reject failed:', error); alert('却下の処理に失敗しました。'); btn.disabled = false; return; }
+          renderAdminImageSubmissions();
+        };
+      });
+    } catch(e) {
+      console.warn('renderAdminImageSubmissions:', e);
+      el.innerHTML = `<p style="font-size:.78rem;color:var(--muted);">読み込みに失敗しました。</p>`;
+    }
+  }
+
   async function loadAdminData() {
     if(!sb) return;
+    renderAdminImageSubmissions();
     try {
       // サイト監視: 直近のエラーログ
       const since24h = new Date(Date.now() - 24*3600*1000).toISOString();
@@ -17745,9 +17993,9 @@
     }
   }
 
-  function adminLogout() {
-    _adminAuthed = false;
-    localStorage.removeItem(ADMIN_SESSION_KEY);
+  async function adminLogout() {
+    // パスワード制は廃止したので、管理者から抜けたい時はサイト自体からログアウトする
+    await signOut();
     initAdminPage();
   }
 
