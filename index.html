@@ -5640,7 +5640,6 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.312.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -12545,6 +12544,18 @@
   // ブロック中のユーザーID一覧（掲示板・レビュー表示のフィルタに使う）
   let _blockedUserIds = null;
   let _boardReplyTarget = null; // 返信チップの対象（{id, username, body}）。掲示板を開いてる間だけ保持
+  // 掲示板を最新（最下部）までスクロールする共通処理。
+  // 注意：body.board-chat-mobileクラスはPC/スマホ問わず掲示板ページなら常に付与されるが、
+  // それを内側スクロール領域に変えるCSSは @media (max-width:767px) の中でしか効いていない。
+  // そのためクラスの有無ではなく「panelが実際にスクロールコンテナになっているか」で判定する。
+  function scrollBoardToBottom(panel) {
+    if(panel && panel.scrollHeight > panel.clientHeight + 4) {
+      panel.scrollTop = panel.scrollHeight;
+    } else {
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+  }
+
   // 「新着へ移動」ピル：最下部から離れて読んでる間に届いた新着件数を数えておく
   let _boardNewSincePill = 0;
   function updateBoardNewPill(panel) {
@@ -12824,10 +12835,7 @@
     panel.innerHTML = html;
     panel.dataset.boardRendered = '1';
     if(isFirstRender || wasNearBottom) {
-      requestAnimationFrame(() => {
-        if(document.body.classList.contains('board-chat-mobile')) panel.scrollTop = panel.scrollHeight;
-        else window.scrollTo(0, document.body.scrollHeight);
-      });
+      requestAnimationFrame(() => scrollBoardToBottom(panel));
       _boardNewSincePill = 0;
       updateBoardNewPill(panel);
     } else {
@@ -12926,7 +12934,13 @@
     });
 
     // ── 下部sticky入力欄 ──
-    const composerWrap = panel.parentElement;
+    // 注意：composerは「.board-chat-scroll(=会話がスクロールする領域)」の外に出し、
+    // .board-page-wrap直下（.board-chat-head / .board-chat-scroll と並ぶ兄弟要素）に置く必要がある。
+    // スマホの3段固定レイアウト（CSS側 body.board-chat-mobile .board-composer{flex:0 0 auto;...}）は
+    // これが.board-page-wrapのflexアイテムであることを前提にしている。
+    // 以前は panel.parentElement（＝.board-chat-scroll自身）に入れてしまっていたため、
+    // 入力欄が会話と一緒にスクロールしてしまっていた。
+    const composerWrap = panel.parentElement.parentElement;
     let composer = composerWrap.querySelector('.board-composer');
     if(!composer) {
       composer = document.createElement('div');
@@ -13046,12 +13060,15 @@
         const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, parentId, currentLang);
         if(error) { alert(t('profileSaveFailedAlert')); return; }
         _boardReplyTarget = null;
-        rerenderFn(animeId);
-        // 投稿後は必ず最新に貼り付ける（3段構成では会話コンテナ側）
+        // 投稿後は必ず最新に貼り付ける（3段構成では会話コンテナ側）。
+        // rerenderFnは非同期（DB再取得を挟む）ため、完了を待たずにスクロールすると
+        // まだ新しい投稿がDOMに反映される前の高さでスクロールしてしまい、特にPCで
+        // 最下部に届かないことがあった。await してから、かつ描画完了を待つ
+        // requestAnimationFrameでスクロールする。
+        await rerenderFn(animeId);
         requestAnimationFrame(() => {
           const sc = document.querySelector('.page.active .board-chat-scroll');
-          if(sc && document.body.classList.contains('board-chat-mobile')) sc.scrollTop = sc.scrollHeight;
-          else window.scrollTo(0, document.body.scrollHeight);
+          scrollBoardToBottom(sc);
         });
       };
       composer.querySelector('#boardComposeBtn').onclick = submitCompose;
