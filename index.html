@@ -4063,7 +4063,30 @@
   </header>
   <div style="padding:1.1rem;">
     <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🔔 お知らせ</h2>
-    <p style="font-size:.85rem;color:var(--muted);text-align:center;padding:2rem 0;">お知らせはまだありません</p>
+    <div id="notificationsList"><p style="font-size:.85rem;color:var(--muted);text-align:center;padding:2rem 0;">お知らせはまだありません</p></div>
+  </div>
+</div>
+
+<!-- 友達申請一覧：届いている申請／自分が送って承認待ちの申請をまとめるページ -->
+<div class="page mypage-page-wrap" id="page-friend-requests">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">友達申請</h2>
+    <h3 class="mypage-section-title" style="margin:0 0 .6rem;">届いている申請</h3>
+    <div id="friendReqIncomingList" style="margin-bottom:1.4rem;"></div>
+    <h3 class="mypage-section-title" style="margin:0 0 .6rem;">申請中（承認待ち）</h3>
+    <div id="friendReqOutgoingList"></div>
   </div>
 </div>
 
@@ -5405,6 +5428,10 @@
         </div>
         <div class="mypage-actions" id="mypageFollowActions" style="display:none;">
           <button class="mypage-btn-primary" id="mypageFollowBtn" onclick="toggleFollowCurrentProfile()">フォローする</button>
+          <button class="mypage-btn-secondary" id="mypageFriendBtn" onclick="handleFriendBtnClick()" style="white-space:nowrap;"></button>
+          <button type="button" id="mypageMoreBtn" aria-label="その他の操作" style="width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;color:#bccfc3;cursor:pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+          </button>
         </div>
       </div>
 
@@ -5507,7 +5534,7 @@
     </div>
 
     <!-- メニュー：履歴・お気に入り・参加中の掲示板は別ページへ -->
-    <div class="mypage-section mypage-record-section">
+    <div class="mypage-section mypage-record-section mypage-owner-only">
       <h3 class="mypage-section-title" style="margin:0 0 .6rem;">記録</h3>
       <div class="mypage-record-list">
       <button class="mypage-menu-row" onclick="nav('my-reviews')">
@@ -5526,6 +5553,12 @@
         <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
         <span class="mypage-menu-row-label" data-i18n="myBoardsTitle">参加中の掲示板</span>
         <span class="mypage-menu-row-badge" id="menuBadgeBoards" style="display:none;"></span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
+      <button class="mypage-menu-row" onclick="nav('friend-requests')">
+        <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span class="mypage-menu-row-label">友達申請</span>
+        <span class="mypage-menu-row-badge" id="menuBadgeFriendReq" style="display:none;"></span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
       <button class="mypage-menu-row" onclick="nav('my-icons')">
@@ -6184,17 +6217,6 @@
         const { data } = await sb.from('follows').select('follower_id').eq('following_id', userId);
         return (data||[]).map(r=>r.follower_id);
       },
-      // 友達＝相互フォロー（自分がフォローしていて、かつ相手にもフォローされているユーザー）
-      async getFriendIds(userId) {
-        if(!sb || !userId) return [];
-        const [followingIds, followerIds] = await Promise.all([this.getFollowingIds(userId), this.getFollowerIds(userId)]);
-        const followerSet = new Set(followerIds);
-        return followingIds.filter(id => followerSet.has(id));
-      },
-      async getFriendCount(userId) {
-        const ids = await this.getFriendIds(userId);
-        return ids.length;
-      },
     },
     blocks: {
       async list(userId) {
@@ -6211,6 +6233,81 @@
         if(!sb) return { error: 'invalid' };
         const { error } = await sb.from('blocks').delete().eq('blocker_id', blockerId).eq('blocked_id', blockedId);
         return { error };
+      },
+    },
+    // ── 友達（フォローとは別物。片方が申請→相手が承認して初めて成立する）
+    // 必要テーブル（Supabase側で作成）：
+    //   create table friend_requests (
+    //     id uuid primary key default gen_random_uuid(),
+    //     requester_id uuid not null references auth.users(id) on delete cascade,
+    //     addressee_id uuid not null references auth.users(id) on delete cascade,
+    //     status text not null default 'pending', -- 'pending' | 'accepted'
+    //     created_at timestamptz not null default now(),
+    //     unique (requester_id, addressee_id)
+    //   );
+    friendRequests: {
+      // 'none' | 'pending_sent'（自分が送って返事待ち） | 'pending_received'（相手から届いている） | 'friends'
+      async getStatus(userId, otherId) {
+        if(!sb || !userId || !otherId) return 'none';
+        const { data } = await sb.from('friend_requests').select('requester_id,addressee_id,status')
+          .or(`and(requester_id.eq.${userId},addressee_id.eq.${otherId}),and(requester_id.eq.${otherId},addressee_id.eq.${userId})`)
+          .maybeSingle();
+        if(!data) return 'none';
+        if(data.status === 'accepted') return 'friends';
+        return data.requester_id === userId ? 'pending_sent' : 'pending_received';
+      },
+      async send(requesterId, addresseeId) {
+        if(!sb || !requesterId || !addresseeId || requesterId === addresseeId) return { error: 'invalid' };
+        // 相手からすでに申請が来ていた場合は、新規発行ではなくその場で相互承認扱いにする
+        const { data: reverse } = await sb.from('friend_requests').select('id,status').eq('requester_id', addresseeId).eq('addressee_id', requesterId).maybeSingle();
+        if(reverse) {
+          if(reverse.status === 'accepted') return { error: null };
+          const { error } = await sb.from('friend_requests').update({ status: 'accepted' }).eq('id', reverse.id);
+          return { error };
+        }
+        const { error } = await sb.from('friend_requests').insert({ requester_id: requesterId, addressee_id: addresseeId, status: 'pending' });
+        return { error };
+      },
+      async cancel(requesterId, addresseeId) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('friend_requests').delete().eq('requester_id', requesterId).eq('addressee_id', addresseeId).eq('status', 'pending');
+        return { error };
+      },
+      async accept(requesterId, addresseeId) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('friend_requests').update({ status: 'accepted' }).eq('requester_id', requesterId).eq('addressee_id', addresseeId);
+        return { error };
+      },
+      async decline(requesterId, addresseeId) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('friend_requests').delete().eq('requester_id', requesterId).eq('addressee_id', addresseeId).eq('status', 'pending');
+        return { error };
+      },
+      async unfriend(userId, otherId) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('friend_requests').delete()
+          .or(`and(requester_id.eq.${userId},addressee_id.eq.${otherId}),and(requester_id.eq.${otherId},addressee_id.eq.${userId})`);
+        return { error };
+      },
+      async listIncoming(userId) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('friend_requests').select('id,requester_id,created_at').eq('addressee_id', userId).eq('status', 'pending').order('created_at', { ascending: false });
+        return data || [];
+      },
+      async listOutgoing(userId) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('friend_requests').select('id,addressee_id,created_at').eq('requester_id', userId).eq('status', 'pending').order('created_at', { ascending: false });
+        return data || [];
+      },
+      async getIncomingCount(userId) {
+        if(!sb || !userId) return 0;
+        const { count } = await sb.from('friend_requests').select('id', { count: 'exact', head: true }).eq('addressee_id', userId).eq('status', 'pending');
+        return count || 0;
+      },
+      async getFriendCount(userId) {
+        if(!sb || !userId) return 0;
+        const { count } = await sb.from('friend_requests').select('id', { count: 'exact', head: true }).eq('status', 'accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+        return count || 0;
       },
     },
     // ── 通報：掲示板投稿・レビューを通報する。閲覧は管理者ページから ──
@@ -7300,6 +7397,7 @@
     'my-favorites': '/mypage/favorites',
     'my-boards': '/mypage/boards',
     'my-icons': '/mypage/icons',
+    'friend-requests': '/mypage/friend-requests',
     settings: '/settings',
     'settings-account': '/settings/account',
     'settings-security': '/settings/security',
@@ -7667,6 +7765,8 @@
       const vEl = document.getElementById('settingsVersionText');
       if(vEl) vEl.textContent = 'v0.312.0';
     }
+    if (page==='notifications') { renderNotifications().catch(console.error); }
+    if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
       currentAnimeId = animeId;
@@ -13820,6 +13920,14 @@
 
     // 自分がその人をフォロー中かどうか（ボタン表示用。自分自身の行は除く）
     const myFollowingIds = _currentUser ? new Set(await db.follows.getFollowingIds(_currentUser.id)) : new Set();
+    // 友達申請の状態も行ごとに反映する（フォローとは別物）
+    const friendStatusMap = {};
+    if(_currentUser) {
+      await Promise.all(ids.map(async uid => {
+        if(uid === _currentUser.id) return;
+        friendStatusMap[uid] = await db.friendRequests.getStatus(_currentUser.id, uid).catch(()=>'none');
+      }));
+    }
 
     bodyEl.innerHTML = ids.map(uid => {
       const p = profileMap[uid] || {};
@@ -13832,13 +13940,17 @@
       const btnHtml = showBtn
         ? `<button type="button" class="mypage-btn-primary follow-list-follow-btn${isFollowing?' mypage-btn-following':''}" data-uid="${escapeHtml(uid)}" data-following="${isFollowing?'1':'0'}" style="height:34px;padding:0 14px;font-size:12px;flex-shrink:0;">${isFollowing?escapeHtml(t('followingBtn')):escapeHtml(t('followBtn'))}</button>`
         : '';
+      const friendStatus = friendStatusMap[uid] || 'none';
+      const friendBtnHtml = showBtn
+        ? `<button type="button" class="mypage-btn-secondary follow-list-friend-btn" data-uid="${escapeHtml(uid)}" data-friend-status="${friendStatus}" style="height:34px;padding:0 14px;font-size:12px;flex-shrink:0;white-space:nowrap;">${escapeHtml(friendStatus==='pending_received' ? '友達申請を承認する' : friendBtnLabel(friendStatus))}</button>`
+        : '';
       return `
         <div class="follow-list-row">
           <div class="follow-list-avatar" onclick="nav('user','${escapeHtml(uid)}')" style="cursor:pointer;background:${avatarUrl?'transparent':'#5ec97a'};">
             ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:escapeHtml(initial)}
           </div>
           <span class="follow-list-name" onclick="nav('user','${escapeHtml(uid)}')">${escapeHtml(name)}</span>
-          ${btnHtml}
+          <span style="flex:0 0 auto;display:flex;gap:6px;">${btnHtml}${friendBtnHtml}</span>
         </div>
       `;
     }).join('');
@@ -13860,14 +13972,32 @@
         btn.classList.toggle('mypage-btn-following', !currentlyFollowing);
       };
     });
+    bodyEl.querySelectorAll('.follow-list-friend-btn').forEach(btn => {
+      btn.onclick = async () => {
+        if(!_currentUser) return;
+        const targetId = btn.dataset.uid;
+        const status = btn.dataset.friendStatus;
+        btn.disabled = true;
+        const newStatus = await performFriendAction(status, targetId);
+        btn.disabled = false;
+        btn.dataset.friendStatus = newStatus;
+        btn.textContent = newStatus === 'pending_received' ? '友達申請を承認する' : friendBtnLabel(newStatus);
+      };
+    });
   }
 
   async function renderBlockedUsers(userId) {
     const el = document.getElementById('settingsBlockedSection');
     if(!el || !sb) return;
-    const rows = await db.blocks.list(userId);
-    if(!rows.length) { el.style.display='none'; return; }
     el.style.display='';
+    const rows = await db.blocks.list(userId);
+    if(!rows.length) {
+      el.innerHTML = `
+        <h3 style="margin:0 0 .5rem;font-size:.9rem;">${escapeHtml(t('blockedUsersTitle'))}</h3>
+        <p style="color:var(--muted,#9ab);font-size:.82rem;margin:0;">ブロック中のユーザーはいません</p>
+      `;
+      return;
+    }
     const names = await Promise.all(rows.map(async r => ({
       id: r.blocked_id,
       name: (await db.profiles.getUsername(r.blocked_id)) || r.blocked_id,
@@ -14103,6 +14233,68 @@
     document.querySelectorAll('.board-more-btn.is-open').forEach(b=>b.classList.remove('is-open'));
     document.removeEventListener('pointerdown', boardMoreOutside, true);
     window.removeEventListener('scroll', closeBoardMoreMenu, true);
+  }
+
+  // マイページ（相手のプロフィール）の「⋯」：通報・ブロックをここに集約する。
+  // 「友達」は相互フォローで自動的に成立する仕組みなので、別途「申請」ボタンは設けていない
+  // （フォローする → 相手もフォローし返してくれたら自動的に友達になる）。
+  async function openMypageMoreMenu(btn, targetUserId) {
+    closeMypageMoreMenu();
+    if(!_currentUser || !targetUserId) return;
+    btn.classList.add('is-open');
+    const blockedRows = await db.blocks.list(_currentUser.id).catch(()=>[]);
+    const isBlocked = blockedRows.some(r => r.blocked_id === targetUserId);
+
+    const menu = document.createElement('div');
+    menu.id = 'mypageMoreMenu';
+    menu.className = 'board-more-menu';
+    menu.innerHTML = `
+      <button type="button" class="board-more-menu-item" data-act="report"><span>🚩</span><span>${escapeHtml(t('reportBtn'))}</span></button>
+      <button type="button" class="board-more-menu-item" data-act="block"><span>🚫</span><span>${escapeHtml(isBlocked ? t('unblockBtn') : t('blockBtn'))}</span></button>`;
+    document.body.appendChild(menu);
+
+    const r = btn.getBoundingClientRect();
+    const mw = menu.offsetWidth, mh = menu.offsetHeight;
+    let left = Math.min(Math.max(8, r.right - mw), window.innerWidth - mw - 8);
+    let top = r.bottom + 8;
+    if(top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 8);
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+
+    menu.querySelector('[data-act="report"]').onclick = async () => {
+      closeMypageMoreMenu();
+      if(!confirm(t('reportConfirm'))) return;
+      const { error } = await db.reports.submit(_currentUser.id, 'user', targetUserId, null);
+      if(error) { alert(t('profileSaveFailedAlert')); return; }
+      alert(t('reportSentAlert'));
+    };
+    menu.querySelector('[data-act="block"]').onclick = async () => {
+      closeMypageMoreMenu();
+      if(isBlocked) {
+        await db.blocks.remove(_currentUser.id, targetUserId);
+      } else {
+        if(!confirm(t('blockConfirm'))) return;
+        const { error } = await db.blocks.add(_currentUser.id, targetUserId);
+        if(error) { alert(t('profileSaveFailedAlert')); return; }
+      }
+      await loadMyBlockedUserIds();
+    };
+
+    setTimeout(() => {
+      document.addEventListener('pointerdown', mypageMoreOutside, true);
+      window.addEventListener('scroll', closeMypageMoreMenu, true);
+    }, 0);
+  }
+  function mypageMoreOutside(ev) {
+    const menu = document.getElementById('mypageMoreMenu');
+    if(menu && !menu.contains(ev.target)) closeMypageMoreMenu();
+  }
+  function closeMypageMoreMenu() {
+    const menu = document.getElementById('mypageMoreMenu');
+    if(menu) menu.remove();
+    document.querySelectorAll('#mypageMoreBtn.is-open').forEach(b=>b.classList.remove('is-open'));
+    document.removeEventListener('pointerdown', mypageMoreOutside, true);
+    window.removeEventListener('scroll', closeMypageMoreMenu, true);
   }
 
   // マイページの価値観アイコンを押した時：常設セクションへスクロールする（旧ポップアップは残置）
@@ -18821,6 +19013,8 @@
           ensureLoggedInUsername();
           checkUnreadBoards();
           startGlobalBoardNotifyWatch();
+          checkFriendRequestBadge();
+          startFriendRequestWatch();
         }
       } catch(e) { console.warn('OAuth hash handling:', e); }
     }
@@ -18834,12 +19028,14 @@
       loadMyBlockedUserIds();
       checkUnreadBoards();
       startGlobalBoardNotifyWatch();
+      checkFriendRequestBadge();
+      startFriendRequestWatch();
     }
     // yourValueHeaderBtn は常時表示（Design案通り）
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -19259,11 +19455,33 @@
   // ── 掲示板の未読バッジ（プッシュ通知に頼らず、アプリを開けば気付ける仕組み） ──
   // ボトムナビの「掲示板」アイコン、および画面上部固定のベル、両方に反映する。
   // 対象は「ベルでONにしている（通知する掲示板リスト）」ものだけ（投稿・投票しただけの掲示板は含まない）。
-  function setBoardBadge(hasAny, hasUnread, unreadCount) {
-    const badge = document.getElementById('bnavNotifBadge');
-    if(badge) {
-      if(unreadCount > 0) { badge.textContent = unreadCount; badge.style.display = ''; }
+  // 通知バッジ（ボトムナビ「お知らせ」）：掲示板の未読(●)と友達申請の件数(数字)を合成して出す。
+  // 友達申請が1件でもあればそちらを数字で優先表示、無ければ掲示板未読の●だけ出す。
+  let _boardHasUnreadFlag = false;
+  let _friendReqBadgeCount = 0;
+  function renderNotifBadges() {
+    ['bnavNotifBadge', 'bnavcNotifBadge'].forEach(id => {
+      const badge = document.getElementById(id);
+      if(!badge) return;
+      if(_friendReqBadgeCount > 0) { badge.textContent = _friendReqBadgeCount; badge.style.display = ''; }
+      else if(_boardHasUnreadFlag) { badge.textContent = '●'; badge.style.display = ''; }
       else { badge.style.display = 'none'; }
+    });
+  }
+  function setBoardBadge(hasAny, hasUnread, unreadCount) {
+    _boardHasUnreadFlag = !!hasUnread;
+    renderNotifBadges();
+  }
+  async function checkFriendRequestBadge() {
+    if(!_currentUser || !sb) { _friendReqBadgeCount = 0; renderNotifBadges(); return; }
+    try {
+      _friendReqBadgeCount = await db.friendRequests.getIncomingCount(_currentUser.id);
+    } catch(e) { console.warn('checkFriendRequestBadge:', e); }
+    renderNotifBadges();
+    const menuBadge = document.getElementById('menuBadgeFriendReq');
+    if(menuBadge) {
+      if(_friendReqBadgeCount > 0) { menuBadge.textContent = _friendReqBadgeCount; menuBadge.style.display = ''; }
+      else { menuBadge.style.display = 'none'; }
     }
   }
   // ベルでON（通知する掲示板リスト、最大BOARD_NOTIFY_LIMIT件）にしている掲示板だけを返す。
@@ -19352,6 +19570,30 @@
   }
   function stopGlobalBoardNotifyWatch() {
     if(_globalBoardNotifyChannel) { sb.removeChannel(_globalBoardNotifyChannel); _globalBoardNotifyChannel = null; }
+  }
+
+  // 自分宛の友達申請をリアルタイムで見張り、届いたら画面上部にトーストで知らせる＋バッジを更新する
+  let _friendReqChannel = null;
+  function startFriendRequestWatch() {
+    stopFriendRequestWatch();
+    if(!sb || !_currentUser) return;
+    const channel = sb.channel('friend_req_watch_' + _currentUser.id)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friend_requests', filter: `addressee_id=eq.${_currentUser.id}` }, async (payload) => {
+        const row = payload.new;
+        if(!row) return;
+        checkFriendRequestBadge();
+        if(document.getElementById('page-notifications')?.classList.contains('active')) renderNotifications();
+        const p = await db.profiles.get(row.requester_id).catch(()=>null);
+        const name = p?.username || t('userNotFound');
+        showTopToast('友達申請', `${name}さんから友達申請が届きました`, () => nav('notifications'));
+      })
+      .subscribe((status, err) => {
+        if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('[friend-req-watch] subscribe failed:', status, err);
+      });
+    _friendReqChannel = channel;
+  }
+  function stopFriendRequestWatch() {
+    if(_friendReqChannel) { sb.removeChannel(_friendReqChannel); _friendReqChannel = null; }
   }
 
   // 初回ログイン時（または性別・年代が未回答のまま既存アカウントの場合）、
@@ -19684,7 +19926,7 @@
       const [followingCount, followerCount, friendCount] = await Promise.all([
         db.follows.getFollowingCount(targetUserId),
         db.follows.getFollowerCount(targetUserId),
-        db.follows.getFriendCount(targetUserId),
+        db.friendRequests.getFriendCount(targetUserId),
       ]);
       document.getElementById('statFollowingCount').textContent = followingCount;
       document.getElementById('statFollowerCount').textContent = followerCount;
@@ -19700,6 +19942,8 @@
       // フォローボタン（自分以外のページを見ている時だけ）
       const followActions = document.getElementById('mypageFollowActions');
       const followBtn = document.getElementById('mypageFollowBtn');
+      const friendBtn = document.getElementById('mypageFriendBtn');
+      const moreBtn = document.getElementById('mypageMoreBtn');
       if(!isOwnPage && _currentUser && followActions && followBtn) {
         followActions.style.display = '';
         const isFollowing = await db.follows.isFollowing(_currentUser.id, targetUserId);
@@ -19707,6 +19951,25 @@
         followBtn.classList.toggle('mypage-btn-following', isFollowing);
         followBtn.dataset.following = isFollowing ? '1' : '0';
         followBtn.dataset.targetUid = targetUserId;
+        // 友達（フォローとは無関係。片方の申請を相手が承認して初めて成立する）
+        if(friendBtn) {
+          friendBtn.dataset.targetUid = targetUserId;
+          const friendStatus = await db.friendRequests.getStatus(_currentUser.id, targetUserId);
+          friendBtn.dataset.friendStatus = friendStatus;
+          if(friendStatus === 'friends') {
+            friendBtn.textContent = '友達';
+          } else if(friendStatus === 'pending_sent') {
+            friendBtn.textContent = '申請中';
+          } else if(friendStatus === 'pending_received') {
+            friendBtn.textContent = '友達申請を承認する';
+          } else {
+            friendBtn.textContent = '友達を申請する';
+          }
+        }
+        if(moreBtn) {
+          moreBtn.dataset.targetUid = targetUserId;
+          moreBtn.onclick = () => openMypageMoreMenu(moreBtn, targetUserId);
+        }
       } else if(followActions) {
         followActions.style.display = 'none';
       }
@@ -19990,6 +20253,156 @@
     const followerCountEl = document.getElementById('statFollowerCount');
     if(followerCountEl) followerCountEl.textContent = followerCount;
   }
+
+  // 友達申請の状態に応じたラベル・アクションの共通処理（マイページ／フォロー一覧／友達申請一覧で共用）
+  function friendBtnLabel(status) {
+    return status === 'friends' ? '友達'
+      : status === 'pending_sent' ? '申請中'
+      : status === 'pending_received' ? '承認する'
+      : '友達を申請する';
+  }
+  async function performFriendAction(status, targetId) {
+    if(!_currentUser || !targetId) return status;
+    if(status === 'none') {
+      const { error } = await db.friendRequests.send(_currentUser.id, targetId);
+      if(error) { alert(t('profileSaveFailedAlert')); return status; }
+    } else if(status === 'pending_sent') {
+      if(!confirm('友達申請を取り消しますか？')) return status;
+      await db.friendRequests.cancel(_currentUser.id, targetId);
+    } else if(status === 'pending_received') {
+      await db.friendRequests.accept(targetId, _currentUser.id);
+    } else if(status === 'friends') {
+      if(!confirm('友達を解除しますか？')) return status;
+      await db.friendRequests.unfriend(_currentUser.id, targetId);
+    }
+    checkFriendRequestBadge();
+    return await db.friendRequests.getStatus(_currentUser.id, targetId);
+  }
+
+  // 友達ボタン：フォローとは無関係。状態（申請前／申請中／申請あり／友達）に応じて動作を変える
+  async function handleFriendBtnClick() {
+    if(!_currentUser) return;
+    const btn = document.getElementById('mypageFriendBtn');
+    if(!btn) return;
+    const targetId = btn.dataset.targetUid;
+    const status = btn.dataset.friendStatus;
+    if(!targetId || !status) return;
+    btn.disabled = true;
+    try {
+      const newStatus = await performFriendAction(status, targetId);
+      btn.dataset.friendStatus = newStatus;
+      btn.textContent = newStatus === 'pending_received' ? '友達申請を承認する' : friendBtnLabel(newStatus);
+      const friendCountEl = document.getElementById('statFriendsCount');
+      if(friendCountEl) friendCountEl.textContent = await db.friendRequests.getFriendCount(targetId);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  window.handleFriendBtnClick = handleFriendBtnClick;
+
+  // 通知ページ：今のところ「届いている友達申請」だけを表示する
+  async function renderNotifications() {
+    const el = document.getElementById('notificationsList');
+    if(!el) return;
+    if(!_currentUser || !sb) {
+      el.innerHTML = `<p style="font-size:.85rem;color:var(--muted);text-align:center;padding:2rem 0;">お知らせはまだありません</p>`;
+      return;
+    }
+    const incoming = await db.friendRequests.listIncoming(_currentUser.id).catch(()=>[]);
+    if(!incoming.length) {
+      el.innerHTML = `<p style="font-size:.85rem;color:var(--muted);text-align:center;padding:2rem 0;">お知らせはまだありません</p>`;
+      return;
+    }
+    const profiles = await Promise.all(incoming.map(r => db.profiles.get(r.requester_id).catch(()=>null)));
+    el.innerHTML = incoming.map((r, i) => {
+      const p = profiles[i];
+      const name = p?.username || t('userNotFound');
+      return `<div class="mypage-menu-row" data-requester-id="${escapeHtml(r.requester_id)}" style="cursor:default;gap:10px;">
+        <span class="mypage-menu-row-label">${escapeHtml(name)} さんから友達申請が届いています</span>
+        <span style="flex:0 0 auto;display:flex;gap:6px;">
+          <button type="button" class="notif-friend-accept" data-uid="${escapeHtml(r.requester_id)}" style="height:32px;padding:0 12px;border-radius:8px;border:none;background:#5ec97a;color:#07200f;font-weight:700;font-size:12.5px;cursor:pointer;">承認</button>
+          <button type="button" class="notif-friend-decline" data-uid="${escapeHtml(r.requester_id)}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#b6c8bd;font-size:12.5px;cursor:pointer;">拒否</button>
+        </span>
+      </div>`;
+    }).join('');
+    el.querySelectorAll('.notif-friend-accept').forEach(btn=>{
+      btn.onclick = async () => {
+        btn.disabled = true;
+        await db.friendRequests.accept(btn.dataset.uid, _currentUser.id);
+        checkFriendRequestBadge();
+        renderNotifications();
+      };
+    });
+    el.querySelectorAll('.notif-friend-decline').forEach(btn=>{
+      btn.onclick = async () => {
+        btn.disabled = true;
+        await db.friendRequests.decline(btn.dataset.uid, _currentUser.id);
+        checkFriendRequestBadge();
+        renderNotifications();
+      };
+    });
+  }
+  window.renderNotifications = renderNotifications;
+
+  // 友達申請一覧ページ：届いている申請（承認・拒否）と、自分が送って承認待ちの申請（取り消し）をまとめて出す
+  async function renderFriendRequestsPage() {
+    const inEl = document.getElementById('friendReqIncomingList');
+    const outEl = document.getElementById('friendReqOutgoingList');
+    if(!inEl || !outEl) return;
+    if(!_currentUser || !sb) {
+      inEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${escapeHtml(t('followListEmpty'))}</p>`;
+      outEl.innerHTML = '';
+      return;
+    }
+    inEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${escapeHtml(t('loadingLabel'))}</p>`;
+    outEl.innerHTML = '';
+    const [incoming, outgoing] = await Promise.all([
+      db.friendRequests.listIncoming(_currentUser.id),
+      db.friendRequests.listOutgoing(_currentUser.id),
+    ]);
+    const renderRow = (uid, profile, actionsHtml) => `
+      <div class="follow-list-row">
+        <div class="follow-list-avatar" onclick="nav('user','${escapeHtml(uid)}')" style="cursor:pointer;background:${profile?.avatar_url?'transparent':'#5ec97a'};">
+          ${profile?.avatar_url?`<img src="${escapeHtml(profile.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:escapeHtml((profile?.username||'?').slice(0,1))}
+        </div>
+        <span class="follow-list-name" onclick="nav('user','${escapeHtml(uid)}')">${escapeHtml(profile?.username || t('userNotFound'))}</span>
+        ${actionsHtml}
+      </div>`;
+
+    if(!incoming.length) {
+      inEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">届いている友達申請はありません</p>`;
+    } else {
+      const profiles = await Promise.all(incoming.map(r => db.profiles.get(r.requester_id).catch(()=>null)));
+      inEl.innerHTML = incoming.map((r,i) => renderRow(r.requester_id, profiles[i], `
+        <span style="flex:0 0 auto;display:flex;gap:6px;">
+          <button type="button" class="freq-accept" data-uid="${escapeHtml(r.requester_id)}" style="height:32px;padding:0 12px;border-radius:8px;border:none;background:#5ec97a;color:#07200f;font-weight:700;font-size:12.5px;cursor:pointer;">承認</button>
+          <button type="button" class="freq-decline" data-uid="${escapeHtml(r.requester_id)}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#b6c8bd;font-size:12.5px;cursor:pointer;">拒否</button>
+        </span>`)).join('');
+      inEl.querySelectorAll('.freq-accept').forEach(btn=>{
+        btn.onclick = async () => { btn.disabled = true; await db.friendRequests.accept(btn.dataset.uid, _currentUser.id); checkFriendRequestBadge(); renderFriendRequestsPage(); };
+      });
+      inEl.querySelectorAll('.freq-decline').forEach(btn=>{
+        btn.onclick = async () => { btn.disabled = true; await db.friendRequests.decline(btn.dataset.uid, _currentUser.id); checkFriendRequestBadge(); renderFriendRequestsPage(); };
+      });
+    }
+
+    if(!outgoing.length) {
+      outEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">申請中のユーザーはいません</p>`;
+    } else {
+      const profiles = await Promise.all(outgoing.map(r => db.profiles.get(r.addressee_id).catch(()=>null)));
+      outEl.innerHTML = outgoing.map((r,i) => renderRow(r.addressee_id, profiles[i], `
+        <button type="button" class="freq-cancel" data-uid="${escapeHtml(r.addressee_id)}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#b6c8bd;font-size:12.5px;cursor:pointer;flex:0 0 auto;">取り消す</button>`)).join('');
+      outEl.querySelectorAll('.freq-cancel').forEach(btn=>{
+        btn.onclick = async () => {
+          if(!confirm('友達申請を取り消しますか？')) return;
+          btn.disabled = true;
+          await db.friendRequests.cancel(_currentUser.id, btn.dataset.uid);
+          renderFriendRequestsPage();
+        };
+      });
+    }
+  }
+  window.renderFriendRequestsPage = renderFriendRequestsPage;
 
   window.showAuthModal = showAuthModal;
   window.closeAuthModal = closeAuthModal;
