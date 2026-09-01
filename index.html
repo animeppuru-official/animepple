@@ -12838,11 +12838,11 @@
         const avatar = grouped
           ? `<span style="width:${avSize}px;flex:0 0 ${avSize}px;"></span>`
           : (avatarUrl
-            ? `<img src="${escapeHtml(avatarUrl)}" style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;object-fit:cover;border:${avatarBorder};">`
-            : `<span style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;background:${avatarBg};border:${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:${isMine?10:11.5}px;font-weight:800;color:${avatarText};">${escapeHtml(name.charAt(0))}</span>`);
+            ? `<img src="${escapeHtml(avatarUrl)}" onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;object-fit:cover;border:${avatarBorder};cursor:pointer;">`
+            : `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;background:${avatarBg};border:${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:${isMine?10:11.5}px;font-weight:800;color:${avatarText};cursor:pointer;">${escapeHtml(name.charAt(0))}</span>`);
         // 名前は相手のみ（自分はアイコンの緑枠で判別できる）。連投時は省略
         const nameHtml = (!isMine && !grouped)
-          ? `<span style="font-size:11.5px;font-weight:700;color:${nameColor};padding-left:2px;">${escapeHtml(name)}${isOfficial?' <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">公式</span>':''}</span>`
+          ? `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="font-size:11.5px;font-weight:700;color:${nameColor};padding-left:2px;cursor:pointer;">${escapeHtml(name)}${isOfficial?' <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">公式</span>':''}</span>`
           : '';
         // 引用ブロック：parent_id はそのまま使い、表示だけ入れ子をやめて本流に並べる
         const q = opts.quote;
