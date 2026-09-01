@@ -7791,7 +7791,7 @@
       renderBoardValue(animeId).catch(console.error);
     }
     if (page==='mypage') renderMypage();
-    if (page==='user'&&animeId) { renderMypage(animeId); }
+    if (page==='user'&&animeId) { renderMypage(animeId).catch(console.error); }
   }
   window.nav = nav;
   function navBack() {
@@ -19540,10 +19540,17 @@
   // ここでは「通知ONにしている掲示板のanime_id」ごとに、そのanime_idを対象にした
   // フィルタ付き購読を同じチャンネルに複数積む（1チャンネルに複数の.on()を積むのはSupabase公式の想定パターン）。
   let _globalBoardNotifyChannel = null;
+  let _globalBoardNotifyGen = 0;
   async function startGlobalBoardNotifyWatch() {
+    // 起動直後にonAuthChangeが即座に発火することがあり、この関数が短時間に二重で走ると
+    // 同じチャンネル名(supabase-js内部では同名チャンネルは使い回される)に対して
+    // 「subscribe()した後に.on()を呼んだ」エラーになる。世代番号で、後から呼ばれた方だけ
+    // 実際にチャンネルを作る（先に始まったが遅れて戻ってきた古い呼び出しは何もしない）
+    const myGen = ++_globalBoardNotifyGen;
     stopGlobalBoardNotifyWatch();
     if(!sb || !_currentUser) return;
     const boards = await getNotifyEnabledBoards(_currentUser.id);
+    if(myGen !== _globalBoardNotifyGen) return;
     if(!boards.length) return;
     const animeIds = [...new Set(boards.map(b=>b.anime_id))];
     let channel = sb.channel('global_board_notify_' + _currentUser.id);
@@ -19563,6 +19570,7 @@
     animeIds.forEach(animeId => {
       channel = channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'board_posts', filter: `anime_id=eq.${animeId}` }, handleInsert);
     });
+    if(myGen !== _globalBoardNotifyGen) return;
     channel.subscribe((status, err) => {
       if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('[global-board-notify] subscribe failed:', status, err);
     });
@@ -19926,7 +19934,7 @@
       const [followingCount, followerCount, friendCount] = await Promise.all([
         db.follows.getFollowingCount(targetUserId),
         db.follows.getFollowerCount(targetUserId),
-        db.friendRequests.getFriendCount(targetUserId),
+        db.friendRequests.getFriendCount(targetUserId).catch(e => { console.warn('friendRequests.getFriendCount:', e); return 0; }),
       ]);
       document.getElementById('statFollowingCount').textContent = followingCount;
       document.getElementById('statFollowerCount').textContent = followerCount;
@@ -19954,7 +19962,7 @@
         // 友達（フォローとは無関係。片方の申請を相手が承認して初めて成立する）
         if(friendBtn) {
           friendBtn.dataset.targetUid = targetUserId;
-          const friendStatus = await db.friendRequests.getStatus(_currentUser.id, targetUserId);
+          const friendStatus = await db.friendRequests.getStatus(_currentUser.id, targetUserId).catch(e => { console.warn('friendRequests.getStatus:', e); return 'none'; });
           friendBtn.dataset.friendStatus = friendStatus;
           if(friendStatus === 'friends') {
             friendBtn.textContent = '友達';
@@ -20357,8 +20365,8 @@
     inEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${escapeHtml(t('loadingLabel'))}</p>`;
     outEl.innerHTML = '';
     const [incoming, outgoing] = await Promise.all([
-      db.friendRequests.listIncoming(_currentUser.id),
-      db.friendRequests.listOutgoing(_currentUser.id),
+      db.friendRequests.listIncoming(_currentUser.id).catch(()=>[]),
+      db.friendRequests.listOutgoing(_currentUser.id).catch(()=>[]),
     ]);
     const renderRow = (uid, profile, actionsHtml) => `
       <div class="follow-list-row">
