@@ -1082,15 +1082,28 @@
 
     /* ── BOARD MSG LINE（三点リーダー＋時刻の位置調整）──
        PCでは吹き出しの脇に収まって問題ないが、スマホ幅だとアバター・吹き出し・
-       時刻＋三点リーダーの3つが横一列に詰め込まれてごちゃつくので、
-       スマホだけ時刻＋三点リーダーを折り返して吹き出しの下に逃がす */
+       時刻＋三点リーダーの3つが横一列に詰め込まれてごちゃつく。
+       flex-wrap+row-reverse+orderの組み合わせは、タップ操作（getBoundingClientRect等で
+       強制的にレイアウト再計算が走る）のタイミングで一部ブラウザの解釈がブレて
+       折り返しが元に戻って見えることがあるため、より安定するCSS Gridで組み直す。
+       DOM順は常に [アバター, 本文(名前+吹き出し), 時刻+三点リーダー] の3つ固定。 */
     @media (max-width:767px) {
-      .board-msg-line { flex-wrap:wrap; }
-      .board-msg-line .board-time-slot {
-        order:99; flex:1 1 100% !important; margin-top:1px;
+      .board-msg-line {
+        display:grid !important; column-gap:7px !important; row-gap:2px !important; align-items:end !important;
       }
-      .board-msg-line.is-mine .board-time-slot { justify-content:flex-end; padding-right:31px; }
-      .board-msg-line.is-theirs .board-time-slot { justify-content:flex-start; padding-left:37px; }
+      .board-msg-line.is-theirs {
+        grid-template-columns:auto 1fr;
+        grid-template-areas:"av ct" ". ts";
+      }
+      .board-msg-line.is-mine {
+        grid-template-columns:1fr auto;
+        grid-template-areas:"ct av" "ts .";
+      }
+      .board-msg-line > :nth-child(1) { grid-area:av; }
+      .board-msg-line > :nth-child(2) { grid-area:ct; min-width:0; }
+      .board-msg-line > :nth-child(3) { grid-area:ts !important; flex:0 0 auto !important; }
+      .board-msg-line.is-mine .board-time-slot { justify-content:flex-end; }
+      .board-msg-line.is-theirs .board-time-slot { justify-content:flex-start; }
     }
 
     /* ── BOARD KEYBOARD（スマホ：キーボード表示中の詰まりを解消） ── */
@@ -13000,12 +13013,17 @@
       // 同時にタブ段とEnterヒントを畳んで会話の見える高さを稼ぐ（CSS側で処理）。
       if(!window._boardKbBound) {
         window._boardKbBound = true;
+        // PC幅では会話はページ全体でスクロールしていて「ページを0に戻す」iOS対策は不要かつ有害
+        // （入力欄をタップするたびにPCの画面が上に戻ってしまっていた）。実際のスマホレイアウト
+        // （CSS側の @media (max-width:767px) と同じ基準）の時だけ行う。
+        const isMobileLayout = () => window.innerWidth <= 767;
         const stickBottom = () => {
           const sec = document.querySelector('#page-board-value.active .board-chat-scroll, #page-board-general.active .board-chat-scroll');
           if(sec) sec.scrollTop = sec.scrollHeight;
         };
         document.addEventListener('focusin', (e) => {
           if(e.target && e.target.id === 'boardComposeInput') {
+            if(!isMobileLayout()) return;
             document.body.classList.add('board-kb-open');
             // iOS はキーボードを出すときページ自体をスクロールアップする。
             // ページを fixed にしたうえで、ここでも 0 に戻して入力欄が飛ぶのを防ぐ
@@ -13021,6 +13039,7 @@
         });
         document.addEventListener('focusout', (e) => {
           if(e.target && e.target.id === 'boardComposeInput') {
+            if(!isMobileLayout()) return;
             setTimeout(() => {
               if(document.activeElement && document.activeElement.id === 'boardComposeInput') return;
               document.body.classList.remove('board-kb-open');
