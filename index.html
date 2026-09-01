@@ -2965,7 +2965,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.309.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.312.0</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -4617,6 +4617,13 @@
   <div id="adminDashboard" style="display:none;padding:1rem;">
     <div id="admin-group-overview">
     <div class="admin-group-header">概要</div>
+    <!-- お問い合わせ一覧 -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">✉️ お問い合わせ</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">フォームから届いたお問い合わせ。メールではなく、ここに直接届きます。</p>
+      <div id="adminContactCategoryTabs" style="display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.7rem;"></div>
+      <div id="adminContactMessagesList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
+    </div>
     <!-- 画像投稿：承認待ち一覧 -->
     <div class="admin-section">
       <h3 class="admin-section-title">🖼️ 画像投稿の承認待ち</h3>
@@ -5282,6 +5289,9 @@
     </p>
 
     <div id="contactFormSection">
+      <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.4rem;">お問い合わせの種類<span style="color:#ff8888;">*</span></label>
+      <div id="contactCategoryChips" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem;"></div>
+
       <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">お名前(任意)</label>
       <input id="contactName" type="text" placeholder="お名前"
         style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;" />
@@ -5630,7 +5640,7 @@
 <!-- ═══════════════════════════════════
      BOTTOM NAV (global)
 ═══════════════════════════════════ -->
-<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.309.0</div>
+<div style="text-align:center;font-size:.6rem;color:var(--muted);padding:.2rem;opacity:.5;">v0.312.0</div>
 <nav class="bnav" id="globalBnav">
   <button class="bnav-item" id="bnav-home" onclick="nav('home')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
@@ -6047,6 +6057,19 @@
           const { error } = await sb.from('board_reactions').insert({ post_id: postId, user_id: userId, emoji });
           return { error, added: true };
         }
+      },
+    },
+    // ── お問い合わせ（投稿自体はEdge Function経由。ここは管理者が読む側だけ） ──
+    contactMessages: {
+      async listAll() {
+        if(!sb) return [];
+        const { data } = await sb.from('contact_messages').select('id, name, message, category, is_read, created_at').order('created_at', { ascending: false });
+        return data || [];
+      },
+      async markRead(id) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('contact_messages').update({ is_read: true }).eq('id', id);
+        return { error };
       },
     },
     // ── 画像投稿（アニメページのポスター画像。管理者承認制） ──
@@ -7617,7 +7640,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.309.0';
+      if(vEl) vEl.textContent = 'v0.312.0';
     }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -16031,12 +16054,41 @@
     });
   }
 
+  const CONTACT_CATEGORIES = [
+    { id:'copyright', label:'著作権について' },
+    { id:'title', label:'作品情報の誤り' },
+    { id:'bug', label:'不具合の報告' },
+    { id:'tagError', label:'あらすじ・タグの誤り' },
+    { id:'featureRequest', label:'機能のご要望' },
+    { id:'account', label:'アカウントについて' },
+    { id:'other', label:'その他' },
+  ];
+  let _contactSelectedCategory = null;
+
   function initContactPage() {
     document.getElementById('contactFormSection').style.display = '';
     document.getElementById('contactSuccessSection').style.display = 'none';
     document.getElementById('contactName').value = '';
     document.getElementById('contactMessage').value = '';
     document.getElementById('contactError').textContent = '';
+    _contactSelectedCategory = null;
+    const chipsWrap = document.getElementById('contactCategoryChips');
+    if(chipsWrap) {
+      chipsWrap.innerHTML = CONTACT_CATEGORIES.map(c => `
+        <button type="button" class="contact-category-chip" data-id="${c.id}" style="height:34px;padding:0 13px;border-radius:9px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:#c3d4c9;font-size:.76rem;font-weight:700;cursor:pointer;">${escapeHtml(c.label)}</button>
+      `).join('');
+      chipsWrap.querySelectorAll('.contact-category-chip').forEach(chip=>{
+        chip.onclick = () => {
+          _contactSelectedCategory = chip.dataset.id;
+          chipsWrap.querySelectorAll('.contact-category-chip').forEach(c=>{
+            const active = c.dataset.id === _contactSelectedCategory;
+            c.style.background = active ? 'rgba(94,201,122,.16)' : 'var(--card2,#141c19)';
+            c.style.borderColor = active ? 'rgba(94,201,122,.55)' : 'var(--line,#2a3830)';
+            c.style.color = active ? '#a7ecc4' : '#c3d4c9';
+          });
+        };
+      });
+    }
     renderContactTurnstile();
   }
   window.initContactPage = initContactPage;
@@ -16048,6 +16100,7 @@
     const btn = document.getElementById('contactSubmitBtn');
     errEl.textContent = '';
 
+    if(!_contactSelectedCategory) { errEl.textContent = 'お問い合わせの種類を選んでください。'; return; }
     if(!message) { errEl.textContent = 'お問い合わせ内容を入力してください。'; return; }
     if(message.length > 2000) { errEl.textContent = '内容が長すぎます(2000文字以内)。'; return; }
 
@@ -16061,7 +16114,7 @@
       const res = await fetch(`${SUPABASE_URL}/functions/v1/send-feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
-        body: JSON.stringify({ turnstileToken, name, message }),
+        body: JSON.stringify({ turnstileToken, name, message, category: _contactSelectedCategory }),
       });
       const data = await res.json();
       if(!res.ok) throw new Error(data?.error || '送信に失敗しました');
@@ -17627,6 +17680,62 @@
     });
   });
 
+  let _adminContactCategory = 'all';
+  const ADMIN_CONTACT_CATEGORIES = [
+    { id:'all', label:'すべて' },
+    { id:'copyright', label:'著作権について' },
+    { id:'title', label:'作品情報の誤り' },
+    { id:'bug', label:'不具合の報告' },
+    { id:'tagError', label:'あらすじ・タグの誤り' },
+    { id:'featureRequest', label:'機能のご要望' },
+    { id:'account', label:'アカウントについて' },
+    { id:'other', label:'その他' },
+  ];
+  // 管理者向け：お問い合わせ一覧（未読を上・新しい順。カテゴリタブで絞り込み）
+  async function renderAdminContactMessages() {
+    const el = document.getElementById('adminContactMessagesList');
+    const tabsEl = document.getElementById('adminContactCategoryTabs');
+    if(!el) return;
+    try {
+      const list = await db.contactMessages.listAll();
+      if(tabsEl) {
+        tabsEl.innerHTML = ADMIN_CONTACT_CATEGORIES.map(c => {
+          const count = c.id === 'all' ? list.length : list.filter(m=>m.category===c.id).length;
+          const active = _adminContactCategory === c.id;
+          return `<button type="button" class="admin-contact-cat-tab" data-id="${c.id}" style="height:30px;padding:0 11px;border-radius:8px;border:1px solid ${active?'rgba(94,201,122,.55)':'var(--line,#2a3830)'};background:${active?'rgba(94,201,122,.16)':'transparent'};color:${active?'#a7ecc4':'var(--muted)'};font-size:.72rem;font-weight:700;cursor:pointer;">${escapeHtml(c.label)}${count?` (${count})`:''}</button>`;
+        }).join('');
+        tabsEl.querySelectorAll('.admin-contact-cat-tab').forEach(tab=>{
+          tab.onclick = () => { _adminContactCategory = tab.dataset.id; renderAdminContactMessages(); };
+        });
+      }
+      const filtered = _adminContactCategory === 'all' ? list : list.filter(m=>m.category===_adminContactCategory);
+      if(!filtered.length) { el.innerHTML = `<p style="font-size:.78rem;color:var(--muted);">お問い合わせはまだありません。</p>`; return; }
+      const sorted = [...filtered].sort((a,b)=> (a.is_read === b.is_read) ? 0 : (a.is_read ? 1 : -1));
+      const catLabel = id => (ADMIN_CONTACT_CATEGORIES.find(c=>c.id===id) || {}).label || id;
+      el.innerHTML = sorted.map(m => `
+        <div style="border:1px solid ${m.is_read?'var(--line,#2a3830)':'rgba(94,201,122,.4)'};background:${m.is_read?'transparent':'rgba(94,201,122,.06)'};border-radius:10px;padding:10px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:.78rem;font-weight:800;color:#dfeae3;">${escapeHtml(m.name || '匿名')}${m.is_read?'':' <span style="color:#8fe5ab;">・未読</span>'}</span>
+            <span style="font-size:.68rem;color:var(--muted);">${escapeHtml(formatRelativeTime(m.created_at))}</span>
+          </div>
+          <span style="display:inline-block;font-size:.66rem;font-weight:800;color:#e8c463;background:rgba(217,164,65,.14);border-radius:5px;padding:1px 6px;margin-bottom:6px;">${escapeHtml(catLabel(m.category))}</span>
+          <p style="font-size:.8rem;color:#c3d4c9;white-space:pre-wrap;margin:0 0 8px;">${escapeHtml(m.message)}</p>
+          ${m.is_read ? '' : `<button type="button" class="admin-contact-read-btn" data-id="${m.id}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line,#2a3830);background:transparent;color:var(--muted);font-size:.7rem;cursor:pointer;">既読にする</button>`}
+        </div>
+      `).join('');
+      el.querySelectorAll('.admin-contact-read-btn').forEach(btn=>{
+        btn.onclick = async () => {
+          btn.disabled = true;
+          await db.contactMessages.markRead(btn.dataset.id);
+          renderAdminContactMessages();
+        };
+      });
+    } catch(e) {
+      console.warn('renderAdminContactMessages:', e);
+      el.innerHTML = `<p style="font-size:.78rem;color:var(--muted);">読み込みに失敗しました。</p>`;
+    }
+  }
+
   // 管理者向け：画像投稿の承認待ち一覧
   async function renderAdminImageSubmissions() {
     const el = document.getElementById('adminImageSubmissionsList');
@@ -17677,6 +17786,7 @@
   async function loadAdminData() {
     if(!sb) return;
     renderAdminImageSubmissions();
+    renderAdminContactMessages();
     try {
       // サイト監視: 直近のエラーログ
       const since24h = new Date(Date.now() - 24*3600*1000).toISOString();
