@@ -1080,6 +1080,19 @@
       .board-msg-row .board-time { display:inline !important; }
     }
 
+    /* ── BOARD MSG LINE（三点リーダー＋時刻の位置調整）──
+       PCでは吹き出しの脇に収まって問題ないが、スマホ幅だとアバター・吹き出し・
+       時刻＋三点リーダーの3つが横一列に詰め込まれてごちゃつくので、
+       スマホだけ時刻＋三点リーダーを折り返して吹き出しの下に逃がす */
+    @media (max-width:767px) {
+      .board-msg-line { flex-wrap:wrap; }
+      .board-msg-line .board-time-slot {
+        order:99; flex:1 1 100% !important; margin-top:1px;
+      }
+      .board-msg-line.is-mine .board-time-slot { justify-content:flex-end; padding-right:31px; }
+      .board-msg-line.is-theirs .board-time-slot { justify-content:flex-start; padding-left:37px; }
+    }
+
     /* ── BOARD KEYBOARD（スマホ：キーボード表示中の詰まりを解消） ── */
     /* 日本語入力ではキーボード216px＋予測変換42px＝約258pxが下から消える。
        visualViewport の高さに合わせて入力バーを持ち上げ、会話は最下部に貼り付けたまま固定する */
@@ -12739,7 +12752,7 @@
           <span class="board-time" style="font-size:10.5px;color:#5f7268;white-space:nowrap;">${formatRelativeTime(item.created_at)}</span>
           ${moreBtn}
         </div>`;
-        return `<div style="display:flex;align-items:flex-end;gap:${isMine?5:7}px;flex-direction:${isMine?'row-reverse':'row'};">
+        return `<div class="board-msg-line ${isMine?'is-mine':'is-theirs'}" style="display:flex;align-items:flex-end;gap:${isMine?5:7}px;flex-direction:${isMine?'row-reverse':'row'};">
           ${avatar}
           <div style="min-width:0;display:flex;flex-direction:column;gap:4px;align-items:${isMine?'flex-end':'flex-start'};">${nameHtml}${bubble}</div>
           ${timeSlot}
@@ -12835,7 +12848,14 @@
     panel.innerHTML = html;
     panel.dataset.boardRendered = '1';
     if(isFirstRender || wasNearBottom) {
-      requestAnimationFrame(() => scrollBoardToBottom(panel));
+      // 実際にスクロールしているのは panel 自身ではなく、その親の .board-chat-scroll（スマホ）
+      // またはページ全体（PC）。panel自身はoverflowを持たないので、必ず親要素を渡す。
+      const scroller = panel.parentElement;
+      requestAnimationFrame(() => {
+        scrollBoardToBottom(scroller);
+        // 画像（アイコン等）の読み込みで高さが後から伸びることがあるため、少し遅れて再度合わせる
+        setTimeout(() => scrollBoardToBottom(scroller), 80);
+      });
       _boardNewSincePill = 0;
       updateBoardNewPill(panel);
     } else {
@@ -13069,6 +13089,7 @@
         requestAnimationFrame(() => {
           const sc = document.querySelector('.page.active .board-chat-scroll');
           scrollBoardToBottom(sc);
+          setTimeout(() => scrollBoardToBottom(sc), 80);
         });
       };
       composer.querySelector('#boardComposeBtn').onclick = submitCompose;
