@@ -12974,6 +12974,85 @@
       </div>
     `;
   }
+  // ── チャットの吹き出し1件分のHTML（掲示板・DM共通）──
+  // avatarMap/isAdminMapは { user_id: avatar_url } / { user_id: true } の形。
+  // 「見た目は掲示板と同じ」にするための本体で、掲示板もDMもこの関数をそのまま呼ぶ。
+  function renderChatBubbleHtml(item, opts) {
+    opts = opts || {};
+    const grouped = !!opts.grouped;
+    const avatarMap = opts.avatarMap || {};
+    const isAdminMap = opts.isAdminMap || {};
+    const name = item.username || '名無し';
+    const isMine = _currentUser && item.user_id === _currentUser.id;
+    const isOfficial = !!isAdminMap[item.user_id];
+    const bg = isMine ? '#2f7d55' : '#262e33';
+    const border = isMine ? 'rgba(255,255,255,.09)' : 'rgba(255,255,255,.08)';
+    const textColor = isMine ? '#f2fbf5' : '#e6efe9';
+    const nameColor = isOfficial ? '#c9a7e6' : '#9db3a5';
+    // 角丸：しっぽは相手=左下4px／自分=右下4px。連投2件目以降はしっぽを付けない（全角14px）
+    const radius = grouped ? '14px' : (isMine ? '14px 14px 4px 14px' : '14px 14px 14px 4px');
+    const shadow = isMine ? '0 10px 22px -16px rgba(0,0,0,.8)' : '0 8px 18px -16px rgba(0,0,0,.8)';
+    // アイコンはガチャで集めるものなので会話中も必ず出す。
+    // 自分側は26px＋金リング（マイページで設定したアイコンがそのまま出る）、相手は30px。
+    const avSize = isMine ? 26 : 30;
+    const avatarBg = isMine ? 'linear-gradient(150deg,#4a2f6d,#241a2c)' : 'linear-gradient(150deg,#2c4436,#1d3225)';
+    const avatarBorder = isMine ? '1.5px solid rgba(240,201,74,.55)' : '1px solid rgba(255,255,255,.1)';
+    const avatarText = isMine ? '#d9c2ef' : '#9be3bd';
+    const avatarUrl = avatarMap[item.user_id];
+    // 連投2件目以降は同幅のスペーサーだけ残して列を揃える
+    const avatar = grouped
+      ? `<span style="width:${avSize}px;flex:0 0 ${avSize}px;"></span>`
+      : (avatarUrl
+        ? `<img src="${escapeHtml(avatarUrl)}" onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;object-fit:cover;border:${avatarBorder};cursor:pointer;">`
+        : `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;background:${avatarBg};border:${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:${isMine?10:11.5}px;font-weight:800;color:${avatarText};cursor:pointer;">${escapeHtml(name.charAt(0))}</span>`);
+    // 名前は相手のみ（自分はアイコンの緑枠で判別できる）。連投時は省略
+    const nameHtml = (!isMine && !grouped)
+      ? `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="font-size:11.5px;font-weight:700;color:${nameColor};padding-left:2px;cursor:pointer;">${escapeHtml(name)}${isOfficial?' <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">公式</span>':''}</span>`
+      : '';
+    // 引用ブロック：parent_id はそのまま使い、表示だけ入れ子をやめて本流に並べる（DMでは使わない）
+    const q = opts.quote;
+    const quoteHtml = q ? `<div style="border-left:2px solid ${isMine?'rgba(255,255,255,.35)':'rgba(147,226,183,.5)'};padding-left:8px;margin-bottom:7px;opacity:.85;">
+        <span style="display:block;font-size:10.5px;font-weight:800;color:${isMine?'#d6f2e2':'#9be3bd'};">${escapeHtml(q.name)}</span>
+        <span style="display:block;font-size:11.5px;color:${isMine?'#cfe8da':'#b6c8bd'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(300px,54vw);">${escapeHtml(q.body)}</span>
+      </div>` : '';
+    const bubble = `<div style="max-width:min(440px,${isMine?74:70}vw);background:${bg};border:1px solid ${border};border-radius:${radius};padding:9px 13px;box-shadow:${shadow};">
+      ${quoteHtml}
+      <div style="font-size:14px;line-height:1.65;color:${textColor};white-space:pre-wrap;word-break:break-word;text-align:left;">${escapeHtml(item.body)}</div>
+    </div>`;
+    // 操作は三点リーダー1つに集約する（DMでは今のところ出さない：opts.showMoreBtnがtrueの時だけ）
+    const moreBtn = (_currentUser && opts.showMoreBtn)
+      ? `<button type="button" class="board-more-btn" data-post-id="${item.id}" aria-label="${escapeHtml(t('boardMoreLabel'))}">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+        </button>`
+      : '';
+    const timeSlot = `<div class="board-time-slot" style="flex:0 0 auto;display:flex;align-items:center;gap:2px;align-self:flex-end;padding-bottom:1px;">
+      <span class="board-time" style="font-size:10.5px;color:#5f7268;white-space:nowrap;">${formatRelativeTime(item.created_at)}</span>
+      ${moreBtn}
+    </div>`;
+    return `<div class="board-msg-line ${isMine?'is-mine':'is-theirs'}" style="display:flex;align-items:flex-end;gap:${isMine?5:7}px;flex-direction:${isMine?'row-reverse':'row'};">
+      ${avatar}
+      <div style="min-width:0;display:flex;flex-direction:column;gap:4px;align-items:${isMine?'flex-end':'flex-start'};">${nameHtml}${bubble}</div>
+      ${timeSlot}
+    </div>`;
+  }
+  // 日付区切りチップ（掲示板・DM共通）
+  function chatDayKey(ts) { const d = new Date(ts); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); }
+  function chatDayLabel(ts) {
+    const d = new Date(ts), now = new Date();
+    const same = (a,b)=> a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+    const yd = new Date(now); yd.setDate(now.getDate()-1);
+    if(same(d,now)) return '今日';
+    if(same(d,yd)) return '昨日';
+    const w = ['日','月','火','水','木','金','土'][d.getDay()];
+    return (d.getMonth()+1)+'月'+d.getDate()+'日 '+w;
+  }
+  function chatSepChipHtml(label, accent) {
+    return `<div style="display:flex;align-items:center;gap:12px;${accent?'animation:boardFadeIn .3s ease both;':''}">
+      <span style="flex:1 1 auto;height:1px;background:${accent?'rgba(229,72,77,.45)':'rgba(255,255,255,.06)'};"></span>
+      <span style="flex:0 0 auto;padding:3px 11px;border-radius:20px;background:${accent?'rgba(229,72,77,.16)':'rgba(255,255,255,.05)'};${accent?'border:1px solid rgba(229,72,77,.4);':''}font-size:11px;font-weight:${accent?'800':'700'};color:${accent?'#f0a0a3':'#82968a'};white-space:nowrap;">${escapeHtml(label)}</span>
+      <span style="flex:1 1 auto;height:1px;background:${accent?'rgba(229,72,77,.45)':'rgba(255,255,255,.06)'};"></span>
+    </div>`;
+  }
   async function renderBoardPostsInto(panel, animeId, boardType, rerenderFn) {
     let posts = await db.board.list(animeId, boardType, currentLang);
     // 表示期限：古い投稿は一覧から除外（DBには残るが表示だけしない）
@@ -13037,63 +13116,7 @@
       // 自分=#2f7d55（旧#5cc98eは暗背景で明るすぎ、文字色も混在していた）／相手=#262e33。
       // opts.grouped: 同一ユーザーの連投2件目以降 → アイコン・名前を省略し行間を詰める
       // opts.quote:   引用元 {name, body} → 吹き出し内の上部に引用ブロックを出す（入れ子にしない）
-      const postCard = (item, opts) => {
-        opts = opts || {};
-        const grouped = !!opts.grouped;
-        const name = item.username || '名無し';
-        const isMine = _currentUser && item.user_id === _currentUser.id;
-        const isOfficial = !!boardIsAdminMap[item.user_id];
-        const bg = isMine ? '#2f7d55' : '#262e33';
-        const border = isMine ? 'rgba(255,255,255,.09)' : 'rgba(255,255,255,.08)';
-        const textColor = isMine ? '#f2fbf5' : '#e6efe9';
-        const nameColor = isOfficial ? '#c9a7e6' : '#9db3a5';
-        // 角丸：しっぽは相手=左下4px／自分=右下4px。連投2件目以降はしっぽを付けない（全角14px）
-        const radius = grouped ? '14px' : (isMine ? '14px 14px 4px 14px' : '14px 14px 14px 4px');
-        const shadow = isMine ? '0 10px 22px -16px rgba(0,0,0,.8)' : '0 8px 18px -16px rgba(0,0,0,.8)';
-        // アイコンはガチャで集めるものなので会話中も必ず出す。
-        // 自分側は26px＋金リング（マイページで設定したアイコンがそのまま出る）、相手は30px。
-        const avSize = isMine ? 26 : 30;
-        const avatarBg = isMine ? 'linear-gradient(150deg,#4a2f6d,#241a2c)' : 'linear-gradient(150deg,#2c4436,#1d3225)';
-        const avatarBorder = isMine ? '1.5px solid rgba(240,201,74,.55)' : '1px solid rgba(255,255,255,.1)';
-        const avatarText = isMine ? '#d9c2ef' : '#9be3bd';
-        const avatarUrl = boardAvatarMap[item.user_id];
-        // 連投2件目以降は同幅のスペーサーだけ残して列を揃える
-        const avatar = grouped
-          ? `<span style="width:${avSize}px;flex:0 0 ${avSize}px;"></span>`
-          : (avatarUrl
-            ? `<img src="${escapeHtml(avatarUrl)}" onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;object-fit:cover;border:${avatarBorder};cursor:pointer;">`
-            : `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;background:${avatarBg};border:${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:${isMine?10:11.5}px;font-weight:800;color:${avatarText};cursor:pointer;">${escapeHtml(name.charAt(0))}</span>`);
-        // 名前は相手のみ（自分はアイコンの緑枠で判別できる）。連投時は省略
-        const nameHtml = (!isMine && !grouped)
-          ? `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="font-size:11.5px;font-weight:700;color:${nameColor};padding-left:2px;cursor:pointer;">${escapeHtml(name)}${isOfficial?' <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">公式</span>':''}</span>`
-          : '';
-        // 引用ブロック：parent_id はそのまま使い、表示だけ入れ子をやめて本流に並べる
-        const q = opts.quote;
-        const quoteHtml = q ? `<div style="border-left:2px solid ${isMine?'rgba(255,255,255,.35)':'rgba(147,226,183,.5)'};padding-left:8px;margin-bottom:7px;opacity:.85;">
-            <span style="display:block;font-size:10.5px;font-weight:800;color:${isMine?'#d6f2e2':'#9be3bd'};">${escapeHtml(q.name)}</span>
-            <span style="display:block;font-size:11.5px;color:${isMine?'#cfe8da':'#b6c8bd'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(300px,54vw);">${escapeHtml(q.body)}</span>
-          </div>` : '';
-        const bubble = `<div style="max-width:min(440px,${isMine?74:70}vw);background:${bg};border:1px solid ${border};border-radius:${radius};padding:9px 13px;box-shadow:${shadow};">
-          ${quoteHtml}
-          <div style="font-size:14px;line-height:1.65;color:${textColor};white-space:pre-wrap;word-break:break-word;text-align:left;">${escapeHtml(item.body)}</div>
-        </div>`;
-        // 操作は三点リーダー1つに集約する。以前は 😊 / ↩ / ⋮ が全メッセージに並び、
-        // タップ端末では常に見えていて会話が読めなかった。押すとメニューが開く。
-        const moreBtn = _currentUser
-          ? `<button type="button" class="board-more-btn" data-post-id="${item.id}" aria-label="${escapeHtml(t('boardMoreLabel'))}">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
-            </button>`
-          : '';
-        const timeSlot = `<div class="board-time-slot" style="flex:0 0 auto;display:flex;align-items:center;gap:2px;align-self:flex-end;padding-bottom:1px;">
-          <span class="board-time" style="font-size:10.5px;color:#5f7268;white-space:nowrap;">${formatRelativeTime(item.created_at)}</span>
-          ${moreBtn}
-        </div>`;
-        return `<div class="board-msg-line ${isMine?'is-mine':'is-theirs'}" style="display:flex;align-items:flex-end;gap:${isMine?5:7}px;flex-direction:${isMine?'row-reverse':'row'};">
-          ${avatar}
-          <div style="min-width:0;display:flex;flex-direction:column;gap:4px;align-items:${isMine?'flex-end':'flex-start'};">${nameHtml}${bubble}</div>
-          ${timeSlot}
-        </div>`;
-      };
+      const postCard = (item, opts) => renderChatBubbleHtml(item, { ...opts, avatarMap: boardAvatarMap, isAdminMap: boardIsAdminMap, showMoreBtn: true });
       // リアクション行：既に付いてる絵文字をチップで表示（押すと自分の分だけON/OFF）＋「+」で新しい絵文字を選ぶ
       const reactionsRow = (item, isMine) => {
         const reactions = boardReactionsMap[item.id] || {};
@@ -13119,21 +13142,9 @@
       const byId = {};
       posts.forEach(p => { byId[p.id] = p; });
       const flow = posts.slice().sort((a,b)=> new Date(a.created_at) - new Date(b.created_at));
-      const dayKey = ts => { const d = new Date(ts); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
-      const dayLabel = ts => {
-        const d = new Date(ts), now = new Date();
-        const same = (a,b)=> a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
-        const yd = new Date(now); yd.setDate(now.getDate()-1);
-        if(same(d,now)) return '今日';
-        if(same(d,yd)) return '昨日';
-        const w = ['日','月','火','水','木','金','土'][d.getDay()];
-        return (d.getMonth()+1)+'月'+d.getDate()+'日 '+w;
-      };
-      const sepChip = (label, accent) => `<div style="display:flex;align-items:center;gap:12px;${accent?'animation:boardFadeIn .3s ease both;':''}">
-        <span style="flex:1 1 auto;height:1px;background:${accent?'rgba(229,72,77,.45)':'rgba(255,255,255,.06)'};"></span>
-        <span style="flex:0 0 auto;padding:3px 11px;border-radius:20px;background:${accent?'rgba(229,72,77,.16)':'rgba(255,255,255,.05)'};${accent?'border:1px solid rgba(229,72,77,.4);':''}font-size:11px;font-weight:${accent?'800':'700'};color:${accent?'#f0a0a3':'#82968a'};white-space:nowrap;">${escapeHtml(label)}</span>
-        <span style="flex:1 1 auto;height:1px;background:${accent?'rgba(229,72,77,.45)':'rgba(255,255,255,.06)'};"></span>
-      </div>`;
+      const dayKey = chatDayKey;
+      const dayLabel = chatDayLabel;
+      const sepChip = chatSepChipHtml;
       // 未読ライン：last_read_at より新しい最初の他人の投稿の直前に1回だけ出す
       const lastRead = boardLastReadIso ? new Date(boardLastReadIso).getTime() : 0;
       let unreadCount = 0, firstUnreadId = null;
@@ -20661,24 +20672,34 @@
   window.openDmThread = openDmThread;
 
   async function renderDmMessages(panel, meId, otherId, otherProfile) {
-    const msgs = await db.dm.list(meId, otherId).catch(()=>[]);
-    const initial = escapeHtml((otherProfile?.username || '?').charAt(0));
-    const bubbleHtml = (m) => {
-      const isMine = m.sender_id === meId;
-      const avatar = isMine ? '' : (otherProfile?.avatar_url
-        ? `<img src="${escapeHtml(otherProfile.avatar_url)}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex:0 0 26px;">`
-        : `<span style="width:26px;height:26px;border-radius:50%;background:#2c4436;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#9be3bd;flex:0 0 26px;">${initial}</span>`);
-      const bubbleStyle = isMine ? 'background:linear-gradient(135deg,#5ec97a,#46b968);color:#07200f;' : 'background:#22412f;color:#eaf6ee;';
-      return `<div style="display:flex;align-items:flex-end;gap:7px;flex-direction:${isMine?'row-reverse':'row'};margin-bottom:10px;">
-        ${avatar}
-        <div style="max-width:74vw;min-width:0;display:flex;flex-direction:column;gap:2px;align-items:${isMine?'flex-end':'flex-start'};">
-          <div style="${bubbleStyle}padding:8px 12px;border-radius:14px;font-size:13.5px;line-height:1.5;word-break:break-word;white-space:pre-wrap;">${escapeHtml(m.body)}</div>
-          <span style="font-size:10px;color:#5f7268;">${escapeHtml(formatRelativeTime(m.created_at))}</span>
-        </div>
+    const rows = await db.dm.list(meId, otherId).catch(()=>[]);
+    // db.dm.list の行を、掲示板の投稿と同じ形（user_id/username/body/created_at/id）に変換して、
+    // 同じ描画関数（renderChatBubbleHtml）にそのまま渡す＝見た目・グルーピング・日付区切りが掲示板と完全に同じになる
+    const posts = rows.map(m => ({
+      id: m.id,
+      user_id: m.sender_id,
+      username: m.sender_id === meId ? (window._loggedInUsername || '') : (otherProfile?.username || ''),
+      body: m.body,
+      created_at: m.created_at,
+    }));
+    const avatarMap = {};
+    if(otherProfile?.avatar_url) avatarMap[otherId] = otherProfile.avatar_url;
+    if(window._loggedInAvatarUrl) avatarMap[meId] = window._loggedInAvatarUrl;
+
+    let prev = null, out = '';
+    posts.forEach(p => {
+      const isMine = p.user_id === meId;
+      if(!prev || chatDayKey(prev.created_at) !== chatDayKey(p.created_at)) out += chatSepChipHtml(chatDayLabel(p.created_at), false);
+      // 連投まとめ：掲示板と同じ条件（同一人物・同日・5分以内）
+      const grouped = !!prev && prev.user_id === p.user_id
+        && chatDayKey(prev.created_at) === chatDayKey(p.created_at)
+        && (new Date(p.created_at) - new Date(prev.created_at)) < 5*60*1000;
+      out += `<div class="board-msg-row" style="display:flex;flex-direction:column;align-items:${isMine?'flex-end':'flex-start'};gap:4px;${grouped?'margin-top:-9px;':''}animation:boardMsgIn .26s cubic-bezier(.22,1,.36,1) both;">
+        ${renderChatBubbleHtml(p, { grouped, avatarMap, showMoreBtn: false })}
       </div>`;
-    };
-    panel.innerHTML = msgs.length ? msgs.map(bubbleHtml).join('')
-      : `<p style="text-align:center;color:var(--muted,#9ab);font-size:.85rem;padding:2rem 0;">まだメッセージがありません</p>`;
+      prev = p;
+    });
+    panel.innerHTML = out || `<p style="text-align:center;color:var(--muted,#9ab);font-size:.85rem;padding:2rem 0;">まだメッセージがありません</p>`;
 
     // 入力欄：掲示板と同じく、スクロール領域の外（.board-page-wrap直下）に置いて固定する
     const composerWrap = panel.parentElement.parentElement;
