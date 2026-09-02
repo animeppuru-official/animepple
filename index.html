@@ -4090,6 +4090,33 @@
   </div>
 </div>
 
+<!-- DM：友達同士のみの1対1チャット。見た目・スクロール挙動は掲示板と同じ -->
+<div class="page" id="page-dm">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()" style="color:#fff;">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <div class="board-page-wrap" style="padding:0;">
+    <div class="board-chat-head" style="position:sticky;top:52px;z-index:20;background:var(--bg);border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem .6rem;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="dmPartnerAvatar" style="width:34px;height:34px;border-radius:50%;flex:0 0 34px;background:#2c4436;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#9be3bd;overflow:hidden;"></span>
+        <div style="flex:1 1 auto;min-width:0;">
+          <h2 id="dmPartnerName" style="margin:0;font-size:1rem;color:#eaf6ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></h2>
+        </div>
+      </div>
+    </div>
+    <div id="dmSection" class="board-chat-scroll" style="padding:.75rem 1rem;"></div>
+  </div>
+</div>
+
 <div class="page mypage-page-wrap" id="page-settings">
   <header class="hdr">
     <div class="hdr-inner">
@@ -5429,6 +5456,7 @@
         <div class="mypage-actions" id="mypageFollowActions" style="display:none;">
           <button class="mypage-btn-primary" id="mypageFollowBtn" onclick="toggleFollowCurrentProfile()">フォローする</button>
           <button class="mypage-btn-secondary" id="mypageFriendBtn" onclick="handleFriendBtnClick()" style="white-space:nowrap;"></button>
+          <button class="mypage-btn-secondary" id="mypageDmBtn" style="display:none;white-space:nowrap;">メッセージ</button>
           <button type="button" id="mypageMoreBtn" aria-label="その他の操作" style="width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;color:#bccfc3;cursor:pointer;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
           </button>
@@ -6232,6 +6260,21 @@
       async remove(blockerId, blockedId) {
         if(!sb) return { error: 'invalid' };
         const { error } = await sb.from('blocks').delete().eq('blocker_id', blockerId).eq('blocked_id', blockedId);
+        return { error };
+      },
+    },
+    // ── DM（友達同士のみ。DB側のRLSでも友達関係を確認しているので、フロント側は表示制御だけでよい）
+    dm: {
+      async list(userIdA, userIdB) {
+        if(!sb || !userIdA || !userIdB) return [];
+        const { data } = await sb.from('direct_messages').select('*')
+          .or(`and(sender_id.eq.${userIdA},recipient_id.eq.${userIdB}),and(sender_id.eq.${userIdB},recipient_id.eq.${userIdA})`)
+          .order('created_at', { ascending: true });
+        return data || [];
+      },
+      async post(senderId, recipientId, body) {
+        if(!sb || !senderId || !recipientId || !body) return { error: 'invalid' };
+        const { error } = await sb.from('direct_messages').insert({ sender_id: senderId, recipient_id: recipientId, body });
         return { error };
       },
     },
@@ -7454,6 +7497,7 @@
     if(page === 'board-value' && animeId) return `/anime/${publicAnimeId(animeId)}/board/value/${_boardActiveTab || 'A'}`;
     if(page === 'image-submit' && animeId) return `/anime/${publicAnimeId(animeId)}/image-submit`;
     if(page === 'user' && animeId) return `/user/${encodeURIComponent(animeId)}`;
+    if(page === 'dm' && animeId) return `/dm/${encodeURIComponent(animeId)}`;
     if(page === 'follow-list') {
       const uid = _followListState && _followListState.userId;
       const mode = (_followListState && _followListState.mode) || 'following';
@@ -7489,6 +7533,9 @@
 
     m = rel.match(/^\/user\/([^\/]+)(?:\/.*)?$/);
     if(m) return { page:'user', animeId: decodeURIComponent(m[1]) };
+
+    m = rel.match(/^\/dm\/([^\/]+)(?:\/.*)?$/);
+    if(m) return { page:'dm', animeId: decodeURIComponent(m[1]) };
 
     if(STATIC_PATH_TO_PAGE[rel] !== undefined) return { page: STATIC_PATH_TO_PAGE[rel], animeId: null };
     return null;
@@ -7611,10 +7658,11 @@
     document.getElementById('page-'+domPage).classList.add('active');
     // 掲示板チャットのスマホ表示：下部ナビを消し、ヘッダー／会話／入力バーの3段固定にする。
     // 会話だけがスクロールするので、打っている間に会話が押し出されない
-    const isBoardChat = (domPage === 'board-value' || domPage === 'board-general');
+    const isBoardChat = (domPage === 'board-value' || domPage === 'board-general' || domPage === 'dm');
     document.body.classList.toggle('board-chat-mobile', isBoardChat);
     if(!isBoardChat) {
       leaveBoardPresence(); // 掲示板から離れたら、そこの「アクティブ人数」から自分を外す
+      if(typeof stopDmRealtime === 'function') stopDmRealtime();
       document.body.classList.remove('board-kb-open');
       document.body.style.removeProperty('--board-vh');
     } else if(window._boardSyncVh) {
@@ -7773,6 +7821,7 @@
     }
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
+    if (page==='dm'&&animeId) { renderDmThread(animeId).catch(console.error); }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
       currentAnimeId = animeId;
@@ -20153,6 +20202,12 @@
           } else {
             friendBtn.textContent = '友達を申請する';
           }
+          // DM：友達同士だけ「メッセージ」ボタンを出す
+          const dmBtn = document.getElementById('mypageDmBtn');
+          if(dmBtn) {
+            dmBtn.style.display = friendStatus === 'friends' ? '' : 'none';
+            dmBtn.onclick = () => openDmThread(targetUserId);
+          }
         }
         if(moreBtn) {
           moreBtn.dataset.targetUid = targetUserId;
@@ -20482,6 +20537,8 @@
       btn.textContent = newStatus === 'pending_received' ? '友達申請を承認する' : friendBtnLabel(newStatus);
       const friendCountEl = document.getElementById('statFriendsCount');
       if(friendCountEl) friendCountEl.textContent = await db.friendRequests.getFriendCount(targetId);
+      const dmBtn = document.getElementById('mypageDmBtn');
+      if(dmBtn) dmBtn.style.display = newStatus === 'friends' ? '' : 'none';
     } finally {
       btn.disabled = false;
     }
@@ -20591,6 +20648,109 @@
     }
   }
   window.renderFriendRequestsPage = renderFriendRequestsPage;
+
+  // ── DM（友達同士のみ。見た目・スクロール挙動は掲示板のチャットと同じ仕組みを流用）──
+  let _dmRealtimeChannel = null;
+  function stopDmRealtime() {
+    if(_dmRealtimeChannel) { sb.removeChannel(_dmRealtimeChannel); _dmRealtimeChannel = null; }
+  }
+  function openDmThread(otherUserId) { nav('dm', otherUserId); }
+  window.openDmThread = openDmThread;
+
+  async function renderDmMessages(panel, meId, otherId, otherProfile) {
+    const msgs = await db.dm.list(meId, otherId).catch(()=>[]);
+    const initial = escapeHtml((otherProfile?.username || '?').charAt(0));
+    const bubbleHtml = (m) => {
+      const isMine = m.sender_id === meId;
+      const avatar = isMine ? '' : (otherProfile?.avatar_url
+        ? `<img src="${escapeHtml(otherProfile.avatar_url)}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex:0 0 26px;">`
+        : `<span style="width:26px;height:26px;border-radius:50%;background:#2c4436;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#9be3bd;flex:0 0 26px;">${initial}</span>`);
+      const bubbleStyle = isMine ? 'background:linear-gradient(135deg,#5ec97a,#46b968);color:#07200f;' : 'background:#22412f;color:#eaf6ee;';
+      return `<div style="display:flex;align-items:flex-end;gap:7px;flex-direction:${isMine?'row-reverse':'row'};margin-bottom:10px;">
+        ${avatar}
+        <div style="max-width:74vw;min-width:0;display:flex;flex-direction:column;gap:2px;align-items:${isMine?'flex-end':'flex-start'};">
+          <div style="${bubbleStyle}padding:8px 12px;border-radius:14px;font-size:13.5px;line-height:1.5;word-break:break-word;white-space:pre-wrap;">${escapeHtml(m.body)}</div>
+          <span style="font-size:10px;color:#5f7268;">${escapeHtml(formatRelativeTime(m.created_at))}</span>
+        </div>
+      </div>`;
+    };
+    panel.innerHTML = msgs.length ? msgs.map(bubbleHtml).join('')
+      : `<p style="text-align:center;color:var(--muted,#9ab);font-size:.85rem;padding:2rem 0;">まだメッセージがありません</p>`;
+
+    // 入力欄：掲示板と同じく、スクロール領域の外（.board-page-wrap直下）に置いて固定する
+    const composerWrap = panel.parentElement.parentElement;
+    let composer = composerWrap.querySelector('.board-composer');
+    if(!composer) {
+      composer = document.createElement('div');
+      composer.className = 'board-composer';
+      composerWrap.appendChild(composer);
+    }
+    composer.innerHTML = `
+      <div style="display:flex;gap:8px;align-items:flex-end;">
+        <textarea id="dmComposeInput" rows="1" placeholder="メッセージを入力" style="flex:1 1 auto;min-width:0;resize:none;max-height:120px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#eaf6ee;font-size:13.5px;"></textarea>
+        <button type="button" id="dmSendBtn" style="flex:0 0 auto;height:40px;padding:0 16px;border-radius:12px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:13px;cursor:pointer;">送信</button>
+      </div>`;
+    const input = composer.querySelector('#dmComposeInput');
+    const sendBtn = composer.querySelector('#dmSendBtn');
+    const send = async () => {
+      const body = input.value.trim();
+      if(!body) return;
+      sendBtn.disabled = true;
+      const { error } = await db.dm.post(meId, otherId, body);
+      sendBtn.disabled = false;
+      if(error) { alert(t('profileSaveFailedAlert')); return; }
+      input.value = '';
+      await renderDmMessages(panel, meId, otherId, otherProfile);
+    };
+    sendBtn.onclick = send;
+    input.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
+
+    requestAnimationFrame(() => {
+      scrollBoardToBottom(panel.parentElement);
+      setTimeout(() => scrollBoardToBottom(panel.parentElement), 80);
+    });
+  }
+
+  async function renderDmThread(otherUserId) {
+    const el = document.getElementById('dmSection');
+    if(!el || !sb) return;
+    stopDmRealtime();
+    if(!_currentUser) {
+      el.innerHTML = `<p style="padding:2rem;text-align:center;color:var(--muted,#9ab);font-size:.85rem;">ログインが必要です</p>`;
+      return;
+    }
+    const [status, profile] = await Promise.all([
+      db.friendRequests.getStatus(_currentUser.id, otherUserId).catch(()=>'none'),
+      db.profiles.get(otherUserId).catch(()=>null),
+    ]);
+    const nameEl = document.getElementById('dmPartnerName');
+    if(nameEl) nameEl.textContent = profile?.username || t('userNotFound');
+    const avEl = document.getElementById('dmPartnerAvatar');
+    if(avEl) avEl.innerHTML = profile?.avatar_url
+      ? `<img src="${escapeHtml(profile.avatar_url)}" style="width:100%;height:100%;object-fit:cover;">`
+      : escapeHtml((profile?.username || '?').charAt(0));
+
+    if(status !== 'friends') {
+      el.innerHTML = `<div id="dmPanel"></div>`;
+      el.querySelector('#dmPanel').innerHTML = `<p style="padding:2rem;text-align:center;color:var(--muted,#9ab);font-size:.85rem;">友達になっている相手とだけメッセージできます</p>`;
+      return;
+    }
+    el.innerHTML = `<div id="dmPanel"></div>`;
+    const panel = el.querySelector('#dmPanel');
+    await renderDmMessages(panel, _currentUser.id, otherUserId, profile);
+    const ch = sb.channel(`dm_${[_currentUser.id, otherUserId].sort().join('_')}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, (payload) => {
+        const row = payload.new;
+        if(!row) return;
+        const involves = (row.sender_id === _currentUser.id && row.recipient_id === otherUserId)
+          || (row.sender_id === otherUserId && row.recipient_id === _currentUser.id);
+        if(!involves) return;
+        renderDmMessages(panel, _currentUser.id, otherUserId, profile);
+      })
+      .subscribe((s, err) => { if(s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') console.warn('[dm] subscribe failed:', s, err); });
+    _dmRealtimeChannel = ch;
+  }
+  window.renderDmThread = renderDmThread;
 
   window.showAuthModal = showAuthModal;
   window.closeAuthModal = closeAuthModal;
