@@ -12265,16 +12265,20 @@
   }
   // ある部屋の「今の」リアルタイム人数を1回だけ覗き見る（track()はせず、sync結果だけ読んで即抜ける）。
   // 実際にその部屋に入っている人と同じチャンネル名を見に行くので、正確な現在人数が取れる。
-  function peekRoomPresenceCount(animeId, shardedType, lang) {
+  // その部屋に今いる人のuserId一覧を1回だけ覗き見る（presenceのkeyにuserIdをそのまま使っているため取れる）
+  function peekRoomPresence(animeId, shardedType, lang) {
     return new Promise(resolve => {
-      if(!sb) return resolve(0);
+      if(!sb) return resolve([]);
       let done = false;
       const ch = sb.channel(boardPresenceChannelName(animeId, shardedType, lang));
-      const finish = (n) => { if(done) return; done = true; resolve(n); setTimeout(()=>sb.removeChannel(ch), 0); };
-      ch.on('presence', { event: 'sync' }, () => finish(Object.keys(ch.presenceState()).length));
-      ch.subscribe(status => { if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') finish(0); });
-      setTimeout(() => finish(0), 3000); // 念のためのタイムアウト保険
+      const finish = (ids) => { if(done) return; done = true; resolve(ids); setTimeout(()=>sb.removeChannel(ch), 0); };
+      ch.on('presence', { event: 'sync' }, () => finish(Object.keys(ch.presenceState())));
+      ch.subscribe(status => { if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') finish([]); });
+      setTimeout(() => finish([]), 3000); // 念のためのタイムアウト保険
     });
+  }
+  function peekRoomPresenceCount(animeId, shardedType, lang) {
+    return peekRoomPresence(animeId, shardedType, lang).then(ids => ids.length);
   }
   // 今この部屋に「入室中」として自分をカウントさせる。onCountChange(現在人数) が変化のたびに呼ばれる
   let _boardPresenceChannel = null;
@@ -12293,8 +12297,9 @@
   }
   // 今すでに使われているサーバー（1件でも投稿があるサーバー）を、shard=1から順に見て一覧にする。
   // 投稿が無いshardに行き当たった時点で「まだ誰も使ってない」ので、そこで打ち切る。
-  // 各部屋の人数は上のpeekRoomPresenceCountでリアルタイムに取得する（投稿数とは無関係）。
+  // 各部屋の人数は上のpeekRoomPresenceでリアルタイムに取得する（投稿数とは無関係）。
   // 既存サーバーが全部満員なら、末尾に「新しいサーバー」という空の選択肢を1つ足す。
+  // ブロック中の相手が今その部屋にいるかどうかも、同じpresence情報からわかる（誰かは伏せて有無だけ知らせる）
   async function listBoardShards(animeId, base, lang) {
     const rooms = [];
     for(let shard = 1; shard <= BOARD_SHARD_MAX; shard++) {
@@ -12302,12 +12307,15 @@
       if(shard > 1 && !stats.participantCount) break; // shard1は投稿0でも常に存在する扱い
       rooms.push({ shard, participantCount: stats.participantCount });
     }
+    if(_currentUser && _blockedUserIds === null) await loadMyBlockedUserIds().catch(()=>{});
     await Promise.all(rooms.map(async r => {
-      r.activeCount = await peekRoomPresenceCount(animeId, shardedBoardType(base, r.shard), lang).catch(()=>0);
+      const ids = await peekRoomPresence(animeId, shardedBoardType(base, r.shard), lang).catch(()=>[]);
+      r.activeCount = ids.length;
+      r.hasBlocked = !!(_blockedUserIds && ids.some(id => _blockedUserIds.has(id)));
     }));
     const allFull = rooms.every(r => r.activeCount >= BOARD_SHARD_THRESHOLD);
     if(allFull && rooms.length < BOARD_SHARD_MAX) {
-      rooms.push({ shard: rooms.length + 1, activeCount: 0, participantCount: 0, isNew: true });
+      rooms.push({ shard: rooms.length + 1, activeCount: 0, participantCount: 0, isNew: true, hasBlocked: false });
     }
     return rooms;
   }
@@ -12342,7 +12350,7 @@
             const full = !r.isNew && r.activeCount >= BOARD_SHARD_THRESHOLD;
             const isMine = myShard === r.shard;
             return `<button type="button" class="board-shard-pick-btn" data-shard="${r.shard}" ${full?'disabled':''} style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;height:52px;padding:0 16px;border-radius:12px;border:1px solid ${full?'rgba(229,72,77,.35)':(isMine?'rgba(92,201,142,.5)':'rgba(255,255,255,.1)')};background:${full?'rgba(229,72,77,.06)':(isMine?'rgba(92,201,142,.1)':'rgba(255,255,255,.03)')};color:${full?'#8a6b6b':'#dfeae3'};cursor:${full?'not-allowed':'pointer'};text-align:left;opacity:${full?'.7':'1'};">
-              <span style="font-weight:700;font-size:13.5px;">${r.isNew ? '新しいサーバーを開く' : `サーバー${r.shard}`}${isMine?' <span style="font-size:10.5px;color:#5ec97a;">(前回)</span>':''}</span>
+              <span style="font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px;">${r.isNew ? '新しいサーバーを開く' : `サーバー${r.shard}`}${isMine?' <span style="font-size:10.5px;color:#5ec97a;">(前回)</span>':''}${r.hasBlocked?' <span title="ブロック中の相手がこの部屋にいます" style="font-size:11px;color:#e8c463;">⚠ ブロック中の相手がいます</span>':''}</span>
               <span style="font-size:11.5px;color:${full?'#e5484d':'#8db5a0'};white-space:nowrap;">${r.isNew ? '' : `● アクティブ ${r.activeCount}/${BOARD_SHARD_THRESHOLD}人${full?'・満員':''}`}</span>
             </button>`;
           }).join('')}
@@ -13283,11 +13291,8 @@
       };
     });
     panel.querySelectorAll('.board-report-btn').forEach(btn=>{
-      btn.onclick = async () => {
-        if(!confirm(t('reportConfirm'))) return;
-        const { error } = await db.reports.submit(_currentUser.id, btn.dataset.type, btn.dataset.id, null);
-        if(error) { alert(t('profileSaveFailedAlert')); return; }
-        alert(t('reportSentAlert'));
+      btn.onclick = () => {
+        openReportSheet(btn.dataset.type, btn.dataset.id);
       };
     });
     panel.querySelectorAll('.board-block-btn').forEach(btn=>{
@@ -14470,6 +14475,56 @@
     window.removeEventListener('scroll', closeBoardMoreMenu, true);
   }
 
+  // ── 通報：理由をテンプレから選ぶ＋詳細は任意（「その他」の時だけ必須）。掲示板投稿・レビュー・ユーザー共通 ──
+  const REPORT_REASONS = [
+    { id: 'spam', label: '迷惑行為・スパム' },
+    { id: 'harassment', label: '嫌がらせ・誹謗中傷' },
+    { id: 'inappropriate', label: '不適切な内容（暴力・性的など）' },
+    { id: 'impersonation', label: 'なりすまし' },
+    { id: 'other', label: 'その他' },
+  ];
+  function openReportSheet(targetType, targetId, onSubmitted) {
+    if(!_currentUser) return;
+    document.getElementById('reportSheetOverlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'reportSheetOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="width:100%;max-width:480px;background:#16241c;border-radius:16px 16px 0 0;padding:18px;padding-bottom:calc(18px + env(safe-area-inset-bottom));">
+        <h3 style="margin:0 0 12px;font-size:14px;color:#eaf6ee;font-weight:800;">通報の理由を選んでください</h3>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+          ${REPORT_REASONS.map(r => `<label style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;background:rgba(255,255,255,.03);cursor:pointer;">
+            <input type="radio" name="reportReason" value="${r.id}" style="accent-color:#5ec97a;">
+            <span style="font-size:13px;color:#dfeae3;">${escapeHtml(r.label)}</span>
+          </label>`).join('')}
+        </div>
+        <textarea id="reportDetailInput" placeholder="詳しい状況（任意。「その他」を選んだ場合は必須）" rows="3" style="width:100%;resize:none;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#eaf6ee;font-size:13px;margin-bottom:14px;box-sizing:border-box;"></textarea>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="reportSheetCancel" style="flex:1 1 auto;height:42px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#b6c8bd;font-weight:700;font-size:13px;cursor:pointer;">キャンセル</button>
+          <button type="button" id="reportSheetSubmit" style="flex:1 1 auto;height:42px;border-radius:11px;border:none;background:#e5484d;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">通報する</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.remove(); });
+    overlay.querySelector('#reportSheetCancel').onclick = () => overlay.remove();
+    overlay.querySelector('#reportSheetSubmit').onclick = async () => {
+      const checked = overlay.querySelector('input[name="reportReason"]:checked');
+      if(!checked) { alert('理由を選んでください'); return; }
+      const detail = overlay.querySelector('#reportDetailInput').value.trim();
+      if(checked.value === 'other' && !detail) { alert('「その他」を選んだ場合は詳しい状況を入力してください'); return; }
+      const reasonLabel = REPORT_REASONS.find(r => r.id === checked.value)?.label || checked.value;
+      const reason = detail ? `${reasonLabel}：${detail}` : reasonLabel;
+      const btn = overlay.querySelector('#reportSheetSubmit');
+      btn.disabled = true;
+      const { error } = await db.reports.submit(_currentUser.id, targetType, targetId, reason);
+      overlay.remove();
+      if(error) { alert(t('profileSaveFailedAlert')); return; }
+      alert(t('reportSentAlert'));
+      if(onSubmitted) onSubmitted();
+    };
+  }
+  window.openReportSheet = openReportSheet;
+
   // マイページ（相手のプロフィール）の「⋯」：通報・ブロックをここに集約する。
   // 「友達」は相互フォローで自動的に成立する仕組みなので、別途「申請」ボタンは設けていない
   // （フォローする → 相手もフォローし返してくれたら自動的に友達になる）。
@@ -14496,12 +14551,9 @@
     menu.style.left = left + 'px';
     menu.style.top = top + 'px';
 
-    menu.querySelector('[data-act="report"]').onclick = async () => {
+    menu.querySelector('[data-act="report"]').onclick = () => {
       closeMypageMoreMenu();
-      if(!confirm(t('reportConfirm'))) return;
-      const { error } = await db.reports.submit(_currentUser.id, 'user', targetUserId, null);
-      if(error) { alert(t('profileSaveFailedAlert')); return; }
-      alert(t('reportSentAlert'));
+      openReportSheet('user', targetUserId);
     };
     menu.querySelector('[data-act="block"]').onclick = async () => {
       closeMypageMoreMenu();
@@ -18938,11 +18990,8 @@
     });
     document.addEventListener('click', () => { el.querySelectorAll('.rc-kebab-menu').forEach(m=>m.style.display='none'); }, {once:true});
     el.querySelectorAll('.rc-report-btn').forEach(btn=>{
-      btn.onclick = async () => {
-        if(!confirm(t('reportConfirm'))) return;
-        const { error } = await db.reports.submit(_currentUser.id, 'review', btn.dataset.reviewId, null);
-        if(error) { alert(t('profileSaveFailedAlert')); return; }
-        alert(t('reportSentAlert'));
+      btn.onclick = () => {
+        openReportSheet('review', btn.dataset.reviewId);
       };
     });
     el.querySelectorAll('.rc-block-btn').forEach(btn=>{
