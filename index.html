@@ -20482,12 +20482,15 @@
     if(!targetId) return;
     const currentlyFollowing = btn.dataset.following === '1';
     btn.disabled = true;
-    if(currentlyFollowing) {
-      await db.follows.unfollow(_currentUser.id, targetId);
-    } else {
-      await db.follows.follow(_currentUser.id, targetId);
-    }
+    const { error } = currentlyFollowing
+      ? await db.follows.unfollow(_currentUser.id, targetId)
+      : await db.follows.follow(_currentUser.id, targetId);
     btn.disabled = false;
+    if(error) {
+      console.warn('follow toggle failed:', error);
+      alert(t('profileSaveFailedAlert'));
+      return; // 保存に失敗したのでボタンの見た目は変えない
+    }
     btn.dataset.following = currentlyFollowing ? '0' : '1';
     btn.textContent = currentlyFollowing ? t('followBtn') : t('followingBtn');
     btn.classList.toggle('mypage-btn-following', !currentlyFollowing);
