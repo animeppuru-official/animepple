@@ -7614,6 +7614,7 @@
     const isBoardChat = (domPage === 'board-value' || domPage === 'board-general');
     document.body.classList.toggle('board-chat-mobile', isBoardChat);
     if(!isBoardChat) {
+      leaveBoardPresence(); // 掲示板から離れたら、そこの「アクティブ人数」から自分を外す
       document.body.classList.remove('board-kb-open');
       document.body.style.removeProperty('--board-vh');
     } else if(window._boardSyncVh) {
@@ -12191,9 +12192,13 @@
   // 投稿・既読・通知・リアルタイム購読は全部board_typeを素通しの文字列として使っているので、
   // これだけで既存の仕組みに一切手を入れずにシャード対応できる。
   // 入室は自動振り分けにせず、必ず「今あるサーバー一覧」をユーザーに見せて自分で選んでもらう。
-  // サーバーを手動で新規作成するボタンは無く、既存のサーバーが全部しきい値以上の時だけ、
+  // サーバーを手動で新規作成するボタンは無く、既存のサーバーが全部満員の時だけ、
   // 「新しいサーバーに入る」という選択肢が一覧の末尾に出る。
-  const BOARD_SHARD_THRESHOLD = 15; // この人数を超えていたら「混雑」表示にする
+  //
+  // 「アクティブ」＝今リアルタイムでそのチャットに接続している人数。過去の投稿数ではなく、
+  // Supabase Realtimeの Presence（今チャンネルに繋がっている人を数える機能）で数える。
+  // 15人ちょうどで、それ以上は物理的に入室をブロックする（表示だけの「混雑」ではない）。
+  const BOARD_SHARD_THRESHOLD = 15; // これに達していたら満員＝入室不可
   const BOARD_SHARD_MAX = 20; // 暴走防止の上限
   function shardedBoardType(base, shard) {
     return shard > 1 ? `${base}__s${shard}` : base;
@@ -12206,16 +12211,51 @@
     const i = sharded.indexOf('__s');
     return i === -1 ? 1 : (parseInt(sharded.slice(i+3), 10) || 1);
   }
+  function boardPresenceChannelName(animeId, shardedType, lang) {
+    return `board_presence_${animeId}_${shardedType}_${lang||'ja'}`;
+  }
+  // ある部屋の「今の」リアルタイム人数を1回だけ覗き見る（track()はせず、sync結果だけ読んで即抜ける）。
+  // 実際にその部屋に入っている人と同じチャンネル名を見に行くので、正確な現在人数が取れる。
+  function peekRoomPresenceCount(animeId, shardedType, lang) {
+    return new Promise(resolve => {
+      if(!sb) return resolve(0);
+      let done = false;
+      const ch = sb.channel(boardPresenceChannelName(animeId, shardedType, lang));
+      const finish = (n) => { if(done) return; done = true; resolve(n); setTimeout(()=>sb.removeChannel(ch), 0); };
+      ch.on('presence', { event: 'sync' }, () => finish(Object.keys(ch.presenceState()).length));
+      ch.subscribe(status => { if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') finish(0); });
+      setTimeout(() => finish(0), 3000); // 念のためのタイムアウト保険
+    });
+  }
+  // 今この部屋に「入室中」として自分をカウントさせる。onCountChange(現在人数) が変化のたびに呼ばれる
+  let _boardPresenceChannel = null;
+  function leaveBoardPresence() {
+    if(_boardPresenceChannel) { sb.removeChannel(_boardPresenceChannel); _boardPresenceChannel = null; }
+  }
+  function joinBoardPresence(animeId, shardedType, lang, onCountChange) {
+    leaveBoardPresence();
+    if(!sb) return;
+    const ch = sb.channel(boardPresenceChannelName(animeId, shardedType, lang), {
+      config: { presence: { key: (_currentUser?.id || ('guest_'+Math.random().toString(36).slice(2))) } }
+    });
+    ch.on('presence', { event: 'sync' }, () => onCountChange(Object.keys(ch.presenceState()).length));
+    ch.subscribe(async (status) => { if(status === 'SUBSCRIBED') await ch.track({ at: Date.now() }); });
+    _boardPresenceChannel = ch;
+  }
   // 今すでに使われているサーバー（1件でも投稿があるサーバー）を、shard=1から順に見て一覧にする。
   // 投稿が無いshardに行き当たった時点で「まだ誰も使ってない」ので、そこで打ち切る。
-  // 既存サーバーが全部しきい値以上の混雑なら、末尾に「新しいサーバー」という空の選択肢を1つ足す。
+  // 各部屋の人数は上のpeekRoomPresenceCountでリアルタイムに取得する（投稿数とは無関係）。
+  // 既存サーバーが全部満員なら、末尾に「新しいサーバー」という空の選択肢を1つ足す。
   async function listBoardShards(animeId, base, lang) {
     const rooms = [];
     for(let shard = 1; shard <= BOARD_SHARD_MAX; shard++) {
-      const stats = await db.boardState.getBoardStats(animeId, shardedBoardType(base, shard), lang).catch(()=>({activeCount:0, participantCount:0}));
+      const stats = await db.boardState.getBoardStats(animeId, shardedBoardType(base, shard), lang).catch(()=>({participantCount:0}));
       if(shard > 1 && !stats.participantCount) break; // shard1は投稿0でも常に存在する扱い
-      rooms.push({ shard, activeCount: stats.activeCount, participantCount: stats.participantCount });
+      rooms.push({ shard, participantCount: stats.participantCount });
     }
+    await Promise.all(rooms.map(async r => {
+      r.activeCount = await peekRoomPresenceCount(animeId, shardedBoardType(base, r.shard), lang).catch(()=>0);
+    }));
     const allFull = rooms.every(r => r.activeCount >= BOARD_SHARD_THRESHOLD);
     if(allFull && rooms.length < BOARD_SHARD_MAX) {
       rooms.push({ shard: rooms.length + 1, activeCount: 0, participantCount: 0, isNew: true });
@@ -12236,7 +12276,8 @@
   const _boardShardChoice = {};
   function boardShardKey(animeId, base, lang) { return `${animeId}|${base}|${lang||'ja'}`; }
 
-  // サーバー一覧画面。選ぶと onPick(shard) を呼ぶだけのシンプルなもの
+  // サーバー一覧画面。選ぶと onPick(shard) を呼ぶだけのシンプルなもの。
+  // 満員（アクティブ15人以上）の部屋はボタンを押せなくする（表示上の警告ではなく実際にブロックする）
   async function renderBoardShardPicker(container, animeId, base, lang, onPick) {
     container.innerHTML = `<p style="text-align:center;color:var(--muted,#9ab);font-size:.85rem;padding:2rem 0;">${escapeHtml(t('loadingLabel'))}</p>`;
     const [rooms, myShard] = await Promise.all([
@@ -12246,27 +12287,39 @@
     container.innerHTML = `
       <div style="padding:16px;">
         <h3 style="margin:0 0 4px;font-size:14px;color:#eaf6ee;font-weight:800;">サーバーを選ぶ</h3>
-        <p style="margin:0 0 14px;font-size:11.5px;color:#8db5a0;">1つのサーバーが混み合ってきたら、新しいサーバーが選べるようになります</p>
+        <p style="margin:0 0 14px;font-size:11.5px;color:#8db5a0;">アクティブ${BOARD_SHARD_THRESHOLD}人で満員になり、入れなくなります</p>
         <div style="display:flex;flex-direction:column;gap:8px;">
           ${rooms.map(r => {
-            const crowded = r.activeCount >= BOARD_SHARD_THRESHOLD;
+            const full = !r.isNew && r.activeCount >= BOARD_SHARD_THRESHOLD;
             const isMine = myShard === r.shard;
-            return `<button type="button" class="board-shard-pick-btn" data-shard="${r.shard}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;height:52px;padding:0 16px;border-radius:12px;border:1px solid ${isMine?'rgba(92,201,142,.5)':'rgba(255,255,255,.1)'};background:${isMine?'rgba(92,201,142,.1)':'rgba(255,255,255,.03)'};color:#dfeae3;cursor:pointer;text-align:left;">
+            return `<button type="button" class="board-shard-pick-btn" data-shard="${r.shard}" ${full?'disabled':''} style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;height:52px;padding:0 16px;border-radius:12px;border:1px solid ${full?'rgba(229,72,77,.35)':(isMine?'rgba(92,201,142,.5)':'rgba(255,255,255,.1)')};background:${full?'rgba(229,72,77,.06)':(isMine?'rgba(92,201,142,.1)':'rgba(255,255,255,.03)')};color:${full?'#8a6b6b':'#dfeae3'};cursor:${full?'not-allowed':'pointer'};text-align:left;opacity:${full?'.7':'1'};">
               <span style="font-weight:700;font-size:13.5px;">${r.isNew ? '新しいサーバーを開く' : `サーバー${r.shard}`}${isMine?' <span style="font-size:10.5px;color:#5ec97a;">(前回)</span>':''}</span>
-              <span style="font-size:11.5px;color:${crowded?'#e8c463':'#8db5a0'};white-space:nowrap;">${r.isNew ? '' : `● アクティブ ${r.activeCount}人${crowded?'・混雑':''}`}</span>
+              <span style="font-size:11.5px;color:${full?'#e5484d':'#8db5a0'};white-space:nowrap;">${r.isNew ? '' : `● アクティブ ${r.activeCount}/${BOARD_SHARD_THRESHOLD}人${full?'・満員':''}`}</span>
             </button>`;
           }).join('')}
         </div>
       </div>
     `;
-    container.querySelectorAll('.board-shard-pick-btn').forEach(btn => {
-      btn.onclick = () => onPick(parseInt(btn.dataset.shard, 10));
+    container.querySelectorAll('.board-shard-pick-btn:not([disabled])').forEach(btn => {
+      btn.onclick = async () => {
+        const shard = parseInt(btn.dataset.shard, 10);
+        // クリック時点で改めて最新人数を確認する（一覧表示後に他の人が入ってきて満員になっている可能性があるため）
+        btn.disabled = true;
+        const liveCount = await peekRoomPresenceCount(animeId, shardedBoardType(base, shard), lang).catch(()=>0);
+        if(liveCount >= BOARD_SHARD_THRESHOLD) {
+          alert('ちょうど満員になってしまいました。別のサーバーを選んでください。');
+          renderBoardShardPicker(container, animeId, base, lang, onPick);
+          return;
+        }
+        onPick(shard);
+      };
     });
   }
 
   async function renderBoardGeneral(animeId) {
     const el = document.getElementById('boardGeneralSection');
     if(!el || !sb) return;
+    leaveBoardPresence();
     const key = boardShardKey(animeId, 'general', currentLang);
     if(!_boardShardChoice[key]) {
       el.innerHTML = `<div id="boardPanel"></div>`;
@@ -12280,12 +12333,17 @@
     const shardedType = shardedBoardType('general', shard);
     el.innerHTML = `<div id="boardPanel"></div>`;
     // 板ヘッダーのサブ行：参加人数・今アクティブ人数（＋サーバーが分かれている時だけ番号と、変更リンクを出す）
+    // 「アクティブ」はリアルタイムの入室人数（Presence）。参加人数（過去に投稿したことがある人数）とは別物
     db.boardState.getBoardStats(animeId, shardedType, currentLang).then(stats => {
       const subEl = document.getElementById('boardGeneralPageSub');
-      if(subEl) subEl.innerHTML = escapeHtml(t('boardStatsLine').replace('{participants}', stats.participantCount).replace('{active}', stats.activeCount))
+      if(subEl) subEl.innerHTML = t('boardStatsLine').replace('{participants}', stats.participantCount).replace('{active}', '<span id="boardGeneralLiveCount">…</span>')
         + (shard > 1 ? escapeHtml(` · サーバー${shard}`) : '')
         + ` · <span onclick="delete _boardShardChoice['${key}'];renderBoardGeneral('${animeId}')" style="text-decoration:underline;cursor:pointer;">サーバーを変更</span>`;
     }).catch(()=>{});
+    joinBoardPresence(animeId, shardedType, currentLang, (count) => {
+      const liveEl = document.getElementById('boardGeneralLiveCount');
+      if(liveEl) liveEl.textContent = count;
+    });
     await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, shardedType, () => renderBoardGeneral(animeId));
     if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, shardedType, currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
     startBoardRealtime(animeId, shardedType, currentLang, () => renderBoardGeneral(animeId));
@@ -12700,6 +12758,7 @@
   async function renderBoardValue(animeId) {
     const el = document.getElementById('boardValueSection');
     if(!el || !sb) return;
+    leaveBoardPresence();
     let myGroup = null;
     if(_currentUser) {
       const mine = await db.reviewValues.getMyGroup(animeId, _currentUser.id);
@@ -12764,13 +12823,17 @@
     const shardedType = shardedBoardType(_boardActiveTab, shard);
     db.boardState.getBoardStats(animeId, shardedType, currentLang).then(stats => {
       const subEl = document.getElementById('boardValuePageSub');
-      // 「今アクティブ」は緑の点を付ける（同じ灰色の文字に埋もれていた）
+      // 「今アクティブ」は緑の点を付ける（同じ灰色の文字に埋もれていた）。リアルタイムのPresence人数で更新する
       if(subEl) subEl.innerHTML = escapeHtml(t('boardStatsParticipants').replace('{n}', stats.participantCount))
         + ' · <span style="color:#5cc98e;">●</span> '
-        + escapeHtml(t('boardStatsActive').replace('{n}', stats.activeCount))
+        + t('boardStatsActive').replace('{n}', '<span id="boardValueLiveCount">…</span>')
         + (shard > 1 ? escapeHtml(` · サーバー${shard}`) : '')
         + ` · <span onclick="delete _boardShardChoice['${shardKey}'];renderBoardValue('${animeId}')" style="text-decoration:underline;cursor:pointer;">サーバーを変更</span>`;
     }).catch(()=>{});
+    joinBoardPresence(animeId, shardedType, currentLang, (count) => {
+      const liveEl = document.getElementById('boardValueLiveCount');
+      if(liveEl) liveEl.textContent = count;
+    });
     await renderBoardPostsInto(panel, animeId, shardedType, () => renderBoardValue(animeId));
     if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, shardedType, currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
     startBoardRealtime(animeId, shardedType, currentLang, () => renderBoardValue(animeId));
