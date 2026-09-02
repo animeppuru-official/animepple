@@ -12190,7 +12190,10 @@
   // 新しいテーブル列は使わず、board_type の文字列に "__sN" を足すだけで別の掲示板として扱う。
   // 投稿・既読・通知・リアルタイム購読は全部board_typeを素通しの文字列として使っているので、
   // これだけで既存の仕組みに一切手を入れずにシャード対応できる。
-  const BOARD_SHARD_THRESHOLD = 15; // このアクティブ人数を超えたら次のシャードへ
+  // 入室は自動振り分けにせず、必ず「今あるサーバー一覧」をユーザーに見せて自分で選んでもらう。
+  // サーバーを手動で新規作成するボタンは無く、既存のサーバーが全部しきい値以上の時だけ、
+  // 「新しいサーバーに入る」という選択肢が一覧の末尾に出る。
+  const BOARD_SHARD_THRESHOLD = 15; // この人数を超えていたら「混雑」表示にする
   const BOARD_SHARD_MAX = 20; // 暴走防止の上限
   function shardedBoardType(base, shard) {
     return shard > 1 ? `${base}__s${shard}` : base;
@@ -12203,13 +12206,23 @@
     const i = sharded.indexOf('__s');
     return i === -1 ? 1 : (parseInt(sharded.slice(i+3), 10) || 1);
   }
-  // 空いているシャードを探す：shard=1から順に「今アクティブ」を見て、しきい値未満の
-  // 最初のシャードに入れる。全部埋まっていれば、まだ投稿の無い次のシャード（アクティブ0人）
-  // が自然に「空き」として見つかるので、そこが新しいシャードになる。
-  // 重要：以前そのユーザーがどこかのシャードに投稿済みなら、次回からは必ず同じシャードに戻す。
-  // 通知(setNotify)・既読(markRead)はboard_type文字列をそのままキーにしているので、
-  // 毎回シャードが変わってしまうと「前に登録した通知」が別の部屋の物として扱われ、
-  // 既読/通知の継続性が壊れてしまうため
+  // 今すでに使われているサーバー（1件でも投稿があるサーバー）を、shard=1から順に見て一覧にする。
+  // 投稿が無いshardに行き当たった時点で「まだ誰も使ってない」ので、そこで打ち切る。
+  // 既存サーバーが全部しきい値以上の混雑なら、末尾に「新しいサーバー」という空の選択肢を1つ足す。
+  async function listBoardShards(animeId, base, lang) {
+    const rooms = [];
+    for(let shard = 1; shard <= BOARD_SHARD_MAX; shard++) {
+      const stats = await db.boardState.getBoardStats(animeId, shardedBoardType(base, shard), lang).catch(()=>({activeCount:0, participantCount:0}));
+      if(shard > 1 && !stats.participantCount) break; // shard1は投稿0でも常に存在する扱い
+      rooms.push({ shard, activeCount: stats.activeCount, participantCount: stats.participantCount });
+    }
+    const allFull = rooms.every(r => r.activeCount >= BOARD_SHARD_THRESHOLD);
+    if(allFull && rooms.length < BOARD_SHARD_MAX) {
+      rooms.push({ shard: rooms.length + 1, activeCount: 0, participantCount: 0, isNew: true });
+    }
+    return rooms;
+  }
+  // 「以前このサーバーに投稿したことがあるか」だけ分かるようにしておく（一覧で「前回」の目印用）
   async function findUserExistingShard(animeId, base, lang, userId) {
     if(!sb || !userId) return null;
     const { data } = await sb.from('board_posts').select('board_type')
@@ -12218,27 +12231,60 @@
     if(data && data.length) return boardTypeShardNum(data[0].board_type);
     return null;
   }
-  async function resolveBoardShard(animeId, base, lang) {
-    const existing = await findUserExistingShard(animeId, base, lang, _currentUser?.id).catch(()=>null);
-    if(existing) return existing;
-    for(let shard = 1; shard <= BOARD_SHARD_MAX; shard++) {
-      const stats = await db.boardState.getBoardStats(animeId, shardedBoardType(base, shard), lang).catch(()=>({activeCount:0}));
-      if(stats.activeCount < BOARD_SHARD_THRESHOLD) return shard;
-    }
-    return BOARD_SHARD_MAX;
+
+  // 選んだサーバーはページを離れるまで覚えておく（投稿の度に一覧に戻されると使い物にならないため）
+  const _boardShardChoice = {};
+  function boardShardKey(animeId, base, lang) { return `${animeId}|${base}|${lang||'ja'}`; }
+
+  // サーバー一覧画面。選ぶと onPick(shard) を呼ぶだけのシンプルなもの
+  async function renderBoardShardPicker(container, animeId, base, lang, onPick) {
+    container.innerHTML = `<p style="text-align:center;color:var(--muted,#9ab);font-size:.85rem;padding:2rem 0;">${escapeHtml(t('loadingLabel'))}</p>`;
+    const [rooms, myShard] = await Promise.all([
+      listBoardShards(animeId, base, lang),
+      findUserExistingShard(animeId, base, lang, _currentUser?.id).catch(()=>null),
+    ]);
+    container.innerHTML = `
+      <div style="padding:16px;">
+        <h3 style="margin:0 0 4px;font-size:14px;color:#eaf6ee;font-weight:800;">サーバーを選ぶ</h3>
+        <p style="margin:0 0 14px;font-size:11.5px;color:#8db5a0;">1つのサーバーが混み合ってきたら、新しいサーバーが選べるようになります</p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${rooms.map(r => {
+            const crowded = r.activeCount >= BOARD_SHARD_THRESHOLD;
+            const isMine = myShard === r.shard;
+            return `<button type="button" class="board-shard-pick-btn" data-shard="${r.shard}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;height:52px;padding:0 16px;border-radius:12px;border:1px solid ${isMine?'rgba(92,201,142,.5)':'rgba(255,255,255,.1)'};background:${isMine?'rgba(92,201,142,.1)':'rgba(255,255,255,.03)'};color:#dfeae3;cursor:pointer;text-align:left;">
+              <span style="font-weight:700;font-size:13.5px;">${r.isNew ? '新しいサーバーを開く' : `サーバー${r.shard}`}${isMine?' <span style="font-size:10.5px;color:#5ec97a;">(前回)</span>':''}</span>
+              <span style="font-size:11.5px;color:${crowded?'#e8c463':'#8db5a0'};white-space:nowrap;">${r.isNew ? '' : `● アクティブ ${r.activeCount}人${crowded?'・混雑':''}`}</span>
+            </button>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+    container.querySelectorAll('.board-shard-pick-btn').forEach(btn => {
+      btn.onclick = () => onPick(parseInt(btn.dataset.shard, 10));
+    });
   }
 
   async function renderBoardGeneral(animeId) {
     const el = document.getElementById('boardGeneralSection');
     if(!el || !sb) return;
-    el.innerHTML = `<div id="boardPanel"></div>`;
-    const shard = await resolveBoardShard(animeId, 'general', currentLang);
+    const key = boardShardKey(animeId, 'general', currentLang);
+    if(!_boardShardChoice[key]) {
+      el.innerHTML = `<div id="boardPanel"></div>`;
+      await renderBoardShardPicker(el.querySelector('#boardPanel'), animeId, 'general', currentLang, (shard) => {
+        _boardShardChoice[key] = shard;
+        renderBoardGeneral(animeId);
+      });
+      return;
+    }
+    const shard = _boardShardChoice[key];
     const shardedType = shardedBoardType('general', shard);
-    // 板ヘッダーのサブ行：参加人数・今アクティブ人数（＋部屋が分かれている時だけ番号を出す）
+    el.innerHTML = `<div id="boardPanel"></div>`;
+    // 板ヘッダーのサブ行：参加人数・今アクティブ人数（＋サーバーが分かれている時だけ番号と、変更リンクを出す）
     db.boardState.getBoardStats(animeId, shardedType, currentLang).then(stats => {
       const subEl = document.getElementById('boardGeneralPageSub');
-      if(subEl) subEl.textContent = t('boardStatsLine').replace('{participants}', stats.participantCount).replace('{active}', stats.activeCount)
-        + (shard > 1 ? ` · サーバー${shard}` : '');
+      if(subEl) subEl.innerHTML = escapeHtml(t('boardStatsLine').replace('{participants}', stats.participantCount).replace('{active}', stats.activeCount))
+        + (shard > 1 ? escapeHtml(` · サーバー${shard}`) : '')
+        + ` · <span onclick="delete _boardShardChoice['${key}'];renderBoardGeneral('${animeId}')" style="text-decoration:underline;cursor:pointer;">サーバーを変更</span>`;
     }).catch(()=>{});
     await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, shardedType, () => renderBoardGeneral(animeId));
     if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, shardedType, currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
@@ -12706,7 +12752,15 @@
       </div>`;
       return;
     }
-    const shard = await resolveBoardShard(animeId, _boardActiveTab, currentLang);
+    const shardKey = boardShardKey(animeId, _boardActiveTab, currentLang);
+    if(!_boardShardChoice[shardKey]) {
+      await renderBoardShardPicker(panel, animeId, _boardActiveTab, currentLang, (shard) => {
+        _boardShardChoice[shardKey] = shard;
+        renderBoardValue(animeId);
+      });
+      return;
+    }
+    const shard = _boardShardChoice[shardKey];
     const shardedType = shardedBoardType(_boardActiveTab, shard);
     db.boardState.getBoardStats(animeId, shardedType, currentLang).then(stats => {
       const subEl = document.getElementById('boardValuePageSub');
@@ -12714,7 +12768,8 @@
       if(subEl) subEl.innerHTML = escapeHtml(t('boardStatsParticipants').replace('{n}', stats.participantCount))
         + ' · <span style="color:#5cc98e;">●</span> '
         + escapeHtml(t('boardStatsActive').replace('{n}', stats.activeCount))
-        + (shard > 1 ? escapeHtml(` · サーバー${shard}`) : '');
+        + (shard > 1 ? escapeHtml(` · サーバー${shard}`) : '')
+        + ` · <span onclick="delete _boardShardChoice['${shardKey}'];renderBoardValue('${animeId}')" style="text-decoration:underline;cursor:pointer;">サーバーを変更</span>`;
     }).catch(()=>{});
     await renderBoardPostsInto(panel, animeId, shardedType, () => renderBoardValue(animeId));
     if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, shardedType, currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
