@@ -6309,6 +6309,11 @@
         const { count } = await sb.from('friend_requests').select('id', { count: 'exact', head: true }).eq('status', 'accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
         return count || 0;
       },
+      async getFriendIds(userId) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('friend_requests').select('requester_id,addressee_id').eq('status', 'accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+        return (data || []).map(r => r.requester_id === userId ? r.addressee_id : r.requester_id);
+      },
     },
     // ── 通報：掲示板投稿・レビューを通報する。閲覧は管理者ページから ──
     reports: {
@@ -12181,28 +12186,76 @@
     el.textContent = (colorMap[status] || '⚪') + ' RT: ' + status;
   }
 
+  // ── 掲示板の人数分割（シャーディング）──
+  // 新しいテーブル列は使わず、board_type の文字列に "__sN" を足すだけで別の掲示板として扱う。
+  // 投稿・既読・通知・リアルタイム購読は全部board_typeを素通しの文字列として使っているので、
+  // これだけで既存の仕組みに一切手を入れずにシャード対応できる。
+  const BOARD_SHARD_THRESHOLD = 15; // このアクティブ人数を超えたら次のシャードへ
+  const BOARD_SHARD_MAX = 20; // 暴走防止の上限
+  function shardedBoardType(base, shard) {
+    return shard > 1 ? `${base}__s${shard}` : base;
+  }
+  function boardTypeBase(sharded) {
+    const i = sharded.indexOf('__s');
+    return i === -1 ? sharded : sharded.slice(0, i);
+  }
+  function boardTypeShardNum(sharded) {
+    const i = sharded.indexOf('__s');
+    return i === -1 ? 1 : (parseInt(sharded.slice(i+3), 10) || 1);
+  }
+  // 空いているシャードを探す：shard=1から順に「今アクティブ」を見て、しきい値未満の
+  // 最初のシャードに入れる。全部埋まっていれば、まだ投稿の無い次のシャード（アクティブ0人）
+  // が自然に「空き」として見つかるので、そこが新しいシャードになる。
+  // 重要：以前そのユーザーがどこかのシャードに投稿済みなら、次回からは必ず同じシャードに戻す。
+  // 通知(setNotify)・既読(markRead)はboard_type文字列をそのままキーにしているので、
+  // 毎回シャードが変わってしまうと「前に登録した通知」が別の部屋の物として扱われ、
+  // 既読/通知の継続性が壊れてしまうため
+  async function findUserExistingShard(animeId, base, lang, userId) {
+    if(!sb || !userId) return null;
+    const { data } = await sb.from('board_posts').select('board_type')
+      .eq('anime_id', animeId).eq('lang', lang || 'ja').eq('user_id', userId)
+      .like('board_type', `${base}%`).limit(1);
+    if(data && data.length) return boardTypeShardNum(data[0].board_type);
+    return null;
+  }
+  async function resolveBoardShard(animeId, base, lang) {
+    const existing = await findUserExistingShard(animeId, base, lang, _currentUser?.id).catch(()=>null);
+    if(existing) return existing;
+    for(let shard = 1; shard <= BOARD_SHARD_MAX; shard++) {
+      const stats = await db.boardState.getBoardStats(animeId, shardedBoardType(base, shard), lang).catch(()=>({activeCount:0}));
+      if(stats.activeCount < BOARD_SHARD_THRESHOLD) return shard;
+    }
+    return BOARD_SHARD_MAX;
+  }
+
   async function renderBoardGeneral(animeId) {
     const el = document.getElementById('boardGeneralSection');
     if(!el || !sb) return;
     el.innerHTML = `<div id="boardPanel"></div>`;
-    // 板ヘッダーのサブ行：参加人数・今アクティブ人数
-    db.boardState.getBoardStats(animeId, 'general', currentLang).then(stats => {
+    const shard = await resolveBoardShard(animeId, 'general', currentLang);
+    const shardedType = shardedBoardType('general', shard);
+    // 板ヘッダーのサブ行：参加人数・今アクティブ人数（＋部屋が分かれている時だけ番号を出す）
+    db.boardState.getBoardStats(animeId, shardedType, currentLang).then(stats => {
       const subEl = document.getElementById('boardGeneralPageSub');
-      if(subEl) subEl.textContent = t('boardStatsLine').replace('{participants}', stats.participantCount).replace('{active}', stats.activeCount);
+      if(subEl) subEl.textContent = t('boardStatsLine').replace('{participants}', stats.participantCount).replace('{active}', stats.activeCount)
+        + (shard > 1 ? ` · サーバー${shard}` : '');
     }).catch(()=>{});
-    await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, 'general', renderBoardGeneral);
-    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, 'general', currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
-    startBoardRealtime(animeId, 'general', currentLang, renderBoardGeneral);
+    await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, shardedType, () => renderBoardGeneral(animeId));
+    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, shardedType, currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
+    startBoardRealtime(animeId, shardedType, currentLang, () => renderBoardGeneral(animeId));
   }
 
   // ── 掲示板トップページ：参加中の全掲示板を一覧表示。新着があるものを上部に「通知」として見せる ──
   function boardTypeLabel(boardType) {
-    if(boardType === 'general') return t('generalBoardLabel') || '通常掲示板';
-    return t('boardTab'+boardType) || boardType;
+    const base = boardTypeBase(boardType);
+    const shard = boardTypeShardNum(boardType);
+    const label = base === 'general' ? (t('generalBoardLabel') || '通常掲示板') : (t('boardTab'+base) || base);
+    return shard > 1 ? `${label}（サーバー${shard}）` : label;
   }
   function openBoardFromHub(animeId, boardType) {
-    if(boardType === 'general') { nav('board-general', animeId); }
-    else { _boardActiveTab = boardType; nav('board-value', animeId); }
+    const base = boardTypeBase(boardType);
+    if(base === 'general') { nav('board-general', animeId); }
+    else { _boardActiveTab = base; nav('board-value', animeId); }
   }
   // 掲示板関連（マイページ一覧・掲示板トップ）でアニメタイトルを解決する共通ヘルパー。
   // getAll()の手元キャッシュに無いID（人気/検索経由でまだ読み込まれていないアニメ）は
@@ -12429,7 +12482,7 @@
     // 価値観掲示板は 💎＋金バッジ、通常掲示板は控えめなグレー（鍵つきの特別な板だと形で分かるように）
     const typeBadge = bt => {
       const label = boardTypeLabel(bt);
-      const isValue = ['A','B','C','D'].includes(bt);
+      const isValue = ['A','B','C','D'].includes(boardTypeBase(bt));
       return isValue
         ? `<span style="flex:0 0 auto;display:inline-flex;align-items:center;height:19px;padding:0 7px;border-radius:5px;background:rgba(217,164,65,.14);border:1px solid rgba(217,164,65,.3);font-size:10px;font-weight:800;color:#e8c463;white-space:nowrap;">💎 ${escapeHtml(label)}</span>`
         : `<span style="flex:0 0 auto;font-size:11px;color:#66786d;white-space:nowrap;">${escapeHtml(label)}</span>`;
@@ -12496,7 +12549,7 @@
         ${thumbOf(b.anime_id, 34, 46, 6)}
         <span style="flex:1 1 auto;min-width:0;">
           <span style="display:block;font-size:13px;font-weight:800;color:#eaf6ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(titleOf(b.anime_id))}</span>
-          <span style="display:block;margin-top:2px;font-size:11px;color:#8db5a0;">${['A','B','C','D'].includes(b.board_type)?'💎 ':''}${escapeHtml(boardTypeLabel(b.board_type))} · ${escapeHtml(t('boardHubTodayCount')||'今日')} ${b.dayPostCount||0}${escapeHtml(t('boardHubPostsUnit')||'件')}</span>
+          <span style="display:block;margin-top:2px;font-size:11px;color:#8db5a0;">${['A','B','C','D'].includes(boardTypeBase(b.board_type))?'💎 ':''}${escapeHtml(boardTypeLabel(b.board_type))} · ${escapeHtml(t('boardHubTodayCount')||'今日')} ${b.dayPostCount||0}${escapeHtml(t('boardHubPostsUnit')||'件')}</span>
         </span>
         ${joined
           ? `<span style="flex:0 0 auto;display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;background:rgba(92,201,142,.14);border:1px solid rgba(92,201,142,.3);font-size:10.5px;font-weight:800;color:#a7ecc4;white-space:nowrap;">${escapeHtml(t('boardHubJoined')||'参加中')}</span>`
@@ -12637,13 +12690,6 @@
       }
     }
     // 板ヘッダーのサブ行：参加人数・今アクティブ人数（選択中のタイプの掲示板について）
-    db.boardState.getBoardStats(animeId, _boardActiveTab, currentLang).then(stats => {
-      const subEl = document.getElementById('boardValuePageSub');
-      // 「今アクティブ」は緑の点を付ける（同じ灰色の文字に埋もれていた）
-      if(subEl) subEl.innerHTML = escapeHtml(t('boardStatsParticipants').replace('{n}', stats.participantCount))
-        + ' · <span style="color:#5cc98e;">●</span> '
-        + escapeHtml(t('boardStatsActive').replace('{n}', stats.activeCount));
-    }).catch(()=>{});
     el.innerHTML = `<div id="boardPanel"></div>`;
     const panel = el.querySelector('#boardPanel');
     if(myGroup !== _boardActiveTab) {
@@ -12660,9 +12706,19 @@
       </div>`;
       return;
     }
-    await renderBoardPostsInto(panel, animeId, _boardActiveTab, () => renderBoardValue(animeId));
-    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, _boardActiveTab, currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
-    startBoardRealtime(animeId, _boardActiveTab, currentLang, () => renderBoardValue(animeId));
+    const shard = await resolveBoardShard(animeId, _boardActiveTab, currentLang);
+    const shardedType = shardedBoardType(_boardActiveTab, shard);
+    db.boardState.getBoardStats(animeId, shardedType, currentLang).then(stats => {
+      const subEl = document.getElementById('boardValuePageSub');
+      // 「今アクティブ」は緑の点を付ける（同じ灰色の文字に埋もれていた）
+      if(subEl) subEl.innerHTML = escapeHtml(t('boardStatsParticipants').replace('{n}', stats.participantCount))
+        + ' · <span style="color:#5cc98e;">●</span> '
+        + escapeHtml(t('boardStatsActive').replace('{n}', stats.activeCount))
+        + (shard > 1 ? escapeHtml(` · サーバー${shard}`) : '');
+    }).catch(()=>{});
+    await renderBoardPostsInto(panel, animeId, shardedType, () => renderBoardValue(animeId));
+    if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, shardedType, currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
+    startBoardRealtime(animeId, shardedType, currentLang, () => renderBoardValue(animeId));
   }
 
   // 通常・価値観、両掲示板共通：投稿一覧＋投稿フォーム＋返信の描画
@@ -13725,7 +13781,7 @@
       const latestAt = latest ? latest.created_at : null;
       const state = stateMap[key] || null;
       const isNew = latestAt && (!state || !state.last_read_at || latestAt > state.last_read_at);
-      const isValueBoard = b.board_type !== 'general';
+      const isValueBoard = boardTypeBase(b.board_type) !== 'general';
       // 状態レコードが無い場合はOFF扱い。通常掲示板はそもそも通知対象外（常にfalse）
       const notify = isValueBoard && state ? state.notify === true : false;
       return { ...b, latest: latestAt, isNew, isValueBoard, notify, title: getTitle(pageMap[b.anime_id]) || pageMap[b.anime_id]?.title || b.anime_id };
@@ -13849,8 +13905,7 @@
           try { localStorage.setItem(LANG_KEY, currentLang); } catch(_) {}
           applyLang();
         }
-        if(boardType === 'general') { nav('board-general', animeId); }
-        else { _boardActiveTab = boardType; nav('board-value', animeId); }
+        openBoardFromHub(animeId, boardType);
       };
     });
     // 「参加してる掲示板」一覧のベルボタン：通知リストに追加／外す
@@ -13906,10 +13961,12 @@
     const titleEl = document.getElementById('followListTitle');
     const bodyEl = document.getElementById('followListBody');
     if(!bodyEl || !sb || !userId) return;
-    if(titleEl) titleEl.textContent = mode === 'followers' ? t('followersTitle') : t('followingTitle');
+    if(titleEl) titleEl.textContent = mode === 'followers' ? t('followersTitle') : mode === 'friends' ? '友達' : t('followingTitle');
     bodyEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${escapeHtml(t('loadingLabel'))}</p>`;
 
-    const ids = mode === 'followers' ? await db.follows.getFollowerIds(userId) : await db.follows.getFollowingIds(userId);
+    const ids = mode === 'followers' ? await db.follows.getFollowerIds(userId)
+      : mode === 'friends' ? await db.friendRequests.getFriendIds(userId).catch(()=>[])
+      : await db.follows.getFollowingIds(userId);
     if(!ids.length) {
       bodyEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">${escapeHtml(t('followListEmpty'))}</p>`;
       return;
@@ -19497,7 +19554,7 @@
       })
       // 通知の対象は価値観掲示板だけ。過去の不具合等でnotify=trueのまま残ってる通常掲示板の
       // データがあっても、ここで確実に弾く（UI側の制限だけに頼らない）
-      .filter(b => ['A','B','C','D'].includes(b.board_type));
+      .filter(b => ['A','B','C','D'].includes(boardTypeBase(b.board_type)));
   }
   async function checkUnreadBoards() {
     if(!_currentUser || !sb) { setBoardBadge(false, false); return; }
@@ -19943,6 +20000,9 @@
       const friendsCard = document.getElementById('statFriendsCard');
       const showFriends = isOwnPage ? true : (profileData?.show_friends_count !== false);
       friendsCard.classList.toggle('mypage-stat-hidden', !showFriends);
+      // 友達一覧は自分のマイページの時だけ押して見られるようにする
+      friendsCard.style.cursor = isOwnPage ? 'pointer' : '';
+      friendsCard.onclick = isOwnPage ? (() => openFollowList(targetUserId, 'friends')) : null;
 
       document.getElementById('statFollowingCard').onclick = () => openFollowList(targetUserId, 'following');
       document.getElementById('statFollowerCard').onclick = () => openFollowList(targetUserId, 'followers');
