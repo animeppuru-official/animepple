@@ -19221,7 +19221,9 @@
       }
     });
   }
-  initAuth();
+  // bootRouteFromUrl（起動直後のURL直接展開）がログイン状態を待ってから開けるように、
+  // Promiseを保持しておく（initAuth自体は他の初期化と並行して進めたいので、ここではawaitしない）
+  const _initAuthPromise = initAuth();
 
   // ── スマホ下部ツールバーのカスタマイズ（長押しで並び替え） ──
   // ツールバー本体（bnavCarousel）は3個ずつのページに分かれた構造のまま、
@@ -20617,7 +20619,7 @@
   // 初回読み込み時、URLに応じて該当ページを直接開く（該当しなければホーム）。
   // スクリプト冒頭ではなく最後に置くのは、ここで参照する変数（_currentUser等）の
   // let宣言がスクリプトの後半にあり、早い段階で呼ぶとTDZ（一時的なデッドゾーン）エラーになるため
-  (function bootRouteFromUrl() {
+  (async function bootRouteFromUrl() {
     const route = parseRouteFromPath(location.pathname);
     // 重要：このIIFEは「本当に外部から新規着地した時」だけでなく、
     // スマホブラウザがメモリ節約のため戻る/進むボタンで裏側のページを丸ごと再読み込みした時にも
@@ -20631,6 +20633,12 @@
       const navEntries = performance.getEntriesByType('navigation');
       if(navEntries && navEntries[0] && navEntries[0].type) navType = navEntries[0].type;
     } catch(_) {}
+    if(route && route.page !== 'home') {
+      // ログイン状態の復元(initAuth)が終わるのを待ってから開く。
+      // 待たずに開くと、価値観掲示板などログイン状態に依存するページで
+      // 「まだ_currentUserがnullのまま」判定されてロック画面等の誤表示になる
+      await _initAuthPromise.catch(()=>{});
+    }
     if(route && route.page !== 'home' && navType === 'navigate') {
       // 外部リンク（Google検索結果等）から深いURLに直接着地した場合、
       // ブラウザの実際のセッション履歴には着地元の1エントリしか無い。
