@@ -20699,7 +20699,9 @@
       </div>`;
       prev = p;
     });
-    panel.innerHTML = out || `<p style="text-align:center;color:var(--muted,#9ab);font-size:.85rem;padding:2rem 0;">まだメッセージがありません</p>`;
+    panel.innerHTML = out
+      ? `<div style="max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:13px;">${out}</div>`
+      : `<p style="text-align:center;color:var(--muted,#9ab);font-size:.85rem;padding:2rem 0;">まだメッセージがありません</p>`;
 
     // 入力欄：掲示板と同じく、スクロール領域の外（.board-page-wrap直下）に置いて固定する
     const composerWrap = panel.parentElement.parentElement;
