@@ -532,6 +532,14 @@
     .gacha-btn:disabled { cursor:default; opacity:.45; }
     .gacha-btn-free { height:54px; border-radius:14px; background:linear-gradient(135deg,#6fd48f,#3fa96f); color:#07200f; font-size:15px; font-weight:900; box-shadow:0 14px 30px -16px rgba(92,201,142,.8); }
     .gacha-btn-ad { height:48px; border:1px solid rgba(240,201,74,.4); background:rgba(240,201,74,.1); color:#f0c94a; font-size:13px; }
+    .gacha-btn-coin { height:48px; border:1px solid rgba(240,201,74,.35); background:rgba(240,201,74,.08); color:#f0c94a; font-size:13px; margin-top:8px; }
+    .gacha-btn-coin10 { height:48px; border:1px solid rgba(147,197,253,.35); background:rgba(147,197,253,.08); color:#93c5fd; font-size:13px; margin-top:8px; }
+    #gachaPullSlot { display:flex; flex-direction:column; }
+    #gachaHoldSlot { display:flex; flex-direction:column; gap:8px; }
+    .gacha-btn-hold { position:relative; overflow:hidden; height:54px; border:none; background:rgba(255,255,255,.06); color:#eaf6ee; font-size:14px; font-weight:900; }
+    .gacha-hold-fill { position:absolute; inset:0; width:0%; background:linear-gradient(135deg,#6fd48f,#3fa96f); border-radius:inherit; pointer-events:none; z-index:0; }
+    .gacha-btn-hold .gacha-hold-label { position:relative; z-index:1; }
+    .gacha-btn-cancel { height:40px; border:1px solid rgba(255,255,255,.14); background:transparent; color:#b6c8bd; font-size:12.5px; }
     .gacha-btn-prob { height:40px; border:1px solid rgba(255,255,255,.1); background:transparent; color:#b6c8bd; font-size:12px; font-weight:700; }
     .gacha-btn-icon { font-size:15px; }
     .gacha-soldout { width:100%; max-width:420px; border-radius:16px; border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.02); padding:18px; text-align:center; }
@@ -3596,14 +3604,28 @@
         <span class="gacha-stage-tray"><span class="gacha-stage-tray-bar"></span></span>
       </div>
 
-      <!-- 無料が主・広告が副。広告は押す前に対価（30秒・残り）が分かるように -->
+      <!-- 無料→広告は同じ枠に出し分け。その下にコイン消費の1回引き・10連。
+           どのボタンも押すとすぐには引かず、5秒長押し用のバーに切り替わる（誤タップ防止） -->
       <div class="gacha-actions">
-        <button type="button" id="gachaFreeBtn" class="gacha-btn gacha-btn-free">
-          <span class="gacha-btn-icon">🎁</span><span data-i18n="gachaFreeBtn">無料で引く</span>
-        </button>
-        <button type="button" id="gachaAdBtn" class="gacha-btn gacha-btn-ad">
-          <span class="gacha-btn-icon">▶</span><span id="gachaAdBtnLabel" data-i18n="gachaAdBtn">広告を見て引く（残り3回・30秒）</span>
-        </button>
+        <div id="gachaPullSlot">
+          <button type="button" id="gachaFreeBtn" class="gacha-btn gacha-btn-free">
+            <span class="gacha-btn-icon">🎁</span><span data-i18n="gachaFreeBtn">無料で引く</span>
+          </button>
+          <button type="button" id="gachaCoinBtn" class="gacha-btn gacha-btn-coin">
+            <span class="gacha-btn-icon">🪙</span><span id="gachaCoinBtnLabel">コイン{n}枚で引く</span>
+          </button>
+          <button type="button" id="gachaCoin10Btn" class="gacha-btn gacha-btn-coin10">
+            <span class="gacha-btn-icon">🪙</span><span id="gachaCoin10BtnLabel">コイン{n}枚で10連</span>
+          </button>
+        </div>
+        <!-- 長押し確認バー（普段は隠す） -->
+        <div id="gachaHoldSlot" style="display:none;">
+          <button type="button" id="gachaHoldBtn" class="gacha-btn gacha-btn-hold">
+            <span class="gacha-hold-fill" id="gachaHoldFill"></span>
+            <span class="gacha-hold-label" data-i18n="gachaHoldLabel">5秒長押しでガチャを引く</span>
+          </button>
+          <button type="button" id="gachaHoldCancelBtn" class="gacha-btn gacha-btn-cancel" data-i18n="btnCancel">キャンセル</button>
+        </div>
         <button type="button" id="gachaProbBtn" class="gacha-btn gacha-btn-prob" data-i18n="gachaProbBtn">確率と景品一覧</button>
       </div>
 
@@ -6744,7 +6766,7 @@
       },
       async getMyMasterGraphCandidates(userId) {
         if(!sb || !userId) return [];
-        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,elapsed_ms').eq('user_id', userId).eq('chart_moved', true);
+        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,elapsed_ms,quality').eq('user_id', userId).eq('chart_moved', true);
         return data || [];
       },
       async insert(review) {
@@ -7507,7 +7529,9 @@
     if(!_currentUser) { _myGoldAnimeIds = null; return; }
     try {
       const rows = await db.reviews.getMyMasterGraphCandidates(_currentUser.id);
-      const validIds = rows.filter(r => isGraphValidReview({
+      // 金カードの条件は「質スコア3点以上（quality＝アプリ全体で使う上質レビューの基準）」かつ
+      // 荒らしパターンでないこと（isGraphValidReview）。質スコアだけを条件にしていたバグを修正。
+      const validIds = rows.filter(r => r.quality && isGraphValidReview({
         chartA: r.chart_a, chartB: r.chart_b, chartMoved: r.chart_moved, elapsedMs: r.elapsed_ms,
       })).map(r => r.anime_id);
       _myGoldAnimeIds = new Set(validIds);
@@ -10121,6 +10145,8 @@
   const GACHA_AD_LIMIT = 3;
   const GACHA_COIN_REWARD = 100; // デイリークエスト達成報酬＝ガチャ1回分のコイン
   const GACHA_COIN_COST = 100; // コインでガチャを1回引く時の消費量
+  const GACHA_COIN10_COST = 1000; // コインで10連を引く時の消費量
+  const GACHA_HOLD_MS = 5000; // 誤タップ防止の長押し時間
   function getGachaState(userId) {
     const keys = gachaTodayKey(userId);
     return {
@@ -10219,21 +10245,39 @@
 
   function updateGachaButtons() {
     const freeBtn = document.getElementById('gachaFreeBtn');
-    const adBtn = document.getElementById('gachaAdBtn');
-    const adBtnLabel = document.getElementById('gachaAdBtnLabel');
+    const coinBtn = document.getElementById('gachaCoinBtn');
+    const coin10Btn = document.getElementById('gachaCoin10Btn');
     updateGachaRemain();
-    if(!freeBtn || !adBtn) return;
+    if(!freeBtn) return;
+    const coinLabel = document.getElementById('gachaCoinBtnLabel');
+    if(coinLabel) coinLabel.textContent = t('gachaCoinBtn').replace('{n}', GACHA_COIN_COST);
+    const coin10Label = document.getElementById('gachaCoin10BtnLabel');
+    if(coin10Label) coin10Label.textContent = t('gachaCoin10Btn').replace('{n}', GACHA_COIN10_COST);
     if(!_currentUser) {
-      freeBtn.disabled = true; adBtn.disabled = true;
-      if(adBtnLabel) adBtnLabel.textContent = t('gachaAdBtn').replace('{n}', GACHA_AD_LIMIT);
+      freeBtn.disabled = true;
+      if(coinBtn) coinBtn.disabled = true;
+      if(coin10Btn) coin10Btn.disabled = true;
       return;
     }
     const state = getGachaState(_currentUser.id);
-    freeBtn.disabled = state.freeUsed;
-    freeBtn.querySelector('span:last-child').textContent = state.freeUsed ? t('gachaFreeBtnUsed') : t('gachaFreeBtn');
     const remaining = Math.max(0, GACHA_AD_LIMIT - state.adUsedCount);
-    adBtn.disabled = remaining <= 0;
-    if(adBtnLabel) adBtnLabel.textContent = remaining <= 0 ? t('gachaAdBtnUsed') : t('gachaAdBtn').replace('{n}', remaining);
+    const label = freeBtn.querySelector('span:last-child');
+    if(!state.freeUsed) {
+      freeBtn.dataset.kind = 'free';
+      freeBtn.disabled = false;
+      freeBtn.querySelector('.gacha-btn-icon').textContent = '🎁';
+      if(label) label.textContent = t('gachaFreeBtn');
+    } else {
+      // 無料分を使い切ったら、同じボタンが広告を見て引くボタンに変わる（別枠には出さない）
+      freeBtn.dataset.kind = 'ad';
+      freeBtn.disabled = remaining <= 0;
+      freeBtn.querySelector('.gacha-btn-icon').textContent = '▶';
+      if(label) label.textContent = remaining <= 0 ? t('gachaAdBtnUsed') : t('gachaAdBtn').replace('{n}', remaining);
+    }
+    db.coins.get(_currentUser.id).then(coins => {
+      if(coinBtn) coinBtn.disabled = coins < GACHA_COIN_COST;
+      if(coin10Btn) coin10Btn.disabled = coins < GACHA_COIN10_COST;
+    }).catch(()=>{});
   }
 
   // 確定枠：好みのグラフに近い作品を1本ピック（100%）
@@ -10343,31 +10387,110 @@
     if(kind === 'free') {
       if(state.freeUsed) return;
       markGachaFreeUsed(_currentUser.id);
-    } else {
+    } else if(kind === 'ad') {
       if(state.adUsedCount >= GACHA_AD_LIMIT) return;
       // 実際の広告SDKは未接続。押す前に対価が分かるよう確認だけ出す
       if(!confirm(t('gachaAdConfirm'))) return;
-      const adBtn = document.getElementById('gachaAdBtn');
-      if(adBtn) { adBtn.disabled = true; const lb = document.getElementById('gachaAdBtnLabel'); if(lb) lb.textContent = t('gachaAdPlaying'); }
+      const freeBtn = document.getElementById('gachaFreeBtn');
+      if(freeBtn) { const lb = freeBtn.querySelector('span:last-child'); if(lb) lb.textContent = t('gachaAdPlaying'); }
       await new Promise(r => setTimeout(r, 1200));
       markGachaAdUsed(_currentUser.id);
+    } else if(kind === 'coin' || kind === 'coin10') {
+      const cost = kind === 'coin' ? GACHA_COIN_COST : GACHA_COIN10_COST;
+      const { error } = await db.coins.spend(_currentUser.id, cost);
+      if(error) { alert(t('gachaCoinInsufficientAlert')); updateGachaButtons(); return; }
+      updateCoinBadge();
     }
+    const pullCount = kind === 'coin10' ? 10 : 1;
     setGachaStageSpinning();
-    const [pick, item] = [await pickGachaAnime(), drawGachaItem()];
-    let isDup = false;
-    if(item && sb) {
-      try {
-        const obtained = await db.icons.listObtained(_currentUser.id);
-        isDup = obtained.some(o => o.icon_id === item.id);
-      } catch(e) {}
-      await db.icons.obtain(_currentUser.id, item.id).catch(()=>{});
+    const results = [];
+    for(let i = 0; i < pullCount; i++) {
+      const [pick, item] = [await pickGachaAnime(), drawGachaItem()];
+      let isDup = false;
+      if(item && sb) {
+        try {
+          const obtained = await db.icons.listObtained(_currentUser.id);
+          isDup = obtained.some(o => o.icon_id === item.id);
+        } catch(e) {}
+        await db.icons.obtain(_currentUser.id, item.id).catch(()=>{});
+      }
+      results.push({ pick, item, isDup });
     }
     await new Promise(r => setTimeout(r, 1400));
     setGachaStageIdle();
-    showGachaResult(pick, item, isDup);
+    if(pullCount === 1) {
+      showGachaResult(results[0].pick, results[0].item, results[0].isDup);
+    } else {
+      showGachaResultBatch(results);
+    }
     updateGachaButtons();
     renderGachaCollection();
   }
+
+  // ── ガチャの実引き：クリックですぐ引かず、5秒長押しに切り替えて誤タップを防ぐ ──
+  let _gachaHoldTimer = null;
+  function selectGachaKind(kind) {
+    document.getElementById('gachaPullSlot').style.display = 'none';
+    const holdSlot = document.getElementById('gachaHoldSlot');
+    holdSlot.style.display = 'flex';
+    const holdBtn = document.getElementById('gachaHoldBtn');
+    const fill = document.getElementById('gachaHoldFill');
+    const cancel = () => {
+      if(_gachaHoldTimer) { clearTimeout(_gachaHoldTimer); _gachaHoldTimer = null; }
+      fill.style.transition = 'width .15s ease';
+      fill.style.width = '0%';
+    };
+    const restore = () => {
+      cancel();
+      holdSlot.style.display = 'none';
+      document.getElementById('gachaPullSlot').style.display = 'flex';
+    };
+    const start = (e) => {
+      e.preventDefault();
+      fill.style.transition = `width ${GACHA_HOLD_MS}ms linear`;
+      requestAnimationFrame(() => { fill.style.width = '100%'; });
+      _gachaHoldTimer = setTimeout(() => {
+        _gachaHoldTimer = null;
+        restore();
+        runGacha(kind);
+      }, GACHA_HOLD_MS);
+    };
+    holdBtn.onpointerdown = start;
+    holdBtn.onpointerup = cancel;
+    holdBtn.onpointerleave = cancel;
+    holdBtn.onpointercancel = cancel;
+    document.getElementById('gachaHoldCancelBtn').onclick = restore;
+  }
+
+  // 10連の結果を一覧で見せる（1件ずつの派手な演出はしない。確定枠は最初の1件だけ代表表示）
+  function showGachaResultBatch(results) {
+    const overlay = document.getElementById('gachaResultOverlay');
+    const pickEl = document.getElementById('gachaResultPick');
+    const bonusEl = document.getElementById('gachaResultBonus');
+    const titleEl = document.getElementById('gachaResultTitle');
+    const againBtn = document.getElementById('gachaResultAgainBtn');
+    if(!overlay) return;
+    _gachaLastPick = results[0]?.pick || null;
+    if(titleEl) titleEl.textContent = t('gachaResultTitleBatch').replace('{n}', results.length);
+    if(pickEl) pickEl.innerHTML = '';
+    if(bonusEl) {
+      bonusEl.innerHTML = `<div class="gacha-batch-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
+        ${results.map(r => {
+          if(!r.item) return `<div style="aspect-ratio:1;border-radius:10px;border:1px dashed rgba(255,255,255,.12);"></div>`;
+          const m = GACHA_RARITY_META[r.item.rarity] || GACHA_RARITY_META[1];
+          return `<div style="aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid ${m.border};background:${m.bg};position:relative;">
+            <img src="${escapeHtml(r.item.image)}" style="width:100%;height:100%;object-fit:cover;">
+            <span style="position:absolute;left:2px;bottom:2px;font-size:9px;font-weight:900;padding:1px 5px;border-radius:6px;background:${m.color};color:#1a2119;">${m.name}</span>
+            ${r.isDup ? `<span style="position:absolute;right:2px;top:2px;font-size:8.5px;padding:1px 4px;border-radius:5px;background:rgba(0,0,0,.55);color:#dfeae3;">${escapeHtml(t('gachaDup'))}</span>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+      <button type="button" class="gacha-pick-btn" style="margin-top:10px;width:100%;" onclick="nav('my-icons')">${escapeHtml(t('gachaBonusUse'))}</button>`;
+    }
+    if(againBtn) againBtn.style.display = 'none';
+    overlay.style.display = 'flex';
+  }
+
 
   function renderGachaProbList() {
     const listEl = document.getElementById('gachaProbList');
@@ -10415,13 +10538,16 @@
     renderGachaRarityList();
     renderGachaCollection();
     const freeBtn = document.getElementById('gachaFreeBtn');
-    const adBtn = document.getElementById('gachaAdBtn');
+    const coinBtn = document.getElementById('gachaCoinBtn');
+    const coin10Btn = document.getElementById('gachaCoin10Btn');
     const probBtn = document.getElementById('gachaProbBtn');
     const probOverlay = document.getElementById('gachaProbOverlay');
     const probCloseBtn = document.getElementById('gachaProbCloseBtn');
     const resOverlay = document.getElementById('gachaResultOverlay');
-    if(freeBtn) freeBtn.onclick = () => runGacha('free');
-    if(adBtn) adBtn.onclick = () => runGacha('ad');
+    // どのボタンも直接引かず、まず5秒長押し確認に切り替える（誤タップ防止）
+    if(freeBtn) freeBtn.onclick = () => selectGachaKind(freeBtn.dataset.kind || 'free');
+    if(coinBtn) coinBtn.onclick = () => selectGachaKind('coin');
+    if(coin10Btn) coin10Btn.onclick = () => selectGachaKind('coin10');
     if(probBtn) probBtn.onclick = () => { renderGachaProbList(); if(probOverlay) probOverlay.style.display = 'flex'; };
     if(probCloseBtn) probCloseBtn.onclick = () => { if(probOverlay) probOverlay.style.display = 'none'; };
     if(probOverlay) probOverlay.onclick = (e) => { if(e.target === probOverlay) probOverlay.style.display = 'none'; };
@@ -11553,7 +11679,11 @@
     const chartBObjPreCheck = Object.fromEntries(axisB.map((k,i)=>[k, vB[i]===-1?0:vB[i]]));
     const isFullGraphPreCheck = vA.every(v=>v!==-1) && vB.every(v=>v!==-1);
     const elapsedPreCheck = Date.now() - _reviewStartTime;
-    const isValidMasterGraph = isFullGraphPreCheck && isGraphValidReview({
+    // 価値観投票（マスターグラフ反映）は「上質レビュー」＝質スコア3点以上の時だけ出す。
+    // 以前はisGraphValidReview（荒らし検知）だけで判定していて、質スコア条件が抜けていたバグを修正。
+    const commentPreCheck = document.getElementById('reviewComment').value.trim();
+    const qualityScorePreCheck = calcQualityScore({ isFullGraph: isFullGraphPreCheck, elapsed: elapsedPreCheck, tags: reviewTags, comment: commentPreCheck });
+    const isValidMasterGraph = qualityScorePreCheck >= 3 && isGraphValidReview({
       chartA: chartAObjPreCheck, chartB: chartBObjPreCheck, chartMoved: true, elapsedMs: elapsedPreCheck,
     });
     if(isValidMasterGraph && _currentUser) {
@@ -12041,8 +12171,8 @@
       if(!target) return;
       btn.onclick = async () => {
         adClick('share_' + target.key);
-        // デイリークエスト：「上質レビューを書いて拡散する」は単一条件。
-        // このシェアボタンは常に「投稿直後のレビュー」に対して出るので、そのレビュー自体が上質(quality)な時だけ達成扱いにする
+        // デイリークエスト：「上質レビュー」は、実績ランク・アイコン解放と同じ基準（review.quality＝質スコア3点以上）を使う。
+        // isValidMasterGraphは別物（マスターグラフ集計対象かどうか）なので混同しない。
         if(_currentUser && review && review.quality) db.quests.markCompleted(_currentUser.id).catch(()=>{});
         const title = getTitle(page) || page.title || page.titleEn || '';
         const shareText = t('shareReviewText').replace('{title}', title);
@@ -14584,7 +14714,8 @@
         ${emojis.map(e=>`<button type="button" data-emoji="${e}">${e}</button>`).join('')}
       </div>
       <button type="button" class="board-more-menu-item" data-act="reply"><span>↩</span><span>${escapeHtml(t('boardSheetReply'))}</span></button>
-      <button type="button" class="board-more-menu-item" data-act="copy"><span>⧉</span><span>${escapeHtml(t('boardSheetCopy'))}</span></button>`;
+      <button type="button" class="board-more-menu-item" data-act="copy"><span>⧉</span><span>${escapeHtml(t('boardSheetCopy'))}</span></button>
+      ${(!post.user_id || post.user_id !== _currentUser?.id) ? `<button type="button" class="board-more-menu-item" data-act="report"><span>🚩</span><span>${escapeHtml(t('reportBtn'))}</span></button>` : ''}`;
     document.body.appendChild(menu);
 
     // ボタンの近くに出す。画面外にはみ出す場合は内側へ寄せる
@@ -14614,6 +14745,15 @@
       closeBoardMoreMenu();
       if(navigator.clipboard) navigator.clipboard.writeText(post.body || '').catch(()=>{});
     };
+    const reportBtn = menu.querySelector('[data-act="report"]');
+    if(reportBtn) {
+      reportBtn.onclick = () => {
+        closeBoardMoreMenu();
+        // 「今いる掲示板」の中で、対象ユーザーの発言だけに絞って選ばせる
+        const candidates = (posts || []).filter(p => p.user_id === post.user_id).map(p => ({ id: p.id, body: p.body }));
+        openReportSheet('post', post.id, null, candidates);
+      };
+    }
 
     setTimeout(() => {
       document.addEventListener('pointerdown', boardMoreOutside, true);
@@ -14640,15 +14780,28 @@
     { id: 'impersonation', key: 'reportReasonImpersonation' },
     { id: 'other', key: 'reportReasonOther' },
   ];
-  function openReportSheet(targetType, targetId, onSubmitted) {
+  // targetType==='post'|'review' の時、candidates（同じユーザーの発言/レビュー一覧）を渡すと、
+  // 通報者がその中から実際に問題だった1件を選び直せるようにする。
+  // targetType==='user'（マイページからの通報）の時はcandidatesを渡さない＝選ばせるものは無い
+  function openReportSheet(targetType, targetId, onSubmitted, candidates) {
     if(!_currentUser) return;
     document.getElementById('reportSheetOverlay')?.remove();
     const overlay = document.createElement('div');
     overlay.id = 'reportSheetOverlay';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+    const hasCandidates = Array.isArray(candidates) && candidates.length > 1;
+    const candidateHtml = hasCandidates ? `
+        <p style="margin:0 0 8px;font-size:12px;color:#8db5a0;">${escapeHtml(t('reportPickTargetLabel'))}</p>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:180px;overflow-y:auto;">
+          ${candidates.map(c => `<label style="display:flex;align-items:flex-start;gap:8px;padding:9px 10px;border-radius:9px;background:rgba(255,255,255,.03);cursor:pointer;">
+            <input type="radio" name="reportTarget" value="${escapeHtml(String(c.id))}" ${c.id===targetId?'checked':''} style="accent-color:#5ec97a;margin-top:2px;">
+            <span style="font-size:12.5px;color:#dfeae3;line-height:1.5;word-break:break-word;">${escapeHtml((c.body||'').slice(0,80))}</span>
+          </label>`).join('')}
+        </div>` : '';
     overlay.innerHTML = `
       <div style="width:100%;max-width:420px;max-height:calc(100vh - 32px);overflow-y:auto;background:#16241c;border-radius:16px;padding:18px;box-sizing:border-box;">
         <h3 style="margin:0 0 12px;font-size:14px;color:#eaf6ee;font-weight:800;">${escapeHtml(t('reportSheetTitle'))}</h3>
+        ${candidateHtml}
         <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
           ${REPORT_REASONS.map(r => `<label style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;background:rgba(255,255,255,.03);cursor:pointer;">
             <input type="radio" name="reportReason" value="${r.id}" style="accent-color:#5ec97a;">
@@ -14669,12 +14822,14 @@
       if(!checked) { alert(t('reportSelectReasonAlert')); return; }
       const detail = overlay.querySelector('#reportDetailInput').value.trim();
       if(checked.value === 'other' && !detail) { alert(t('reportOtherRequiredAlert')); return; }
+      const targetChecked = hasCandidates ? overlay.querySelector('input[name="reportTarget"]:checked') : null;
+      const finalTargetId = targetChecked ? targetChecked.value : targetId;
       const reasonEntry = REPORT_REASONS.find(r => r.id === checked.value);
       const reasonLabel = reasonEntry ? t(reasonEntry.key) : checked.value;
       const reason = detail ? `${reasonLabel}：${detail}` : reasonLabel;
       const btn = overlay.querySelector('#reportSheetSubmit');
       btn.disabled = true;
-      const { error } = await db.reports.submit(_currentUser.id, targetType, targetId, reason);
+      const { error } = await db.reports.submit(_currentUser.id, targetType, finalTargetId, reason);
       overlay.remove();
       if(error) { alert(t('profileSaveFailedAlert')); return; }
       alert(t('reportSentAlert'));
@@ -15768,12 +15923,19 @@
     btnCancel:{ ja:'キャンセル', en:'Cancel', ko:'취소', 'zh-tw':'取消', 'zh-cn':'取消', es:'Cancelar', fr:'Annuler', pt:'Cancelar', de:'Abbrechen', ar:'إلغاء', th:'ยกเลิก', id:'Batal', ru:'Отмена', it:'Annulla', vi:'Hủy' },
     reportSubmitBtn:{ ja:'通報する', en:'Submit report', ko:'신고하기', 'zh-tw':'送出檢舉', 'zh-cn':'提交举报', es:'Enviar reporte', fr:'Envoyer le signalement', pt:'Enviar denúncia', de:'Meldung senden', ar:'إرسال البلاغ', th:'ส่งรายงาน', id:'Kirim laporan', ru:'Отправить жалобу', it:'Invia segnalazione', vi:'Gửi báo cáo' },
     reportSelectReasonAlert:{ ja:'理由を選んでください', en:'Please choose a reason', ko:'사유를 선택해 주세요', 'zh-tw':'請選擇原因', 'zh-cn':'请选择原因', es:'Por favor, elige un motivo', fr:'Veuillez choisir un motif', pt:'Por favor, escolha um motivo', de:'Bitte wähle einen Grund', ar:'يرجى اختيار سبب', th:'กรุณาเลือกเหตุผล', id:'Silakan pilih alasan', ru:'Пожалуйста, выберите причину', it:'Seleziona un motivo', vi:'Vui lòng chọn lý do' },
+    reportPickTargetLabel:{ ja:'どの発言/レビューを通報しますか？', en:'Which post/review are you reporting?', ko:'어떤 발언/리뷰를 신고하시겠습니까?', 'zh-tw':'要檢舉哪一則發言／評論？', 'zh-cn':'要举报哪一条发言／评论？', es:'¿Qué publicación/reseña estás reportando?', fr:'Quel message/avis signalez-vous ?', pt:'Qual publicação/avaliação você está denunciando?', de:'Welchen Beitrag/welche Rezension meldest du?', ar:'أي منشور/مراجعة تُبلغ عنها؟', th:'คุณกำลังรายงานข้อความ/รีวิวใด?', id:'Postingan/ulasan mana yang Anda laporkan?', ru:'Какой пост/отзыв вы жалуетесь?', it:'Quale post/recensione stai segnalando?', vi:'Bạn đang báo cáo bài đăng/đánh giá nào?' },
     reportOtherRequiredAlert:{ ja:'「その他」を選んだ場合は詳しい状況を入力してください', en:'Please describe the situation when choosing "Other"', ko:'"기타"를 선택한 경우 자세한 상황을 입력해 주세요', 'zh-tw':'選擇「其他」時，請輸入詳細狀況', 'zh-cn':'选择“其他”时，请输入详细情况', es:'Describe la situación si eliges "Otro"', fr:'Veuillez décrire la situation si vous choisissez "Autre"', pt:'Descreva a situação se escolher "Outro"', de:'Bitte beschreibe die Situation bei „Sonstiges“', ar:'يرجى وصف الموقف عند اختيار "أخرى"', th:'กรุณาอธิบายสถานการณ์เมื่อเลือก "อื่นๆ"', id:'Harap jelaskan situasinya jika memilih "Lainnya"', ru:'Опишите ситуацию, если выбрано «Другое»', it:'Descrivi la situazione se scegli "Altro"', vi:'Vui lòng mô tả tình huống nếu chọn "Khác"' },
     dailyQuestBtn:{ ja:'デイリークエスト', en:'Daily Quests', ko:'데일리 퀘스트', 'zh-tw':'每日任務', 'zh-cn':'每日任务', es:'Misiones diarias', fr:'Quêtes quotidiennes', pt:'Missões diárias', de:'Tägliche Aufgaben', ar:'المهام اليومية', th:'เควสประจำวัน', id:'Misi harian', ru:'Ежедневные задания', it:'Missioni giornaliere', vi:'Nhiệm vụ hằng ngày' },
     coinShopBtn:{ ja:'ショップ', en:'Shop', ko:'상점', 'zh-tw':'商店', 'zh-cn':'商店', es:'Tienda', fr:'Boutique', pt:'Loja', de:'Shop', ar:'المتجر', th:'ร้านค้า', id:'Toko', ru:'Магазин', it:'Negozio', vi:'Cửa hàng' },
+    gachaCoinBtn:{ ja:'コイン{n}枚で引く', en:'Draw for {n} coins', ko:'코인 {n}개로 뽑기', 'zh-tw':'花{n}枚硬幣抽一次', 'zh-cn':'花{n}枚硬币抽一次', es:'Tirar por {n} monedas', fr:'Tirer pour {n} pièces', pt:'Puxar por {n} moedas', de:'Für {n} Münzen ziehen', ar:'اسحب مقابل {n} عملة', th:'สุ่มด้วยเหรียญ {n} เหรียญ', id:'Tarik dengan {n} koin', ru:'Тянуть за {n} монет', it:'Estrai per {n} monete', vi:'Quay với {n} xu' },
+    gachaCoin10Btn:{ ja:'コイン{n}枚で10連', en:'10-pull for {n} coins', ko:'코인 {n}개로 10연차', 'zh-tw':'花{n}枚硬幣抽10次', 'zh-cn':'花{n}枚硬币抽10次', es:'Tirada x10 por {n} monedas', fr:'Tirage x10 pour {n} pièces', pt:'Puxada x10 por {n} moedas', de:'10er-Ziehung für {n} Münzen', ar:'سحب 10 مقابل {n} عملة', th:'สุ่ม 10 ครั้งด้วยเหรียญ {n} เหรียญ', id:'Tarik 10x dengan {n} koin', ru:'10 попыток за {n} монет', it:'Estrazione x10 per {n} monete', vi:'Quay 10 lần với {n} xu' },
+    gachaHoldLabel:{ ja:'5秒長押しでガチャを引く', en:'Hold for 5 seconds to draw', ko:'5초간 길게 눌러서 뽑기', 'zh-tw':'長按5秒進行抽獎', 'zh-cn':'长按5秒进行抽奖', es:'Mantén presionado 5 segundos para tirar', fr:'Maintenez 5 secondes pour tirer', pt:'Segure por 5 segundos para puxar', de:'5 Sekunden halten zum Ziehen', ar:'اضغط مطولاً لمدة 5 ثوانٍ للسحب', th:'กดค้าง 5 วินาทีเพื่อสุ่ม', id:'Tahan 5 detik untuk menarik', ru:'Удерживайте 5 секунд, чтобы вытянуть', it:'Tieni premuto per 5 secondi per estrarre', vi:'Giữ 5 giây để quay' },
+    gachaCoinInsufficientAlert:{ ja:'コインが足りません', en:'Not enough coins', ko:'코인이 부족합니다', 'zh-tw':'硬幣不足', 'zh-cn':'硬币不足', es:'No tienes suficientes monedas', fr:'Pièces insuffisantes', pt:'Moedas insuficientes', de:'Nicht genug Münzen', ar:'العملات غير كافية', th:'เหรียญไม่เพียงพอ', id:'Koin tidak cukup', ru:'Недостаточно монет', it:'Monete insufficienti', vi:'Không đủ xu' },
+    gachaResultTitleBatch:{ ja:'🎉 {n}個手に入れました', en:'🎉 You got {n} items', ko:'🎉 {n}개 획득했습니다', 'zh-tw':'🎉 獲得了{n}個', 'zh-cn':'🎉 获得了{n}个', es:'🎉 ¡Obtuviste {n} objetos!', fr:'🎉 Vous avez obtenu {n} objets !', pt:'🎉 Você obteve {n} itens!', de:'🎉 Du hast {n} Gegenstände erhalten!', ar:'🎉 حصلت على {n} عنصرًا!', th:'🎉 คุณได้รับ {n} ชิ้น!', id:'🎉 Anda mendapatkan {n} item!', ru:'🎉 Вы получили {n} предметов!', it:'🎉 Hai ottenuto {n} oggetti!', vi:'🎉 Bạn đã nhận được {n} vật phẩm!' },
     questShareQualityReviewTask:{ ja:'上質なレビューを書いて、SNSでシェアする', en:'Write a quality review and share it on social media', ko:'양질의 리뷰를 작성하고 SNS에서 공유하기', 'zh-tw':'撰寫優質評論並在社群媒體分享', 'zh-cn':'撰写优质评论并在社交媒体分享', es:'Escribe una reseña de calidad y compártela en redes sociales', fr:'Rédigez un avis de qualité et partagez-le sur les réseaux sociaux', pt:'Escreva uma avaliação de qualidade e compartilhe nas redes sociais', de:'Schreibe eine hochwertige Rezension und teile sie in sozialen Netzwerken', ar:'اكتب مراجعة عالية الجودة وشاركها على وسائل التواصل الاجتماعي', th:'เขียนรีวิวคุณภาพแล้วแชร์ลงโซเชียล', id:'Tulis ulasan berkualitas dan bagikan di media sosial', ru:'Напишите качественный отзыв и поделитесь им в соцсетях', it:'Scrivi una recensione di qualità e condividila sui social', vi:'Viết một đánh giá chất lượng và chia sẻ lên mạng xã hội' },
     questClaimBtn:{ ja:'コイン{n}枚を受け取る', en:'Claim {n} coins', ko:'코인 {n}개 받기', 'zh-tw':'領取{n}枚硬幣', 'zh-cn':'领取{n}枚硬币', es:'Reclamar {n} monedas', fr:'Récupérer {n} pièces', pt:'Resgatar {n} moedas', de:'{n} Münzen abholen', ar:'استلام {n} عملة', th:'รับเหรียญ {n} เหรียญ', id:'Klaim {n} koin', ru:'Получить {n} монет', it:'Riscuoti {n} monete', vi:'Nhận {n} xu' },
     questClaimedLabel:{ ja:'受け取り済み', en:'Claimed', ko:'수령 완료', 'zh-tw':'已領取', 'zh-cn':'已领取', es:'Reclamado', fr:'Récupéré', pt:'Resgatado', de:'Abgeholt', ar:'تم الاستلام', th:'รับแล้ว', id:'Sudah diklaim', ru:'Получено', it:'Riscosso', vi:'Đã nhận' },
+    questResetInLabel:{ ja:'あと{h}時間{m}分で更新', en:'Resets in {h}h {m}m', ko:'{h}시간 {m}분 후 갱신', 'zh-tw':'{h}小時{m}分後更新', 'zh-cn':'{h}小时{m}分后更新', es:'Se actualiza en {h}h {m}m', fr:'Mise à jour dans {h}h {m}m', pt:'Atualiza em {h}h {m}m', de:'Aktualisierung in {h}Std. {m}Min.', ar:'التحديث خلال {h} ساعة {m} دقيقة', th:'อัปเดตในอีก {h} ชม. {m} นาที', id:'Diperbarui dalam {h}j {m}m', ru:'Обновление через {h} ч {m} мин', it:'Aggiornamento tra {h}h {m}m', vi:'Cập nhật sau {h} giờ {m} phút' },
     heroEyebrow:{ ja:'可視化特化型アニメコミュニティ', en:'A visualization-first anime community', ko:'시각화 특화 애니메이션 커뮤니티', 'zh-tw':'以視覺化為核心的動畫社群', 'zh-cn':'以可视化为核心的动漫社区', es:'Una comunidad de anime centrada en la visualización', fr:'Une communauté anime axée sur la visualisation', pt:'Uma comunidade de anime focada em visualização', de:'Eine Anime-Community mit Fokus auf Visualisierung', ar:'مجتمع أنمي يركز على التصور المرئي', th:'ชุมชนอนิเมะที่เน้นการแสดงผลข้อมูล', id:'Komunitas anime yang berfokus pada visualisasi', ru:'Аниме-сообщество с акцентом на визуализацию', it:'Una community anime incentrata sulla visualizzazione', vi:'Cộng đồng anime tập trung vào trực quan hóa' },
     pickupSectionTitle:{ ja:'ピックアップ', en:'Pickup', ko:'픽업', 'zh-tw':'精選', 'zh-cn':'精选', es:'Selección', fr:'Sélection', pt:'Seleção', de:'Auswahl', ar:'مختارات', th:'ไฮไลต์', id:'Pilihan', ru:'Подборка', it:'In evidenza', vi:'Nổi bật' },
     seasonAnimeSectionTitle:{ ja:'今季アニメ', en:'This season', ko:'이번 시즌 애니메이션', 'zh-tw':'本季動畫', 'zh-cn':'本季动漫', es:'Anime de esta temporada', fr:'Anime de la saison', pt:'Anime da temporada', de:'Anime dieser Saison', ar:'أنمي هذا الموسم', th:'อนิเมะซีซั่นนี้', id:'Anime musim ini', ru:'Аниме этого сезона', it:'Anime di stagione', vi:'Anime mùa này' },
@@ -19149,7 +19311,7 @@
       const isOwnReview = _currentUser && userId === _currentUser.id;
       const kebabMenuItemsHtml = isOwnReview
         ? `<button type="button" class="rc-delete-btn" data-review-id="${escapeHtml(rev.id||'')}" data-anime-id="${escapeHtml(rev.animeId||'')}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#eaa9a9;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('deleteReviewBtn'))}</button>`
-        : `<button type="button" class="rc-report-btn" data-review-id="${escapeHtml(rev.id||'')}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#eaa9a9;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('reportBtn'))}</button>
+        : `<button type="button" class="rc-report-btn" data-review-id="${escapeHtml(rev.id||'')}" data-uid="${escapeHtml(userId||'')}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#eaa9a9;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('reportBtn'))}</button>
               <button type="button" class="rc-block-btn" data-uid="${escapeHtml(userId)}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#b6c8bd;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('blockBtn'))}</button>`;
       const deleteBtnHtml = (_currentUser && userId) ? `<div style="margin-left:auto;margin-right:44px;position:relative;flex-shrink:0;">
             <button type="button" class="rc-kebab-btn" aria-label="メニュー" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:transparent;color:#82968a;cursor:pointer;">
@@ -19350,7 +19512,12 @@
     document.addEventListener('click', () => { el.querySelectorAll('.rc-kebab-menu').forEach(m=>m.style.display='none'); }, {once:true});
     el.querySelectorAll('.rc-report-btn').forEach(btn=>{
       btn.onclick = () => {
-        openReportSheet('review', btn.dataset.reviewId);
+        // 「今このアニメページ」の中で、対象ユーザーのレビューコメントだけに絞って選ばせる
+        const uid = btn.dataset.uid;
+        const candidates = sorted
+          .filter(r => (r.userId || r.user_id) === uid)
+          .map(r => ({ id: r.id, body: r.comment || '' }));
+        openReportSheet('review', btn.dataset.reviewId, null, candidates);
       };
     });
     el.querySelectorAll('.rc-block-btn').forEach(btn=>{
@@ -21259,11 +21426,13 @@
       <span style="flex:1 1 auto;font-size:13.5px;color:${done?'#eaf6ee':'#b6c8bd'};">${escapeHtml(label)}</span>
     </div>`;
     el.innerHTML = `
+      <p id="dailyQuestResetIn" style="margin:0 0 12px;font-size:11.5px;color:#8db5a0;text-align:right;"></p>
       ${row(completed, t('questShareQualityReviewTask'))}
       <button type="button" id="dailyQuestClaimBtn" ${(!completed || claimed) ? 'disabled' : ''} style="width:100%;height:46px;margin-top:12px;border-radius:12px;border:none;background:${(completed && !claimed) ? '#5ec97a' : 'rgba(255,255,255,.08)'};color:${(completed && !claimed) ? '#07200f' : '#82968a'};font-weight:800;font-size:13.5px;cursor:${(completed && !claimed)?'pointer':'not-allowed'};">
         ${claimed ? escapeHtml(t('questClaimedLabel')) : escapeHtml(t('questClaimBtn').replace('{n}', GACHA_COIN_REWARD))}
       </button>
     `;
+    startDailyQuestCountdown();
     const claimBtn = document.getElementById('dailyQuestClaimBtn');
     if(claimBtn && completed && !claimed) {
       claimBtn.onclick = async () => {
@@ -21276,6 +21445,24 @@
     }
   }
   window.renderDailyQuestPage = renderDailyQuestPage;
+
+  // 更新までの残り時間表示：ガチャの「1日1回」と同じ基準（UTC日付境界）で計算する
+  let _dailyQuestCountdownTimer = null;
+  function startDailyQuestCountdown() {
+    if(_dailyQuestCountdownTimer) clearInterval(_dailyQuestCountdownTimer);
+    const tick = () => {
+      const el = document.getElementById('dailyQuestResetIn');
+      if(!el) { clearInterval(_dailyQuestCountdownTimer); return; }
+      const now = new Date();
+      const nextReset = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+      const diffMs = nextReset - now;
+      const h = Math.floor(diffMs / 3600000);
+      const m = Math.floor((diffMs % 3600000) / 60000);
+      el.textContent = t('questResetInLabel').replace('{h}', h).replace('{m}', m);
+    };
+    tick();
+    _dailyQuestCountdownTimer = setInterval(tick, 30000);
+  }
 
   // ── コインショップ ──
   async function renderCoinShopPage() {
