@@ -540,6 +540,14 @@
     .gacha-hold-fill { position:absolute; inset:0; width:0%; background:linear-gradient(135deg,#6fd48f,#3fa96f); border-radius:inherit; pointer-events:none; z-index:0; }
     .gacha-btn-hold .gacha-hold-label { position:relative; z-index:1; }
     .gacha-btn-cancel { height:40px; border:1px solid rgba(255,255,255,.14); background:transparent; color:#b6c8bd; font-size:12.5px; }
+    /* ── アイコンサイズ統一：掲示板・レビューカード・ヘッダーのユーザーアイコンをYouTubeのアイコンサイズに合わせる。
+       マイページ本体のアイコン(大きい表示)は対象外。PC=24px、スマホ=32px（タップしやすさのため大きめ） ── */
+    .user-avatar-circle { width:24px; height:24px; flex:0 0 24px; }
+    .user-avatar-circle img { width:24px; height:24px; }
+    @media (max-width:767px) {
+      .user-avatar-circle { width:32px; height:32px; flex:0 0 32px; }
+      .user-avatar-circle img { width:32px; height:32px; }
+    }
     .gacha-btn-prob { height:40px; border:1px solid rgba(255,255,255,.1); background:transparent; color:#b6c8bd; font-size:12px; font-weight:700; }
     .gacha-btn-icon { font-size:15px; }
     .gacha-soldout { width:100%; max-width:420px; border-radius:16px; border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.02); padding:18px; text-align:center; }
@@ -2000,6 +2008,14 @@
     .mypage-name { font-family:"Zen Kaku Gothic New",sans-serif; font-size:22px; font-weight:900; color:#e8f0ea; margin:0 0 .2rem; letter-spacing:.01em; }
     .mypage-sub { font-size:13px; color:#82968a; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .mypage-actions { display:flex; gap:9px; padding-bottom:6px; }
+    /* スマホ：横並びのままだと-46pxの重ね合わせがアイコンだけ変な位置に飛び出て見えるので、
+       アイコン→名前→ボタンを縦積みにして中央寄せにする */
+    @media (max-width:767px) {
+      .mypage-hero { flex-direction:column; align-items:center; text-align:center; margin-top:-30px; gap:10px; }
+      .mypage-info { text-align:center; flex:1 1 auto; }
+      #mypageUsername { justify-content:center; }
+      .mypage-actions { justify-content:center; flex-wrap:wrap; padding-bottom:0; }
+    }
     .mypage-btn-primary {
       height:40px; padding:0 16px; border-radius:11px; background:linear-gradient(120deg,var(--brand),var(--brand2));
       color:#0c2015; font-weight:800; border:none; cursor:pointer; font-size:13px;
@@ -5534,7 +5550,7 @@
           </button>
         </div>
         <div class="mypage-info">
-          <p class="mypage-name" id="mypageUsername" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span id="mypageUsernameText" data-i18n="labelUsername2">ユーザー名</span><span id="mypageCountryBadge"></span><button type="button" id="mypageValueProfileBtn" onclick="openValueProfilePopup()" aria-label="あなたの価値観" style="display:none;width:26px;height:26px;border-radius:50%;border:1px solid rgba(94,201,122,.4);background:rgba(94,201,122,.14);color:#8fe5ab;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg></button></p>
+          <p class="mypage-name" id="mypageUsername" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span id="mypageUsernameText" data-i18n="labelUsername2">ユーザー名</span><span id="mypageCountryBadge"></span></p>
           <p class="mypage-sub" id="mypageEmail" style="display:none;">email</p>
           <p id="mypageRankBadge" style="display:none;"></p>
         </div>
@@ -11311,7 +11327,7 @@
           <div class="rc-head" style="padding-top:50px;">
             <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;">
               <div${userOnclick} style="width:48px;height:48px;border-radius:50%;overflow:hidden;background:${avatarUrl?'transparent':(()=>{const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];const name=displayName;if(name==='ゲスト')return 'rgba(140,198,160,0.2)';return colors[name.charCodeAt(0)%colors.length];})()};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#0c2015;flex-shrink:0;">
-                ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="width:48px;height:48px;object-fit:cover;display:block;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
+                ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="object-fit:cover;display:block;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
                 <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}${countryBadgeHtml(rev.countryCode||rev.country_code)}</span>
@@ -13288,19 +13304,17 @@
     // 角丸：しっぽは相手=左下4px／自分=右下4px。連投2件目以降はしっぽを付けない（全角14px）
     const radius = grouped ? '14px' : (isMine ? '14px 14px 4px 14px' : '14px 14px 14px 4px');
     const shadow = isMine ? '0 10px 22px -16px rgba(0,0,0,.8)' : '0 8px 18px -16px rgba(0,0,0,.8)';
-    // アイコンはガチャで集めるものなので会話中も必ず出す。
-    // 自分側は26px＋金リング（マイページで設定したアイコンがそのまま出る）、相手は30px。
-    const avSize = isMine ? 26 : 30;
+    // アイコンはガチャで集めるものなので会話中も必ず出す。サイズはYouTubeのアイコンサイズに統一（PC24px/スマホ32px）。
     const avatarBg = isMine ? 'linear-gradient(150deg,#4a2f6d,#241a2c)' : 'linear-gradient(150deg,#2c4436,#1d3225)';
     const avatarBorder = isMine ? '1.5px solid rgba(240,201,74,.55)' : '1px solid rgba(255,255,255,.1)';
     const avatarText = isMine ? '#d9c2ef' : '#9be3bd';
     const avatarUrl = avatarMap[item.user_id];
     // 連投2件目以降は同幅のスペーサーだけ残して列を揃える
     const avatar = grouped
-      ? `<span style="width:${avSize}px;flex:0 0 ${avSize}px;"></span>`
+      ? `<span class="user-avatar-circle"></span>`
       : (avatarUrl
-        ? `<img src="${escapeHtml(avatarUrl)}" onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;object-fit:cover;border:${avatarBorder};cursor:pointer;">`
-        : `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="width:${avSize}px;height:${avSize}px;flex:0 0 ${avSize}px;border-radius:50%;background:${avatarBg};border:${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:${isMine?10:11.5}px;font-weight:800;color:${avatarText};cursor:pointer;">${escapeHtml(name.charAt(0))}</span>`);
+        ? `<img src="${escapeHtml(avatarUrl)}" onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" class="user-avatar-circle" style="border-radius:50%;object-fit:cover;border:${avatarBorder};cursor:pointer;">`
+        : `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" class="user-avatar-circle" style="border-radius:50%;background:${avatarBg};border:${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:${avatarText};cursor:pointer;">${escapeHtml(name.charAt(0))}</span>`);
     // 名前は相手のみ（自分はアイコンの緑枠で判別できる）。連投時は省略
     const nameHtml = (!isMine && !grouped)
       ? `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="font-size:11.5px;font-weight:700;color:${nameColor};padding-left:2px;cursor:pointer;">${escapeHtml(name)}${isOfficial?' <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">公式</span>':''}</span>`
@@ -14794,7 +14808,7 @@
         <p style="margin:0 0 8px;font-size:12px;color:#8db5a0;">${escapeHtml(t('reportPickTargetLabel'))}</p>
         <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:180px;overflow-y:auto;">
           ${candidates.map(c => `<label style="display:flex;align-items:flex-start;gap:8px;padding:9px 10px;border-radius:9px;background:rgba(255,255,255,.03);cursor:pointer;">
-            <input type="radio" name="reportTarget" value="${escapeHtml(String(c.id))}" ${c.id===targetId?'checked':''} style="accent-color:#5ec97a;margin-top:2px;">
+            <input type="checkbox" name="reportTarget" value="${escapeHtml(String(c.id))}" ${c.id===targetId?'checked':''} style="accent-color:#5ec97a;margin-top:2px;">
             <span style="font-size:12.5px;color:#dfeae3;line-height:1.5;word-break:break-word;">${escapeHtml((c.body||'').slice(0,80))}</span>
           </label>`).join('')}
         </div>` : '';
@@ -14822,14 +14836,15 @@
       if(!checked) { alert(t('reportSelectReasonAlert')); return; }
       const detail = overlay.querySelector('#reportDetailInput').value.trim();
       if(checked.value === 'other' && !detail) { alert(t('reportOtherRequiredAlert')); return; }
-      const targetChecked = hasCandidates ? overlay.querySelector('input[name="reportTarget"]:checked') : null;
-      const finalTargetId = targetChecked ? targetChecked.value : targetId;
+      const targetChecks = hasCandidates ? Array.from(overlay.querySelectorAll('input[name="reportTarget"]:checked')) : [];
+      const finalTargetIds = targetChecks.length ? targetChecks.map(c => c.value) : [targetId];
       const reasonEntry = REPORT_REASONS.find(r => r.id === checked.value);
       const reasonLabel = reasonEntry ? t(reasonEntry.key) : checked.value;
       const reason = detail ? `${reasonLabel}：${detail}` : reasonLabel;
       const btn = overlay.querySelector('#reportSheetSubmit');
       btn.disabled = true;
-      const { error } = await db.reports.submit(_currentUser.id, targetType, finalTargetId, reason);
+      // 複数選んでも1つの通報としてまとめる（target_idはカンマ区切りで複数入れる）
+      const { error } = await db.reports.submit(_currentUser.id, targetType, finalTargetIds.join(','), reason);
       overlay.remove();
       if(error) { alert(t('profileSaveFailedAlert')); return; }
       alert(t('reportSentAlert'));
@@ -15923,7 +15938,7 @@
     btnCancel:{ ja:'キャンセル', en:'Cancel', ko:'취소', 'zh-tw':'取消', 'zh-cn':'取消', es:'Cancelar', fr:'Annuler', pt:'Cancelar', de:'Abbrechen', ar:'إلغاء', th:'ยกเลิก', id:'Batal', ru:'Отмена', it:'Annulla', vi:'Hủy' },
     reportSubmitBtn:{ ja:'通報する', en:'Submit report', ko:'신고하기', 'zh-tw':'送出檢舉', 'zh-cn':'提交举报', es:'Enviar reporte', fr:'Envoyer le signalement', pt:'Enviar denúncia', de:'Meldung senden', ar:'إرسال البلاغ', th:'ส่งรายงาน', id:'Kirim laporan', ru:'Отправить жалобу', it:'Invia segnalazione', vi:'Gửi báo cáo' },
     reportSelectReasonAlert:{ ja:'理由を選んでください', en:'Please choose a reason', ko:'사유를 선택해 주세요', 'zh-tw':'請選擇原因', 'zh-cn':'请选择原因', es:'Por favor, elige un motivo', fr:'Veuillez choisir un motif', pt:'Por favor, escolha um motivo', de:'Bitte wähle einen Grund', ar:'يرجى اختيار سبب', th:'กรุณาเลือกเหตุผล', id:'Silakan pilih alasan', ru:'Пожалуйста, выберите причину', it:'Seleziona un motivo', vi:'Vui lòng chọn lý do' },
-    reportPickTargetLabel:{ ja:'どの発言/レビューを通報しますか？', en:'Which post/review are you reporting?', ko:'어떤 발언/리뷰를 신고하시겠습니까?', 'zh-tw':'要檢舉哪一則發言／評論？', 'zh-cn':'要举报哪一条发言／评论？', es:'¿Qué publicación/reseña estás reportando?', fr:'Quel message/avis signalez-vous ?', pt:'Qual publicação/avaliação você está denunciando?', de:'Welchen Beitrag/welche Rezension meldest du?', ar:'أي منشور/مراجعة تُبلغ عنها؟', th:'คุณกำลังรายงานข้อความ/รีวิวใด?', id:'Postingan/ulasan mana yang Anda laporkan?', ru:'Какой пост/отзыв вы жалуетесь?', it:'Quale post/recensione stai segnalando?', vi:'Bạn đang báo cáo bài đăng/đánh giá nào?' },
+    reportPickTargetLabel:{ ja:'どの発言/レビューを通報しますか？（複数選択可）', en:'Which post/review are you reporting? (multiple allowed)', ko:'어떤 발언/리뷰를 신고하시겠습니까? (복수 선택 가능)', 'zh-tw':'要檢舉哪一則發言／評論？（可複選）', 'zh-cn':'要举报哪一条发言／评论？（可多选）', es:'¿Qué publicación(es)/reseña(s) estás reportando? (puedes elegir varias)', fr:'Quel(s) message(s)/avis signalez-vous ? (plusieurs choix possibles)', pt:'Quais publicações/avaliações você está denunciando? (pode escolher várias)', de:'Welche Beiträge/Rezensionen meldest du? (Mehrfachauswahl möglich)', ar:'أي منشورات/مراجعات تُبلغ عنها؟ (يمكن اختيار أكثر من واحد)', th:'คุณกำลังรายงานข้อความ/รีวิวใด? (เลือกได้หลายรายการ)', id:'Postingan/ulasan mana yang Anda laporkan? (bisa pilih lebih dari satu)', ru:'Какие посты/отзывы вы жалуетесь? (можно выбрать несколько)', it:'Quali post/recensioni stai segnalando? (selezione multipla consentita)', vi:'Bạn đang báo cáo bài đăng/đánh giá nào? (có thể chọn nhiều)' },
     reportOtherRequiredAlert:{ ja:'「その他」を選んだ場合は詳しい状況を入力してください', en:'Please describe the situation when choosing "Other"', ko:'"기타"를 선택한 경우 자세한 상황을 입력해 주세요', 'zh-tw':'選擇「其他」時，請輸入詳細狀況', 'zh-cn':'选择“其他”时，请输入详细情况', es:'Describe la situación si eliges "Otro"', fr:'Veuillez décrire la situation si vous choisissez "Autre"', pt:'Descreva a situação se escolher "Outro"', de:'Bitte beschreibe die Situation bei „Sonstiges“', ar:'يرجى وصف الموقف عند اختيار "أخرى"', th:'กรุณาอธิบายสถานการณ์เมื่อเลือก "อื่นๆ"', id:'Harap jelaskan situasinya jika memilih "Lainnya"', ru:'Опишите ситуацию, если выбрано «Другое»', it:'Descrivi la situazione se scegli "Altro"', vi:'Vui lòng mô tả tình huống nếu chọn "Khác"' },
     dailyQuestBtn:{ ja:'デイリークエスト', en:'Daily Quests', ko:'데일리 퀘스트', 'zh-tw':'每日任務', 'zh-cn':'每日任务', es:'Misiones diarias', fr:'Quêtes quotidiennes', pt:'Missões diárias', de:'Tägliche Aufgaben', ar:'المهام اليومية', th:'เควสประจำวัน', id:'Misi harian', ru:'Ежедневные задания', it:'Missioni giornaliere', vi:'Nhiệm vụ hằng ngày' },
     coinShopBtn:{ ja:'ショップ', en:'Shop', ko:'상점', 'zh-tw':'商店', 'zh-cn':'商店', es:'Tienda', fr:'Boutique', pt:'Loja', de:'Shop', ar:'المتجر', th:'ร้านค้า', id:'Toko', ru:'Магазин', it:'Negozio', vi:'Cửa hàng' },
@@ -19299,7 +19314,7 @@
       const avatarUrl = userId ? avatarMap[userId] : null;
       const iconBg = avatarUrl ? 'transparent' : (name==='ゲスト'?'rgba(140,198,160,0.2)':colors[name.charCodeAt(0)%colors.length]);
       const iconContent = avatarUrl
-        ? `<img src="${escapeHtml(avatarUrl)}" alt="" style="width:48px;height:48px;object-fit:cover;display:block;">`
+        ? `<img src="${escapeHtml(avatarUrl)}" alt="" style="object-fit:cover;display:block;">`
         : (name==='ゲスト'
           ?'<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>'
           :name.slice(0,1));
@@ -19336,7 +19351,7 @@
         <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank)}</div>
         <div class="rc-head" style="padding-top:50px;">
           <div style="display:flex;align-items:flex-start;gap:.6rem;flex:1;min-width:0;">
-            <div${userOnclick} style="width:48px;height:48px;border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+            <div${userOnclick} class="user-avatar-circle" style="border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
             <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
               <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
@@ -19357,7 +19372,7 @@
           <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank)}</div>
           <div class="rc-head" style="padding-top:50px;">
             <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;">
-              <div${userOnclick} style="width:48px;height:48px;border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+              <div${userOnclick} class="user-avatar-circle" style="border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
                 <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${name}${flag}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
@@ -19786,9 +19801,9 @@
       if(!btn) {
         btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'hdr-avatar-btn';
+        btn.className = 'hdr-avatar-btn user-avatar-circle';
         btn.onclick = () => nav('mypage');
-        btn.style.cssText = 'width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:#1d3225;color:#8fe5ab;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;flex:0 0 auto;padding:0;';
+        btn.style.cssText = 'border-radius:50%;border:1px solid rgba(255,255,255,.14);background:#1d3225;color:#8fe5ab;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;flex:0 0 auto;padding:0;';
         // 言語ボタンより前（左側）に差し込む
         hdrRight.insertBefore(btn, hdrRight.firstChild);
       }
