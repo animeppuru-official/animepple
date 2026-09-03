@@ -3576,6 +3576,16 @@
         </span>
       </div>
 
+      <!-- デイリークエスト・ショップ（コイン）の入り口。ガチャと同じ通貨（コイン）を扱う機能なのでここに置く -->
+      <div class="gacha-quest-shop-row" style="display:flex;gap:10px;margin-bottom:14px;">
+        <button type="button" id="gachaDailyQuestBtn" onclick="nav('daily-quest')" style="flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:7px;height:46px;border-radius:12px;border:1px solid rgba(240,201,74,.3);background:rgba(240,201,74,.08);color:#f0c94a;font-size:13px;font-weight:800;cursor:pointer;">
+          <span>🗓</span><span data-i18n="dailyQuestBtn">デイリークエスト</span>
+        </button>
+        <button type="button" id="gachaShopBtn" onclick="nav('coin-shop')" style="flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:7px;height:46px;border-radius:12px;border:1px solid rgba(92,201,142,.3);background:rgba(92,201,142,.08);color:#5ec97a;font-size:13px;font-weight:800;cursor:pointer;">
+          <span>🛒</span><span data-i18n="coinShopBtn">ショップ</span>
+        </button>
+      </div>
+
       <!-- 演出枠：ガチャ動画／GIFの再生場所。待機＝揺れる／回転＝本編／結果＝開く -->
       <div id="gachaStage" class="gacha-stage">
         <span class="gacha-stage-glow"></span>
@@ -4107,6 +4117,47 @@
   <div style="padding:1.1rem;">
     <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="dmMenuLabel">メッセージ</h2>
     <div id="dmListBody"></div>
+  </div>
+</div>
+
+<!-- デイリークエスト（入り口のみ・中身は準備中） -->
+<div class="page mypage-page-wrap" id="page-daily-quest">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🗓 <span data-i18n="dailyQuestBtn">デイリークエスト</span></h2>
+    <div id="dailyQuestBody"></div>
+  </div>
+</div>
+
+<!-- コインショップ -->
+<div class="page mypage-page-wrap" id="page-coin-shop">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🛒 <span data-i18n="coinShopBtn">ショップ</span></h2>
+    <p style="font-size:.85rem;color:var(--muted);margin:0 0 1rem;">🪙 <span id="coinShopBalance">0</span></p>
+    <p style="font-size:.85rem;color:var(--muted);text-align:center;padding:2rem 0;" data-i18n="comingSoonText">近日公開予定です。お楽しみに！</p>
   </div>
 </div>
 
@@ -6289,6 +6340,68 @@
       },
     },
     // ── DM（友達同士のみ。DB側のRLSでも友達関係を確認しているので、フロント側は表示制御だけでよい）
+    // ── コイン（ガチャの通貨）とデイリークエスト ──
+    // 必要テーブル（Supabase側で作成）：
+    //   alter table profiles add column if not exists coins integer not null default 0;
+    //   create table daily_quest_progress (
+    //     user_id uuid not null references auth.users(id) on delete cascade,
+    //     quest_date date not null,
+    //     completed boolean not null default false, -- 「上質レビューを書いて拡散する」達成フラグ（単一条件）
+    //     claimed boolean not null default false,
+    //     primary key (user_id, quest_date)
+    //   );
+    coins: {
+      async get(userId) {
+        if(!sb || !userId) return 0;
+        const { data } = await sb.from('profiles').select('coins').eq('id', userId).maybeSingle();
+        return data?.coins || 0;
+      },
+      async add(userId, amount) {
+        if(!sb || !userId || !amount) return { error: 'invalid' };
+        const current = await this.get(userId);
+        const { error } = await sb.from('profiles').update({ coins: current + amount }).eq('id', userId);
+        return { error };
+      },
+      async spend(userId, amount) {
+        if(!sb || !userId || !amount) return { error: 'invalid' };
+        const current = await this.get(userId);
+        if(current < amount) return { error: 'insufficient' };
+        const { error } = await sb.from('profiles').update({ coins: current - amount }).eq('id', userId);
+        return { error };
+      },
+    },
+    quests: {
+      todayStr() { return new Date().toISOString().slice(0, 10); },
+      async getToday(userId) {
+        if(!sb || !userId) return null;
+        const today = this.todayStr();
+        const { data } = await sb.from('daily_quest_progress').select('*').eq('user_id', userId).eq('quest_date', today).maybeSingle();
+        return data || { user_id: userId, quest_date: today, completed: false, claimed: false };
+      },
+      // 「上質レビューを書いて拡散する」単一条件の達成フラグを立てる。既にONなら何もしない
+      async markCompleted(userId) {
+        if(!sb || !userId) return;
+        const today = this.todayStr();
+        const { data: existing } = await sb.from('daily_quest_progress').select('*').eq('user_id', userId).eq('quest_date', today).maybeSingle();
+        if(existing) {
+          if(existing.completed) return;
+          await sb.from('daily_quest_progress').update({ completed: true }).eq('user_id', userId).eq('quest_date', today);
+        } else {
+          await sb.from('daily_quest_progress').insert({ user_id: userId, quest_date: today, completed: true });
+        }
+      },
+      // 達成済み・未受け取りの時だけコインを付与する
+      async claim(userId, rewardAmount) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const today = this.todayStr();
+        const { data: existing } = await sb.from('daily_quest_progress').select('*').eq('user_id', userId).eq('quest_date', today).maybeSingle();
+        if(!existing || !existing.completed) return { error: 'not_complete' };
+        if(existing.claimed) return { error: 'already_claimed' };
+        const { error: e1 } = await sb.from('daily_quest_progress').update({ claimed: true }).eq('user_id', userId).eq('quest_date', today);
+        if(e1) return { error: e1 };
+        return db.coins.add(userId, rewardAmount);
+      },
+    },
     dm: {
       async list(userIdA, userIdB) {
         if(!sb || !userIdA || !userIdB) return [];
@@ -7481,6 +7594,8 @@
     'my-icons': '/mypage/icons',
     'friend-requests': '/mypage/friend-requests',
     'dm-list': '/mypage/messages',
+    'daily-quest': '/gacha/daily-quest',
+    'coin-shop': '/gacha/shop',
     settings: '/settings',
     'settings-account': '/settings/account',
     'settings-security': '/settings/security',
@@ -7857,6 +7972,8 @@
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
     if (page==='dm-list') { renderDmList().catch(console.error); }
+    if (page==='daily-quest') { renderDailyQuestPage().catch(console.error); }
+    if (page==='coin-shop') { renderCoinShopPage().catch(console.error); }
     if (page==='dm'&&animeId) { renderDmThread(animeId).catch(console.error); }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -10002,6 +10119,8 @@
     return { free: `animepple_gacha_free_${userId}_${today}`, ad: `animepple_gacha_ad_${userId}_${today}` };
   }
   const GACHA_AD_LIMIT = 3;
+  const GACHA_COIN_REWARD = 100; // デイリークエスト達成報酬＝ガチャ1回分のコイン
+  const GACHA_COIN_COST = 100; // コインでガチャを1回引く時の消費量
   function getGachaState(userId) {
     const keys = gachaTodayKey(userId);
     return {
@@ -11922,6 +12041,9 @@
       if(!target) return;
       btn.onclick = async () => {
         adClick('share_' + target.key);
+        // デイリークエスト：「上質レビューを書いて拡散する」は単一条件。
+        // このシェアボタンは常に「投稿直後のレビュー」に対して出るので、そのレビュー自体が上質(quality)な時だけ達成扱いにする
+        if(_currentUser && review && review.quality) db.quests.markCompleted(_currentUser.id).catch(()=>{});
         const title = getTitle(page) || page.title || page.titleEn || '';
         const shareText = t('shareReviewText').replace('{title}', title);
         const shareUrl = `https://animeppuru-official.github.io/animepple/anime/${page.id}/reviews`;
@@ -12984,12 +13106,12 @@
   function formatRelativeTime(dateStr) {
     const diffMs = Date.now() - new Date(dateStr).getTime();
     const min = Math.floor(diffMs / 60000);
-    if(min < 1) return currentLang==='ja' ? 'たった今' : 'just now';
-    if(min < 60) return currentLang==='ja' ? `${min}分前` : `${min}m ago`;
+    if(min < 1) return t('timeJustNow');
+    if(min < 60) return tFn('timeMinAgo', min);
     const hr = Math.floor(min / 60);
-    if(hr < 24) return currentLang==='ja' ? `${hr}時間前` : `${hr}h ago`;
+    if(hr < 24) return tFn('timeHourAgo', hr);
     const day = Math.floor(hr / 24);
-    return currentLang==='ja' ? `${day}日前` : `${day}d ago`;
+    return tFn('timeDayAgo', day);
   }
 
   const BOARD_DISPLAY_EXPIRY_DAYS = 90;
@@ -13026,7 +13148,7 @@
     const grouped = !!opts.grouped;
     const avatarMap = opts.avatarMap || {};
     const isAdminMap = opts.isAdminMap || {};
-    const name = item.username || '名無し';
+    const name = item.username || t('anonymousNameLabel');
     const isMine = _currentUser && item.user_id === _currentUser.id;
     const isOfficial = !!isAdminMap[item.user_id];
     const bg = isMine ? '#2f7d55' : '#262e33';
@@ -13085,10 +13207,9 @@
     const d = new Date(ts), now = new Date();
     const same = (a,b)=> a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
     const yd = new Date(now); yd.setDate(now.getDate()-1);
-    if(same(d,now)) return '今日';
-    if(same(d,yd)) return '昨日';
-    const w = ['日','月','火','水','木','金','土'][d.getDay()];
-    return (d.getMonth()+1)+'月'+d.getDate()+'日 '+w;
+    if(same(d,now)) return t('chatToday');
+    if(same(d,yd)) return t('chatYesterday');
+    return d.toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US', {month:'numeric', day:'numeric', weekday:'short'});
   }
   function chatSepChipHtml(label, accent) {
     return `<div style="display:flex;align-items:center;gap:12px;${accent?'animation:boardFadeIn .3s ease both;':''}">
@@ -13204,9 +13325,9 @@
       flow.forEach(p => {
         const isMine = _currentUser && p.user_id === _currentUser.id;
         const parent = p.parent_id ? byId[p.parent_id] : null;
-        const quote = parent ? { name: parent.username || '名無し', body: parent.body } : null;
+        const quote = parent ? { name: parent.username || t('anonymousNameLabel'), body: parent.body } : null;
         if(!prev || dayKey(prev.created_at) !== dayKey(p.created_at)) out += sepChip(dayLabel(p.created_at), false);
-        if(firstUnreadId && p.id === firstUnreadId) out += sepChip('ここから新着 '+unreadCount+'件', true);
+        if(firstUnreadId && p.id === firstUnreadId) out += sepChip(t('boardNewFromHereLabel')+' '+unreadCount+t('boardHubBoardsUnit'), true);
         // 連投まとめ：同一ユーザー・同日・引用なし・5分以内 が続いたら2件目以降はアイコン/名前を省略
         const grouped = !!prev && prev.user_id === p.user_id && !quote
           && dayKey(prev.created_at) === dayKey(p.created_at)
@@ -13323,7 +13444,7 @@
       btn.onclick = () => {
         const target = posts.find(p => String(p.id) === String(btn.dataset.id));
         if(!target) return;
-        setBoardReplyTarget({ id: target.id, username: target.username || '名無し', body: target.body });
+        setBoardReplyTarget({ id: target.id, username: target.username || t('anonymousNameLabel'), body: target.body });
       };
     });
     panel.querySelectorAll('.board-report-btn').forEach(btn=>{
@@ -13469,7 +13590,7 @@
         const input = composer.querySelector('#boardComposeInput');
         const body = input.value.trim().slice(0, BOARD_MAX_LEN);
         if(!body) return;
-        const username = (_currentUser && window._loggedInUsername) || 'ゲスト';
+        const username = (_currentUser && window._loggedInUsername) || t('guest');
         const parentId = _boardReplyTarget ? _boardReplyTarget.id : undefined;
         const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, parentId, currentLang);
         if(error) { alert(t('profileSaveFailedAlert')); return; }
@@ -14485,7 +14606,7 @@
     });
     menu.querySelector('[data-act="reply"]').onclick = () => {
       closeBoardMoreMenu();
-      setBoardReplyTarget({ id: post.id, username: post.username || '名無し', body: post.body });
+      setBoardReplyTarget({ id: post.id, username: post.username || t('anonymousNameLabel'), body: post.body });
       const inp = document.getElementById('boardComposeInput');
       if(inp) inp.focus();
     };
@@ -15648,6 +15769,11 @@
     reportSubmitBtn:{ ja:'通報する', en:'Submit report', ko:'신고하기', 'zh-tw':'送出檢舉', 'zh-cn':'提交举报', es:'Enviar reporte', fr:'Envoyer le signalement', pt:'Enviar denúncia', de:'Meldung senden', ar:'إرسال البلاغ', th:'ส่งรายงาน', id:'Kirim laporan', ru:'Отправить жалобу', it:'Invia segnalazione', vi:'Gửi báo cáo' },
     reportSelectReasonAlert:{ ja:'理由を選んでください', en:'Please choose a reason', ko:'사유를 선택해 주세요', 'zh-tw':'請選擇原因', 'zh-cn':'请选择原因', es:'Por favor, elige un motivo', fr:'Veuillez choisir un motif', pt:'Por favor, escolha um motivo', de:'Bitte wähle einen Grund', ar:'يرجى اختيار سبب', th:'กรุณาเลือกเหตุผล', id:'Silakan pilih alasan', ru:'Пожалуйста, выберите причину', it:'Seleziona un motivo', vi:'Vui lòng chọn lý do' },
     reportOtherRequiredAlert:{ ja:'「その他」を選んだ場合は詳しい状況を入力してください', en:'Please describe the situation when choosing "Other"', ko:'"기타"를 선택한 경우 자세한 상황을 입력해 주세요', 'zh-tw':'選擇「其他」時，請輸入詳細狀況', 'zh-cn':'选择“其他”时，请输入详细情况', es:'Describe la situación si eliges "Otro"', fr:'Veuillez décrire la situation si vous choisissez "Autre"', pt:'Descreva a situação se escolher "Outro"', de:'Bitte beschreibe die Situation bei „Sonstiges“', ar:'يرجى وصف الموقف عند اختيار "أخرى"', th:'กรุณาอธิบายสถานการณ์เมื่อเลือก "อื่นๆ"', id:'Harap jelaskan situasinya jika memilih "Lainnya"', ru:'Опишите ситуацию, если выбрано «Другое»', it:'Descrivi la situazione se scegli "Altro"', vi:'Vui lòng mô tả tình huống nếu chọn "Khác"' },
+    dailyQuestBtn:{ ja:'デイリークエスト', en:'Daily Quests', ko:'데일리 퀘스트', 'zh-tw':'每日任務', 'zh-cn':'每日任务', es:'Misiones diarias', fr:'Quêtes quotidiennes', pt:'Missões diárias', de:'Tägliche Aufgaben', ar:'المهام اليومية', th:'เควสประจำวัน', id:'Misi harian', ru:'Ежедневные задания', it:'Missioni giornaliere', vi:'Nhiệm vụ hằng ngày' },
+    coinShopBtn:{ ja:'ショップ', en:'Shop', ko:'상점', 'zh-tw':'商店', 'zh-cn':'商店', es:'Tienda', fr:'Boutique', pt:'Loja', de:'Shop', ar:'المتجر', th:'ร้านค้า', id:'Toko', ru:'Магазин', it:'Negozio', vi:'Cửa hàng' },
+    questShareQualityReviewTask:{ ja:'上質なレビューを書いて、SNSでシェアする', en:'Write a quality review and share it on social media', ko:'양질의 리뷰를 작성하고 SNS에서 공유하기', 'zh-tw':'撰寫優質評論並在社群媒體分享', 'zh-cn':'撰写优质评论并在社交媒体分享', es:'Escribe una reseña de calidad y compártela en redes sociales', fr:'Rédigez un avis de qualité et partagez-le sur les réseaux sociaux', pt:'Escreva uma avaliação de qualidade e compartilhe nas redes sociais', de:'Schreibe eine hochwertige Rezension und teile sie in sozialen Netzwerken', ar:'اكتب مراجعة عالية الجودة وشاركها على وسائل التواصل الاجتماعي', th:'เขียนรีวิวคุณภาพแล้วแชร์ลงโซเชียล', id:'Tulis ulasan berkualitas dan bagikan di media sosial', ru:'Напишите качественный отзыв и поделитесь им в соцсетях', it:'Scrivi una recensione di qualità e condividila sui social', vi:'Viết một đánh giá chất lượng và chia sẻ lên mạng xã hội' },
+    questClaimBtn:{ ja:'コイン{n}枚を受け取る', en:'Claim {n} coins', ko:'코인 {n}개 받기', 'zh-tw':'領取{n}枚硬幣', 'zh-cn':'领取{n}枚硬币', es:'Reclamar {n} monedas', fr:'Récupérer {n} pièces', pt:'Resgatar {n} moedas', de:'{n} Münzen abholen', ar:'استلام {n} عملة', th:'รับเหรียญ {n} เหรียญ', id:'Klaim {n} koin', ru:'Получить {n} монет', it:'Riscuoti {n} monete', vi:'Nhận {n} xu' },
+    questClaimedLabel:{ ja:'受け取り済み', en:'Claimed', ko:'수령 완료', 'zh-tw':'已領取', 'zh-cn':'已领取', es:'Reclamado', fr:'Récupéré', pt:'Resgatado', de:'Abgeholt', ar:'تم الاستلام', th:'รับแล้ว', id:'Sudah diklaim', ru:'Получено', it:'Riscosso', vi:'Đã nhận' },
     heroEyebrow:{ ja:'可視化特化型アニメコミュニティ', en:'A visualization-first anime community', ko:'시각화 특화 애니메이션 커뮤니티', 'zh-tw':'以視覺化為核心的動畫社群', 'zh-cn':'以可视化为核心的动漫社区', es:'Una comunidad de anime centrada en la visualización', fr:'Une communauté anime axée sur la visualisation', pt:'Uma comunidade de anime focada em visualização', de:'Eine Anime-Community mit Fokus auf Visualisierung', ar:'مجتمع أنمي يركز على التصور المرئي', th:'ชุมชนอนิเมะที่เน้นการแสดงผลข้อมูล', id:'Komunitas anime yang berfokus pada visualisasi', ru:'Аниме-сообщество с акцентом на визуализацию', it:'Una community anime incentrata sulla visualizzazione', vi:'Cộng đồng anime tập trung vào trực quan hóa' },
     pickupSectionTitle:{ ja:'ピックアップ', en:'Pickup', ko:'픽업', 'zh-tw':'精選', 'zh-cn':'精选', es:'Selección', fr:'Sélection', pt:'Seleção', de:'Auswahl', ar:'مختارات', th:'ไฮไลต์', id:'Pilihan', ru:'Подборка', it:'In evidenza', vi:'Nổi bật' },
     seasonAnimeSectionTitle:{ ja:'今季アニメ', en:'This season', ko:'이번 시즌 애니메이션', 'zh-tw':'本季動畫', 'zh-cn':'本季动漫', es:'Anime de esta temporada', fr:'Anime de la saison', pt:'Anime da temporada', de:'Anime dieser Saison', ar:'أنمي هذا الموسم', th:'อนิเมะซีซั่นนี้', id:'Anime musim ini', ru:'Аниме этого сезона', it:'Anime di stagione', vi:'Anime mùa này' },
@@ -15726,22 +15852,22 @@
     boardHubTitle:{ ja:'掲示板', en:'Boards' },
     boardHubNewTitle:{ ja:'新着', en:'New' },
     boardHubNoNew:{ ja:'新着はありません', en:'No new posts' },
-    boardHubTrendingTitle:{ ja:'勢いのある掲示板', en:'Trending boards' },
-    boardHubNoTrending:{ ja:'まだデータがありません', en:'No data yet' },
-    boardHubClearAll:{ ja:'全部消去', en:'Clear all' },
-    boardHubMineTitle:{ ja:'通知を受け取る掲示板', en:'Boards you get notified for' },
-    boardHubJoinedCount:{ ja:'通知ON', en:'Notify on' },
-    boardHubUnreadCount:{ ja:'未読', en:'Unread' },
-    boardHubBoardsUnit:{ ja:'件', en:'' },
+    boardHubTrendingTitle:{ ja:'勢いのある掲示板', en:'Trending boards', ko:'인기 급상승 게시판', 'zh-tw':'熱門掲示板', 'zh-cn':'热门板块', es:'Foros en tendencia', fr:'Forums tendance', pt:'Quadros em alta', de:'Angesagte Boards', ar:'اللوحات الرائجة', th:'บอร์ดที่กำลังมาแรง', id:'Papan yang sedang tren', ru:'Популярные доски', it:'Bacheche di tendenza', vi:'Bảng đang thịnh hành' },
+    boardHubNoTrending:{ ja:'まだデータがありません', en:'No data yet', ko:'아직 데이터가 없습니다', 'zh-tw':'目前尚無資料', 'zh-cn':'目前尚无数据', es:'Aún no hay datos', fr:'Pas encore de données', pt:'Ainda não há dados', de:'Noch keine Daten', ar:'لا توجد بيانات بعد', th:'ยังไม่มีข้อมูล', id:'Belum ada data', ru:'Пока нет данных', it:'Ancora nessun dato', vi:'Chưa có dữ liệu' },
+    boardHubClearAll:{ ja:'全部消去', en:'Clear all', ko:'모두 지우기', 'zh-tw':'全部清除', 'zh-cn':'全部清除', es:'Borrar todo', fr:'Tout effacer', pt:'Limpar tudo', de:'Alles löschen', ar:'مسح الكل', th:'ล้างทั้งหมด', id:'Hapus semua', ru:'Очистить всё', it:'Cancella tutto', vi:'Xóa tất cả' },
+    boardHubMineTitle:{ ja:'通知を受け取る掲示板', en:'Boards you get notified for', ko:'알림을 받는 게시판', 'zh-tw':'接收通知的掲示板', 'zh-cn':'接收通知的板块', es:'Foros con notificaciones', fr:'Forums avec notifications', pt:'Quadros com notificações', de:'Boards mit Benachrichtigungen', ar:'اللوحات التي تصلك إشعاراتها', th:'บอร์ดที่รับการแจ้งเตือน', id:'Papan yang menerima notifikasi', ru:'Доски с уведомлениями', it:'Bacheche con notifiche', vi:'Bảng nhận thông báo' },
+    boardHubJoinedCount:{ ja:'通知ON', en:'Notify on', ko:'알림 켜짐', 'zh-tw':'通知已開', 'zh-cn':'通知已开', es:'Notificar activo', fr:'Notification activée', pt:'Notificação ativada', de:'Benachrichtigung an', ar:'الإشعار مفعّل', th:'เปิดแจ้งเตือน', id:'Notifikasi aktif', ru:'Уведомления вкл.', it:'Notifica attiva', vi:'Đã bật thông báo' },
+    boardHubUnreadCount:{ ja:'未読', en:'Unread', ko:'안 읽음', 'zh-tw':'未讀', 'zh-cn':'未读', es:'No leído', fr:'Non lu', pt:'Não lido', de:'Ungelesen', ar:'غير مقروء', th:'ยังไม่อ่าน', id:'Belum dibaca', ru:'Непрочитано', it:'Non letto', vi:'Chưa đọc' },
+    boardHubBoardsUnit:{ ja:'件', en:'', ko:'건', 'zh-tw':'則', 'zh-cn':'条', es:'', fr:'', pt:'', de:'', ar:'', th:' รายการ', id:'', ru:'', it:'', vi:'' },
     boardHubPostsUnit:{ ja:'件', en:' posts' },
     boardHubPeopleUnit:{ ja:'人', en:'' },
     boardHubTodayCount:{ ja:'今日', en:'Today' },
-    boardHubJoined:{ ja:'参加中', en:'Joined' },
+    boardHubJoined:{ ja:'参加中', en:'Joined', ko:'참여 중', 'zh-tw':'參與中', 'zh-cn':'参与中', es:'Unido', fr:'Rejoint', pt:'Participando', de:'Beigetreten', ar:'مشترك', th:'เข้าร่วมอยู่', id:'Bergabung', ru:'Участвую', it:'Iscritto', vi:'Đang tham gia' },
     boardHub24h:{ ja:'24時間', en:'24h' },
-    boardHubEmptyTitle:{ ja:'まだ通知ONの掲示板がありません', en:'You have not turned on notifications for any board yet' },
-    boardHubEmptyBody:{ ja:'マイページの「参加中の掲示板」から、ベルをタップして通知をONにすると、ここに表示されます。', en:'Tap the bell on a board in "Your boards" on your profile to have it show up here.' },
-    boardHubAllRead:{ ja:'すべて読みました。', en:'All caught up. ' },
-    boardHubGuestHint:{ ja:'ログインすると参加中の掲示板と未読が表示されます', en:'Log in to see your boards and unread posts' },
+    boardHubEmptyTitle:{ ja:'まだ通知ONの掲示板がありません', en:'You have not turned on notifications for any board yet', ko:'아직 알림을 켠 게시판이 없습니다', 'zh-tw':'目前尚無開啟通知的掲示板', 'zh-cn':'目前尚无开启通知的板块', es:'Aún no has activado notificaciones en ningún foro', fr:'Vous n\'avez activé les notifications sur aucun forum', pt:'Você ainda não ativou notificações em nenhum quadro', de:'Du hast noch für kein Board Benachrichtigungen aktiviert', ar:'لم تُفعّل إشعارات أي لوحة بعد', th:'คุณยังไม่ได้เปิดแจ้งเตือนสำหรับบอร์ดใดเลย', id:'Anda belum mengaktifkan notifikasi untuk papan mana pun', ru:'Вы ещё не включили уведомления ни для одной доски', it:'Non hai ancora attivato le notifiche per nessuna bacheca', vi:'Bạn chưa bật thông báo cho bảng nào' },
+    boardHubEmptyBody:{ ja:'マイページの「参加中の掲示板」から、ベルをタップして通知をONにすると、ここに表示されます。', en:'Tap the bell on a board in "Your boards" on your profile to have it show up here.', ko:'마이페이지의 "참여 중인 게시판"에서 종 모양을 눌러 알림을 켜면 여기에 표시됩니다.', 'zh-tw':'在個人頁面的「參與中的掲示板」點擊鈴鐺開啟通知，就會顯示在這裡。', 'zh-cn':'在个人页面的「参与中的板块」点击铃铛开启通知，就会显示在这里。', es:'Toca la campana en un foro dentro de "Tus foros" en tu perfil para que aparezca aquí.', fr:'Appuyez sur la cloche d\'un forum dans "Vos forums" de votre profil pour qu\'il apparaisse ici.', pt:'Toque no sino de um quadro em "Seus quadros" no seu perfil para que ele apareça aqui.', de:'Tippe auf die Glocke bei einem Board unter „Deine Boards“ in deinem Profil, damit es hier erscheint.', ar:'انقر على الجرس في لوحة ضمن "لوحاتك" في ملفك الشخصي ليظهر هنا.', th:'แตะกระดิ่งที่บอร์ดใน "บอร์ดของคุณ" ในหน้าโปรไฟล์เพื่อให้แสดงที่นี่', id:'Ketuk ikon lonceng pada papan di "Papan Anda" di profil untuk menampilkannya di sini.', ru:'Нажмите на колокольчик у доски в разделе «Ваши доски» в профиле, чтобы она появилась здесь.', it:'Tocca la campanella su una bacheca in "Le tue bacheche" nel tuo profilo per farla comparire qui.', vi:'Nhấn vào chuông trên một bảng trong "Bảng của bạn" ở hồ sơ để nó hiện ở đây.' },
+    boardHubAllRead:{ ja:'すべて読みました。', en:'All caught up. ', ko:'모두 읽었습니다. ', 'zh-tw':'已全部閱讀。', 'zh-cn':'已全部阅读。', es:'Todo leído. ', fr:'Tout est lu. ', pt:'Tudo lido. ', de:'Alles gelesen. ', ar:'تمت قراءة كل شيء. ', th:'อ่านครบแล้ว ', id:'Semua sudah dibaca. ', ru:'Всё прочитано. ', it:'Tutto letto. ', vi:'Đã đọc hết. ' },
+    boardHubGuestHint:{ ja:'ログインすると参加中の掲示板と未読が表示されます', en:'Log in to see your boards and unread posts', ko:'로그인하면 참여 중인 게시판과 안 읽은 글이 표시됩니다', 'zh-tw':'登入後即可查看你參與的掲示板與未讀訊息', 'zh-cn':'登录后即可查看你参与的板块与未读消息', es:'Inicia sesión para ver tus foros y publicaciones no leídas', fr:'Connectez-vous pour voir vos forums et publications non lues', pt:'Faça login para ver seus quadros e postagens não lidas', de:'Melde dich an, um deine Boards und ungelesenen Beiträge zu sehen', ar:'سجّل الدخول لرؤية لوحاتك والمنشورات غير المقروءة', th:'เข้าสู่ระบบเพื่อดูบอร์ดที่เข้าร่วมและโพสต์ที่ยังไม่ได้อ่าน', id:'Masuk untuk melihat papan Anda dan postingan belum dibaca', ru:'Войдите, чтобы увидеть свои доски и непрочитанные посты', it:'Accedi per vedere le tue bacheche e i post non letti', vi:'Đăng nhập để xem bảng của bạn và bài viết chưa đọc' },
     settingsPlan: { ja:'プラン', en:'Plan' },
     planLead: { ja:'アニメップルをもっと使いたい方向けの有料プランです。無料でできることは、これからも無料のままです。', en:'Paid plans for people who want more. Everything free stays free.' },
     planCurrentLabel: { ja:'現在のプラン', en:'Current plan' },
@@ -15937,7 +16063,7 @@
     boardSortTitle: { ja:'タイトル順', en:'Title' },
     boardLangCurrentOnly: { ja:'今の表示言語のみ', en:'Current language only' },
     boardLangAll: { ja:'すべての言語', en:'All languages' },
-    boardHubNotifySettingsBtn: { ja:'通知設定', en:'Notification settings' },
+    boardHubNotifySettingsBtn: { ja:'通知設定', en:'Notification settings', ko:'알림 설정', 'zh-tw':'通知設定', 'zh-cn':'通知设置', es:'Ajustes de notificaciones', fr:'Paramètres de notification', pt:'Configurações de notificação', de:'Benachrichtigungseinstellungen', ar:'إعدادات الإشعارات', th:'ตั้งค่าการแจ้งเตือน', id:'Pengaturan notifikasi', ru:'Настройки уведомлений', it:'Impostazioni notifiche', vi:'Cài đặt thông báo' },
     boardTypeAll: { ja:'すべて', en:'All types' },
     boardTypeGeneral: { ja:'通常掲示板', en:'General board' },
     boardTypeValue: { ja:'価値観掲示板', en:'Value board' },
@@ -16045,6 +16171,14 @@
     todayPickAnime:{ ja:'アニメ', en:'Anime', ko:'애니메이션', 'zh-tw':'動畫', 'zh-cn':'动漫', es:'Anime', fr:'Anime', pt:'Anime', de:'Anime', ar:'أنمي', th:'อนิเมะ', id:'Anime', ru:'Аниме', it:'Anime', vi:'Anime' },
     todayPickMovie:{ ja:'映画', en:'Movies', ko:'영화', 'zh-tw':'電影', 'zh-cn':'电影', es:'Películas', fr:'Films', pt:'Filmes', de:'Filme', ar:'أفلام', th:'ภาพยนตร์', id:'Film', ru:'Фильмы', it:'Film', vi:'Phim điện ảnh' },
     articlesPageTitle:{ ja:'記事の広場', en:'Article Plaza', ko:'게시판 광장', 'zh-tw':'文章廣場', 'zh-cn':'文章广场', es:'Plaza de artículos', fr:'Place des articles', pt:'Praça de artigos', de:'Artikel-Forum', ar:'ساحة المقالات', th:'ลานบทความ', id:'Plaza Artikel', ru:'Площадка статей', it:'Piazza degli articoli', vi:'Quảng trường bài viết' },
+    timeJustNow:{ ja:'たった今', en:'just now', ko:'방금', 'zh-tw':'剛剛', 'zh-cn':'刚刚', es:'justo ahora', fr:'à l\'instant', pt:'agora mesmo', de:'gerade eben', ar:'الآن', th:'เมื่อสักครู่', id:'baru saja', ru:'только что', it:'proprio ora', vi:'vừa xong' },
+    timeMinAgo:{ ja:n=>`${n}分前`, en:n=>`${n}m ago`, ko:n=>`${n}분 전`, 'zh-tw':n=>`${n}分鐘前`, 'zh-cn':n=>`${n}分钟前`, es:n=>`hace ${n} min`, fr:n=>`il y a ${n} min`, pt:n=>`há ${n} min`, de:n=>`vor ${n} Min.`, ar:n=>`منذ ${n} دقيقة`, th:n=>`${n} นาทีที่แล้ว`, id:n=>`${n} menit lalu`, ru:n=>`${n} мин. назад`, it:n=>`${n} min fa`, vi:n=>`${n} phút trước` },
+    timeHourAgo:{ ja:n=>`${n}時間前`, en:n=>`${n}h ago`, ko:n=>`${n}시간 전`, 'zh-tw':n=>`${n}小時前`, 'zh-cn':n=>`${n}小时前`, es:n=>`hace ${n} h`, fr:n=>`il y a ${n} h`, pt:n=>`há ${n} h`, de:n=>`vor ${n} Std.`, ar:n=>`منذ ${n} ساعة`, th:n=>`${n} ชั่วโมงที่แล้ว`, id:n=>`${n} jam lalu`, ru:n=>`${n} ч. назад`, it:n=>`${n} h fa`, vi:n=>`${n} giờ trước` },
+    timeDayAgo:{ ja:n=>`${n}日前`, en:n=>`${n}d ago`, ko:n=>`${n}일 전`, 'zh-tw':n=>`${n}天前`, 'zh-cn':n=>`${n}天前`, es:n=>`hace ${n} d`, fr:n=>`il y a ${n} j`, pt:n=>`há ${n} d`, de:n=>`vor ${n} T.`, ar:n=>`منذ ${n} يوم`, th:n=>`${n} วันที่แล้ว`, id:n=>`${n} hari lalu`, ru:n=>`${n} дн. назад`, it:n=>`${n} g fa`, vi:n=>`${n} ngày trước` },
+    chatToday:{ ja:'今日', en:'Today', ko:'오늘', 'zh-tw':'今天', 'zh-cn':'今天', es:'Hoy', fr:'Aujourd\'hui', pt:'Hoje', de:'Heute', ar:'اليوم', th:'วันนี้', id:'Hari ini', ru:'Сегодня', it:'Oggi', vi:'Hôm nay' },
+    chatYesterday:{ ja:'昨日', en:'Yesterday', ko:'어제', 'zh-tw':'昨天', 'zh-cn':'昨天', es:'Ayer', fr:'Hier', pt:'Ontem', de:'Gestern', ar:'أمس', th:'เมื่อวาน', id:'Kemarin', ru:'Вчера', it:'Ieri', vi:'Hôm qua' },
+    boardNewFromHereLabel:{ ja:'ここから新着', en:'New from here', ko:'여기부터 새 글', 'zh-tw':'從這裡開始是新訊息', 'zh-cn':'从这里开始是新消息', es:'Nuevo desde aquí', fr:'Nouveau à partir d\'ici', pt:'Novo a partir daqui', de:'Neu ab hier', ar:'جديد من هنا', th:'ข้อความใหม่จากตรงนี้', id:'Baru mulai dari sini', ru:'Новое отсюда', it:'Nuovo da qui', vi:'Mới từ đây' },
+    anonymousNameLabel:{ ja:'名無し', en:'Anonymous', ko:'익명', 'zh-tw':'匿名', 'zh-cn':'匿名', es:'Anónimo', fr:'Anonyme', pt:'Anônimo', de:'Anonym', ar:'مجهول', th:'ไม่ระบุชื่อ', id:'Anonim', ru:'Аноним', it:'Anonimo', vi:'Ẩn danh' },
     tagSuggestLabel: { ja:'よく使われるタグ',en:'Popular tags',ko:'자주 사용되는 태그','zh-tw':'常用標籤','zh-cn':'常用标签',es:'Tags populares',fr:'Tags populaires',pt:'Tags populares',de:'Beliebte Tags',ar:'الوسوم الشائعة',th:'แท็กยอดนิยม',id:'Tag populer',ru:'Популярные теги',it:'Tag popolari',vi:'Thẻ phổ biến' },
     tagHint:       { ja:'Enterまたは「追加」で確定。タグはみんなの検索に使われます。',en:'Press Enter or "Add" to confirm. Tags are used in search.',ko:'Enter 또는 "추가"로 확정. 태그는 검색에 사용됩니다.','zh-tw':'按Enter或「添加」確認。標籤用於搜尋。','zh-cn':'按Enter或「添加」确认。标签用于搜索。',es:'Pulsa Enter o "Añadir". Los tags se usan en la búsqueda.',fr:'Appuyez sur Entrée ou "Ajouter". Les tags sont utilisés dans la recherche.',pt:'Pressione Enter ou "Adicionar". As tags são usadas na pesquisa.',de:'Drücke Enter oder "Hinzufügen". Tags werden in der Suche verwendet.',ar:'اضغط Enter أو "إضافة". تُستخدم الوسوم في البحث.',th:'กด Enter หรือ "เพิ่ม" เพื่อยืนยัน แท็กใช้ในการค้นหา',id:'Tekan Enter atau "Tambah". Tag digunakan dalam pencarian.',ru:'Нажмите Enter или «Добавить». Теги используются в поиске.',it:'Premi Invio o "Aggiungi". I tag sono usati nella ricerca.',vi:'Nhấn Enter hoặc "Thêm". Thẻ dùng để tìm kiếm.' },
     reviewHistoryTitle:{ ja:'レビュー履歴',en:'Review History',ko:'리뷰 기록','zh-tw':'評論記錄','zh-cn':'评论记录',es:'Historial',fr:'Historique',pt:'Histórico',de:'Verlauf',ar:'السجل',th:'ประวัติรีวิว',id:'Riwayat ulasan',ru:'История отзывов',it:'Cronologia recensioni',vi:'Lịch sử đánh giá' },
@@ -19524,6 +19658,7 @@
           startGlobalBoardNotifyWatch();
           checkFriendRequestBadge();
           startFriendRequestWatch();
+          updateCoinBadge();
         }
       } catch(e) { console.warn('OAuth hash handling:', e); }
     }
@@ -19539,12 +19674,13 @@
       startGlobalBoardNotifyWatch();
       checkFriendRequestBadge();
       startFriendRequestWatch();
+      updateCoinBadge();
     }
     // yourValueHeaderBtn は常時表示（Design案通り）
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -21105,6 +21241,76 @@
     });
   }
   window.renderDmList = renderDmList;
+
+  // ── デイリークエスト ──
+  async function renderDailyQuestPage() {
+    const el = document.getElementById('dailyQuestBody');
+    if(!el) return;
+    if(!_currentUser) {
+      el.innerHTML = `<p style="padding:2rem;text-align:center;color:var(--muted,#9ab);font-size:.85rem;">${escapeHtml(t('loginRequired'))}</p>`;
+      return;
+    }
+    el.innerHTML = `<p style="padding:2rem;text-align:center;color:var(--muted,#9ab);font-size:.85rem;">${escapeHtml(t('loadingLabel'))}</p>`;
+    const progress = await db.quests.getToday(_currentUser.id).catch(()=>null);
+    const completed = !!progress?.completed;
+    const claimed = !!progress?.claimed;
+    const row = (done, label) => `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);margin-bottom:8px;">
+      <span style="font-size:18px;">${done ? '✅' : '⬜'}</span>
+      <span style="flex:1 1 auto;font-size:13.5px;color:${done?'#eaf6ee':'#b6c8bd'};">${escapeHtml(label)}</span>
+    </div>`;
+    el.innerHTML = `
+      ${row(completed, t('questShareQualityReviewTask'))}
+      <button type="button" id="dailyQuestClaimBtn" ${(!completed || claimed) ? 'disabled' : ''} style="width:100%;height:46px;margin-top:12px;border-radius:12px;border:none;background:${(completed && !claimed) ? '#5ec97a' : 'rgba(255,255,255,.08)'};color:${(completed && !claimed) ? '#07200f' : '#82968a'};font-weight:800;font-size:13.5px;cursor:${(completed && !claimed)?'pointer':'not-allowed'};">
+        ${claimed ? escapeHtml(t('questClaimedLabel')) : escapeHtml(t('questClaimBtn').replace('{n}', GACHA_COIN_REWARD))}
+      </button>
+    `;
+    const claimBtn = document.getElementById('dailyQuestClaimBtn');
+    if(claimBtn && completed && !claimed) {
+      claimBtn.onclick = async () => {
+        claimBtn.disabled = true;
+        const { error } = await db.quests.claim(_currentUser.id, GACHA_COIN_REWARD);
+        if(error) { alert(t('profileSaveFailedAlert')); claimBtn.disabled = false; return; }
+        updateCoinBadge();
+        renderDailyQuestPage();
+      };
+    }
+  }
+  window.renderDailyQuestPage = renderDailyQuestPage;
+
+  // ── コインショップ ──
+  async function renderCoinShopPage() {
+    const balEl = document.getElementById('coinShopBalance');
+    if(!balEl) return;
+    if(!_currentUser) { balEl.textContent = '0'; return; }
+    balEl.textContent = await db.coins.get(_currentUser.id).catch(()=>0);
+  }
+  window.renderCoinShopPage = renderCoinShopPage;
+
+  // ── コイン残高バッジ：全ページのヘッダー(.hdr-right)に共通で出す ──
+  // ページごとに個別にHTMLを書いていない（35箇所あるため）ので、JSで一括挿入して使い回す
+  function ensureCoinBadges() {
+    document.querySelectorAll('.hdr-right').forEach(hr => {
+      if(hr.querySelector('.hdr-coin-badge')) return;
+      const badge = document.createElement('span');
+      badge.className = 'hdr-coin-badge';
+      badge.style.cssText = 'display:none;align-items:center;gap:4px;font-size:12px;font-weight:800;color:#f0c94a;background:rgba(240,201,74,.12);border:1px solid rgba(240,201,74,.3);border-radius:20px;padding:4px 10px;margin-right:8px;white-space:nowrap;cursor:pointer;';
+      badge.innerHTML = '🪙 <span class="hdr-coin-count">0</span>';
+      badge.onclick = () => nav('coin-shop');
+      hr.insertBefore(badge, hr.firstChild);
+    });
+  }
+  async function updateCoinBadge() {
+    ensureCoinBadges();
+    const badges = document.querySelectorAll('.hdr-coin-badge');
+    if(!_currentUser) { badges.forEach(b => { b.style.display = 'none'; }); return; }
+    const coins = await db.coins.get(_currentUser.id).catch(() => 0);
+    badges.forEach(b => {
+      b.style.display = 'inline-flex';
+      const c = b.querySelector('.hdr-coin-count');
+      if(c) c.textContent = coins;
+    });
+  }
+  window.updateCoinBadge = updateCoinBadge;
 
   window.showAuthModal = showAuthModal;
   window.closeAuthModal = closeAuthModal;
