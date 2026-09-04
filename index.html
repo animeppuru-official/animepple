@@ -34,6 +34,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="skins.css" />
   <link rel="apple-touch-icon" href="icons/赤リンゴ.jpe" />
   <meta name="theme-color" content="#0e1a13" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -542,7 +543,7 @@
     .gacha-btn-cancel { height:40px; border:1px solid rgba(255,255,255,.14); background:transparent; color:#b6c8bd; font-size:12.5px; }
     /* ── アイコンサイズ統一：掲示板・レビューカード・ヘッダーのユーザーアイコンをYouTubeのアイコンサイズに合わせる。
        マイページ本体のアイコン(大きい表示)は対象外。PC=24px、スマホ=32px（タップしやすさのため大きめ） ── */
-    .user-avatar-circle { width:36px; height:36px; flex:0 0 36px; }
+    .user-avatar-circle { width:36px; height:36px; flex:0 0 36px; cursor:pointer; }
     .user-avatar-circle img { width:36px; height:36px; }
     @media (max-width:767px) {
       .user-avatar-circle { width:32px; height:32px; flex:0 0 32px; }
@@ -908,7 +909,7 @@
     .mypage-menu-row-badge {
       flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
       min-width:18px; height:18px; padding:0 5px; border-radius:9px;
-      background:#e5484d; color:#fff; font-size:10px; font-weight:800;
+      background:var(--badge-color,#e5484d); color:#fff; font-size:10px; font-weight:800;
     }
     /* 狭い画面：右カラムに移した価値観を、カードの直後に見せる（案のスマホ順） */
     @media (max-width:1099px) {
@@ -1360,7 +1361,7 @@
     .master-tag-mood { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(240,138,138,.13); color:#eaa9a9; font-size:13px; font-weight:700; flex-shrink:0; white-space:nowrap; }
     .master-tag-strength.is-top, .master-tag-mood.is-top { background:rgba(255,209,102,.22); color:#ffd166; box-shadow:0 0 0 1px rgba(255,209,102,.5) inset; }
     .master-tag-strength.is-worst, .master-tag-mood.is-worst { background:rgba(130,150,138,.16); color:#82968a; box-shadow:0 0 0 1px rgba(130,150,138,.3) inset; }
-    .review-card { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px; overflow:hidden; box-shadow:0 12px 30px -20px rgba(0,0,0,.8); }
+    .review-card { border:1px solid rgba(255,255,255,.1); border-radius:16px; overflow:hidden; box-shadow:0 12px 30px -20px rgba(0,0,0,.8); position:relative; }
     /* レビューカードのフリップ（回転してコメント面を表示） */
     .review-card-flip-wrap { perspective:1400px; -webkit-perspective:1400px; }
     .review-card-flip-inner {
@@ -1465,7 +1466,7 @@
     .review-card-back-text { font-size:.85rem; line-height:1.8; color:#e8f0ea; white-space:pre-wrap; word-break:break-word; margin:0; }
     #reviewList { display:grid; grid-template-columns:1fr; gap:20px; align-items:start; }
     .rc-head { display:flex; justify-content:space-between; align-items:flex-start; padding:16px 20px 10px; }
-    .rc-name { font-weight:700; font-size:14px; color:#e8f0ea; }
+    .rc-name { font-weight:700; font-size:14px; color:#e8f0ea; cursor:pointer; }
     .rc-delete { background:none; border:1px solid #5a3030; color:#ffa0a0; border-radius:8px; padding:.25rem .55rem; font-size:.72rem; cursor:pointer; }
     .rc-tags-row { display:flex; flex-wrap:wrap; gap:.35rem; padding:0 .75rem .5rem; min-height:28px; }
     .rc-charts { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 20px 12px; }
@@ -2336,7 +2337,7 @@
       .bnav-tip-title { margin:0 0 4px; font-size:12.5px; font-weight:700; color:#f0e6cf; }
       .bnav-tip-sub { margin:0; font-size:11.5px; line-height:1.6; color:#82968a; }
       .bnav-divider { height:1px; background:rgba(255,255,255,.07); margin:8px 6px; }
-      .bnav-badge { min-width:18px; height:18px; padding:0 5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#07160d; background:#e5595d; border-radius:9px; flex-shrink:0; }
+      .bnav-badge { min-width:18px; height:18px; padding:0 5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#07160d; background:var(--badge-color,#e5595d); border-radius:9px; flex-shrink:0; }
       /* サイドナビのロゴ */
       .bnav::before {
         content:'アニメップル'; display:block;
@@ -5726,13 +5727,13 @@
       <div class="auth-modal-body">
         <div class="auth-field">
           <label data-i18n="labelUsername2">ユーザー名</label>
-          <input type="text" id="profileEditUsername" maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" name="profile-display-name" />
-          <p style="margin:.3rem 0 0;font-size:.72rem;color:var(--muted);text-align:right;"><span id="profileEditUsernameCount">0</span> / 20</p>
+          <input type="text" id="profileEditUsername" maxlength="10" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" name="profile-display-name" />
+          <p style="margin:.3rem 0 0;font-size:.72rem;color:var(--muted);text-align:right;"><span id="profileEditUsernameCount">0</span> / 10</p>
         </div>
         <div class="auth-field">
           <label data-i18n="labelBio">自己紹介</label>
-          <textarea id="profileEditBio" maxlength="100" rows="3" autocomplete="off" style="padding:.65rem .9rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;font-family:inherit;resize:vertical;"></textarea>
-          <p style="margin:.3rem 0 0;font-size:.72rem;color:var(--muted);text-align:right;"><span id="profileEditBioCount">0</span> / 100</p>
+          <textarea id="profileEditBio" maxlength="60" rows="3" autocomplete="off" style="padding:.65rem .9rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;font-family:inherit;resize:vertical;"></textarea>
+          <p style="margin:.3rem 0 0;font-size:.72rem;color:var(--muted);text-align:right;"><span id="profileEditBioCount">0</span> / 60</p>
         </div>
         <button class="mypage-btn-primary" onclick="saveProfileEdit()" data-i18n="btnSave">保存する</button>
       </div>
@@ -5765,7 +5766,7 @@
     <div class="auth-modal-body" style="gap:1rem;">
       <div>
         <label for="onboardUsername" style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem;" data-i18n="labelUsername2">ユーザー名</label>
-        <input type="text" id="onboardUsername" placeholder="ユーザー名" maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" name="onboard-display-name" style="width:100%;box-sizing:border-box;" />
+        <input type="text" id="onboardUsername" placeholder="ユーザー名" maxlength="10" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" name="onboard-display-name" style="width:100%;box-sizing:border-box;" />
       </div>
       <div>
         <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem;">性別</label>
@@ -10106,9 +10107,22 @@
       default: return '';
     }
   }
-  // 実績ランクバッジのHTML（レビューカードの名前横・マイページ共通で使う）
-  function rankTagHtml(rank) {
+  // 実績ランクバッジの「見た目バリエーション」。新人〜殿堂入りの色・アイコンは変えず、
+  // 見た目だけガチャで手に入れた別デザインに差し替えられるようにする土台。
+  // RANK_BADGE_SKINS.<skinId>.<nameKey> に上書きしたいプロパティだけ書けばよい
+  // （書かなければRANK_TIERS本来の見た目のまま＝見た目は今と一切変わらない）
+  const RANK_BADGE_SKINS = {
+    default: {},
+  };
+  function getRankBadgeVisual(rank, skinId) {
+    if(!rank) return rank;
+    const overrides = (RANK_BADGE_SKINS[skinId] && RANK_BADGE_SKINS[skinId][rank.nameKey]) || {};
+    return { ...rank, ...overrides };
+  }
+  // 実績ランクバッジのHTML（レビューカードの名前横・マイページ共通で使う）。skinIdは省略可（未指定=default）
+  function rankTagHtml(rank, skinId) {
     if(!rank) return '';
+    rank = getRankBadgeVisual(rank, skinId || 'default');
     const glowStyle = rank.badgeGlow ? `text-shadow:0 1px 2px ${rank.badgeGlow}, 0 0 4px ${rank.badgeGlow};` : '';
     return `<span class="rank-tag${rank.badgeSparkle?' sparkle':''}" style="background:${rank.badgeBg};color:${rank.badgeTextColor};border-color:${rank.badgeBorder};${glowStyle}">${rankIconSvg(rank.badgeIcon, rank.badgeIconColor)}<span>${escapeHtml(rank.name)}</span></span>`;
   }
@@ -11320,7 +11334,7 @@
       }).join('');
       const displayName = rev.userName || rev.username || 'ゲスト';
       const isClickableUser = !!rev.userId;
-      const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(rev.userId)}')" style="cursor:pointer;"` : '';
+      const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(rev.userId)}')"` : '';
       const avatarUrl = rev.userId ? avatarMap[rev.userId] : null;
       const cardQualityCount = rev.userId ? (cardRankQualityCounts[rev.userId] || 0) : 0;
       const cardRank = getRankByQualityCount(cardQualityCount);
@@ -11893,98 +11907,334 @@
     `).join('');
   }
 
-  // マイページカード（プロフィール共有用）の画像を生成する
-  async function generateProfileCardImage(data) {
-    const W = 900, H = 700;
-    const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d');
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, '#173625'); grad.addColorStop(1, '#0b1a11');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-
-    // アバター（円形）。CORS汚染を避けるため、レビューカードと同じ事前テストを行う
-    const avatarSize = 160, avatarX = 70, avatarY = 70;
-    let avatarImg = null;
-    if (data.avatarUrl) {
-      try {
-        const img = await new Promise((resolve, reject) => {
-          const im = new Image();
-          im.crossOrigin = 'anonymous';
-          im.onload = () => resolve(im);
-          im.onerror = reject;
-          im.src = data.avatarUrl;
-        });
-        const testCanvas = document.createElement('canvas');
-        testCanvas.width = 1; testCanvas.height = 1;
-        const testCtx = testCanvas.getContext('2d');
-        testCtx.drawImage(img, 0, 0, 1, 1);
-        testCtx.getImageData(0, 0, 1, 1);
-        avatarImg = img;
-      } catch(e) { console.warn('profile card avatar skipped (likely CORS-tainted):', e); avatarImg = null; }
-    }
+  // ══ 共有カード共通のヘルパー ══════════════════════════════
+  // 角丸パス（Safari など roundRect 未対応環境向けのフォールバック付き）
+  function shareRoundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    if(ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);     ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+  // 画像を読み込む。CORS で汚染された画像は toBlob() を失敗させるので、
+  // 1×1 に描いて getImageData() が通るかで事前に判定し、駄目なら null を返す
+  async function shareLoadImage(url) {
+    if(!url) return null;
+    try {
+      const img = await new Promise((resolve, reject) => {
+        const im = new Image();
+        im.crossOrigin = 'anonymous';
+        im.onload = () => resolve(im);
+        im.onerror = reject;
+        im.src = url;
+      });
+      const test = document.createElement('canvas');
+      test.width = 1; test.height = 1;
+      const tctx = test.getContext('2d');
+      tctx.drawImage(img, 0, 0, 1, 1);
+      tctx.getImageData(0, 0, 1, 1);
+      return img;
+    } catch(e) { console.warn('share card image skipped (CORS?):', e); return null; }
+  }
+  // cover でクロップして描く
+  function shareDrawCover(ctx, img, x, y, w, h) {
+    const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+    const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
+    ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  }
+  // 円形クリップでアイコンを描く。画像が無ければ頭文字にフォールバック
+  function shareDrawAvatar(ctx, img, cx, cy, size, opt) {
     ctx.save();
     ctx.beginPath();
-    ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+    ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
-    if (avatarImg) {
-      const scale = Math.max(avatarSize / avatarImg.naturalWidth, avatarSize / avatarImg.naturalHeight);
-      const dw = avatarImg.naturalWidth * scale, dh = avatarImg.naturalHeight * scale;
-      ctx.drawImage(avatarImg, avatarX + (avatarSize - dw) / 2, avatarY + (avatarSize - dh) / 2, dw, dh);
+    if(img) {
+      shareDrawCover(ctx, img, cx - size / 2, cy - size / 2, size, size);
     } else {
-      ctx.fillStyle = '#2d5a3f';
-      ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
-      ctx.fillStyle = '#8fe5ab';
-      ctx.font = "bold 70px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillStyle = opt.bg;
+      ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
+      ctx.fillStyle = opt.fg;
+      ctx.font = `900 ${Math.round(size * 0.4)}px 'Zen Kaku Gothic New', sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText((data.username || '?').charAt(0), avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 4);
+      ctx.fillText(opt.initial || '?', cx, cy + 2);
     }
     ctx.restore();
-
-    // ユーザー名・実績バッジ
+    if(opt.ring) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
+      ctx.lineWidth = opt.ringWidth || 2;
+      ctx.strokeStyle = opt.ring;
+      ctx.stroke();
+    }
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+  // レーダーチャート本体（6軸・12軸のどちらでも使う）
+  function shareDrawRadar(ctx, o) {
+    const { cx, cy, r, labelR, labels, values, fill, stroke, labelColor, labelFont, rings } = o;
+    const n = labels.length;
+    const step = (Math.PI * 2) / n;
+    (rings || [1, 0.667, 0.333]).forEach(k => {
+      ctx.beginPath();
+      for(let i = 0; i < n; i++) {
+        const a = -Math.PI / 2 + i * step;
+        const x = cx + r * k * Math.cos(a), y = cy + r * k * Math.sin(a);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.stroke();
+    });
+    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.07)';
+    for(let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * step;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+      ctx.stroke();
+    }
+    // 値の多角形
+    ctx.beginPath();
+    for(let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * step;
+      const v = Math.max(0, Math.min(10, Number(values[i]) || 0));
+      const rr = r * v / 10;
+      const x = cx + rr * Math.cos(a), y = cy + rr * Math.sin(a);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = stroke; ctx.lineJoin = 'round'; ctx.stroke();
+    ctx.fillStyle = stroke;
+    for(let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * step;
+      const rr = r * (Math.max(0, Math.min(10, Number(values[i]) || 0))) / 10;
+      ctx.beginPath();
+      ctx.arc(cx + rr * Math.cos(a), cy + rr * Math.sin(a), n > 6 ? 4 : 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // 軸ラベル：真上と真下は中央揃え、右半分は左揃え、左半分は右揃え
+    ctx.font = labelFont;
+    ctx.fillStyle = labelColor;
+    ctx.textBaseline = 'middle';
+    for(let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * step;
+      const dx = Math.cos(a), dy = Math.sin(a);
+      const x = cx + labelR * dx, y = cy + labelR * dy;
+      ctx.textAlign = Math.abs(dx) < 0.05 ? 'center' : (dx > 0 ? 'left' : 'right');
+      ctx.fillText(labels[i], x, y);
+    }
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+  // 2行までで折り返す（3行目に溢れる分は末尾を「…」にする）
+  function shareWrapLines(ctx, text, maxW, maxLines) {
+    const lines = [];
+    let cur = '';
+    for(const ch of String(text || '')) {
+      if(ctx.measureText(cur + ch).width > maxW && cur) {
+        lines.push(cur); cur = ch;
+        if(lines.length === maxLines) break;
+      } else cur += ch;
+    }
+    if(lines.length < maxLines && cur) lines.push(cur);
+    if(lines.length === maxLines) {
+      const rest = String(text || '').slice(lines.join('').length);
+      if(rest) {
+        let last = lines[maxLines - 1];
+        while(last.length > 1 && ctx.measureText(last + '…').width > maxW) last = last.slice(0, -1);
+        lines[maxLines - 1] = last + '…';
+      }
+    }
+    return lines;
+  }
+  // ブランドのフッター行（ロゴ・サービス名・キャッチ・URL）。3カードで共通
+  function shareDrawFooter(ctx, o) {
+    const { x, w, lineY, logoY, baseline, logoSize, brandSize, subSize, logoBg, logoFg, lineColor, subColor } = o;
+    ctx.fillStyle = lineColor;
+    ctx.fillRect(x, lineY, w, 1);
+    shareRoundRect(ctx, x, logoY, logoSize, logoSize, Math.round(logoSize * 0.29));
+    ctx.fillStyle = logoBg; ctx.fill();
+    ctx.fillStyle = logoFg;
+    ctx.font = `900 ${Math.round(logoSize * 0.56)}px 'Zen Kaku Gothic New', sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('A', x + logoSize / 2, logoY + logoSize / 2 + 1);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    let bx = x + logoSize + 13;
     ctx.fillStyle = '#e8f0ea';
-    ctx.font = "bold 42px 'Zen Kaku Gothic New', sans-serif";
-    ctx.fillText(data.username || '', avatarX + avatarSize + 30, avatarY + 66);
-    if (data.rankLabel) {
-      ctx.fillStyle = '#e8c463';
-      ctx.font = "bold 24px 'Zen Kaku Gothic New', sans-serif";
-      ctx.fillText(data.rankLabel, avatarX + avatarSize + 30, avatarY + 106);
+    ctx.font = `800 ${brandSize}px 'Zen Kaku Gothic New', sans-serif`;
+    const brand = t('cardBrandName') || 'アニメップル';
+    ctx.fillText(brand, bx, baseline);
+    bx += ctx.measureText(brand).width + 13;
+    ctx.fillStyle = lineColor;
+    ctx.fillRect(bx, baseline - 15, 1, 20);
+    bx += 13;
+    ctx.fillStyle = subColor;
+    ctx.font = `${subSize}px 'Zen Kaku Gothic New', sans-serif`;
+    ctx.fillText(t('cardBrandDesc') || '可視化特化型アニメコミュニティ', bx, baseline);
+    ctx.textAlign = 'right';
+    ctx.fillText('animepple.com', x + w, baseline);
+    ctx.textAlign = 'left';
+  }
+
+  // ══ マイカードのスキン設定 ══════════════════════════
+  // 新しいスキンを追加する時は、ここに1エントリ足すだけでよい（JSの描画ロジック側は触らない）。
+  // decoImage を指定すると、右下あたりにキャラの影絵等を追加で描ける（generateProfileCardImage内で使用）
+  const PROFILE_CARD_SKINS = {
+    default: {
+      bgGradient: ['#1d4a30', '#143024', '#0b1a11'],
+      borderColor: 'rgba(255,255,255,.1)',
+      avatarBg: '#3a2a52', avatarFg: '#d9c2ef', avatarRing: 'rgba(240,201,74,.6)',
+      rankChip: ['#f3d786', '#d9a441'], rankChipText: '#2a2006',
+      radarFill: 'rgba(94,201,122,.30)', radarStroke: '#5ec97a', radarLabel: '#8db5a0',
+      panelBg: 'rgba(92,201,142,.1)', panelBorder: 'rgba(92,201,142,.3)',
+      typeLabelColor: '#8db5a0', typeValueColor: '#a7ecc4',
+      statsBg: 'rgba(255,255,255,.03)', statsBorder: 'rgba(255,255,255,.09)', statsDivider: 'rgba(255,255,255,.06)',
+      taglineAccent: '#5ec97a', taglineColor: '#e8f0ea',
+      footerLogoBg: '#5ec97a', footerLogoFg: '#07200f', footerLine: 'rgba(255,255,255,.09)', footerSub: '#8db5a0',
+      decoImage: null,
+    },
+  };
+
+  // ══ マイページカード（900×700）══════════════════════════
+  // 画面のマイカードと同じ要素を、横長に合わせて「左=12軸グラフ／右=タイプと数値」に組み替えたもの
+  // data.skinId を渡すと、その見た目(色・チップ・影絵など)に丸ごと差し替わる。無指定なら'default'
+  async function generateProfileCardImage(data) {
+    const skin = PROFILE_CARD_SKINS[data.skinId] || PROFILE_CARD_SKINS.default;
+    const W = 900, H = 700;
+    const canvas = document.createElement('canvas');
+    canvas.width = W * 2; canvas.height = H * 2;   // 縮小表示でも文字が潰れないよう2倍で描く
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+
+    const bg = ctx.createRadialGradient(108, 0, 0, 108, 0, 1080);
+    bg.addColorStop(0, skin.bgGradient[0]); bg.addColorStop(0.46, skin.bgGradient[1]); bg.addColorStop(1, skin.bgGradient[2]);
+    shareRoundRect(ctx, 1, 1, W - 2, H - 2, 24);
+    ctx.fillStyle = bg; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = skin.borderColor; ctx.stroke();
+    ctx.save();
+    shareRoundRect(ctx, 1, 1, W - 2, H - 2, 24); ctx.clip();
+
+    // スキン専用の飾り（キャラの影絵など）。本文より先に描いて、下敷きにする
+    if(skin.decoImage) {
+      const decoImg = await shareLoadImage(skin.decoImage);
+      if(decoImg) {
+        ctx.save();
+        ctx.globalAlpha = skin.decoOpacity != null ? skin.decoOpacity : 1;
+        const dw = skin.decoWidth || 260, dh = skin.decoHeight || (dw * decoImg.naturalHeight / decoImg.naturalWidth);
+        const dx = skin.decoX != null ? skin.decoX : (W - dw - 20), dy = skin.decoY != null ? skin.decoY : (H - dh - 20);
+        ctx.drawImage(decoImg, dx, dy, dw, dh);
+        ctx.restore();
+      }
     }
 
-    // 統計（レビュー数・上質レビュー数・フォロワー数）
-    const statY = 340;
-    const stats = [
-      { label: t('statReviews'), value: data.reviewCount },
-      { label: t('statQuality'), value: data.qualityCount },
-      { label: t('statFollowers'), value: data.followerCount },
-    ];
-    const statW = (W - 140) / 3;
-    stats.forEach((s, i) => {
-      const sx = 70 + i * statW;
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#8fe5ab';
-      ctx.font = "bold 52px 'Zen Kaku Gothic New', sans-serif";
-      ctx.fillText(String(s.value ?? 0), sx + statW / 2 - 30, statY);
-      ctx.fillStyle = '#b6c8bd';
-      ctx.font = "18px 'Zen Kaku Gothic New', sans-serif";
-      ctx.fillText(s.label, sx + statW / 2 - 30, statY + 34);
+    // アイコン：金のリング＋外側にうっすら光彩
+    const avImg = await shareLoadImage(data.avatarUrl);
+    ctx.beginPath();
+    ctx.arc(110, 110, 62 + 4.5, 0, Math.PI * 2);
+    ctx.lineWidth = 9; ctx.strokeStyle = 'rgba(240,201,74,.08)'; ctx.stroke();
+    shareDrawAvatar(ctx, avImg, 110, 110, 124, {
+      bg: skin.avatarBg, fg: skin.avatarFg, initial: (data.username || '?').charAt(0),
+      ring: skin.avatarRing, ringWidth: 4,
     });
 
-    // ブランディング
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#8db5a0';
-    ctx.font = "bold 24px 'Zen Kaku Gothic New', sans-serif";
-    ctx.fillText('アニメップル', 40, H - 36);
+    // ユーザー名（長い名前は幅580で「…」）
+    ctx.fillStyle = '#e8f0ea';
+    ctx.font = "900 38px 'Zen Kaku Gothic New', sans-serif";
+    let uname = data.username || '';
+    while(uname.length > 1 && ctx.measureText(uname).width > 580) uname = uname.slice(0, -1);
+    if(uname !== (data.username || '')) uname += '…';
+    ctx.fillText(uname, 196, 106);
 
+    // 称号チップ
+    if(data.rankLabel) {
+      ctx.font = "800 16px 'Zen Kaku Gothic New', sans-serif";
+      const label = '★ ' + data.rankLabel;
+      const cw = ctx.measureText(label).width + 28;
+      const cg = ctx.createLinearGradient(196, 124, 196 + cw, 158);
+      cg.addColorStop(0, skin.rankChip[0]); cg.addColorStop(1, skin.rankChip[1]);
+      shareRoundRect(ctx, 196, 124, cw, 34, 9);
+      ctx.fillStyle = cg; ctx.fill();
+      ctx.fillStyle = skin.rankChipText;
+      ctx.fillText(label, 210, 146);
+    }
+
+    // 12軸グラフ（マイページの「あなたの価値観」と同じ値）
+    const vp = (typeof _cachedValueProfile !== 'undefined') ? _cachedValueProfile : null;
+    const labels12 = (vp && vp.labAll) || [...getAxisA(), ...getAxisB()];
+    const values12 = (vp && vp.valsAll) || labels12.map(() => 0);
+    shareDrawRadar(ctx, {
+      cx: 250, cy: 460, r: 125, labelR: 160,
+      labels: labels12, values: values12,
+      fill: skin.radarFill, stroke: skin.radarStroke,
+      labelColor: skin.radarLabel, labelFont: "600 15px 'Zen Kaku Gothic New', sans-serif",
+      rings: [1, 0.5],
+    });
+
+    // 好みのタイプ
+    shareRoundRect(ctx, 508, 212, 344, 84, 14);
+    ctx.fillStyle = skin.panelBg; ctx.fill();
+    ctx.lineWidth = 1; ctx.strokeStyle = skin.panelBorder; ctx.stroke();
+    ctx.fillStyle = skin.typeLabelColor;
+    ctx.font = "14px 'Zen Kaku Gothic New', sans-serif";
+    ctx.fillText(t('cardValueTypeLabel') || '好みのタイプ', 526, 240);
+    ctx.fillStyle = skin.typeValueColor;
+    ctx.font = "900 26px 'Zen Kaku Gothic New', sans-serif";
+    let typeLabel = (vp && typeof valueTypeLabelFrom === 'function') ? valueTypeLabelFrom(labels12, values12) : '';
+    if(!typeLabel) typeLabel = t('cardValueTypeNone') || '—';
+    while(typeLabel.length > 1 && ctx.measureText(typeLabel).width > 308) typeLabel = typeLabel.slice(0, -1);
+    ctx.fillText(typeLabel, 526, 276);
+
+    // 数値：2×2（レビュー・上質・フォロワー・お気に入り）
+    shareRoundRect(ctx, 508, 314, 344, 198, 14);
+    ctx.fillStyle = skin.statsBg; ctx.fill();
+    ctx.lineWidth = 1; ctx.strokeStyle = skin.statsBorder; ctx.stroke();
+    ctx.fillStyle = skin.statsDivider;
+    ctx.fillRect(508 + 172, 314, 1, 198);
+    ctx.fillRect(508, 314 + 99, 344, 1);
+    const cells = [
+      { v: data.reviewCount, l: t('statReviews'),   c: '#8fe5ab', lc: '#8db5a0' },
+      { v: data.qualityCount, l: t('statQuality'),  c: '#f0c94a', lc: '#dccaa0' },
+      { v: data.followerCount, l: t('statFollowers'), c: '#e8f0ea', lc: '#8db5a0' },
+      { v: data.favoriteCount, l: t('statFavorites'), c: '#e8f0ea', lc: '#8db5a0' },
+    ];
+    ctx.textAlign = 'center';
+    cells.forEach((c, i) => {
+      const cxx = 508 + (i % 2) * 172 + 86;
+      const cyy = 314 + Math.floor(i / 2) * 99;
+      ctx.fillStyle = c.c;
+      ctx.font = "900 32px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillText(String(c.v ?? 0), cxx, cyy + 52);
+      ctx.fillStyle = c.lc;
+      ctx.font = "14px 'Zen Kaku Gothic New', sans-serif";
+      let lb = c.l || '';
+      while(lb.length > 1 && ctx.measureText(lb).width > 160) lb = lb.slice(0, -1);
+      ctx.fillText(lb, cxx, cyy + 76);
+    });
+    ctx.textAlign = 'left';
+
+    // キャッチコピー
+    ctx.fillStyle = skin.taglineAccent;
+    ctx.font = "800 12px 'Zen Kaku Gothic New', sans-serif";
+    ctx.fillText('MY GRAPH', 508, 542);
+    ctx.fillStyle = skin.taglineColor;
+    ctx.font = "800 20px 'Zen Kaku Gothic New', sans-serif";
+    shareWrapLines(ctx, t('cardTagline') || '', 344, 2)
+      .forEach((line, i) => ctx.fillText(line, 508, 571 + i * 29));
+
+    shareDrawFooter(ctx, {
+      x: 48, w: 804, lineY: 626, logoY: 650, baseline: 672,
+      logoSize: 30, brandSize: 23, subSize: 15,
+      logoBg: skin.footerLogoBg, logoFg: skin.footerLogoFg,
+      lineColor: skin.footerLine, subColor: skin.footerSub,
+    });
+
+    ctx.restore();
     return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   }
 
-  // レビュー共有カード：デザイン仕様書（review-card-layout.html、900×1100・座標確定版）通りに実装。
-  // 高解像度対応のためcanvas自体は2倍(1800×2200)で作り、ctx.scale(2,2)してから
-  // 以下すべて仕様書記載の等倍座標のまま描く（Xのタイムライン等で文字が潰れないように）
-  // レビュー共有カード：Xの推奨サイズ1200×630（1.91:1、summary_large_image規格）に合わせたレイアウト。
+  // ══ レビュー共有カード（1200×630）════════════════════════
+  // X の summary_large_image 規格。右6割をグラフ2枚に割り当てて「グラフが主役」にしている。
+  // 文言・軸ラベルはすべて t() / getAxisA() 経由なので、表示言語のまま画像になる
   async function generateReviewCardImage(page, review, isQuality) {
     const W = 1200, H = 630;
     const canvas = document.createElement('canvas');
@@ -11993,181 +12243,122 @@
     ctx.scale(2, 2);
 
     const COL = isQuality
-      ? { bgTop:'#3a2f14', bgBottom:'#241c09', border:'rgba(224,178,86,.55)', panelBorder:'rgba(224,178,86,.18)',
-          accent:'#e8c463', footerLine:'rgba(224,178,86,.22)', logoBg:'#e0b256' }
-      : { bgTop:'#20392b', bgBottom:'#16291d', border:'rgba(255,255,255,.1)', panelBorder:'rgba(255,255,255,.07)',
-          accent:'#8fe5ab', footerLine:'rgba(255,255,255,.09)', logoBg:'#5ec97a' };
+      ? { top:'#3a2f14', mid:'#241c09', bottom:'#1c1607', border:'rgba(224,178,86,.55)',
+          panelBorder:'rgba(224,178,86,.18)', accent:'#e8c463', sub:'#c3ad82',
+          avatarBg:'#5a4520', avatarFg:'#e8c463', avatarRing:'rgba(232,196,99,.65)',
+          tagLabel:'#e0b256', tagText:'#f4ecd8', line:'rgba(224,178,86,.22)', logoBg:'#e0b256', logoFg:'#241c09' }
+      : { top:'#20392b', mid:'#16291d', bottom:'#122016', border:'rgba(255,255,255,.1)',
+          panelBorder:'rgba(255,255,255,.07)', accent:'#8fe5ab', sub:'#8db5a0',
+          avatarBg:'#2f5a41', avatarFg:'#8fe5ab', avatarRing:'rgba(143,229,171,.5)',
+          tagLabel:'#5ec97a', tagText:'#e8f0ea', line:'rgba(255,255,255,.09)', logoBg:'#5ec97a', logoFg:'#07200f' };
 
-    function roundRectPath(x, y, w, h, r) {
-      ctx.beginPath();
-      if(ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
-      ctx.moveTo(x+r, y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
-      ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
-    }
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, COL.bgTop); grad.addColorStop(1, COL.bgBottom);
-    roundRectPath(1, 1, W-2, H-2, 24);
+    // 背景：160°のグラデーション（canvas は角度指定できないので座標で近似）
+    const grad = ctx.createLinearGradient(W * 0.34, 0, W * 0.66, H);
+    grad.addColorStop(0, COL.top); grad.addColorStop(0.62, COL.mid); grad.addColorStop(1, COL.bottom);
+    shareRoundRect(ctx, 1, 1, W - 2, H - 2, 24);
     ctx.fillStyle = grad; ctx.fill();
     ctx.lineWidth = 2; ctx.strokeStyle = COL.border; ctx.stroke();
     ctx.save();
-    roundRectPath(1, 1, W-2, H-2, 24); ctx.clip();
-    const title = getTitle(page) || page.title || page.titleEn || '';
+    shareRoundRect(ctx, 1, 1, W - 2, H - 2, 24); ctx.clip();
+
+    // 上質だけ金の斜光を重ねる。サムネイルサイズでも通常版と見分けられるようにする
+    if(isQuality) {
+      const sheen = ctx.createLinearGradient(0, 0, W * 0.62, H * 0.86);
+      sheen.addColorStop(0, 'rgba(240,214,150,.14)'); sheen.addColorStop(0.34, 'rgba(240,214,150,0)');
+      ctx.fillStyle = sheen; ctx.fillRect(0, 0, W, H);
+    }
+
+    // ポスター（読み込めなければ描かず、左列だけ60px上に詰める）
+    const posterImg = await shareLoadImage(page && (page.image || page.imageUrl));
+    let shift = 0;
+    if(posterImg) {
+      ctx.save();
+      shareRoundRect(ctx, 40, 40, 132, 186, 12); ctx.clip();
+      shareDrawCover(ctx, posterImg, 40, 40, 132, 186);
+      ctx.restore();
+      shareRoundRect(ctx, 40, 40, 132, 186, 12);
+      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.stroke();
+    } else {
+      shift = 60;
+    }
+
+    // 作品タイトル（最大2行）
+    ctx.fillStyle = '#e8f0ea';
+    ctx.font = "700 32px 'Zen Kaku Gothic New', sans-serif";
+    const title = (typeof getTitle === 'function' ? getTitle(page) : '') || (page && (page.title || page.titleEn)) || '';
+    shareWrapLines(ctx, title, 372, 2)
+      .forEach((line, i) => ctx.fillText(line, 40, 272 - shift + i * 40));
+
+    // アイコン＋ユーザー名
+    const uAvatar = review && (review.avatarUrl || review.userAvatar);
+    const avImg = await shareLoadImage(uAvatar);
+    shareDrawAvatar(ctx, avImg, 64, 356 - shift, 48, {
+      bg: COL.avatarBg, fg: COL.avatarFg, initial: (review && review.userName || '?').charAt(0),
+      ring: COL.avatarRing, ringWidth: 2,
+    });
+    ctx.fillStyle = COL.accent;
+    ctx.font = "700 22px 'Zen Kaku Gothic New', sans-serif";
+    let name = (review && review.userName) || '';
+    while(name.length > 1 && ctx.measureText(name).width > 260) name = name.slice(0, -1);
+    if(name && name !== review.userName) name += '…';
+    ctx.fillText(name, 102, 353 - shift);
+    // 「{name}のレビュー」/「Review by {name}」で語順が変わるので、名前を抜いた側だけ添える
+    const byTemplate = t('cardByLine') || '{name}のレビュー';
+    const byRest = byTemplate.replace('{name}', '').trim();
+    if(byRest) {
+      ctx.fillStyle = COL.sub;
+      ctx.font = "16px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillText(byRest, 102, 375 - shift);
+    }
+
+    // キャッチコピー：見た人への誘い文句。ここだけ太く大きくする
+    ctx.fillStyle = COL.tagLabel;
+    ctx.font = "800 13px 'Zen Kaku Gothic New', sans-serif";
+    ctx.fillText('MY GRAPH', 40, 423);
+    ctx.fillStyle = COL.tagText;
+    ctx.font = "800 23px 'Zen Kaku Gothic New', sans-serif";
+    shareWrapLines(ctx, t('cardTagline') || '', 372, 2)
+      .forEach((line, i) => ctx.fillText(line, 40, 464 + i * 34));
 
     // 上質バッジ（右上）
-    if (isQuality) {
-      const bw = 156, bh = 40, bx = W - 40 - bw, by = 28;
-      roundRectPath(bx, by, bw, bh, 20);
+    if(isQuality) {
+      ctx.font = "800 19px 'Zen Kaku Gothic New', sans-serif";
+      const label = '★ ' + (t('qualityReviewBadge') || '上質レビュー');
+      const bw = ctx.measureText(label).width + 44;
+      shareRoundRect(ctx, W - 40 - bw, 40, bw, 44, 22);
       ctx.fillStyle = 'rgba(217,164,65,.14)'; ctx.fill();
       ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(217,164,65,.4)'; ctx.stroke();
       ctx.fillStyle = '#e8c463';
-      ctx.font = "800 17px 'Zen Kaku Gothic New', sans-serif";
-      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-      ctx.fillText('★ ' + (t('qualityReviewBadge') || '上質レビュー'), bx + 18, by + 27);
+      ctx.fillText(label, W - 40 - bw + 22, 69);
     }
 
-    // タイトル（1行固定・幅900pxに収める）
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#e8f0ea';
-    let titleSize = 40;
-    const fitTitle = (text, maxW) => {
-      for(const size of [40, 34, 30]) {
-        ctx.font = `700 ${size}px 'Zen Kaku Gothic New', sans-serif`;
-        if(ctx.measureText(text).width <= maxW) { titleSize = size; return text; }
-      }
-      titleSize = 30;
-      ctx.font = `700 30px 'Zen Kaku Gothic New', sans-serif`;
-      let truncated = text;
-      while(truncated.length > 1 && ctx.measureText(truncated + '…').width > maxW) truncated = truncated.slice(0, -1);
-      return truncated + '…';
-    };
-    const fittedTitle = fitTitle(title, isQuality ? 780 : 1120);
-    ctx.font = `700 ${titleSize}px 'Zen Kaku Gothic New', sans-serif`;
-    ctx.fillText(fittedTitle, 40, 56);
-
-    // ユーザー名（言語によって「{name}のレビュー」/「Review by {name}」のように前後が変わるため、
-    // テンプレートを{name}で分割し、前半・本体・後半の順で描画する）
-    if (review.userName) {
-      let name = review.userName;
-      ctx.font = "700 22px 'Zen Kaku Gothic New', sans-serif";
-      while(name.length > 1 && ctx.measureText(name).width > 380) name = name.slice(0, -1) + '…';
-      const template = t('cardByLine') || '{name}のレビュー';
-      const [before, after] = template.split('{name}');
-      let x = 40;
-      if(before) {
-        ctx.font = "400 17px 'Zen Kaku Gothic New', sans-serif";
-        ctx.fillStyle = '#8db5a0';
-        ctx.fillText(before, x, 90);
-        x += ctx.measureText(before).width;
-      }
-      ctx.font = "700 22px 'Zen Kaku Gothic New', sans-serif";
-      ctx.fillStyle = COL.accent;
-      ctx.fillText(name, x, 90);
-      x += ctx.measureText(name).width;
-      if(after) {
-        ctx.font = "400 17px 'Zen Kaku Gothic New', sans-serif";
-        ctx.fillStyle = '#8db5a0';
-        ctx.fillText(after, x + 6, 90);
-      }
-    }
-
-    // グラフ2枚を横並びの角丸パネルに（幅を活かして横長パネルにする）
+    // グラフ2枚（348×420のパネル）
     const labA = getAxisA(), labB = getAxisB();
-    const panelY = 112, panelH = 250, panelW = 552;
-    function drawPanelRadar(px, py, pw, ph, heading, labels, keys, dataObj, fillColor, strokeColor) {
-      roundRectPath(px, py, pw, ph, 18);
+    const drawPanel = (px, heading, labels, keys, dataObj, fill, stroke) => {
+      shareRoundRect(ctx, px, 40, 348, 420, 18);
       ctx.fillStyle = 'rgba(255,255,255,.035)'; ctx.fill();
       ctx.lineWidth = 1; ctx.strokeStyle = COL.panelBorder; ctx.stroke();
       ctx.fillStyle = '#e8f0ea';
-      ctx.font = "700 18px 'Zen Kaku Gothic New', sans-serif";
+      ctx.font = "700 19px 'Zen Kaku Gothic New', sans-serif";
       ctx.textAlign = 'center';
-      ctx.fillText(heading, px + pw / 2, py + 28);
-
-      const cx = px + pw / 2, cy = py + ph / 2 + 16, r = 70, labelR = 92;
-      const values = labels.map((_, j) => Number((dataObj && dataObj[keys[j]]) || 0));
-      [70, 46.6, 23.3].forEach(rr => {
-        ctx.beginPath();
-        for(let i = 0; i <= 6; i++) {
-          const a = -Math.PI/2 + i * Math.PI/3;
-          const x = cx + rr * Math.cos(a), y = cy + rr * Math.sin(a);
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.stroke();
-      });
-      for(let i = 0; i < 6; i++) {
-        const a = -Math.PI/2 + i * Math.PI/3;
-        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + r*Math.cos(a), cy + r*Math.sin(a));
-        ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 1; ctx.stroke();
-      }
-      ctx.beginPath();
-      values.forEach((v, i) => {
-        const a = -Math.PI/2 + i * Math.PI/3;
-        const rr = r * Math.min(v, 10) / 10;
-        const x = cx + rr*Math.cos(a), y = cy + rr*Math.sin(a);
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      });
-      ctx.closePath();
-      ctx.fillStyle = fillColor; ctx.fill();
-      ctx.strokeStyle = strokeColor; ctx.lineWidth = 3; ctx.stroke();
-      values.forEach((v, i) => {
-        const a = -Math.PI/2 + i * Math.PI/3;
-        const rr = r * Math.min(v, 10) / 10;
-        ctx.beginPath(); ctx.arc(cx + rr*Math.cos(a), cy + rr*Math.sin(a), 3.5, 0, Math.PI*2);
-        ctx.fillStyle = strokeColor; ctx.fill();
-      });
-      ctx.font = "600 14px 'Zen Kaku Gothic New', sans-serif";
-      ctx.fillStyle = '#8db5a0';
-      const anchors = [
-        { align:'center', dx:0,   dy:-labelR+28 },
-        { align:'left',   dx:labelR*Math.cos(-Math.PI/2+Math.PI/3),  dy:labelR*Math.sin(-Math.PI/2+Math.PI/3) },
-        { align:'left',   dx:labelR*Math.cos(-Math.PI/2+2*Math.PI/3),dy:labelR*Math.sin(-Math.PI/2+2*Math.PI/3) },
-        { align:'center', dx:0,   dy:labelR-70+54 },
-        { align:'right',  dx:labelR*Math.cos(-Math.PI/2+4*Math.PI/3),dy:labelR*Math.sin(-Math.PI/2+4*Math.PI/3) },
-        { align:'right',  dx:labelR*Math.cos(-Math.PI/2+5*Math.PI/3),dy:labelR*Math.sin(-Math.PI/2+5*Math.PI/3) },
-      ];
-      labels.forEach((label, i) => {
-        ctx.textAlign = anchors[i].align;
-        ctx.fillText(label, cx + anchors[i].dx, cy + anchors[i].dy);
-      });
+      ctx.fillText(heading, px + 174, 84);
       ctx.textAlign = 'left';
-    }
-    drawPanelRadar(40, panelY, panelW, panelH, t('radarTitleA') || '作品の完成度', labA, axisA, review.chartA, 'rgba(94,201,122,.30)', '#5ec97a');
-    drawPanelRadar(W - 40 - panelW, panelY, panelW, panelH, t('radarTitleB') || '感情・雰囲気', labB, axisB, review.chartB, 'rgba(232,106,106,.30)', '#e86a6a');
+      shareDrawRadar(ctx, {
+        cx: px + 174, cy: 298, r: 95, labelR: 118,
+        labels, values: keys.map(k => Number((dataObj && dataObj[k]) || 0)),
+        fill, stroke, labelColor: COL.sub,
+        labelFont: "600 16px 'Zen Kaku Gothic New', sans-serif",
+      });
+    };
+    drawPanel(444, t('chartATitle') || '', labA, axisA, review && review.chartA, 'rgba(94,201,122,.32)', '#5ec97a');
+    drawPanel(812, t('chartBTitle') || '', labB, axisB, review && review.chartB, 'rgba(232,106,106,.32)', '#e86a6a');
 
-    // コメント（1行のみ、短く）
-    if (review.comment) {
-      const commentY = panelY + panelH + 34;
-      ctx.fillStyle = isQuality ? 'rgba(224,178,86,.55)' : 'rgba(94,201,122,.5)';
-      ctx.fillRect(40, commentY - 20, 3, 26);
-      ctx.font = "400 20px 'Zen Kaku Gothic New', sans-serif";
-      ctx.fillStyle = '#e8f0ea';
-      const maxWidth = 1120;
-      let text = `「${review.comment}」`;
-      while(text.length > 2 && ctx.measureText(text).width > maxWidth) text = text.slice(0, -2) + '…」';
-      ctx.fillText(text, 58, commentY);
-    }
-
-    // フッター
-    const footerY = H - 60;
-    ctx.fillStyle = COL.footerLine;
-    ctx.fillRect(40, footerY, W - 80, 1);
-    roundRectPath(40, footerY + 18, 24, 24, 7);
-    ctx.fillStyle = COL.logoBg; ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = "900 13px 'Zen Kaku Gothic New', sans-serif";
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('A', 40 + 12, footerY + 18 + 13);
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#e8f0ea';
-    ctx.font = "800 21px 'Zen Kaku Gothic New', sans-serif";
-    ctx.fillText('アニメップル', 40 + 24 + 10, footerY + 36);
-    const brandWidth = ctx.measureText('アニメップル').width;
-    ctx.fillStyle = '#8db5a0';
-    ctx.font = "400 15px 'Zen Kaku Gothic New', sans-serif";
-    ctx.fillText(' ｜ ' + (t('cardTagline') || 'アニメのグラフでドンピシャを見つける'), 40 + 24 + 10 + brandWidth, footerY + 36);
-    ctx.font = "400 16px 'Zen Kaku Gothic New', sans-serif";
-    ctx.textAlign = 'right';
-    ctx.fillText('animepple.com', W - 40, footerY + 36);
-    ctx.textAlign = 'left';
+    shareDrawFooter(ctx, {
+      x: 40, w: 1120, lineY: 524, logoY: 557, baseline: 583,
+      logoSize: 34, brandSize: 26, subSize: 17,
+      logoBg: COL.logoBg, logoFg: COL.logoFg,
+      lineColor: COL.line, subColor: COL.sub,
+    });
 
     ctx.restore();
     return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
@@ -13086,7 +13277,7 @@
           <div style="min-width:0;display:flex;flex-direction:column;gap:12px;">
             <div style="display:flex;align-items:center;gap:9px;">
               <span style="font-size:14px;font-weight:800;color:#eaf6ee;">${escapeHtml(t('boardHubMineTitle')||'通知を受け取る掲示板')}</span>
-              ${unreadRows.length ? `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 6px;border-radius:10px;background:#e5484d;color:#fff;font-size:10.5px;font-weight:800;">${unreadRows.length}</span>` : ''}
+              ${unreadRows.length ? `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 6px;border-radius:10px;background:var(--badge-color,#e5484d);color:#fff;font-size:10.5px;font-weight:800;">${unreadRows.length}</span>` : ''}
               ${unreadRows.length ? `<button type="button" id="boardNewNotifClearAll" style="margin-left:auto;height:26px;padding:0 10px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#82968a;font-size:11px;font-weight:700;cursor:pointer;">${escapeHtml(t('boardHubClearAll')||'全部消去')}</button>` : ''}
             </div>
             ${rows.length ? '' : emptyJoined}
@@ -13145,7 +13336,7 @@
         const border = active ? 'rgba(92,201,142,.55)' : 'rgba(255,255,255,.07)';
         const color = active ? '#a7ecc4' : '#66786d';
         // 角丸ピル型。自分のタイプは💎、他タイプは🔒。横スクロールで全部触れる
-        return `<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px;border-radius:14px;background:${bg};border:1px solid ${border};color:${color};font-size:11.5px;font-weight:${active?'800':'700'};cursor:pointer;white-space:nowrap;">${locked?'🔒':'💎'}${escapeHtml(tb.label)}<span class="board-tab-badge" data-tab-badge="${tb.id}" style="display:none;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:#e5484d;color:#fff;font-size:9px;font-weight:800;align-items:center;justify-content:center;"></span></button>`;
+        return `<button type="button" class="board-tab-btn" data-tab="${tb.id}" style="flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px;border-radius:14px;background:${bg};border:1px solid ${border};color:${color};font-size:11.5px;font-weight:${active?'800':'700'};cursor:pointer;white-space:nowrap;">${locked?'🔒':'💎'}${escapeHtml(tb.label)}<span class="board-tab-badge" data-tab-badge="${tb.id}" style="display:none;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:var(--badge-color,#e5484d);color:#fff;font-size:9px;font-weight:800;align-items:center;justify-content:center;"></span></button>`;
       }).join('');
       tabsRow.querySelectorAll('.board-tab-btn').forEach(btn=>{
         btn.onclick = () => { _boardActiveTab = btn.dataset.tab; renderBoardValue(animeId); };
@@ -13297,40 +13488,46 @@
     const grouped = !!opts.grouped;
     const avatarMap = opts.avatarMap || {};
     const isAdminMap = opts.isAdminMap || {};
+    const skinMap = opts.skinMap || {}; // { user_id: 'skinId' } 将来ガチャで手に入れたスキンをここに渡す
+    const frameMap = opts.frameMap || {}; // { user_id: 'frameId' } 将来ガチャで手に入れたアイコンフレームをここに渡す
     const name = item.username || t('anonymousNameLabel');
     const isMine = _currentUser && item.user_id === _currentUser.id;
     const isOfficial = !!isAdminMap[item.user_id];
-    const bg = isMine ? '#2f7d55' : '#262e33';
-    const border = isMine ? 'rgba(255,255,255,.09)' : 'rgba(255,255,255,.08)';
-    const textColor = isMine ? '#f2fbf5' : '#e6efe9';
+    const skinId = skinMap[item.user_id] || 'default';
+    const frameId = frameMap[item.user_id] || 'default';
     const nameColor = isOfficial ? '#c9a7e6' : '#9db3a5';
-    // 角丸：しっぽは相手=左下4px／自分=右下4px。連投2件目以降はしっぽを付けない（全角14px）
-    const radius = grouped ? '14px' : (isMine ? '14px 14px 4px 14px' : '14px 14px 14px 4px');
-    const shadow = isMine ? '0 10px 22px -16px rgba(0,0,0,.8)' : '0 8px 18px -16px rgba(0,0,0,.8)';
+    // 連投2件目以降はしっぽを付けない（角丸・背景・影・柄などの「見た目」は全部bubble-skin-*クラス側で決める。
+    // 新しいスキンを追加する時はここのJSは触らず、CSSに.bubble-skin-XXXブロックを1つ足すだけでよい）
+    const bubbleSkinClass = `bubble-skin-${skinId} ${grouped ? 'is-grouped' : ''} ${isMine ? 'is-mine' : 'is-theirs'}`;
     // アイコンはガチャで集めるものなので会話中も必ず出す。サイズはYouTubeのアイコンサイズに統一（PC24px/スマホ32px）。
+    // 縁取り(フレーム)は「自分の投稿だから金色」ではなく、そのユーザーが装備しているフレームをそのまま出す
+    // （掲示板・DM・レビューカード・ヘッダー・マイページ全部で共通のavatar-frame-*クラスを使う）
+    const avatarFrameClass = `avatar-frame-${frameId}`;
     const avatarBg = isMine ? 'linear-gradient(150deg,#4a2f6d,#241a2c)' : 'linear-gradient(150deg,#2c4436,#1d3225)';
-    const avatarBorder = isMine ? '1.5px solid rgba(240,201,74,.55)' : '1px solid rgba(255,255,255,.1)';
     const avatarText = isMine ? '#d9c2ef' : '#9be3bd';
     const avatarUrl = avatarMap[item.user_id];
     // 連投2件目以降は同幅のスペーサーだけ残して列を揃える
     const avatar = grouped
       ? `<span class="user-avatar-circle"></span>`
       : (avatarUrl
-        ? `<img src="${escapeHtml(avatarUrl)}" onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" class="user-avatar-circle" style="border-radius:50%;object-fit:cover;border:${avatarBorder};cursor:pointer;">`
-        : `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" class="user-avatar-circle" style="border-radius:50%;background:${avatarBg};border:${avatarBorder};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:${avatarText};cursor:pointer;">${escapeHtml(name.charAt(0))}</span>`);
+        ? `<img src="${escapeHtml(avatarUrl)}" onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" class="user-avatar-circle ${avatarFrameClass}" style="border-radius:50%;object-fit:cover;cursor:pointer;">`
+        : `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" class="user-avatar-circle ${avatarFrameClass}" style="border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:${avatarText};cursor:pointer;">${escapeHtml(name.charAt(0))}</span>`);
     // 名前は相手のみ（自分はアイコンの緑枠で判別できる）。連投時は省略
     const nameHtml = (!isMine && !grouped)
       ? `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="font-size:11.5px;font-weight:700;color:${nameColor};padding-left:2px;cursor:pointer;">${escapeHtml(name)}${isOfficial?' <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">公式</span>':''}</span>`
       : '';
     // 引用ブロック：parent_id はそのまま使い、表示だけ入れ子をやめて本流に並べる（DMでは使わない）
     const q = opts.quote;
-    const quoteHtml = q ? `<div style="border-left:2px solid ${isMine?'rgba(255,255,255,.35)':'rgba(147,226,183,.5)'};padding-left:8px;margin-bottom:7px;opacity:.85;">
-        <span style="display:block;font-size:10.5px;font-weight:800;color:${isMine?'#d6f2e2':'#9be3bd'};">${escapeHtml(q.name)}</span>
-        <span style="display:block;font-size:11.5px;color:${isMine?'#cfe8da':'#b6c8bd'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(300px,54vw);">${escapeHtml(q.body)}</span>
+    const quoteHtml = q ? `<div class="bubble-quote">
+        <span class="bubble-quote-name">${escapeHtml(q.name)}</span>
+        <span class="bubble-quote-body">${escapeHtml(q.body)}</span>
       </div>` : '';
-    const bubble = `<div style="max-width:min(440px,${isMine?74:70}vw);background:${bg};border:1px solid ${border};border-radius:${radius};padding:9px 13px;box-shadow:${shadow};">
-      ${quoteHtml}
-      <div style="font-size:14px;line-height:1.65;color:${textColor};white-space:pre-wrap;word-break:break-word;text-align:left;">${escapeHtml(item.body)}</div>
+    // 吹き出し本体：色・角丸・影・背景画像や飾り(疑似要素)は全部bubble-skin-*クラスのCSS側で定義する
+    const bubble = `<div class="chat-bubble ${bubbleSkinClass}">
+      <div class="bubble-inner">
+        ${quoteHtml}
+        <div class="bubble-text">${escapeHtml(item.body)}</div>
+      </div>
     </div>`;
     // 操作は三点リーダー1つに集約する（DMでは今のところ出さない：opts.showMoreBtnがtrueの時だけ）
     const moreBtn = (_currentUser && opts.showMoreBtn)
@@ -16140,6 +16337,10 @@
     radarTitleB: { ja:'感情・雰囲気', en:'Mood & Feel' },
     cardTagline: { ja:'アニメのグラフでドンピシャを見つける', en:'Find your perfect anime with visual charts' },
     cardByLine: { ja:'{name}のレビュー', en:'Review by {name}' },
+    cardBrandName: { ja:'アニメップル', en:'Animepple' },
+    cardBrandDesc: { ja:'可視化特化型アニメコミュニティ', en:'The anime community built on charts' },
+    cardValueTypeLabel: { ja:'好みのタイプ', en:'Your type' },
+    cardValueTypeNone: { ja:'まだ集計中', en:'Not enough data yet' },
     imageSubmitTapHint: { ja:'画像を投稿する', en:'Submit an image' },
     imageSubmitTitleSuffix: { ja:'画像を投稿', en:'Submit image' },
     imageSubmitLead: { ja:'この作品のポスター画像を投稿できます。管理者の確認後、公開されます。', en:'You can submit a poster image for this title. It will be published after admin review.' },
@@ -19294,6 +19495,9 @@
     // アカウント登録済みユーザーのアイコン画像をまとめて取得
     let avatarMap = {};
     let cardRankQualityCounts = {};
+    let cardSkinMap = {}; // 将来: { user_id: 装備中のカードスキンID }。今は誰も所持していないので常に空
+    let cardFrameMap = {}; // 将来: { user_id: 装備中のアイコンフレームID }。今は誰も所持していないので常に空
+    let cardBadgeSkinMap = {}; // 将来: { user_id: 装備中の称号バッジスキンID }。今は誰も所持していないので常に空
     if(sb) {
       const userIds = [...new Set(sorted.map(r=>r.userId||r.user_id).filter(Boolean))];
       if(userIds.length) {
@@ -19312,6 +19516,9 @@
       const name = rev.userName||rev.username||'ゲスト';
       const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
       const userId = rev.userId || rev.user_id || null;
+      const cardSkinId = (userId && cardSkinMap[userId]) || 'default'; // 将来ガチャで手に入れたスキンをここに反映する
+      const cardFrameId = (userId && cardFrameMap[userId]) || 'default'; // 将来ガチャで手に入れたアイコンフレームをここに反映する
+      const cardBadgeSkinId = (userId && cardBadgeSkinMap[userId]) || 'default'; // 将来ガチャで手に入れた称号バッジデザインをここに反映する
       const cardQualityCount = userId ? (cardRankQualityCounts[userId] || 0) : 0;
       const cardRank = getRankByQualityCount(cardQualityCount);
       const avatarUrl = userId ? avatarMap[userId] : null;
@@ -19325,7 +19532,7 @@
       const dateStr = rev.createdAt||rev.created_at?new Date(rev.createdAt||rev.created_at).toLocaleDateString('ja-JP',{year:'numeric',month:'short',day:'numeric'}):'';
       const flag = countryBadgeHtml(rev.country_code||rev.countryCode);
       const isClickableUser = !!userId;
-      const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(userId)}')" style="cursor:pointer;"` : '';
+      const userOnclick = isClickableUser ? ` onclick="nav('user','${escapeHtml(userId)}')"` : '';
       const isOwnReview = _currentUser && userId === _currentUser.id;
       const kebabMenuItemsHtml = isOwnReview
         ? `<button type="button" class="rc-delete-btn" data-review-id="${escapeHtml(rev.id||'')}" data-anime-id="${escapeHtml(rev.animeId||'')}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#eaa9a9;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('deleteReviewBtn'))}</button>`
@@ -19346,15 +19553,15 @@
         : `<p class="review-card-back-text">${commentTextEscaped || '<span style="color:var(--muted);">コメントはありません</span>'}</p>`;
       return `<div class="review-card-flip-wrap">
       <div class="review-card-flip-inner" id="rc-flip-${i}">
-        <article class="review-card review-card-face review-card-front" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
+        <article class="review-card review-card-face review-card-front card-skin-${cardSkinId}${rev.quality?' is-quality':''}" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
         <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="コメントを見る">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
         </button>
         <span class="rc-comment-label${hasComment?' has-comment':''}">${hasComment?'コメントあり':'コメントなし'}</span>
-        <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank)}</div>
+        <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank, cardBadgeSkinId)}</div>
         <div class="rc-head" style="padding-top:50px;">
           <div style="display:flex;align-items:flex-start;gap:.6rem;flex:1;min-width:0;">
-            <div${userOnclick} class="user-avatar-circle" style="border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+            <div${userOnclick} class="user-avatar-circle avatar-frame-${cardFrameId}" style="border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
             <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
               <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
@@ -19368,14 +19575,14 @@
           <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-fbi="${i}" width="280" height="200"></canvas></div>
         </div>
         </article>
-        <article class="review-card review-card-face review-card-back" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
+        <article class="review-card review-card-face review-card-back card-skin-${cardSkinId}${rev.quality?' is-quality':''}" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
           <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="戻る">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
           </button>
-          <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank)}</div>
+          <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank, cardBadgeSkinId)}</div>
           <div class="rc-head" style="padding-top:50px;">
             <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;">
-              <div${userOnclick} class="user-avatar-circle" style="border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
+              <div${userOnclick} class="user-avatar-circle avatar-frame-${cardFrameId}" style="border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
                 <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${name}${flag}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
@@ -19806,10 +20013,12 @@
         btn.type = 'button';
         btn.className = 'hdr-avatar-btn user-avatar-circle';
         btn.onclick = () => nav('mypage');
-        btn.style.cssText = 'border-radius:50%;border:1px solid rgba(255,255,255,.14);background:#1d3225;color:#8fe5ab;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;flex:0 0 auto;padding:0;';
+        btn.style.cssText = 'border-radius:50%;background:#1d3225;color:#8fe5ab;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;flex:0 0 auto;padding:0;';
         // 言語ボタンより前（左側）に差し込む
         hdrRight.insertBefore(btn, hdrRight.firstChild);
       }
+      // フレーム(縁取り)は自分が装備しているものをそのまま出す（将来: window._loggedInFrameIdに実データを入れる）
+      btn.className = `hdr-avatar-btn user-avatar-circle avatar-frame-${window._loggedInFrameId || 'default'}`;
       const url = window._loggedInAvatarUrl;
       const initial = (window._loggedInUsername || '?').charAt(0);
       btn.innerHTML = url ? `<img src="${escapeHtml(url)}" style="width:100%;height:100%;object-fit:cover;">` : escapeHtml(initial);
@@ -20753,6 +20962,8 @@
     const avatarUrl = profileData?.avatar_url;
     const colors = ['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
     const idx = targetUserId.charCodeAt(0) % colors.length;
+    // フレーム(縁取り)は表示中のユーザーが装備しているものをそのまま出す（今は誰も所持していないのでdefault）
+    avatar.className = `mypage-avatar user-avatar avatar-frame-${profileData?.frame_id || 'default'}`;
     if (avatarUrl) {
       avatar.style.background = 'transparent';
       avatar.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="avatar" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;">`;
@@ -20883,6 +21094,7 @@
           reviewCount: reviewTotal,
           qualityCount,
           followerCount: document.getElementById('statFollowerCount')?.textContent || 0,
+          favoriteCount: document.getElementById('statFavCount')?.textContent || 0,
         });
       }
     }
@@ -21067,8 +21279,14 @@
     const unameCount = document.getElementById('profileEditUsernameCount');
     const bioCount = document.getElementById('profileEditBioCount');
     const syncCounts = () => {
-      if(unameCount) unameCount.textContent = unameEl.value.length;
-      if(bioCount) bioCount.textContent = bioEl.value.length;
+      if(unameCount) {
+        unameCount.textContent = unameEl.value.length;
+        unameCount.style.color = unameEl.value.length >= unameEl.maxLength ? '#e5484d' : '';
+      }
+      if(bioCount) {
+        bioCount.textContent = bioEl.value.length;
+        bioCount.style.color = bioEl.value.length >= bioEl.maxLength ? '#e5484d' : '';
+      }
     };
     syncCounts();
     if(!unameEl.dataset.countBound) {
@@ -21083,7 +21301,7 @@
   async function saveProfileEdit() {
     if(!_currentUser || !sb) return;
     const username = document.getElementById('profileEditUsername').value.trim() || _myProfile.username;
-    const bio = document.getElementById('profileEditBio').value.trim().slice(0,100);
+    const bio = document.getElementById('profileEditBio').value.trim().slice(0,60);
     await db.profiles.upsert(_currentUser.id, {
       username,
       bio,
