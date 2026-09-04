@@ -68,7 +68,7 @@
     .page.active { display:block; }
 
     /* ── HEADER ── */
-    .hdr { position:sticky; top:0; z-index:100; background:rgba(7,21,13,.9); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,.06); }
+    .hdr { position:sticky; top:0; z-index:100; background:var(--hdr-bg, rgba(7,21,13,.9)); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,.06); }
     .hdr-inner { display:flex; align-items:center; justify-content:space-between; padding:.7rem 1rem; gap:.7rem; }
     .logo { font-size:1.18rem; font-weight:900; letter-spacing:.02em; cursor:pointer; }
     .logo em { color:var(--brand); font-style:normal; }
@@ -1980,7 +1980,7 @@
     }
     .mypage-hero-cover {
       height:110px;
-      background:radial-gradient(120% 180% at 15% 0%, rgba(92,201,142,.22), transparent 55%), radial-gradient(120% 180% at 90% 0%, rgba(217,164,65,.16), transparent 55%);
+      background:radial-gradient(120% 180% at 15% 0%, var(--mypage-cover-a, rgba(92,201,142,.22)), transparent 55%), radial-gradient(120% 180% at 90% 0%, var(--mypage-cover-b, rgba(217,164,65,.16)), transparent 55%);
       border-bottom:1px solid rgba(255,255,255,.06);
     }
     .mypage-hero { display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; padding:0 24px; margin-top:-46px; }
@@ -3715,7 +3715,7 @@
 </div>
 
 <!-- 掲示板（中身は後日実装） -->
-<div class="page board-page-wrap" id="page-board">
+<div class="page" id="page-board">
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>

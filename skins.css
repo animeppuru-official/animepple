@@ -73,12 +73,12 @@
 
 /* ── 掲示板全体の見た目（吹き出し以外の背景・入力欄など）。自分が見る時だけのテーマで、
    投稿者ごとではなく閲覧者本人の好み。.board-skin-<id> を .board-page-wrap に付けて使う ── */
-.board-skin-default { background: transparent; --board-panel-bg: var(--bg); --board-input-bg:#12291d; --board-input-border:rgba(255,255,255,.14); }
+.board-skin-default { background: transparent; --board-panel-bg: var(--bg); --board-input-bg:#12291d; --board-input-border:rgba(255,255,255,.14); --hdr-bg: rgba(7,21,13,.9); }
 .board-skin-default .board-composer { background:#0b1a11; }
 
 /* ── マイページ全体の見た目。自分が見る時だけのテーマ（他人には影響しない）。
    #page-mypage に .mypage-skin-<id> を付けて使う ── */
-.mypage-skin-default { background: transparent; --card-panel-bg:#09201b; --card-panel-border:rgba(255,255,255,.14); }
+.mypage-skin-default { background: transparent; --card-panel-bg:#09201b; --card-panel-border:rgba(255,255,255,.14); --hdr-bg: rgba(7,21,13,.9); }
 
 /* ── ここから下に、新しいスキンをどんどん追記していく ── */
 /* ==========================================================================
@@ -136,6 +136,8 @@
   --board-panel-bg:#0c1230;
   --board-input-bg:#141c46;
   --board-input-border:rgba(207,224,255,.22);
+  --hdr-bg: rgba(5,7,15,.82);
+  --bg:#080b1a; --card:#0e1430; --card2:#10152e; --line:rgba(207,224,255,.22);
   background:
     /* 月 */
     radial-gradient(13px 13px at 85% 11%, rgba(255,246,226,.9) 0 56%, rgba(255,246,226,0) 58%),
@@ -260,6 +262,8 @@
   position:relative; isolation:isolate;
   --card-panel-bg:#0e1430;
   --card-panel-border:rgba(207,224,255,.22);
+  --hdr-bg: rgba(5,7,15,.82);
+  --bg:#080b1a; --card:#0e1430; --card2:#10152e; --line:rgba(207,224,255,.22);
   background:
     radial-gradient(11px 11px at 12% 9%, rgba(255,246,226,.85) 0 56%, rgba(255,246,226,0) 58%),
     radial-gradient(210px 210px at 12% 9%, rgba(255,238,200,.09) 0%, rgba(255,238,200,.03) 42%, transparent 70%),
@@ -303,6 +307,7 @@
 .card-skin-yozora {
   --card-panel-bg:#0c1130;
   --card-panel-border:rgba(207,224,255,.22);
+  --card2:#0c1130; --line:rgba(207,224,255,.22);
   background:
     radial-gradient(9px 9px at 86% 12%, rgba(255,246,226,.75) 0 56%, rgba(255,246,226,0) 58%),
     radial-gradient(150px 150px at 86% 12%, rgba(255,238,200,.08) 0%, transparent 68%),
