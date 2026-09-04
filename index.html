@@ -1175,7 +1175,7 @@
     .board-compose-field textarea {
       width:100%; box-sizing:border-box; min-height:38px; max-height:120px;
       padding:9px 44px 9px 15px; border-radius:19px;
-      border:1px solid rgba(255,255,255,.14); background:#12291d; color:#e8f0ea;
+      border:1px solid var(--board-input-border, rgba(255,255,255,.14)); background:var(--board-input-bg, #12291d); color:#e8f0ea;
       font-size:14px; line-height:1.5; font-family:inherit; resize:none; outline:none;
       transition:border-color .16s ease;
     }
@@ -3715,7 +3715,7 @@
 </div>
 
 <!-- 掲示板（中身は後日実装） -->
-<div class="page" id="page-board">
+<div class="page board-page-wrap" id="page-board">
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
@@ -12222,7 +12222,7 @@
   // data.skinId を渡すと、その見た目(色・チップ・影絵など)に丸ごと差し替わる。無指定なら'default'
   async function generateProfileCardImage(data) {
     const skin = PROFILE_CARD_SKINS[data.skinId] || PROFILE_CARD_SKINS.default;
-    const W = 900, H = 700;
+    const W = 1200, H = 630; // Xのカードは1200×630(約1.91:1)が標準。マイカードもここに合わせる
     const canvas = document.createElement('canvas');
     canvas.width = W * 2; canvas.height = H * 2;   // 縮小表示でも文字が潰れないよう2倍で描く
     const ctx = canvas.getContext('2d');
@@ -12252,67 +12252,67 @@
     // アイコン：金のリング＋外側にうっすら光彩
     const avImg = await shareLoadImage(data.avatarUrl);
     ctx.beginPath();
-    ctx.arc(110, 110, 62 + 4.5, 0, Math.PI * 2);
+    ctx.arc(100, 96, 52 + 4.5, 0, Math.PI * 2);
     ctx.lineWidth = 9; ctx.strokeStyle = 'rgba(240,201,74,.08)'; ctx.stroke();
-    shareDrawAvatar(ctx, avImg, 110, 110, 124, {
+    shareDrawAvatar(ctx, avImg, 100, 96, 104, {
       bg: skin.avatarBg, fg: skin.avatarFg, initial: (data.username || '?').charAt(0),
       ring: skin.avatarRing, ringWidth: 4,
     });
 
-    // ユーザー名（長い名前は幅580で「…」）
+    // ユーザー名（長い名前は幅440で「…」）
     ctx.fillStyle = '#e8f0ea';
-    ctx.font = "900 38px 'Zen Kaku Gothic New', sans-serif";
+    ctx.font = "900 32px 'Zen Kaku Gothic New', sans-serif";
     let uname = data.username || '';
-    while(uname.length > 1 && ctx.measureText(uname).width > 580) uname = uname.slice(0, -1);
+    while(uname.length > 1 && ctx.measureText(uname).width > 440) uname = uname.slice(0, -1);
     if(uname !== (data.username || '')) uname += '…';
-    ctx.fillText(uname, 196, 106);
+    ctx.fillText(uname, 170, 88);
 
     // 称号チップ
     if(data.rankLabel) {
-      ctx.font = "800 16px 'Zen Kaku Gothic New', sans-serif";
+      ctx.font = "800 15px 'Zen Kaku Gothic New', sans-serif";
       const label = '★ ' + data.rankLabel;
-      const cw = ctx.measureText(label).width + 28;
-      const cg = ctx.createLinearGradient(196, 124, 196 + cw, 158);
+      const cw = ctx.measureText(label).width + 26;
+      const cg = ctx.createLinearGradient(170, 104, 170 + cw, 134);
       cg.addColorStop(0, skin.rankChip[0]); cg.addColorStop(1, skin.rankChip[1]);
-      shareRoundRect(ctx, 196, 124, cw, 34, 9);
+      shareRoundRect(ctx, 170, 104, cw, 32, 9);
       ctx.fillStyle = cg; ctx.fill();
       ctx.fillStyle = skin.rankChipText;
-      ctx.fillText(label, 210, 146);
+      ctx.fillText(label, 183, 125);
     }
 
-    // 12軸グラフ（マイページの「あなたの価値観」と同じ値）
+    // 12軸グラフ（マイページの「あなたの価値観」と同じ値）。左側、縦幅630に収まるサイズに調整
     const vp = (typeof _cachedValueProfile !== 'undefined') ? _cachedValueProfile : null;
     const labels12 = (vp && vp.labAll) || [...getAxisA(), ...getAxisB()];
     const values12 = (vp && vp.valsAll) || labels12.map(() => 0);
     shareDrawRadar(ctx, {
-      cx: 250, cy: 460, r: 125, labelR: 160,
+      cx: 230, cy: 350, r: 108, labelR: 138,
       labels: labels12, values: values12,
       fill: skin.radarFill, stroke: skin.radarStroke,
-      labelColor: skin.radarLabel, labelFont: "600 15px 'Zen Kaku Gothic New', sans-serif",
+      labelColor: skin.radarLabel, labelFont: "600 14px 'Zen Kaku Gothic New', sans-serif",
       rings: [1, 0.5],
     });
 
-    // 好みのタイプ
-    shareRoundRect(ctx, 508, 212, 344, 84, 14);
+    // 好みのタイプ（右列）
+    shareRoundRect(ctx, 520, 76, 620, 76, 14);
     ctx.fillStyle = skin.panelBg; ctx.fill();
     ctx.lineWidth = 1; ctx.strokeStyle = skin.panelBorder; ctx.stroke();
     ctx.fillStyle = skin.typeLabelColor;
-    ctx.font = "14px 'Zen Kaku Gothic New', sans-serif";
-    ctx.fillText(t('cardValueTypeLabel') || '好みのタイプ', 526, 240);
+    ctx.font = "13px 'Zen Kaku Gothic New', sans-serif";
+    ctx.fillText(t('cardValueTypeLabel') || '好みのタイプ', 538, 102);
     ctx.fillStyle = skin.typeValueColor;
-    ctx.font = "900 26px 'Zen Kaku Gothic New', sans-serif";
+    ctx.font = "900 24px 'Zen Kaku Gothic New', sans-serif";
     let typeLabel = (vp && typeof valueTypeLabelFrom === 'function') ? valueTypeLabelFrom(labels12, values12) : '';
     if(!typeLabel) typeLabel = t('cardValueTypeNone') || '—';
-    while(typeLabel.length > 1 && ctx.measureText(typeLabel).width > 308) typeLabel = typeLabel.slice(0, -1);
-    ctx.fillText(typeLabel, 526, 276);
+    while(typeLabel.length > 1 && ctx.measureText(typeLabel).width > 580) typeLabel = typeLabel.slice(0, -1);
+    ctx.fillText(typeLabel, 538, 134);
 
     // 数値：2×2（レビュー・上質・フォロワー・お気に入り）
-    shareRoundRect(ctx, 508, 314, 344, 198, 14);
+    shareRoundRect(ctx, 520, 168, 620, 170, 14);
     ctx.fillStyle = skin.statsBg; ctx.fill();
     ctx.lineWidth = 1; ctx.strokeStyle = skin.statsBorder; ctx.stroke();
     ctx.fillStyle = skin.statsDivider;
-    ctx.fillRect(508 + 172, 314, 1, 198);
-    ctx.fillRect(508, 314 + 99, 344, 1);
+    ctx.fillRect(520 + 310, 168, 1, 170);
+    ctx.fillRect(520, 168 + 85, 620, 1);
     const cells = [
       { v: data.reviewCount, l: t('statReviews'),   c: '#8fe5ab', lc: '#8db5a0' },
       { v: data.qualityCount, l: t('statQuality'),  c: '#f0c94a', lc: '#dccaa0' },
@@ -12321,31 +12321,31 @@
     ];
     ctx.textAlign = 'center';
     cells.forEach((c, i) => {
-      const cxx = 508 + (i % 2) * 172 + 86;
-      const cyy = 314 + Math.floor(i / 2) * 99;
+      const cxx = 520 + (i % 2) * 310 + 155;
+      const cyy = 168 + Math.floor(i / 2) * 85;
       ctx.fillStyle = c.c;
-      ctx.font = "900 32px 'Zen Kaku Gothic New', sans-serif";
-      ctx.fillText(String(c.v ?? 0), cxx, cyy + 52);
+      ctx.font = "900 30px 'Zen Kaku Gothic New', sans-serif";
+      ctx.fillText(String(c.v ?? 0), cxx, cyy + 45);
       ctx.fillStyle = c.lc;
-      ctx.font = "14px 'Zen Kaku Gothic New', sans-serif";
+      ctx.font = "13px 'Zen Kaku Gothic New', sans-serif";
       let lb = c.l || '';
-      while(lb.length > 1 && ctx.measureText(lb).width > 160) lb = lb.slice(0, -1);
-      ctx.fillText(lb, cxx, cyy + 76);
+      while(lb.length > 1 && ctx.measureText(lb).width > 280) lb = lb.slice(0, -1);
+      ctx.fillText(lb, cxx, cyy + 67);
     });
     ctx.textAlign = 'left';
 
     // キャッチコピー
     ctx.fillStyle = skin.taglineAccent;
     ctx.font = "800 12px 'Zen Kaku Gothic New', sans-serif";
-    ctx.fillText('MY GRAPH', 508, 542);
+    ctx.fillText('MY GRAPH', 520, 372);
     ctx.fillStyle = skin.taglineColor;
-    ctx.font = "800 20px 'Zen Kaku Gothic New', sans-serif";
-    shareWrapLines(ctx, t('cardTagline') || '', 344, 2)
-      .forEach((line, i) => ctx.fillText(line, 508, 571 + i * 29));
+    ctx.font = "800 19px 'Zen Kaku Gothic New', sans-serif";
+    shareWrapLines(ctx, t('cardTagline') || '', 620, 1)
+      .forEach((line, i) => ctx.fillText(line, 520, 398 + i * 26));
 
     shareDrawFooter(ctx, {
-      x: 48, w: 804, lineY: 626, logoY: 650, baseline: 672,
-      logoSize: 30, brandSize: 23, subSize: 15,
+      x: 48, w: 1104, lineY: 570, logoY: 590, baseline: 610,
+      logoSize: 28, brandSize: 21, subSize: 14,
       logoBg: skin.footerLogoBg, logoFg: skin.footerLogoFg,
       lineColor: skin.footerLine, subColor: skin.footerSub,
     });
@@ -22000,7 +22000,7 @@
     window._loggedInFrameId = equipped.frame_id || 'default';
     window._loggedInBadgeSkinId = equipped.badge_skin || 'default';
     window._loggedInBoardSkinId = equipped.board_skin || 'default';
-    document.querySelectorAll('.board-page-wrap').forEach(el => {
+    document.querySelectorAll('#page-board, #page-board-general, #page-board-value, #page-dm, #page-dm-list').forEach(el => {
       el.className = el.className.replace(/\bboard-skin-\S+/g, '').trim();
       el.classList.add(`board-skin-${window._loggedInBoardSkinId}`);
     });
