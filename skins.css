@@ -95,21 +95,24 @@
 [class*="board-skin-"]::after,  [class*="mypage-skin-"]::after  { z-index: -1 !important; }
 
 /* ══════════════════════════════════════════════════════════════════
-   body自体の背景をアクティブページのスキンに連動させる
-   ・#page-mypage / #page-board 等は横幅が固定＆中央寄せなので、画面が広い時は
-     その左右にアプリ全体の背景(既定は緑)がそのまま透けて見えてしまう。
-   ・:has()で「今どのスキン付きページがactiveか」を判定し、bodyの背景そのものを
-     差し替えることで、中央の箱の外側もテーマ色に揃える。
-   ・新しいスキンを追加したら、ここに1行足すこと（忘れると新スキンの時だけ
-     左右が緑のまま浮いて見えるバグになる）。
+   #themeScenery：「月・星・天の川」等、画面全体に1枚だけ敷く背景シーン
+   ・board-skin-<id> / mypage-skin-<id> の箱(#page-mypage 等)は横幅が固定＆
+     中央寄せなので、箱自体に背景を塗ると画面が広い時に箱の外側(左右の余白)
+     との継ぎ目が見えてしまう(色が違う/絵がズレる)。
+   ・そこで「月・星・天の川・ベースの空色」といった重い絵は、box幅に関係なく
+     常に画面いっぱいを覆う #themeScenery (position:fixed;inset:0、body直下に
+     1個だけ置いてある実要素)側にまとめて描く。JS側が今アクティブなページの
+     スキンに応じて #themeScenery のクラスを scenery-board-<id> /
+     scenery-mypage-<id> に付け替える(updateThemeScenery()。nav()と
+     applyMyEquippedCustomization()から呼ばれる)。
+   ・箱(board-skin-<id>/mypage-skin-<id>)側は、--board-panel-bg 等の
+     「必須CSS変数」と、::before/::after の瞬く星・流れ星アニメだけを持つ。
+   ・新しいスキンを追加したら、下に scenery-board-<id> / scenery-mypage-<id>
+     を1つずつ足すこと（忘れると新スキンの時だけ画面の余白部分が
+     テーマ色に揃わないバグになる）。
    ══════════════════════════════════════════════════════════════════ */
-body:has(#page-mypage.active.mypage-skin-yozora),
-body:has(#page-board.active.board-skin-yozora),
-body:has(#page-board-general.active.board-skin-yozora),
-body:has(#page-board-value.active.board-skin-yozora),
-body:has(#page-dm.active.board-skin-yozora),
-body:has(#page-dm-list.active.board-skin-yozora) {
-  background: linear-gradient(180deg,#05070f 0%,#0a0f26 42%,#0d1533 76%,#141c46 100%) fixed;
+#themeScenery {
+  position: fixed; inset: 0; z-index: -3; pointer-events: none;
 }
 
 .board-skin-default { background: transparent; --board-panel-bg: var(--bg); --board-input-bg:#12291d; --board-input-border:rgba(255,255,255,.14); --hdr-bg: rgba(7,21,13,.9); --board-icon-muted:#5f7268; --board-icon-active:#c3d4c9; --board-reaction-mine-bg:rgba(92,201,142,.18); --board-reaction-mine-border:rgba(92,201,142,.5); --board-reaction-bg:rgba(255,255,255,.05); --board-reaction-border:rgba(255,255,255,.1); }
@@ -179,19 +182,8 @@ body:has(#page-dm-list.active.board-skin-yozora) {
 }
 
 
-/* ══════════ ① 掲示板（board） ══════════ */
-.board-skin-yozora {
-  --board-panel-bg:#0c1230;
-  --board-input-bg:#141c46;
-  --board-input-border:rgba(207,224,255,.22);
-  --hdr-bg:rgba(5,7,15,.82);
-  --board-icon-muted:#7c8bc2;
-  --board-icon-active:#dfe6f7;
-  --board-reaction-mine-bg:rgba(159,188,255,.2);
-  --board-reaction-mine-border:rgba(159,188,255,.55);
-  --board-reaction-bg:rgba(207,224,255,.07);
-  --board-reaction-border:rgba(207,224,255,.16);
-  --bg:#080b1a; --card:#0e1430; --card2:#10152e; --line:rgba(207,224,255,.22);
+/* ══════════ #themeScenery（画面全体に1枚だけ敷く背景シーン。box幅に一切縛られない） ══════════ */
+#themeScenery.scenery-board-yozora {
   background:
     /* 月 */
     radial-gradient(13px 13px at 85% 11%, rgba(255,246,226,.9) 0 56%, rgba(255,246,226,0) 58%),
@@ -222,7 +214,45 @@ body:has(#page-dm-list.active.board-skin-yozora) {
     radial-gradient(52% 36% at 80% 64%, rgba(122,88,184,.13) 0%, transparent 72%),
     /* ベース（下が地平の大気光でわずかに明るい） */
     linear-gradient(180deg,#05070f 0%,#0a0f26 42%,#0d1533 76%,#141c46 100%);
-  background-attachment:fixed;
+}
+#themeScenery.scenery-mypage-yozora {
+  background:
+    /* 月は掲示板と左右対称の位置（左上）に置いて、画面ごとの表情を変えている */
+    radial-gradient(11px 11px at 12% 9%, rgba(255,246,226,.85) 0 56%, rgba(255,246,226,0) 58%),
+    radial-gradient(210px 210px at 12% 9%, rgba(255,238,200,.09) 0%, rgba(255,238,200,.03) 42%, transparent 70%),
+    radial-gradient(1.8px 1.8px at 28% 11%, rgba(255,255,255,.9) 0 55%, transparent 56%),
+    radial-gradient(1.1px 1.1px at 44% 6%,  rgba(207,224,255,.65) 0 55%, transparent 56%),
+    radial-gradient(1.5px 1.5px at 61% 15%, rgba(255,255,255,.8) 0 55%, transparent 56%),
+    radial-gradient(2px 2px    at 78% 9%,   rgba(255,246,226,.8) 0 55%, transparent 56%),
+    radial-gradient(1.2px 1.2px at 91% 19%, rgba(207,224,255,.6) 0 55%, transparent 56%),
+    radial-gradient(1.4px 1.4px at 15% 27%, rgba(255,255,255,.7) 0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 37% 33%,  rgba(207,224,255,.5) 0 55%, transparent 56%),
+    radial-gradient(1.6px 1.6px at 66% 39%, rgba(255,255,255,.6) 0 55%, transparent 56%),
+    radial-gradient(1.1px 1.1px at 86% 47%, rgba(207,224,255,.45) 0 55%, transparent 56%),
+    radial-gradient(1.3px 1.3px at 22% 58%, rgba(255,255,255,.45) 0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 52% 66%,  rgba(207,224,255,.35) 0 55%, transparent 56%),
+    radial-gradient(1.2px 1.2px at 74% 77%, rgba(255,255,255,.3) 0 55%, transparent 56%),
+    linear-gradient(73deg, transparent 36%, rgba(198,214,255,.055) 45%, rgba(216,228,255,.1) 50%, rgba(198,214,255,.05) 56%, transparent 65%),
+    radial-gradient(56% 38% at 74% 26%, rgba(96,120,220,.15) 0%, transparent 70%),
+    radial-gradient(50% 34% at 22% 66%, rgba(122,88,184,.12) 0%, transparent 72%),
+    linear-gradient(180deg,#05070f 0%,#0a0f26 44%,#0d1533 78%,#131a42 100%);
+}
+
+/* ══════════ ① 掲示板（board） ══════════ */
+.board-skin-yozora {
+  --board-panel-bg:#0c1230;
+  --board-input-bg:#141c46;
+  --board-input-border:rgba(207,224,255,.22);
+  --hdr-bg:rgba(5,7,15,.82);
+  --board-icon-muted:#7c8bc2;
+  --board-icon-active:#dfe6f7;
+  --board-reaction-mine-bg:rgba(159,188,255,.2);
+  --board-reaction-mine-border:rgba(159,188,255,.55);
+  --board-reaction-bg:rgba(207,224,255,.07);
+  --board-reaction-border:rgba(207,224,255,.16);
+  --bg:#080b1a; --card:#0e1430; --card2:#10152e; --line:rgba(207,224,255,.22);
+  /* 月・星・天の川・ベース色は #themeScenery.scenery-board-yozora 側で画面全体に1枚だけ描く
+     （この箱自体の background は使わない＝箱の横幅に縛られて画面外に緑の余白が出ていたバグの原因だった） */
 }
 /* 瞬く星（同時に夜空全体がゆっくり流れる。opacity と transform で別のアニメを重ねている） */
 .board-skin-yozora::before {
@@ -324,27 +354,7 @@ body:has(#page-dm-list.active.board-skin-yozora) {
   --card-preview-accent:rgba(159,188,255,.4);
   --card-preview-graph-fill:rgba(142,168,255,.3);
   --card-preview-graph-stroke:#9fbcff;
-  background:
-    /* 月は掲示板と左右対称の位置（左上）に置いて、画面ごとの表情を変えている */
-    radial-gradient(11px 11px at 12% 9%, rgba(255,246,226,.85) 0 56%, rgba(255,246,226,0) 58%),
-    radial-gradient(210px 210px at 12% 9%, rgba(255,238,200,.09) 0%, rgba(255,238,200,.03) 42%, transparent 70%),
-    radial-gradient(1.8px 1.8px at 28% 11%, rgba(255,255,255,.9) 0 55%, transparent 56%),
-    radial-gradient(1.1px 1.1px at 44% 6%,  rgba(207,224,255,.65) 0 55%, transparent 56%),
-    radial-gradient(1.5px 1.5px at 61% 15%, rgba(255,255,255,.8) 0 55%, transparent 56%),
-    radial-gradient(2px 2px    at 78% 9%,   rgba(255,246,226,.8) 0 55%, transparent 56%),
-    radial-gradient(1.2px 1.2px at 91% 19%, rgba(207,224,255,.6) 0 55%, transparent 56%),
-    radial-gradient(1.4px 1.4px at 15% 27%, rgba(255,255,255,.7) 0 55%, transparent 56%),
-    radial-gradient(1px 1px    at 37% 33%,  rgba(207,224,255,.5) 0 55%, transparent 56%),
-    radial-gradient(1.6px 1.6px at 66% 39%, rgba(255,255,255,.6) 0 55%, transparent 56%),
-    radial-gradient(1.1px 1.1px at 86% 47%, rgba(207,224,255,.45) 0 55%, transparent 56%),
-    radial-gradient(1.3px 1.3px at 22% 58%, rgba(255,255,255,.45) 0 55%, transparent 56%),
-    radial-gradient(1px 1px    at 52% 66%,  rgba(207,224,255,.35) 0 55%, transparent 56%),
-    radial-gradient(1.2px 1.2px at 74% 77%, rgba(255,255,255,.3) 0 55%, transparent 56%),
-    linear-gradient(73deg, transparent 36%, rgba(198,214,255,.055) 45%, rgba(216,228,255,.1) 50%, rgba(198,214,255,.05) 56%, transparent 65%),
-    radial-gradient(56% 38% at 74% 26%, rgba(96,120,220,.15) 0%, transparent 70%),
-    radial-gradient(50% 34% at 22% 66%, rgba(122,88,184,.12) 0%, transparent 72%),
-    linear-gradient(180deg,#05070f 0%,#0a0f26 44%,#0d1533 78%,#131a42 100%);
-  background-attachment:fixed;
+  /* 月・星・天の川・ベース色は #themeScenery.scenery-mypage-yozora 側で画面全体に1枚だけ描く */
 }
 .mypage-skin-yozora::before {
   content:'';

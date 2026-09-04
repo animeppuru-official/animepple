@@ -2733,6 +2733,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
+<div id="themeScenery" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════
      LANGUAGE SELECTOR OVERLAY
@@ -7938,6 +7939,7 @@
     const domPage = (page === 'user') ? 'mypage' : page;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('page-'+domPage).classList.add('active');
+    if(typeof updateThemeScenery === 'function') updateThemeScenery();
     // 掲示板チャットのスマホ表示：下部ナビを消し、ヘッダー／会話／入力バーの3段固定にする。
     // 会話だけがスクロールするので、打っている間に会話が押し出されない
     const isBoardChat = (domPage === 'board-value' || domPage === 'board-general' || domPage === 'dm');
@@ -21999,6 +22001,25 @@
   }
   window.renderCustomizePage = renderCustomizePage;
 
+  // 「星空」等、box幅に縛られず画面全体に1枚だけ敷く背景シーン。
+  // #page-mypage / #page-board 等はテーマの箱ごとに背景を塗っていたため、画面が広い時に
+  // 箱の外側(左右の余白)との継ぎ目が見えてしまっていた。今は、今アクティブなページの
+  // スキンに応じて #themeScenery (position:fixed;inset:0の共有1枚)だけを塗り替える方式にして、
+  // 箱の内も外も同じ1枚の絵になり継ぎ目が原理的に出ないようにしている。
+  function updateThemeScenery() {
+    const scenery = document.getElementById('themeScenery');
+    if(!scenery) return;
+    const isActive = id => document.getElementById(id)?.classList.contains('active');
+    let cls = '';
+    if(isActive('page-mypage')) {
+      cls = `scenery-mypage-${window._loggedInMypageSkinId || 'default'}`;
+    } else if(['page-board','page-board-general','page-board-value','page-dm','page-dm-list'].some(isActive)) {
+      cls = `scenery-board-${window._loggedInBoardSkinId || 'default'}`;
+    }
+    scenery.className = cls;
+  }
+  window.updateThemeScenery = updateThemeScenery;
+
   // 自分が今装備しているカスタマイズを、ヘッダーアイコン・通知バッジ色に反映する
   async function applyMyEquippedCustomization() {
     if(!_currentUser) return;
@@ -22018,6 +22039,7 @@
     });
     document.body.className = document.body.className.replace(/\bbadge-skin-\S+/g, '').trim();
     document.body.classList.add(`badge-skin-${equipped.badge_color_skin || 'default'}`);
+    updateThemeScenery();
     renderHeaderAvatar();
   }
   window.applyMyEquippedCustomization = applyMyEquippedCustomization;
