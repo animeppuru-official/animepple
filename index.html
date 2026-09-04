@@ -953,14 +953,14 @@
     .mypage-share-row { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
     .mypage-share-preview {
       flex:0 0 96px; height:96px; border-radius:11px; border:1px solid rgba(255,255,255,.1);
-      background:radial-gradient(130% 110% at 12% 0%, #17402a 0%, #0b1f14 60%, #061109 100%);
+      background:var(--card-preview-bg, radial-gradient(130% 110% at 12% 0%, #17402a 0%, #0b1f14 60%, #061109 100%));
       padding:9px; box-sizing:border-box; display:flex; flex-direction:column; gap:5px;
     }
     .mypage-share-preview-head { display:flex; align-items:center; gap:5px; }
-    .mypage-share-preview-dot { width:16px; height:16px; flex:0 0 16px; border-radius:50%; background:linear-gradient(150deg,#4a2f6d,#241a2c); border:1px solid rgba(240,201,74,.6); }
+    .mypage-share-preview-dot { width:16px; height:16px; flex:0 0 16px; border-radius:50%; background:var(--card-preview-dot-bg, linear-gradient(150deg,#4a2f6d,#241a2c)); border:1px solid var(--card-preview-dot-border, rgba(240,201,74,.6)); }
     .mypage-share-preview-bar { flex:1 1 auto; height:5px; border-radius:3px; background:rgba(255,255,255,.22); }
     .mypage-share-preview-graph { flex:1 1 auto; min-height:0; width:100%; }
-    .mypage-share-preview-foot { height:4px; width:60%; border-radius:2px; background:rgba(142,226,165,.4); }
+    .mypage-share-preview-foot { height:4px; width:60%; border-radius:2px; background:var(--card-preview-accent, rgba(142,226,165,.4)); }
     .mypage-share-copy { flex:1 1 auto; min-width:0; }
     .mypage-share-title { display:block; font-size:13px; font-weight:800; color:#eaf6ee; }
     .mypage-share-sub { display:block; margin-top:3px; font-size:11.5px; line-height:1.65; color:#8db5a0; }
@@ -1135,17 +1135,17 @@
     /* ── BOARD MORE（三点リーダー：返信・リアクション・コピーの入口） ── */
     .board-more-btn {
       flex:0 0 auto; width:28px; height:28px; padding:0; border:none; border-radius:8px;
-      background:transparent; color:#5f7268; cursor:pointer;
+      background:transparent; color:var(--board-icon-muted, #5f7268); cursor:pointer;
       display:flex; align-items:center; justify-content:center;
       opacity:.5; transition:opacity .14s ease, background-color .14s ease, color .14s ease;
     }
     .board-msg-row:hover .board-more-btn { opacity:1; }
-    .board-more-btn:hover, .board-more-btn.is-open { background:rgba(255,255,255,.08); color:#c3d4c9; opacity:1; }
+    .board-more-btn:hover, .board-more-btn.is-open { background:rgba(255,255,255,.08); color:var(--board-icon-active, #c3d4c9); opacity:1; }
     @media (hover:none) { .board-more-btn { opacity:.65; } }
     /* メニュー：吹き出しの近くに出す小さなポップオーバー */
     .board-more-menu {
       position:fixed; z-index:10007; min-width:172px; padding:6px;
-      border-radius:14px; background:#14261c; border:1px solid rgba(255,255,255,.14);
+      border-radius:14px; background:var(--board-panel-bg, var(--card-panel-bg, #14261c)); border:1px solid rgba(255,255,255,.14);
       box-shadow:0 20px 44px -16px rgba(0,0,0,.95);
       animation:boardPopIn .16s ease both;
     }
@@ -1974,7 +1974,7 @@
     .mypage-hero-wrap-bg {
       position:relative; border-radius:22px; overflow:hidden;
       border:1px solid rgba(255,255,255,.09);
-      background:linear-gradient(150deg,#173021 0%,#0e2015 60%,#0c1c12 100%);
+      background:var(--mypage-card-bg, linear-gradient(150deg,#173021 0%,#0e2015 60%,#0c1c12 100%));
       box-shadow:0 20px 50px -28px rgba(0,0,0,.85);
       margin:16px 16px 22px;
     }
@@ -5645,7 +5645,7 @@
       <div class="mypage-share-row">
         <span class="mypage-share-preview" aria-hidden="true">
           <span class="mypage-share-preview-head"><span class="mypage-share-preview-dot"></span><span class="mypage-share-preview-bar"></span></span>
-          <svg viewBox="0 0 100 100" class="mypage-share-preview-graph"><polygon points="50,14 68,18.8 81.2,32 86,50 81.2,68 68,81.2 50,86 32,81.2 18.8,68 14,50 18.8,32 32,18.8" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/><polygon points="50,21.2 66.2,21.9 74.9,35.6 78.8,50 74.9,64.4 66.2,78.1 50,75.2 44.6,59.4 18.8,68 42.8,50 46.9,48.2 37.4,28.2" fill="rgba(92,201,142,.3)" stroke="#5cc98e" stroke-width="2"/></svg>
+          <svg viewBox="0 0 100 100" class="mypage-share-preview-graph"><polygon points="50,14 68,18.8 81.2,32 86,50 81.2,68 68,81.2 50,86 32,81.2 18.8,68 14,50 18.8,32 32,18.8" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/><polygon points="50,21.2 66.2,21.9 74.9,35.6 78.8,50 74.9,64.4 66.2,78.1 50,75.2 44.6,59.4 18.8,68 42.8,50 46.9,48.2 37.4,28.2" fill="var(--card-preview-graph-fill, rgba(92,201,142,.3))" stroke="var(--card-preview-graph-stroke, #5cc98e)" stroke-width="2"/></svg>
           <span class="mypage-share-preview-foot"></span>
         </span>
         <span class="mypage-share-copy">
@@ -12393,10 +12393,10 @@
         tagLabel: '#8ea8ff', tagText: '#eaf1ff', line: 'rgba(207,224,255,.16)', logoBg: '#9fbcff', logoFg: '#0b1026',
       },
       quality: {
-        top: '#3b2f6b', mid: '#7a5c15', bottom: '#231a3a', border: 'rgba(255,205,105,.7)',
-        panelBorder: 'rgba(255,205,105,.5)', accent: '#ffcd69', sub: '#dcc38a',
-        avatarBg: '#2a2008', avatarFg: '#fff3d0',
-        tagLabel: '#ffcd69', tagText: '#fff6dd', line: 'rgba(255,205,105,.34)', logoBg: '#ffcd69', logoFg: '#2a2008',
+        top: '#221d54', mid: '#151041', bottom: '#0a0820', border: 'rgba(255,205,105,.5)',
+        panelBorder: 'rgba(255,205,105,.34)', accent: '#ffd06a', sub: '#a9adcf',
+        avatarBg: '#141039', avatarFg: '#eef2ff',
+        tagLabel: '#ffd06a', tagText: '#eef2ff', line: 'rgba(255,205,105,.22)', logoBg: '#ffd06a', logoFg: '#221d54',
       },
     },
   };
@@ -13686,7 +13686,7 @@
         </button>`
       : '';
     const timeSlot = `<div class="board-time-slot" style="flex:0 0 auto;display:flex;align-items:center;gap:2px;align-self:flex-end;padding-bottom:1px;">
-      <span class="board-time" style="font-size:10.5px;color:#5f7268;white-space:nowrap;">${formatRelativeTime(item.created_at)}</span>
+      <span class="board-time" style="font-size:10.5px;color:var(--board-icon-muted,#5f7268);white-space:nowrap;">${formatRelativeTime(item.created_at)}</span>
       ${moreBtn}
     </div>`;
     return `<div class="board-msg-line ${isMine?'is-mine':'is-theirs'}" style="display:flex;align-items:flex-end;gap:${isMine?5:7}px;flex-direction:${isMine?'row-reverse':'row'};">
@@ -13800,7 +13800,7 @@
         if(!chips) return '';
         // 自分側は時刻を同じ行に並べて縦を節約する
         const timeInline = isMine
-          ? `<span class="board-time-inline" style="font-size:9.5px;color:#5f7268;white-space:nowrap;">${formatRelativeTime(item.created_at)}</span>`
+          ? `<span class="board-time-inline" style="font-size:9.5px;color:var(--board-icon-muted,#5f7268);white-space:nowrap;">${formatRelativeTime(item.created_at)}</span>`
           : '';
         return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;position:relative;justify-content:${isMine?'flex-end':'flex-start'};padding:${isMine?'0 31px 0 0':'0 0 0 37px'};">${chips}${timeInline}</div>`;
       };
@@ -15085,9 +15085,8 @@
       <button type="button" class="board-more-menu-item" data-act="reply"><span>↩</span><span>${escapeHtml(t('boardSheetReply'))}</span></button>
       <button type="button" class="board-more-menu-item" data-act="copy"><span>⧉</span><span>${escapeHtml(t('boardSheetCopy'))}</span></button>
       ${(!post.user_id || post.user_id !== _currentUser?.id) ? `<button type="button" class="board-more-menu-item" data-act="report"><span>🚩</span><span>${escapeHtml(t('reportBtn'))}</span></button>` : ''}`;
-    document.body.appendChild(menu);
-
-    // ボタンの近くに出す。画面外にはみ出す場合は内側へ寄せる
+    // 掲示板のテーマ(CSS変数)を受け取れるよう、bodyではなく今開いているページの中に追加する（position:fixedなので見た目の位置は変わらない）
+    (document.querySelector('.page.active') || document.body).appendChild(menu);
     const r = btn.getBoundingClientRect();
     const mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8);
@@ -15224,7 +15223,8 @@
     menu.innerHTML = `
       <button type="button" class="board-more-menu-item" data-act="report"><span>🚩</span><span>${escapeHtml(t('reportBtn'))}</span></button>
       <button type="button" class="board-more-menu-item" data-act="block"><span>🚫</span><span>${escapeHtml(isBlocked ? t('unblockBtn') : t('blockBtn'))}</span></button>`;
-    document.body.appendChild(menu);
+    // マイページのテーマ(CSS変数)を受け取れるよう、bodyではなく今開いているページの中に追加する
+    (document.querySelector('.page.active') || document.body).appendChild(menu);
 
     const r = btn.getBoundingClientRect();
     const mw = menu.offsetWidth, mh = menu.offsetHeight;

@@ -73,36 +73,64 @@
 
 /* ── 掲示板全体の見た目（吹き出し以外の背景・入力欄など）。自分が見る時だけのテーマで、
    投稿者ごとではなく閲覧者本人の好み。.board-skin-<id> を .board-page-wrap に付けて使う ── */
-.board-skin-default { background: transparent; --board-panel-bg: var(--bg); --board-input-bg:#12291d; --board-input-border:rgba(255,255,255,.14); --hdr-bg: rgba(7,21,13,.9); }
+/* ══════════════════════════════════════════════════════════════════
+   全スキン共通の土台（今後スキンを何個追加しても、ここは触らなくていい）
+   ・「掲示板」「マイページ」テーマの外枠(position/z-index/画面いっぱいに覆う)は
+     ここで一括固定する。個別スキン側は「content」と「background(-image)」だけ書けばよい。
+   ・!important を付けているのは、個別スキン側がposition/insetをうっかり
+     書いてしまっても、必ずこちらが勝つようにするため（＝毎回チェック不要にする）。
+   ══════════════════════════════════════════════════════════════════ */
+[class*="board-skin-"], [class*="mypage-skin-"] {
+  position: relative !important;
+  isolation: isolate !important;
+  min-height: 100% !important;
+}
+[class*="board-skin-"]::before, [class*="board-skin-"]::after,
+[class*="mypage-skin-"]::before, [class*="mypage-skin-"]::after {
+  position: fixed !important;   /* absoluteだと親要素の実サイズ次第で余白が出るため、常にビューポート基準に固定する */
+  inset: 0 !important;
+  pointer-events: none !important;
+}
+[class*="board-skin-"]::before, [class*="mypage-skin-"]::before { z-index: -2 !important; }
+[class*="board-skin-"]::after,  [class*="mypage-skin-"]::after  { z-index: -1 !important; }
+
+.board-skin-default { background: transparent; --board-panel-bg: var(--bg); --board-input-bg:#12291d; --board-input-border:rgba(255,255,255,.14); --hdr-bg: rgba(7,21,13,.9); --board-icon-muted:#5f7268; --board-icon-active:#c3d4c9; }
 .board-skin-default .board-composer { background:#0b1a11; }
 
 /* ── マイページ全体の見た目。自分が見る時だけのテーマ（他人には影響しない）。
    #page-mypage に .mypage-skin-<id> を付けて使う ── */
-.mypage-skin-default { background: transparent; --card-panel-bg:#09201b; --card-panel-border:rgba(255,255,255,.14); --hdr-bg: rgba(7,21,13,.9); }
+.mypage-skin-default { background: transparent; --card-panel-bg:#09201b; --card-panel-border:rgba(255,255,255,.14); --hdr-bg: rgba(7,21,13,.9); --mypage-cover-a: rgba(92,201,142,.22); --mypage-cover-b: rgba(217,164,65,.16); --card-preview-bg: radial-gradient(130% 110% at 12% 0%, #17402a 0%, #0b1f14 60%, #061109 100%); --card-preview-dot-bg: linear-gradient(150deg,#4a2f6d,#241a2c); --card-preview-dot-border: rgba(240,201,74,.6); --card-preview-accent: rgba(142,226,165,.4); --card-preview-graph-fill: rgba(92,201,142,.3); --card-preview-graph-stroke: #5cc98e; --mypage-card-bg: linear-gradient(150deg,#173021 0%,#0e2015 60%,#0c1c12 100%); }
 
-/* ── ここから下に、新しいスキンをどんどん追記していく ── */
 /* ==========================================================================
    夜空スキン（yozora）／skins.css の末尾にそのまま貼り足す
    ==========================================================================
-   6カテゴリ全部入り：board / mypage / card / frame / badge_color
-   （badge は guide.js 側）
+   カテゴリ：① board ② mypage ③ card（通常/上質） ④ frame ⑥ badge_color
+   （⑤ 称号バッジは skin-catalogs-yozora.js 側）
 
-   夜空の作り方＝色替えではなく「層」で作っている。下から順に：
+   共通の土台ルールに合わせてあります：
+   ・position / inset / z-index は一切書いていません（[class*="board-skin-"] 等が
+     !important で面倒を見るため）。疑似要素は content と background だけ。
+   ・::before / ::after は共通ルールで inset:0 の全画面レイヤーになるので、
+     流れ星は「細い棒の要素」ではなく、全画面レイヤーの中に background-image で
+     1本の光の筋を描き、その筋ごと transform で動かす形にしています。
+   ・必須CSS変数（--hdr-bg / --board-icon-* / --bg / --card / --card2 / --line /
+     --mypage-card-bg / --card-preview-* など）は全部揃えてあります。
+
+   夜空の作り方＝色替えではなく「層」で作っています。下から順に：
      ① 地平の大気光を含むベースグラデ（上ほど暗い #05070f → 下 #141c46）
      ② 星雲のにじみ（青紫2つ）
-     ③ 天の川の帯（107度の斜め・薄い白青）
+     ③ 天の川の帯（斜めの薄い白青）
      ④ 星（静止・大小18粒。等級差を出すため大きさと不透明度を散らしてある）
      ⑤ 月（小さな円＋広いグロー）
-     ⑥ 瞬く星（::before・opacityだけ動かす7粒）
-     ⑦ 流れ星（::after・1要素で3本ぶんを時間差で流す。24秒周期）
-   動かすのは opacity と transform だけなので再描画は起きない。
+     ⑥ 瞬く星（::before・opacity だけ動かす7粒）＋ 夜空全体のゆっくりした流れ
+     ⑦ 流れ星（::after・1レイヤーで3本ぶんを時間差で流す。24秒周期）
+   動かすのは opacity と transform だけなので再描画は起きません。
    ========================================================================== */
 
 /* ══ 共通キーフレーム ══ */
 @keyframes yozora-twinkle { 0%,100% { opacity:.32 } 50% { opacity:1 } }
 
 /* 夜空の流れ。3〜4分で一巡する、ごくゆっくりした斜めの移動＋わずかな拡大。
-   transform だけなので再描画は起きない（背景位置は動かしていない）。
    月と星雲は動かさず固定の目印として残し、星の層だけが流れる。
    translate は最大2.2%、拡大は1.06〜1.09倍なので、縁が透けることはない。 */
 @keyframes yozora-drift {
@@ -111,9 +139,11 @@
   100% { transform:translate3d(0,0,0) scale(1.06); }
 }
 
-/* 1要素で3本ぶん。消えている間に次の位置へ飛ばしているので要素は1つで足りる */
+/* 流れ星。1レイヤーで3本ぶん。消えている間に次の開始位置へ飛ばしているので
+   レイヤーは1枚で足りる。transform-origin が光の筋の根元なので、
+   rotate で軌道の角度、scaleX で尾の伸び縮みを表している。 */
 @keyframes yozora-meteor-track {
-  /* ―― 1本目：左上から浅い角度で ―― */
+  /* ―― 1本目：左上から浅い角度で長く ―― */
   0%    { opacity:0; transform:translate3d(6vw,7vh,0) rotate(22deg) scaleX(.15); }
   1.5%  { opacity:.95; transform:translate3d(8vw,calc(7vh + 18px),0) rotate(22deg) scaleX(1); }
   6%    { opacity:0; transform:translate3d(calc(6vw + 330px),calc(7vh + 133px),0) rotate(22deg) scaleX(.9); }
@@ -123,20 +153,22 @@
   38.2% { opacity:.85; transform:translate3d(calc(38vw + 22px),calc(4vh + 16px),0) rotate(36deg) scaleX(1); }
   42%   { opacity:0; transform:translate3d(calc(38vw + 210px),calc(4vh + 153px),0) rotate(36deg) scaleX(.9); }
   42.01%{ opacity:0; transform:translate3d(22vw,24vh,0) rotate(11deg) scaleX(.15); }
-  /* ―― 3本目：中ほどを長くゆっくり ―― */
+  /* ―― 3本目：中ほどをゆっくり ―― */
   71%   { opacity:0; transform:translate3d(22vw,24vh,0) rotate(11deg) scaleX(.15); }
   72.5% { opacity:.7; transform:translate3d(calc(22vw + 26px),calc(24vh + 5px),0) rotate(11deg) scaleX(1); }
   79%   { opacity:0; transform:translate3d(calc(22vw + 400px),calc(24vh + 78px),0) rotate(11deg) scaleX(.9); }
   100%  { opacity:0; transform:translate3d(6vw,7vh,0) rotate(22deg) scaleX(.15); }
 }
 
-/* ══ ① 掲示板（board） ══ */
+
+/* ══════════ ① 掲示板（board） ══════════ */
 .board-skin-yozora {
-  position:relative; isolation:isolate;
   --board-panel-bg:#0c1230;
   --board-input-bg:#141c46;
   --board-input-border:rgba(207,224,255,.22);
-  --hdr-bg: rgba(5,7,15,.82);
+  --hdr-bg:rgba(5,7,15,.82);
+  --board-icon-muted:#7c8bc2;
+  --board-icon-active:#dfe6f7;
   --bg:#080b1a; --card:#0e1430; --card2:#10152e; --line:rgba(207,224,255,.22);
   background:
     /* 月 */
@@ -170,9 +202,9 @@
     linear-gradient(180deg,#05070f 0%,#0a0f26 42%,#0d1533 76%,#141c46 100%);
   background-attachment:fixed;
 }
-/* 瞬く星（同時にゆっくり流れる。opacity と transform で別々のアニメを重ねている） */
+/* 瞬く星（同時に夜空全体がゆっくり流れる。opacity と transform で別のアニメを重ねている） */
 .board-skin-yozora::before {
-  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  content:'';
   background-image:
     radial-gradient(2.2px 2.2px at 19% 22%, rgba(255,255,255,.95) 0 55%, transparent 56%),
     radial-gradient(1.7px 1.7px at 41% 12%, rgba(207,224,255,.9)  0 55%, transparent 56%),
@@ -183,19 +215,15 @@
     radial-gradient(1.8px 1.8px at 76% 68%, rgba(207,224,255,.6)  0 55%, transparent 56%);
   animation:yozora-twinkle 5.2s ease-in-out infinite, yozora-drift 180s ease-in-out infinite;
 }
-/* 流れ星（24秒で3本） */
+/* 流れ星（24秒で3本）。全画面レイヤーの左上に光の筋を1本だけ描き、それを動かす */
 .board-skin-yozora::after {
-  content:''; position:absolute; top:0; left:0; z-index:-1; pointer-events:none;
-  width:130px; height:1.6px; border-radius:2px; transform-origin:0 50%; opacity:0;
-  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(207,224,255,.55) 55%, rgba(232,240,255,.95) 88%, #fff 100%);
+  content:'';
+  background-image:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(207,224,255,.55) 55%, rgba(232,240,255,.95) 88%, #fff 100%);
+  background-repeat:no-repeat;
+  background-size:130px 1.6px;
+  background-position:0 0;
+  transform-origin:0 0;
   animation:yozora-meteor-track 24s linear infinite;
-}
-/* もっと流したい時は掲示板の中に <i class="board-meteor"></i> を足すだけ（周期をずらしてある） */
-.board-skin-yozora .board-meteor {
-  position:absolute; top:0; left:0; z-index:-1; pointer-events:none;
-  width:96px; height:1.4px; border-radius:2px; transform-origin:0 50%; opacity:0;
-  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,217,138,.5) 55%, rgba(255,236,196,.9) 88%, #fff 100%);
-  animation:yozora-meteor-track 31s linear 9s infinite;
 }
 .board-skin-yozora .board-composer {
   background:#0d1330;
@@ -203,7 +231,7 @@
   box-shadow:inset 0 1px 0 rgba(207,224,255,.07);
 }
 
-/* ══ 吹き出し（boardカテゴリの一部） ══ */
+/* ══ 吹き出し（board カテゴリの一部） ══ */
 .bubble-skin-yozora { max-width:min(440px,70vw); border-width:1px; border-style:solid; overflow:hidden; }
 .bubble-skin-yozora.is-mine { max-width:min(440px,74vw); }
 .bubble-skin-yozora.is-mine, .bubble-skin-yozora.is-theirs { border-radius:14px 14px 14px 4px; }
@@ -234,7 +262,8 @@
 .bubble-skin-yozora.is-theirs .bubble-quote-body { color:#aab6d2; }
 .bubble-skin-yozora.is-theirs .bubble-quote { border-left:2px solid rgba(159,188,255,.5); }
 
-/* 吹き出しの中の星（静止5粒） */
+/* 吹き出しの中の星（静止5粒）。.chat-bubble は position:relative 済みなので
+   z-index:0 以下・pointer-events:none だけ守れば本文に被らない */
 .bubble-skin-yozora::after {
   content:''; position:absolute; inset:0; z-index:0; pointer-events:none; border-radius:inherit;
   background-image:
@@ -257,14 +286,24 @@
 }
 .bubble-skin-yozora.is-grouped::before { animation:none; opacity:.4; }
 
-/* ══ ② マイページ（mypage） ══ */
+
+/* ══════════ ② マイページ（mypage） ══════════ */
 .mypage-skin-yozora {
-  position:relative; isolation:isolate;
   --card-panel-bg:#0e1430;
   --card-panel-border:rgba(207,224,255,.22);
-  --hdr-bg: rgba(5,7,15,.82);
+  --hdr-bg:rgba(5,7,15,.82);
   --bg:#080b1a; --card:#0e1430; --card2:#10152e; --line:rgba(207,224,255,.22);
+  --mypage-cover-a:rgba(159,188,255,.28);
+  --mypage-cover-b:rgba(207,224,255,.14);
+  --mypage-card-bg:linear-gradient(150deg,#1b2350 0%,#101740 60%,#0a0e26 100%);
+  --card-preview-bg:radial-gradient(130% 110% at 12% 0%, #1e2a63 0%, #101740 60%, #05070f 100%);
+  --card-preview-dot-bg:linear-gradient(150deg,#2a3675,#0b1026);
+  --card-preview-dot-border:rgba(207,224,255,.6);
+  --card-preview-accent:rgba(159,188,255,.4);
+  --card-preview-graph-fill:rgba(142,168,255,.3);
+  --card-preview-graph-stroke:#9fbcff;
   background:
+    /* 月は掲示板と左右対称の位置（左上）に置いて、画面ごとの表情を変えている */
     radial-gradient(11px 11px at 12% 9%, rgba(255,246,226,.85) 0 56%, rgba(255,246,226,0) 58%),
     radial-gradient(210px 210px at 12% 9%, rgba(255,238,200,.09) 0%, rgba(255,238,200,.03) 42%, transparent 70%),
     radial-gradient(1.8px 1.8px at 28% 11%, rgba(255,255,255,.9) 0 55%, transparent 56%),
@@ -286,7 +325,7 @@
   background-attachment:fixed;
 }
 .mypage-skin-yozora::before {
-  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  content:'';
   background-image:
     radial-gradient(2.2px 2.2px at 33% 20%, rgba(255,255,255,.95) 0 55%, transparent 56%),
     radial-gradient(1.7px 1.7px at 56% 27%, rgba(207,224,255,.9) 0 55%, transparent 56%),
@@ -296,14 +335,19 @@
     radial-gradient(1.5px 1.5px at 70% 62%, rgba(255,255,255,.6) 0 55%, transparent 56%);
   animation:yozora-twinkle 6.4s ease-in-out infinite, yozora-drift 220s ease-in-out infinite;
 }
+/* マイページは落ち着かせたいので流れ星は1本だけ・28秒周期 */
 .mypage-skin-yozora::after {
-  content:''; position:absolute; top:0; left:0; z-index:-1; pointer-events:none;
-  width:118px; height:1.5px; border-radius:2px; transform-origin:0 50%; opacity:0;
-  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(207,224,255,.55) 55%, rgba(232,240,255,.95) 88%, #fff 100%);
+  content:'';
+  background-image:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(207,224,255,.55) 55%, rgba(232,240,255,.95) 88%, #fff 100%);
+  background-repeat:no-repeat;
+  background-size:118px 1.5px;
+  background-position:0 0;
+  transform-origin:0 0;
   animation:yozora-meteor-track 28s linear 4s infinite;
 }
 
-/* ══ ③ レビューカード（card）／通常・上質の2パターン ══ */
+
+/* ══════════ ③ レビューカード（card）／通常・上質の2パターン ══════════ */
 .card-skin-yozora {
   --card-panel-bg:#0c1130;
   --card-panel-border:rgba(207,224,255,.22);
@@ -322,33 +366,38 @@
     radial-gradient(60% 42% at 24% 24%, rgba(96,120,220,.15) 0%, transparent 72%),
     linear-gradient(180deg,#1b2350 0%,#101740 46%,#0a0e26 100%);
 }
-/* 上質：金を主役に。月光を金色の広い光として大きく入れ、天の川も金の帯に置き換え、
-   星も金〜白金で統一。枠と見出しの金と合わせて「金の夜空」に振っている。 */
+/* 上質：地は通常と同じ夜空のまま。金は薄いグラデーションで広げず、
+   月・星4粒・枠・見出しといった「小さく強い点」で純色のまま使う。
+   地の紺だけ通常よりわずかに紫寄りにして、金が締まって見えるようにしている。 */
 .card-skin-yozora.is-quality {
-  --card-panel-bg:#2a2008;
-  --card-panel-border:rgba(255,205,105,.55);
+  --card-panel-bg:#141039;
+  --card-panel-border:rgba(255,205,105,.42);
+  --card2:#141039; --line:rgba(255,205,105,.22);
   background:
-    /* 月（大きめ・完全な金） */
-    radial-gradient(15px 15px at 84% 12%, #fff3d0 0 54%, rgba(255,243,208,0) 57%),
-    radial-gradient(120px 120px at 84% 12%, rgba(255,196,92,.42) 0%, rgba(255,196,92,.14) 46%, transparent 74%),
-    radial-gradient(300px 300px at 84% 12%, rgba(255,180,70,.20) 0%, transparent 72%),
-    /* 星（金・白金） */
-    radial-gradient(2.1px 2.1px at 13% 11%, #fff6dd 0 55%, transparent 56%),
-    radial-gradient(1.5px 1.5px at 30% 20%, rgba(255,214,130,.95) 0 55%, transparent 56%),
-    radial-gradient(1.8px 1.8px at 50% 8%,  #ffeec2 0 55%, transparent 56%),
-    radial-gradient(1.3px 1.3px at 66% 26%, rgba(255,205,105,.9) 0 55%, transparent 56%),
-    radial-gradient(1.7px 1.7px at 22% 38%, rgba(255,230,170,.85) 0 55%, transparent 56%),
-    radial-gradient(1.4px 1.4px at 77% 45%, rgba(255,205,105,.8) 0 55%, transparent 56%),
-    radial-gradient(1.2px 1.2px at 44% 60%, rgba(255,230,170,.6) 0 55%, transparent 56%),
-    radial-gradient(1.5px 1.5px at 62% 68%, rgba(255,205,105,.55) 0 55%, transparent 56%),
-    /* 天の川を金の帯に */
-    linear-gradient(104deg, transparent 30%, rgba(255,205,105,.14) 42%, rgba(255,228,160,.26) 50%, rgba(255,205,105,.13) 58%, transparent 70%),
-    /* 金の大気光（下辺から立ち上がる） */
-    radial-gradient(120% 62% at 50% 108%, rgba(255,186,74,.34) 0%, rgba(255,186,74,.10) 46%, transparent 78%),
-    linear-gradient(180deg,#3b2f6b 0%,#5a4514 46%,#7a5c15 66%,#231a3a 100%);
+    /* 月（小さくキレのある金。にじみは最小限） */
+    radial-gradient(10px 10px at 85% 12%, #ffd06a 0 55%, rgba(255,208,106,0) 58%),
+    radial-gradient(46px 46px at 85% 12%, rgba(255,196,92,.28) 0%, transparent 72%),
+    /* 金の星は4粒だけ。残りは通常と同じ白青 */
+    radial-gradient(2px 2px    at 13% 11%, #ffd06a 0 55%, transparent 56%),
+    radial-gradient(1.6px 1.6px at 66% 26%, #ffc85c 0 55%, transparent 56%),
+    radial-gradient(1.5px 1.5px at 30% 41%, #ffd884 0 55%, transparent 56%),
+    radial-gradient(1.3px 1.3px at 77% 58%, rgba(255,200,92,.9) 0 55%, transparent 56%),
+    radial-gradient(1.4px 1.4px at 32% 21%, rgba(207,224,255,.75) 0 55%, transparent 56%),
+    radial-gradient(1.6px 1.6px at 52% 9%,  rgba(255,255,255,.8) 0 55%, transparent 56%),
+    radial-gradient(1.1px 1.1px at 46% 61%, rgba(207,224,255,.5) 0 55%, transparent 56%),
+    radial-gradient(1.3px 1.3px at 88% 33%, rgba(255,255,255,.55) 0 55%, transparent 56%),
+    /* 天の川は白青のまま（金にしない） */
+    linear-gradient(104deg, transparent 38%, rgba(198,214,255,.06) 47%, rgba(216,228,255,.11) 51%, transparent 62%),
+    radial-gradient(60% 42% at 24% 24%, rgba(112,104,210,.16) 0%, transparent 72%),
+    linear-gradient(180deg,#221d54 0%,#151041 46%,#0a0820 100%);
 }
 
-/* ══ ④ アイコンフレーム（frame）※CSS表示用。Canvas版は guide.js 側と同じ見た目 ══ */
+
+/* ══════════ ④ アイコンフレーム（frame）══════════
+   CSS表示用。Canvas版（AVATAR_FRAME_CANVAS.yozora）と1対1で対応：
+     0 0 0 3px #0b1026                 → 内側の輪（夜空の紺・太め）
+     0 0 0 4.2px rgba(207,224,255,.75) → 星の白青の細い輪
+     0 0 0 7px rgba(159,188,255,.18)   → 外側のうっすら光る輪               */
 .avatar-frame-yozora {
   border:none;
   box-shadow:
@@ -357,13 +406,15 @@
     0 0 0 7px rgba(159,188,255,.18);
 }
 
-/* ══ ⑥ 通知バッジ・未読ドット ══ */
+
+/* ══════════ ⑥ 通知バッジ・未読ドット ══════════
+   赤（#e5484d）は夜空の中で浮くので、星の白青に寄せている */
 .badge-skin-yozora { --badge-color:#8ea8ff; }
 
-/* ══ 動きを減らす設定の端末では止める ══ */
+
+/* ══════════ 動きを減らす設定の端末では止める ══════════ */
 @media (prefers-reduced-motion: reduce) {
   .board-skin-yozora::after,
-  .board-skin-yozora .board-meteor,
   .mypage-skin-yozora::after { animation:none; opacity:0; }
   .board-skin-yozora::before,
   .mypage-skin-yozora::before { animation:none; opacity:.7; transform:none; }
