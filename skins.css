@@ -1,0 +1,72 @@
+/* ==========================================================================
+   アニメップル：チャット吹き出しスキン専用CSS
+   ==========================================================================
+   新しいスキン(コラボ等)を追加する時は、このファイルの末尾に
+   .bubble-skin-<id> のブロックを1つ足すだけでいい。JS側は一切触らなくてよい。
+   （skinMap経由でユーザーごとにIDを渡すと、そのユーザーの投稿だけこのCSSが当たる）
+
+   最低限クラスの中に用意されているもの:
+     .bubble-skin-<id>                共通の外枠（padding・border-radius等の基準はdefaultを参照）
+     .bubble-skin-<id>.is-mine        自分の投稿の時
+     .bubble-skin-<id>.is-theirs      相手の投稿の時
+     .bubble-skin-<id>.is-grouped     連投2件目以降（しっぽを付けない等）
+     .bubble-inner / .bubble-text     吹き出しの中身・本文
+     .bubble-quote / .bubble-quote-name / .bubble-quote-body   返信時の引用ブロック
+
+   背景画像やキャラのシルエットを入れたい場合は ::after 等の疑似要素を使う
+   （.chat-bubble に position:relative; z-index分けは既に用意済みなので、
+   本文の上に被らないよう z-index:0 以下、pointer-events:none を付けること）。
+   ========================================================================== */
+
+.chat-bubble { position:relative; }
+.chat-bubble .bubble-inner { position:relative; z-index:1; padding:9px 13px; }
+.chat-bubble .bubble-text { font-size:14px; line-height:1.65; white-space:pre-wrap; word-break:break-word; text-align:left; }
+.chat-bubble .bubble-quote { padding-left:8px; margin-bottom:7px; opacity:.85; }
+.chat-bubble .bubble-quote-name { display:block; font-size:10.5px; font-weight:800; }
+.chat-bubble .bubble-quote-body { display:block; font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:min(300px,54vw); }
+
+/* ── default：今の標準の見た目。全員のデフォルト ── */
+.bubble-skin-default { max-width:min(440px,70vw); border-width:1px; border-style:solid; }
+.bubble-skin-default.is-mine { max-width:min(440px,74vw); }
+.bubble-skin-default.is-mine, .bubble-skin-default.is-theirs { border-radius:14px 14px 14px 4px; }
+.bubble-skin-default.is-mine { border-radius:14px 14px 4px 14px; }
+.bubble-skin-default.is-grouped { border-radius:14px; }
+.bubble-skin-default.is-mine {
+  background:#2f7d55; border-color:rgba(255,255,255,.09);
+  box-shadow:0 10px 22px -16px rgba(0,0,0,.8);
+}
+.bubble-skin-default.is-mine .bubble-text { color:#f2fbf5; }
+.bubble-skin-default.is-mine .bubble-quote-name { color:#d6f2e2; }
+.bubble-skin-default.is-mine .bubble-quote-body { color:#cfe8da; }
+.bubble-skin-default.is-mine .bubble-quote { border-left:2px solid rgba(255,255,255,.35); }
+.bubble-skin-default.is-theirs {
+  background:#262e33; border-color:rgba(255,255,255,.08);
+  box-shadow:0 8px 18px -16px rgba(0,0,0,.8);
+}
+.bubble-skin-default.is-theirs .bubble-text { color:#e6efe9; }
+.bubble-skin-default.is-theirs .bubble-quote-name { color:#9be3bd; }
+.bubble-skin-default.is-theirs .bubble-quote-body { color:#b6c8bd; }
+.bubble-skin-default.is-theirs .bubble-quote { border-left:2px solid rgba(147,226,183,.5); }
+
+/* ── レビューカードのスキン。card-skin-<id> で背景・装飾を丸ごと差し替える。
+   スキンごとに「通常」「上質(is-quality)」の2パターンを用意する
+   （例: 夜空スキンなら .card-skin-yozora＝通常夜空、.card-skin-yozora.is-quality＝上質夜空） ── */
+.card-skin-default { background:linear-gradient(180deg,#20392b 0%,#16291d 100%); }
+.card-skin-default.is-quality { background:linear-gradient(180deg,#3a2f10 0%,#241c08 100%); }
+
+/* ── アイコンフレーム。全アイコン（掲示板・DM・レビューカード・ヘッダー・マイページ）共通。
+   「自分の投稿だから金色」ではなく、「そのユーザーが今装備しているフレーム」を表示する。
+   新しいフレームは .avatar-frame-<id> を1つ足すだけでよい ── */
+.avatar-frame-default { border: 1px solid rgba(255,255,255,.14); }
+
+/* ── 通知バッジ・未読ドットの色。--badge-colorを上書きするだけで全部変わる。
+   新しいスキンは body に .badge-skin-<id> を付けて --badge-color を変えるだけでよい ── */
+:root { --badge-color: #e5484d; }
+.badge-skin-default { --badge-color: #e5484d; }
+
+/* ── 掲示板全体の見た目（吹き出し以外の背景・入力欄など）。自分が見る時だけのテーマで、
+   投稿者ごとではなく閲覧者本人の好み。.board-skin-<id> を .board-page-wrap に付けて使う ── */
+.board-skin-default { background: transparent; }
+.board-skin-default .board-composer { background:#0b1a11; }
+
+/* ── ここから下に、新しいスキンをどんどん追記していく ── */

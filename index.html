@@ -4201,6 +4201,27 @@
   </div>
 </div>
 
+<!-- カスタマイズ：吹き出し・レビューカード・アイコンフレーム・称号(殿堂入り限定)・通知バッジ色 -->
+<div class="page mypage-page-wrap" id="page-customize">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🎨 <span data-i18n="customizeMenuLabel">カスタマイズ</span></h2>
+    <div id="customizeTabs" style="display:flex;gap:6px;overflow-x:auto;margin-bottom:1rem;padding-bottom:2px;"></div>
+    <div id="customizeBody"></div>
+  </div>
+</div>
+
 <!-- DM：友達同士のみの1対1チャット。見た目・スクロール挙動は掲示板と同じ -->
 <div class="page" id="page-dm">
   <header class="hdr">
@@ -5711,6 +5732,11 @@
         <span class="mypage-menu-row-count" id="menuCountIcons"></span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
+      <button class="mypage-menu-row" onclick="nav('customize')">
+        <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.2 6.8H21l-5.6 4.1 2.2 6.8L12 15.6l-5.6 4.1 2.2-6.8L3 8.8h6.8z"/></svg></span>
+        <span class="mypage-menu-row-label" data-i18n="customizeMenuLabel">カスタマイズ</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
       </div>
     </div>
     </div><!-- /.mypage-col-side -->
@@ -6392,6 +6418,63 @@
     //     claimed boolean not null default false,
     //     primary key (user_id, quest_date)
     //   );
+    // ── カスタマイズ（吹き出し・レビューカード・アイコンフレーム・称号・通知バッジ色）の所持・装備 ──
+    // 必要テーブル（Supabase側で作成）：
+    //   create table user_skins (
+    //     user_id uuid not null references auth.users(id) on delete cascade,
+    //     category text not null,   -- 'bubble' | 'card' | 'frame' | 'badge' | 'badge_color'
+    //     skin_id text not null,
+    //     obtained_at timestamptz not null default now(),
+    //     primary key (user_id, category, skin_id)
+    //   );
+    //   create table user_equipped_skins (
+    //     user_id uuid primary key references auth.users(id) on delete cascade,
+    //     bubble_skin text not null default 'default',
+    //     card_skin text not null default 'default',
+    //     frame_id text not null default 'default',
+    //     badge_skin text not null default 'default',
+    //     badge_color_skin text not null default 'default',
+    //     board_skin text not null default 'default'  -- 掲示板の見た目（自分が見る時だけのテーマ、他人には影響しない）
+    //   );
+    customization: {
+      CATEGORY_COLUMN: { bubble: 'bubble_skin', card: 'card_skin', frame: 'frame_id', badge: 'badge_skin', badge_color: 'badge_color_skin', board: 'board_skin' },
+      async listOwned(userId, category) {
+        if(!sb || !userId) return ['default'];
+        const { data } = await sb.from('user_skins').select('skin_id').eq('user_id', userId).eq('category', category);
+        return ['default', ...((data || []).map(r => r.skin_id))];
+      },
+      async getEquipped(userId) {
+        if(!sb || !userId) return { bubble_skin: 'default', card_skin: 'default', frame_id: 'default', badge_skin: 'default', badge_color_skin: 'default', board_skin: 'default' };
+        const { data } = await sb.from('user_equipped_skins').select('*').eq('user_id', userId).maybeSingle();
+        return data || { bubble_skin: 'default', card_skin: 'default', frame_id: 'default', badge_skin: 'default', badge_color_skin: 'default', board_skin: 'default' };
+      },
+      async equip(userId, category, skinId) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const col = this.CATEGORY_COLUMN[category];
+        if(!col) return { error: 'invalid_category' };
+        if(skinId !== 'default') {
+          const owned = await this.listOwned(userId, category);
+          if(!owned.includes(skinId)) return { error: 'not_owned' };
+        }
+        const { error } = await sb.from('user_equipped_skins').upsert({ user_id: userId, [col]: skinId }, { onConflict: 'user_id' });
+        return { error };
+      },
+      // ガチャ等で入手した時に呼ぶ（今はまだどこからも呼ばれていない。将来ガチャの景品にスキンを混ぜる時に使う）
+      async grant(userId, category, skinId) {
+        if(!sb || !userId || skinId === 'default') return { error: null };
+        const { error } = await sb.from('user_skins').upsert({ user_id: userId, category, skin_id: skinId }, { onConflict: 'user_id,category,skin_id' });
+        return { error };
+      },
+      // 掲示板やレビュー一覧で「他の人からどう見えるか」をまとめて出すためのバッチ取得。
+      // 戻り値は { user_id: { bubble_skin, card_skin, frame_id, badge_skin, badge_color_skin } }
+      async getEquippedForUsers(userIds) {
+        if(!sb || !userIds || !userIds.length) return {};
+        const { data } = await sb.from('user_equipped_skins').select('*').in('user_id', userIds);
+        const map = {};
+        (data || []).forEach(row => { map[row.user_id] = row; });
+        return map;
+      },
+    },
     coins: {
       async get(userId) {
         if(!sb || !userId) return 0;
@@ -7640,6 +7723,7 @@
     'dm-list': '/mypage/messages',
     'daily-quest': '/gacha/daily-quest',
     'coin-shop': '/gacha/shop',
+    'customize': '/mypage/customize',
     settings: '/settings',
     'settings-account': '/settings/account',
     'settings-security': '/settings/security',
@@ -8018,6 +8102,7 @@
     if (page==='dm-list') { renderDmList().catch(console.error); }
     if (page==='daily-quest') { renderDailyQuestPage().catch(console.error); }
     if (page==='coin-shop') { renderCoinShopPage().catch(console.error); }
+    if (page==='customize') { renderCustomizePage().catch(console.error); }
     if (page==='dm'&&animeId) { renderDmThread(animeId).catch(console.error); }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
     if (page==='board-general'&&animeId) {
@@ -12235,22 +12320,30 @@
   // ══ レビュー共有カード（1200×630）════════════════════════
   // X の summary_large_image 規格。右6割をグラフ2枚に割り当てて「グラフが主役」にしている。
   // 文言・軸ラベルはすべて t() / getAxisA() 経由なので、表示言語のまま画像になる
-  async function generateReviewCardImage(page, review, isQuality) {
+  // ══ レビュー共有画像のスキン設定 ══════════════════════════
+  // 各スキンは「通常」「上質(quality)」の2パターンをセットで持つ（例: 夜空スキンなら通常夜空・上質夜空）。
+  // 新しいスキンを足す時はここに1エントリ足すだけでよい（JSの描画ロジック側は触らない）
+  const REVIEW_CARD_SHARE_SKINS = {
+    default: {
+      normal: { top:'#20392b', mid:'#16291d', bottom:'#122016', border:'rgba(255,255,255,.1)',
+        panelBorder:'rgba(255,255,255,.07)', accent:'#8fe5ab', sub:'#8db5a0',
+        avatarBg:'#2f5a41', avatarFg:'#8fe5ab', avatarRing:'rgba(143,229,171,.5)',
+        tagLabel:'#5ec97a', tagText:'#e8f0ea', line:'rgba(255,255,255,.09)', logoBg:'#5ec97a', logoFg:'#07200f' },
+      quality: { top:'#3a2f14', mid:'#241c09', bottom:'#1c1607', border:'rgba(224,178,86,.55)',
+        panelBorder:'rgba(224,178,86,.18)', accent:'#e8c463', sub:'#c3ad82',
+        avatarBg:'#5a4520', avatarFg:'#e8c463', avatarRing:'rgba(232,196,99,.65)',
+        tagLabel:'#e0b256', tagText:'#f4ecd8', line:'rgba(224,178,86,.22)', logoBg:'#e0b256', logoFg:'#241c09' },
+    },
+  };
+  async function generateReviewCardImage(page, review, isQuality, skinId) {
     const W = 1200, H = 630;
     const canvas = document.createElement('canvas');
     canvas.width = W * 2; canvas.height = H * 2;
     const ctx = canvas.getContext('2d');
     ctx.scale(2, 2);
 
-    const COL = isQuality
-      ? { top:'#3a2f14', mid:'#241c09', bottom:'#1c1607', border:'rgba(224,178,86,.55)',
-          panelBorder:'rgba(224,178,86,.18)', accent:'#e8c463', sub:'#c3ad82',
-          avatarBg:'#5a4520', avatarFg:'#e8c463', avatarRing:'rgba(232,196,99,.65)',
-          tagLabel:'#e0b256', tagText:'#f4ecd8', line:'rgba(224,178,86,.22)', logoBg:'#e0b256', logoFg:'#241c09' }
-      : { top:'#20392b', mid:'#16291d', bottom:'#122016', border:'rgba(255,255,255,.1)',
-          panelBorder:'rgba(255,255,255,.07)', accent:'#8fe5ab', sub:'#8db5a0',
-          avatarBg:'#2f5a41', avatarFg:'#8fe5ab', avatarRing:'rgba(143,229,171,.5)',
-          tagLabel:'#5ec97a', tagText:'#e8f0ea', line:'rgba(255,255,255,.09)', logoBg:'#5ec97a', logoFg:'#07200f' };
+    const skin = REVIEW_CARD_SHARE_SKINS[skinId] || REVIEW_CARD_SHARE_SKINS.default;
+    const COL = isQuality ? skin.quality : skin.normal;
 
     // 背景：160°のグラデーション（canvas は角度指定できないので座標で近似）
     const grad = ctx.createLinearGradient(W * 0.34, 0, W * 0.66, H);
@@ -12391,7 +12484,8 @@
         if(review) {
           btn.style.opacity = '.5';
           try {
-            const blob = await generateReviewCardImage(page, review, isVoted);
+            const mySkin = _currentUser ? await db.customization.getEquipped(_currentUser.id).catch(() => null) : null;
+            const blob = await generateReviewCardImage(page, review, isVoted, mySkin?.card_skin || 'default');
             if(!blob) throw new Error('blob is null');
             const cardUrl = await uploadShareCard(blob, title, shareUrl);
             if(cardUrl) {
@@ -12451,7 +12545,8 @@
         const originalLabel = cardShareBtn.innerHTML;
         cardShareBtn.innerHTML = t('shareCardGenerating');
         try {
-          const blob = await generateReviewCardImage(page, review, isVoted);
+          const mySkin2 = _currentUser ? await db.customization.getEquipped(_currentUser.id).catch(() => null) : null;
+          const blob = await generateReviewCardImage(page, review, isVoted, mySkin2?.card_skin || 'default');
           if(!blob) throw new Error('blob is null');
           const title = getTitle(page) || page.title || page.titleEn || '';
           const shareText = t('shareReviewText').replace('{title}', title);
@@ -13577,6 +13672,8 @@
     // 常に「今現在設定されている」アイコンを表示するため。過去の投稿でも、後でアイコンを変えれば反映される）
     let boardAvatarMap = {};
     let boardIsAdminMap = {};
+    let boardSkinMap = {};
+    let boardFrameMap = {};
     if(DB_MODE === 'supabase' && sb && posts.length) {
       try {
         const posterIds = [...new Set(posts.map(p=>p.user_id).filter(Boolean))];
@@ -13584,6 +13681,12 @@
         profiles.forEach(p=>{
           if(p.avatar_url) boardAvatarMap[p.id] = p.avatar_url;
           if(p.is_admin) boardIsAdminMap[p.id] = true;
+        });
+        // 掲示板は「他の人からどう見えるか」がそのまま出る場所なので、投稿者ごとの装備を反映する
+        const equippedMap = await db.customization.getEquippedForUsers(posterIds);
+        Object.entries(equippedMap).forEach(([uid, row]) => {
+          boardSkinMap[uid] = row.bubble_skin || 'default';
+          boardFrameMap[uid] = row.frame_id || 'default';
         });
       } catch(e) { console.warn('board avatar fetch:', e); }
     }
@@ -13625,7 +13728,7 @@
       // 自分=#2f7d55（旧#5cc98eは暗背景で明るすぎ、文字色も混在していた）／相手=#262e33。
       // opts.grouped: 同一ユーザーの連投2件目以降 → アイコン・名前を省略し行間を詰める
       // opts.quote:   引用元 {name, body} → 吹き出し内の上部に引用ブロックを出す（入れ子にしない）
-      const postCard = (item, opts) => renderChatBubbleHtml(item, { ...opts, avatarMap: boardAvatarMap, isAdminMap: boardIsAdminMap, showMoreBtn: true });
+      const postCard = (item, opts) => renderChatBubbleHtml(item, { ...opts, avatarMap: boardAvatarMap, isAdminMap: boardIsAdminMap, skinMap: boardSkinMap, frameMap: boardFrameMap, showMoreBtn: true });
       // リアクション行：既に付いてる絵文字をチップで表示（押すと自分の分だけON/OFF）＋「+」で新しい絵文字を選ぶ
       const reactionsRow = (item, isMine) => {
         const reactions = boardReactionsMap[item.id] || {};
@@ -16141,6 +16244,18 @@
     reportPickTargetLabel:{ ja:'どの発言/レビューを通報しますか？（複数選択可）', en:'Which post/review are you reporting? (multiple allowed)', ko:'어떤 발언/리뷰를 신고하시겠습니까? (복수 선택 가능)', 'zh-tw':'要檢舉哪一則發言／評論？（可複選）', 'zh-cn':'要举报哪一条发言／评论？（可多选）', es:'¿Qué publicación(es)/reseña(s) estás reportando? (puedes elegir varias)', fr:'Quel(s) message(s)/avis signalez-vous ? (plusieurs choix possibles)', pt:'Quais publicações/avaliações você está denunciando? (pode escolher várias)', de:'Welche Beiträge/Rezensionen meldest du? (Mehrfachauswahl möglich)', ar:'أي منشورات/مراجعات تُبلغ عنها؟ (يمكن اختيار أكثر من واحد)', th:'คุณกำลังรายงานข้อความ/รีวิวใด? (เลือกได้หลายรายการ)', id:'Postingan/ulasan mana yang Anda laporkan? (bisa pilih lebih dari satu)', ru:'Какие посты/отзывы вы жалуетесь? (можно выбрать несколько)', it:'Quali post/recensioni stai segnalando? (selezione multipla consentita)', vi:'Bạn đang báo cáo bài đăng/đánh giá nào? (có thể chọn nhiều)' },
     reportOtherRequiredAlert:{ ja:'「その他」を選んだ場合は詳しい状況を入力してください', en:'Please describe the situation when choosing "Other"', ko:'"기타"를 선택한 경우 자세한 상황을 입력해 주세요', 'zh-tw':'選擇「其他」時，請輸入詳細狀況', 'zh-cn':'选择“其他”时，请输入详细情况', es:'Describe la situación si eliges "Otro"', fr:'Veuillez décrire la situation si vous choisissez "Autre"', pt:'Descreva a situação se escolher "Outro"', de:'Bitte beschreibe die Situation bei „Sonstiges“', ar:'يرجى وصف الموقف عند اختيار "أخرى"', th:'กรุณาอธิบายสถานการณ์เมื่อเลือก "อื่นๆ"', id:'Harap jelaskan situasinya jika memilih "Lainnya"', ru:'Опишите ситуацию, если выбрано «Другое»', it:'Descrivi la situazione se scegli "Altro"', vi:'Vui lòng mô tả tình huống nếu chọn "Khác"' },
     dailyQuestBtn:{ ja:'デイリークエスト', en:'Daily Quests', ko:'데일리 퀘스트', 'zh-tw':'每日任務', 'zh-cn':'每日任务', es:'Misiones diarias', fr:'Quêtes quotidiennes', pt:'Missões diárias', de:'Tägliche Aufgaben', ar:'المهام اليومية', th:'เควสประจำวัน', id:'Misi harian', ru:'Ежедневные задания', it:'Missioni giornaliere', vi:'Nhiệm vụ hằng ngày' },
+    customizeMenuLabel:{ ja:'カスタマイズ', en:'Customize', ko:'커스터마이즈', 'zh-tw':'自訂', 'zh-cn':'自定义', es:'Personalizar', fr:'Personnaliser', pt:'Personalizar', de:'Anpassen', ar:'تخصيص', th:'ปรับแต่ง', id:'Kustomisasi', ru:'Настройка внешнего вида', it:'Personalizza', vi:'Tùy chỉnh' },
+    customizeTabBubble:{ ja:'吹き出し', en:'Chat bubble', ko:'말풍선', 'zh-tw':'對話框', 'zh-cn':'对话框', es:'Burbuja de chat', fr:'Bulle de discussion', pt:'Balão de chat', de:'Sprechblase', ar:'فقاعة الدردشة', th:'บอลลูนแชท', id:'Balon obrolan', ru:'Чат-пузырь', it:'Fumetto chat', vi:'Bong bóng chat' },
+    customizeTabBoard:{ ja:'掲示板のテーマ', en:'Board theme', ko:'게시판 테마', 'zh-tw':'掲示板主題', 'zh-cn':'板块主题', es:'Tema del foro', fr:'Thème du forum', pt:'Tema do quadro', de:'Board-Thema', ar:'سمة اللوحة', th:'ธีมบอร์ด', id:'Tema papan', ru:'Тема доски', it:'Tema bacheca', vi:'Chủ đề bảng' },
+    customizeTabCard:{ ja:'レビューカード', en:'Review card', ko:'리뷰 카드', 'zh-tw':'評論卡片', 'zh-cn':'评论卡片', es:'Tarjeta de reseña', fr:'Carte d\'avis', pt:'Cartão de avaliação', de:'Rezensionskarte', ar:'بطاقة المراجعة', th:'การ์ดรีวิว', id:'Kartu ulasan', ru:'Карточка отзыва', it:'Card recensione', vi:'Thẻ đánh giá' },
+    customizeTabFrame:{ ja:'アイコンフレーム', en:'Icon frame', ko:'아이콘 프레임', 'zh-tw':'頭像外框', 'zh-cn':'头像外框', es:'Marco de icono', fr:'Cadre d\'icône', pt:'Moldura do ícone', de:'Icon-Rahmen', ar:'إطار الأيقونة', th:'กรอบไอคอน', id:'Bingkai ikon', ru:'Рамка иконки', it:'Cornice icona', vi:'Khung biểu tượng' },
+    customizeTabBadge:{ ja:'称号(殿堂入り限定)', en:'Rank badge (Hall of Fame only)', ko:'칭호(명예의 전당 한정)', 'zh-tw':'稱號(限名人堂)', 'zh-cn':'称号(限名人堂)', es:'Insignia (solo Salón de la fama)', fr:'Titre (Panthéon uniquement)', pt:'Emblema (somente Hall da fama)', de:'Titel (nur Ruhmeshalle)', ar:'اللقب (قاعة المشاهير فقط)', th:'ยศ (เฉพาะหอเกียรติยศ)', id:'Gelar (khusus Aula Ketenaran)', ru:'Титул (только Зал славы)', it:'Titolo (solo Sala della fama)', vi:'Danh hiệu (chỉ Đại sảnh danh vọng)' },
+    customizeTabBadgeColor:{ ja:'通知バッジの色', en:'Notification badge color', ko:'알림 배지 색상', 'zh-tw':'通知徽章顏色', 'zh-cn':'通知徽章颜色', es:'Color de insignia de notificación', fr:'Couleur du badge de notification', pt:'Cor do emblema de notificação', de:'Benachrichtigungs-Badge-Farbe', ar:'لون شارة الإشعار', th:'สีป้ายแจ้งเตือน', id:'Warna lencana notifikasi', ru:'Цвет значка уведомлений', it:'Colore badge notifiche', vi:'Màu huy hiệu thông báo' },
+    customizeEquippedLabel:{ ja:'装備中', en:'Equipped', ko:'장착 중', 'zh-tw':'裝備中', 'zh-cn':'装备中', es:'Equipado', fr:'Équipé', pt:'Equipado', de:'Ausgerüstet', ar:'مجهّز', th:'สวมใส่อยู่', id:'Dipakai', ru:'Экипировано', it:'Equipaggiato', vi:'Đang trang bị' },
+    customizeEquipBtn:{ ja:'これにする', en:'Equip', ko:'장착하기', 'zh-tw':'裝備此項', 'zh-cn':'装备此项', es:'Equipar', fr:'Équiper', pt:'Equipar', de:'Ausrüsten', ar:'تجهيز', th:'สวมใส่', id:'Pakai', ru:'Экипировать', it:'Equipaggia', vi:'Trang bị' },
+    customizeLockedForNonHof:{ ja:'殿堂入りになると、ここでバッジのデザインを変えられるようになります。', en:'Once you reach Hall of Fame, you can change your badge design here.', ko:'명예의 전당에 도달하면 여기서 칭호 디자인을 바꿀 수 있습니다.', 'zh-tw':'進入名人堂後，即可在此更改稱號設計。', 'zh-cn':'进入名人堂后，即可在此更改称号设计。', es:'Al llegar al Salón de la fama, podrás cambiar el diseño de tu insignia aquí.', fr:'Une fois au Panthéon, vous pourrez changer le design de votre titre ici.', pt:'Ao chegar ao Hall da fama, você poderá mudar o design do seu emblema aqui.', de:'Sobald du die Ruhmeshalle erreichst, kannst du hier dein Titel-Design ändern.', ar:'بمجرد وصولك إلى قاعة المشاهير، يمكنك تغيير تصميم شارتك هنا.', th:'เมื่อคุณถึงหอเกียรติยศแล้ว คุณจะสามารถเปลี่ยนดีไซน์ยศได้ที่นี่', id:'Setelah mencapai Aula Ketenaran, Anda dapat mengubah desain lencana di sini.', ru:'Как только вы достигнете Зала славы, здесь можно будет изменить дизайн титула.', it:'Una volta raggiunta la Sala della fama, potrai cambiare il design del tuo titolo qui.', vi:'Khi đạt Đại sảnh danh vọng, bạn có thể đổi thiết kế danh hiệu tại đây.' },
+    customizeOnlyDefaultNote:{ ja:'今のところ「ノーマル」だけです。ガチャで手に入れると、ここに増えていきます。', en:'Only "Normal" is available for now. Items you get from the gacha will appear here.', ko:'현재는 "노멀"만 있습니다. 가챠로 얻으면 여기에 추가됩니다.', 'zh-tw':'目前只有「一般」。從扭蛋獲得後會顯示在這裡。', 'zh-cn':'目前只有「普通」。从扭蛋获得后会显示在这里。', es:'Por ahora solo está "Normal". Los objetos obtenidos del gacha aparecerán aquí.', fr:'Seul "Normal" est disponible pour l\'instant. Les objets du Gacha apparaîtront ici.', pt:'Por enquanto só há "Normal". Itens obtidos no gacha aparecerão aqui.', de:'Derzeit gibt es nur „Normal“. Aus dem Gacha erhaltene Gegenstände erscheinen hier.', ar:'يتوفر حاليًا "عادي" فقط. ستظهر هنا العناصر التي تحصل عليها من الغاتشا.', th:'ตอนนี้มีแค่ "ปกติ" เท่านั้น ไอเทมที่ได้จากกาชาจะมาโผล่ที่นี่', id:'Untuk saat ini hanya ada "Normal". Item dari gacha akan muncul di sini.', ru:'Пока доступен только «Обычный». Предметы из гачи появятся здесь.', it:'Per ora è disponibile solo "Normale". Gli oggetti ottenuti dal Gacha appariranno qui.', vi:'Hiện chỉ có "Bình thường". Vật phẩm từ Gacha sẽ xuất hiện ở đây.' },
+    customizeNormalLabel:{ ja:'ノーマル', en:'Normal', ko:'노멀', 'zh-tw':'一般', 'zh-cn':'普通', es:'Normal', fr:'Normal', pt:'Normal', de:'Normal', ar:'عادي', th:'ปกติ', id:'Normal', ru:'Обычный', it:'Normale', vi:'Bình thường' },
     coinShopBtn:{ ja:'ショップ', en:'Shop', ko:'상점', 'zh-tw':'商店', 'zh-cn':'商店', es:'Tienda', fr:'Boutique', pt:'Loja', de:'Shop', ar:'المتجر', th:'ร้านค้า', id:'Toko', ru:'Магазин', it:'Negozio', vi:'Cửa hàng' },
     gachaCoinBtn:{ ja:'コイン{n}枚で引く', en:'Draw for {n} coins', ko:'코인 {n}개로 뽑기', 'zh-tw':'花{n}枚硬幣抽一次', 'zh-cn':'花{n}枚硬币抽一次', es:'Tirar por {n} monedas', fr:'Tirer pour {n} pièces', pt:'Puxar por {n} moedas', de:'Für {n} Münzen ziehen', ar:'اسحب مقابل {n} عملة', th:'สุ่มด้วยเหรียญ {n} เหรียญ', id:'Tarik dengan {n} koin', ru:'Тянуть за {n} монет', it:'Estrai per {n} monete', vi:'Quay với {n} xu' },
     gachaCoin10Btn:{ ja:'コイン{n}枚で10連', en:'10-pull for {n} coins', ko:'코인 {n}개로 10연차', 'zh-tw':'花{n}枚硬幣抽10次', 'zh-cn':'花{n}枚硬币抽10次', es:'Tirada x10 por {n} monedas', fr:'Tirage x10 pour {n} pièces', pt:'Puxada x10 por {n} moedas', de:'10er-Ziehung für {n} Münzen', ar:'سحب 10 مقابل {n} عملة', th:'สุ่ม 10 ครั้งด้วยเหรียญ {n} เหรียญ', id:'Tarik 10x dengan {n} koin', ru:'10 попыток за {n} монет', it:'Estrazione x10 per {n} monete', vi:'Quay 10 lần với {n} xu' },
@@ -19508,6 +19623,14 @@
         try {
           cardRankQualityCounts = (rankFilterVal !== 'all') ? filteredQualityCounts : await db.reviews.getQualityCountsByUserIds(userIds);
         } catch(e) { console.warn('review rank fetch:', e); }
+        try {
+          const equippedMap = await db.customization.getEquippedForUsers(userIds);
+          Object.entries(equippedMap).forEach(([uid, row]) => {
+            cardSkinMap[uid] = row.card_skin || 'default';
+            cardFrameMap[uid] = row.frame_id || 'default';
+            cardBadgeSkinMap[uid] = row.badge_skin || 'default';
+          });
+        } catch(e) { console.warn('review customization fetch:', e); }
       }
     }
 
@@ -20069,6 +20192,7 @@
       checkFriendRequestBadge();
       startFriendRequestWatch();
       updateCoinBadge();
+      applyMyEquippedCustomization();
     }
     // yourValueHeaderBtn は常時表示（Design案通り）
     // 認証状態変化を監視
@@ -21086,6 +21210,7 @@
       // 本人が自分のマイページを見ている時だけ、実績到達によるアイコンの自動付与をチェックする
       if(_currentUser && targetUserId === _currentUser.id) {
         checkIconUnlocks(targetUserId, qualityCount, profileData?.is_admin);
+        const myEquipped = await db.customization.getEquipped(_currentUser.id).catch(() => null);
         setupMypageShareCard({
           userId: targetUserId,
           username: (window._loggedInUsername) || (profileData?.username) || '',
@@ -21095,6 +21220,7 @@
           qualityCount,
           followerCount: document.getElementById('statFollowerCount')?.textContent || 0,
           favoriteCount: document.getElementById('statFavCount')?.textContent || 0,
+          skinId: myEquipped?.card_skin || 'default',
         });
       }
     }
@@ -21113,12 +21239,13 @@
   function renderRankProgress(qualityCount) {
     const el = document.getElementById('mypageRankProgress');
     if(!el) return;
-    const currentRank = getRankByQualityCount(qualityCount);
-    const currentIdx = RANK_TIERS.indexOf(currentRank);
+    const mySkinId = window._loggedInBadgeSkinId || 'default'; // 殿堂入りだけこのIDで見た目が変わる（他ランクは元のまま）
+    const currentRank = getRankBadgeVisual(getRankByQualityCount(qualityCount), mySkinId);
+    const currentIdx = RANK_TIERS.indexOf(RANK_TIERS.find(r => r.nameKey === currentRank.nameKey));
     const nextRank = RANK_TIERS[currentIdx+1];
     if(!nextRank) {
       el.innerHTML = `<div class="mypage-rank-head"><span class="mypage-rank-chip">${rankIconSvg(currentRank.badgeIcon, currentRank.badgeIconColor, 14)} ${escapeHtml(t(currentRank.nameKey))}</span><span class="mypage-rank-next">${escapeHtml(t('rankMaxLabel'))}</span></div>
-        <div class="mypage-rank-badges">${RANK_TIERS.map(r=>`<span class="mypage-rank-badge is-got"><span class="mypage-rank-badge-icon">${rankIconSvg(r.badgeIcon, r.badgeIconColor, 17)}</span><span class="mypage-rank-badge-name">${escapeHtml(t(r.nameKey))}</span></span>`).join('')}</div>`;
+        <div class="mypage-rank-badges">${RANK_TIERS.map(r=>{ const rv = getRankBadgeVisual(r, mySkinId); return `<span class="mypage-rank-badge is-got"><span class="mypage-rank-badge-icon">${rankIconSvg(rv.badgeIcon, rv.badgeIconColor, 17)}</span><span class="mypage-rank-badge-name">${escapeHtml(t(rv.nameKey))}</span></span>`; }).join('')}</div>`;
       const cntMax = document.getElementById('mypageRankCount');
       if(cntMax) cntMax.textContent = t('rankBadgeCountLabel').replace('{a}', RANK_TIERS.length).replace('{b}', RANK_TIERS.length);
       return;
@@ -21127,9 +21254,10 @@
     // 称号バッジ一覧：獲得済みは金枠、未獲得は🔒で薄く。集める対象として見せる
     const badges = RANK_TIERS.map((r, i) => {
       const got = i <= currentIdx;
+      const rv = got ? getRankBadgeVisual(r, mySkinId) : r;
       return `<span class="mypage-rank-badge ${got ? 'is-got' : 'is-locked'}">
-        <span class="mypage-rank-badge-icon">${got ? rankIconSvg(r.badgeIcon, r.badgeIconColor, 17) : '🔒'}</span>
-        <span class="mypage-rank-badge-name">${escapeHtml(t(r.nameKey))}</span>
+        <span class="mypage-rank-badge-icon">${got ? rankIconSvg(rv.badgeIcon, rv.badgeIconColor, 17) : '🔒'}</span>
+        <span class="mypage-rank-badge-name">${escapeHtml(t(rv.nameKey))}</span>
       </span>`;
     }).join('');
     el.innerHTML = `
@@ -21512,6 +21640,15 @@
     const avatarMap = {};
     if(otherProfile?.avatar_url) avatarMap[otherId] = otherProfile.avatar_url;
     if(window._loggedInAvatarUrl) avatarMap[meId] = window._loggedInAvatarUrl;
+    // DMも「相手からどう見えるか」が出る場所なので、お互いの装備を反映する
+    const skinMap = {}, frameMap = {};
+    try {
+      const equippedMap = await db.customization.getEquippedForUsers([meId, otherId]);
+      Object.entries(equippedMap).forEach(([uid, row]) => {
+        skinMap[uid] = row.bubble_skin || 'default';
+        frameMap[uid] = row.frame_id || 'default';
+      });
+    } catch(e) { console.warn('dm skin fetch:', e); }
 
     let prev = null, out = '';
     posts.forEach(p => {
@@ -21522,7 +21659,7 @@
         && chatDayKey(prev.created_at) === chatDayKey(p.created_at)
         && (new Date(p.created_at) - new Date(prev.created_at)) < 5*60*1000;
       out += `<div class="board-msg-row" style="display:flex;flex-direction:column;align-items:${isMine?'flex-end':'flex-start'};gap:4px;${grouped?'margin-top:-9px;':''}animation:boardMsgIn .26s cubic-bezier(.22,1,.36,1) both;">
-        ${renderChatBubbleHtml(p, { grouped, avatarMap, showMoreBtn: false })}
+        ${renderChatBubbleHtml(p, { grouped, avatarMap, skinMap, frameMap, showMoreBtn: false })}
       </div>`;
       prev = p;
     });
@@ -21722,6 +21859,101 @@
     balEl.textContent = await db.coins.get(_currentUser.id).catch(()=>0);
   }
   window.renderCoinShopPage = renderCoinShopPage;
+
+  // ── カスタマイズ（吹き出し・レビューカード・アイコンフレーム・称号・通知バッジ色） ──
+  const CUSTOMIZE_TABS = [
+    { id: 'bubble', labelKey: 'customizeTabBubble', className: (id) => `bubble-skin-${id} is-mine`, previewText: () => t('gachaFreeBtn') },
+    { id: 'board', labelKey: 'customizeTabBoard', className: (id) => `board-skin-${id}` },
+    { id: 'card', labelKey: 'customizeTabCard', className: (id) => `card-skin-${id}` },
+    { id: 'frame', labelKey: 'customizeTabFrame', className: (id) => `avatar-frame-${id}` },
+    { id: 'badge', labelKey: 'customizeTabBadge', hofOnly: true },
+    { id: 'badge_color', labelKey: 'customizeTabBadgeColor', className: (id) => `badge-skin-${id}` },
+  ];
+  let _customizeActiveTab = 'bubble';
+  async function renderCustomizePage() {
+    const tabsEl = document.getElementById('customizeTabs');
+    const bodyEl = document.getElementById('customizeBody');
+    if(!tabsEl || !bodyEl) return;
+    if(!_currentUser) {
+      tabsEl.innerHTML = '';
+      bodyEl.innerHTML = `<p style="padding:2rem;text-align:center;color:var(--muted,#9ab);font-size:.85rem;">${escapeHtml(t('loginRequired'))}</p>`;
+      return;
+    }
+    tabsEl.innerHTML = CUSTOMIZE_TABS.map(tab => `<button type="button" class="customize-tab-btn" data-tab="${tab.id}" style="flex:0 0 auto;height:34px;padding:0 14px;border-radius:17px;border:1px solid ${tab.id===_customizeActiveTab?'rgba(92,201,142,.5)':'rgba(255,255,255,.12)'};background:${tab.id===_customizeActiveTab?'rgba(92,201,142,.14)':'transparent'};color:${tab.id===_customizeActiveTab?'#8fe5ab':'#b6c8bd'};font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;">${escapeHtml(t(tab.labelKey))}</button>`).join('');
+    tabsEl.querySelectorAll('.customize-tab-btn').forEach(btn => {
+      btn.onclick = () => { _customizeActiveTab = btn.dataset.tab; renderCustomizePage(); };
+    });
+
+    const tab = CUSTOMIZE_TABS.find(t2 => t2.id === _customizeActiveTab);
+    const qCounts = _currentUser ? await db.reviews.getQualityCountsByUserIds([_currentUser.id]).catch(() => ({})) : {};
+    const qualityCount = qCounts[_currentUser.id] || 0;
+    const isHof = getRankByQualityCount(qualityCount)?.nameKey === 'rankTier8';
+    if(tab.hofOnly && !isHof) {
+      bodyEl.innerHTML = `<p style="padding:2rem 1rem;text-align:center;color:var(--muted,#9ab);font-size:.85rem;">${escapeHtml(t('customizeLockedForNonHof'))}</p>`;
+      return;
+    }
+
+    const equipped = await db.customization.getEquipped(_currentUser.id);
+    const col = db.customization.CATEGORY_COLUMN[tab.id];
+    const equippedId = equipped[col] || 'default';
+    const owned = await db.customization.listOwned(_currentUser.id, tab.id);
+
+    const tileHtml = (skinId) => {
+      const isEquipped = skinId === equippedId;
+      const previewClass = tab.className ? tab.className(skinId) : '';
+      const previewInner = tab.id === 'bubble'
+        ? `<div class="chat-bubble ${previewClass}" style="max-width:none;"><div class="bubble-inner"><div class="bubble-text">${escapeHtml(tab.previewText())}</div></div></div>`
+        : tab.id === 'card' || tab.id === 'board'
+        ? `<div class="${previewClass}" style="width:100%;height:60px;border-radius:10px;"></div>`
+        : tab.id === 'frame'
+        ? `<span class="user-avatar-circle ${previewClass}" style="background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-weight:800;">A</span>`
+        : tab.id === 'badge_color'
+        ? `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--badge-color,#e5484d);color:#fff;font-size:11px;font-weight:800;">3</span>`
+        : `<span></span>`;
+      return `<div class="customize-tile" data-skin-id="${escapeHtml(skinId)}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 10px;border-radius:14px;border:1px solid ${isEquipped?'rgba(92,201,142,.5)':'rgba(255,255,255,.1)'};background:${isEquipped?'rgba(92,201,142,.08)':'rgba(255,255,255,.02)'};">
+        <div style="display:flex;align-items:center;justify-content:center;min-height:44px;">${previewInner}</div>
+        <span style="font-size:12px;color:#dfeae3;font-weight:700;">${skinId==='default'?escapeHtml(t('customizeNormalLabel')):escapeHtml(skinId)}</span>
+        ${isEquipped
+          ? `<span style="font-size:11px;color:#8fe5ab;font-weight:800;">✓ ${escapeHtml(t('customizeEquippedLabel'))}</span>`
+          : `<button type="button" class="customize-equip-btn" data-skin-id="${escapeHtml(skinId)}" style="height:28px;padding:0 12px;border-radius:8px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:11.5px;cursor:pointer;">${escapeHtml(t('customizeEquipBtn'))}</button>`}
+      </div>`;
+    };
+
+    bodyEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
+        ${owned.map(tileHtml).join('')}
+      </div>
+      ${owned.length <= 1 ? `<p style="font-size:11.5px;color:var(--muted);text-align:center;">${escapeHtml(t('customizeOnlyDefaultNote'))}</p>` : ''}
+    `;
+    bodyEl.querySelectorAll('.customize-equip-btn').forEach(btn => {
+      btn.onclick = async () => {
+        btn.disabled = true;
+        const { error } = await db.customization.equip(_currentUser.id, tab.id, btn.dataset.skinId);
+        if(error) { alert(t('profileSaveFailedAlert')); btn.disabled = false; return; }
+        applyMyEquippedCustomization();
+        renderCustomizePage();
+      };
+    });
+  }
+  window.renderCustomizePage = renderCustomizePage;
+
+  // 自分が今装備しているカスタマイズを、ヘッダーアイコン・通知バッジ色に反映する
+  async function applyMyEquippedCustomization() {
+    if(!_currentUser) return;
+    const equipped = await db.customization.getEquipped(_currentUser.id).catch(() => null);
+    if(!equipped) return;
+    window._loggedInFrameId = equipped.frame_id || 'default';
+    window._loggedInBadgeSkinId = equipped.badge_skin || 'default';
+    window._loggedInBoardSkinId = equipped.board_skin || 'default';
+    document.querySelectorAll('.board-page-wrap').forEach(el => {
+      el.className = el.className.replace(/\bboard-skin-\S+/g, '').trim();
+      el.classList.add(`board-skin-${window._loggedInBoardSkinId}`);
+    });
+    document.body.className = document.body.className.replace(/\bbadge-skin-\S+/g, '').trim();
+    document.body.classList.add(`badge-skin-${equipped.badge_color_skin || 'default'}`);
+    renderHeaderAvatar();
+  }
+  window.applyMyEquippedCustomization = applyMyEquippedCustomization;
 
   // ── コイン残高バッジ：全ページのヘッダー(.hdr-right)に共通で出す ──
   // ページごとに個別にHTMLを書いていない（35箇所あるため）ので、JSで一括挿入して使い回す
