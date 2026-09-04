@@ -10201,7 +10201,7 @@
     yozora: {
       rankTier8: {
         badgeIcon: 'star',
-        badgeIconColor: '#0b1026',
+        badgeIconColor: '#ffd98a',
         badgeTextColor: '#fff',
         badgeBg: 'linear-gradient(135deg,#0b1026 0%,#1e2a63 35%,#6f86d6 50%,#1e2a63 65%,#0b1026 100%)',
         badgeBorder: 'rgba(207,224,255,.85)',
@@ -12040,6 +12040,16 @@
     ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
   }
   // 円形クリップでアイコンを描く。画像が無ければ頭文字にフォールバック
+  // ── アイコンフレーム（Canvas版）。CSS側の.avatar-frame-*と見た目を合わせる。
+  // 新しいフレームを増やす時はここに1エントリ足すだけでよい ──
+  const AVATAR_FRAME_CANVAS = {
+    default: { rings: [ { width: 3, color: '#000' }, { width: 1.2, color: 'rgba(255,255,255,.55)', gap: 1.5 } ] },
+    yozora: { rings: [
+      { width: 3, color: '#0b1026' },
+      { width: 1.2, color: 'rgba(207,224,255,.75)' },
+      { width: 2.8, color: 'rgba(159,188,255,.18)' },
+    ] },
+  };
   function shareDrawAvatar(ctx, img, cx, cy, size, opt) {
     ctx.save();
     ctx.beginPath();
@@ -12057,13 +12067,18 @@
       ctx.fillText(opt.initial || '?', cx, cy + 2);
     }
     ctx.restore();
-    if(opt.ring) {
+    // フレーム：装備しているものを内側から順に重ねて描く（CSSのbox-shadowの多重リングと同じ考え方）
+    const frame = AVATAR_FRAME_CANVAS[opt.frameId] || AVATAR_FRAME_CANVAS.default;
+    let ringR = size / 2;
+    (frame.rings || []).forEach(r => {
+      ringR += (r.gap || 0) + r.width / 2;
       ctx.beginPath();
-      ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
-      ctx.lineWidth = opt.ringWidth || 2;
-      ctx.strokeStyle = opt.ring;
+      ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+      ctx.lineWidth = r.width;
+      ctx.strokeStyle = r.color;
       ctx.stroke();
-    }
+      ringR += r.width / 2;
+    });
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   }
   // レーダーチャート本体（6軸・12軸のどちらでも使う）
@@ -12190,21 +12205,20 @@
       decoImage: null,
     },
     yozora: {
-      bgGradient: ['#1e2a63', '#121a44', '#070a18'],
+      bgGradient: ['#1b2350', '#101740', '#05070f'],
       borderColor: 'rgba(207,224,255,.28)',
       avatarBg: '#1a2350',
       avatarFg: '#dfe6f7',
-      avatarRing: 'rgba(207,224,255,.6)',
       rankChip: ['#2a3675', '#8ea8ff'],
       rankChipText: '#0b1026',
       radarFill: 'rgba(142,168,255,.26)',
       radarStroke: '#9fbcff',
       radarLabel: '#c3cfee',
-      panelBg: 'rgba(17,23,55,.72)',
-      panelBorder: 'rgba(207,224,255,.16)',
+      panelBg: 'rgba(14,20,48,.72)',
+      panelBorder: 'rgba(207,224,255,.18)',
       typeLabelColor: '#8ea8ff',
       typeValueColor: '#eaf1ff',
-      statsBg: 'rgba(12,17,48,.7)',
+      statsBg: 'rgba(10,14,38,.7)',
       statsBorder: 'rgba(207,224,255,.16)',
       statsDivider: 'rgba(207,224,255,.14)',
       taglineAccent: '#ffd98a',
@@ -12256,7 +12270,7 @@
     ctx.lineWidth = 9; ctx.strokeStyle = 'rgba(240,201,74,.08)'; ctx.stroke();
     shareDrawAvatar(ctx, avImg, 100, 96, 104, {
       bg: skin.avatarBg, fg: skin.avatarFg, initial: (data.username || '?').charAt(0),
-      ring: skin.avatarRing, ringWidth: 4,
+      frameId: data.frameId,
     });
 
     // ユーザー名（長い名前は幅440で「…」）
@@ -12373,16 +12387,16 @@
     },
     yozora: {
       normal: {
-        top: '#1e2a63', mid: '#141c46', bottom: '#080b1a', border: 'rgba(207,224,255,.26)',
-        panelBorder: 'rgba(207,224,255,.16)', accent: '#9fbcff', sub: '#a7b3d1',
-        avatarBg: '#1a2350', avatarFg: '#dfe6f7', avatarRing: 'rgba(207,224,255,.55)',
+        top: '#1b2350', mid: '#101740', bottom: '#05070f', border: 'rgba(207,224,255,.26)',
+        panelBorder: 'rgba(207,224,255,.18)', accent: '#9fbcff', sub: '#a7b3d1',
+        avatarBg: '#1a2350', avatarFg: '#dfe6f7',
         tagLabel: '#8ea8ff', tagText: '#eaf1ff', line: 'rgba(207,224,255,.16)', logoBg: '#9fbcff', logoFg: '#0b1026',
       },
       quality: {
-        top: '#2b2a5e', mid: '#3a2f10', bottom: '#120e28', border: 'rgba(255,217,138,.45)',
-        panelBorder: 'rgba(255,217,138,.24)', accent: '#ffd98a', sub: '#cbbd94',
-        avatarBg: '#2a2350', avatarFg: '#fff6e2', avatarRing: 'rgba(255,217,138,.7)',
-        tagLabel: '#ffd98a', tagText: '#fff6e2', line: 'rgba(255,217,138,.2)', logoBg: '#ffd98a', logoFg: '#241c08',
+        top: '#3b2f6b', mid: '#7a5c15', bottom: '#231a3a', border: 'rgba(255,205,105,.7)',
+        panelBorder: 'rgba(255,205,105,.5)', accent: '#ffcd69', sub: '#dcc38a',
+        avatarBg: '#2a2008', avatarFg: '#fff3d0',
+        tagLabel: '#ffcd69', tagText: '#fff6dd', line: 'rgba(255,205,105,.34)', logoBg: '#ffcd69', logoFg: '#2a2008',
       },
     },
   };
@@ -12434,11 +12448,11 @@
       .forEach((line, i) => ctx.fillText(line, 40, 272 - shift + i * 40));
 
     // アイコン＋ユーザー名
-    const uAvatar = review && (review.avatarUrl || review.userAvatar);
+    const uAvatar = (review && (review.avatarUrl || review.userAvatar)) || window._loggedInAvatarUrl;
     const avImg = await shareLoadImage(uAvatar);
     shareDrawAvatar(ctx, avImg, 64, 356 - shift, 48, {
       bg: COL.avatarBg, fg: COL.avatarFg, initial: (review && review.userName || '?').charAt(0),
-      ring: COL.avatarRing, ringWidth: 2,
+      frameId: review && review.frameId,
     });
     ctx.fillStyle = COL.accent;
     ctx.font = "700 22px 'Zen Kaku Gothic New', sans-serif";
@@ -12463,18 +12477,6 @@
     ctx.font = "800 23px 'Zen Kaku Gothic New', sans-serif";
     shareWrapLines(ctx, t('cardTagline') || '', 372, 2)
       .forEach((line, i) => ctx.fillText(line, 40, 464 + i * 34));
-
-    // 上質バッジ（右上）
-    if(isQuality) {
-      ctx.font = "800 19px 'Zen Kaku Gothic New', sans-serif";
-      const label = '★ ' + (t('qualityReviewBadge') || '上質レビュー');
-      const bw = ctx.measureText(label).width + 44;
-      shareRoundRect(ctx, W - 40 - bw, 40, bw, 44, 22);
-      ctx.fillStyle = 'rgba(217,164,65,.14)'; ctx.fill();
-      ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(217,164,65,.4)'; ctx.stroke();
-      ctx.fillStyle = '#e8c463';
-      ctx.fillText(label, W - 40 - bw + 22, 69);
-    }
 
     // グラフ2枚（348×420のパネル）
     const labA = getAxisA(), labB = getAxisB();
@@ -12536,6 +12538,7 @@
           btn.style.opacity = '.5';
           try {
             const mySkin = _currentUser ? await db.customization.getEquipped(_currentUser.id).catch(() => null) : null;
+            review.frameId = mySkin?.frame_id || 'default';
             const blob = await generateReviewCardImage(page, review, isVoted, mySkin?.card_skin || 'default');
             if(!blob) throw new Error('blob is null');
             const cardUrl = await uploadShareCard(blob, title, shareUrl);
@@ -12597,6 +12600,7 @@
         cardShareBtn.innerHTML = t('shareCardGenerating');
         try {
           const mySkin2 = _currentUser ? await db.customization.getEquipped(_currentUser.id).catch(() => null) : null;
+          review.frameId = mySkin2?.frame_id || 'default';
           const blob = await generateReviewCardImage(page, review, isVoted, mySkin2?.card_skin || 'default');
           if(!blob) throw new Error('blob is null');
           const title = getTitle(page) || page.title || page.titleEn || '';
@@ -14941,9 +14945,6 @@
   let _cachedValueProfile = null; // ポップアップを開いた時に使う（renderValueProfileで事前計算しておく）
 
   async function renderValueProfile(userId) {
-    const btn = document.getElementById('mypageValueProfileBtn');
-    if(!btn) return;
-    btn.style.display = 'inline-flex'; // データの有無に関わらずアイコン自体は常に表示する
     if(!sb) { _cachedValueProfile = null; renderValueProfileInline(); return; }
     const signals = await db.axisSignals.listForUser(userId);
     const totalWeight = signals.reduce((sum,s)=>sum+(Number(s.weight)||0), 0);
@@ -16499,15 +16500,15 @@
     shareCardDesktopNote: { ja:'画像をダウンロードしました。開いた投稿画面に手動で添付してください。', en:'Image downloaded. Please attach it manually in the post window that opened.' },
     shareIconCopiedNote: { ja:'画像をコピーしました。開いた投稿画面に貼り付けて（Ctrl+V／⌘+V）ください。', en:'Image copied. Paste it (Ctrl+V / ⌘+V) into the post window that opened.' },
     shareIconDownloadedNote: { ja:'画像をダウンロードしました。開いた投稿画面に手動で添付してください。', en:'Image downloaded. Please attach it manually in the post window that opened.' },
-    qualityReviewBadge: { ja:'上質レビュー', en:'Quality review' },
+    qualityReviewBadge: { ja:'上質レビュー', en:'Quality review', ko:'양질의 리뷰', 'zh-tw':'優質評論', 'zh-cn':'优质评论', es:'Reseña de calidad', fr:'Avis de qualité', pt:'Avaliação de qualidade', de:'Hochwertige Rezension', ar:'مراجعة عالية الجودة', th:'รีวิวคุณภาพ', id:'Ulasan berkualitas', ru:'Качественный отзыв', it:'Recensione di qualità', vi:'Đánh giá chất lượng' },
     radarTitleA: { ja:'作品の完成度', en:'Craftsmanship' },
     radarTitleB: { ja:'感情・雰囲気', en:'Mood & Feel' },
-    cardTagline: { ja:'アニメのグラフでドンピシャを見つける', en:'Find your perfect anime with visual charts' },
-    cardByLine: { ja:'{name}のレビュー', en:'Review by {name}' },
-    cardBrandName: { ja:'アニメップル', en:'Animepple' },
-    cardBrandDesc: { ja:'可視化特化型アニメコミュニティ', en:'The anime community built on charts' },
-    cardValueTypeLabel: { ja:'好みのタイプ', en:'Your type' },
-    cardValueTypeNone: { ja:'まだ集計中', en:'Not enough data yet' },
+    cardTagline: { ja:'アニメのグラフでドンピシャを見つける', en:'Find your perfect anime with visual charts', ko:'애니메이션 그래프로 딱 맞는 작품을 찾다', 'zh-tw':'用圖表找到最適合的動畫', 'zh-cn':'用图表找到最适合的动漫', es:'Encuentra tu anime perfecto con gráficos visuales', fr:'Trouvez l\'anime parfait grâce aux graphiques', pt:'Encontre seu anime perfeito com gráficos visuais', de:'Finde dein perfektes Anime mit visuellen Diagrammen', ar:'اعثر على الأنمي المثالي لك من خلال الرسوم البيانية', th:'ค้นหาอนิเมะที่ใช่ด้วยกราฟ', id:'Temukan anime idealmu dengan grafik visual', ru:'Найдите своё идеальное аниме с помощью графиков', it:'Trova il tuo anime perfetto con i grafici visivi', vi:'Tìm anime hoàn hảo của bạn qua biểu đồ trực quan' },
+    cardByLine: { ja:'{name}のレビュー', en:'Review by {name}', ko:'{name}님의 리뷰', 'zh-tw':'{name}的評論', 'zh-cn':'{name}的评论', es:'Reseña de {name}', fr:'Avis de {name}', pt:'Avaliação de {name}', de:'Rezension von {name}', ar:'مراجعة بواسطة {name}', th:'รีวิวโดย {name}', id:'Ulasan oleh {name}', ru:'Отзыв от {name}', it:'Recensione di {name}', vi:'Đánh giá bởi {name}' },
+    cardBrandName: { ja:'アニメップル', en:'Animepple', ko:'Animepple', 'zh-tw':'Animepple', 'zh-cn':'Animepple', es:'Animepple', fr:'Animepple', pt:'Animepple', de:'Animepple', ar:'Animepple', th:'Animepple', id:'Animepple', ru:'Animepple', it:'Animepple', vi:'Animepple' },
+    cardBrandDesc: { ja:'可視化特化型アニメコミュニティ', en:'The anime community built on charts', ko:'시각화 특화 애니메이션 커뮤니티', 'zh-tw':'以視覺化為核心的動畫社群', 'zh-cn':'以可视化为核心的动漫社区', es:'La comunidad de anime basada en gráficos', fr:'La communauté anime basée sur les graphiques', pt:'A comunidade de anime baseada em gráficos', de:'Die Anime-Community, die auf Diagrammen basiert', ar:'مجتمع الأنمي المبني على الرسوم البيانية', th:'ชุมชนอนิเมะที่สร้างจากกราฟ', id:'Komunitas anime yang dibangun dari grafik', ru:'Аниме-сообщество на основе графиков', it:'La community anime basata sui grafici', vi:'Cộng đồng anime xây dựng trên biểu đồ' },
+    cardValueTypeLabel: { ja:'好みのタイプ', en:'Your type', ko:'취향 타입', 'zh-tw':'喜好類型', 'zh-cn':'喜好类型', es:'Tu tipo', fr:'Votre type', pt:'Seu tipo', de:'Dein Typ', ar:'نوعك', th:'ประเภทที่ชอบ', id:'Tipe Anda', ru:'Ваш тип', it:'Il tuo tipo', vi:'Kiểu của bạn' },
+    cardValueTypeNone: { ja:'まだ集計中', en:'Not enough data yet', ko:'아직 집계 중', 'zh-tw':'尚在統計中', 'zh-cn':'尚在统计中', es:'Aún recopilando datos', fr:'Données en cours de collecte', pt:'Ainda coletando dados', de:'Noch nicht genug Daten', ar:'لا توجد بيانات كافية بعد', th:'กำลังรวบรวมข้อมูล', id:'Data belum cukup', ru:'Данных пока недостаточно', it:'Dati ancora insufficienti', vi:'Chưa đủ dữ liệu' },
     imageSubmitTapHint: { ja:'画像を投稿する', en:'Submit an image' },
     imageSubmitTitleSuffix: { ja:'画像を投稿', en:'Submit image' },
     imageSubmitLead: { ja:'この作品のポスター画像を投稿できます。管理者の確認後、公開されます。', en:'You can submit a poster image for this title. It will be published after admin review.' },
@@ -16752,7 +16753,7 @@
     statFavorites:  { ja:'お気に入り',en:'Favorites',ko:'즐겨찾기','zh-tw':'收藏','zh-cn':'收藏',es:'Favoritos',fr:'Favoris',pt:'Favoritos',de:'Favoriten',ar:'المفضلة',th:'รายการโปรด',id:'Favorit',ru:'Избранное',it:'Preferiti',vi:'Yêu thích' },
     statQuality:    { ja:'上質レビュー',en:'Quality reviews',ko:'우수 리뷰','zh-tw':'優質評論','zh-cn':'优质评论',es:'Reseñas de calidad',fr:'Avis de qualité',pt:'Avaliações de qualidade',de:'Qualitätsbewertungen',ar:'مراجعات عالية الجودة',th:'รีวิวคุณภาพ',id:'Ulasan berkualitas',ru:'Качественные отзывы',it:'Recensioni di qualità',vi:'Đánh giá chất lượng' },
     statFollowing:  { ja:'フォロー中', en:'Following' },
-    statFollowers:  { ja:'フォロワー', en:'Followers' },
+    statFollowers:  { ja:'フォロワー', en:'Followers', ko:'팔로워', 'zh-tw':'追蹤者', 'zh-cn':'关注者', es:'Seguidores', fr:'Abonnés', pt:'Seguidores', de:'Follower', ar:'المتابعون', th:'ผู้ติดตาม', id:'Pengikut', ru:'Подписчики', it:'Follower', vi:'Người theo dõi' },
     statFriends:    { ja:'友達', en:'Friends' },
     followingTitle: { ja:'フォロー中', en:'Following' },
     followersTitle: { ja:'フォロワー', en:'Followers' },
@@ -21138,8 +21139,9 @@
     const avatarUrl = profileData?.avatar_url;
     const colors = ['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
     const idx = targetUserId.charCodeAt(0) % colors.length;
-    // フレーム(縁取り)は表示中のユーザーが装備しているものをそのまま出す（今は誰も所持していないのでdefault）
-    avatar.className = `mypage-avatar user-avatar avatar-frame-${profileData?.frame_id || 'default'}`;
+    // フレーム(縁取り)は表示中のユーザーが装備しているものをそのまま出す
+    const targetEquipped = await db.customization.getEquipped(targetUserId).catch(() => null);
+    avatar.className = `mypage-avatar user-avatar avatar-frame-${targetEquipped?.frame_id || 'default'}`;
     if (avatarUrl) {
       avatar.style.background = 'transparent';
       avatar.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="avatar" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;">`;
@@ -21273,6 +21275,7 @@
           followerCount: document.getElementById('statFollowerCount')?.textContent || 0,
           favoriteCount: document.getElementById('statFavCount')?.textContent || 0,
           skinId: myEquipped?.mypage_skin || 'default',
+          frameId: myEquipped?.frame_id || 'default',
         });
       }
     }

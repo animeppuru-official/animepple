@@ -57,7 +57,14 @@
 /* ── アイコンフレーム。全アイコン（掲示板・DM・レビューカード・ヘッダー・マイページ）共通。
    「自分の投稿だから金色」ではなく、「そのユーザーが今装備しているフレーム」を表示する。
    新しいフレームは .avatar-frame-<id> を1つ足すだけでよい ── */
-.avatar-frame-default { border: 1px solid rgba(255,255,255,.14); }
+/* ── アイコンフレーム。全アイコン（掲示板・DM・レビューカード・ヘッダー・マイページ）共通。
+   「自分の投稿だから金色」ではなく、「そのユーザーが今装備しているフレーム」を表示する。
+   box-shadowで枠を作る（borderだと要素のサイズ自体が変わって場所によってズレるため）。
+   新しいフレームは .avatar-frame-<id> を1つ足すだけでよい ── */
+.avatar-frame-default {
+  border: none;
+  box-shadow: 0 0 0 3px #000, 0 0 0 4px rgba(255,255,255,.16);
+}
 
 /* ── 通知バッジ・未読ドットの色。--badge-colorを上書きするだけで全部変わる。
    新しいスキンは body に .badge-skin-<id> を付けて --badge-color を変えるだけでよい ── */
@@ -66,19 +73,135 @@
 
 /* ── 掲示板全体の見た目（吹き出し以外の背景・入力欄など）。自分が見る時だけのテーマで、
    投稿者ごとではなく閲覧者本人の好み。.board-skin-<id> を .board-page-wrap に付けて使う ── */
-.board-skin-default { background: transparent; --board-panel-bg: var(--bg); }
+.board-skin-default { background: transparent; --board-panel-bg: var(--bg); --board-input-bg:#12291d; --board-input-border:rgba(255,255,255,.14); }
 .board-skin-default .board-composer { background:#0b1a11; }
 
 /* ── マイページ全体の見た目。自分が見る時だけのテーマ（他人には影響しない）。
    #page-mypage に .mypage-skin-<id> を付けて使う ── */
-.mypage-skin-default { background: transparent; }
+.mypage-skin-default { background: transparent; --card-panel-bg:#09201b; --card-panel-border:rgba(255,255,255,.14); }
 
 /* ── ここから下に、新しいスキンをどんどん追記していく ── */
-/* ── 夜空スキン（yozora）：skins.css の末尾にそのまま貼り足す ──
-   ベース：深い藍(#0b1026〜#1a2350) + 星の白青(#cfe0ff) + 月の淡金(#ffd98a)
-   defaultにある項目を全部揃えてあります。 */
+/* ==========================================================================
+   夜空スキン（yozora）／skins.css の末尾にそのまま貼り足す
+   ==========================================================================
+   6カテゴリ全部入り：board / mypage / card / frame / badge_color
+   （badge は guide.js 側）
 
-/* 吹き出し */
+   夜空の作り方＝色替えではなく「層」で作っている。下から順に：
+     ① 地平の大気光を含むベースグラデ（上ほど暗い #05070f → 下 #141c46）
+     ② 星雲のにじみ（青紫2つ）
+     ③ 天の川の帯（107度の斜め・薄い白青）
+     ④ 星（静止・大小18粒。等級差を出すため大きさと不透明度を散らしてある）
+     ⑤ 月（小さな円＋広いグロー）
+     ⑥ 瞬く星（::before・opacityだけ動かす7粒）
+     ⑦ 流れ星（::after・1要素で3本ぶんを時間差で流す。24秒周期）
+   動かすのは opacity と transform だけなので再描画は起きない。
+   ========================================================================== */
+
+/* ══ 共通キーフレーム ══ */
+@keyframes yozora-twinkle { 0%,100% { opacity:.32 } 50% { opacity:1 } }
+
+/* 夜空の流れ。3〜4分で一巡する、ごくゆっくりした斜めの移動＋わずかな拡大。
+   transform だけなので再描画は起きない（背景位置は動かしていない）。
+   月と星雲は動かさず固定の目印として残し、星の層だけが流れる。
+   translate は最大2.2%、拡大は1.06〜1.09倍なので、縁が透けることはない。 */
+@keyframes yozora-drift {
+  0%   { transform:translate3d(0,0,0) scale(1.06); }
+  50%  { transform:translate3d(-2.2%,1.4%,0) scale(1.09); }
+  100% { transform:translate3d(0,0,0) scale(1.06); }
+}
+
+/* 1要素で3本ぶん。消えている間に次の位置へ飛ばしているので要素は1つで足りる */
+@keyframes yozora-meteor-track {
+  /* ―― 1本目：左上から浅い角度で ―― */
+  0%    { opacity:0; transform:translate3d(6vw,7vh,0) rotate(22deg) scaleX(.15); }
+  1.5%  { opacity:.95; transform:translate3d(8vw,calc(7vh + 18px),0) rotate(22deg) scaleX(1); }
+  6%    { opacity:0; transform:translate3d(calc(6vw + 330px),calc(7vh + 133px),0) rotate(22deg) scaleX(.9); }
+  6.01% { opacity:0; transform:translate3d(38vw,4vh,0) rotate(36deg) scaleX(.15); }
+  /* ―― 2本目：右寄りから急な角度で短く ―― */
+  37%   { opacity:0; transform:translate3d(38vw,4vh,0) rotate(36deg) scaleX(.15); }
+  38.2% { opacity:.85; transform:translate3d(calc(38vw + 22px),calc(4vh + 16px),0) rotate(36deg) scaleX(1); }
+  42%   { opacity:0; transform:translate3d(calc(38vw + 210px),calc(4vh + 153px),0) rotate(36deg) scaleX(.9); }
+  42.01%{ opacity:0; transform:translate3d(22vw,24vh,0) rotate(11deg) scaleX(.15); }
+  /* ―― 3本目：中ほどを長くゆっくり ―― */
+  71%   { opacity:0; transform:translate3d(22vw,24vh,0) rotate(11deg) scaleX(.15); }
+  72.5% { opacity:.7; transform:translate3d(calc(22vw + 26px),calc(24vh + 5px),0) rotate(11deg) scaleX(1); }
+  79%   { opacity:0; transform:translate3d(calc(22vw + 400px),calc(24vh + 78px),0) rotate(11deg) scaleX(.9); }
+  100%  { opacity:0; transform:translate3d(6vw,7vh,0) rotate(22deg) scaleX(.15); }
+}
+
+/* ══ ① 掲示板（board） ══ */
+.board-skin-yozora {
+  position:relative; isolation:isolate;
+  --board-panel-bg:#0c1230;
+  --board-input-bg:#141c46;
+  --board-input-border:rgba(207,224,255,.22);
+  background:
+    /* 月 */
+    radial-gradient(13px 13px at 85% 11%, rgba(255,246,226,.9) 0 56%, rgba(255,246,226,0) 58%),
+    radial-gradient(240px 240px at 85% 11%, rgba(255,238,200,.10) 0%, rgba(255,238,200,.035) 42%, transparent 70%),
+    /* 星（静止・18粒） */
+    radial-gradient(1.9px 1.9px at 11% 14%, rgba(255,255,255,.95) 0 55%, transparent 56%),
+    radial-gradient(1.1px 1.1px at 26% 8%,  rgba(207,224,255,.7)  0 55%, transparent 56%),
+    radial-gradient(1.5px 1.5px at 38% 19%, rgba(255,255,255,.8)  0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 47% 6%,   rgba(207,224,255,.55) 0 55%, transparent 56%),
+    radial-gradient(2.1px 2.1px at 62% 16%, rgba(255,246,226,.85) 0 55%, transparent 56%),
+    radial-gradient(1.2px 1.2px at 73% 25%, rgba(207,224,255,.65) 0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 92% 21%,  rgba(255,255,255,.6)  0 55%, transparent 56%),
+    radial-gradient(1.6px 1.6px at 8% 33%,  rgba(255,255,255,.75) 0 55%, transparent 56%),
+    radial-gradient(1.1px 1.1px at 31% 38%, rgba(207,224,255,.6)  0 55%, transparent 56%),
+    radial-gradient(1.3px 1.3px at 55% 34%, rgba(255,255,255,.7)  0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 79% 41%,  rgba(207,224,255,.5)  0 55%, transparent 56%),
+    radial-gradient(1.7px 1.7px at 17% 52%, rgba(255,255,255,.6)  0 55%, transparent 56%),
+    radial-gradient(1.1px 1.1px at 44% 57%, rgba(207,224,255,.45) 0 55%, transparent 56%),
+    radial-gradient(1.4px 1.4px at 68% 61%, rgba(255,246,226,.5)  0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 88% 55%,  rgba(255,255,255,.4)  0 55%, transparent 56%),
+    radial-gradient(1.2px 1.2px at 24% 71%, rgba(207,224,255,.35) 0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 59% 78%,  rgba(255,255,255,.3)  0 55%, transparent 56%),
+    radial-gradient(1.3px 1.3px at 82% 84%, rgba(207,224,255,.28) 0 55%, transparent 56%),
+    /* 天の川 */
+    linear-gradient(107deg, transparent 37%, rgba(198,214,255,.06) 45%, rgba(216,228,255,.11) 50%, rgba(198,214,255,.055) 56%, transparent 64%),
+    /* 星雲 */
+    radial-gradient(58% 40% at 20% 28%, rgba(96,120,220,.16) 0%, transparent 70%),
+    radial-gradient(52% 36% at 80% 64%, rgba(122,88,184,.13) 0%, transparent 72%),
+    /* ベース（下が地平の大気光でわずかに明るい） */
+    linear-gradient(180deg,#05070f 0%,#0a0f26 42%,#0d1533 76%,#141c46 100%);
+  background-attachment:fixed;
+}
+/* 瞬く星（同時にゆっくり流れる。opacity と transform で別々のアニメを重ねている） */
+.board-skin-yozora::before {
+  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background-image:
+    radial-gradient(2.2px 2.2px at 19% 22%, rgba(255,255,255,.95) 0 55%, transparent 56%),
+    radial-gradient(1.7px 1.7px at 41% 12%, rgba(207,224,255,.9)  0 55%, transparent 56%),
+    radial-gradient(2.4px 2.4px at 67% 29%, rgba(255,246,226,.9)  0 55%, transparent 56%),
+    radial-gradient(1.6px 1.6px at 88% 17%, rgba(255,255,255,.8)  0 55%, transparent 56%),
+    radial-gradient(1.9px 1.9px at 13% 45%, rgba(207,224,255,.75) 0 55%, transparent 56%),
+    radial-gradient(1.5px 1.5px at 52% 49%, rgba(255,255,255,.7)  0 55%, transparent 56%),
+    radial-gradient(1.8px 1.8px at 76% 68%, rgba(207,224,255,.6)  0 55%, transparent 56%);
+  animation:yozora-twinkle 5.2s ease-in-out infinite, yozora-drift 180s ease-in-out infinite;
+}
+/* 流れ星（24秒で3本） */
+.board-skin-yozora::after {
+  content:''; position:absolute; top:0; left:0; z-index:-1; pointer-events:none;
+  width:130px; height:1.6px; border-radius:2px; transform-origin:0 50%; opacity:0;
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(207,224,255,.55) 55%, rgba(232,240,255,.95) 88%, #fff 100%);
+  animation:yozora-meteor-track 24s linear infinite;
+}
+/* もっと流したい時は掲示板の中に <i class="board-meteor"></i> を足すだけ（周期をずらしてある） */
+.board-skin-yozora .board-meteor {
+  position:absolute; top:0; left:0; z-index:-1; pointer-events:none;
+  width:96px; height:1.4px; border-radius:2px; transform-origin:0 50%; opacity:0;
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,217,138,.5) 55%, rgba(255,236,196,.9) 88%, #fff 100%);
+  animation:yozora-meteor-track 31s linear 9s infinite;
+}
+.board-skin-yozora .board-composer {
+  background:#0d1330;
+  border-top:1px solid rgba(207,224,255,.14);
+  box-shadow:inset 0 1px 0 rgba(207,224,255,.07);
+}
+
+/* ══ 吹き出し（boardカテゴリの一部） ══ */
 .bubble-skin-yozora { max-width:min(440px,70vw); border-width:1px; border-style:solid; overflow:hidden; }
 .bubble-skin-yozora.is-mine { max-width:min(440px,74vw); }
 .bubble-skin-yozora.is-mine, .bubble-skin-yozora.is-theirs { border-radius:14px 14px 14px 4px; }
@@ -86,9 +209,11 @@
 .bubble-skin-yozora.is-grouped { border-radius:14px; }
 
 .bubble-skin-yozora.is-mine {
-  background:linear-gradient(160deg,#1e2a63 0%,#141c46 55%,#0e1436 100%);
-  border-color:rgba(207,224,255,.22);
-  box-shadow:0 10px 22px -16px rgba(0,0,0,.9), inset 0 1px 0 rgba(207,224,255,.12);
+  background:
+    linear-gradient(112deg, transparent 30%, rgba(198,214,255,.07) 48%, transparent 68%),
+    linear-gradient(160deg,#233070 0%,#182055 52%,#0e1436 100%);
+  border-color:rgba(207,224,255,.24);
+  box-shadow:0 10px 22px -16px rgba(0,0,0,.9), inset 0 1px 0 rgba(207,224,255,.14);
 }
 .bubble-skin-yozora.is-mine .bubble-text { color:#eaf1ff; }
 .bubble-skin-yozora.is-mine .bubble-quote-name { color:#ffd98a; }
@@ -96,7 +221,9 @@
 .bubble-skin-yozora.is-mine .bubble-quote { border-left:2px solid rgba(255,217,138,.55); }
 
 .bubble-skin-yozora.is-theirs {
-  background:linear-gradient(160deg,#171c2e 0%,#12162552 55%,#0f1320 100%), #12162a;
+  background:
+    linear-gradient(112deg, transparent 32%, rgba(198,214,255,.05) 50%, transparent 70%),
+    linear-gradient(160deg,#151a2e 0%,#11152a 52%,#0d1120 100%);
   border-color:rgba(207,224,255,.13);
   box-shadow:0 8px 18px -16px rgba(0,0,0,.9);
 }
@@ -105,94 +232,135 @@
 .bubble-skin-yozora.is-theirs .bubble-quote-body { color:#aab6d2; }
 .bubble-skin-yozora.is-theirs .bubble-quote { border-left:2px solid rgba(159,188,255,.5); }
 
-/* 星の粒（本文の下に敷く。連投2件目以降は出さない） */
+/* 吹き出しの中の星（静止5粒） */
 .bubble-skin-yozora::after {
   content:''; position:absolute; inset:0; z-index:0; pointer-events:none; border-radius:inherit;
   background-image:
-    radial-gradient(1.4px 1.4px at 18% 26%, rgba(255,255,255,.85) 0 60%, transparent 61%),
-    radial-gradient(1px 1px at 46% 68%, rgba(207,224,255,.7) 0 60%, transparent 61%),
-    radial-gradient(1.6px 1.6px at 72% 22%, rgba(255,217,138,.75) 0 60%, transparent 61%),
-    radial-gradient(1px 1px at 88% 60%, rgba(255,255,255,.55) 0 60%, transparent 61%),
-    radial-gradient(1.2px 1.2px at 30% 84%, rgba(207,224,255,.5) 0 60%, transparent 61%);
+    radial-gradient(1.4px 1.4px at 18% 26%, rgba(255,255,255,.85) 0 55%, transparent 56%),
+    radial-gradient(1px 1px at 46% 68%, rgba(207,224,255,.7) 0 55%, transparent 56%),
+    radial-gradient(1.6px 1.6px at 72% 22%, rgba(255,217,138,.7) 0 55%, transparent 56%),
+    radial-gradient(1px 1px at 88% 60%, rgba(255,255,255,.5) 0 55%, transparent 56%),
+    radial-gradient(1.2px 1.2px at 30% 84%, rgba(207,224,255,.45) 0 55%, transparent 56%);
   opacity:.9;
 }
 .bubble-skin-yozora.is-grouped::after { opacity:.45; }
-
-/* レビューカード背景 */
-.card-skin-yozora { background:linear-gradient(180deg,#1b2350 0%,#0c1130 100%); --card-panel-bg:#0c1130; --card-panel-border:rgba(207,224,255,.22); }
-.card-skin-yozora.is-quality { background:linear-gradient(180deg,#2b2a5e 0%,#3a2f10 55%,#171232 100%); --card-panel-bg:#241c08; --card-panel-border:rgba(255,217,138,.35); }
-
-/* アイコンフレーム */
-.avatar-frame-yozora {
-  border:1px solid rgba(207,224,255,.55);
-  box-shadow:0 0 0 1px rgba(11,16,38,.9), 0 0 10px -2px rgba(159,188,255,.65);
-}
-
-/* 通知バッジ・未読ドット */
-.badge-skin-yozora { --badge-color:#8ea8ff; }
-
-/* 掲示板テーマ */
-.board-skin-yozora {
-  background:
-    radial-gradient(1.2px 1.2px at 12% 18%, rgba(255,255,255,.5) 0 60%, transparent 61%),
-    radial-gradient(1px 1px at 68% 9%, rgba(207,224,255,.45) 0 60%, transparent 61%),
-    radial-gradient(1.4px 1.4px at 84% 34%, rgba(255,217,138,.4) 0 60%, transparent 61%),
-    linear-gradient(180deg,#0b1026 0%,#080b1a 100%);
-}
-.board-skin-yozora .board-composer {
-  background:#111737;
-  border-top:1px solid rgba(207,224,255,.12);
-}
-
-/* ── 流星（掲示板背景のみ・12秒に1回だけ流れる） ──
-   負荷を抑えるため transform と opacity しか動かしていない。
-   背景の夜空も ::before に移し、両方 isolation:isolate 内の
-   マイナスz-indexに置いてあるので、投稿や入力欄の下に確実に入る。 */
-.board-skin-yozora { position:relative; isolation:isolate; background:transparent; --board-panel-bg: #10152e; }
-.board-skin-yozora::before {
-  content:''; position:absolute; inset:0; z-index:-2; pointer-events:none;
-  background:
-    radial-gradient(1.2px 1.2px at 12% 18%, rgba(255,255,255,.5) 0 60%, transparent 61%),
-    radial-gradient(1px 1px at 68% 9%, rgba(207,224,255,.45) 0 60%, transparent 61%),
-    radial-gradient(1.4px 1.4px at 84% 34%, rgba(255,217,138,.4) 0 60%, transparent 61%),
-    linear-gradient(180deg,#0b1026 0%,#080b1a 100%);
-}
-.board-skin-yozora::after {
-  content:''; position:absolute; z-index:-1; pointer-events:none;
-  top:9%; left:14%; width:104px; height:1.5px; transform-origin:0 50%;
-  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(207,224,255,.9) 62%, #fff 100%);
-  border-radius:2px; opacity:0;
-  animation:yozora-meteor 12s linear infinite;
-}
-@keyframes yozora-meteor {
-  0%, 88%   { opacity:0; transform:translate3d(0,0,0) rotate(18deg) scaleX(.3); }
-  90%       { opacity:.95; transform:translate3d(0,0,0) rotate(18deg) scaleX(1); }
-  99%       { opacity:0; transform:translate3d(280px,92px,0) rotate(18deg) scaleX(1); }
-  100%      { opacity:0; transform:translate3d(280px,92px,0) rotate(18deg) scaleX(.3); }
-}
-/* 2本目が欲しい時は、掲示板の中に <i class="board-meteor"></i> を1つ置くだけでよい */
-.board-skin-yozora .board-meteor {
-  position:absolute; z-index:-1; pointer-events:none;
-  top:26%; right:18%; width:78px; height:1.4px; transform-origin:0 50%;
-  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,217,138,.85) 62%, #fff 100%);
-  border-radius:2px; opacity:0;
-  animation:yozora-meteor 12s linear 5.5s infinite;
-}
-
-/* ── 吹き出しの星の瞬き（opacityのみ。3粒だけ・連投時は静止） ── */
+/* 瞬く星（3粒だけ・連投時は静止） */
 .bubble-skin-yozora::before {
   content:''; position:absolute; inset:0; z-index:0; pointer-events:none; border-radius:inherit;
   background-image:
-    radial-gradient(1.5px 1.5px at 34% 42%, rgba(255,255,255,.9) 0 60%, transparent 61%),
-    radial-gradient(1.2px 1.2px at 62% 78%, rgba(207,224,255,.8) 0 60%, transparent 61%),
-    radial-gradient(1.7px 1.7px at 82% 34%, rgba(255,217,138,.85) 0 60%, transparent 61%);
+    radial-gradient(1.5px 1.5px at 34% 42%, rgba(255,255,255,.9) 0 55%, transparent 56%),
+    radial-gradient(1.2px 1.2px at 62% 78%, rgba(207,224,255,.8) 0 55%, transparent 56%),
+    radial-gradient(1.7px 1.7px at 82% 34%, rgba(255,217,138,.85) 0 55%, transparent 56%);
   animation:yozora-twinkle 4.6s ease-in-out infinite;
 }
 .bubble-skin-yozora.is-grouped::before { animation:none; opacity:.4; }
-@keyframes yozora-twinkle { 0%,100% { opacity:.35 } 50% { opacity:1 } }
 
+/* ══ ② マイページ（mypage） ══ */
+.mypage-skin-yozora {
+  position:relative; isolation:isolate;
+  --card-panel-bg:#0e1430;
+  --card-panel-border:rgba(207,224,255,.22);
+  background:
+    radial-gradient(11px 11px at 12% 9%, rgba(255,246,226,.85) 0 56%, rgba(255,246,226,0) 58%),
+    radial-gradient(210px 210px at 12% 9%, rgba(255,238,200,.09) 0%, rgba(255,238,200,.03) 42%, transparent 70%),
+    radial-gradient(1.8px 1.8px at 28% 11%, rgba(255,255,255,.9) 0 55%, transparent 56%),
+    radial-gradient(1.1px 1.1px at 44% 6%,  rgba(207,224,255,.65) 0 55%, transparent 56%),
+    radial-gradient(1.5px 1.5px at 61% 15%, rgba(255,255,255,.8) 0 55%, transparent 56%),
+    radial-gradient(2px 2px    at 78% 9%,   rgba(255,246,226,.8) 0 55%, transparent 56%),
+    radial-gradient(1.2px 1.2px at 91% 19%, rgba(207,224,255,.6) 0 55%, transparent 56%),
+    radial-gradient(1.4px 1.4px at 15% 27%, rgba(255,255,255,.7) 0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 37% 33%,  rgba(207,224,255,.5) 0 55%, transparent 56%),
+    radial-gradient(1.6px 1.6px at 66% 39%, rgba(255,255,255,.6) 0 55%, transparent 56%),
+    radial-gradient(1.1px 1.1px at 86% 47%, rgba(207,224,255,.45) 0 55%, transparent 56%),
+    radial-gradient(1.3px 1.3px at 22% 58%, rgba(255,255,255,.45) 0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 52% 66%,  rgba(207,224,255,.35) 0 55%, transparent 56%),
+    radial-gradient(1.2px 1.2px at 74% 77%, rgba(255,255,255,.3) 0 55%, transparent 56%),
+    linear-gradient(73deg, transparent 36%, rgba(198,214,255,.055) 45%, rgba(216,228,255,.1) 50%, rgba(198,214,255,.05) 56%, transparent 65%),
+    radial-gradient(56% 38% at 74% 26%, rgba(96,120,220,.15) 0%, transparent 70%),
+    radial-gradient(50% 34% at 22% 66%, rgba(122,88,184,.12) 0%, transparent 72%),
+    linear-gradient(180deg,#05070f 0%,#0a0f26 44%,#0d1533 78%,#131a42 100%);
+  background-attachment:fixed;
+}
+.mypage-skin-yozora::before {
+  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background-image:
+    radial-gradient(2.2px 2.2px at 33% 20%, rgba(255,255,255,.95) 0 55%, transparent 56%),
+    radial-gradient(1.7px 1.7px at 56% 27%, rgba(207,224,255,.9) 0 55%, transparent 56%),
+    radial-gradient(2.3px 2.3px at 82% 33%, rgba(255,246,226,.85) 0 55%, transparent 56%),
+    radial-gradient(1.6px 1.6px at 18% 41%, rgba(255,255,255,.75) 0 55%, transparent 56%),
+    radial-gradient(1.9px 1.9px at 47% 54%, rgba(207,224,255,.7) 0 55%, transparent 56%),
+    radial-gradient(1.5px 1.5px at 70% 62%, rgba(255,255,255,.6) 0 55%, transparent 56%);
+  animation:yozora-twinkle 6.4s ease-in-out infinite, yozora-drift 220s ease-in-out infinite;
+}
+.mypage-skin-yozora::after {
+  content:''; position:absolute; top:0; left:0; z-index:-1; pointer-events:none;
+  width:118px; height:1.5px; border-radius:2px; transform-origin:0 50%; opacity:0;
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(207,224,255,.55) 55%, rgba(232,240,255,.95) 88%, #fff 100%);
+  animation:yozora-meteor-track 28s linear 4s infinite;
+}
+
+/* ══ ③ レビューカード（card）／通常・上質の2パターン ══ */
+.card-skin-yozora {
+  --card-panel-bg:#0c1130;
+  --card-panel-border:rgba(207,224,255,.22);
+  background:
+    radial-gradient(9px 9px at 86% 12%, rgba(255,246,226,.75) 0 56%, rgba(255,246,226,0) 58%),
+    radial-gradient(150px 150px at 86% 12%, rgba(255,238,200,.08) 0%, transparent 68%),
+    radial-gradient(1.6px 1.6px at 14% 12%, rgba(255,255,255,.85) 0 55%, transparent 56%),
+    radial-gradient(1.1px 1.1px at 32% 21%, rgba(207,224,255,.6) 0 55%, transparent 56%),
+    radial-gradient(1.4px 1.4px at 52% 9%,  rgba(255,255,255,.7) 0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 68% 27%,  rgba(207,224,255,.5) 0 55%, transparent 56%),
+    radial-gradient(1.3px 1.3px at 24% 39%, rgba(255,255,255,.5) 0 55%, transparent 56%),
+    radial-gradient(1.1px 1.1px at 78% 46%, rgba(207,224,255,.4) 0 55%, transparent 56%),
+    radial-gradient(1px 1px    at 46% 61%,  rgba(255,255,255,.32) 0 55%, transparent 56%),
+    linear-gradient(104deg, transparent 38%, rgba(198,214,255,.06) 47%, rgba(216,228,255,.1) 51%, transparent 62%),
+    radial-gradient(60% 42% at 24% 24%, rgba(96,120,220,.15) 0%, transparent 72%),
+    linear-gradient(180deg,#1b2350 0%,#101740 46%,#0a0e26 100%);
+}
+/* 上質：金を主役に。月光を金色の広い光として大きく入れ、天の川も金の帯に置き換え、
+   星も金〜白金で統一。枠と見出しの金と合わせて「金の夜空」に振っている。 */
+.card-skin-yozora.is-quality {
+  --card-panel-bg:#2a2008;
+  --card-panel-border:rgba(255,205,105,.55);
+  background:
+    /* 月（大きめ・完全な金） */
+    radial-gradient(15px 15px at 84% 12%, #fff3d0 0 54%, rgba(255,243,208,0) 57%),
+    radial-gradient(120px 120px at 84% 12%, rgba(255,196,92,.42) 0%, rgba(255,196,92,.14) 46%, transparent 74%),
+    radial-gradient(300px 300px at 84% 12%, rgba(255,180,70,.20) 0%, transparent 72%),
+    /* 星（金・白金） */
+    radial-gradient(2.1px 2.1px at 13% 11%, #fff6dd 0 55%, transparent 56%),
+    radial-gradient(1.5px 1.5px at 30% 20%, rgba(255,214,130,.95) 0 55%, transparent 56%),
+    radial-gradient(1.8px 1.8px at 50% 8%,  #ffeec2 0 55%, transparent 56%),
+    radial-gradient(1.3px 1.3px at 66% 26%, rgba(255,205,105,.9) 0 55%, transparent 56%),
+    radial-gradient(1.7px 1.7px at 22% 38%, rgba(255,230,170,.85) 0 55%, transparent 56%),
+    radial-gradient(1.4px 1.4px at 77% 45%, rgba(255,205,105,.8) 0 55%, transparent 56%),
+    radial-gradient(1.2px 1.2px at 44% 60%, rgba(255,230,170,.6) 0 55%, transparent 56%),
+    radial-gradient(1.5px 1.5px at 62% 68%, rgba(255,205,105,.55) 0 55%, transparent 56%),
+    /* 天の川を金の帯に */
+    linear-gradient(104deg, transparent 30%, rgba(255,205,105,.14) 42%, rgba(255,228,160,.26) 50%, rgba(255,205,105,.13) 58%, transparent 70%),
+    /* 金の大気光（下辺から立ち上がる） */
+    radial-gradient(120% 62% at 50% 108%, rgba(255,186,74,.34) 0%, rgba(255,186,74,.10) 46%, transparent 78%),
+    linear-gradient(180deg,#3b2f6b 0%,#5a4514 46%,#7a5c15 66%,#231a3a 100%);
+}
+
+/* ══ ④ アイコンフレーム（frame）※CSS表示用。Canvas版は guide.js 側と同じ見た目 ══ */
+.avatar-frame-yozora {
+  border:none;
+  box-shadow:
+    0 0 0 3px #0b1026,
+    0 0 0 4.2px rgba(207,224,255,.75),
+    0 0 0 7px rgba(159,188,255,.18);
+}
+
+/* ══ ⑥ 通知バッジ・未読ドット ══ */
+.badge-skin-yozora { --badge-color:#8ea8ff; }
+
+/* ══ 動きを減らす設定の端末では止める ══ */
 @media (prefers-reduced-motion: reduce) {
   .board-skin-yozora::after,
-  .board-skin-yozora .board-meteor { animation:none; opacity:0; }
+  .board-skin-yozora .board-meteor,
+  .mypage-skin-yozora::after { animation:none; opacity:0; }
+  .board-skin-yozora::before,
+  .mypage-skin-yozora::before { animation:none; opacity:.7; transform:none; }
   .bubble-skin-yozora::before { animation:none; opacity:.7; }
 }
