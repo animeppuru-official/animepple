@@ -980,7 +980,8 @@
     .mypage-stat-cell.mypage-stat-clickable:hover { background:rgba(255,255,255,.03); }
     .mypage-avatar-edit-badge {
       position:absolute; right:-2px; bottom:-2px; width:28px; height:28px; border-radius:50%;
-      background:#0f2418; border:1px solid rgba(255,255,255,.16); color:#a7ecc4;
+      background:var(--card-panel-bg, #0f2418); border:1px solid var(--card-panel-border, rgba(255,255,255,.16));
+      color:var(--card-preview-graph-stroke, #a7ecc4);
       display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
       transition:transform .16s cubic-bezier(.34,1.56,.64,1);
     }
@@ -1376,7 +1377,10 @@
       position:absolute; top:0; left:0; height:100%;
       transform:rotateY(180deg);
       display:flex; flex-direction:column;
-      background:linear-gradient(180deg,#20392b 0%,#16291d 100%); border:1px solid rgba(255,255,255,.1); border-radius:16px;
+      border-radius:16px;
+      /* 背景色・枠線はここで固定せず .card-skin-<id> 側に任せる（.review-card クラスが基本の border は
+         既に持っている）。ここで background/border を書くと、クラス2つ分の詳細度で .card-skin-<id>
+         (クラス1つ)より必ず勝ってしまい、スキンを変えても裏面だけ default の緑のままになるバグの原因だった */
     }
     .rc-flip-btn {
       position:absolute; top:12px; right:12px; z-index:5;
@@ -13791,9 +13795,9 @@
           .filter(e => reactions[e] && reactions[e].count > 0)
           .map(e => {
             const r = reactions[e];
-            const bg = r.mine ? 'rgba(92,201,142,.18)' : 'rgba(255,255,255,.05)';
-            const border = r.mine ? 'rgba(92,201,142,.5)' : 'rgba(255,255,255,.1)';
-            return `<button type="button" class="board-reaction-chip" data-post-id="${item.id}" data-emoji="${e}" style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:12px;background:${bg};border:1px solid ${border};color:#dfeae3;font-size:11.5px;cursor:pointer;">${e} ${r.count}</button>`;
+            const bg = r.mine ? 'var(--board-reaction-mine-bg, rgba(92,201,142,.18))' : 'var(--board-reaction-bg, rgba(255,255,255,.05))';
+            const border = r.mine ? 'var(--board-reaction-mine-border, rgba(92,201,142,.5))' : 'var(--board-reaction-border, rgba(255,255,255,.1))';
+            return `<button type="button" class="board-reaction-chip" data-post-id="${item.id}" data-emoji="${e}" style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:12px;background:${bg};border:1px solid ${border};color:var(--board-icon-active,#dfeae3);font-size:11.5px;cursor:pointer;">${e} ${r.count}</button>`;
           }).join('');
         // 常設の「＋」は置かない（全メッセージに付いて散らかり、タップ領域も小さかった）。
         // 追加はスマホ=長押しシート、PC=ホバーの操作島から。

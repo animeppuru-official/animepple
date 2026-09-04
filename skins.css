@@ -83,7 +83,7 @@
 [class*="board-skin-"], [class*="mypage-skin-"] {
   position: relative !important;
   isolation: isolate !important;
-  min-height: 100% !important;
+  min-height: 100vh !important;   /* 100%だと親要素に明示的な高さが無い場合に効かず、コンテンツが短いページ(サーバー選択画面など)で背景が途中で切れるため、ビューポート基準に変更 */
 }
 [class*="board-skin-"]::before, [class*="board-skin-"]::after,
 [class*="mypage-skin-"]::before, [class*="mypage-skin-"]::after {
@@ -94,7 +94,7 @@
 [class*="board-skin-"]::before, [class*="mypage-skin-"]::before { z-index: -2 !important; }
 [class*="board-skin-"]::after,  [class*="mypage-skin-"]::after  { z-index: -1 !important; }
 
-.board-skin-default { background: transparent; --board-panel-bg: var(--bg); --board-input-bg:#12291d; --board-input-border:rgba(255,255,255,.14); --hdr-bg: rgba(7,21,13,.9); --board-icon-muted:#5f7268; --board-icon-active:#c3d4c9; }
+.board-skin-default { background: transparent; --board-panel-bg: var(--bg); --board-input-bg:#12291d; --board-input-border:rgba(255,255,255,.14); --hdr-bg: rgba(7,21,13,.9); --board-icon-muted:#5f7268; --board-icon-active:#c3d4c9; --board-reaction-mine-bg:rgba(92,201,142,.18); --board-reaction-mine-border:rgba(92,201,142,.5); --board-reaction-bg:rgba(255,255,255,.05); --board-reaction-border:rgba(255,255,255,.1); }
 .board-skin-default .board-composer { background:#0b1a11; }
 
 /* ── マイページ全体の見た目。自分が見る時だけのテーマ（他人には影響しない）。
@@ -169,6 +169,10 @@
   --hdr-bg:rgba(5,7,15,.82);
   --board-icon-muted:#7c8bc2;
   --board-icon-active:#dfe6f7;
+  --board-reaction-mine-bg:rgba(159,188,255,.2);
+  --board-reaction-mine-border:rgba(159,188,255,.55);
+  --board-reaction-bg:rgba(207,224,255,.07);
+  --board-reaction-border:rgba(207,224,255,.16);
   --bg:#080b1a; --card:#0e1430; --card2:#10152e; --line:rgba(207,224,255,.22);
   background:
     /* 月 */
