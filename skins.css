@@ -66,7 +66,7 @@
 
 /* ── 掲示板全体の見た目（吹き出し以外の背景・入力欄など）。自分が見る時だけのテーマで、
    投稿者ごとではなく閲覧者本人の好み。.board-skin-<id> を .board-page-wrap に付けて使う ── */
-.board-skin-default { background: transparent; --board-panel-bg: var(--bg); }
+.board-skin-default { background: transparent; --board-panel-bg: var(--bg); --board-input-bg:#12291d; --board-input-border:rgba(255,255,255,.14); }
 .board-skin-default .board-composer { background:#0b1a11; }
 
 /* ── マイページ全体の見た目。自分が見る時だけのテーマ（他人には影響しない）。
@@ -148,7 +148,7 @@
    負荷を抑えるため transform と opacity しか動かしていない。
    背景の夜空も ::before に移し、両方 isolation:isolate 内の
    マイナスz-indexに置いてあるので、投稿や入力欄の下に確実に入る。 */
-.board-skin-yozora { position:relative; isolation:isolate; background:transparent; --board-panel-bg: #10152e; }
+.board-skin-yozora { position:relative; isolation:isolate; background:transparent; --board-panel-bg: #10152e; --board-input-bg:#141c46; --board-input-border:rgba(207,224,255,.22); }
 .board-skin-yozora::before {
   content:''; position:absolute; inset:0; z-index:-2; pointer-events:none;
   background:

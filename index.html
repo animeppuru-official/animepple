@@ -1175,7 +1175,7 @@
     .board-compose-field textarea {
       width:100%; box-sizing:border-box; min-height:38px; max-height:120px;
       padding:9px 44px 9px 15px; border-radius:19px;
-      border:1px solid rgba(255,255,255,.14); background:#12291d; color:#e8f0ea;
+      border:1px solid var(--board-input-border, rgba(255,255,255,.14)); background:var(--board-input-bg, #12291d); color:#e8f0ea;
       font-size:14px; line-height:1.5; font-family:inherit; resize:none; outline:none;
       transition:border-color .16s ease;
     }
@@ -3715,7 +3715,7 @@
 </div>
 
 <!-- 掲示板（中身は後日実装） -->
-<div class="page" id="page-board">
+<div class="page board-page-wrap" id="page-board">
   <header class="hdr">
     <div class="hdr-inner">
       <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
@@ -22000,7 +22000,7 @@
     window._loggedInFrameId = equipped.frame_id || 'default';
     window._loggedInBadgeSkinId = equipped.badge_skin || 'default';
     window._loggedInBoardSkinId = equipped.board_skin || 'default';
-    document.querySelectorAll('.board-page-wrap').forEach(el => {
+    document.querySelectorAll('#page-board, #page-board-general, #page-board-value, #page-dm, #page-dm-list').forEach(el => {
       el.className = el.className.replace(/\bboard-skin-\S+/g, '').trim();
       el.classList.add(`board-skin-${window._loggedInBoardSkinId}`);
     });
