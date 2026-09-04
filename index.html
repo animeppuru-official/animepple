@@ -10198,6 +10198,17 @@
   // （書かなければRANK_TIERS本来の見た目のまま＝見た目は今と一切変わらない）
   const RANK_BADGE_SKINS = {
     default: {},
+    yozora: {
+      rankTier8: {
+        badgeIcon: 'star',
+        badgeIconColor: '#0b1026',
+        badgeTextColor: '#fff',
+        badgeBg: 'linear-gradient(135deg,#0b1026 0%,#1e2a63 35%,#6f86d6 50%,#1e2a63 65%,#0b1026 100%)',
+        badgeBorder: 'rgba(207,224,255,.85)',
+        badgeSparkle: true,
+        badgeGlow: 'rgba(0,0,0,.55)',
+      },
+    },
   };
   function getRankBadgeVisual(rank, skinId) {
     if(!rank) return rank;
@@ -12178,6 +12189,32 @@
       footerLogoBg: '#5ec97a', footerLogoFg: '#07200f', footerLine: 'rgba(255,255,255,.09)', footerSub: '#8db5a0',
       decoImage: null,
     },
+    yozora: {
+      bgGradient: ['#1e2a63', '#121a44', '#070a18'],
+      borderColor: 'rgba(207,224,255,.28)',
+      avatarBg: '#1a2350',
+      avatarFg: '#dfe6f7',
+      avatarRing: 'rgba(207,224,255,.6)',
+      rankChip: ['#2a3675', '#8ea8ff'],
+      rankChipText: '#0b1026',
+      radarFill: 'rgba(142,168,255,.26)',
+      radarStroke: '#9fbcff',
+      radarLabel: '#c3cfee',
+      panelBg: 'rgba(17,23,55,.72)',
+      panelBorder: 'rgba(207,224,255,.16)',
+      typeLabelColor: '#8ea8ff',
+      typeValueColor: '#eaf1ff',
+      statsBg: 'rgba(12,17,48,.7)',
+      statsBorder: 'rgba(207,224,255,.16)',
+      statsDivider: 'rgba(207,224,255,.14)',
+      taglineAccent: '#ffd98a',
+      taglineColor: '#dfe6f7',
+      footerLogoBg: '#9fbcff',
+      footerLogoFg: '#0b1026',
+      footerLine: 'rgba(207,224,255,.18)',
+      footerSub: '#96a2c2',
+      decoImage: null,
+    },
   };
 
   // ══ マイページカード（900×700）══════════════════════════
@@ -12333,6 +12370,20 @@
         panelBorder:'rgba(224,178,86,.18)', accent:'#e8c463', sub:'#c3ad82',
         avatarBg:'#5a4520', avatarFg:'#e8c463', avatarRing:'rgba(232,196,99,.65)',
         tagLabel:'#e0b256', tagText:'#f4ecd8', line:'rgba(224,178,86,.22)', logoBg:'#e0b256', logoFg:'#241c09' },
+    },
+    yozora: {
+      normal: {
+        top: '#1e2a63', mid: '#141c46', bottom: '#080b1a', border: 'rgba(207,224,255,.26)',
+        panelBorder: 'rgba(207,224,255,.16)', accent: '#9fbcff', sub: '#a7b3d1',
+        avatarBg: '#1a2350', avatarFg: '#dfe6f7', avatarRing: 'rgba(207,224,255,.55)',
+        tagLabel: '#8ea8ff', tagText: '#eaf1ff', line: 'rgba(207,224,255,.16)', logoBg: '#9fbcff', logoFg: '#0b1026',
+      },
+      quality: {
+        top: '#2b2a5e', mid: '#3a2f10', bottom: '#120e28', border: 'rgba(255,217,138,.45)',
+        panelBorder: 'rgba(255,217,138,.24)', accent: '#ffd98a', sub: '#cbbd94',
+        avatarBg: '#2a2350', avatarFg: '#fff6e2', avatarRing: 'rgba(255,217,138,.7)',
+        tagLabel: '#ffd98a', tagText: '#fff6e2', line: 'rgba(255,217,138,.2)', logoBg: '#ffd98a', logoFg: '#241c08',
+      },
     },
   };
   async function generateReviewCardImage(page, review, isQuality, skinId) {
