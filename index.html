@@ -581,20 +581,19 @@
     .cz-skin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; align-items:start; }
     .cz-tile { display:flex; flex-direction:column; overflow:hidden; border-radius:14px;
       border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.02); }
+    .cz-tile-swatch {
+      display:block; height:76px; overflow:hidden;
+      contain: strict; /* board-skin-*/mypage-skin-* の position:fixed な疑似要素や100vhのmin-heightを
+                           この箱の外に一切漏らさないための閉じ込め。containを使うと子のfixedは
+                           この要素が作る包含ブロックの中に閉じ、min-heightも箱の外寸(76px)を
+                           変えられなくなる */
+    }
+    .cz-tile-swatch[class*="board-skin-"], .cz-tile-swatch[class*="mypage-skin-"] {
+      height:76px !important; min-height:0 !important; max-height:76px !important;
+    }
     .cz-tile.is-equipped { border-color:rgba(92,201,142,.5); background:rgba(92,201,142,.08); }
     /* スウォッチ：スキンの地色の上に吹き出し2つ。高さは固定して縦に伸びないようにする */
     .cz-tile-swatch { position:relative; display:block; height:76px; min-height:76px; overflow:hidden; }
-    .cz-tile-chip { position:absolute; bottom:9px; display:block; height:14px; border-radius:7px 7px 7px 2px;
-      max-width:none; margin:0; padding:0; }
-    .cz-tile-chip { left:10px; width:32px; }
-    .cz-tile-chip-mine { left:auto; right:10px; width:24px; border-radius:7px 7px 2px 7px; }
-    .cz-tile-frame { height:76px; display:flex; align-items:center; justify-content:center; }
-    .cz-tile-frame .user-avatar-circle { width:38px; height:38px; background:#2c4436;
-      display:flex; align-items:center; justify-content:center; color:#9be3bd; font-size:13px; font-weight:800; }
-    .cz-tile-badge { height:76px; display:flex; align-items:center; justify-content:center; }
-    .cz-tile-badge i { display:inline-flex; align-items:center; justify-content:center; min-width:24px; height:24px;
-      padding:0 7px; border-radius:12px; background:var(--badge-color,#e5484d); color:#fff;
-      font-size:11px; font-style:normal; font-weight:800; }
     .cz-tile-foot { display:flex; flex-direction:column; gap:8px; padding:10px 11px 11px;
       border-top:1px solid rgba(255,255,255,.06); }
     .cz-tile-name { font-size:12px; font-weight:800; color:#dfeae3;
@@ -22705,16 +22704,6 @@
   // ── カスタマイズ（吹き出し・レビューカード・アイコンフレーム・称号・通知バッジ色） ──
   // スキンの表示名。IDそのままだと英字が出てしまうので、ここで日本語名を持つ
   const SKIN_NAMES = { yozora: '夜空' };
-  // タイル(小さいスウォッチ)専用の色。board-skin-*/mypage-skin-* クラスはページ全面を覆う前提の
-  // 重いルール(min-height:100vh・::before/::after position:fixedなど)が名前の部分一致で効く作りなので、
-  // 76px程度の小さいタイルに直接使うと画面が壊れる。なのでタイルは絶対にそのクラスを使わず、
-  // ここの色だけを見た目に使う（新しいスキンを追加したら、ここにも1行足すこと）。
-  const CZ_SWATCH_BOARD = { default: '#0d1d13', yozora: '#0c1230' };
-  const CZ_SWATCH_MYPAGE = {
-    default: ['rgba(92,201,142,.22)', 'rgba(255,255,255,.06)'],
-    yozora:  ['rgba(159,188,255,.28)', 'rgba(207,224,255,.14)'],
-  };
-
   const CUSTOMIZE_TABS = [
     { id: 'board', labelKey: 'customizeTabBoard', className: (id) => `board-skin-${id}`, bubbleClass: (id) => `bubble-skin-${id} is-mine` },
     { id: 'mypage', labelKey: 'customizeTabMypage', className: (id) => `mypage-skin-${id}` },
@@ -22755,31 +22744,18 @@
     const tileHtml = (skinId) => {
       const isEquipped = skinId === equippedId;
       const previewClass = tab.className ? tab.className(skinId) : '';
-      // スウォッチ：カテゴリごとに見た目を変える。
-      // 注意：board-skin-*/mypage-skin-* はページ全面を覆う前提の重いルールが名前の部分一致で
-      // 効く作りなので、この76px程度の小さいタイルには絶対に直接使わない
-      // （CZ_SWATCH_BOARD/CZ_SWATCH_MYPAGEの色だけを使う）。
-      let swatch;
+      // スウォッチ：6カテゴリすべて同じ .cz-tile-swatch の箱(同じ高さ・同じ角丸)に統一。中身だけ変える。
+      let inner;
       if(tab.id === 'frame') {
-        swatch = `<span class="cz-tile-frame"><span class="user-avatar-circle ${previewClass}">A</span></span>`;
+        inner = `<span class="user-avatar-circle ${previewClass}" style="width:38px;height:38px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:13px;font-weight:800;">A</span>`;
       } else if(tab.id === 'badge_color') {
-        swatch = `<span class="cz-tile-badge ${previewClass}"><i>3</i></span>`;
-      } else if(tab.id === 'card') {
-        // card-skin-<id> はページ全面ルールの対象外（board/mypageだけが対象）なので直接使って安全
-        swatch = `<span class="cz-tile-swatch ${previewClass}"></span>`;
-      } else if(tab.id === 'board') {
-        const bg = CZ_SWATCH_BOARD[skinId] || CZ_SWATCH_BOARD.default;
-        swatch = `<span class="cz-tile-swatch" style="background:${bg};">
-             <i class="cz-tile-chip chat-bubble ${tab.bubbleClass ? tab.bubbleClass(skinId) : ''} is-theirs"></i>
-             <i class="cz-tile-chip cz-tile-chip-mine chat-bubble ${tab.bubbleClass ? tab.bubbleClass(skinId) : ''} is-mine"></i>
-           </span>`;
-      } else if(tab.id === 'mypage') {
-        const [a, b] = CZ_SWATCH_MYPAGE[skinId] || CZ_SWATCH_MYPAGE.default;
-        swatch = `<span class="cz-tile-swatch" style="background:linear-gradient(120deg,${a},${b});"></span>`;
+        inner = `<span class="${previewClass}" style="position:relative;width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:17px;">🔔<span style="position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--badge-color,#e5484d);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">3</span></span>`;
+      } else if(tab.id === 'badge') {
+        inner = rankTagHtml(RANK_TIERS[RANK_TIERS.length - 1], skinId);
       } else {
-        // badge（称号）：ランクバッジそのものを縮小して見せる
-        swatch = `<span class="cz-tile-swatch" style="display:flex;align-items:center;justify-content:center;">${rankTagHtml(RANK_TIERS[RANK_TIERS.length - 1], skinId)}</span>`;
+        inner = ''; // board/mypage/card：previewClass自体の背景(実物のスキン絵)がそのまま箱の背景になる
       }
+      const swatch = `<span class="cz-tile-swatch ${tab.id==='board'||tab.id==='mypage'||tab.id==='card' ? previewClass : ''}" style="display:flex;align-items:center;justify-content:center;">${inner}</span>`;
       const name = skinId === 'default' ? t('customizeNormalLabel') : (SKIN_NAMES[skinId] || skinId);
       return `<div class="customize-tile cz-tile${isEquipped?' is-equipped':''}" data-skin-id="${escapeHtml(skinId)}">
         ${swatch}
