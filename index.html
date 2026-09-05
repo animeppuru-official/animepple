@@ -567,19 +567,12 @@
       font-size:.95rem; font-weight:900; color:#f0c94a; font-variant-numeric:tabular-nums; }
 
     /* ── カスタマイズページ ── */
-    .cz-wrap { max-width:1040px; margin:0 auto; padding:18px 20px 44px;
-      display:flex; flex-direction:column; gap:16px; }
+    .cz-wrap { padding:16px 14px 44px; display:flex; flex-direction:column; gap:16px; }
     .cz-head { display:flex; flex-direction:column; gap:5px; }
     .cz-title { margin:0; font-size:1.15rem; font-weight:900; color:#eaf6ee; }
     .cz-lead { margin:0; font-size:11.5px; line-height:1.7; color:var(--muted); }
     .cz-tabs { display:flex; flex-wrap:wrap; gap:6px; }
     .cz-body { display:flex; flex-direction:column; gap:18px; }
-    /* PC幅では左にプレビュー、右にスキン一覧。狭い時は縦積み */
-    @media (min-width:900px) {
-      .cz-body { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:24px; align-items:start; }
-      .cz-body > :first-child { min-width:0; }
-      .cz-body > :last-child { position:sticky; top:64px; }
-    }
 
     .cz-preview-col, .cz-skins-col { display:flex; flex-direction:column; gap:9px; }
     .cz-col-head { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
@@ -587,7 +580,31 @@
     .cz-col-sub { font-size:10.5px; color:var(--muted); }
     .cz-preview-frame { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.09);
       background:linear-gradient(180deg,#0d2416,#081a0f); box-shadow:0 22px 44px -32px #000; }
-    .cz-skin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
+    .cz-skin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+    .cz-tile { display:flex; flex-direction:column; overflow:hidden; border-radius:14px;
+      border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.02); }
+    .cz-tile.is-equipped { border-color:rgba(92,201,142,.5); background:rgba(92,201,142,.08); }
+    /* スウォッチ：スキンの地色の上に吹き出し2つ。高さは固定して縦に伸びないようにする */
+    .cz-tile-swatch { position:relative; display:block; height:76px; overflow:hidden; }
+    .cz-tile-chip { position:absolute; bottom:9px; display:block; height:14px; border-radius:7px 7px 7px 2px;
+      max-width:none; margin:0; padding:0; }
+    .cz-tile-chip { left:10px; width:32px; }
+    .cz-tile-chip-mine { left:auto; right:10px; width:24px; border-radius:7px 7px 2px 7px; }
+    .cz-tile-frame { height:76px; display:flex; align-items:center; justify-content:center; }
+    .cz-tile-frame .user-avatar-circle { width:38px; height:38px; background:#2c4436;
+      display:flex; align-items:center; justify-content:center; color:#9be3bd; font-size:13px; font-weight:800; }
+    .cz-tile-badge { height:76px; display:flex; align-items:center; justify-content:center; }
+    .cz-tile-badge i { display:inline-flex; align-items:center; justify-content:center; min-width:24px; height:24px;
+      padding:0 7px; border-radius:12px; background:var(--badge-color,#e5484d); color:#fff;
+      font-size:11px; font-style:normal; font-weight:800; }
+    .cz-tile-foot { display:flex; flex-direction:column; gap:8px; padding:10px 11px 11px;
+      border-top:1px solid rgba(255,255,255,.06); }
+    .cz-tile-name { font-size:12px; font-weight:800; color:#dfeae3;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cz-tile-equipped { display:flex; align-items:center; height:28px; font-size:11px; font-weight:800; color:#8fe5ab; }
+    .cz-tile-btn { height:28px; padding:0 12px; border-radius:8px; border:none;
+      background:#5ec97a; color:#07200f; font:inherit; font-weight:800; font-size:11.5px; cursor:pointer; }
+    .cz-tile-btn:hover { background:#6fd48f; }
     .cz-only-note { margin:6px 0 0; font-size:11.5px; line-height:1.8; color:var(--muted); }
 
     /* ── デイリークエストページ（DC: デイリークエストページ.dc.html と同じ見た目） ── */
@@ -22688,6 +22705,9 @@
   window.renderCoinShopPage = renderCoinShopPage;
 
   // ── カスタマイズ（吹き出し・レビューカード・アイコンフレーム・称号・通知バッジ色） ──
+  // スキンの表示名。IDそのままだと英字が出てしまうので、ここで日本語名を持つ
+  const SKIN_NAMES = { yozora: '夜空' };
+
   const CUSTOMIZE_TABS = [
     { id: 'board', labelKey: 'customizeTabBoard', className: (id) => `board-skin-${id}`, bubbleClass: (id) => `bubble-skin-${id} is-mine` },
     { id: 'mypage', labelKey: 'customizeTabMypage', className: (id) => `mypage-skin-${id}` },
@@ -22729,24 +22749,24 @@
     const tileHtml = (skinId) => {
       const isEquipped = skinId === equippedId;
       const previewClass = tab.className ? tab.className(skinId) : '';
-      const previewInner = tab.id === 'board'
-        ? `<div style="display:flex;flex-direction:column;gap:6px;width:100%;">
-             <div class="${previewClass}" style="width:100%;height:34px;border-radius:8px;"></div>
-             <div class="chat-bubble ${tab.bubbleClass(skinId)}" style="max-width:none;align-self:flex-end;"><div class="bubble-inner"><div class="bubble-text" style="font-size:12px;">${escapeHtml(t('gachaFreeBtn'))}</div></div></div>
-           </div>`
-        : tab.id === 'card' || tab.id === 'mypage'
-        ? `<div class="${previewClass}" style="width:100%;height:60px;border-radius:10px;"></div>`
-        : tab.id === 'frame'
-        ? `<span class="user-avatar-circle ${previewClass}" style="background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-weight:800;">A</span>`
+      // スウォッチ：そのスキンの地色の上に吹き出し2つを重ねて、質感が一目で分かるようにする
+      const swatch = tab.id === 'frame'
+        ? `<span class="cz-tile-frame"><span class="user-avatar-circle ${previewClass}">A</span></span>`
         : tab.id === 'badge_color'
-        ? `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--badge-color,#e5484d);color:#fff;font-size:11px;font-weight:800;">3</span>`
-        : `<span></span>`;
-      return `<div class="customize-tile" data-skin-id="${escapeHtml(skinId)}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 10px;border-radius:14px;border:1px solid ${isEquipped?'rgba(92,201,142,.5)':'rgba(255,255,255,.1)'};background:${isEquipped?'rgba(92,201,142,.08)':'rgba(255,255,255,.02)'};">
-        <div style="display:flex;align-items:center;justify-content:center;min-height:44px;">${previewInner}</div>
-        <span style="font-size:12px;color:#dfeae3;font-weight:700;">${skinId==='default'?escapeHtml(t('customizeNormalLabel')):escapeHtml(skinId)}</span>
-        ${isEquipped
-          ? `<span style="font-size:11px;color:#8fe5ab;font-weight:800;">✓ ${escapeHtml(t('customizeEquippedLabel'))}</span>`
-          : `<button type="button" class="customize-equip-btn" data-skin-id="${escapeHtml(skinId)}" style="height:28px;padding:0 12px;border-radius:8px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:11.5px;cursor:pointer;">${escapeHtml(t('customizeEquipBtn'))}</button>`}
+        ? `<span class="cz-tile-badge ${previewClass}"><i>3</i></span>`
+        : `<span class="cz-tile-swatch ${previewClass}">
+             <i class="cz-tile-chip chat-bubble ${tab.bubbleClass ? tab.bubbleClass(skinId) : ''} is-theirs"></i>
+             <i class="cz-tile-chip cz-tile-chip-mine chat-bubble ${tab.bubbleClass ? tab.bubbleClass(skinId) : ''} is-mine"></i>
+           </span>`;
+      const name = skinId === 'default' ? t('customizeNormalLabel') : (SKIN_NAMES[skinId] || skinId);
+      return `<div class="customize-tile cz-tile${isEquipped?' is-equipped':''}" data-skin-id="${escapeHtml(skinId)}">
+        ${swatch}
+        <span class="cz-tile-foot">
+          <span class="cz-tile-name">${escapeHtml(name)}</span>
+          ${isEquipped
+            ? `<span class="cz-tile-equipped">✓ ${escapeHtml(t('customizeEquippedLabel'))}</span>`
+            : `<button type="button" class="customize-equip-btn cz-tile-btn" data-skin-id="${escapeHtml(skinId)}">${escapeHtml(t('customizeEquipBtn'))}</button>`}
+        </span>
       </div>`;
     };
 
