@@ -580,12 +580,27 @@
     .cz-col-sub { font-size:10.5px; color:var(--muted); }
     .cz-preview-frame { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.09);
       background:linear-gradient(180deg,#0d2416,#081a0f); box-shadow:0 22px 44px -32px #000; }
-    .cz-skin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+    .cz-skin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; align-items:start; }
+
+    /* スキンのクラスはページ全体に敷く前提（min-height:100%、疑似要素は position:fixed）。
+       プレビュー箱とタイルの中では、その2つを打ち消して箱の中に収める。 */
+    .cz-preview-frame [class*="board-skin-"], .cz-preview-frame [class*="mypage-skin-"],
+    .cz-tile [class*="board-skin-"], .cz-tile [class*="mypage-skin-"] {
+      min-height:0 !important;
+    }
+    .cz-preview-frame [class*="board-skin-"]::before, .cz-preview-frame [class*="board-skin-"]::after,
+    .cz-preview-frame [class*="mypage-skin-"]::before, .cz-preview-frame [class*="mypage-skin-"]::after,
+    .cz-tile [class*="board-skin-"]::before, .cz-tile [class*="board-skin-"]::after,
+    .cz-tile [class*="mypage-skin-"]::before, .cz-tile [class*="mypage-skin-"]::after {
+      position:absolute !important;
+    }
+    /* プレビュー箱の中の入力バーも、ページ用の sticky と負マージンを打ち消す */
+    .cz-preview-frame .board-composer { position:static !important; margin:0 !important; }
     .cz-tile { display:flex; flex-direction:column; overflow:hidden; border-radius:14px;
       border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.02); }
     .cz-tile.is-equipped { border-color:rgba(92,201,142,.5); background:rgba(92,201,142,.08); }
     /* スウォッチ：スキンの地色の上に吹き出し2つ。高さは固定して縦に伸びないようにする */
-    .cz-tile-swatch { position:relative; display:block; height:76px; overflow:hidden; }
+    .cz-tile-swatch { position:relative; display:block; height:76px; min-height:76px; overflow:hidden; }
     .cz-tile-chip { position:absolute; bottom:9px; display:block; height:14px; border-radius:7px 7px 7px 2px;
       max-width:none; margin:0; padding:0; }
     .cz-tile-chip { left:10px; width:32px; }
