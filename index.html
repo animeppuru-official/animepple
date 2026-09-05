@@ -503,6 +503,274 @@
     .gacha-remain-dot { width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.14); }
     .gacha-remain-dot.is-on { background:#5cc98e; }
     .gacha-remain-num { font-size:12px; font-weight:800; color:#dfeae3; white-space:nowrap; }
+    /* 横スクロール部のスクロールバーは出さない（矢印が中身に重なるため） */
+    .gacha-series-banners::-webkit-scrollbar, #customizeTabs::-webkit-scrollbar { width:0; height:0; }
+    .gacha-series-banners, #customizeTabs { scrollbar-width:none; }
+    .gacha-series-block { display:flex; flex-direction:column; gap:7px; }
+    .gacha-series-head { display:flex; align-items:baseline; gap:8px; }
+    .gacha-series-label { font-size:11px; font-weight:800; color:#8db5a0; letter-spacing:.04em; }
+    .gacha-series-hint { font-size:10.5px; color:var(--muted); }
+
+    /* 筐体の刻印プレート・稼働ランプ・レベルゲージ・りんごの透かし */
+    .gacha-stage-apple { position:absolute; left:50%; top:50%; width:58%; height:58%; transform:translate(-50%,-52%); opacity:.07; }
+    .gacha-stage-plate { position:absolute; top:14px; left:14px; z-index:5; display:flex; flex-direction:column; gap:2px;
+      padding:5px 10px; border-radius:7px; background:linear-gradient(160deg,rgba(240,201,74,.24),rgba(240,201,74,.06));
+      border:1px solid rgba(240,201,74,.42); box-shadow:inset 0 1px 0 rgba(255,255,255,.18); }
+    .gacha-stage-plate b { font-size:9px; font-weight:900; letter-spacing:.22em; color:#f0c94a; }
+    .gacha-stage-plate i { font-size:7.5px; font-style:normal; letter-spacing:.14em; color:rgba(240,201,74,.62); }
+    .gacha-stage-led { position:absolute; top:14px; right:14px; z-index:5; display:flex; align-items:center; gap:5px;
+      padding:4px 9px; border-radius:999px; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.12); }
+    .gacha-stage-led i { width:6px; height:6px; border-radius:50%; background:#5cc98e; box-shadow:0 0 7px #5cc98e; }
+    .gacha-stage-led b { font-size:8.5px; font-weight:900; letter-spacing:.12em; color:#a9bcb0; }
+    .gacha-stage.is-filling .gacha-stage-led i { background:#f0c94a; box-shadow:0 0 7px #f0c94a; animation:gachaLed .5s ease-in-out infinite; }
+    @keyframes gachaLed { 0%,100% { opacity:.35 } 50% { opacity:1 } }
+    .gacha-stage-gauge { position:absolute; left:14px; top:32%; bottom:22%; z-index:5; width:12px; border-radius:7px;
+      background:rgba(0,0,0,.42); border:1px solid rgba(255,255,255,.1); display:flex; flex-direction:column-reverse;
+      gap:3px; padding:4px 2.5px; pointer-events:none; }
+    .gacha-stage-gauge i { flex:1 1 0; min-height:0; border-radius:3px; background:rgba(255,255,255,.09); }
+    .gacha-stage.is-filling .gacha-stage-gauge i:nth-child(1) { background:#d97510; }
+    .gacha-stage.is-filling .gacha-stage-gauge i:nth-child(2) { background:#e08417; }
+    .gacha-stage.is-filling .gacha-stage-gauge i:nth-child(3) { background:#eb9420; }
+    .gacha-stage.is-filling .gacha-stage-gauge i:nth-child(4) { background:#f2a52c; }
+    .gacha-stage.is-filling .gacha-stage-gauge i:nth-child(5) { background:#f6b93b; }
+
+    /* 長押しボタン：押している間、ボタン自身が左から満ちる */
+    .gacha-actions { display:flex; flex-direction:column; gap:9px; }
+    .gacha-hold-btn { position:relative; overflow:hidden; border:none; border-radius:14px; cursor:pointer;
+      font:inherit; touch-action:none; -webkit-user-select:none; user-select:none; }
+    .gacha-hold-btn:disabled { opacity:.45; cursor:default; }
+    .gacha-hold-btn .gacha-hold-fill { position:absolute; left:0; top:0; bottom:0; width:0;
+      background:rgba(255,255,255,.28); pointer-events:none; }
+    .gacha-hold-btn .gacha-hold-body { position:relative; display:flex; align-items:center; justify-content:center; gap:9px; }
+    .gacha-hold-btn-free { height:56px; background:linear-gradient(135deg,#6fd48f,#3fa96f); color:#07200f;
+      font-size:15px; font-weight:900; box-shadow:0 14px 30px -16px rgba(92,201,142,.7); }
+    .gacha-coin-row { display:flex; gap:9px; margin-top:5px; }
+    .gacha-hold-btn-coin, .gacha-hold-btn-coin10 { height:58px; border-radius:13px; }
+    .gacha-hold-btn-coin { flex:1 1 0; min-width:0; border:1px solid rgba(240,201,74,.35); background:rgba(240,201,74,.08); color:#f0c94a; }
+    .gacha-hold-btn-coin10 { flex:1.25 1 0; min-width:0; border:1px solid rgba(240,201,74,.55);
+      background:linear-gradient(135deg,rgba(240,201,74,.22),rgba(240,201,74,.08)); color:#ffe9a8; }
+    .gacha-hold-btn-coin .gacha-hold-fill, .gacha-hold-btn-coin10 .gacha-hold-fill { background:rgba(240,201,74,.28); }
+    .gacha-hold-btn-coin .gacha-hold-body, .gacha-hold-btn-coin10 .gacha-hold-body { flex-direction:column; gap:2px; }
+    .gacha-coin-amount { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:900; }
+    .gacha-coin-dot { width:13px; height:13px; border-radius:50%; background:linear-gradient(135deg,#f3d786,#c9982c); }
+    .gacha-coin-note { font-size:10.5px; font-weight:700; color:#c8a94a; }
+    .gacha-hold-btn-coin10 .gacha-coin-note { color:#e0c576; }
+    .gacha-coin-tag { position:absolute; top:-8px; left:50%; transform:translateX(-50%); z-index:2; font-size:9.5px;
+      font-weight:900; padding:2px 8px; border-radius:8px; background:#f0c94a; color:#0e2416; white-space:nowrap; }
+
+    /* コインの表現。絵文字は使わず、金貨の質感をCSSで作る */
+    .coin-dot { display:inline-block; width:14px; height:14px; border-radius:50%; flex:0 0 auto;
+      background:linear-gradient(135deg,#f7e6ab,#f0c94a 45%,#b9852b);
+      box-shadow:inset 0 -1px 0 rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.55); }
+    .coin-dot-lg { width:26px; height:26px; }
+    .coin-balance { display:flex; align-items:center; gap:7px; margin:0 0 1rem;
+      font-size:.95rem; font-weight:900; color:#f0c94a; font-variant-numeric:tabular-nums; }
+
+    /* ── デイリークエストページ（DC: デイリークエストページ.dc.html と同じ見た目） ── */
+    #page-daily-quest .page-body, #dailyQuestBody { max-width:560px; margin:0 auto; padding:16px 14px 44px;
+      display:flex; flex-direction:column; gap:20px; }
+    .dq-head { display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+    .dq-head-copy { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:5px; }
+    .dq-title { margin:0; font-size:1.15rem; font-weight:900; color:#eaf6ee; }
+    .dq-lead { margin:0; font-size:11.5px; line-height:1.7; color:var(--muted); }
+    .dq-reset { flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 12px;
+      border-radius:10px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+    .dq-reset b { font-size:11.5px; font-weight:800; color:#dfeae3; white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+    /* 主カード：進行中は緑、達成すると金＋光沢、受け取り後は沈める */
+    .dq-card { position:relative; overflow:hidden; border-radius:18px;
+      border:1px solid rgba(92,201,142,.3); background:linear-gradient(160deg,rgba(92,201,142,.12),rgba(92,201,142,.03)); }
+    .dq-card.is-ready { border-color:rgba(240,201,74,.42); background:linear-gradient(160deg,rgba(240,201,74,.15),rgba(240,201,74,.03)); }
+    .dq-card.is-claimed { border-color:rgba(255,255,255,.09); background:rgba(255,255,255,.02); }
+    .dq-card-sheen { position:absolute; top:0; bottom:0; width:45%; pointer-events:none;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);
+      animation:csSheen 4.2s ease-in-out infinite; }
+    .dq-card-inner { position:relative; padding:18px 17px 16px; display:flex; flex-direction:column; gap:15px; }
+    .dq-card-top { display:flex; align-items:flex-start; gap:12px; }
+    .dq-card-ico { flex:0 0 auto; width:38px; height:38px; border-radius:11px; display:grid; place-items:center;
+      background:rgba(92,201,142,.14); border:1px solid rgba(92,201,142,.32); color:#5cc98e; }
+    .dq-card-ico.is-done { background:rgba(240,201,74,.16); border-color:rgba(240,201,74,.4); color:#f0c94a; }
+    .dq-card-copy { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:5px; }
+    .dq-card-state { font-size:10.5px; font-weight:900; letter-spacing:.1em; }
+    .dq-card-task { font-size:14.5px; font-weight:800; line-height:1.6; color:#eaf6ee; text-wrap:pretty; }
+    .dq-progress { display:flex; align-items:center; gap:11px; }
+    .dq-progress-track { flex:1 1 auto; min-width:0; height:7px; border-radius:4px; background:rgba(255,255,255,.08); overflow:hidden; }
+    .dq-progress-fill { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,#3fa96f,#6fd48f); transition:width .3s ease; }
+    .dq-progress-fill.is-done { background:linear-gradient(90deg,#f0c94a,#f7e6ab); }
+    .dq-progress-num { flex:0 0 auto; font-size:11.5px; font-weight:900; font-variant-numeric:tabular-nums; }
+    .dq-reward { display:flex; align-items:center; gap:12px; padding:12px 13px; border-radius:12px;
+      background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.07); }
+    .dq-reward-label { flex:1 1 auto; min-width:0; font-size:11px; font-weight:800; color:var(--muted); }
+    .dq-reward-value { flex:0 0 auto; display:flex; align-items:center; gap:8px; }
+    .dq-reward-value b { font-size:19px; font-weight:900; color:#f7e6ab; line-height:1; font-variant-numeric:tabular-nums; }
+    .dq-claim { height:50px; border-radius:13px; border:none; background:rgba(255,255,255,.07);
+      color:#7e9689; font:inherit; font-size:13.5px; font-weight:900; cursor:not-allowed; }
+    .dq-claim.is-ready { background:linear-gradient(135deg,#f7e6ab,#f0c94a 55%,#d9a92f); color:#2b1c05; cursor:pointer; }
+
+    /* 達成手順：縦線でつないだタイムライン。今やる所にだけ操作ボタンを出す */
+    .dq-steps, .dq-criteria { display:flex; flex-direction:column; gap:11px; }
+    .dq-section-label { font-size:11px; font-weight:800; letter-spacing:.04em; color:var(--muted); }
+    .dq-steps-list { display:flex; flex-direction:column; }
+    .dq-step { display:flex; gap:13px; padding:0 0 16px; }
+    .dq-step-rail { flex:0 0 auto; display:flex; flex-direction:column; align-items:center; }
+    .dq-step-dot { width:24px; height:24px; border-radius:50%; display:grid; place-items:center;
+      background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); color:#7e9689;
+      font-size:11px; font-weight:900; }
+    .dq-step-dot.is-done { background:#5cc98e; border-color:#5cc98e; color:#07200f; }
+    .dq-step-dot.is-current { background:rgba(92,201,142,.14); border-color:rgba(92,201,142,.45); color:#8fe0b0; }
+    .dq-step-line { flex:1 1 auto; width:1px; margin-top:5px; background:rgba(255,255,255,.1); }
+    .dq-step-copy { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:4px; padding-top:2px; }
+    .dq-step-title { font-size:12.5px; font-weight:800; color:#eaf6ee; }
+    .dq-step-title.is-done { color:var(--muted); }
+    .dq-step-body { font-size:11px; line-height:1.75; color:var(--muted); text-wrap:pretty; }
+    .dq-step-action { flex:0 0 auto; align-self:center; height:30px; padding:0 13px; border-radius:9px;
+      border:1px solid rgba(92,201,142,.4); background:rgba(92,201,142,.1); color:#8fe0b0;
+      font:inherit; font-size:11.5px; font-weight:800; cursor:pointer; white-space:nowrap; }
+    .dq-step-action:hover { background:rgba(92,201,142,.18); }
+    .dq-criteria { padding:14px; border-radius:14px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.02); gap:9px; }
+    .dq-criteria-list { display:flex; flex-direction:column; gap:7px; }
+    .dq-criteria-item { display:flex; align-items:flex-start; gap:8px; font-size:11px; line-height:1.7; color:#c3d4c9; }
+    .dq-criteria-item svg { flex:0 0 auto; margin-top:3px; }
+    .dq-gacha-link { height:46px; border-radius:12px; border:1px solid rgba(240,201,74,.34);
+      background:rgba(240,201,74,.08); color:#f0c94a; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
+    .dq-gacha-link:hover { background:rgba(240,201,74,.15); }
+
+    /* ── 課金ページ（DC: 課金ページ.dc.html と同じ見た目） ── */
+    #page-coin-shop .page-body { max-width:560px; margin:0 auto; padding:16px 14px 44px;
+      display:flex; flex-direction:column; gap:22px; }
+    .cs-head { display:flex; flex-direction:column; gap:5px; }
+    .cs-title { margin:0; font-size:1.15rem; font-weight:900; color:#eaf6ee; }
+    .cs-lead { margin:0; font-size:11.5px; line-height:1.7; color:var(--muted); }
+
+    .cs-balance { border:1px solid rgba(240,201,74,.3); border-radius:18px; overflow:hidden;
+      background:linear-gradient(160deg,rgba(240,201,74,.14),rgba(240,201,74,.03)); }
+    .cs-balance-top { padding:17px 17px 15px; display:flex; align-items:flex-end; justify-content:space-between; gap:14px; }
+    .cs-balance-left { display:flex; flex-direction:column; gap:7px; min-width:0; }
+    .cs-balance-label { font-size:11px; font-weight:800; letter-spacing:.04em; color:#c8a94a; }
+    .cs-balance-value { display:flex; align-items:center; gap:10px; line-height:1;
+      font-size:32px; font-weight:900; color:#f7e6ab; font-variant-numeric:tabular-nums; }
+    .cs-balance-right { flex:0 0 auto; display:flex; flex-direction:column; align-items:flex-end; gap:3px; padding-bottom:3px; }
+    .cs-balance-right b { font-size:22px; font-weight:900; color:#eafdf1; line-height:1; font-variant-numeric:tabular-nums; }
+    .cs-balance-right i { font-size:10.5px; font-style:normal; color:#c8a94a; }
+    .cs-balance-uses { display:flex; border-top:1px solid rgba(240,201,74,.2); background:rgba(0,0,0,.24); }
+    .cs-use { flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 6px; }
+    .cs-use b { font-size:13.5px; font-weight:900; color:#eafdf1; font-variant-numeric:tabular-nums; }
+    .cs-use i { font-size:10.5px; font-style:normal; color:var(--muted); }
+    .cs-use-sep { width:1px; background:rgba(240,201,74,.18); }
+
+    .cs-packs { display:flex; flex-direction:column; gap:11px; }
+    .cs-packs-head { display:flex; align-items:baseline; gap:9px; }
+    .cs-packs-label { font-size:11px; font-weight:800; letter-spacing:.04em; color:var(--muted); }
+    .cs-packs-hint { font-size:10.5px; color:var(--muted); }
+
+    /* 一番お得なパック：横長カード。光沢がゆっくり流れる */
+    .cs-pack-best { position:relative; overflow:hidden; width:100%; display:flex; align-items:center; gap:14px;
+      padding:16px; border-radius:16px; border:1px solid rgba(240,201,74,.55);
+      background:linear-gradient(135deg,rgba(240,201,74,.2),rgba(240,201,74,.05));
+      color:inherit; font:inherit; cursor:pointer; text-align:left; }
+    .cs-pack-best:hover { border-color:#f0c94a; }
+    .cs-pack-best-sheen { position:absolute; top:0; bottom:0; width:45%; pointer-events:none;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent);
+      animation:csSheen 4.2s ease-in-out infinite; }
+    @keyframes csSheen { 0% { transform:translateX(-130%) } 100% { transform:translateX(240%) } }
+    .cs-pack-best-copy { position:relative; flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:4px; }
+    .cs-pack-best-tag { display:inline-flex; align-self:flex-start; align-items:center; height:18px; padding:0 8px;
+      border-radius:6px; background:#f0c94a; color:#2b1c05; font-size:10.5px; font-weight:900; }
+    .cs-pack-best-amount { display:flex; align-items:baseline; gap:7px; }
+    .cs-pack-best-amount b { font-size:26px; font-weight:900; color:#fff6dd; line-height:1; font-variant-numeric:tabular-nums; }
+    .cs-pack-best-note { font-size:10.5px; color:#c8a94a; }
+    .cs-pack-best-price { position:relative; flex:0 0 auto; height:38px; padding:0 16px; border-radius:10px;
+      background:#f0c94a; color:#2b1c05; display:flex; align-items:center;
+      font-size:14px; font-weight:900; font-variant-numeric:tabular-nums; }
+
+    .cs-pack-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(152px,1fr)); gap:14px 10px; margin-top:3px; }
+    .cs-pack { position:relative; display:flex; flex-direction:column; align-items:center; gap:7px;
+      padding:16px 10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.02); color:inherit; font:inherit; cursor:pointer;
+      transition:border-color .16s ease, background .16s ease, transform .16s cubic-bezier(.34,1.56,.64,1); }
+    .cs-pack:hover { transform:translateY(-2px); border-color:rgba(240,201,74,.5); }
+    .cs-pack.is-popular { border-color:rgba(92,201,142,.45); background:rgba(92,201,142,.06); }
+    .cs-pack-tag { position:absolute; top:-9px; left:50%; transform:translateX(-50%); height:18px; padding:0 8px;
+      border-radius:8px; background:#5cc98e; color:#07200f; font-size:10.5px; font-weight:900;
+      white-space:nowrap; display:flex; align-items:center; }
+    .cs-pack-amount { display:flex; align-items:center; gap:7px; line-height:1; }
+    .cs-pack-amount b { font-size:19px; font-weight:900; color:#eafdf1; font-variant-numeric:tabular-nums; }
+    .cs-pack-meta { display:flex; align-items:center; gap:6px; min-height:17px; }
+    .cs-bonus { font-size:10.5px; font-weight:900; color:#07200f; background:#8fe0a8; padding:1px 6px; border-radius:5px; }
+    .cs-draws { font-size:10.5px; color:var(--muted); }
+    .cs-pack-price { width:100%; margin-top:3px; height:32px; border-radius:9px;
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+      display:flex; align-items:center; justify-content:center;
+      font-size:13.5px; font-weight:900; color:#dfeae3; font-variant-numeric:tabular-nums; }
+
+    .cs-legal { display:flex; flex-direction:column; gap:10px; padding:14px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.02); }
+    .cs-legal-label { font-size:11px; font-weight:800; color:var(--muted); }
+    .cs-legal-body { margin:0; font-size:10.5px; line-height:1.9; color:#7e9689; }
+    .cs-legal-links { display:flex; gap:14px; flex-wrap:wrap; padding-top:2px; }
+    .cs-legal-links a { font-size:10.5px; font-weight:700; }
+    .coin-dot-xl { width:28px; height:28px; box-shadow:inset 0 -1px 0 rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.55); }
+
+    /* 課金ページ：残高カードとパック一覧 */
+    .coin-balance-card { border:1px solid rgba(240,201,74,.28); border-radius:16px;
+      background:linear-gradient(160deg,rgba(240,201,74,.12),rgba(240,201,74,.03)); overflow:hidden; margin-bottom:1.3rem; }
+    .coin-balance-main { display:flex; flex-direction:column; gap:6px; padding:16px 16px 14px; }
+    .coin-balance-label { font-size:11px; font-weight:800; color:#c8a94a; letter-spacing:.04em; }
+    .coin-balance-value { display:flex; align-items:center; gap:9px; font-size:30px; font-weight:900;
+      color:#f7e6ab; line-height:1; font-variant-numeric:tabular-nums; }
+    .coin-balance-uses { display:flex; align-items:stretch; border-top:1px solid rgba(240,201,74,.2); background:rgba(0,0,0,.22); }
+    .coin-use { flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 6px; }
+    .coin-use b { font-size:14px; font-weight:900; color:#eafdf1; font-variant-numeric:tabular-nums; }
+    .coin-use i { font-size:10.5px; font-style:normal; color:var(--muted); text-align:center; }
+    .coin-use-sep { width:1px; background:rgba(240,201,74,.18); }
+    .coin-section-label { margin:0 0 .7rem; font-size:11px; font-weight:800; color:#8db5a0; letter-spacing:.04em; }
+    .coin-pack-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px 10px; }
+    .coin-pack-card { position:relative; display:flex; flex-direction:column; align-items:center; gap:7px;
+      padding:16px 10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.02); color:inherit; font:inherit; cursor:pointer;
+      transition:border-color .16s ease, background .16s ease, transform .16s cubic-bezier(.34,1.56,.64,1); }
+    .coin-pack-card:hover { transform:translateY(-2px); border-color:rgba(240,201,74,.5); background:rgba(240,201,74,.06); }
+    .coin-pack-card.is-best { border-color:rgba(240,201,74,.5); background:linear-gradient(160deg,rgba(240,201,74,.14),rgba(240,201,74,.04)); }
+    .coin-pack-card.is-popular { border-color:rgba(92,201,142,.45); }
+    .coin-pack-tag { position:absolute; top:-9px; left:50%; transform:translateX(-50%); font-size:9.5px;
+      font-weight:900; padding:2px 8px; border-radius:8px; white-space:nowrap; }
+    .coin-pack-tag.is-popular { background:#5cc98e; color:#07200f; }
+    .coin-pack-tag.is-best { background:#f0c94a; color:#2b1c05; }
+    .coin-pack-amount { display:flex; align-items:center; gap:7px; font-size:19px; font-weight:900;
+      color:#eafdf1; line-height:1; font-variant-numeric:tabular-nums; }
+    .coin-pack-meta { display:flex; align-items:center; gap:6px; min-height:16px; }
+    .coin-pack-bonus { font-size:10.5px; font-weight:900; color:#07200f; background:#8fe0a8;
+      padding:1px 6px; border-radius:5px; }
+    .coin-pack-draws { font-size:10.5px; color:var(--muted); }
+    .coin-pack-price { width:100%; margin-top:3px; height:32px; border-radius:9px;
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+      display:flex; align-items:center; justify-content:center;
+      font-size:13.5px; font-weight:900; color:#dfeae3; font-variant-numeric:tabular-nums; }
+    .coin-pack-card.is-best .coin-pack-price { background:#f0c94a; border-color:#f0c94a; color:#2b1c05; }
+
+    /* 見出し右の「確率と景品」入口 */
+    .gacha-prob-entry { flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 13px;
+      border-radius:11px; background:rgba(240,201,74,.09); border:1px solid rgba(240,201,74,.34);
+      color:#f0c94a; font-size:12px; font-weight:800; white-space:nowrap; cursor:pointer; }
+    .gacha-prob-entry:hover { background:rgba(240,201,74,.16); }
+    /* クエスト・ショップ：状態が読めるカードにする */
+    .gacha-entry-card { flex:1 1 0; min-width:0; display:flex; align-items:center; gap:9px; padding:11px 12px;
+      border-radius:13px; cursor:pointer; text-align:left; font:inherit; }
+    .gacha-entry-card .gacha-entry-ico { flex:0 0 auto; width:34px; height:34px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center; }
+    .gacha-entry-card .gacha-entry-copy { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+    .gacha-entry-card .gacha-entry-title { font-size:12px; font-weight:800; color:#eaf6ee; }
+    .gacha-entry-card .gacha-entry-sub { font-size:10.5px; }
+    .gacha-entry-quest { border:1px solid rgba(92,201,142,.32); background:linear-gradient(160deg,rgba(92,201,142,.13),rgba(92,201,142,.05)); position:relative; }
+    .gacha-entry-quest:hover { border-color:rgba(92,201,142,.6); }
+    .gacha-entry-quest .gacha-entry-ico { background:rgba(92,201,142,.16); }
+    .gacha-entry-shop { border:1px solid rgba(240,201,74,.3); background:linear-gradient(160deg,rgba(240,201,74,.12),rgba(240,201,74,.04)); }
+    .gacha-entry-shop:hover { border-color:rgba(240,201,74,.6); }
+    .gacha-entry-shop .gacha-entry-ico { background:rgba(240,201,74,.15); }
+    .gacha-entry-badge { position:absolute; top:-6px; right:-4px; min-width:19px; height:19px; padding:0 5px;
+      border-radius:10px; background:#f0c94a; color:#0e2416; font-size:11px; font-weight:900;
+      display:none; align-items:center; justify-content:center; }
+    .gacha-entry-badge.is-on { display:flex; }
     /* マシン枠：上から金の光、下に受け皿。動画/GIFはここに差し替える */
     .gacha-stage {
       position:relative; width:100%; max-width:420px; aspect-ratio:1/1;
@@ -514,22 +782,64 @@
     .gacha-stage-glow { position:absolute; inset:0; background:radial-gradient(60% 40% at 50% 0%, rgba(240,201,74,.16), transparent 70%); pointer-events:none; }
     .gacha-stage-tray { position:absolute; left:0; right:0; bottom:0; height:66px; background:linear-gradient(180deg,transparent,rgba(0,0,0,.45)); display:flex; align-items:flex-end; justify-content:center; padding-bottom:12px; pointer-events:none; }
     .gacha-stage-tray-bar { width:150px; height:8px; border-radius:4px; background:rgba(240,201,74,.35); }
-    .gacha-stage-idle { position:relative; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; padding:0 24px; }
-    .gacha-capsule {
-      width:96px; height:96px; border-radius:50%; border:2px dashed rgba(240,201,74,.45);
-      display:flex; align-items:center; justify-content:center; font-size:32px;
-      animation:gachaIdle 2.6s ease-in-out infinite;
+    .gacha-stage-idle { position:relative; z-index:5; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; padding:0 24px; }
+
+    /* ── 長押し中の演出：枠そのものがコップになり、下からリンゴジュースが満ちる。
+       同時にカメラ(=中身)が寄ってヴィネットで周囲が落ちる。動かすのはtransformとopacityだけ ── */
+    .gacha-juice { position:absolute; left:0; right:0; bottom:0; height:0; z-index:2; pointer-events:none;
+      background:linear-gradient(180deg,#ffcf5e 0%,#f2a52c 46%,#d97e14 100%); box-shadow:0 -10px 30px rgba(255,170,50,.35); }
+    .gacha-juice-surface { position:absolute; top:-5px; left:-10px; right:-10px; height:11px; border-radius:50%;
+      background:rgba(255,243,200,.95); opacity:0; }
+    .gacha-juice-bubbles { position:absolute; inset:0; opacity:0; }
+    .gacha-juice-bubbles i { position:absolute; bottom:3%; border-radius:50%; background:rgba(255,255,255,.46); }
+    .gacha-juice-bubbles i:nth-child(1) { left:16%; width:9px; height:9px; }
+    .gacha-juice-bubbles i:nth-child(2) { left:38%; width:6px; height:6px; }
+    .gacha-juice-bubbles i:nth-child(3) { left:58%; width:11px; height:11px; }
+    .gacha-juice-bubbles i:nth-child(4) { left:78%; width:7px; height:7px; }
+    .gacha-stage-vignette { position:absolute; inset:0; z-index:3; pointer-events:none; opacity:0;
+      background:radial-gradient(72% 60% at 50% 50%, transparent 32%, rgba(0,0,0,.9) 100%); }
+    .gacha-stage-marks { position:absolute; inset:0; z-index:1; pointer-events:none; }
+    .gacha-stage-marks i { position:absolute; right:0; height:1px; background:rgba(240,201,74,.2); }
+    .gacha-stage-marks i:nth-child(1) { top:24%; width:30px; }
+    .gacha-stage-marks i:nth-child(2) { top:44%; width:20px; background:rgba(240,201,74,.14); }
+    .gacha-stage-marks i:nth-child(3) { top:64%; width:30px; }
+    .gacha-stage-marks i:nth-child(4) { top:84%; width:20px; background:rgba(240,201,74,.14); }
+    .gacha-stage-marks b { position:absolute; right:34px; transform:translateY(-50%); font-size:8px; font-weight:900;
+      letter-spacing:.1em; color:rgba(240,201,74,.32); }
+    .gacha-stage-marks b:nth-of-type(1) { top:24%; }
+    .gacha-stage-marks b:nth-of-type(2) { top:64%; }
+    .gacha-stage-zoom { position:absolute; inset:0; z-index:4; display:flex; align-items:center; justify-content:center;
+      transform-origin:50% 50%; }
+
+    /* 長押し中だけ動かす */
+    .gacha-stage.is-filling .gacha-juice { animation:gachaJuiceFill var(--gacha-hold,3000ms) linear forwards; }
+    .gacha-stage.is-filling .gacha-juice-surface { opacity:1; animation:gachaSurface 1.15s ease-in-out infinite; }
+    .gacha-stage.is-filling .gacha-juice-bubbles { opacity:1; }
+    .gacha-stage.is-filling .gacha-juice-bubbles i { animation:gachaBubble 2.4s linear infinite; }
+    .gacha-stage.is-filling .gacha-juice-bubbles i:nth-child(2) { animation-duration:2.9s; animation-delay:.5s; }
+    .gacha-stage.is-filling .gacha-juice-bubbles i:nth-child(3) { animation-duration:2.6s; animation-delay:1s; }
+    .gacha-stage.is-filling .gacha-juice-bubbles i:nth-child(4) { animation-duration:3.1s; animation-delay:1.5s; }
+    .gacha-stage.is-filling .gacha-stage-vignette { animation:gachaVignette var(--gacha-hold,3000ms) ease-in forwards; }
+    .gacha-stage.is-filling .gacha-stage-zoom { animation:gachaZoom var(--gacha-hold,3000ms) cubic-bezier(.4,0,.5,1) forwards; }
+    /* 離した時は素早く戻す */
+    .gacha-juice, .gacha-stage-vignette, .gacha-stage-zoom { transition:height .4s ease-out, opacity .4s ease-out, transform .4s ease-out; }
+    @keyframes gachaJuiceFill { from { height:0% } to { height:100% } }
+    @keyframes gachaSurface { 0%,100% { transform:translateX(-7px) scaleY(1) } 50% { transform:translateX(7px) scaleY(1.7) } }
+    @keyframes gachaBubble { 0% { transform:translateY(0) scale(.5); opacity:0 } 18% { opacity:.85 } 100% { transform:translateY(-190px) scale(1.2); opacity:0 } }
+    @keyframes gachaVignette { from { opacity:0 } to { opacity:.5 } }
+    @keyframes gachaZoom { 0% { transform:scale(1) } 70% { transform:scale(1.14) } 100% { transform:scale(1.26) } }
+    @media (prefers-reduced-motion: reduce) {
+      .gacha-stage.is-filling .gacha-stage-zoom, .gacha-stage.is-filling .gacha-stage-vignette { animation:none; }
     }
-    .gacha-stage-text { font-size:12.5px; line-height:1.7; color:#a9bcb0; }
-    /* 回転中：カプセルが回り、下に進捗バー */
-    .gacha-spin-ring {
+    .gacha-stage-text { font-size:12.5px; line-height:1.7; color:#cfe0d5; text-shadow:0 1px 6px rgba(0,0,0,.85); }
+    /* 回転中：文字と進捗バーだけ。枠にたまったジュースを隠さないようにしている */
+    .gacha-spin-ring-unused {
       width:96px; height:96px; border-radius:50%; border:3px solid rgba(240,201,74,.6); border-top-color:transparent;
       display:flex; align-items:center; justify-content:center; font-size:32px;
       animation:gachaSpin .9s linear infinite;
     }
     .gacha-spin-bar { width:180px; height:5px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
     .gacha-spin-fill { display:block; height:100%; width:0%; background:linear-gradient(90deg,#d9a441,#f3d786); animation:gachaFill 2s ease-out forwards; }
-    @keyframes gachaIdle { 0%,100% { transform:translateY(0) rotate(-3deg); } 50% { transform:translateY(-6px) rotate(3deg); } }
     @keyframes gachaSpin { to { transform:rotate(360deg); } }
     @keyframes gachaFill { to { width:100%; } }
     @keyframes gachaPop { 0% { transform:scale(.7); opacity:0; } 60% { transform:scale(1.06); opacity:1; } 100% { transform:scale(1); } }
@@ -541,16 +851,7 @@
     }
     .gacha-btn:hover:not(:disabled) { transform:translateY(-2px); }
     .gacha-btn:disabled { cursor:default; opacity:.45; }
-    .gacha-btn-free { height:54px; border-radius:14px; background:linear-gradient(135deg,#6fd48f,#3fa96f); color:#07200f; font-size:15px; font-weight:900; box-shadow:0 14px 30px -16px rgba(92,201,142,.8); }
     .gacha-btn-ad { height:48px; border:1px solid rgba(240,201,74,.4); background:rgba(240,201,74,.1); color:#f0c94a; font-size:13px; }
-    .gacha-btn-coin { height:48px; border:1px solid rgba(240,201,74,.35); background:rgba(240,201,74,.08); color:#f0c94a; font-size:13px; margin-top:8px; }
-    .gacha-btn-coin10 { height:48px; border:1px solid rgba(147,197,253,.35); background:rgba(147,197,253,.08); color:#93c5fd; font-size:13px; margin-top:8px; }
-    #gachaPullSlot { display:flex; flex-direction:column; }
-    #gachaHoldSlot { display:flex; flex-direction:column; gap:8px; }
-    .gacha-btn-hold { position:relative; overflow:hidden; height:54px; border:none; background:rgba(255,255,255,.06); color:#eaf6ee; font-size:14px; font-weight:900; }
-    .gacha-hold-fill { position:absolute; inset:0; width:0%; background:linear-gradient(135deg,#6fd48f,#3fa96f); border-radius:inherit; pointer-events:none; z-index:0; }
-    .gacha-btn-hold .gacha-hold-label { position:relative; z-index:1; }
-    .gacha-btn-cancel { height:40px; border:1px solid rgba(255,255,255,.14); background:transparent; color:#b6c8bd; font-size:12.5px; }
     /* ── アイコンサイズ統一：掲示板・レビューカード・ヘッダーのユーザーアイコンをYouTubeのアイコンサイズに合わせる。
        マイページ本体のアイコン(大きい表示)は対象外。PC=24px、スマホ=32px（タップしやすさのため大きめ） ── */
     .user-avatar-circle { width:36px; height:36px; flex:0 0 36px; cursor:pointer; }
@@ -3603,7 +3904,13 @@
   </header>
   <div class="gacha-layout">
     <!-- シリーズバナー：横スクロールで選ぶと、そのシリーズのガチャに切り替わる -->
-    <div id="gachaSeriesBanners" class="gacha-series-banners"></div>
+    <div class="gacha-series-block">
+      <div class="gacha-series-head">
+        <span class="gacha-series-label" data-i18n="gachaSeriesLabel">シリーズ</span>
+        <span class="gacha-series-hint" data-i18n="gachaSeriesHint">横スクロールで追加分が並びます</span>
+      </div>
+      <div id="gachaSeriesBanners" class="gacha-series-banners"></div>
+    </div>
 
     <!-- 左：マシン本体 -->
     <div class="gacha-col-main">
@@ -3612,57 +3919,95 @@
           <h2 class="gacha-title" data-i18n="gachaTitle">ガチャガチャ</h2>
           <p class="gacha-lead" data-i18n="gachaLead">1日1回無料。広告を見るとあと3回引けます。</p>
         </div>
-        <!-- 残り回数：無料1＋広告3＝4回をドットで見せる（ラベルの中に埋めない） -->
-        <span class="gacha-remain">
-          <span class="gacha-remain-label" data-i18n="gachaRemainLabel">今日の残り</span>
-          <span class="gacha-remain-dots" id="gachaRemainDots"></span>
-          <span class="gacha-remain-num" id="gachaRemainNum">— / 4</span>
-        </span>
+        <!-- 確率と景品：見出しの右。残り回数は各ボタンのラベル側で示すのでここには置かない -->
+        <button type="button" id="gachaProbBtn" class="gacha-prob-entry">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M4 19h17"/></svg>
+          <span data-i18n="gachaProbBtn">確率と景品一覧</span>
+        </button>
       </div>
 
       <!-- デイリークエスト・ショップ（コイン）の入り口。ガチャと同じ通貨（コイン）を扱う機能なのでここに置く -->
-      <div class="gacha-quest-shop-row" style="display:flex;gap:10px;margin-bottom:14px;">
-        <button type="button" id="gachaDailyQuestBtn" onclick="nav('daily-quest')" style="flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:7px;height:46px;border-radius:12px;border:1px solid rgba(240,201,74,.3);background:rgba(240,201,74,.08);color:#f0c94a;font-size:13px;font-weight:800;cursor:pointer;">
-          <span>🗓</span><span data-i18n="dailyQuestBtn">デイリークエスト</span>
+      <div class="gacha-quest-shop-row" style="display:flex;gap:9px;margin-bottom:14px;">
+        <button type="button" id="gachaDailyQuestBtn" class="gacha-entry-card gacha-entry-quest" onclick="nav('daily-quest')">
+          <span class="gacha-entry-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5cc98e" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18M9 16l2 2 4-4"/></svg>
+          </span>
+          <span class="gacha-entry-copy">
+            <span class="gacha-entry-title" data-i18n="dailyQuestBtn">デイリークエスト</span>
+            <span class="gacha-entry-sub" id="gachaQuestSub" style="color:#8db5a0;">—</span>
+          </span>
+          <span class="gacha-entry-badge" id="gachaQuestBadge">1</span>
         </button>
-        <button type="button" id="gachaShopBtn" onclick="nav('coin-shop')" style="flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:7px;height:46px;border-radius:12px;border:1px solid rgba(92,201,142,.3);background:rgba(92,201,142,.08);color:#5ec97a;font-size:13px;font-weight:800;cursor:pointer;">
-          <span>🛒</span><span data-i18n="coinShopBtn">ショップ</span>
+        <button type="button" id="gachaShopBtn" class="gacha-entry-card gacha-entry-shop" onclick="nav('coin-shop')">
+          <span class="gacha-entry-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0c94a" stroke-width="2" stroke-linecap="round"><path d="M4 8h16l-1.3 11a2 2 0 0 1-2 1.8H7.3a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+          </span>
+          <span class="gacha-entry-copy">
+            <span class="gacha-entry-title" data-i18n="coinShopBtn">ショップ</span>
+            <span class="gacha-entry-sub" id="gachaShopSub" style="color:#c8a94a;">—</span>
+          </span>
         </button>
       </div>
 
       <!-- 演出枠：ガチャ動画／GIFの再生場所。待機＝揺れる／回転＝本編／結果＝開く -->
       <div id="gachaStage" class="gacha-stage">
         <span class="gacha-stage-glow"></span>
-        <div id="gachaStagePlaceholder" class="gacha-stage-idle">
-          <span class="gacha-capsule">🥎</span>
-          <span class="gacha-stage-text" data-i18n="gachaStageIdle">ボタンを押して引いてみよう</span>
+        <!-- 空の時に見える目盛りとりんごの透かし。ジュースが上がると隠れていく -->
+        <span class="gacha-stage-marks">
+          <svg class="gacha-stage-apple" viewBox="0 0 64 64"><path d="M32 12c9 0 16 7 16 17s-7 21-16 21-16-10-16-21 7-17 16-17z" fill="#f0c94a"/><path d="M32 12V4M32 7c4-4 10-4 10-4s0 6-6 7z" fill="none" stroke="#f0c94a" stroke-width="3" stroke-linecap="round"/></svg>
+          <i></i><i></i><i></i><i></i><b>MAX</b><b>1/2</b>
+        </span>
+        <!-- 下からたまるリンゴジュース。高さはCSSアニメだけで動かす -->
+        <span class="gacha-juice" id="gachaJuice">
+          <span class="gacha-juice-surface"></span>
+          <span class="gacha-juice-bubbles"><i></i><i></i><i></i><i></i></span>
+        </span>
+        <span class="gacha-stage-vignette"></span>
+        <div class="gacha-stage-zoom">
+          <div id="gachaStagePlaceholder" class="gacha-stage-idle">
+            <span class="gacha-stage-text" data-i18n="gachaStageIdle">ボタンを3秒長押し</span>
+          </div>
         </div>
+        <!-- 筐体の刻印プレート -->
+        <span class="gacha-stage-plate">
+          <b>APPLE JUICE</b>
+          <i>ANIMEPPLE ・ No.001</i>
+        </span>
+        <!-- 稼働ランプ。長押し中は「注入中」で点滅する -->
+        <span class="gacha-stage-led">
+          <i id="gachaStageLedDot"></i>
+          <b id="gachaStageLedLabel" data-i18n="gachaLedIdle">待機中</b>
+        </span>
+        <!-- 左のレベルゲージ。注入中は下から順に点灯する -->
+        <span class="gacha-stage-gauge"><i></i><i></i><i></i><i></i><i></i></span>
         <span class="gacha-stage-tray"><span class="gacha-stage-tray-bar"></span></span>
       </div>
 
       <!-- 無料→広告は同じ枠に出し分け。その下にコイン消費の1回引き・10連。
-           どのボタンも押すとすぐには引かず、5秒長押し用のバーに切り替わる（誤タップ防止） -->
+           どのボタンも「押した瞬間に引く」のではなく、そのボタン自体を3秒長押しして引く。
+           押している間はボタンが左から満ちるバーになり、同時に枠にジュースがたまる。 -->
       <div class="gacha-actions">
-        <div id="gachaPullSlot">
-          <button type="button" id="gachaFreeBtn" class="gacha-btn gacha-btn-free">
-            <span class="gacha-btn-icon">🎁</span><span data-i18n="gachaFreeBtn">無料で引く</span>
+        <button type="button" id="gachaFreeBtn" class="gacha-hold-btn gacha-hold-btn-free">
+          <span class="gacha-hold-fill"></span>
+          <span class="gacha-hold-body"><span data-i18n="gachaFreeBtn">無料で引く</span></span>
+        </button>
+        <div class="gacha-coin-row">
+          <button type="button" id="gachaCoinBtn" class="gacha-hold-btn gacha-hold-btn-coin">
+            <span class="gacha-hold-fill"></span>
+            <span class="gacha-hold-body">
+              <span class="gacha-coin-amount"><i class="gacha-coin-dot"></i><span id="gachaCoinBtnLabel">100</span></span>
+              <span class="gacha-coin-note" data-i18n="gachaCoinOnce">1回引く</span>
+            </span>
           </button>
-          <button type="button" id="gachaCoinBtn" class="gacha-btn gacha-btn-coin">
-            <span class="gacha-btn-icon">🪙</span><span id="gachaCoinBtnLabel">コイン{n}枚で引く</span>
-          </button>
-          <button type="button" id="gachaCoin10Btn" class="gacha-btn gacha-btn-coin10">
-            <span class="gacha-btn-icon">🪙</span><span id="gachaCoin10BtnLabel">コイン{n}枚で10連</span>
+          <button type="button" id="gachaCoin10Btn" class="gacha-hold-btn gacha-hold-btn-coin10">
+            <span class="gacha-hold-fill"></span>
+            <span class="gacha-coin-tag" data-i18n="gachaCoin10Tag">SR以上1枚確定</span>
+            <span class="gacha-hold-body">
+              <span class="gacha-coin-amount"><i class="gacha-coin-dot"></i><span id="gachaCoin10BtnLabel">1000</span></span>
+              <span class="gacha-coin-note" data-i18n="gachaCoin10Note">10連で引く</span>
+            </span>
           </button>
         </div>
-        <!-- 長押し確認バー（普段は隠す） -->
-        <div id="gachaHoldSlot" style="display:none;">
-          <button type="button" id="gachaHoldBtn" class="gacha-btn gacha-btn-hold">
-            <span class="gacha-hold-fill" id="gachaHoldFill"></span>
-            <span class="gacha-hold-label" data-i18n="gachaHoldLabel">5秒長押しでガチャを引く</span>
-          </button>
-          <button type="button" id="gachaHoldCancelBtn" class="gacha-btn gacha-btn-cancel" data-i18n="btnCancel">キャンセル</button>
-        </div>
-        <button type="button" id="gachaProbBtn" class="gacha-btn gacha-btn-prob" data-i18n="gachaProbBtn">確率と景品一覧</button>
       </div>
 
       <!-- 打ち止め：次に引ける時刻とアニメップル＋への導線 -->
@@ -3711,7 +4056,7 @@
 <div id="gachaResultOverlay" class="gacha-result-overlay" style="display:none;">
   <div class="gacha-result-sheet" id="gachaResultSheet">
     <div class="gacha-result-head">
-      <span class="gacha-result-title" id="gachaResultTitle" data-i18n="gachaResultTitle1">🎉 手に入れました</span>
+      <span class="gacha-result-title" id="gachaResultTitle" data-i18n="gachaResultTitle1">手に入れました</span>
       <button type="button" id="gachaResultClose" class="gacha-result-close">✕</button>
     </div>
     <div id="gachaResultPick"></div>
@@ -4193,7 +4538,7 @@
     </div>
   </header>
   <div style="padding:1.1rem;">
-    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🗓 <span data-i18n="dailyQuestBtn">デイリークエスト</span></h2>
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;"><span data-i18n="dailyQuestBtn">デイリークエスト</span></h2>
     <div id="dailyQuestBody"></div>
   </div>
 </div>
@@ -4213,10 +4558,49 @@
     </div>
   </header>
   <div style="padding:1.1rem;">
-    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🛒 <span data-i18n="coinShopBtn">ショップ</span></h2>
-    <p style="font-size:.85rem;color:var(--muted);margin:0 0 1rem;">🪙 <span id="coinShopBalance">0</span></p>
-    <div id="coinPackGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;"></div>
-    <p style="font-size:.72rem;color:var(--muted);text-align:center;margin:1.2rem 0 0;line-height:1.7;">価格は日本円の税込表示です。海外からの購入は決済時点のレートで現地通貨に自動換算されます。</p>
+    <div class="cs-head">
+      <h1 class="cs-title" data-i18n="coinShopBtn">ショップ</h1>
+      <p class="cs-lead" data-i18n="coinShopLead">コインはガチャに使えます。まとめ買いほどボーナスが増えます。</p>
+    </div>
+
+    <!-- 残高。買う前に「あと何回引けるか」まで分かるようにしている -->
+    <div class="cs-balance">
+      <div class="cs-balance-top">
+        <div class="cs-balance-left">
+          <span class="cs-balance-label" data-i18n="coinShopBalanceLabel">いま持っているコイン</span>
+          <span class="cs-balance-value"><i class="coin-dot coin-dot-xl"></i><span id="coinShopBalance">0</span></span>
+        </div>
+        <span class="cs-balance-right">
+          <b id="coinDrawsLeft">0</b>
+          <i data-i18n="coinShopDrawsSuffix">回引けます</i>
+        </span>
+      </div>
+      <div class="cs-balance-uses">
+        <span class="cs-use"><b id="coinUseOnce">100</b><i data-i18n="coinShopUseOnce">1回引く</i></span>
+        <span class="cs-use-sep"></span>
+        <span class="cs-use"><b id="coinUseTen">1,000</b><i data-i18n="coinShopUseTen">10連で引く</i></span>
+      </div>
+    </div>
+
+    <div class="cs-packs">
+      <div class="cs-packs-head">
+        <span class="cs-packs-label" data-i18n="coinShopPacksLabel">コインを買う</span>
+        <span class="cs-packs-hint" data-i18n="coinShopPacksHint">ボーナス込みの枚数です</span>
+      </div>
+      <!-- 一番お得なパックは横長で単独。残りはグリッド -->
+      <div id="coinPackBest"></div>
+      <div id="coinPackGrid" class="cs-pack-grid"></div>
+    </div>
+
+    <div class="cs-legal">
+      <span class="cs-legal-label" data-i18n="coinShopLegalLabel">お支払いについて</span>
+      <p class="cs-legal-body" data-i18n="coinShopLegalBody">価格は日本円の税込表示です。海外からの購入は決済時点のレートで現地通貨に自動換算されます。コインの有効期限はありません。未使用分の払い戻しはできません。</p>
+      <div class="cs-legal-links">
+        <a href="#" data-i18n="legalTerms">利用規約</a>
+        <a href="#" data-i18n="legalTokushoho">特定商取引法に基づく表記</a>
+        <a href="#" data-i18n="legalShikin">資金決済法に基づく表示</a>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -4235,8 +4619,8 @@
     </div>
   </header>
   <div style="padding:1.1rem;">
-    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🎨 <span data-i18n="customizeMenuLabel">カスタマイズ</span></h2>
-    <div id="customizeTabs" style="display:flex;gap:6px;overflow-x:auto;margin-bottom:1rem;padding-bottom:2px;"></div>
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;"><span data-i18n="customizeMenuLabel">カスタマイズ</span></h2>
+    <div id="customizeTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;"></div>
     <div id="customizeBody"></div>
   </div>
 </div>
@@ -10375,7 +10759,7 @@
   const GACHA_COIN_REWARD = 100; // デイリークエスト達成報酬＝ガチャ1回分のコイン
   const GACHA_COIN_COST = 100; // コインでガチャを1回引く時の消費量
   const GACHA_COIN10_COST = 1000; // コインで10連を引く時の消費量
-  const GACHA_HOLD_MS = 5000; // 誤タップ防止の長押し時間
+  const GACHA_HOLD_MS = 3000; // 長押し時間。この間ずっとリンゴジュースが枠にたまる演出が走る
   function getGachaState(userId) {
     const keys = gachaTodayKey(userId);
     return {
@@ -10411,6 +10795,27 @@
     });
   }
 
+  // クエスト・ショップカードの状態表示。押す前に「今やることがあるか」が分かるようにする
+  async function updateGachaEntryCards() {
+    const shopSub = document.getElementById('gachaShopSub');
+    if(shopSub && COIN_PACKS.length) {
+      const min = Math.min(...COIN_PACKS.map(p => p.priceJpy));
+      const maxBonus = Math.max(...COIN_PACKS.map(p => p.bonusPct || 0));
+      shopSub.textContent = '¥' + min.toLocaleString() + t('gachaShopSubFrom') + ' ・ ' + t('gachaShopSubBonus').replace('{n}', maxBonus);
+    }
+    const questSub = document.getElementById('gachaQuestSub');
+    const questBadge = document.getElementById('gachaQuestBadge');
+    if(!questSub) return;
+    if(!_currentUser) { questSub.textContent = '—'; questBadge?.classList.remove('is-on'); return; }
+    const progress = await db.quests.getToday(_currentUser.id).catch(()=>null);
+    const completed = !!progress?.completed;
+    const claimed = !!progress?.claimed;
+    questSub.textContent = claimed ? t('questClaimedLabel')
+      : (completed ? t('gachaQuestSubReady') : t('gachaQuestSubOpen'));
+    questSub.style.color = (completed && !claimed) ? '#f0c94a' : '#8db5a0';
+    questBadge?.classList.toggle('is-on', completed && !claimed);
+  }
+
   // 残り回数：無料1＋広告3＝4回。ドットで見せる
   function updateGachaRemain() {
     const dots = document.getElementById('gachaRemainDots');
@@ -10429,6 +10834,7 @@
         `<span class="gacha-remain-dot${i < left ? ' is-on' : ''}"></span>`).join('');
     }
     if(num) num.textContent = left + ' / ' + total;
+    updateGachaEntryCards();
     if(soldOut) {
       soldOut.style.display = (_currentUser && left === 0) ? '' : 'none';
       const at = document.getElementById('gachaResetAt');
@@ -10496,9 +10902,9 @@
     updateGachaRemain();
     if(!freeBtn) return;
     const coinLabel = document.getElementById('gachaCoinBtnLabel');
-    if(coinLabel) coinLabel.textContent = t('gachaCoinBtn').replace('{n}', GACHA_COIN_COST);
+    if(coinLabel) coinLabel.textContent = GACHA_COIN_COST.toLocaleString();
     const coin10Label = document.getElementById('gachaCoin10BtnLabel');
-    if(coin10Label) coin10Label.textContent = t('gachaCoin10Btn').replace('{n}', GACHA_COIN10_COST);
+    if(coin10Label) coin10Label.textContent = GACHA_COIN10_COST.toLocaleString();
     if(!_currentUser) {
       freeBtn.disabled = true;
       if(coinBtn) coinBtn.disabled = true;
@@ -10507,17 +10913,15 @@
     }
     const state = getGachaState(_currentUser.id);
     const remaining = Math.max(0, GACHA_AD_LIMIT - state.adUsedCount);
-    const label = freeBtn.querySelector('span:last-child');
+    const label = freeBtn.querySelector('.gacha-hold-body span:last-child');
     if(!state.freeUsed) {
       freeBtn.dataset.kind = 'free';
       freeBtn.disabled = false;
-      freeBtn.querySelector('.gacha-btn-icon').textContent = '🎁';
       if(label) label.textContent = t('gachaFreeBtn');
     } else {
       // 無料分を使い切ったら、同じボタンが広告を見て引くボタンに変わる（別枠には出さない）
       freeBtn.dataset.kind = 'ad';
       freeBtn.disabled = remaining <= 0;
-      freeBtn.querySelector('.gacha-btn-icon').textContent = '▶';
       if(label) label.textContent = remaining <= 0 ? t('gachaAdBtnUsed') : t('gachaAdBtn').replace('{n}', remaining);
     }
     db.coins.get(_currentUser.id).then(coins => {
@@ -10545,15 +10949,12 @@
     if(!stage) return;
     const idle = document.getElementById('gachaStagePlaceholder');
     if(idle) idle.innerHTML = `
-      <span class="gacha-spin-ring">🥎</span>
       <span class="gacha-stage-text">${escapeHtml(t('gachaSpinning'))}</span>
       <span class="gacha-spin-bar"><span class="gacha-spin-fill"></span></span>`;
   }
   function setGachaStageIdle() {
     const idle = document.getElementById('gachaStagePlaceholder');
-    if(idle) idle.innerHTML = `
-      <span class="gacha-capsule">🥎</span>
-      <span class="gacha-stage-text">${escapeHtml(t('gachaStageIdle'))}</span>`;
+    if(idle) idle.innerHTML = `<span class="gacha-stage-text">${escapeHtml(t('gachaStageIdle'))}</span>`;
   }
 
   // 結果：確定枠（アニメカード）＋おまけ枠（レア度で枠色と光彩が変わる）
@@ -10693,38 +11094,47 @@
   }
 
   // ── ガチャの実引き：クリックですぐ引かず、5秒長押しに切り替えて誤タップを防ぐ ──
+  // 長押しで引く。押したボタン自身が左から満ちるバーになり、
+  // 同時に演出枠へリンゴジュースがたまる。指を離した時点で中止（誤タップ防止）。
   let _gachaHoldTimer = null;
-  function selectGachaKind(kind) {
-    document.getElementById('gachaPullSlot').style.display = 'none';
-    const holdSlot = document.getElementById('gachaHoldSlot');
-    holdSlot.style.display = 'flex';
-    const holdBtn = document.getElementById('gachaHoldBtn');
-    const fill = document.getElementById('gachaHoldFill');
-    const cancel = () => {
+  function bindGachaHold(btn, getKind) {
+    if(!btn) return;
+    const fill = btn.querySelector('.gacha-hold-fill');
+    const stage = document.getElementById('gachaStage');
+    const ledLabel = document.getElementById('gachaStageLedLabel');
+    const stop = () => {
       if(_gachaHoldTimer) { clearTimeout(_gachaHoldTimer); _gachaHoldTimer = null; }
-      fill.style.transition = 'width .15s ease';
-      fill.style.width = '0%';
+      if(fill) { fill.style.transition = 'width .2s ease'; fill.style.width = '0%'; }
+      if(stage) stage.classList.remove('is-filling');
+      if(ledLabel) ledLabel.textContent = t('gachaLedIdle');
+      setGachaStageIdle();
     };
-    const restore = () => {
-      cancel();
-      holdSlot.style.display = 'none';
-      document.getElementById('gachaPullSlot').style.display = 'flex';
-    };
-    const start = (e) => {
+    btn.onpointerdown = (e) => {
       e.preventDefault();
-      fill.style.transition = `width ${GACHA_HOLD_MS}ms linear`;
-      requestAnimationFrame(() => { fill.style.width = '100%'; });
+      if(btn.disabled) return;
+      if(stage) {
+        stage.style.setProperty('--gacha-hold', GACHA_HOLD_MS + 'ms');
+        stage.classList.remove('is-filling');
+        void stage.offsetWidth;
+        stage.classList.add('is-filling');
+      }
+      if(ledLabel) ledLabel.textContent = t('gachaLedFilling');
+      const idle = document.getElementById('gachaStagePlaceholder');
+      if(idle) idle.innerHTML = `<span class="gacha-stage-text">${escapeHtml(t('gachaStageFilling'))}</span>`;
+      if(fill) {
+        fill.style.transition = `width ${GACHA_HOLD_MS}ms linear`;
+        requestAnimationFrame(() => { fill.style.width = '100%'; });
+      }
       _gachaHoldTimer = setTimeout(() => {
         _gachaHoldTimer = null;
-        restore();
-        runGacha(kind);
+        stop();
+        runGacha(getKind());
       }, GACHA_HOLD_MS);
     };
-    holdBtn.onpointerdown = start;
-    holdBtn.onpointerup = cancel;
-    holdBtn.onpointerleave = cancel;
-    holdBtn.onpointercancel = cancel;
-    document.getElementById('gachaHoldCancelBtn').onclick = restore;
+    btn.onpointerup = stop;
+    btn.onpointerleave = stop;
+    btn.onpointercancel = stop;
+    btn.oncontextmenu = (e) => e.preventDefault();
   }
 
   // 10連の結果を一覧で見せる（1件ずつの派手な演出はしない。確定枠は最初の1件だけ代表表示）
@@ -10784,7 +11194,7 @@
         : `${escapeHtml(t('gachaLabelIcon'))} ★${it.starRarity||''}`;
       const thumb = it.kind === 'icon' && it.image
         ? `<img src="${escapeHtml(it.image)}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px;">`
-        : `<span style="width:40px;height:40px;border-radius:8px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;background:${m.bg};border:1px solid ${m.border};font-size:16px;">${it.kind==='custom'?'🎨':'?'}</span>`;
+        : `<span style="width:40px;height:40px;border-radius:8px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;background:${m.bg};border:1px solid ${m.border};font-size:16px;">${it.kind==='custom'?'C':'?'}</span>`;
       return `
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line,#2a3830);">
           ${thumb}
@@ -10822,10 +11232,10 @@
     const probOverlay = document.getElementById('gachaProbOverlay');
     const probCloseBtn = document.getElementById('gachaProbCloseBtn');
     const resOverlay = document.getElementById('gachaResultOverlay');
-    // どのボタンも直接引かず、まず5秒長押し確認に切り替える（誤タップ防止）
-    if(freeBtn) freeBtn.onclick = () => selectGachaKind(freeBtn.dataset.kind || 'free');
-    if(coinBtn) coinBtn.onclick = () => selectGachaKind('coin');
-    if(coin10Btn) coin10Btn.onclick = () => selectGachaKind('coin10');
+    // どのボタンも押した瞬間には引かない。そのボタンを3秒長押しして引く（誤タップ防止）
+    bindGachaHold(freeBtn, () => freeBtn.dataset.kind || 'free');
+    bindGachaHold(coinBtn, () => 'coin');
+    bindGachaHold(coin10Btn, () => 'coin10');
     if(probBtn) probBtn.onclick = () => { renderGachaProbList(); if(probOverlay) probOverlay.style.display = 'flex'; };
     if(probCloseBtn) probCloseBtn.onclick = () => { if(probOverlay) probOverlay.style.display = 'none'; };
     if(probOverlay) probOverlay.onclick = (e) => { if(e.target === probOverlay) probOverlay.style.display = 'none'; };
@@ -16461,9 +16871,9 @@
     coinShopBtn:{ ja:'ショップ', en:'Shop', ko:'상점', 'zh-tw':'商店', 'zh-cn':'商店', es:'Tienda', fr:'Boutique', pt:'Loja', de:'Shop', ar:'المتجر', th:'ร้านค้า', id:'Toko', ru:'Магазин', it:'Negozio', vi:'Cửa hàng' },
     gachaCoinBtn:{ ja:'コイン{n}枚で引く', en:'Draw for {n} coins', ko:'코인 {n}개로 뽑기', 'zh-tw':'花{n}枚硬幣抽一次', 'zh-cn':'花{n}枚硬币抽一次', es:'Tirar por {n} monedas', fr:'Tirer pour {n} pièces', pt:'Puxar por {n} moedas', de:'Für {n} Münzen ziehen', ar:'اسحب مقابل {n} عملة', th:'สุ่มด้วยเหรียญ {n} เหรียญ', id:'Tarik dengan {n} koin', ru:'Тянуть за {n} монет', it:'Estrai per {n} monete', vi:'Quay với {n} xu' },
     gachaCoin10Btn:{ ja:'コイン{n}枚で10連', en:'10-pull for {n} coins', ko:'코인 {n}개로 10연차', 'zh-tw':'花{n}枚硬幣抽10次', 'zh-cn':'花{n}枚硬币抽10次', es:'Tirada x10 por {n} monedas', fr:'Tirage x10 pour {n} pièces', pt:'Puxada x10 por {n} moedas', de:'10er-Ziehung für {n} Münzen', ar:'سحب 10 مقابل {n} عملة', th:'สุ่ม 10 ครั้งด้วยเหรียญ {n} เหรียญ', id:'Tarik 10x dengan {n} koin', ru:'10 попыток за {n} монет', it:'Estrazione x10 per {n} monete', vi:'Quay 10 lần với {n} xu' },
-    gachaHoldLabel:{ ja:'5秒長押しでガチャを引く', en:'Hold for 5 seconds to draw', ko:'5초간 길게 눌러서 뽑기', 'zh-tw':'長按5秒進行抽獎', 'zh-cn':'长按5秒进行抽奖', es:'Mantén presionado 5 segundos para tirar', fr:'Maintenez 5 secondes pour tirer', pt:'Segure por 5 segundos para puxar', de:'5 Sekunden halten zum Ziehen', ar:'اضغط مطولاً لمدة 5 ثوانٍ للسحب', th:'กดค้าง 5 วินาทีเพื่อสุ่ม', id:'Tahan 5 detik untuk menarik', ru:'Удерживайте 5 секунд, чтобы вытянуть', it:'Tieni premuto per 5 secondi per estrarre', vi:'Giữ 5 giây để quay' },
+    gachaHoldLabel:{ ja:'3秒長押しでガチャを引く', en:'Hold for 3 seconds to draw', ko:'3초간 길게 눌러서 뽑기', 'zh-tw':'長按3秒進行抽獎', 'zh-cn':'长按3秒进行抽奖', es:'Mantén presionado 3 segundos para tirar', fr:'Maintenez 3 secondes pour tirer', pt:'Segure por 3 segundos para puxar', de:'3 Sekunden halten zum Ziehen', ar:'اضغط مطولاً لمدة 3 ثوانٍ للسحب', th:'กดค้าง 3 วินาทีเพื่อสุ่ม', id:'Tahan 3 detik untuk menarik', ru:'Удерживайте 3 секунды, чтобы вытянуть', it:'Tieni premuto per 3 secondi per estrarre', vi:'Giữ 3 giây để quay' },
     gachaCoinInsufficientAlert:{ ja:'コインが足りません', en:'Not enough coins', ko:'코인이 부족합니다', 'zh-tw':'硬幣不足', 'zh-cn':'硬币不足', es:'No tienes suficientes monedas', fr:'Pièces insuffisantes', pt:'Moedas insuficientes', de:'Nicht genug Münzen', ar:'العملات غير كافية', th:'เหรียญไม่เพียงพอ', id:'Koin tidak cukup', ru:'Недостаточно монет', it:'Monete insufficienti', vi:'Không đủ xu' },
-    gachaResultTitleBatch:{ ja:'🎉 {n}個手に入れました', en:'🎉 You got {n} items', ko:'🎉 {n}개 획득했습니다', 'zh-tw':'🎉 獲得了{n}個', 'zh-cn':'🎉 获得了{n}个', es:'🎉 ¡Obtuviste {n} objetos!', fr:'🎉 Vous avez obtenu {n} objets !', pt:'🎉 Você obteve {n} itens!', de:'🎉 Du hast {n} Gegenstände erhalten!', ar:'🎉 حصلت على {n} عنصرًا!', th:'🎉 คุณได้รับ {n} ชิ้น!', id:'🎉 Anda mendapatkan {n} item!', ru:'🎉 Вы получили {n} предметов!', it:'🎉 Hai ottenuto {n} oggetti!', vi:'🎉 Bạn đã nhận được {n} vật phẩm!' },
+    gachaResultTitleBatch:{ ja:'{n}個手に入れました', en:'You got {n} items', ko:'{n}개 획득했습니다', 'zh-tw':'獲得了{n}個', 'zh-cn':'获得了{n}个', es:'¡Obtuviste {n} objetos!', fr:'Vous avez obtenu {n} objets !', pt:'Você obteve {n} itens!', de:'Du hast {n} Gegenstände erhalten!', ar:'حصلت على {n} عنصرًا!', th:'คุณได้รับ {n} ชิ้น!', id:'Anda mendapatkan {n} item!', ru:'Вы получили {n} предметов!', it:'Hai ottenuto {n} oggetti!', vi:'Bạn đã nhận được {n} vật phẩm!' },
     questShareQualityReviewTask:{ ja:'上質なレビューを書いて、SNSでシェアする', en:'Write a quality review and share it on social media', ko:'양질의 리뷰를 작성하고 SNS에서 공유하기', 'zh-tw':'撰寫優質評論並在社群媒體分享', 'zh-cn':'撰写优质评论并在社交媒体分享', es:'Escribe una reseña de calidad y compártela en redes sociales', fr:'Rédigez un avis de qualité et partagez-le sur les réseaux sociaux', pt:'Escreva uma avaliação de qualidade e compartilhe nas redes sociais', de:'Schreibe eine hochwertige Rezension und teile sie in sozialen Netzwerken', ar:'اكتب مراجعة عالية الجودة وشاركها على وسائل التواصل الاجتماعي', th:'เขียนรีวิวคุณภาพแล้วแชร์ลงโซเชียล', id:'Tulis ulasan berkualitas dan bagikan di media sosial', ru:'Напишите качественный отзыв и поделитесь им в соцсетях', it:'Scrivi una recensione di qualità e condividila sui social', vi:'Viết một đánh giá chất lượng và chia sẻ lên mạng xã hội' },
     questClaimBtn:{ ja:'コイン{n}枚を受け取る', en:'Claim {n} coins', ko:'코인 {n}개 받기', 'zh-tw':'領取{n}枚硬幣', 'zh-cn':'领取{n}枚硬币', es:'Reclamar {n} monedas', fr:'Récupérer {n} pièces', pt:'Resgatar {n} moedas', de:'{n} Münzen abholen', ar:'استلام {n} عملة', th:'รับเหรียญ {n} เหรียญ', id:'Klaim {n} koin', ru:'Получить {n} монет', it:'Riscuoti {n} monete', vi:'Nhận {n} xu' },
     questClaimedLabel:{ ja:'受け取り済み', en:'Claimed', ko:'수령 완료', 'zh-tw':'已領取', 'zh-cn':'已领取', es:'Reclamado', fr:'Récupéré', pt:'Resgatado', de:'Abgeholt', ar:'تم الاستلام', th:'รับแล้ว', id:'Sudah diklaim', ru:'Получено', it:'Riscosso', vi:'Đã nhận' },
@@ -16692,7 +17102,7 @@
     loginRequiredAlert: { ja:'ログインが必要です。', en:'Please log in first.' },
     loginRequired: { ja:'ログインが必要です', en:'Please log in', ko:'로그인이 필요합니다', 'zh-tw':'需要登入', 'zh-cn':'需要登录', es:'Inicia sesión para continuar', fr:'Veuillez vous connecter', pt:'Faça login para continuar', de:'Bitte melde dich an', ar:'يرجى تسجيل الدخول', th:'กรุณาเข้าสู่ระบบ', id:'Silakan masuk', ru:'Пожалуйста, войдите', it:'Effettua l\'accesso', vi:'Vui lòng đăng nhập' },
     gachaTitle: { ja:'ガチャガチャ', en:'Gacha' },
-    gachaStageIdle: { ja:'ボタンを押して引いてみよう', en:'Tap a button to try your luck!' },
+    gachaStageIdle: { ja:'ボタンを3秒長押し', en:'Hold a button for 3 seconds' },
     gachaFreeBtn: { ja:'無料で引く', en:'Free draw' },
     gachaFreeBtnUsed: { ja:'本日は引き終わりました', en:'Already used today' },
     gachaAdBtn: { ja:'広告を見て引く（残り{n}回・30秒）', en:'Watch a 30s ad to draw ({n} left)' },
@@ -16715,8 +17125,8 @@
     gachaItemListLabel: { ja:'景品一覧', en:'All items' },
     gachaCollectTitle: { ja:'集めたもの', en:'Your collection' },
     gachaCollectBtn: { ja:'図鑑を開く', en:'Open collection' },
-    gachaResultTitle1: { ja:'🎉 手に入れました', en:'🎉 You got it' },
-    gachaResultTitle2: { ja:'🎉 2つ手に入れました', en:'🎉 You got 2 things' },
+    gachaResultTitle1: { ja:'手に入れました', en:'You got it' },
+    gachaResultTitle2: { ja:'2つ手に入れました', en:'You got 2 things' },
     gachaPickMeta: { ja:'あなたのグラフに近い作品です', en:'Close to your graph' },
     gachaPickOpen: { ja:'作品を見る', en:'View title' },
     gachaPickFav: { ja:'お気に入り', en:'Favorite' },
@@ -16727,6 +17137,52 @@
     gachaResetAt: { ja:'明日 0:00', en:'tomorrow 0:00' },
     gachaSoldOutPlus: { ja:'アニメップル＋なら毎日3回（広告なし）', en:'Animepple+ gives 3 draws a day, ad-free' },
     gachaProbBtn: { ja:'確率と景品一覧', en:'Odds & prize list' },
+    gachaCoinOnce: { ja:'1回引く', en:'Single draw' },
+    gachaCoin10Note: { ja:'10連で引く', en:'10-pull' },
+    gachaCoin10Tag: { ja:'SR以上1枚確定', en:'SR+ guaranteed' },
+    gachaLedIdle: { ja:'待機中', en:'Standby' },
+    gachaSeriesLabel: { ja:'シリーズ', en:'Series' },
+    coinShopBalanceLabel: { ja:'いま持っているコイン', en:'Your coins' },
+    coinShopUseOnce: { ja:'1回引く', en:'Single draw' },
+    coinShopUseTen: { ja:'10連で引く', en:'10-pull' },
+    coinShopDrawsLeft: { ja:'いま引ける回数', en:'Draws available' },
+    coinShopPacksLabel: { ja:'コインを買う', en:'Buy coins' },
+    coinShopDrawsUnit: { ja:'ガチャ{n}回分', en:'{n} draws' },
+    coinShopLead: { ja:'コインはガチャに使えます。まとめ買いほどボーナスが増えます。', en:'Coins are used for the gacha. Bigger packs give bigger bonuses.' },
+    questPageLead: { ja:'1日1つ。達成するとコインを受け取れます。', en:'One per day. Complete it to claim coins.' },
+    questStateDone: { ja:'達成', en:'Complete' },
+    questStateOpen: { ja:'進行中', en:'In progress' },
+    questRewardLabel: { ja:'報酬', en:'Reward' },
+    questClaimLocked: { ja:'あと{n}ステップで受け取れます', en:'{n} step(s) left to claim' },
+    questStepsLabel: { ja:'達成のしかた', en:'How to complete' },
+    questStep1Title: { ja:'レビューを書く', en:'Write a review' },
+    questStep1Body: { ja:'作品ページから、下の条件を満たすレビューを投稿します。', en:'Post a review from a title page that meets the criteria below.' },
+    questStep1Action: { ja:'レビューを書く', en:'Write' },
+    questStep2Title: { ja:'SNSでシェアする', en:'Share on social media' },
+    questStep2Body: { ja:'書いたレビューの共有カードを作って、外部に投稿します。', en:'Create the share card for your review and post it externally.' },
+    questStep2Action: { ja:'シェアする', en:'Share' },
+    questCriteriaLabel: { ja:'上質と判定される条件', en:'Quality criteria' },
+    questCriteria1: { ja:'本文が120文字以上あること', en:'At least 120 characters of body text' },
+    questCriteria2: { ja:'価値観の投票を12軸すべて終えていること', en:'All 12 value axes voted' },
+    questCriteria3: { ja:'同じ作品への投稿が当日1件目であること', en:'First post for that title today' },
+    questToGacha: { ja:'ガチャガチャへ', en:'Go to gacha' },
+    coinShopDrawsSuffix: { ja:'回引けます', en:'draws available' },
+    coinShopPacksHint: { ja:'ボーナス込みの枚数です', en:'Bonus included' },
+    coinShopPerDraw: { ja:'1回あたり{n}円', en:'¥{n} per draw' },
+    coinShopLegalLabel: { ja:'お支払いについて', en:'About payment' },
+    coinShopLegalBody: { ja:'価格は日本円の税込表示です。海外からの購入は決済時点のレートで現地通貨に自動換算されます。コインの有効期限はありません。未使用分の払い戻しはできません。', en:'Prices include Japanese tax. Overseas purchases are converted at the rate at checkout. Coins do not expire. Unused coins are non-refundable.' },
+    legalTerms: { ja:'利用規約', en:'Terms of service' },
+    legalTokushoho: { ja:'特定商取引法に基づく表記', en:'Commercial transaction disclosure' },
+    legalShikin: { ja:'資金決済法に基づく表示', en:'Payment services disclosure' },
+    coinShopTagPopular: { ja:'人気', en:'Popular' },
+    coinShopTagBest: { ja:'最もお得', en:'Best value' },
+    gachaSeriesHint: { ja:'横スクロールで追加分が並びます', en:'Scroll sideways for more' },
+    gachaLedFilling: { ja:'注入中', en:'Pouring' },
+    gachaStageFilling: { ja:'リンゴジュースがたまっていきます…', en:'Filling with apple juice…' },
+    gachaShopSubFrom: { ja:'から', en:'+' },
+    gachaShopSubBonus: { ja:'ボーナス最大{n}%', en:'up to +{n}% bonus' },
+    gachaQuestSubReady: { ja:'達成 ・ 受け取れます', en:'Done ・ ready to claim' },
+    gachaQuestSubOpen: { ja:'0 / 1 達成', en:'0 / 1 done' },
     gachaProbTitle: { ja:'確率と景品一覧', en:'Odds & prize list' },
     gachaEmptyPool: { ja:'景品は準備中です。もうしばらくお待ちください。', en:'Prizes are coming soon.' },
     gachaCloseBtn: { ja:'閉じる', en:'Close', ko:'닫기', 'zh-tw':'關閉', 'zh-cn':'关闭', es:'Cerrar', fr:'Fermer', pt:'Fechar', de:'Schließen', ar:'إغلاق', th:'ปิด', id:'Tutup', ru:'Закрыть', it:'Chiudi', vi:'Đóng' },
@@ -17044,7 +17500,7 @@
     langSelectTitle:{ ja:'言語を選択', en:'Select Language', ko:'언어 선택', 'zh-tw':'選擇語言','zh-cn':'选择语言', es:'Seleccionar idioma', fr:'Choisir la langue', pt:'Selecionar idioma', de:'Sprache wählen', ar:'اختر اللغة',th:'เลือกภาษา',id:'Pilih bahasa',ru:'Выбрать язык',it:'Seleziona lingua',vi:'Chọn ngôn ngữ' },
     confirmDelete:{ ja:'このページを削除しますか？', en:'Delete this page?', ko:'이 페이지를 삭제하시겠습니까?','zh-tw':'確定刪除此頁面？','zh-cn':'确定删除此页面？',es:'¿Eliminar esta página?',fr:'Supprimer cette page ?',pt:'Excluir esta página?',de:'Diese Seite löschen?',ar:'حذف هذه الصفحة؟',th:'ลบหน้านี้หรือไม่?',id:'Hapus halaman ini?',ru:'Удалить эту страницу?',it:'Eliminare questa pagina?',vi:'Xóa trang này?' },
     reviewPosted: { ja:'🍎 レビューを投稿しました！', en:'🍎 Review posted!', ko:'🍎 리뷰를 투고했습니다!','zh-tw':'🍎 評論已發佈！','zh-cn':'🍎 评论已发布！',es:'🍎 ¡Reseña publicada!',fr:'🍎 Avis publié !',pt:'🍎 Avaliação publicada!',de:'🍎 Bewertung veröffentlicht!',ar:'🍎 تم نشر المراجعة!',th:'🍎 โพสต์รีวิวแล้ว!',id:'🍎 Ulasan diposting!',ru:'🍎 Отзыв опубликован!',it:'🍎 Recensione pubblicata!',vi:'🍎 Đã đăng đánh giá!' },
-    reviewPostedVoted: { ja:'🎉 上質なレビュー＆価値観投票、完了しました！', en:'🎉 Quality review & value vote complete!', ko:'🎉 우수 리뷰 및 가치관 투표 완료!','zh-tw':'🎉 優質評論與價值觀投票已完成！','zh-cn':'🎉 优质评论与价值观投票已完成！',es:'🎉 ¡Reseña de calidad y voto de valores completados!',fr:'🎉 Avis de qualité et vote de valeurs terminés !',pt:'🎉 Avaliação de qualidade e voto de valores concluídos!',de:'🎉 Qualitätsbewertung & Wertevotum abgeschlossen!',ar:'🎉 اكتملت المراجعة الجيدة والتصويت على القيم!',th:'🎉 รีวิวคุณภาพและการโหวตค่านิยมเสร็จสมบูรณ์!',id:'🎉 Ulasan berkualitas & voting nilai selesai!',ru:'🎉 Качественный отзыв и голосование по ценностям завершены!',it:'🎉 Recensione di qualità e voto sui valori completati!',vi:'🎉 Đã hoàn tất đánh giá chất lượng & bình chọn giá trị!' },
+    reviewPostedVoted: { ja:'上質なレビュー＆価値観投票、完了しました！', en:'Quality review & value vote complete!', ko:'우수 리뷰 및 가치관 투표 완료!','zh-tw':'優質評論與價值觀投票已完成！','zh-cn':'优质评论与价值观投票已完成！',es:'¡Reseña de calidad y voto de valores completados!',fr:'Avis de qualité et vote de valeurs terminés !',pt:'Avaliação de qualidade e voto de valores concluídos!',de:'Qualitätsbewertung & Wertevotum abgeschlossen!',ar:'اكتملت المراجعة الجيدة والتصويت على القيم!',th:'รีวิวคุณภาพและการโหวตค่านิยมเสร็จสมบูรณ์!',id:'Ulasan berkualitas & voting nilai selesai!',ru:'Качественный отзыв и голосование по ценностям завершены!',it:'Recensione di qualità e voto sui valori completati!',vi:'Đã hoàn tất đánh giá chất lượng & bình chọn giá trị!' },
     noResults:  { ja:'見つかりませんでした', en:'No results found', ko:'결과 없음','zh-tw':'找不到結果','zh-cn':'未找到结果',es:'Sin resultados',fr:'Aucun résultat',pt:'Nenhum resultado',de:'Keine Ergebnisse',ar:'لا توجد نتائج',th:'ไม่พบผลลัพธ์',id:'Tidak ada hasil',ru:'Ничего не найдено',it:'Nessun risultato',vi:'Không tìm thấy kết quả' },
     noResultsSub:{ ja:'キーワード・タグ・フィルターを変えてみてください。', en:'Try changing your keywords, tags, or filters.', ko:'키워드·태그·필터를 바꿔 보세요.','zh-tw':'請嘗試更改關鍵字、標籤或篩選條件。','zh-cn':'请尝试更改关键字、标签或筛选条件。',es:'Intenta cambiar palabras clave, etiquetas o filtros.',fr:'Essayez de changer les mots-clés, tags ou filtres.',pt:'Tente mudar palavras-chave, tags ou filtros.',de:'Versuche andere Schlüsselwörter, Tags oder Filter.',ar:'جرب تغيير الكلمات المفتاحية أو الوسوم أو الفلاتر.',th:'ลองเปลี่ยนคำค้น แท็ก หรือตัวกรอง',id:'Coba ubah kata kunci, tag, atau filter.',ru:'Попробуйте изменить ключевые слова, теги или фильтры.',it:'Prova a cambiare parole chiave, tag o filtri.',vi:'Hãy thử đổi từ khóa, thẻ hoặc bộ lọc.' },
   };
@@ -22012,16 +22468,92 @@
     const progress = await db.quests.getToday(_currentUser.id).catch(()=>null);
     const completed = !!progress?.completed;
     const claimed = !!progress?.claimed;
-    const row = (done, label) => `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);margin-bottom:8px;">
-      <span style="font-size:18px;">${done ? '✅' : '⬜'}</span>
-      <span style="flex:1 1 auto;font-size:13.5px;color:${done?'#eaf6ee':'#b6c8bd'};">${escapeHtml(label)}</span>
-    </div>`;
+    // 達成状況で主カードの見た目が変わる：進行中は緑、達成すると金＋光沢、受け取り後は沈める
+    const done = completed ? 2 : 0;   // ステップは「レビューを書く」「シェアする」の2つ
+    const ready = completed && !claimed;
+    const stateLabel = claimed ? t('questClaimedLabel') : (completed ? t('questStateDone') : t('questStateOpen'));
+    const stateColor = claimed ? '#8db5a0' : (completed ? '#f0c94a' : '#5cc98e');
+
+    const steps = [
+      { title: t('questStep1Title'), body: t('questStep1Body'), action: t('questStep1Action'), page: 'search' },
+      { title: t('questStep2Title'), body: t('questStep2Body'), action: t('questStep2Action'), page: 'mypage' },
+    ];
+    const stepsHtml = steps.map((s, i) => {
+      const fin = i < done, cur = i === done;
+      return `<div class="dq-step">
+        <span class="dq-step-rail">
+          <span class="dq-step-dot${fin?' is-done':cur?' is-current':''}">${fin ? '✓' : (i + 1)}</span>
+          ${i < steps.length - 1 ? '<span class="dq-step-line"></span>' : ''}
+        </span>
+        <span class="dq-step-copy">
+          <span class="dq-step-title${fin?' is-done':''}">${escapeHtml(s.title)}</span>
+          <span class="dq-step-body">${escapeHtml(s.body)}</span>
+        </span>
+        ${cur ? `<button type="button" class="dq-step-action" onclick="nav('${s.page}')">${escapeHtml(s.action)}</button>` : ''}
+      </div>`;
+    }).join('');
+
+    const criteria = [t('questCriteria1'), t('questCriteria2'), t('questCriteria3')];
+
     el.innerHTML = `
-      <p id="dailyQuestResetIn" style="margin:0 0 12px;font-size:11.5px;color:#8db5a0;text-align:right;"></p>
-      ${row(completed, t('questShareQualityReviewTask'))}
-      <button type="button" id="dailyQuestClaimBtn" ${(!completed || claimed) ? 'disabled' : ''} style="width:100%;height:46px;margin-top:12px;border-radius:12px;border:none;background:${(completed && !claimed) ? '#5ec97a' : 'rgba(255,255,255,.08)'};color:${(completed && !claimed) ? '#07200f' : '#82968a'};font-weight:800;font-size:13.5px;cursor:${(completed && !claimed)?'pointer':'not-allowed'};">
-        ${claimed ? escapeHtml(t('questClaimedLabel')) : escapeHtml(t('questClaimBtn').replace('{n}', GACHA_COIN_REWARD))}
-      </button>
+      <div class="dq-head">
+        <div class="dq-head-copy">
+          <h1 class="dq-title" data-i18n="dailyQuestBtn">デイリークエスト</h1>
+          <p class="dq-lead" data-i18n="questPageLead">1日1つ。達成するとコインを受け取れます。</p>
+        </div>
+        <span class="dq-reset">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8db5a0" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+          <b id="dailyQuestResetIn"></b>
+        </span>
+      </div>
+
+      <div class="dq-card${ready?' is-ready':''}${claimed?' is-claimed':''}">
+        ${ready ? '<span class="dq-card-sheen"></span>' : ''}
+        <div class="dq-card-inner">
+          <div class="dq-card-top">
+            <span class="dq-card-ico${completed?' is-done':''}">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${completed ? 'M4 12l5 5L20 6' : 'M4 20h4L20 8l-4-4L4 16z'}"/></svg>
+            </span>
+            <span class="dq-card-copy">
+              <span class="dq-card-state" style="color:${stateColor};">${escapeHtml(stateLabel)}</span>
+              <span class="dq-card-task">${escapeHtml(t('questShareQualityReviewTask'))}</span>
+            </span>
+          </div>
+
+          <div class="dq-progress">
+            <span class="dq-progress-track"><span class="dq-progress-fill${completed?' is-done':''}" style="width:${done / 2 * 100}%;"></span></span>
+            <span class="dq-progress-num" style="color:${stateColor};">${done} / 2</span>
+          </div>
+
+          <div class="dq-reward">
+            <span class="dq-reward-label" data-i18n="questRewardLabel">報酬</span>
+            <span class="dq-reward-value"><i class="coin-dot" style="width:20px;height:20px;"></i><b>${GACHA_COIN_REWARD}</b></span>
+          </div>
+
+          <button type="button" id="dailyQuestClaimBtn" class="dq-claim${ready?' is-ready':''}" ${ready ? '' : 'disabled'}>
+            ${claimed ? escapeHtml(t('questClaimedLabel'))
+              : (completed ? escapeHtml(t('questClaimBtn').replace('{n}', GACHA_COIN_REWARD))
+              : escapeHtml(t('questClaimLocked').replace('{n}', 2 - done)))}
+          </button>
+        </div>
+      </div>
+
+      <div class="dq-steps">
+        <span class="dq-section-label" data-i18n="questStepsLabel">達成のしかた</span>
+        <div class="dq-steps-list">${stepsHtml}</div>
+      </div>
+
+      <div class="dq-criteria">
+        <span class="dq-section-label" data-i18n="questCriteriaLabel">上質と判定される条件</span>
+        <div class="dq-criteria-list">
+          ${criteria.map(c => `<span class="dq-criteria-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5cc98e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+            ${escapeHtml(c)}
+          </span>`).join('')}
+        </div>
+      </div>
+
+      <button type="button" class="dq-gacha-link" onclick="nav('gacha')" data-i18n="questToGacha">ガチャガチャへ</button>
     `;
     startDailyQuestCountdown();
     const claimBtn = document.getElementById('dailyQuestClaimBtn');
@@ -22071,14 +22603,35 @@
   function renderCoinPacks() {
     const grid = document.getElementById('coinPackGrid');
     if(!grid) return;
-    grid.innerHTML = COIN_PACKS.map(p => `
-      <button type="button" class="coin-pack-card" data-pack-id="${p.id}" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 10px 12px;border-radius:14px;border:1px solid ${p.best?'rgba(240,201,74,.5)':'rgba(255,255,255,.1)'};background:${p.best?'rgba(240,201,74,.08)':'rgba(255,255,255,.02)'};cursor:pointer;">
-        ${p.popular ? `<span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:9.5px;font-weight:900;padding:2px 8px;border-radius:8px;background:#5cc98e;color:#07200f;white-space:nowrap;">人気</span>` : ''}
-        ${p.best ? `<span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:9.5px;font-weight:900;padding:2px 8px;border-radius:8px;background:#f0c94a;color:#2b1c05;white-space:nowrap;">最もお得</span>` : ''}
-        <span style="font-size:20px;">🪙</span>
-        <span style="font-size:16px;font-weight:900;color:#eafdf1;">${p.coins.toLocaleString()}</span>
-        ${p.bonusPct ? `<span style="font-size:10.5px;font-weight:800;color:#8fe0a8;">+${p.bonusPct}%お得</span>` : ''}
-        <span style="font-size:13px;font-weight:800;color:#dfeae3;margin-top:6px;">¥${p.priceJpy.toLocaleString()}</span>
+    const perDraw = p => Math.round(p.priceJpy / Math.max(1, Math.floor(p.coins / GACHA_COIN_COST)));
+    const drawsOf = p => Math.floor(p.coins / GACHA_COIN_COST);
+    const best = COIN_PACKS.find(p => p.best) || COIN_PACKS[COIN_PACKS.length - 1];
+
+    const bestEl = document.getElementById('coinPackBest');
+    if(bestEl) bestEl.innerHTML = `
+      <button type="button" class="cs-pack-best coin-pack-card" data-pack-id="${best.id}">
+        <span class="cs-pack-best-sheen"></span>
+        <span class="coin-dot" style="position:relative;width:44px;height:44px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.28),inset 0 2px 0 rgba(255,255,255,.5);"></span>
+        <span class="cs-pack-best-copy">
+          <span class="cs-pack-best-tag">${escapeHtml(t('coinShopTagBest'))}</span>
+          <span class="cs-pack-best-amount">
+            <b>${best.coins.toLocaleString()}</b>
+            <span class="cs-bonus">+${best.bonusPct}%</span>
+          </span>
+          <span class="cs-pack-best-note">${escapeHtml(t('coinShopDrawsUnit').replace('{n}', drawsOf(best).toLocaleString()))} ・ ${escapeHtml(t('coinShopPerDraw').replace('{n}', perDraw(best).toLocaleString()))}</span>
+        </span>
+        <span class="cs-pack-best-price">¥${best.priceJpy.toLocaleString()}</span>
+      </button>`;
+
+    grid.innerHTML = COIN_PACKS.filter(p => p !== best).map(p => `
+      <button type="button" class="cs-pack coin-pack-card${p.popular?' is-popular':''}" data-pack-id="${p.id}">
+        ${p.popular ? `<span class="cs-pack-tag">${escapeHtml(t('coinShopTagPopular'))}</span>` : ''}
+        <span class="cs-pack-amount"><i class="coin-dot" style="width:15px;height:15px;"></i><b>${p.coins.toLocaleString()}</b></span>
+        <span class="cs-pack-meta">
+          ${p.bonusPct ? `<span class="cs-bonus">+${p.bonusPct}%</span>` : ''}
+          <span class="cs-draws">${escapeHtml(t('coinShopDrawsUnit').replace('{n}', drawsOf(p).toLocaleString()))}</span>
+        </span>
+        <span class="cs-pack-price">¥${p.priceJpy.toLocaleString()}</span>
       </button>`).join('');
     grid.querySelectorAll('.coin-pack-card').forEach(btn => {
       btn.onclick = () => alert('決済システムは準備中です。もうしばらくお待ちください。');
@@ -22087,9 +22640,15 @@
   async function renderCoinShopPage() {
     const balEl = document.getElementById('coinShopBalance');
     if(!balEl) return;
-    if(!_currentUser) { balEl.textContent = '0'; } else {
-      balEl.textContent = await db.coins.get(_currentUser.id).catch(()=>0);
-    }
+    let coins = 0;
+    if(_currentUser) coins = await db.coins.get(_currentUser.id).catch(()=>0);
+    balEl.textContent = Number(coins).toLocaleString();
+    const once = document.getElementById('coinUseOnce');
+    if(once) once.textContent = GACHA_COIN_COST.toLocaleString();
+    const ten = document.getElementById('coinUseTen');
+    if(ten) ten.textContent = GACHA_COIN10_COST.toLocaleString();
+    const draws = document.getElementById('coinDrawsLeft');
+    if(draws) draws.textContent = Math.floor(Number(coins) / GACHA_COIN_COST).toLocaleString();
     renderCoinPacks();
   }
   window.renderCoinShopPage = renderCoinShopPage;
@@ -22104,6 +22663,7 @@
     { id: 'badge_color', labelKey: 'customizeTabBadgeColor', className: (id) => `badge-skin-${id}` },
   ];
   let _customizeActiveTab = 'bubble';
+  let _customizeCardQuality = false; // レビューカードのプレビューで上質側を見ているか
   async function renderCustomizePage() {
     const tabsEl = document.getElementById('customizeTabs');
     const bodyEl = document.getElementById('customizeBody');
@@ -22156,12 +22716,122 @@
       </div>`;
     };
 
+    // 装備中スキンの実物プレビュー。タブごとに、実際の画面に近い形で出す
+    const previewHtml = (() => {
+      const cls = tab.className ? tab.className(equippedId) : '';
+      if(tab.id === 'board') {
+        return `<div class="${cls}" style="position:relative;border-radius:16px;overflow:hidden;isolation:isolate;">
+          <div class="board-composer" style="display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.07);">
+            <span class="user-avatar-circle avatar-frame-${escapeHtml(equipped[db.customization.CATEGORY_COLUMN.frame]||'default')}" style="width:26px;height:26px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:11px;font-weight:800;">ミ</span>
+            <span style="flex:1;font-size:12.5px;font-weight:800;color:#e6efe9;">今期アニメ雑談</span>
+          </div>
+          <div style="padding:16px 13px 20px;display:flex;flex-direction:column;gap:7px;min-height:170px;">
+            <div class="chat-bubble bubble-skin-${escapeHtml(equippedId)} is-theirs" style="align-self:flex-start;max-width:78%;">
+              <div class="bubble-inner">
+                <div class="bubble-quote" style="padding-left:8px;margin-bottom:6px;opacity:.85;">
+                  <span class="bubble-quote-name" style="display:block;font-size:10px;font-weight:800;">ミナト</span>
+                  <span class="bubble-quote-body" style="display:block;font-size:11px;">今期のOP、作画すごくない？</span>
+                </div>
+                <div class="bubble-text" style="font-size:13.5px;">3話のあれで完全に落ちた</div>
+              </div>
+            </div>
+            <div class="chat-bubble bubble-skin-${escapeHtml(equippedId)} is-mine" style="align-self:flex-end;max-width:78%;">
+              <div class="bubble-inner"><div class="bubble-text" style="font-size:13.5px;">わかる、夜のシーンの色がいい</div></div>
+            </div>
+          </div>
+          <div class="board-composer" style="display:flex;gap:9px;align-items:center;padding:10px 12px;border-top:1px solid rgba(255,255,255,.07);">
+            <span style="flex:1;padding:8px 13px;border-radius:999px;background:var(--board-input-bg,#12291d);border:1px solid var(--board-input-border,rgba(255,255,255,.14));font-size:12px;color:#7e9689;">メッセージを入力</span>
+            <span style="width:30px;height:30px;border-radius:50%;background:#5cc98e;color:#07200f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;">↑</span>
+          </div>
+        </div>`;
+      }
+      if(tab.id === 'mypage') {
+        return `<div class="${cls}" style="position:relative;border-radius:16px;overflow:hidden;isolation:isolate;">
+          <span style="display:block;height:62px;background:linear-gradient(120deg,var(--mypage-cover-a,rgba(92,201,142,.22)),var(--mypage-cover-b,rgba(255,255,255,.06)));"></span>
+          <div style="padding:0 16px 20px;display:flex;flex-direction:column;gap:14px;margin-top:-22px;">
+            <div style="display:flex;align-items:flex-end;gap:12px;">
+              <span class="user-avatar-circle avatar-frame-${escapeHtml(equipped[db.customization.CATEGORY_COLUMN.frame]||'default')}" style="width:54px;height:54px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:17px;font-weight:800;">ミ</span>
+              <span style="display:flex;flex-direction:column;gap:5px;padding-bottom:2px;">
+                <span style="font-size:15px;font-weight:900;color:#e6efe9;">ミナト</span>
+                <span style="align-self:flex-start;padding:3px 11px;border-radius:999px;background:linear-gradient(90deg,#2f7d55,#5cc98e);color:#07200f;font-size:10.5px;font-weight:900;">殿堂入り</span>
+              </span>
+            </div>
+            <div style="padding:14px;border-radius:12px;background:var(--card-panel-bg,#09201b);border:1px solid var(--card-panel-border,rgba(255,255,255,.14));display:flex;flex-direction:column;gap:10px;">
+              <span style="font-size:11.5px;font-weight:800;color:#5cc98e;">あなたの価値観</span>
+              <span style="height:96px;border-radius:8px;background:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 6px,transparent 6px 12px);display:flex;align-items:center;justify-content:center;font-size:10.5px;color:#7e9689;">12軸グラフ</span>
+            </div>
+          </div>
+        </div>`;
+      }
+      if(tab.id === 'card') {
+        const q = _customizeCardQuality ? ' is-quality' : '';
+        return `<div style="padding:14px;display:flex;flex-direction:column;gap:11px;">
+          <div style="display:flex;gap:7px;">
+            <button type="button" class="customize-card-variant" data-quality="0" style="flex:1;height:32px;border-radius:9px;border:1px solid ${_customizeCardQuality?'rgba(255,255,255,.1)':'rgba(92,201,142,.5)'};background:${_customizeCardQuality?'rgba(255,255,255,.04)':'rgba(92,201,142,.16)'};color:${_customizeCardQuality?'#b6c8bd':'#8fe0b0'};font-size:11px;font-weight:800;cursor:pointer;">通常</button>
+            <button type="button" class="customize-card-variant" data-quality="1" style="flex:1;height:32px;border-radius:9px;border:1px solid ${_customizeCardQuality?'rgba(240,201,74,.5)':'rgba(255,255,255,.1)'};background:${_customizeCardQuality?'rgba(240,201,74,.16)':'rgba(255,255,255,.04)'};color:${_customizeCardQuality?'#f0c94a':'#b6c8bd'};font-size:11px;font-weight:800;cursor:pointer;">上質</button>
+          </div>
+          <div class="${cls}${q}" style="border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="user-avatar-circle avatar-frame-${escapeHtml(equipped[db.customization.CATEGORY_COLUMN.frame]||'default')}" style="width:34px;height:34px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:12.5px;font-weight:800;">ミ</span>
+              <span style="display:flex;flex-direction:column;gap:2px;">
+                <span style="font-size:13px;font-weight:800;color:#e6efe9;">星降る夜のあの作品</span>
+                <span style="font-size:10.5px;font-weight:700;color:#8db5a0;">${_customizeCardQuality?'上質レビュー':'通常レビュー'}</span>
+              </span>
+            </div>
+            <span style="border-radius:10px;height:90px;background:var(--card-panel-bg,#09201b);border:1px solid var(--card-panel-border,rgba(255,255,255,.14));display:flex;align-items:center;justify-content:center;font-size:10px;color:#8db5a0;">グラフ枠</span>
+            <span style="font-size:12px;line-height:1.75;color:#c3d4c9;">構図がとにかく静かで、余白の使い方に見入ってしまう。</span>
+          </div>
+        </div>`;
+      }
+      if(tab.id === 'frame') {
+        return `<div style="padding:28px 16px 26px;display:flex;flex-direction:column;align-items:center;gap:18px;">
+          <div style="display:flex;gap:26px;align-items:center;">
+            <span class="user-avatar-circle ${cls}" style="width:66px;height:66px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:21px;font-weight:800;">ミ</span>
+            <span class="user-avatar-circle ${cls}" style="width:46px;height:46px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:15px;font-weight:800;">ナ</span>
+            <span class="user-avatar-circle ${cls}" style="width:32px;height:32px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:11px;font-weight:800;">ア</span>
+          </div>
+          <span style="font-size:11px;line-height:1.8;color:#8db5a0;text-align:center;max-width:320px;">掲示板・DM・レビューカード・ヘッダー・マイページのアイコンすべてに反映されます。</span>
+        </div>`;
+      }
+      if(tab.id === 'badge_color') {
+        return `<div class="${cls}" style="padding:26px 16px 24px;display:flex;flex-direction:column;align-items:center;gap:20px;">
+          <div style="display:flex;gap:30px;align-items:center;">
+            <span style="position:relative;width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:17px;">🔔
+              <span style="position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--badge-color,#e5484d);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">3</span>
+            </span>
+            <span style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:11px;background:var(--badge-color,#e5484d);color:#fff;font-size:11px;font-weight:800;">12</span>
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--badge-color,#e5484d);"></span>
+          </div>
+          <span style="font-size:11px;line-height:1.8;color:#8db5a0;text-align:center;max-width:320px;">お知らせの件数と未読ドットの色が変わります。</span>
+        </div>`;
+      }
+      // badge（称号）はランクバッジそのものを出す
+      return `<div style="padding:30px 16px 26px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+        ${rankTagHtml(RANK_TIERS[RANK_TIERS.length - 1], equippedId)}
+        <span style="font-size:11px;line-height:1.8;color:#8db5a0;text-align:center;max-width:320px;">殿堂入りの称号だけに適用されます。</span>
+      </div>`;
+    })();
+
     bodyEl.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px;">
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:11px;font-weight:800;color:#8db5a0;">プレビュー</span>
+          <span style="font-size:10.5px;color:#5f7a6a;">${escapeHtml(t(tab.labelKey))}</span>
+        </div>
+        <div style="border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:linear-gradient(180deg,#0d2416,#081a0f);box-shadow:0 22px 44px -32px #000;">${previewHtml}</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:9px;">
+        <span style="font-size:11px;font-weight:800;color:#8db5a0;">持っているもの</span>
+        <span style="font-size:10.5px;color:#5f7a6a;">${owned.length}種</span>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
         ${owned.map(tileHtml).join('')}
       </div>
       ${owned.length <= 1 ? `<p style="font-size:11.5px;color:var(--muted);text-align:center;">${escapeHtml(t('customizeOnlyDefaultNote'))}</p>` : ''}
     `;
+    bodyEl.querySelectorAll('.customize-card-variant').forEach(btn => {
+      btn.onclick = () => { _customizeCardQuality = btn.dataset.quality === '1'; renderCustomizePage(); };
+    });
     bodyEl.querySelectorAll('.customize-equip-btn').forEach(btn => {
       btn.onclick = async () => {
         btn.disabled = true;
@@ -22225,7 +22895,7 @@
       const badge = document.createElement('span');
       badge.className = 'hdr-coin-badge';
       badge.style.cssText = 'display:none;align-items:center;gap:4px;font-size:12px;font-weight:800;color:#f0c94a;background:rgba(240,201,74,.12);border:1px solid rgba(240,201,74,.3);border-radius:20px;padding:4px 10px;margin-right:8px;white-space:nowrap;cursor:pointer;';
-      badge.innerHTML = '🪙 <span class="hdr-coin-count">0</span>';
+      badge.innerHTML = '<span class="coin-dot"></span><span class="hdr-coin-count">0</span>';
       badge.onclick = () => nav('coin-shop');
       hr.insertBefore(badge, hr.firstChild);
     });
