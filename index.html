@@ -582,18 +582,13 @@
     .cz-tile { display:flex; flex-direction:column; overflow:hidden; border-radius:14px;
       border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.02); }
     .cz-tile-swatch {
-      display:block; height:76px; overflow:hidden;
-      contain: strict; /* board-skin-*/mypage-skin-* の position:fixed な疑似要素や100vhのmin-heightを
-                           この箱の外に一切漏らさないための閉じ込め。containを使うと子のfixedは
-                           この要素が作る包含ブロックの中に閉じ、min-heightも箱の外寸(76px)を
-                           変えられなくなる */
+      position:relative; display:block; height:76px; overflow:hidden;
+      contain: strict;
     }
     .cz-tile-swatch[class*="board-skin-"], .cz-tile-swatch[class*="mypage-skin-"] {
       height:76px !important; min-height:0 !important; max-height:76px !important;
     }
     .cz-tile.is-equipped { border-color:rgba(92,201,142,.5); background:rgba(92,201,142,.08); }
-    /* スウォッチ：スキンの地色の上に吹き出し2つ。高さは固定して縦に伸びないようにする */
-    .cz-tile-swatch { position:relative; display:block; height:76px; min-height:76px; overflow:hidden; }
     .cz-tile-foot { display:flex; flex-direction:column; gap:8px; padding:10px 11px 11px;
       border-top:1px solid rgba(255,255,255,.06); }
     .cz-tile-name { font-size:12px; font-weight:800; color:#dfeae3;
@@ -22744,18 +22739,8 @@
     const tileHtml = (skinId) => {
       const isEquipped = skinId === equippedId;
       const previewClass = tab.className ? tab.className(skinId) : '';
-      // スウォッチ：6カテゴリすべて同じ .cz-tile-swatch の箱(同じ高さ・同じ角丸)に統一。中身だけ変える。
-      let inner;
-      if(tab.id === 'frame') {
-        inner = `<span class="user-avatar-circle ${previewClass}" style="width:38px;height:38px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:13px;font-weight:800;">A</span>`;
-      } else if(tab.id === 'badge_color') {
-        inner = `<span class="${previewClass}" style="position:relative;width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:17px;">🔔<span style="position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--badge-color,#e5484d);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">3</span></span>`;
-      } else if(tab.id === 'badge') {
-        inner = rankTagHtml(RANK_TIERS[RANK_TIERS.length - 1], skinId);
-      } else {
-        inner = ''; // board/mypage/card：previewClass自体の背景(実物のスキン絵)がそのまま箱の背景になる
-      }
-      const swatch = `<span class="cz-tile-swatch ${tab.id==='board'||tab.id==='mypage'||tab.id==='card' ? previewClass : ''}" style="display:flex;align-items:center;justify-content:center;">${inner}</span>`;
+      // スウォッチ：6カテゴリすべて card-skin-<id> の絵をそのまま使い、完全に同じ見た目にする
+      const swatch = `<span class="cz-tile-swatch card-skin-${escapeHtml(skinId)}"></span>`;
       const name = skinId === 'default' ? t('customizeNormalLabel') : (SKIN_NAMES[skinId] || skinId);
       return `<div class="customize-tile cz-tile${isEquipped?' is-equipped':''}" data-skin-id="${escapeHtml(skinId)}">
         ${swatch}
