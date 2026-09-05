@@ -574,28 +574,11 @@
     .cz-tabs { display:flex; flex-wrap:wrap; gap:6px; }
     .cz-body { display:flex; flex-direction:column; gap:18px; }
 
-    .cz-preview-col, .cz-skins-col { display:flex; flex-direction:column; gap:9px; }
+    .cz-skins-col { display:flex; flex-direction:column; gap:9px; }
     .cz-col-head { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
     .cz-col-label { font-size:11px; font-weight:800; color:var(--muted); }
     .cz-col-sub { font-size:10.5px; color:var(--muted); }
-    .cz-preview-frame { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.09);
-      background:linear-gradient(180deg,#0d2416,#081a0f); box-shadow:0 22px 44px -32px #000; }
     .cz-skin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; align-items:start; }
-
-    /* スキンのクラスはページ全体に敷く前提（min-height:100%、疑似要素は position:fixed）。
-       プレビュー箱とタイルの中では、その2つを打ち消して箱の中に収める。 */
-    .cz-preview-frame [class*="board-skin-"], .cz-preview-frame [class*="mypage-skin-"],
-    .cz-tile [class*="board-skin-"], .cz-tile [class*="mypage-skin-"] {
-      min-height:0 !important;
-    }
-    .cz-preview-frame [class*="board-skin-"]::before, .cz-preview-frame [class*="board-skin-"]::after,
-    .cz-preview-frame [class*="mypage-skin-"]::before, .cz-preview-frame [class*="mypage-skin-"]::after,
-    .cz-tile [class*="board-skin-"]::before, .cz-tile [class*="board-skin-"]::after,
-    .cz-tile [class*="mypage-skin-"]::before, .cz-tile [class*="mypage-skin-"]::after {
-      position:absolute !important;
-    }
-    /* プレビュー箱の中の入力バーも、ページ用の sticky と負マージンを打ち消す */
-    .cz-preview-frame .board-composer { position:static !important; margin:0 !important; }
     .cz-tile { display:flex; flex-direction:column; overflow:hidden; border-radius:14px;
       border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.02); }
     .cz-tile.is-equipped { border-color:rgba(92,201,142,.5); background:rgba(92,201,142,.08); }
@@ -22722,6 +22705,15 @@
   // ── カスタマイズ（吹き出し・レビューカード・アイコンフレーム・称号・通知バッジ色） ──
   // スキンの表示名。IDそのままだと英字が出てしまうので、ここで日本語名を持つ
   const SKIN_NAMES = { yozora: '夜空' };
+  // タイル(小さいスウォッチ)専用の色。board-skin-*/mypage-skin-* クラスはページ全面を覆う前提の
+  // 重いルール(min-height:100vh・::before/::after position:fixedなど)が名前の部分一致で効く作りなので、
+  // 76px程度の小さいタイルに直接使うと画面が壊れる。なのでタイルは絶対にそのクラスを使わず、
+  // ここの色だけを見た目に使う（新しいスキンを追加したら、ここにも1行足すこと）。
+  const CZ_SWATCH_BOARD = { default: '#0d1d13', yozora: '#0c1230' };
+  const CZ_SWATCH_MYPAGE = {
+    default: ['rgba(92,201,142,.22)', 'rgba(255,255,255,.06)'],
+    yozora:  ['rgba(159,188,255,.28)', 'rgba(207,224,255,.14)'],
+  };
 
   const CUSTOMIZE_TABS = [
     { id: 'board', labelKey: 'customizeTabBoard', className: (id) => `board-skin-${id}`, bubbleClass: (id) => `bubble-skin-${id} is-mine` },
@@ -22732,7 +22724,6 @@
     { id: 'badge_color', labelKey: 'customizeTabBadgeColor', className: (id) => `badge-skin-${id}` },
   ];
   let _customizeActiveTab = 'bubble';
-  let _customizeCardQuality = false; // レビューカードのプレビューで上質側を見ているか
   async function renderCustomizePage() {
     const tabsEl = document.getElementById('customizeTabs');
     const bodyEl = document.getElementById('customizeBody');
@@ -22764,15 +22755,31 @@
     const tileHtml = (skinId) => {
       const isEquipped = skinId === equippedId;
       const previewClass = tab.className ? tab.className(skinId) : '';
-      // スウォッチ：そのスキンの地色の上に吹き出し2つを重ねて、質感が一目で分かるようにする
-      const swatch = tab.id === 'frame'
-        ? `<span class="cz-tile-frame"><span class="user-avatar-circle ${previewClass}">A</span></span>`
-        : tab.id === 'badge_color'
-        ? `<span class="cz-tile-badge ${previewClass}"><i>3</i></span>`
-        : `<span class="cz-tile-swatch ${previewClass}">
+      // スウォッチ：カテゴリごとに見た目を変える。
+      // 注意：board-skin-*/mypage-skin-* はページ全面を覆う前提の重いルールが名前の部分一致で
+      // 効く作りなので、この76px程度の小さいタイルには絶対に直接使わない
+      // （CZ_SWATCH_BOARD/CZ_SWATCH_MYPAGEの色だけを使う）。
+      let swatch;
+      if(tab.id === 'frame') {
+        swatch = `<span class="cz-tile-frame"><span class="user-avatar-circle ${previewClass}">A</span></span>`;
+      } else if(tab.id === 'badge_color') {
+        swatch = `<span class="cz-tile-badge ${previewClass}"><i>3</i></span>`;
+      } else if(tab.id === 'card') {
+        // card-skin-<id> はページ全面ルールの対象外（board/mypageだけが対象）なので直接使って安全
+        swatch = `<span class="cz-tile-swatch ${previewClass}"></span>`;
+      } else if(tab.id === 'board') {
+        const bg = CZ_SWATCH_BOARD[skinId] || CZ_SWATCH_BOARD.default;
+        swatch = `<span class="cz-tile-swatch" style="background:${bg};">
              <i class="cz-tile-chip chat-bubble ${tab.bubbleClass ? tab.bubbleClass(skinId) : ''} is-theirs"></i>
              <i class="cz-tile-chip cz-tile-chip-mine chat-bubble ${tab.bubbleClass ? tab.bubbleClass(skinId) : ''} is-mine"></i>
            </span>`;
+      } else if(tab.id === 'mypage') {
+        const [a, b] = CZ_SWATCH_MYPAGE[skinId] || CZ_SWATCH_MYPAGE.default;
+        swatch = `<span class="cz-tile-swatch" style="background:linear-gradient(120deg,${a},${b});"></span>`;
+      } else {
+        // badge（称号）：ランクバッジそのものを縮小して見せる
+        swatch = `<span class="cz-tile-swatch" style="display:flex;align-items:center;justify-content:center;">${rankTagHtml(RANK_TIERS[RANK_TIERS.length - 1], skinId)}</span>`;
+      }
       const name = skinId === 'default' ? t('customizeNormalLabel') : (SKIN_NAMES[skinId] || skinId);
       return `<div class="customize-tile cz-tile${isEquipped?' is-equipped':''}" data-skin-id="${escapeHtml(skinId)}">
         ${swatch}
@@ -22785,110 +22792,7 @@
       </div>`;
     };
 
-    // 装備中スキンの実物プレビュー。タブごとに、実際の画面に近い形で出す
-    const previewHtml = (() => {
-      const cls = tab.className ? tab.className(equippedId) : '';
-      if(tab.id === 'board') {
-        return `<div class="${cls}" style="position:relative;border-radius:16px;overflow:hidden;isolation:isolate;">
-          <div style="display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.22);">
-            <span class="user-avatar-circle avatar-frame-${escapeHtml(equipped[db.customization.CATEGORY_COLUMN.frame]||'default')}" style="width:26px;height:26px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:11px;font-weight:800;">ミ</span>
-            <span style="flex:1;font-size:12.5px;font-weight:800;color:#e6efe9;">今期アニメ雑談</span>
-          </div>
-          <div style="padding:16px 13px 20px;display:flex;flex-direction:column;gap:7px;min-height:170px;">
-            <div class="chat-bubble bubble-skin-${escapeHtml(equippedId)} is-theirs" style="align-self:flex-start;max-width:78%;">
-              <div class="bubble-inner">
-                <div class="bubble-quote" style="padding-left:8px;margin-bottom:6px;opacity:.85;">
-                  <span class="bubble-quote-name" style="display:block;font-size:10px;font-weight:800;">ミナト</span>
-                  <span class="bubble-quote-body" style="display:block;font-size:11px;">今期のOP、作画すごくない？</span>
-                </div>
-                <div class="bubble-text" style="font-size:13.5px;">3話のあれで完全に落ちた</div>
-              </div>
-            </div>
-            <div class="chat-bubble bubble-skin-${escapeHtml(equippedId)} is-mine" style="align-self:flex-end;max-width:78%;">
-              <div class="bubble-inner"><div class="bubble-text" style="font-size:13.5px;">わかる、夜のシーンの色がいい</div></div>
-            </div>
-          </div>
-          <div style="display:flex;gap:9px;align-items:center;padding:10px 12px;border-top:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.22);">
-            <span style="flex:1;padding:8px 13px;border-radius:999px;background:var(--board-input-bg,#12291d);border:1px solid var(--board-input-border,rgba(255,255,255,.14));font-size:12px;color:#7e9689;">メッセージを入力</span>
-            <span style="width:30px;height:30px;border-radius:50%;background:#5cc98e;color:#07200f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;">↑</span>
-          </div>
-        </div>`;
-      }
-      if(tab.id === 'mypage') {
-        return `<div class="${cls}" style="position:relative;border-radius:16px;overflow:hidden;isolation:isolate;">
-          <span style="display:block;height:62px;background:linear-gradient(120deg,var(--mypage-cover-a,rgba(92,201,142,.22)),var(--mypage-cover-b,rgba(255,255,255,.06)));"></span>
-          <div style="padding:0 16px 20px;display:flex;flex-direction:column;gap:14px;margin-top:-22px;">
-            <div style="display:flex;align-items:flex-end;gap:12px;">
-              <span class="user-avatar-circle avatar-frame-${escapeHtml(equipped[db.customization.CATEGORY_COLUMN.frame]||'default')}" style="width:54px;height:54px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:17px;font-weight:800;">ミ</span>
-              <span style="display:flex;flex-direction:column;gap:5px;padding-bottom:2px;">
-                <span style="font-size:15px;font-weight:900;color:#e6efe9;">ミナト</span>
-                <span style="align-self:flex-start;padding:3px 11px;border-radius:999px;background:linear-gradient(90deg,#2f7d55,#5cc98e);color:#07200f;font-size:10.5px;font-weight:900;">殿堂入り</span>
-              </span>
-            </div>
-            <div style="padding:14px;border-radius:12px;background:var(--card-panel-bg,#09201b);border:1px solid var(--card-panel-border,rgba(255,255,255,.14));display:flex;flex-direction:column;gap:10px;">
-              <span style="font-size:11.5px;font-weight:800;color:#5cc98e;">あなたの価値観</span>
-              <span style="height:96px;border-radius:8px;background:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 6px,transparent 6px 12px);display:flex;align-items:center;justify-content:center;font-size:10.5px;color:#7e9689;">12軸グラフ</span>
-            </div>
-          </div>
-        </div>`;
-      }
-      if(tab.id === 'card') {
-        const q = _customizeCardQuality ? ' is-quality' : '';
-        return `<div style="padding:14px;display:flex;flex-direction:column;gap:11px;">
-          <div style="display:flex;gap:7px;">
-            <button type="button" class="customize-card-variant" data-quality="0" style="flex:1;height:32px;border-radius:9px;border:1px solid ${_customizeCardQuality?'rgba(255,255,255,.1)':'rgba(92,201,142,.5)'};background:${_customizeCardQuality?'rgba(255,255,255,.04)':'rgba(92,201,142,.16)'};color:${_customizeCardQuality?'#b6c8bd':'#8fe0b0'};font-size:11px;font-weight:800;cursor:pointer;">通常</button>
-            <button type="button" class="customize-card-variant" data-quality="1" style="flex:1;height:32px;border-radius:9px;border:1px solid ${_customizeCardQuality?'rgba(240,201,74,.5)':'rgba(255,255,255,.1)'};background:${_customizeCardQuality?'rgba(240,201,74,.16)':'rgba(255,255,255,.04)'};color:${_customizeCardQuality?'#f0c94a':'#b6c8bd'};font-size:11px;font-weight:800;cursor:pointer;">上質</button>
-          </div>
-          <div class="${cls}${q}" style="border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span class="user-avatar-circle avatar-frame-${escapeHtml(equipped[db.customization.CATEGORY_COLUMN.frame]||'default')}" style="width:34px;height:34px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:12.5px;font-weight:800;">ミ</span>
-              <span style="display:flex;flex-direction:column;gap:2px;">
-                <span style="font-size:13px;font-weight:800;color:#e6efe9;">星降る夜のあの作品</span>
-                <span style="font-size:10.5px;font-weight:700;color:#8db5a0;">${_customizeCardQuality?'上質レビュー':'通常レビュー'}</span>
-              </span>
-            </div>
-            <span style="border-radius:10px;height:90px;background:var(--card-panel-bg,#09201b);border:1px solid var(--card-panel-border,rgba(255,255,255,.14));display:flex;align-items:center;justify-content:center;font-size:10px;color:#8db5a0;">グラフ枠</span>
-            <span style="font-size:12px;line-height:1.75;color:#c3d4c9;">構図がとにかく静かで、余白の使い方に見入ってしまう。</span>
-          </div>
-        </div>`;
-      }
-      if(tab.id === 'frame') {
-        return `<div style="padding:28px 16px 26px;display:flex;flex-direction:column;align-items:center;gap:18px;">
-          <div style="display:flex;gap:26px;align-items:center;">
-            <span class="user-avatar-circle ${cls}" style="width:66px;height:66px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:21px;font-weight:800;">ミ</span>
-            <span class="user-avatar-circle ${cls}" style="width:46px;height:46px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:15px;font-weight:800;">ナ</span>
-            <span class="user-avatar-circle ${cls}" style="width:32px;height:32px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:11px;font-weight:800;">ア</span>
-          </div>
-          <span style="font-size:11px;line-height:1.8;color:#8db5a0;text-align:center;max-width:320px;">掲示板・DM・レビューカード・ヘッダー・マイページのアイコンすべてに反映されます。</span>
-        </div>`;
-      }
-      if(tab.id === 'badge_color') {
-        return `<div class="${cls}" style="padding:26px 16px 24px;display:flex;flex-direction:column;align-items:center;gap:20px;">
-          <div style="display:flex;gap:30px;align-items:center;">
-            <span style="position:relative;width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:17px;">🔔
-              <span style="position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--badge-color,#e5484d);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">3</span>
-            </span>
-            <span style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:11px;background:var(--badge-color,#e5484d);color:#fff;font-size:11px;font-weight:800;">12</span>
-            <span style="width:10px;height:10px;border-radius:50%;background:var(--badge-color,#e5484d);"></span>
-          </div>
-          <span style="font-size:11px;line-height:1.8;color:#8db5a0;text-align:center;max-width:320px;">お知らせの件数と未読ドットの色が変わります。</span>
-        </div>`;
-      }
-      // badge（称号）はランクバッジそのものを出す
-      return `<div style="padding:30px 16px 26px;display:flex;flex-direction:column;align-items:center;gap:16px;">
-        ${rankTagHtml(RANK_TIERS[RANK_TIERS.length - 1], equippedId)}
-        <span style="font-size:11px;line-height:1.8;color:#8db5a0;text-align:center;max-width:320px;">殿堂入りの称号だけに適用されます。</span>
-      </div>`;
-    })();
-
     bodyEl.innerHTML = `
-      <div class="cz-preview-col">
-        <div class="cz-col-head">
-          <span class="cz-col-label" data-i18n="customizePreviewLabel">プレビュー</span>
-          <span class="cz-col-sub">${escapeHtml(t(tab.labelKey))}</span>
-        </div>
-        <div class="cz-preview-frame">${previewHtml}</div>
-      </div>
       <div class="cz-skins-col">
         <div class="cz-col-head">
           <span class="cz-col-label" data-i18n="customizeOwnedLabel">持っているもの</span>
@@ -22898,9 +22802,6 @@
         ${owned.length <= 1 ? `<p class="cz-only-note">${escapeHtml(t('customizeOnlyDefaultNote'))}</p>` : ''}
       </div>
     `;
-    bodyEl.querySelectorAll('.customize-card-variant').forEach(btn => {
-      btn.onclick = () => { _customizeCardQuality = btn.dataset.quality === '1'; renderCustomizePage(); };
-    });
     bodyEl.querySelectorAll('.customize-equip-btn').forEach(btn => {
       btn.onclick = async () => {
         btn.disabled = true;
