@@ -492,7 +492,7 @@
       display:block; width:100%; padding:6px 8px; font-size:11px; font-weight:800; color:#fff;
       background:linear-gradient(0deg,rgba(0,0,0,.65),transparent); text-align:left;
     }
-    .gacha-col-main { display:flex; flex-direction:column; gap:15px; align-items:center; }
+    .gacha-col-main { display:flex; flex-direction:column; gap:15px; align-items:center; width:100%; }
     .gacha-head { width:100%; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
     .gacha-head-copy { flex:1 1 auto; min-width:0; }
     .gacha-title { margin:0; font-size:1.2rem; font-weight:900; color:#eaf6ee; }
@@ -506,7 +506,7 @@
     /* 横スクロール部のスクロールバーは出さない（矢印が中身に重なるため） */
     .gacha-series-banners::-webkit-scrollbar, #customizeTabs::-webkit-scrollbar { width:0; height:0; }
     .gacha-series-banners, #customizeTabs { scrollbar-width:none; }
-    .gacha-series-block { display:flex; flex-direction:column; gap:7px; }
+    .gacha-series-block { display:flex; flex-direction:column; gap:7px; grid-column:1 / -1; }
     .gacha-series-head { display:flex; align-items:baseline; gap:8px; }
     .gacha-series-label { font-size:11px; font-weight:800; color:#8db5a0; letter-spacing:.04em; }
     .gacha-series-hint { font-size:10.5px; color:var(--muted); }
@@ -565,6 +565,30 @@
     .coin-dot-lg { width:26px; height:26px; }
     .coin-balance { display:flex; align-items:center; gap:7px; margin:0 0 1rem;
       font-size:.95rem; font-weight:900; color:#f0c94a; font-variant-numeric:tabular-nums; }
+
+    /* ── カスタマイズページ ── */
+    .cz-wrap { max-width:1040px; margin:0 auto; padding:18px 20px 44px;
+      display:flex; flex-direction:column; gap:16px; }
+    .cz-head { display:flex; flex-direction:column; gap:5px; }
+    .cz-title { margin:0; font-size:1.15rem; font-weight:900; color:#eaf6ee; }
+    .cz-lead { margin:0; font-size:11.5px; line-height:1.7; color:var(--muted); }
+    .cz-tabs { display:flex; flex-wrap:wrap; gap:6px; }
+    .cz-body { display:flex; flex-direction:column; gap:18px; }
+    /* PC幅では左にプレビュー、右にスキン一覧。狭い時は縦積み */
+    @media (min-width:900px) {
+      .cz-body { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:24px; align-items:start; }
+      .cz-body > :first-child { min-width:0; }
+      .cz-body > :last-child { position:sticky; top:64px; }
+    }
+
+    .cz-preview-col, .cz-skins-col { display:flex; flex-direction:column; gap:9px; }
+    .cz-col-head { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+    .cz-col-label { font-size:11px; font-weight:800; color:var(--muted); }
+    .cz-col-sub { font-size:10.5px; color:var(--muted); }
+    .cz-preview-frame { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.09);
+      background:linear-gradient(180deg,#0d2416,#081a0f); box-shadow:0 22px 44px -32px #000; }
+    .cz-skin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
+    .cz-only-note { margin:6px 0 0; font-size:11.5px; line-height:1.8; color:var(--muted); }
 
     /* ── デイリークエストページ（DC: デイリークエストページ.dc.html と同じ見た目） ── */
     #page-daily-quest .page-body, #dailyQuestBody { max-width:560px; margin:0 auto; padding:16px 14px 44px;
@@ -924,8 +948,12 @@
     .gacha-result-foot { margin-top:auto; display:flex; flex-direction:column; gap:9px; }
 
     @media (min-width:1000px) {
-      .gacha-layout { max-width:none; padding:22px 28px 40px; display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:24px; align-items:start; }
+      .gacha-layout { max-width:none; padding:22px 28px 40px; display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:18px 24px; align-items:start; }
       .gacha-col-main { min-width:0; }
+      /* 演出枠は広い列いっぱいだと大きすぎるので上限を設ける */
+      .gacha-stage { max-width:520px; }
+      .gacha-actions { max-width:520px; width:100%; }
+      .gacha-head, .gacha-quest-shop-row { max-width:520px; }
       .gacha-col-side { position:sticky; top:64px; }
     }
 
@@ -4618,10 +4646,13 @@
       </div>
     </div>
   </header>
-  <div style="padding:1.1rem;">
-    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;"><span data-i18n="customizeMenuLabel">カスタマイズ</span></h2>
-    <div id="customizeTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;"></div>
-    <div id="customizeBody"></div>
+  <div class="cz-wrap">
+    <div class="cz-head">
+      <h2 class="cz-title" data-i18n="customizeMenuLabel">カスタマイズ</h2>
+      <p class="cz-lead" data-i18n="customizeLead">部位ごとに選べます。選んだものはすぐ反映されます。</p>
+    </div>
+    <div id="customizeTabs" class="cz-tabs"></div>
+    <div id="customizeBody" class="cz-body"></div>
   </div>
 </div>
 
@@ -17150,6 +17181,9 @@
     coinShopDrawsUnit: { ja:'ガチャ{n}回分', en:'{n} draws' },
     coinShopLead: { ja:'コインはガチャに使えます。まとめ買いほどボーナスが増えます。', en:'Coins are used for the gacha. Bigger packs give bigger bonuses.' },
     questPageLead: { ja:'1日1つ。達成するとコインを受け取れます。', en:'One per day. Complete it to claim coins.' },
+    customizeLead: { ja:'部位ごとに選べます。選んだものはすぐ反映されます。', en:'Choose per slot. Your pick applies right away.' },
+    customizePreviewLabel: { ja:'プレビュー', en:'Preview' },
+    customizeOwnedLabel: { ja:'持っているもの', en:'Owned' },
     questStateDone: { ja:'達成', en:'Complete' },
     questStateOpen: { ja:'進行中', en:'In progress' },
     questRewardLabel: { ja:'報酬', en:'Reward' },
@@ -22721,7 +22755,7 @@
       const cls = tab.className ? tab.className(equippedId) : '';
       if(tab.id === 'board') {
         return `<div class="${cls}" style="position:relative;border-radius:16px;overflow:hidden;isolation:isolate;">
-          <div class="board-composer" style="display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.07);">
+          <div style="display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.22);">
             <span class="user-avatar-circle avatar-frame-${escapeHtml(equipped[db.customization.CATEGORY_COLUMN.frame]||'default')}" style="width:26px;height:26px;background:#2c4436;display:flex;align-items:center;justify-content:center;color:#9be3bd;font-size:11px;font-weight:800;">ミ</span>
             <span style="flex:1;font-size:12.5px;font-weight:800;color:#e6efe9;">今期アニメ雑談</span>
           </div>
@@ -22739,7 +22773,7 @@
               <div class="bubble-inner"><div class="bubble-text" style="font-size:13.5px;">わかる、夜のシーンの色がいい</div></div>
             </div>
           </div>
-          <div class="board-composer" style="display:flex;gap:9px;align-items:center;padding:10px 12px;border-top:1px solid rgba(255,255,255,.07);">
+          <div style="display:flex;gap:9px;align-items:center;padding:10px 12px;border-top:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.22);">
             <span style="flex:1;padding:8px 13px;border-radius:999px;background:var(--board-input-bg,#12291d);border:1px solid var(--board-input-border,rgba(255,255,255,.14));font-size:12px;color:#7e9689;">メッセージを入力</span>
             <span style="width:30px;height:30px;border-radius:50%;background:#5cc98e;color:#07200f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;">↑</span>
           </div>
@@ -22813,21 +22847,21 @@
     })();
 
     bodyEl.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px;">
-        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:11px;font-weight:800;color:#8db5a0;">プレビュー</span>
-          <span style="font-size:10.5px;color:#5f7a6a;">${escapeHtml(t(tab.labelKey))}</span>
+      <div class="cz-preview-col">
+        <div class="cz-col-head">
+          <span class="cz-col-label" data-i18n="customizePreviewLabel">プレビュー</span>
+          <span class="cz-col-sub">${escapeHtml(t(tab.labelKey))}</span>
         </div>
-        <div style="border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:linear-gradient(180deg,#0d2416,#081a0f);box-shadow:0 22px 44px -32px #000;">${previewHtml}</div>
+        <div class="cz-preview-frame">${previewHtml}</div>
       </div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:9px;">
-        <span style="font-size:11px;font-weight:800;color:#8db5a0;">持っているもの</span>
-        <span style="font-size:10.5px;color:#5f7a6a;">${owned.length}種</span>
+      <div class="cz-skins-col">
+        <div class="cz-col-head">
+          <span class="cz-col-label" data-i18n="customizeOwnedLabel">持っているもの</span>
+          <span class="cz-col-sub">${owned.length}種</span>
+        </div>
+        <div class="cz-skin-grid">${owned.map(tileHtml).join('')}</div>
+        ${owned.length <= 1 ? `<p class="cz-only-note">${escapeHtml(t('customizeOnlyDefaultNote'))}</p>` : ''}
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
-        ${owned.map(tileHtml).join('')}
-      </div>
-      ${owned.length <= 1 ? `<p style="font-size:11.5px;color:var(--muted);text-align:center;">${escapeHtml(t('customizeOnlyDefaultNote'))}</p>` : ''}
     `;
     bodyEl.querySelectorAll('.customize-card-variant').forEach(btn => {
       btn.onclick = () => { _customizeCardQuality = btn.dataset.quality === '1'; renderCustomizePage(); };
