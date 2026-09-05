@@ -21701,6 +21701,10 @@
   document.getElementById('myFavoritesSortSelect')?.addEventListener('change', ()=>renderMyFavorites());
 
   async function renderMypage(viewUserId) {
+    // 友達申請一覧・検索結果・掲示板メンバー一覧などから「自分自身」のプロフィールを開いた場合、
+    // viewUserIdに自分のidが渡ってきても必ず本人ページ(isOwnPage=true)として扱う。
+    // これをしないと、自分のページなのに他人から見た表示(編集ボタン等が非表示)になってしまう。
+    if(viewUserId && _currentUser && viewUserId === _currentUser.id) viewUserId = undefined;
     const guest = document.getElementById('mypageGuest');
     const user = document.getElementById('mypageUser');
     const isOwnPage = !viewUserId;
