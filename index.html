@@ -482,6 +482,16 @@
     /* ── GACHA ── */
     #page-gacha { background:radial-gradient(120% 80% at 50% 0%, #10301f 0%, #08170e 55%, #061109 100%); }
     .gacha-layout { padding:1.1rem; max-width:480px; margin:0 auto; display:flex; flex-direction:column; gap:18px; }
+    .gacha-series-banners { display:flex; gap:10px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch; }
+    .gacha-series-banner {
+      flex:0 0 auto; width:150px; height:64px; border-radius:12px; border:2px solid transparent;
+      position:relative; overflow:hidden; cursor:pointer; padding:0; display:flex; align-items:flex-end;
+    }
+    .gacha-series-banner.is-active { border-color:#f0c94a; box-shadow:0 0 0 2px rgba(240,201,74,.35); }
+    .gacha-series-banner-name {
+      display:block; width:100%; padding:6px 8px; font-size:11px; font-weight:800; color:#fff;
+      background:linear-gradient(0deg,rgba(0,0,0,.65),transparent); text-align:left;
+    }
     .gacha-col-main { display:flex; flex-direction:column; gap:15px; align-items:center; }
     .gacha-head { width:100%; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
     .gacha-head-copy { flex:1 1 auto; min-width:0; }
@@ -3592,6 +3602,9 @@
     </div>
   </header>
   <div class="gacha-layout">
+    <!-- シリーズバナー：横スクロールで選ぶと、そのシリーズのガチャに切り替わる -->
+    <div id="gachaSeriesBanners" class="gacha-series-banners"></div>
+
     <!-- 左：マシン本体 -->
     <div class="gacha-col-main">
       <div class="gacha-head">
@@ -4202,7 +4215,8 @@
   <div style="padding:1.1rem;">
     <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🛒 <span data-i18n="coinShopBtn">ショップ</span></h2>
     <p style="font-size:.85rem;color:var(--muted);margin:0 0 1rem;">🪙 <span id="coinShopBalance">0</span></p>
-    <p style="font-size:.85rem;color:var(--muted);text-align:center;padding:2rem 0;" data-i18n="comingSoonText">近日公開予定です。お楽しみに！</p>
+    <div id="coinPackGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;"></div>
+    <p style="font-size:.72rem;color:var(--muted);text-align:center;margin:1.2rem 0 0;line-height:1.7;">価格は日本円の税込表示です。海外からの購入は決済時点のレートで現地通貨に自動換算されます。</p>
   </div>
 </div>
 
@@ -10253,25 +10267,105 @@
     } catch(e) { console.warn('checkIconUnlocks:', e); }
   }
 
-  // ── ガチャガチャ ──
-  // 景品プールは「画像がある」かつ「デフォルト付与(id:1)でも実績報酬(unlockMinQuality)でもない」アイコンだけ。
-  // 現状はicon2〜6が全部実績報酬に予約済みのため、ガチャの景品は今のところ空。
-  // 今後 id:7以降 に画像を追加すれば、そのままガチャの景品として自動的に対象になる。
-  const GACHA_RARITY_WEIGHT = { 1: 60, 2: 25, 3: 10, 4: 4, 5: 1 }; // レア度が高いほど出にくい
-  function getGachaPool() {
-    return ICON_CATALOG.filter(ic => ic.image && !ic.default && ic.unlockMinQuality == null);
+  // ── ガチャガチャ（シリーズ制・6段階） ──
+  // 1シリーズ＝バナー1枚。中身のテンプレートは全シリーズ共通(下記GACHA_SERIES_TEMPLATE参照)で、
+  // 差し替わるのは絵(アイコン画像・カスタムのskinId)だけ。
+  //   N=アイコン星1  R=アイコン星2
+  //   SR=アイコン星3(70%) / カスタム(30%：通知ドット・フレーム・称号を均等抽選)
+  //   SSR=アイコン星4(70%) / カスタム(30%：レビューカード確定)
+  //   UR=アイコン星5(70%) / カスタム(30%：マイページ確定)
+  //   LR=カスタム(100%：掲示板確定)
+  // 個数テンプレート：N7・R6・SR4(+カスタム3)・SSR2(+カスタム1)・UR1(+カスタム1)・LR(カスタム1) ＝ 計26枠
+  const GACHA_RARITY_WEIGHT = { N: 55, R: 27, SR: 12, SSR: 4.3, UR: 1.2, LR: 0.5 }; // レア度が高いほど出にくい
+  const GACHA_RARITY_ORDER = ['N', 'R', 'SR', 'SSR', 'UR', 'LR'];
+  // SR/SSR/URは「アイコンかカスタムか」をさらにこの比率で抽選する（LRはカスタム確定、N/Rはアイコン確定）
+  const GACHA_ICON_VS_CUSTOM = { SR: 0.7, SSR: 0.7, UR: 0.7 }; // アイコン側の比率（残りがカスタム）
+  // レア度の見た目（枠色・帯色）。確率は GACHA_RARITY_WEIGHT から算出する
+  const GACHA_RARITY_META = {
+    N:   { name:'N',   color:'#9db3a5', border:'rgba(255,255,255,.08)',   bg:'rgba(255,255,255,.02)' },
+    R:   { name:'R',   color:'#5cc98e', border:'rgba(92,201,142,.22)',    bg:'rgba(92,201,142,.05)' },
+    SR:  { name:'SR',  color:'#7bb8ee', border:'rgba(93,163,229,.28)',    bg:'rgba(93,163,229,.06)' },
+    SSR: { name:'SSR', color:'#c9a7e6', border:'rgba(201,167,230,.32)',   bg:'rgba(201,167,230,.07)' },
+    UR:  { name:'UR',  color:'#f0c94a', border:'rgba(240,201,74,.4)',     bg:'rgba(240,201,74,.1)' },
+    LR:  { name:'LR',  color:'#ff8fc7', border:'rgba(255,143,199,.45)',   bg:'rgba(255,143,199,.12)' },
+  };
+  // カスタム側の表示ラベル・カテゴリ対応
+  const GACHA_CUSTOM_META = {
+    badge_color: { labelKey:'customizeTabBadgeColor' },
+    frame:       { labelKey:'customizeTabFrame' },
+    badge:       { labelKey:'customizeTabBadge' },
+    card:        { labelKey:'customizeTabCard' },
+    mypage:      { labelKey:'customizeTabMypage' },
+    board:       { labelKey:'customizeTabBoard' },
+  };
+
+  /* ══════════════════════════════════════════════════════════════════
+     GACHA_SERIES：バナーで選ぶガチャのシリーズ一覧。
+     ・items は「N7・R6・SR4+カスタム3・SSR2+カスタム1・UR1+カスタム1・LR カスタム1」の
+       テンプレート通りに全26件を並べる（このテンプレートは今後シリーズを追加する時も守ること）。
+     ・image/skinId が null のものは「まだ絵/スキンが用意できていないプレースホルダー」。
+       実装だけ先に動かせるよう sample01 を1本だけ仮で入れてある。
+     ・新しいシリーズを追加したら、この配列に1つオブジェクトを足すだけでバナー一覧に出る。
+     ══════════════════════════════════════════════════════════════════ */
+  const GACHA_SERIES = [
+    {
+      id: 'sample01',
+      name: 'サンプルシリーズ',
+      banner: null, // バナー画像URL（未指定ならグラデ+タイトル文字で表示）
+      active: true,
+      items: [
+        ...Array.from({length:7}, (_,i)=>({ tier:'N', kind:'icon', starRarity:1, image:null, key:`sample01-n${i+1}` })),
+        ...Array.from({length:6}, (_,i)=>({ tier:'R', kind:'icon', starRarity:2, image:null, key:`sample01-r${i+1}` })),
+        ...Array.from({length:4}, (_,i)=>({ tier:'SR', kind:'icon', starRarity:3, image:null, key:`sample01-sr${i+1}` })),
+        { tier:'SR', kind:'custom', category:'badge_color', skinId:'sample01_dot',   key:'sample01-sr-dot' },
+        { tier:'SR', kind:'custom', category:'frame',       skinId:'sample01_frame', key:'sample01-sr-frame' },
+        { tier:'SR', kind:'custom', category:'badge',       skinId:'sample01_title', key:'sample01-sr-badge' },
+        ...Array.from({length:2}, (_,i)=>({ tier:'SSR', kind:'icon', starRarity:4, image:null, key:`sample01-ssr${i+1}` })),
+        { tier:'SSR', kind:'custom', category:'card',   skinId:'sample01_card',   key:'sample01-ssr-card' },
+        { tier:'UR', kind:'icon', starRarity:5, image:null, key:'sample01-ur1' },
+        { tier:'UR', kind:'custom', category:'mypage', skinId:'sample01_mypage', key:'sample01-ur-mypage' },
+        { tier:'LR', kind:'custom', category:'board',  skinId:'sample01_board',  key:'sample01-lr-board' },
+      ],
+    },
+    // series02, series03, ... を今後ここに追加していく
+  ];
+  function getActiveGachaSeriesList() { return GACHA_SERIES.filter(s => s.active); }
+  let _gachaActiveSeriesId = null;
+  function getCurrentGachaSeries() {
+    return GACHA_SERIES.find(s => s.id === _gachaActiveSeriesId) || getActiveGachaSeriesList()[0] || null;
   }
+  function setActiveGachaSeries(id) {
+    _gachaActiveSeriesId = id;
+    renderGachaSeriesBanners();
+    renderGachaRarityList();
+    renderGachaCollection();
+  }
+
+  // 景品プール＝今選んでいるシリーズのitems全部（画像/skinId未定でも構造上は対象。表示側でプレースホルダー扱いする）
+  function getGachaPool() {
+    const series = getCurrentGachaSeries();
+    return series ? series.items : [];
+  }
+  // 段階(N〜LR)を確率で1つ選び、SR/SSR/URならさらにアイコン/カスタムを抽選し、
+  // 最後にそのシリーズの該当items内から均等に1つ選ぶ。該当items が0件ならnullを返す。
   function drawGachaItem() {
     const pool = getGachaPool();
     if(!pool.length) return null;
-    const weighted = pool.map(ic => ({ ic, w: GACHA_RARITY_WEIGHT[ic.rarity] || 1 }));
+    const tiersInPool = GACHA_RARITY_ORDER.filter(tr => pool.some(it => it.tier === tr));
+    if(!tiersInPool.length) return null;
+    const weighted = tiersInPool.map(tr => ({ tr, w: GACHA_RARITY_WEIGHT[tr] || 0 }));
     const total = weighted.reduce((s, x) => s + x.w, 0);
     let r = Math.random() * total;
-    for(const { ic, w } of weighted) {
-      if(r < w) return ic;
-      r -= w;
+    let tier = weighted[weighted.length - 1].tr;
+    for(const { tr, w } of weighted) { if(r < w) { tier = tr; break; } r -= w; }
+    let candidates = pool.filter(it => it.tier === tier);
+    const iconRatio = GACHA_ICON_VS_CUSTOM[tier];
+    if(iconRatio != null) {
+      const wantIcon = Math.random() < iconRatio;
+      const filtered = candidates.filter(it => it.kind === (wantIcon ? 'icon' : 'custom'));
+      if(filtered.length) candidates = filtered; // その種類がそのシリーズに無ければ、tier内の別種類で代用
     }
-    return weighted[weighted.length - 1].ic;
+    return candidates[Math.floor(Math.random() * candidates.length)] || null;
   }
   function gachaTodayKey(userId) {
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD（端末のローカル日付）
@@ -10297,15 +10391,25 @@
     const count = Number(localStorage.getItem(keys.ad) || 0) + 1;
     localStorage.setItem(keys.ad, String(count));
   }
-  // レア度の見た目（枠色・帯色）。名称と確率は GACHA_RARITY_WEIGHT から算出する
-  const GACHA_RARITY_META = {
-    1: { name:'N',   color:'#9db3a5', border:'rgba(255,255,255,.08)',   bg:'rgba(255,255,255,.02)',   labelKey:'gachaLabelIcon' },
-    2: { name:'R',   color:'#5cc98e', border:'rgba(92,201,142,.22)',    bg:'rgba(92,201,142,.05)',    labelKey:'gachaLabelIcon' },
-    3: { name:'SR',  color:'#7bb8ee', border:'rgba(93,163,229,.28)',    bg:'rgba(93,163,229,.06)',    labelKey:'gachaLabelIcon' },
-    4: { name:'SSR', color:'#c9a7e6', border:'rgba(201,167,230,.32)',   bg:'rgba(201,167,230,.07)',   labelKey:'gachaLabelIcon' },
-    5: { name:'UR',  color:'#f0c94a', border:'rgba(240,201,74,.4)',     bg:'rgba(240,201,74,.1)',     labelKey:'gachaLabelIconTitle' },
-  };
   let _gachaLastPick = null; // 直近の「本日のおすすめ」（結果カードから作品ページへ飛ぶ用）
+
+  // ヘッダー下のシリーズバナー一覧。タップで setActiveGachaSeries()
+  function renderGachaSeriesBanners() {
+    const row = document.getElementById('gachaSeriesBanners');
+    if(!row) return;
+    const list = getActiveGachaSeriesList();
+    if(!getCurrentGachaSeries() && list.length) _gachaActiveSeriesId = list[0].id;
+    row.innerHTML = list.map(s => {
+      const active = s.id === (getCurrentGachaSeries()?.id);
+      const bg = s.banner ? `background-image:url('${escapeHtml(s.banner)}');background-size:cover;background-position:center;` : `background:linear-gradient(135deg,#3a2f6d,#1d1533);`;
+      return `<button type="button" class="gacha-series-banner${active?' is-active':''}" data-series-id="${escapeHtml(s.id)}" style="${bg}">
+        <span class="gacha-series-banner-name">${escapeHtml(s.name)}</span>
+      </button>`;
+    }).join('');
+    row.querySelectorAll('.gacha-series-banner').forEach(btn => {
+      btn.onclick = () => setActiveGachaSeries(btn.dataset.seriesId);
+    });
+  }
 
   // 残り回数：無料1＋広告3＝4回。ドットで見せる
   function updateGachaRemain() {
@@ -10337,18 +10441,25 @@
     const el = document.getElementById('gachaRarityList');
     if(!el) return;
     const total = Object.values(GACHA_RARITY_WEIGHT).reduce((a, b) => a + b, 0);
-    el.innerHTML = [1,2,3,4,5].map(r => {
-      const m = GACHA_RARITY_META[r];
-      const pct = ((GACHA_RARITY_WEIGHT[r] / total) * 100);
+    el.innerHTML = GACHA_RARITY_ORDER.map(tier => {
+      const m = GACHA_RARITY_META[tier];
+      const pct = ((GACHA_RARITY_WEIGHT[tier] / total) * 100);
       const pctText = pct < 10 ? pct.toFixed(1) : Math.round(pct);
+      const iconRatio = GACHA_ICON_VS_CUSTOM[tier];
+      const sub = iconRatio != null
+        ? `<span class="gacha-rarity-sub">（アイコン${Math.round(iconRatio*100)}% / カスタム${Math.round((1-iconRatio)*100)}%）</span>`
+        : '';
       return `
         <span class="gacha-rarity-row" style="border-color:${m.border};background:${m.bg};">
           <span class="gacha-rarity-dot" style="background:${m.color};"></span>
-          <span class="gacha-rarity-name">${m.name} · ${escapeHtml(t(m.labelKey))}</span>
+          <span class="gacha-rarity-name">${m.name}${sub}</span>
           <span class="gacha-rarity-pct" style="color:${m.color};">${pctText}%</span>
         </span>`;
     }).join('');
   }
+
+  // ICON_CATALOGの星レア度(1〜5)と、ガチャの段階名(N〜UR)の対応。LRはアイコンを持たないので対象外
+  const STAR_TO_TIER = { 1:'N', 2:'R', 3:'SR', 4:'SSR', 5:'UR' };
 
   // コレクション：獲得済みは画像、未獲得は「?」。集まっていく実感を出す
   async function renderGachaCollection() {
@@ -10369,7 +10480,7 @@
     if(fill) fill.style.width = pool.length ? Math.round(got.length / pool.length * 100) + '%' : '0%';
     const cells = pool.slice(0, 10).map(ic => {
       if(obtainedIds.has(ic.id)) {
-        const m = GACHA_RARITY_META[ic.rarity] || GACHA_RARITY_META[1];
+        const m = GACHA_RARITY_META[STAR_TO_TIER[ic.rarity]] || GACHA_RARITY_META.N;
         return `<span class="gacha-collect-cell" style="border-color:${m.border};background:${m.bg};"><img src="${escapeHtml(ic.image)}" loading="lazy" alt=""></span>`;
       }
       return '<span class="gacha-collect-cell is-locked">?</span>';
@@ -10473,19 +10584,31 @@
         </div>` : '';
     }
 
+    // 景品1件ぶんの見た目（アイコン＝画像、カスタム＝カテゴリ名のプレースホルダー）
+    function gachaItemArtHtml(it, m) {
+      if(it.kind === 'custom') {
+        const cm = GACHA_CUSTOM_META[it.category] || {};
+        return `<span style="display:flex;align-items:center;justify-content:center;height:100%;font-size:10.5px;font-weight:800;color:${m.color};text-align:center;padding:4px;">${escapeHtml(cm.labelKey ? t(cm.labelKey) : it.category)}</span>`;
+      }
+      return it.image ? `<img src="${escapeHtml(it.image)}" alt="">` : `<span style="display:flex;align-items:center;justify-content:center;height:100%;font-size:18px;">★${it.starRarity||''}</span>`;
+    }
+
     if(bonusEl) {
       if(!item) {
         bonusEl.innerHTML = `<p style="margin:0;padding:14px;border-radius:12px;border:1px dashed rgba(255,255,255,.12);font-size:11.5px;line-height:1.7;color:#8db5a0;text-align:center;">${escapeHtml(t('gachaEmptyPool'))}</p>`;
       } else {
-        const m = GACHA_RARITY_META[item.rarity] || GACHA_RARITY_META[1];
+        const m = GACHA_RARITY_META[item.tier] || GACHA_RARITY_META.N;
+        const nameLine = item.kind === 'custom'
+          ? escapeHtml((GACHA_CUSTOM_META[item.category]||{}).labelKey ? t(GACHA_CUSTOM_META[item.category].labelKey) : item.category)
+          : `${escapeHtml(t('gachaLabelIcon'))} ★${item.starRarity||''}`;
         bonusEl.innerHTML = `
           <div class="gacha-bonus" style="border:1px solid ${m.border};background:linear-gradient(160deg,${m.bg},rgba(0,0,0,.05));box-shadow:0 0 0 5px ${m.bg};">
             <span class="gacha-bonus-rank" style="background:${m.color};color:#1a2119;">${m.name}</span>
-            <span class="gacha-bonus-art" style="border:1px solid ${m.border};background:${m.bg};"><img src="${escapeHtml(item.image)}" alt=""></span>
-            <p class="gacha-bonus-name" style="color:${m.color};">${escapeHtml(t(m.labelKey))} #${item.id}</p>
+            <span class="gacha-bonus-art" style="border:1px solid ${m.border};background:${m.bg};">${gachaItemArtHtml(item, m)}</span>
+            <p class="gacha-bonus-name" style="color:${m.color};">${nameLine}</p>
             <p class="gacha-bonus-desc" style="color:#c3d4c9;">${escapeHtml(t('gachaBonusDesc'))}</p>
             ${isDup ? `<p class="gacha-bonus-dup" style="color:#8db5a0;">${escapeHtml(t('gachaDup'))}</p>` : ''}
-            <button type="button" class="gacha-pick-btn" onclick="nav('my-icons')">${escapeHtml(t('gachaBonusUse'))}</button>
+            <button type="button" class="gacha-pick-btn" onclick="nav('${item.kind==='custom' ? 'customize' : 'my-icons'}')">${escapeHtml(t('gachaBonusUse'))}</button>
           </div>`;
       }
     }
@@ -10544,10 +10667,17 @@
       let isDup = false;
       if(item && sb) {
         try {
-          const obtained = await db.icons.listObtained(_currentUser.id);
-          isDup = obtained.some(o => o.icon_id === item.id);
+          if(item.kind === 'custom') {
+            await db.customization.grant(_currentUser.id, item.category, item.skinId).catch(()=>{});
+          } else {
+            // TODO: 現状は item.key(文字列)をそのまま icon_id として保存している。
+            // シリーズのアイコンに実際の絵とICON_CATALOG上の数値idを割り当てたら、
+            // そのidをここで使うように差し替えること。
+            const obtained = await db.icons.listObtained(_currentUser.id);
+            isDup = obtained.some(o => o.icon_id === item.key);
+            await db.icons.obtain(_currentUser.id, item.key).catch(()=>{});
+          }
         } catch(e) {}
-        await db.icons.obtain(_currentUser.id, item.id).catch(()=>{});
       }
       results.push({ pick, item, isDup });
     }
@@ -10612,9 +10742,12 @@
       bonusEl.innerHTML = `<div class="gacha-batch-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
         ${results.map(r => {
           if(!r.item) return `<div style="aspect-ratio:1;border-radius:10px;border:1px dashed rgba(255,255,255,.12);"></div>`;
-          const m = GACHA_RARITY_META[r.item.rarity] || GACHA_RARITY_META[1];
+          const m = GACHA_RARITY_META[r.item.tier] || GACHA_RARITY_META.N;
+          const art = r.item.kind === 'custom'
+            ? `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:9px;font-weight:800;color:${m.color};text-align:center;padding:2px;">${escapeHtml((GACHA_CUSTOM_META[r.item.category]||{}).labelKey ? t(GACHA_CUSTOM_META[r.item.category].labelKey) : r.item.category)}</span>`
+            : (r.item.image ? `<img src="${escapeHtml(r.item.image)}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:14px;">★${r.item.starRarity||''}</span>`);
           return `<div style="aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid ${m.border};background:${m.bg};position:relative;">
-            <img src="${escapeHtml(r.item.image)}" style="width:100%;height:100%;object-fit:cover;">
+            ${art}
             <span style="position:absolute;left:2px;bottom:2px;font-size:9px;font-weight:900;padding:1px 5px;border-radius:6px;background:${m.color};color:#1a2119;">${m.name}</span>
             ${r.isDup ? `<span style="position:absolute;right:2px;top:2px;font-size:8.5px;padding:1px 4px;border-radius:5px;background:rgba(0,0,0,.55);color:#dfeae3;">${escapeHtml(t('gachaDup'))}</span>` : ''}
           </div>`;
@@ -10632,23 +10765,31 @@
     if(!listEl) return;
     const pool = getGachaPool();
     const total = Object.values(GACHA_RARITY_WEIGHT).reduce((a, b) => a + b, 0);
-    const rarityRows = [1,2,3,4,5].map(r => {
-      const m = GACHA_RARITY_META[r];
-      const pct = (GACHA_RARITY_WEIGHT[r] / total) * 100;
+    const rarityRows = GACHA_RARITY_ORDER.map(tier => {
+      const m = GACHA_RARITY_META[tier];
+      const pct = (GACHA_RARITY_WEIGHT[tier] / total) * 100;
+      const iconRatio = GACHA_ICON_VS_CUSTOM[tier];
+      const sub = iconRatio != null ? `（アイコン${Math.round(iconRatio*100)}% / カスタム${Math.round((1-iconRatio)*100)}%）` : '';
       return `
         <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;margin-bottom:6px;border-radius:10px;border:1px solid ${m.border};background:${m.bg};">
           <span style="width:8px;height:8px;border-radius:50%;background:${m.color};"></span>
-          <span style="flex:1 1 auto;font-size:11.5px;color:#c3d4c9;">${m.name} · ${escapeHtml(t(m.labelKey))}</span>
+          <span style="flex:1 1 auto;font-size:11.5px;color:#c3d4c9;">${m.name} ${sub}</span>
           <span style="font-size:11.5px;font-weight:800;color:${m.color};">${pct < 10 ? pct.toFixed(1) : Math.round(pct)}%</span>
         </div>`;
     }).join('');
-    const itemRows = pool.length ? pool.map(ic => {
-      const m = GACHA_RARITY_META[ic.rarity] || GACHA_RARITY_META[1];
+    const itemRows = pool.length ? pool.map(it => {
+      const m = GACHA_RARITY_META[it.tier] || GACHA_RARITY_META.N;
+      const label = it.kind === 'custom'
+        ? escapeHtml((GACHA_CUSTOM_META[it.category]||{}).labelKey ? t(GACHA_CUSTOM_META[it.category].labelKey) : it.category)
+        : `${escapeHtml(t('gachaLabelIcon'))} ★${it.starRarity||''}`;
+      const thumb = it.kind === 'icon' && it.image
+        ? `<img src="${escapeHtml(it.image)}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px;">`
+        : `<span style="width:40px;height:40px;border-radius:8px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;background:${m.bg};border:1px solid ${m.border};font-size:16px;">${it.kind==='custom'?'🎨':'?'}</span>`;
       return `
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line,#2a3830);">
-          <img src="${escapeHtml(ic.image)}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px;">
+          ${thumb}
           <div style="flex:1 1 auto;">
-            <div style="font-size:.8rem;font-weight:700;color:#dfeae3;">#${ic.id}</div>
+            <div style="font-size:.8rem;font-weight:700;color:#dfeae3;">${label}</div>
             <div style="font-size:.72rem;color:${m.color};font-weight:800;">${m.name}</div>
           </div>
         </div>`;
@@ -10669,6 +10810,8 @@
 
   function initGachaPage() {
     setGachaStageIdle();
+    if(!_gachaActiveSeriesId) _gachaActiveSeriesId = getActiveGachaSeriesList()[0]?.id || null;
+    renderGachaSeriesBanners();
     updateGachaButtons();
     renderGachaRarityList();
     renderGachaCollection();
@@ -21913,11 +22056,41 @@
   }
 
   // ── コインショップ ──
+  // 価格は日本円基準で決め、海外向けの通貨換算・税処理はPaddle側に任せる想定（決済連携は別途）。
+  // coinsPerYen=1.0を基準に、まとめ買いほどボーナスが増える一般的なソシャゲ石の価格帯(120/480/980/1800/3000/4900/9800/24000円)に合わせた。
+  const COIN_PACKS = [
+    { id:'p120',   priceJpy:120,   coins:120,   bonusPct:0 },
+    { id:'p480',   priceJpy:480,   coins:500,   bonusPct:4 },
+    { id:'p980',   priceJpy:980,   coins:1050,  bonusPct:7 },
+    { id:'p1800',  priceJpy:1800,  coins:2000,  bonusPct:11 },
+    { id:'p3000',  priceJpy:3000,  coins:3450,  bonusPct:15 },
+    { id:'p4900',  priceJpy:4900,  coins:5800,  bonusPct:18, popular:true },
+    { id:'p9800',  priceJpy:9800,  coins:12000, bonusPct:22 },
+    { id:'p24000', priceJpy:24000, coins:30000, bonusPct:25, best:true },
+  ];
+  function renderCoinPacks() {
+    const grid = document.getElementById('coinPackGrid');
+    if(!grid) return;
+    grid.innerHTML = COIN_PACKS.map(p => `
+      <button type="button" class="coin-pack-card" data-pack-id="${p.id}" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 10px 12px;border-radius:14px;border:1px solid ${p.best?'rgba(240,201,74,.5)':'rgba(255,255,255,.1)'};background:${p.best?'rgba(240,201,74,.08)':'rgba(255,255,255,.02)'};cursor:pointer;">
+        ${p.popular ? `<span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:9.5px;font-weight:900;padding:2px 8px;border-radius:8px;background:#5cc98e;color:#07200f;white-space:nowrap;">人気</span>` : ''}
+        ${p.best ? `<span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:9.5px;font-weight:900;padding:2px 8px;border-radius:8px;background:#f0c94a;color:#2b1c05;white-space:nowrap;">最もお得</span>` : ''}
+        <span style="font-size:20px;">🪙</span>
+        <span style="font-size:16px;font-weight:900;color:#eafdf1;">${p.coins.toLocaleString()}</span>
+        ${p.bonusPct ? `<span style="font-size:10.5px;font-weight:800;color:#8fe0a8;">+${p.bonusPct}%お得</span>` : ''}
+        <span style="font-size:13px;font-weight:800;color:#dfeae3;margin-top:6px;">¥${p.priceJpy.toLocaleString()}</span>
+      </button>`).join('');
+    grid.querySelectorAll('.coin-pack-card').forEach(btn => {
+      btn.onclick = () => alert('決済システムは準備中です。もうしばらくお待ちください。');
+    });
+  }
   async function renderCoinShopPage() {
     const balEl = document.getElementById('coinShopBalance');
     if(!balEl) return;
-    if(!_currentUser) { balEl.textContent = '0'; return; }
-    balEl.textContent = await db.coins.get(_currentUser.id).catch(()=>0);
+    if(!_currentUser) { balEl.textContent = '0'; } else {
+      balEl.textContent = await db.coins.get(_currentUser.id).catch(()=>0);
+    }
+    renderCoinPacks();
   }
   window.renderCoinShopPage = renderCoinShopPage;
 
