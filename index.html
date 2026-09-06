@@ -4624,6 +4624,7 @@
     <div class="cs-head">
       <h1 class="cs-title" data-i18n="coinShopBtn">ショップ</h1>
       <p class="cs-lead" data-i18n="coinShopLead">コインはガチャに使えます。まとめ買いほどボーナスが増えます。</p>
+      <button type="button" onclick="nav('settings-history')" style="background:none;border:none;padding:0;margin-top:4px;color:#8fe0a8;font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer;" data-i18n="settingsHistoryLinkFromShop">購入・ガチャ履歴を見る</button>
     </div>
 
     <!-- 残高。買う前に「あと何回引けるか」まで分かるようにしている -->
@@ -4757,6 +4758,11 @@
       <button class="settings-row" onclick="nav('settings-plan')">
         <span class="settings-row-icon" style="background:rgba(217,164,65,.12);color:#e8c463;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
         <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsPlan">プラン</span><span class="settings-row-sub" data-i18n="settingsPlanSub">アニメップル+・クリエイタープラン</span></span>
+        <span class="settings-row-arrow">›</span>
+      </button>
+      <button class="settings-row" onclick="nav('settings-history')">
+        <span class="settings-row-icon" style="background:rgba(154,171,163,.12);color:#b9cabf;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsHistoryTitle">購入・ガチャ履歴</span><span class="settings-row-sub" data-i18n="settingsHistorySub">コインの増減、ガチャの結果</span></span>
         <span class="settings-row-arrow">›</span>
       </button>
       <button class="settings-row" onclick="nav('tip')">
@@ -4910,6 +4916,20 @@
   </header>
   <div style="padding-top:.5rem;">
     <h2 style="font-size:1rem;color:#dff0e6;margin:0 1.1rem 1rem;" data-i18n="settingsNotifications">🔔 通知</h2>
+    <div class="mypage-section" style="padding:1rem 1.1rem;">
+      <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .5rem;" data-i18n="settingsPushTitle">プッシュ通知</p>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .7rem;" data-i18n="settingsPushDesc">端末にプッシュ通知を送れるようにします。</p>
+      <button class="mypage-btn-secondary" id="settingsEnablePushBtn" data-i18n="settingsPushEnableBtn">プッシュ通知を有効にする</button>
+    </div>
+    <div class="mypage-section" style="padding:1rem 1.1rem;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;">
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .3rem;" data-i18n="settingsNotifFriendRequestTitle">友達申請の通知</p>
+          <p style="font-size:.72rem;color:var(--muted);margin:0;" data-i18n="settingsNotifFriendRequestDesc">友達申請が届いた時にバッジ・通知でお知らせします。</p>
+        </div>
+        <input type="checkbox" id="settingsNotifFriendRequestCb" checked style="width:20px;height:20px;flex-shrink:0;margin-top:.2rem;accent-color:var(--brand);" />
+      </div>
+    </div>
     <div>
       <button class="mypage-menu-row" onclick="nav('my-boards')">
         <span class="mypage-menu-row-icon">💬</span>
@@ -5171,6 +5191,30 @@
       </button>
     </div>
     <p style="font-size:.75rem;color:var(--muted);margin:1rem 1.1rem;" id="settingsVersionText"></p>
+  </div>
+</div>
+
+<!-- 購入・ガチャ履歴 -->
+<div class="page mypage-page-wrap" id="page-settings-history">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🧾 <span data-i18n="settingsHistoryTitle">購入・ガチャ履歴</span></h2>
+    <div style="display:flex;gap:8px;margin-bottom:1rem;">
+      <button type="button" class="history-tab-btn is-active" data-tab="coin" data-i18n="settingsHistoryTabCoin" style="flex:1;height:38px;border-radius:10px;border:1px solid rgba(92,201,142,.4);background:rgba(92,201,142,.14);color:#9be3bd;font-size:12.5px;font-weight:800;cursor:pointer;">コイン</button>
+      <button type="button" class="history-tab-btn" data-tab="gacha" data-i18n="settingsHistoryTabGacha" style="flex:1;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#b6c8bd;font-size:12.5px;font-weight:800;cursor:pointer;">ガチャ</button>
+    </div>
+    <div id="historyList"></div>
   </div>
 </div>
 
@@ -6988,25 +7032,56 @@
         const { error } = await sb.from('gacha_daily_state').update({ ad_used_count: existing.ad_used_count + 1 }).eq('user_id', userId).eq('gacha_date', today).eq('ad_used_count', existing.ad_used_count);
         return { error };
       },
+      // 必要テーブル（Supabase側で作成）：
+      //   create table gacha_pull_log (
+      //     id bigserial primary key,
+      //     user_id uuid not null references auth.users(id) on delete cascade,
+      //     series_id text, tier text not null, kind text not null, label text not null,
+      //     created_at timestamptz not null default now()
+      //   );
+      async logPull(userId, entry) {
+        if(!sb || !userId) return;
+        await sb.from('gacha_pull_log').insert({ user_id: userId, series_id: entry.seriesId || null, tier: entry.tier, kind: entry.kind, label: entry.label }).catch(()=>{});
+      },
+      async listPullLog(userId, limit) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('gacha_pull_log').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(limit || 30);
+        return data || [];
+      },
     },
+    // 必要テーブル（Supabase側で作成）：
+    //   create table coin_transactions (
+    //     id bigserial primary key,
+    //     user_id uuid not null references auth.users(id) on delete cascade,
+    //     amount integer not null, -- 正なら入手、負なら消費
+    //     reason text not null,    -- 'daily_quest' | 'gacha_pull' | 'gacha_pull10' | 'purchase' 等
+    //     created_at timestamptz not null default now()
+    //   );
     coins: {
       async get(userId) {
         if(!sb || !userId) return 0;
         const { data } = await sb.from('profiles').select('coins').eq('id', userId).maybeSingle();
         return data?.coins || 0;
       },
-      async add(userId, amount) {
+      async add(userId, amount, reason) {
         if(!sb || !userId || !amount) return { error: 'invalid' };
         const current = await this.get(userId);
         const { error } = await sb.from('profiles').update({ coins: current + amount }).eq('id', userId);
+        if(!error) await sb.from('coin_transactions').insert({ user_id: userId, amount, reason: reason || 'unknown' }).catch(()=>{});
         return { error };
       },
-      async spend(userId, amount) {
+      async spend(userId, amount, reason) {
         if(!sb || !userId || !amount) return { error: 'invalid' };
         const current = await this.get(userId);
         if(current < amount) return { error: 'insufficient' };
         const { error } = await sb.from('profiles').update({ coins: current - amount }).eq('id', userId);
+        if(!error) await sb.from('coin_transactions').insert({ user_id: userId, amount: -amount, reason: reason || 'unknown' }).catch(()=>{});
         return { error };
+      },
+      async listTransactions(userId, limit) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('coin_transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(limit || 30);
+        return data || [];
       },
     },
     quests: {
@@ -7038,7 +7113,7 @@
         if(existing.claimed) return { error: 'already_claimed' };
         const { error: e1 } = await sb.from('daily_quest_progress').update({ claimed: true }).eq('user_id', userId).eq('quest_date', today);
         if(e1) return { error: e1 };
-        return db.coins.add(userId, rewardAmount);
+        return db.coins.add(userId, rewardAmount, 'daily_quest');
       },
     },
     dm: {
@@ -8237,6 +8312,7 @@
     'dm-list': '/mypage/messages',
     'daily-quest': '/gacha/daily-quest',
     'coin-shop': '/gacha/shop',
+    'settings-history': '/settings/history',
     'customize': '/mypage/customize',
     settings: '/settings',
     'settings-account': '/settings/account',
@@ -8612,11 +8688,40 @@
       const vEl = document.getElementById('settingsVersionText');
       if(vEl) vEl.textContent = 'v0.312.0';
     }
+    if (page==='settings-notifications') {
+      const pushBtn = document.getElementById('settingsEnablePushBtn');
+      if(pushBtn) {
+        pushBtn.onclick = async () => {
+          pushBtn.disabled = true;
+          const { error } = await enablePushNotifications();
+          pushBtn.disabled = false;
+          if(error) { alert(t('settingsPushFailedAlert')); return; }
+          alert(t('settingsPushEnabledAlert'));
+        };
+      }
+      const notifFriendReqCb = document.getElementById('settingsNotifFriendRequestCb');
+      if(notifFriendReqCb && sb) {
+        (async () => {
+          let uid = _currentUser?.id;
+          if(!uid) {
+            const { data } = await sb.auth.getSession();
+            uid = data?.session?.user?.id;
+          }
+          if(!uid) return;
+          const profile = await db.profiles.get(uid);
+          notifFriendReqCb.checked = profile?.notif_friend_request !== false;
+          notifFriendReqCb.onchange = async () => {
+            await db.profiles.upsert(uid, { notif_friend_request: notifFriendReqCb.checked });
+          };
+        })();
+      }
+    }
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
     if (page==='dm-list') { renderDmList().catch(console.error); }
     if (page==='daily-quest') { renderDailyQuestPage().catch(console.error); }
     if (page==='coin-shop') { renderCoinShopPage().catch(console.error); }
+    if (page==='settings-history') { renderHistoryPage('coin').catch(console.error); }
     if (page==='customize') { renderCustomizePage().catch(console.error); }
     if (page==='dm'&&animeId) { renderDmThread(animeId).catch(console.error); }
     if (page==='reviews'&&animeId) { currentAnimeId=animeId; renderReviewsList(animeId); recordValueSignal(animeId, 'view_reviews'); }
@@ -11156,7 +11261,7 @@
       if(error) { alert(t('gachaLimitReachedAlert')); updateGachaButtons(); return; } // 既に上限到達済み（多重タップ対策）
     } else if(kind === 'coin' || kind === 'coin10') {
       const cost = kind === 'coin' ? GACHA_COIN_COST : GACHA_COIN10_COST;
-      const { error } = await db.coins.spend(_currentUser.id, cost);
+      const { error } = await db.coins.spend(_currentUser.id, cost, kind === 'coin' ? 'gacha_pull' : 'gacha_pull10');
       if(error) { alert(t('gachaCoinInsufficientAlert')); updateGachaButtons(); return; }
       updateCoinBadge();
     }
@@ -11178,6 +11283,10 @@
             isDup = obtained.some(o => o.icon_id === item.key);
             await db.icons.obtain(_currentUser.id, item.key).catch(()=>{});
           }
+          const label = item.kind === 'custom'
+            ? ((GACHA_CUSTOM_META[item.category]||{}).labelKey ? t(GACHA_CUSTOM_META[item.category].labelKey) : item.category)
+            : `${t('gachaLabelIcon')} ★${item.starRarity||''}`;
+          db.gacha.logPull(_currentUser.id, { seriesId: getCurrentGachaSeries()?.id, tier: item.tier, kind: item.kind, label });
         } catch(e) {}
       }
       results.push({ pick, item, isDup });
@@ -17044,8 +17153,25 @@
     settingsSecuritySub:{ ja:'ログイン方法の管理', en:'Manage sign-in methods' },
     settingsPrivacySub:{ ja:'ブロック中のユーザーなど', en:'Blocked users and more' },
     settingsNotificationsSub:{ ja:'お知らせの受け取り方', en:'How you receive alerts' },
+    settingsPushTitle:{ ja:'プッシュ通知', en:'Push notifications' },
+    settingsPushDesc:{ ja:'端末にプッシュ通知を送れるようにします。', en:'Allow push notifications to this device.' },
+    settingsPushEnableBtn:{ ja:'プッシュ通知を有効にする', en:'Enable push notifications' },
+    settingsPushEnabledAlert:{ ja:'プッシュ通知を有効にしました', en:'Push notifications enabled' },
+    settingsPushFailedAlert:{ ja:'プッシュ通知を有効にできませんでした', en:'Could not enable push notifications' },
+    settingsNotifFriendRequestTitle:{ ja:'友達申請の通知', en:'Friend request notifications' },
+    settingsNotifFriendRequestDesc:{ ja:'友達申請が届いた時にバッジ・通知でお知らせします。', en:'Get notified when someone sends you a friend request.' },
     settingsDisplaySub:{ ja:'テーマ、フォント、言語設定', en:'Theme, font, language settings' },
     settingsAboutSub:{ ja:'利用規約、お問い合わせ', en:'Terms of use, contact' },
+    settingsHistoryTitle:{ ja:'購入・ガチャ履歴', en:'Purchase & gacha history' },
+    settingsHistoryLinkFromShop:{ ja:'購入・ガチャ履歴を見る', en:'View purchase & gacha history' },
+    settingsHistorySub:{ ja:'コインの増減、ガチャの結果', en:'Coin changes and gacha results' },
+    settingsHistoryTabCoin:{ ja:'コイン', en:'Coins' },
+    settingsHistoryTabGacha:{ ja:'ガチャ', en:'Gacha' },
+    historyEmpty:{ ja:'まだ履歴がありません', en:'No history yet' },
+    historyReasonDailyQuest:{ ja:'デイリークエスト報酬', en:'Daily quest reward' },
+    historyReasonGachaPull:{ ja:'ガチャ(1回)', en:'Gacha (1 pull)' },
+    historyReasonGachaPull10:{ ja:'ガチャ(10連)', en:'Gacha (10 pulls)' },
+    historyReasonPurchase:{ ja:'コイン購入', en:'Coin purchase' },
     settingsUsernameLabel:{ ja:'ユーザー名', en:'Username' },
     settingsEmailLabel:{ ja:'メールアドレス', en:'Email' },
     settingsLoginMethodLabel:{ ja:'ログイン方法', en:'Login method' },
@@ -21405,6 +21531,8 @@
   async function checkFriendRequestBadge() {
     if(!_currentUser || !sb) { _friendReqBadgeCount = 0; renderNotifBadges(); return; }
     try {
+      const profile = await db.profiles.get(_currentUser.id);
+      if(profile?.notif_friend_request === false) { _friendReqBadgeCount = 0; renderNotifBadges(); return; }
       _friendReqBadgeCount = await db.friendRequests.getIncomingCount(_currentUser.id);
     } catch(e) { console.warn('checkFriendRequestBadge:', e); }
     renderNotifBadges();
@@ -22768,6 +22896,57 @@
     renderCoinPacks();
   }
   window.renderCoinShopPage = renderCoinShopPage;
+
+  // ── 購入・ガチャ履歴 ──
+  const COIN_REASON_LABEL_KEY = {
+    daily_quest: 'historyReasonDailyQuest',
+    gacha_pull: 'historyReasonGachaPull',
+    gacha_pull10: 'historyReasonGachaPull10',
+    purchase: 'historyReasonPurchase',
+  };
+  async function renderHistoryPage(tab) {
+    const listEl = document.getElementById('historyList');
+    if(!listEl) return;
+    document.querySelectorAll('.history-tab-btn').forEach(btn => {
+      const active = btn.dataset.tab === tab;
+      btn.classList.toggle('is-active', active);
+      btn.style.border = active ? '1px solid rgba(92,201,142,.4)' : '1px solid rgba(255,255,255,.12)';
+      btn.style.background = active ? 'rgba(92,201,142,.14)' : 'transparent';
+      btn.style.color = active ? '#9be3bd' : '#b6c8bd';
+      btn.onclick = () => renderHistoryPage(btn.dataset.tab);
+    });
+    if(!_currentUser) { listEl.innerHTML = `<p style="text-align:center;color:var(--muted);font-size:.85rem;padding:2rem 0;">${escapeHtml(t('loginRequired'))}</p>`; return; }
+    listEl.innerHTML = `<p style="text-align:center;color:var(--muted);font-size:.85rem;padding:2rem 0;">${escapeHtml(t('loadingLabel'))}</p>`;
+    if(tab === 'coin') {
+      const rows = await db.coins.listTransactions(_currentUser.id, 50);
+      listEl.innerHTML = rows.length ? rows.map(r => {
+        const plus = r.amount > 0;
+        const labelKey = COIN_REASON_LABEL_KEY[r.reason];
+        const label = labelKey ? t(labelKey) : r.reason;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line,#2a3830);">
+          <span style="width:34px;height:34px;border-radius:50%;flex:0 0 34px;display:flex;align-items:center;justify-content:center;font-size:15px;background:${plus?'rgba(92,201,142,.14)':'rgba(255,255,255,.05)'};">${plus?'🪙':'➖'}</span>
+          <div style="flex:1 1 auto;min-width:0;">
+            <div style="font-size:.82rem;font-weight:700;color:#dfeae3;">${escapeHtml(label)}</div>
+            <div style="font-size:.7rem;color:var(--muted);">${formatRelativeTime(r.created_at)}</div>
+          </div>
+          <div style="font-size:.85rem;font-weight:800;color:${plus?'#8fe0a8':'#eaa9a9'};">${plus?'+':''}${r.amount.toLocaleString()}</div>
+        </div>`;
+      }).join('') : `<p style="text-align:center;color:var(--muted);font-size:.85rem;padding:2rem 0;">${escapeHtml(t('historyEmpty'))}</p>`;
+    } else {
+      const rows = await db.gacha.listPullLog(_currentUser.id, 50);
+      listEl.innerHTML = rows.length ? rows.map(r => {
+        const m = GACHA_RARITY_META[r.tier] || GACHA_RARITY_META.N;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line,#2a3830);">
+          <span style="display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:24px;padding:0 8px;border-radius:7px;font-size:11px;font-weight:900;background:${m.color};color:#1a2119;flex:0 0 auto;">${m.name}</span>
+          <div style="flex:1 1 auto;min-width:0;">
+            <div style="font-size:.82rem;font-weight:700;color:#dfeae3;">${escapeHtml(r.label)}</div>
+            <div style="font-size:.7rem;color:var(--muted);">${formatRelativeTime(r.created_at)}</div>
+          </div>
+        </div>`;
+      }).join('') : `<p style="text-align:center;color:var(--muted);font-size:.85rem;padding:2rem 0;">${escapeHtml(t('historyEmpty'))}</p>`;
+    }
+  }
+  window.renderHistoryPage = renderHistoryPage;
 
   // ── カスタマイズ（吹き出し・レビューカード・アイコンフレーム・称号・通知バッジ色） ──
   // スキンの表示名。IDそのままだと英字が出てしまうので、ここで日本語名を持つ
