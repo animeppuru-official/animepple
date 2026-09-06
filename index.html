@@ -3106,7 +3106,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.7'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
+<script>window.APP_BUILD = 'v0.313.10'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
 <div id="themeScenery" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════
@@ -3202,7 +3202,7 @@
       <div class="tag-section">
         <div class="tag-section-head">
           <span class="tag-section-title" data-i18n="filterTagLabel">🏷 タグで絞る</span>
-          <span class="tag-section-count">最大10個 ・ <span id="overlayTagCount">0/10</span></span>
+          <span class="tag-section-count"><span id="overlayTagMaxLabel"></span><span id="overlayTagCount">0/10</span></span>
         </div>
         <div class="search-tag-input-wrap">
           <input id="overlayTagInput" placeholder="キーワードでタグを追加（例: 泣ける、鬱、神作画）" data-i18n="phTagAddLong" maxlength="20" autocomplete="off" />
@@ -3396,7 +3396,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.7</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.10</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -6171,8 +6171,8 @@
           <span class="mypage-share-preview-foot"></span>
         </span>
         <span class="mypage-share-copy">
-          <span class="mypage-share-title">カードをシェア</span>
-          <span class="mypage-share-sub">12角形グラフ入りの画像を保存して投稿できます</span>
+          <span class="mypage-share-title" data-i18n="shareCardTitle">カードをシェア</span>
+          <span class="mypage-share-sub" data-i18n="shareCardSub">12角形グラフ入りの画像を保存して投稿できます</span>
         </span>
       </div>
       <div class="mypage-share-actions">
@@ -6217,7 +6217,7 @@
 
     <!-- メニュー：履歴・お気に入り・参加中の掲示板は別ページへ -->
     <div class="mypage-section mypage-record-section mypage-owner-only">
-      <h3 class="mypage-section-title" style="margin:0 0 .6rem;">記録</h3>
+      <h3 class="mypage-section-title" style="margin:0 0 .6rem;" data-i18n="mypageRecordsTitle">記録</h3>
       <div class="mypage-record-list">
       <button class="mypage-menu-row" onclick="nav('my-reviews')">
         <span class="mypage-menu-row-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
@@ -8800,7 +8800,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.313.7';
+      if(vEl) vEl.textContent = 'v0.313.10';
     }
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
@@ -10595,10 +10595,10 @@
   function getCurrentSeason() {
     const m = new Date().getMonth() + 1;
     const y = new Date().getFullYear();
-    if (m >= 1 && m <= 3)  return { season:'WINTER', label:`${y}年冬アニメ`, startYearMonth:`${y}-01` };
-    if (m >= 4 && m <= 6)  return { season:'SPRING', label:`${y}年春アニメ`, startYearMonth:`${y}-04` };
-    if (m >= 7 && m <= 9)  return { season:'SUMMER', label:`${y}年夏アニメ`, startYearMonth:`${y}-07` };
-    return { season:'FALL', label:`${y}年秋アニメ`, startYearMonth:`${y}-10` };
+    if (m >= 1 && m <= 3)  return { season:'WINTER', label:(T.seasonWinter[currentLang]||T.seasonWinter.en)(y), startYearMonth:`${y}-01` };
+    if (m >= 4 && m <= 6)  return { season:'SPRING', label:(T.seasonSpring[currentLang]||T.seasonSpring.en)(y), startYearMonth:`${y}-04` };
+    if (m >= 7 && m <= 9)  return { season:'SUMMER', label:(T.seasonSummer[currentLang]||T.seasonSummer.en)(y), startYearMonth:`${y}-07` };
+    return { season:'FALL', label:(T.seasonFall[currentLang]||T.seasonFall.en)(y), startYearMonth:`${y}-10` };
   }
 
   // 自社DBのbroadcast_startを見て、今シーズン開始月に該当する作品を全件取得する
@@ -11142,7 +11142,7 @@
       const pctText = pct < 10 ? pct.toFixed(1) : Math.round(pct);
       const iconRatio = GACHA_ICON_VS_CUSTOM[tier];
       const sub = iconRatio != null
-        ? `<span class="gacha-rarity-sub">（アイコン${Math.round(iconRatio*100)}% / カスタム${Math.round((1-iconRatio)*100)}%）</span>`
+        ? `<span class="gacha-rarity-sub">${(T.gachaIconVsCustomRatio[currentLang]||T.gachaIconVsCustomRatio.en)(Math.round(iconRatio*100), Math.round((1-iconRatio)*100))}</span>`
         : '';
       return `
         <span class="gacha-rarity-row" style="border-color:${m.border};background:${m.bg};">
@@ -11474,7 +11474,7 @@
       const m = GACHA_RARITY_META[tier];
       const pct = (GACHA_RARITY_WEIGHT[tier] / total) * 100;
       const iconRatio = GACHA_ICON_VS_CUSTOM[tier];
-      const sub = iconRatio != null ? `（アイコン${Math.round(iconRatio*100)}% / カスタム${Math.round((1-iconRatio)*100)}%）` : '';
+      const sub = iconRatio != null ? (T.gachaIconVsCustomRatio[currentLang]||T.gachaIconVsCustomRatio.en)(Math.round(iconRatio*100), Math.round((1-iconRatio)*100)) : '';
       return `
         <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;margin-bottom:6px;border-radius:10px;border:1px solid ${m.border};background:${m.bg};">
           <span style="width:8px;height:8px;border-radius:50%;background:${m.color};"></span>
@@ -12184,7 +12184,7 @@
       const total = entries.reduce((s,[,v])=>s+v,0);
       if(!total) {
         section.style.display='';
-        content.innerHTML = `<p style="font-size:.78rem;color:var(--muted);margin:0;">${t('notEnoughReviews') || 'まだデータがありません'}</p>`;
+        content.innerHTML = `<p style="font-size:.78rem;color:var(--muted);margin:0;">${escapeHtml(t('boardHubNoTrending'))}</p>`;
         return;
       }
       section.style.display='';
@@ -13649,8 +13649,8 @@
       myGroup = mine ? mine.axis_group : null;
     }
     const msg = myGroup
-      ? `<span style="color:${VALUE_TYPE_COLORS[myGroup]};font-weight:800;">${escapeHtml(t('valueType'+myGroup))}</span>${currentLang==='ja'?'の掲示板の鍵が開いたよ！':' board is unlocked!'}`
-      : (currentLang==='ja' ? 'しっかりとしたレビューを書くと、特別な掲示板に入れるよ！' : 'Write a solid review to unlock a special board!');
+      ? `<span style="color:${VALUE_TYPE_COLORS[myGroup]};font-weight:800;">${escapeHtml(t('valueType'+myGroup))}</span>${escapeHtml(t('boardUnlockedSuffix'))}`
+      : t('writeGoodReviewToUnlock');
     el.innerHTML = `
       <div style="display:flex;align-items:flex-end;gap:.5rem;">
         <img src="https://animeppuru-official.github.io/animepple/mascot.png" alt="アニメップルちゃん" style="width:64px;height:auto;flex-shrink:0;" />
@@ -15902,7 +15902,7 @@
     }
     const { labAll, valsAll, items } = _cachedValueProfile;
     sec.style.display = '';
-    if(meta) meta.textContent = _cachedValueProfile.signalCount ? ('行動 ' + _cachedValueProfile.signalCount + '件から') : '';
+    if(meta) meta.textContent = _cachedValueProfile.signalCount ? tFn('basedOnActionsCount', _cachedValueProfile.signalCount) : '';
     body.innerHTML = `
       <div style="max-width:340px;margin:0 auto;">
         <canvas id="valueProfileInlineCanvas" class="rc-canvas" width="320" height="320" style="aspect-ratio:1/1;"></canvas>
@@ -16141,8 +16141,8 @@
       el.innerHTML = `
         <div style="text-align:center;padding:1.5rem .5rem;color:var(--muted);">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto .6rem;display:block;"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg>
-          <p style="margin:0;font-size:.85rem;">${escapeHtml(currentLang==='ja'?'まだデータがありません':'No data yet')}</p>
-          <p style="margin:.4rem 0 0;font-size:.74rem;">${escapeHtml(currentLang==='ja'?'レビュー投稿・お気に入り・レビュー閲覧などの行動をすると、少しずつ価値観が見えてきます。':'Review, favorite, or browse reviews to start building your taste profile.')}</p>
+          <p style="margin:0;font-size:.85rem;">${escapeHtml(t('boardHubNoTrending'))}</p>
+          <p style="margin:.4rem 0 0;font-size:.74rem;">${escapeHtml(t('buildTasteProfileHint'))}</p>
         </div>
       `;
       return;
@@ -17078,7 +17078,7 @@
     masterStrengthLabel:{ ja:'際立つ強み',en:'Standout Strengths',ko:'뛰어난 강점','zh-tw':'突出優點','zh-cn':'突出优点',es:'Puntos fuertes',fr:'Points forts',pt:'Pontos fortes',de:'Stärken',ar:'نقاط القوة',th:'จุดเด่น',id:'Keunggulan',ru:'Сильные стороны',it:'Punti di forza',vi:'Điểm mạnh nổi bật' },
     masterMoodLabel:{ ja:'印象的な雰囲気',en:'Notable Mood',ko:'인상적인 분위기','zh-tw':'印象深刻的氛圍','zh-cn':'印象深刻的氛围',es:'Ambiente notable',fr:'Ambiance notable',pt:'Ambiente notável',de:'Bemerkenswerte Stimmung',ar:'جو ملحوظ',th:'บรรยากาศที่โดดเด่น',id:'Suasana Menonjol',ru:'Заметная атмосфера',it:'Atmosfera notevole',vi:'Bầu không khí ấn tượng' },
     boardSectionTitle:{ ja:'掲示板', en:'Board' },
-    boardTabGeneral:{ ja:'通常掲示板', en:'General board' },
+    boardTabGeneral:{ ja:'通常掲示板', en:'General board', ko:'일반 게시판', 'zh-tw':'一般板', 'zh-cn':'一般板块', es:'Foro general', fr:'Forum général', pt:'Fórum geral', de:'Allgemeines Board', ar:'اللوحة العامة', th:'บอร์ดทั่วไป', id:'Papan umum', ru:'Общая доска', it:'Bacheca generale', vi:'Bảng chung' },
     boardTabA:{ ja:'ビジュアルタイプ', en:'Visual' },
     boardTabB:{ ja:'ストーリータイプ', en:'Story' },
     boardTabC:{ ja:'キャラタイプ', en:'Characters' },
@@ -17088,13 +17088,21 @@
     valueTypeC:{ ja:'キャラタイプ', en:'Character type' },
     valueTypeD:{ ja:'トーンタイプ', en:'Tone type' },
     boardEntrySectionTitle:{ ja:'掲示板', en:'Board' },
-    boardEntryGeneral:{ ja:'通常掲示板', en:'General board' },
+    boardEntryGeneral:{ ja:'通常掲示板', en:'General board', ko:'일반 게시판', 'zh-tw':'一般板', 'zh-cn':'一般板块', es:'Foro general', fr:'Forum général', pt:'Fórum geral', de:'Allgemeines Board', ar:'اللوحة العامة', th:'บอร์ดทั่วไป', id:'Papan umum', ru:'Общая доска', it:'Bacheca generale', vi:'Bảng chung' },
     boardEntryLocked:{ ja:'未投票', en:'Not voted yet' },
-    boardEntryValue:{ ja:'価値観掲示板', en:'Value board' },
-    deleteReviewBtn:{ ja:'削除', en:'Delete' },
+    boardEntryValue:{ ja:'価値観掲示板', en:'Value board', ko:'가치관 게시판', 'zh-tw':'價值觀板', 'zh-cn':'价值观板块', es:'Foro de valores', fr:'Forum des valeurs', pt:'Fórum de valores', de:'Werte-Board', ar:'لوحة القيم', th:'บอร์ดคุณค่า', id:'Papan nilai', ru:'Доска ценностей', it:'Bacheca dei valori', vi:'Bảng giá trị quan' },
+    deleteReviewBtn:{ ja:'削除', en:'Delete', ko:'삭제', 'zh-tw':'刪除', 'zh-cn':'删除', es:'Eliminar', fr:'Supprimer', pt:'Excluir', de:'Löschen', ar:'حذف', th:'ลบ', id:'Hapus', ru:'Удалить', it:'Elimina', vi:'Xóa' },
     deleteReviewConfirm:{ ja:'このレビューを削除しますか？削除すると、マスターグラフへの反映や価値観掲示板の権限が取り消される可能性があります。', en:'Delete this review? This also removes it from the master graph and revokes value-board access if it applied.' },
-    reportBtn:{ ja:'通報', en:'Report' },
-    blockBtn:{ ja:'ブロック', en:'Block' },
+    reportBtn:{ ja:'通報', en:'Report', ko:'신고', 'zh-tw':'檢舉', 'zh-cn':'举报', es:'Reportar', fr:'Signaler', pt:'Denunciar', de:'Melden', ar:'إبلاغ', th:'รายงาน', id:'Laporkan', ru:'Пожаловаться', it:'Segnala', vi:'Báo cáo' },
+    blockBtn:{ ja:'ブロック', en:'Block', ko:'차단', 'zh-tw':'封鎖', 'zh-cn':'屏蔽', es:'Bloquear', fr:'Bloquer', pt:'Bloquear', de:'Blockieren', ar:'حظر', th:'บล็อก', id:'Blokir', ru:'Заблокировать', it:'Blocca', vi:'Chặn' },
+    hasCommentLabel: { ja:'コメントあり', en:'Has comment', ko:'댓글 있음', 'zh-tw':'有留言', 'zh-cn':'有留言', es:'Con comentario', fr:'Avec commentaire', pt:'Com comentário', de:'Mit Kommentar', ar:'يحتوي على تعليق', th:'มีความคิดเห็น', id:'Ada komentar', ru:'Есть комментарий', it:'Con commento', vi:'Có bình luận' },
+    noCommentLabel: { ja:'コメントなし', en:'No comment', ko:'댓글 없음', 'zh-tw':'無留言', 'zh-cn':'无留言', es:'Sin comentario', fr:'Sans commentaire', pt:'Sem comentário', de:'Kein Kommentar', ar:'بدون تعليق', th:'ไม่มีความคิดเห็น', id:'Tanpa komentar', ru:'Нет комментария', it:'Senza commento', vi:'Không có bình luận' },
+    bulkShowComment: { ja:'コメント一括表示', en:'Show all comments', ko:'댓글 일괄 표시', 'zh-tw':'一併顯示留言', 'zh-cn':'一并显示留言', es:'Mostrar todos los comentarios', fr:'Afficher tous les commentaires', pt:'Mostrar todos os comentários', de:'Alle Kommentare anzeigen', ar:'عرض كل التعليقات', th:'แสดงความคิดเห็นทั้งหมด', id:'Tampilkan semua komentar', ru:'Показать все комментарии', it:'Mostra tutti i commenti', vi:'Hiện tất cả bình luận' },
+    bulkShowGraph: { ja:'グラフ一括表示', en:'Show all graphs', ko:'그래프 일괄 표시', 'zh-tw':'一併顯示圖表', 'zh-cn':'一并显示图表', es:'Mostrar todos los gráficos', fr:'Afficher tous les graphiques', pt:'Mostrar todos os gráficos', de:'Alle Diagramme anzeigen', ar:'عرض كل الرسوم البيانية', th:'แสดงกราฟทั้งหมด', id:'Tampilkan semua grafik', ru:'Показать все графики', it:'Mostra tutti i grafici', vi:'Hiện tất cả biểu đồ' },
+    tagEraRefineLabel: { ja:'タグ・年代で絞り込み', en:'Filter by tags & era', ko:'태그・연대로 좁히기', 'zh-tw':'依標籤・年代篩選', 'zh-cn':'按标签・年代筛选', es:'Filtrar por etiquetas y época', fr:'Filtrer par tags et époque', pt:'Filtrar por tags e época', de:'Nach Tags & Ära filtern', ar:'تصفية حسب الوسوم والحقبة', th:'กรองด้วยแท็กและยุค', id:'Saring dengan tag & era', ru:'Фильтр по тегам и эпохе', it:'Filtra per tag ed epoca', vi:'Lọc theo thẻ và thời kỳ' },
+    tagMaxCountLabel: { ja:n=>`最大${n}個 ・ `, en:n=>`Up to ${n} ・ `, ko:n=>`최대 ${n}개 ・ `, 'zh-tw':n=>`最多${n}個 ・ `, 'zh-cn':n=>`最多${n}个 ・ `, es:n=>`Hasta ${n} ・ `, fr:n=>`Max ${n} ・ `, pt:n=>`Até ${n} ・ `, de:n=>`Bis zu ${n} ・ `, ar:n=>`حتى ${n} ・ `, th:n=>`สูงสุด ${n} ・ `, id:n=>`Maks ${n} ・ `, ru:n=>`До ${n} ・ `, it:n=>`Fino a ${n} ・ `, vi:n=>`Tối đa ${n} ・ ` },
+    gachaIconVsCustomRatio: { ja:(a,b)=>`（アイコン${a}% / カスタム${b}%）`, en:(a,b)=>` (Icon ${a}% / Custom ${b}%)`, ko:(a,b)=>` (아이콘 ${a}% / 커스텀 ${b}%)`, 'zh-tw':(a,b)=>`（頭像${a}% / 客製${b}%）`, 'zh-cn':(a,b)=>`（头像${a}% / 定制${b}%）`, es:(a,b)=>` (Icono ${a}% / Personalización ${b}%)`, fr:(a,b)=>` (Icône ${a}% / Personnalisation ${b}%)`, pt:(a,b)=>` (Ícone ${a}% / Personalização ${b}%)`, de:(a,b)=>` (Symbol ${a}% / Anpassung ${b}%)`, ar:(a,b)=>` (أيقونة ${a}% / تخصيص ${b}%)`, th:(a,b)=>` (ไอคอน ${a}% / ปรับแต่ง ${b}%)`, id:(a,b)=>` (Ikon ${a}% / Kustomisasi ${b}%)`, ru:(a,b)=>` (Иконка ${a}% / Кастом ${b}%)`, it:(a,b)=>` (Icona ${a}% / Personalizzazione ${b}%)`, vi:(a,b)=>` (Biểu tượng ${a}% / Tùy chỉnh ${b}%)` },
+    buildTasteProfileHint: { ja:'レビュー投稿・お気に入り・レビュー閲覧などの行動をすると、少しずつ価値観が見えてきます。', en:'Review, favorite, or browse reviews to start building your taste profile.', ko:'리뷰 작성・즐겨찾기・리뷰 열람 등의 활동을 하면 취향이 조금씩 보이기 시작해요.', 'zh-tw':'透過發表評論、收藏、瀏覽評論等行動，你的喜好會漸漸浮現。', 'zh-cn':'通过发表评论、收藏、浏览评论等行动，你的喜好会渐渐浮现。', es:'Reseña, marca como favorito o explora reseñas para construir tu perfil de gustos.', fr:'Rédigez des avis, ajoutez des favoris ou parcourez des avis pour construire votre profil de goûts.', pt:'Avalie, favorite ou navegue por avaliações para construir seu perfil de gosto.', de:'Rezensiere, favorisiere oder durchstöbere Rezensionen, um dein Geschmacksprofil aufzubauen.', ar:'قم بالمراجعة أو الإضافة للمفضلة أو تصفح المراجعات لبناء ملف تفضيلاتك.', th:'รีวิว เพิ่มรายการโปรด หรือดูรีวิวเพื่อเริ่มสร้างโปรไฟล์รสนิยมของคุณ', id:'Beri ulasan, favoritkan, atau jelajahi ulasan untuk mulai membangun profil selera Anda.', ru:'Пишите отзывы, добавляйте в избранное или просматривайте отзывы, чтобы сформировать профиль вкуса.', it:'Recensisci, aggiungi ai preferiti o sfoglia le recensioni per costruire il tuo profilo di gusti.', vi:'Đánh giá, yêu thích hoặc xem đánh giá để bắt đầu xây dựng hồ sơ sở thích của bạn.' },
     reportConfirm:{ ja:'この投稿を通報しますか？運営が内容を確認します。', en:'Report this post? The admin will review it.' },
     reportSentAlert:{ ja:'通報しました。ご協力ありがとうございます。', en:'Report sent. Thank you.' },
     blockConfirm:{ ja:'このユーザーをブロックしますか？以降、このユーザーの投稿・レビューが表示されなくなります。マイページからいつでも解除できます。', en:'Block this user? Their posts and reviews will be hidden from you. You can unblock anytime from your page.' },
@@ -17311,6 +17319,11 @@
     writeReviewBtn:{ ja:'レビューを書く', en:'Write a review', ko:'리뷰 작성하기', 'zh-tw':'撰寫評論', 'zh-cn':'撰写评论', es:'Escribir reseña', fr:'Rédiger un avis', pt:'Escrever avaliação', de:'Rezension schreiben', ar:'كتابة مراجعة', th:'เขียนรีวิว', id:'Tulis ulasan', ru:'Написать отзыв', it:'Scrivi una recensione', vi:'Viết đánh giá' },
     preferenceTypeLabel:{ ja:'好みのタイプ', en:'Preference type', ko:'취향 유형', 'zh-tw':'喜好類型', 'zh-cn':'喜好类型', es:'Tipo de preferencia', fr:'Type de préférence', pt:'Tipo de preferência', de:'Präferenztyp', ar:'نوع التفضيل', th:'ประเภทที่ชอบ', id:'Tipe preferensi', ru:'Тип предпочтений', it:'Tipo di preferenza', vi:'Loại sở thích' },
     similarTitlesLabel:{ ja:'好みに近い作品', en:'Titles that match your taste', ko:'취향에 가까운 작품', 'zh-tw':'符合喜好的作品', 'zh-cn':'符合喜好的作品', es:'Títulos afines a tu gusto', fr:'Titres proches de vos goûts', pt:'Títulos afins ao seu gosto', de:'Titel nach deinem Geschmack', ar:'أعمال قريبة من ذوقك', th:'ผลงานที่ใกล้เคียงรสนิยม', id:'Judul sesuai selera Anda', ru:'Тайтлы по вашему вкусу', it:'Titoli vicini ai tuoi gusti', vi:'Tựa phim hợp sở thích' },
+    seasonWinter: { ja:y=>`${y}年冬アニメ`, en:y=>`Winter ${y} Anime`, ko:y=>`${y}년 겨울 애니메`, 'zh-tw':y=>`${y}年冬季動畫`, 'zh-cn':y=>`${y}年冬季动画`, es:y=>`Anime de invierno ${y}`, fr:y=>`Anime hiver ${y}`, pt:y=>`Anime de inverno ${y}`, de:y=>`Winter-Anime ${y}`, ar:y=>`أنمي شتاء ${y}`, th:y=>`อนิเมะฤดูหนาว ${y}`, id:y=>`Anime musim dingin ${y}`, ru:y=>`Зимнее аниме ${y}`, it:y=>`Anime invernale ${y}`, vi:y=>`Anime mùa đông ${y}` },
+    seasonSpring: { ja:y=>`${y}年春アニメ`, en:y=>`Spring ${y} Anime`, ko:y=>`${y}년 봄 애니메`, 'zh-tw':y=>`${y}年春季動畫`, 'zh-cn':y=>`${y}年春季动画`, es:y=>`Anime de primavera ${y}`, fr:y=>`Anime printemps ${y}`, pt:y=>`Anime de primavera ${y}`, de:y=>`Frühlings-Anime ${y}`, ar:y=>`أنمي ربيع ${y}`, th:y=>`อนิเมะฤดูใบไม้ผลิ ${y}`, id:y=>`Anime musim semi ${y}`, ru:y=>`Весеннее аниме ${y}`, it:y=>`Anime primaverile ${y}`, vi:y=>`Anime mùa xuân ${y}` },
+    seasonSummer: { ja:y=>`${y}年夏アニメ`, en:y=>`Summer ${y} Anime`, ko:y=>`${y}년 여름 애니메`, 'zh-tw':y=>`${y}年夏季動畫`, 'zh-cn':y=>`${y}年夏季动画`, es:y=>`Anime de verano ${y}`, fr:y=>`Anime été ${y}`, pt:y=>`Anime de verão ${y}`, de:y=>`Sommer-Anime ${y}`, ar:y=>`أنمي صيف ${y}`, th:y=>`อนิเมะฤดูร้อน ${y}`, id:y=>`Anime musim panas ${y}`, ru:y=>`Летнее аниме ${y}`, it:y=>`Anime estivo ${y}`, vi:y=>`Anime mùa hè ${y}` },
+    seasonFall: { ja:y=>`${y}年秋アニメ`, en:y=>`Fall ${y} Anime`, ko:y=>`${y}년 가을 애니메`, 'zh-tw':y=>`${y}年秋季動畫`, 'zh-cn':y=>`${y}年秋季动画`, es:y=>`Anime de otoño ${y}`, fr:y=>`Anime automne ${y}`, pt:y=>`Anime de outono ${y}`, de:y=>`Herbst-Anime ${y}`, ar:y=>`أنمي خريف ${y}`, th:y=>`อนิเมะฤดูใบไม้ร่วง ${y}`, id:y=>`Anime musim gugur ${y}`, ru:y=>`Осеннее аниме ${y}`, it:y=>`Anime autunnale ${y}`, vi:y=>`Anime mùa thu ${y}` },
+    basedOnActionsCount: { ja:n=>`行動 ${n}件から`, en:n=>`Based on ${n} actions`, ko:n=>`행동 ${n}건 기준`, 'zh-tw':n=>`根據${n}項行動`, 'zh-cn':n=>`根据${n}项行动`, es:n=>`Basado en ${n} acciones`, fr:n=>`Basé sur ${n} actions`, pt:n=>`Baseado em ${n} ações`, de:n=>`Basierend auf ${n} Aktionen`, ar:n=>`بناءً على ${n} إجراء`, th:n=>`อ้างอิงจาก ${n} การกระทำ`, id:n=>`Berdasarkan ${n} aktivitas`, ru:n=>`На основе ${n} действий`, it:n=>`Basato su ${n} azioni`, vi:n=>`Dựa trên ${n} hành động` },
     officialBadge:{ ja:'公式', en:'Official', ko:'공식', 'zh-tw':'官方', 'zh-cn':'官方', es:'Oficial', fr:'Officiel', pt:'Oficial', de:'Offiziell', ar:'رسمي', th:'ทางการ', id:'Resmi', ru:'Официально', it:'Ufficiale', vi:'Chính thức' },
     hotTopicBadge:{ ja:'🔥 話題', en:'🔥 Trending', ko:'🔥 화제', 'zh-tw':'🔥 話題', 'zh-cn':'🔥 话题', es:'🔥 Tendencia', fr:'🔥 Tendance', pt:'🔥 Em alta', de:'🔥 Im Trend', ar:'🔥 رائج', th:'🔥 กำลังฮิต', id:'🔥 Tren', ru:'🔥 В тренде', it:'🔥 Di tendenza', vi:'🔥 Xu hướng' },
     sampleDisplayNote:{ ja:'※サンプル表示', en:'*Sample display', ko:'※ 샘플 표시', 'zh-tw':'※範例顯示', 'zh-cn':'※示例显示', es:'*Muestra de ejemplo', fr:'*Affichage exemple', pt:'*Exibição de exemplo', de:'*Beispielanzeige', ar:'* عرض توضيحي', th:'※ตัวอย่างการแสดงผล', id:'*Tampilan contoh', ru:'*Пример отображения', it:'*Visualizzazione di esempio', vi:'*Hiển thị mẫu' },
@@ -17346,8 +17359,8 @@
     accountRestoreMessageTemplate:{ ja:'アカウント復元リクエスト: {email}', en:'Account restore request: {email}' },
     deletedUserLabel:{ ja:'削除済みユーザー', en:'Deleted user' },
     deletedUserPostBody:{ ja:'[このユーザーは退会しました]', en:'[This user has deleted their account]' },
-    myBoardsTitle:{ ja:'参加中の掲示板', en:'Your boards' },
-    boardHubTitle:{ ja:'掲示板', en:'Boards' },
+    myBoardsTitle:{ ja:'参加中の掲示板', en:'Your boards', ko:'참여 중인 게시판', 'zh-tw':'參與中的板', 'zh-cn':'参与中的板块', es:'Tus foros', fr:'Vos forums', pt:'Seus fóruns', de:'Deine Boards', ar:'لوحاتك', th:'บอร์ดที่เข้าร่วม', id:'Papan Anda', ru:'Ваши доски', it:'Le tue bacheche', vi:'Bảng của bạn' },
+    boardHubTitle:{ ja:'掲示板', en:'Boards', ko:'게시판', 'zh-tw':'掲示板', 'zh-cn':'板块', es:'Foros', fr:'Forums', pt:'Fóruns', de:'Boards', ar:'المنتديات', th:'บอร์ด', id:'Papan', ru:'Доски', it:'Bacheche', vi:'Bảng' },
     boardHubNewTitle:{ ja:'新着', en:'New' },
     boardHubNoNew:{ ja:'新着はありません', en:'No new posts' },
     boardHubTrendingTitle:{ ja:'勢いのある掲示板', en:'Trending boards', ko:'인기 급상승 게시판', 'zh-tw':'熱門掲示板', 'zh-cn':'热门板块', es:'Foros en tendencia', fr:'Forums tendance', pt:'Quadros em alta', de:'Angesagte Boards', ar:'اللوحات الرائجة', th:'บอร์ดที่กำลังมาแรง', id:'Papan yang sedang tren', ru:'Популярные доски', it:'Bacheche di tendenza', vi:'Bảng đang thịnh hành' },
@@ -17397,14 +17410,14 @@
     planFaqQ4: { ja:'支払い方法は何が使えますか', en:'What payment methods can I use?' },
     planFaqA4: { ja:'クレジットカードに対応予定です。詳細は公開時にお知らせします。', en:'Credit cards are planned. Details at launch.' },
     settingsPlanSub: { ja:'アニメップル+・クリエイタープラン', en:'Animepple+ & Creator plan' },
-    settingsSupport: { ja:'開発を応援する', en:'Support development' },
-    settingsSupportSub: { ja:'投げ銭でアニメップルを支援', en:'Send a tip to support us' },
+    settingsSupport: { ja:'開発を応援する', en:'Support development', ko:'개발 응원하기', 'zh-tw':'支持開發', 'zh-cn':'支持开发', es:'Apoyar el desarrollo', fr:'Soutenir le développement', pt:'Apoiar o desenvolvimento', de:'Entwicklung unterstützen', ar:'دعم التطوير', th:'สนับสนุนการพัฒนา', id:'Dukung pengembangan', ru:'Поддержать разработку', it:'Sostieni lo sviluppo', vi:'Ủng hộ phát triển' },
+    settingsSupportSub: { ja:'投げ銭でアニメップルを支援', en:'Send a tip to support us', ko:'후원금으로 애니메플을 응원하세요', 'zh-tw':'透過小額贊助支持Animepple', 'zh-cn':'通过打赏支持Animepple', es:'Apoya a Animepple con una propina', fr:'Soutenez Animepple avec un pourboire', pt:'Apoie o Animepple com uma gorjeta', de:'Unterstütze Animepple mit einem Trinkgeld', ar:'ادعم Animepple بإكرامية', th:'สนับสนุน Animepple ด้วยการให้ทิป', id:'Dukung Animepple dengan tip', ru:'Поддержите Animepple чаевыми', it:'Sostieni Animepple con una mancia', vi:'Ủng hộ Animepple bằng tiền tip' },
     planComingSoonNote: { ja:'サブスクプランは近日公開予定です。公開までしばらくお待ちください。', en:'Subscription plans are coming soon.' },
     planFreeTitle: { ja:'無料プラン', en:'Free plan' },
     planFreeDesc: { ja:'現在利用中のプランです', en:'Your current plan' },
     planPlusDesc: { ja:'準備中', en:'Coming soon' },
     planCreatorDesc: { ja:'準備中', en:'Coming soon' },
-    tipTitle: { ja:'開発を応援する', en:'Support development' },
+    tipTitle: { ja:'開発を応援する', en:'Support development', ko:'개발 응원하기', 'zh-tw':'支持開發', 'zh-cn':'支持开发', es:'Apoyar el desarrollo', fr:'Soutenir le développement', pt:'Apoiar o desenvolvimento', de:'Entwicklung unterstützen', ar:'دعم التطوير', th:'สนับสนุนการพัฒนา', id:'Dukung pengembangan', ru:'Поддержать разработку', it:'Sostieni lo sviluppo', vi:'Ủng hộ phát triển' },
     tipDesc: { ja:'アニメップルの開発・運営を応援していただける方は、こちらから投げ銭ができます。金額はいくらでも、いつでも大丈夫です。', en:'Support Animepple\'s development with a one-time tip of any amount, any time.' },
     tipPopularLabel: { ja:'人気', en:'Popular' },
     tipConfirmBtn: { ja:'この金額で応援する', en:'Support with this amount' },
@@ -17428,11 +17441,15 @@
     tipAltText: { ja:'お金をかけずに応援したい方は、レビューを書く・掲示板で話す・友達に教える、でも十分に助かります。', en:'You can also help for free: write a review, join a board, or tell a friend.' },
     tipAltBtn: { ja:'レビューを書く', en:'Write a review' },
     tipAmountRequiredAlert: { ja:'金額を選択するか、¥500以上を入力してください。', en:'Please select or enter an amount of ¥500 or more.' },
-    shareSectionTitle: { ja:'共有する', en:'Share' },
-    shareHint: { ja:'今回のレビューを画像カードにして共有できます。', en:'Share this review as an image card.' },
-    shareCardBtnHint: { ja:'スマホ：タップするとアプリを選ぶ画面が開き、画像添付済みの投稿画面になります', en:'Mobile: opens your device\'s share menu with the image already attached.' },
-    shareIconsHint: { ja:'各アイコン：画像が自動保存され、そのSNSの投稿画面が開きます（画像は手動で添付してください）', en:'Each icon: downloads the image and opens that platform\'s post screen (attach the image manually).' },
-    mypageShareCardBtn: { ja:'マイページカードをシェア', en:'Share my page card' },
+    shareSectionTitle: { ja:'共有する', en:'Share', ko:'공유하기', 'zh-tw':'分享', 'zh-cn':'分享', es:'Compartir', fr:'Partager', pt:'Compartilhar', de:'Teilen', ar:'مشاركة', th:'แชร์', id:'Bagikan', ru:'Поделиться', it:'Condividi', vi:'Chia sẻ' },
+    shareHint: { ja:'今回のレビューを画像カードにして共有できます。', en:'Share this review as an image card.', ko:'이번 리뷰를 이미지 카드로 만들어 공유할 수 있어요.', 'zh-tw':'可以將這次的評論做成圖片卡片分享。', 'zh-cn':'可以将这次的评论做成图片卡片分享。', es:'Puedes compartir esta reseña como una tarjeta de imagen.', fr:'Vous pouvez partager cet avis sous forme de carte image.', pt:'Você pode compartilhar esta avaliação como um cartão de imagem.', de:'Du kannst diese Rezension als Bildkarte teilen.', ar:'يمكنك مشاركة هذه المراجعة كبطاقة صورة.', th:'คุณสามารถแชร์รีวิวนี้เป็นการ์ดภาพได้', id:'Anda dapat membagikan ulasan ini sebagai kartu gambar.', ru:'Вы можете поделиться этим отзывом в виде карточки-изображения.', it:'Puoi condividere questa recensione come card immagine.', vi:'Bạn có thể chia sẻ đánh giá này dưới dạng thẻ hình ảnh.' },
+    shareCardBtnHint: { ja:'スマホ：タップするとアプリを選ぶ画面が開き、画像添付済みの投稿画面になります', en:'Mobile: opens your device\'s share menu with the image already attached.', ko:'모바일: 탭하면 앱 선택 화면이 열리고 이미지가 첨부된 게시 화면이 돼요', 'zh-tw':'手機：點擊後會開啟分享選單，圖片已自動附加', 'zh-cn':'手机：点击后会打开分享菜单，图片已自动附加', es:'Móvil: abre el menú para compartir con la imagen ya adjunta.', fr:'Mobile : ouvre le menu de partage avec l\'image déjà jointe.', pt:'Celular: abre o menu de compartilhamento com a imagem já anexada.', de:'Mobil: Öffnet das Freigabemenü mit bereits angehängtem Bild.', ar:'الجوال: يفتح قائمة المشاركة مع إرفاق الصورة تلقائيًا.', th:'มือถือ: แตะเพื่อเปิดเมนูแชร์พร้อมแนบรูปภาพให้แล้ว', id:'Ponsel: membuka menu berbagi dengan gambar sudah terlampir.', ru:'Мобильные: откроет меню share с уже прикреплённым изображением.', it:'Cellulare: apre il menu di condivisione con l\'immagine già allegata.', vi:'Di động: mở menu chia sẻ với ảnh đã đính kèm sẵn.' },
+    shareIconsHint: { ja:'各アイコン：画像が自動保存され、そのSNSの投稿画面が開きます（画像は手動で添付してください）', en:'Each icon: downloads the image and opens that platform\'s post screen (attach the image manually).', ko:'각 아이콘: 이미지가 자동 저장되고 해당 SNS의 게시 화면이 열려요(이미지는 직접 첨부해 주세요)', 'zh-tw':'各圖示：圖片會自動下載並開啟該平台的發文畫面（請手動附加圖片）', 'zh-cn':'各图标：图片会自动下载并打开该平台的发文页面（请手动附加图片）', es:'Cada ícono: descarga la imagen y abre la pantalla de publicación de esa red (adjunta la imagen manualmente).', fr:'Chaque icône : télécharge l\'image et ouvre l\'écran de publication de la plateforme (joignez l\'image manuellement).', pt:'Cada ícone: baixa a imagem e abre a tela de postagem da plataforma (anexe a imagem manualmente).', de:'Jedes Symbol: lädt das Bild herunter und öffnet den Beitragsbildschirm dieser Plattform (Bild manuell anhängen).', ar:'كل أيقونة: تنزل الصورة وتفتح شاشة النشر لتلك المنصة (أرفق الصورة يدويًا).', th:'แต่ละไอคอน: ดาวน์โหลดภาพและเปิดหน้าจอโพสต์ของแพลตฟอร์มนั้น (แนบภาพเอง)', id:'Setiap ikon: mengunduh gambar dan membuka layar posting platform tersebut (lampirkan gambar secara manual).', ru:'Каждая иконка: скачивает изображение и открывает экран публикации платформы (прикрепите изображение вручную).', it:'Ogni icona: scarica l\'immagine e apre la schermata di pubblicazione di quella piattaforma (allega l\'immagine manualmente).', vi:'Mỗi biểu tượng: tải ảnh xuống và mở màn hình đăng bài của nền tảng đó (tự đính kèm ảnh).' },
+    mypageShareCardBtn: { ja:'マイページカードをシェア', en:'Share my page card', ko:'마이페이지 카드 공유', 'zh-tw':'分享我的頁面卡片', 'zh-cn':'分享我的页面卡片', es:'Compartir mi tarjeta', fr:'Partager ma carte', pt:'Compartilhar meu cartão', de:'Meine Profilkarte teilen', ar:'مشاركة بطاقة صفحتي', th:'แชร์การ์ดมายเพจ', id:'Bagikan kartu halaman saya', ru:'Поделиться карточкой профиля', it:'Condividi la mia card', vi:'Chia sẻ thẻ trang cá nhân' },
+    shareCardTitle: { ja:'カードをシェア', en:'Share card', ko:'카드 공유', 'zh-tw':'分享卡片', 'zh-cn':'分享卡片', es:'Compartir tarjeta', fr:'Partager la carte', pt:'Compartilhar cartão', de:'Karte teilen', ar:'مشاركة البطاقة', th:'แชร์การ์ด', id:'Bagikan kartu', ru:'Поделиться карточкой', it:'Condividi la card', vi:'Chia sẻ thẻ' },
+    shareCardSub: { ja:'12角形グラフ入りの画像を保存して投稿できます', en:'Save and post an image with the 12-axis radar graph', ko:'12각형 그래프가 들어간 이미지를 저장해 게시할 수 있어요', 'zh-tw':'可儲存含12角形圖表的圖片並發佈', 'zh-cn':'可保存含12角形图表的图片并发布', es:'Guarda y publica una imagen con el gráfico radial de 12 ejes', fr:'Enregistrez et publiez une image avec le graphique radar à 12 axes', pt:'Salve e publique uma imagem com o gráfico radar de 12 eixos', de:'Speichere und poste ein Bild mit dem 12-Achsen-Diagramm', ar:'احفظ وانشر صورة تحتوي على الرسم البياني ذي 12 محورًا', th:'บันทึกและโพสต์ภาพที่มีกราฟ 12 แกน', id:'Simpan dan bagikan gambar dengan grafik radar 12 sumbu', ru:'Сохраните и опубликуйте изображение с 12-осевым графиком', it:'Salva e pubblica un\'immagine con il grafico radar a 12 assi', vi:'Lưu và đăng ảnh có biểu đồ radar 12 trục' },
+    boardUnlockedSuffix: { ja:'の掲示板の鍵が開いたよ！', en:' board is unlocked!', ko:' 게시판이 열렸어요!', 'zh-tw':'的板已解鎖！', 'zh-cn':'的板块已解锁！', es:' se ha desbloqueado el foro!', fr:' le forum est débloqué !', pt:' o fórum foi desbloqueado!', de:' Board ist freigeschaltet!', ar:' تم فتح اللوحة!', th:' ปลดล็อกบอร์ดแล้ว!', id:' papan telah dibuka!', ru:' доска разблокирована!', it:' bacheca sbloccata!', vi:' bảng đã được mở khóa!' },
+    writeGoodReviewToUnlock: { ja:'しっかりとしたレビューを書くと、特別な掲示板に入れるよ！', en:'Write a solid review to unlock a special board!', ko:'제대로 된 리뷰를 쓰면 특별한 게시판에 입장할 수 있어요!', 'zh-tw':'寫一則紮實的評論就能解鎖特別板！', 'zh-cn':'写一条扎实的评论就能解锁特别板块！', es:'¡Escribe una buena reseña para desbloquear un foro especial!', fr:'Rédigez un bon avis pour débloquer un forum spécial !', pt:'Escreva uma boa avaliação para desbloquear um fórum especial!', de:'Schreibe eine gute Rezension, um ein spezielles Board freizuschalten!', ar:'اكتب مراجعة جيدة لفتح لوحة خاصة!', th:'เขียนรีวิวดีๆ เพื่อปลดล็อกบอร์ดพิเศษ!', id:'Tulis ulasan yang bagus untuk membuka papan spesial!', ru:'Напишите хороший отзыв, чтобы открыть особую доску!', it:'Scrivi una buona recensione per sbloccare una bacheca speciale!', vi:'Viết đánh giá chỉn chu để mở khóa bảng đặc biệt!' },
     shareProfileText: { ja:'アニメップルで「{username}」のマイページを見てみて！ #アニメップル', en:'Check out {username}\'s profile on Animepple! #Animepple' },
     bnavCustomizeTitle: { ja:'ツールバーの並び替え', en:'Reorder toolbar' },
     bnavCustomizeHint: { ja:'ドラッグして並べ替え。左上の3つがナビに出ます。', en:'Press and hold an icon to drag and reorder it. The top row becomes the left side of the toolbar.' },
@@ -17448,7 +17465,7 @@
     bnavCustomizeSettingsDesc: { ja:'下部ツールバーのアイコンの並び順を変更できます。ツールバーを長押しすることでも同じ操作ができます。', en:'Change the order of icons in the bottom toolbar. You can also do this by long-pressing the toolbar itself.' },
     bnavCustomizeSettingsBtn: { ja:'並び順を変更', en:'Change order' },
     shareReviewText: { ja:'『{title}』のレビューを書きました！ #アニメップル', en:'I just reviewed {title}! #Animepple' },
-    shareCardBtn: { ja:'レビューカードをシェア', en:'Share review card' },
+    shareCardBtn: { ja:'レビューカードをシェア', en:'Share review card', ko:'리뷰 카드 공유', 'zh-tw':'分享評論卡片', 'zh-cn':'分享评论卡片', es:'Compartir tarjeta de reseña', fr:'Partager la carte d\'avis', pt:'Compartilhar cartão de avaliação', de:'Rezensionskarte teilen', ar:'مشاركة بطاقة المراجعة', th:'แชร์การ์ดรีวิว', id:'Bagikan kartu ulasan', ru:'Поделиться карточкой отзыва', it:'Condividi la card recensione', vi:'Chia sẻ thẻ đánh giá' },
     shareCardGenerating: { ja:'作成中…', en:'Generating…' },
     shareCardDesktopNote: { ja:'画像をダウンロードしました。開いた投稿画面に手動で添付してください。', en:'Image downloaded. Please attach it manually in the post window that opened.' },
     shareIconCopiedNote: { ja:'画像をコピーしました。開いた投稿画面に貼り付けて（Ctrl+V／⌘+V）ください。', en:'Image copied. Paste it (Ctrl+V / ⌘+V) into the post window that opened.' },
@@ -17488,7 +17505,8 @@
     boardHubActiveCount:{ ja:'アクティブ', en:'Active ' },
     boardHubParticipantCount:{ ja:'参加', en:'Members ' },
     generalBoardLabel:{ ja:'通常掲示板', en:'General Board' },
-    mypageIconsTitle: { ja:'アイコン', en:'Icons' },
+    mypageIconsTitle: { ja:'アイコン', en:'Icons', ko:'아이콘', 'zh-tw':'頭像', 'zh-cn':'头像', es:'Iconos', fr:'Icônes', pt:'Ícones', de:'Symbole', ar:'الأيقونات', th:'ไอคอน', id:'Ikon', ru:'Иконки', it:'Icone', vi:'Biểu tượng' },
+    mypageRecordsTitle: { ja:'記録', en:'Records', ko:'기록', 'zh-tw':'紀錄', 'zh-cn':'记录', es:'Registros', fr:'Historique', pt:'Registros', de:'Aufzeichnungen', ar:'السجلات', th:'บันทึก', id:'Catatan', ru:'Записи', it:'Registri', vi:'Ghi chép' },
     iconDexCountLabel: { ja:'図鑑', en:'Collected' },
     iconSortNo: { ja:'NO順', en:'By No.' },
     iconSortRarity: { ja:'レア度順', en:'By rarity' },
@@ -17546,7 +17564,7 @@
     questPageLead: { ja:'1日1つ。達成するとコインを受け取れます。', en:'One per day. Complete it to claim coins.' },
     customizeLead: { ja:'部位ごとに選べます。選んだものはすぐ反映されます。', en:'Choose per slot. Your pick applies right away.' },
     customizePreviewLabel: { ja:'プレビュー', en:'Preview' },
-    customizeOwnedLabel: { ja:'持っているもの', en:'Owned' },
+    customizeOwnedLabel: { ja:'持っているもの', en:'Owned', ko:'보유 중인 것', 'zh-tw':'擁有的項目', 'zh-cn':'拥有的项目', es:'Que tienes', fr:'Possédés', pt:'Que você tem', de:'Im Besitz', ar:'ما تملكه', th:'สิ่งที่มี', id:'Yang dimiliki', ru:'В наличии', it:'In tuo possesso', vi:'Đang sở hữu' },
     questStateDone: { ja:'達成', en:'Complete' },
     questStateOpen: { ja:'進行中', en:'In progress' },
     questRewardLabel: { ja:'報酬', en:'Reward' },
@@ -17612,9 +17630,9 @@
     boardLangAll: { ja:'すべての言語', en:'All languages' },
     boardHubNotifySettingsBtn: { ja:'通知設定', en:'Notification settings', ko:'알림 설정', 'zh-tw':'通知設定', 'zh-cn':'通知设置', es:'Ajustes de notificaciones', fr:'Paramètres de notification', pt:'Configurações de notificação', de:'Benachrichtigungseinstellungen', ar:'إعدادات الإشعارات', th:'ตั้งค่าการแจ้งเตือน', id:'Pengaturan notifikasi', ru:'Настройки уведомлений', it:'Impostazioni notifiche', vi:'Cài đặt thông báo' },
     boardTypeAll: { ja:'すべて', en:'All types' },
-    boardTypeGeneral: { ja:'通常掲示板', en:'General board' },
-    boardTypeValue: { ja:'価値観掲示板', en:'Value board' },
-    boardGeneralLabel:{ ja:'通常掲示板', en:'General board' },
+    boardTypeGeneral: { ja:'通常掲示板', en:'General board', ko:'일반 게시판', 'zh-tw':'一般板', 'zh-cn':'一般板块', es:'Foro general', fr:'Forum général', pt:'Fórum geral', de:'Allgemeines Board', ar:'اللوحة العامة', th:'บอร์ดทั่วไป', id:'Papan umum', ru:'Общая доска', it:'Bacheca generale', vi:'Bảng chung' },
+    boardTypeValue: { ja:'価値観掲示板', en:'Value board', ko:'가치관 게시판', 'zh-tw':'價值觀板', 'zh-cn':'价值观板块', es:'Foro de valores', fr:'Forum des valeurs', pt:'Fórum de valores', de:'Werte-Board', ar:'لوحة القيم', th:'บอร์ดคุณค่า', id:'Papan nilai', ru:'Доска ценностей', it:'Bacheca dei valori', vi:'Bảng giá trị quan' },
+    boardGeneralLabel:{ ja:'通常掲示板', en:'General board', ko:'일반 게시판', 'zh-tw':'一般板', 'zh-cn':'一般板块', es:'Foro general', fr:'Forum général', pt:'Fórum geral', de:'Allgemeines Board', ar:'اللوحة العامة', th:'บอร์ดทั่วไป', id:'Papan umum', ru:'Общая доска', it:'Bacheca generale', vi:'Bảng chung' },
     yourValueBtn:{ ja:'あなたの価値観', en:'Your taste' },
     boardLockedTitle:{ ja:'この掲示板は投票者限定です', en:'Members-only board' },
     boardLockedCta:{ ja:'レビューを書いて開放する', en:'Write a review to unlock' },
@@ -17630,9 +17648,9 @@
     boardReplyPlaceholder:{ ja:'返信を書く', en:'Write a reply' },
     boardEmpty:{ ja:'まだ投稿がありません。最初の投稿をしてみましょう。', en:'No posts yet. Be the first to post.' },
     boardLoginRequired:{ ja:'投稿にはログインが必要です。', en:'Log in to post.' },
-    valuePollTitle:{ ja:'この作品で一番重要な項目は？', en:'What matters most in this title?' },
-    valuePollHint:{ ja:'選ぶと、同じ価値観の人だけの掲示板に参加できます', en:'Pick one to unlock the board for people who share your take' },
-    valuePollSkip:{ ja:'選ばず投稿する', en:'Post without choosing' },
+    valuePollTitle:{ ja:'この作品で一番重要な項目は？', en:'What matters most in this title?', ko:'이 작품에서 가장 중요한 항목은?', 'zh-tw':'這部作品中最重要的項目是？', 'zh-cn':'这部作品中最重要的项目是？', es:'¿Qué es lo más importante en este título?', fr:'Quel est le plus important dans ce titre ?', pt:'O que é mais importante neste título?', de:'Was ist bei diesem Titel am wichtigsten?', ar:'ما الأهم في هذا العمل؟', th:'อะไรสำคัญที่สุดในผลงานนี้?', id:'Apa yang paling penting di judul ini?', ru:'Что важнее всего в этом тайтле?', it:'Cosa conta di più in questo titolo?', vi:'Điều gì quan trọng nhất ở tựa phim này?' },
+    valuePollHint:{ ja:'選ぶと、同じ価値観の人だけの掲示板に参加できます', en:'Pick one to unlock the board for people who share your take', ko:'선택하면 같은 가치관을 가진 사람들만의 게시판에 참여할 수 있어요', 'zh-tw':'選擇後可以加入與你價值觀相同的人專屬的板', 'zh-cn':'选择后可以加入与你价值观相同的人专属的板块', es:'Elige uno para desbloquear el foro de quienes piensan como tú', fr:'Choisissez-en un pour débloquer le forum de ceux qui partagent votre avis', pt:'Escolha um para desbloquear o fórum de quem pensa como você', de:'Wähle eine Option, um das Board für Gleichgesinnte freizuschalten', ar:'اختر واحدًا لفتح لوحة لمن يشاركونك الرأي', th:'เลือกหนึ่งข้อเพื่อปลดล็อกบอร์ดสำหรับคนที่คิดเหมือนกัน', id:'Pilih satu untuk membuka papan bagi orang dengan pandangan serupa', ru:'Выберите один пункт, чтобы открыть доску для единомышленников', it:'Scegline uno per sbloccare la bacheca di chi la pensa come te', vi:'Chọn một để mở khóa bảng cho người cùng quan điểm' },
+    valuePollSkip:{ ja:'選ばず投稿する', en:'Post without choosing', ko:'선택하지 않고 게시하기', 'zh-tw':'不選擇直接發佈', 'zh-cn':'不选择直接发布', es:'Publicar sin elegir', fr:'Publier sans choisir', pt:'Publicar sem escolher', de:'Ohne Auswahl posten', ar:'النشر دون اختيار', th:'โพสต์โดยไม่เลือก', id:'Kirim tanpa memilih', ru:'Опубликовать без выбора', it:'Pubblica senza scegliere', vi:'Đăng mà không chọn' },
     valueChangeConfirmTitle:{ ja:'価値観を変更しますか？', en:'Change your value type?' },
     valueChangeConfirmBefore:{ ja:'前回は', en:'You previously voted for' },
     valueChangeConfirmAfter:{ ja:'今回選んだのは', en:'This time you chose' },
@@ -17750,10 +17768,10 @@
     statReviews:    { ja:'レビュー',en:'Reviews',ko:'리뷰','zh-tw':'評論','zh-cn':'评论',es:'Reseñas',fr:'Avis',pt:'Avaliações',de:'Bewertungen',ar:'مراجعات',th:'รีวิว',id:'Ulasan',ru:'Отзывы',it:'Recensioni',vi:'Đánh giá' },
     statFavorites:  { ja:'お気に入り',en:'Favorites',ko:'즐겨찾기','zh-tw':'收藏','zh-cn':'收藏',es:'Favoritos',fr:'Favoris',pt:'Favoritos',de:'Favoriten',ar:'المفضلة',th:'รายการโปรด',id:'Favorit',ru:'Избранное',it:'Preferiti',vi:'Yêu thích' },
     statQuality:    { ja:'上質レビュー',en:'Quality reviews',ko:'우수 리뷰','zh-tw':'優質評論','zh-cn':'优质评论',es:'Reseñas de calidad',fr:'Avis de qualité',pt:'Avaliações de qualidade',de:'Qualitätsbewertungen',ar:'مراجعات عالية الجودة',th:'รีวิวคุณภาพ',id:'Ulasan berkualitas',ru:'Качественные отзывы',it:'Recensioni di qualità',vi:'Đánh giá chất lượng' },
-    statFollowing:  { ja:'フォロー中', en:'Following' },
+    statFollowing:  { ja:'フォロー中', en:'Following', ko:'팔로잉', 'zh-tw':'追蹤中', 'zh-cn':'关注中', es:'Siguiendo', fr:'Abonnements', pt:'Seguindo', de:'Gefolgt', ar:'المتابَعون', th:'กำลังติดตาม', id:'Mengikuti', ru:'Подписки', it:'Seguiti', vi:'Đang theo dõi' },
     statFollowers:  { ja:'フォロワー', en:'Followers', ko:'팔로워', 'zh-tw':'追蹤者', 'zh-cn':'关注者', es:'Seguidores', fr:'Abonnés', pt:'Seguidores', de:'Follower', ar:'المتابعون', th:'ผู้ติดตาม', id:'Pengikut', ru:'Подписчики', it:'Follower', vi:'Người theo dõi' },
-    statFriends:    { ja:'友達', en:'Friends' },
-    followingTitle: { ja:'フォロー中', en:'Following' },
+    statFriends:    { ja:'友達', en:'Friends', ko:'친구', 'zh-tw':'好友', 'zh-cn':'好友', es:'Amigos', fr:'Amis', pt:'Amigos', de:'Freunde', ar:'أصدقاء', th:'เพื่อน', id:'Teman', ru:'Друзья', it:'Amici', vi:'Bạn bè' },
+    followingTitle: { ja:'フォロー中', en:'Following', ko:'팔로잉', 'zh-tw':'追蹤中', 'zh-cn':'关注中', es:'Siguiendo', fr:'Abonnements', pt:'Seguindo', de:'Gefolgt', ar:'المتابَعون', th:'กำลังติดตาม', id:'Mengikuti', ru:'Подписки', it:'Seguiti', vi:'Đang theo dõi' },
     followersTitle: { ja:'フォロワー', en:'Followers' },
     followListEmpty:{ ja:'まだ誰もいません', en:'No one here yet' },
     followBtn:      { ja:'フォローする', en:'Follow', ko:'팔로우', 'zh-tw':'追蹤', 'zh-cn':'关注', es:'Seguir', fr:'Suivre', pt:'Seguir', de:'Folgen', ar:'متابعة', th:'ติดตาม', id:'Ikuti', ru:'Подписаться', it:'Segui', vi:'Theo dõi' },
@@ -18006,6 +18024,9 @@
     document.querySelectorAll('.lang-code-label').forEach(el => {
       el.textContent = currentLang.split('-')[0].toUpperCase();
     });
+    // タグ上限ラベル（「最大10個 ・ 」部分）
+    const tagMaxLabelEl = document.getElementById('overlayTagMaxLabel');
+    if(tagMaxLabelEl) tagMaxLabelEl.textContent = tFn('tagMaxCountLabel', 10);
     // data-i18n属性を持つ全要素を自動翻訳
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.dataset.i18n;
@@ -20829,7 +20850,7 @@
         <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="コメントを見る" data-i18n-aria="ariaViewComment">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
         </button>
-        <span class="rc-comment-label${hasComment?' has-comment':''}">${hasComment?'コメントあり':'コメントなし'}</span>
+        <span class="rc-comment-label${hasComment?' has-comment':''}">${hasComment?escapeHtml(t('hasCommentLabel')):escapeHtml(t('noCommentLabel'))}</span>
         <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank, cardBadgeSkinId)}</div>
         <div class="rc-head" style="padding-top:50px;">
           <div style="display:flex;align-items:flex-start;gap:.6rem;flex:1;min-width:0;">
@@ -20969,7 +20990,7 @@
       let _bulkCurrentView = getReviewInitialView(); // 'graph' | 'comment'
       const updateBulkToggleLabel = () => {
         const nextIsComment = _bulkCurrentView !== 'comment';
-        bulkToggleBtn.textContent = nextIsComment ? 'コメント一括表示' : 'グラフ一括表示';
+        bulkToggleBtn.textContent = nextIsComment ? t('bulkShowComment') : t('bulkShowGraph');
         bulkToggleBtn.title = nextIsComment ? 'コメントを一括表示' : 'グラフを一括表示';
         bulkToggleBtn.classList.toggle('active', _bulkCurrentView === 'comment');
       };
@@ -22484,7 +22505,7 @@
         <span class="mypage-rank-next">${escapeHtml(t('rankNextLabel').replace('{name}', t(nextRank.nameKey)).replace('{n}', nextRank.min - qualityCount))}</span>
       </div>
       <div class="rank-progress-bar-bg"><div class="rank-progress-bar-fill" style="width:${progress}%;"></div></div>
-      <div class="mypage-rank-ticks"><span>${qualityCount}件</span><span>${nextRank.min}件</span></div>
+      <div class="mypage-rank-ticks"><span>${qualityCount}${escapeHtml(t('countUnit'))}</span><span>${nextRank.min}${escapeHtml(t('countUnit'))}</span></div>
       <div class="mypage-rank-badges">${badges}</div>`;
     const cnt = document.getElementById('mypageRankCount');
     if(cnt) cnt.textContent = t('rankBadgeCountLabel').replace('{a}', currentIdx + 1).replace('{b}', RANK_TIERS.length);
