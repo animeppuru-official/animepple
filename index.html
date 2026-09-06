@@ -2086,6 +2086,28 @@
     .tag-chip-search { cursor:pointer; }
     .tag-chip-search.active { background:rgba(94,201,122,.35); border-color:var(--brand); color:#e8fff0; }
     .tag-hint { font-size:.74rem; color:var(--muted); margin:.3rem 0 0; }
+    /* ── チャット系ページ(掲示板・DM)は画面サイズに関係なく常に「ヘッダー/会話/入力欄」の3段固定。
+       会話が短くても入力欄が画面下に浮かず、常に画面いっぱいの一番下に来る。
+       スマホ向けの追加調整（キーボード追従など）は下の@media側で上乗せする。 ── */
+    #page-board-value.active, #page-board-general.active, #page-dm.active {
+      display:flex !important; flex-direction:column; height:100vh !important; min-height:0 !important; padding-bottom:0 !important; overflow:hidden;
+    }
+    #page-board-value.active > .hdr, #page-board-general.active > .hdr, #page-dm.active > .hdr {
+      flex:0 0 auto; position:static !important;
+    }
+    #page-board-value.active > .board-page-wrap, #page-board-general.active > .board-page-wrap, #page-dm.active > .board-page-wrap {
+      flex:1 1 auto !important; min-height:0 !important; display:flex !important; flex-direction:column; overflow:hidden !important;
+    }
+    #page-board-value.active .board-chat-head, #page-board-general.active .board-chat-head, #page-dm.active .board-chat-head {
+      flex:0 0 auto; position:static !important;
+    }
+    #page-board-value.active .board-chat-scroll, #page-board-general.active .board-chat-scroll, #page-dm.active .board-chat-scroll {
+      flex:1 1 auto !important; min-height:0 !important; overflow-y:auto !important;
+    }
+    #page-board-value.active .board-composer, #page-board-general.active .board-composer, #page-dm.active .board-composer {
+      flex:0 0 auto; position:static !important; margin:0 !important; padding:14px 1rem calc(14px + env(safe-area-inset-bottom));
+      border-top:1px solid rgba(255,255,255,.07); background:#0b1a11;
+    }
     .board-composer { position:sticky; bottom:0; margin:0 -1rem -.75rem; padding:14px 1rem 18px; border-top:1px solid rgba(255,255,255,.07); background:#0b1a11; }
     .tag-suggest-wrap { margin-top:.5rem; }
     .tag-suggest-label { font-size:12px; font-weight:700; color:#82968a; margin:0 0 9px; }
@@ -14139,6 +14161,7 @@
     el.innerHTML = `<div id="boardPanel"></div>`;
     const panel = el.querySelector('#boardPanel');
     if(myGroup !== _boardActiveTab) {
+      el.parentElement?.querySelector('.board-composer')?.remove();
       panel.innerHTML = `<div class="board-locked-sheet" style="display:flex;align-items:center;justify-content:center;padding:40px 20px;">
         <div style="max-width:340px;width:100%;text-align:center;background:#22412f;border:1px solid rgba(217,164,65,.25);border-radius:16px;padding:20px;">
           <span style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:14px;background:rgba(217,164,65,.12);border:1px solid rgba(217,164,65,.3);margin-bottom:14px;">
@@ -14154,6 +14177,8 @@
     }
     const shardKey = boardShardKey(animeId, _boardActiveTab, currentLang);
     if(!_boardShardChoice[shardKey]) {
+      // サーバー選択画面には入力欄は不要。前の描画で作られた入力欄が残っていたら消す
+      el.parentElement?.querySelector('.board-composer')?.remove();
       await renderBoardShardPicker(panel, animeId, _boardActiveTab, currentLang, (shard) => {
         _boardShardChoice[shardKey] = shard;
         renderBoardValue(animeId);
