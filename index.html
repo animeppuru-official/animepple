@@ -20962,7 +20962,7 @@
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -22866,7 +22866,12 @@
   // 自分が今装備しているカスタマイズを、ヘッダーアイコン・通知バッジ色に反映する
   async function applyMyEquippedCustomization() {
     if(!_currentUser) return;
-    const equipped = await db.customization.getEquipped(_currentUser.id).catch(() => null);
+    let equipped = await db.customization.getEquipped(_currentUser.id).catch(() => null);
+    if(!equipped) {
+      // リロード直後はセッションの確立と競合して失敗することがあるため、少し待って1回だけ再試行する
+      await new Promise(r => setTimeout(r, 600));
+      equipped = await db.customization.getEquipped(_currentUser.id).catch(() => null);
+    }
     if(!equipped) return;
     window._loggedInFrameId = equipped.frame_id || 'default';
     window._loggedInBadgeSkinId = equipped.badge_skin || 'default';
