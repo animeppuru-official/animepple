@@ -17277,8 +17277,6 @@
     accountRestoreSubmitBtn:{ ja:'復元をリクエストする', en:'Request restoration' },
     accountRestoreInvalidEmail:{ ja:'正しいメールアドレスを入力してください', en:'Please enter a valid email address' },
     accountRestoreMessageTemplate:{ ja:'アカウント復元リクエスト: {email}', en:'Account restore request: {email}' },
-    accountRestoreSent:{ ja:'送信しました。運営からの連絡をお待ちください。', en:'Sent. Please wait for a response from us.' },
-    accountRestoreFailed:{ ja:'送信に失敗しました', en:'Failed to send' },
     deletedUserLabel:{ ja:'削除済みユーザー', en:'Deleted user' },
     deletedUserPostBody:{ ja:'[このユーザーは退会しました]', en:'[This user has deleted their account]' },
     myBoardsTitle:{ ja:'参加中の掲示板', en:'Your boards' },
@@ -18446,14 +18444,17 @@
     { id:'other', label:'その他' },
   ];
   let _contactSelectedCategory = null;
+  let _pendingContactPrefill = null; // 他の画面(アカウント復元等)から連携する時の下書き{category, message}
 
   function initContactPage() {
     document.getElementById('contactFormSection').style.display = '';
     document.getElementById('contactSuccessSection').style.display = 'none';
     document.getElementById('contactName').value = '';
-    document.getElementById('contactMessage').value = '';
+    document.getElementById('contactMessage').value = _pendingContactPrefill?.message || '';
     document.getElementById('contactError').textContent = '';
-    _contactSelectedCategory = null;
+    _contactSelectedCategory = _pendingContactPrefill?.category || null;
+    const prefillCategory = _pendingContactPrefill?.category || null;
+    _pendingContactPrefill = null;
     const chipsWrap = document.getElementById('contactCategoryChips');
     if(chipsWrap) {
       chipsWrap.innerHTML = CONTACT_CATEGORIES.map(c => `
@@ -18470,6 +18471,10 @@
           });
         };
       });
+      if(prefillCategory) {
+        const chip = chipsWrap.querySelector(`.contact-category-chip[data-id="${prefillCategory}"]`);
+        if(chip) chip.click();
+      }
     }
     renderContactTurnstile();
   }
@@ -21195,13 +21200,9 @@
     btn.disabled = true;
     btn.textContent = t('settingsDeleteAccountInProgress');
     try {
-      const { data: { session } } = await sb.auth.getSession();
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${session?.access_token}` },
-      });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data?.error || 'failed');
+      const { data, error } = await sb.functions.invoke('delete-account');
+      if(error) throw error;
+      if(data?.error) throw new Error(data.error);
     } catch(e) {
       console.warn('delete-account failed:', e);
       alert(t('profileSaveFailedAlert'));
@@ -21218,27 +21219,19 @@
     nav('home');
   });
 
-  // アカウント復元リクエスト：メールアドレスをcontact_messagesに送るだけ。
-  // 管理画面の「お問い合わせ」一覧にcategory='account_restore'として届き、
-  // 管理者がそのメールで手動確認のうえ復元する。
-  document.getElementById('accountRestoreSubmitBtn')?.addEventListener('click', async () => {
+  // アカウント復元リクエスト：直接contact_messagesに書き込むとRLSで弾かれるため、
+  // 既存の「お問い合わせ」フォーム(Turnstile確認＋送信用Edge Function)にメールアドレスを
+  // 入れた状態で連携する
+  document.getElementById('accountRestoreSubmitBtn')?.addEventListener('click', () => {
     const emailInput = document.getElementById('accountRestoreEmail');
     const msgEl = document.getElementById('accountRestoreMsg');
     const email = emailInput.value.trim();
     if(!email || !email.includes('@')) { msgEl.style.color = '#eaa9a9'; msgEl.textContent = t('accountRestoreInvalidEmail'); return; }
-    if(!sb) return;
-    const btn = document.getElementById('accountRestoreSubmitBtn');
-    btn.disabled = true;
-    const { error } = await sb.from('contact_messages').insert({
-      name: email,
-      category: 'account_restore',
+    _pendingContactPrefill = {
+      category: 'account',
       message: t('accountRestoreMessageTemplate').replace('{email}', email) + (_currentUser ? `\n復元先(今ログイン中)のユーザーID: ${_currentUser.id}` : ''),
-    });
-    btn.disabled = false;
-    if(error) { msgEl.style.color = '#eaa9a9'; msgEl.textContent = t('accountRestoreFailed'); return; }
-    msgEl.style.color = '#8fe0a8';
-    msgEl.textContent = t('accountRestoreSent');
-    emailInput.value = '';
+    };
+    nav('contact');
   });
 
   async function initAuth() {
