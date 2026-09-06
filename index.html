@@ -20169,11 +20169,17 @@
               const newUserId = resultEl.querySelector(`.admin-contact-restore-uid[data-archive-id="${archiveId}"]`).value.trim();
               if(!newUserId) return;
               if(!confirm(`ユーザーID ${newUserId} にこのバックアップを復元します。よろしいですか？`)) return;
+              cbtn.disabled = true;
+              cbtn.textContent = '処理中…';
               const { data: res, error } = await sb.functions.invoke('restore-account', { body: { archiveId, newUserId } });
+              cbtn.disabled = false;
+              cbtn.textContent = 'このIDに復元する';
               const problems = error || res?.error || (res?.errors?.length ? res.errors : null);
+              const errBox = document.createElement('pre');
+              errBox.style.cssText = 'white-space:pre-wrap;word-break:break-all;background:rgba(0,0,0,.3);border:1px solid rgba(255,100,100,.4);border-radius:6px;padding:8px;margin-top:8px;font-size:10.5px;color:#ffb3b3;max-height:300px;overflow:auto;';
               if(problems) {
-                console.warn(problems);
-                alert('一部失敗しました:\n' + JSON.stringify(problems, null, 2).slice(0, 800));
+                errBox.textContent = '失敗しました:\n' + JSON.stringify(problems, null, 2);
+                cbtn.parentElement.appendChild(errBox);
               } else {
                 alert('復元が完了しました');
                 renderAdminContactMessages();
