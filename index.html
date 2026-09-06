@@ -5325,13 +5325,17 @@
     <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-reports')">🚨 通報</button>
   </div>
 
-  <!-- パスワード画面 -->
+  <!-- ログイン画面：共通モーダルに頼らず、ここに直接フォームを置く -->
   <div id="adminLoginSection" style="padding:2rem 1rem;">
-    <div style="max-width:320px;margin:0 auto;text-align:center;">
-      <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.2rem;line-height:1.7;">管理者アカウントでログインしてください。パスワードは廃止し、アカウントの権限だけで判定するようになりました。</p>
-      <button id="adminGoLoginBtn" onclick="showAuthModal('login')"
+    <div style="max-width:320px;margin:0 auto;">
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.2rem;line-height:1.7;text-align:center;">管理者アカウントのメールアドレスとパスワードを入力してください。</p>
+      <input id="adminLoginEmail" type="email" placeholder="メールアドレス" autocomplete="username"
+        style="width:100%;height:44px;padding:0 14px;margin-bottom:.6rem;border-radius:10px;background:#173322;border:1px solid rgba(255,255,255,.14);color:#dfeae3;font-size:14px;box-sizing:border-box;">
+      <input id="adminLoginPassword" type="password" placeholder="パスワード" autocomplete="current-password" onkeydown="if(event.key==='Enter')adminInlineLogin()"
+        style="width:100%;height:44px;padding:0 14px;margin-bottom:1rem;border-radius:10px;background:#173322;border:1px solid rgba(255,255,255,.14);color:#dfeae3;font-size:14px;box-sizing:border-box;">
+      <button id="adminGoLoginBtn" onclick="adminInlineLogin()"
         style="width:100%;padding:.75rem;border-radius:10px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">ログインする</button>
-      <p id="adminLoginError" style="color:#ff6b6b;font-size:.78rem;margin-top:.75rem;"></p>
+      <p id="adminLoginError" style="color:#ff6b6b;font-size:.78rem;margin-top:.75rem;text-align:center;"></p>
     </div>
   </div>
 
@@ -20579,6 +20583,31 @@
       console.error('Admin data load error:', e);
     }
   }
+
+  // 管理者ページ専用のログイン。共通のログインモーダルには頼らず、ここで直接signInしてから
+  // その場でinitAdminPage()を呼び、ログイン→ダッシュボード表示までを1回の操作で完結させる
+  async function adminInlineLogin() {
+    const email = document.getElementById('adminLoginEmail').value.trim();
+    const password = document.getElementById('adminLoginPassword').value;
+    const errEl = document.getElementById('adminLoginError');
+    const btn = document.getElementById('adminGoLoginBtn');
+    errEl.textContent = '';
+    if(!email || !password) { errEl.textContent = 'メールアドレスとパスワードを入力してください。'; return; }
+    if(!sb) { errEl.textContent = '接続できませんでした。'; return; }
+    btn.disabled = true;
+    btn.textContent = 'ログイン中…';
+    const { user, error } = await db.auth.signIn(email, password);
+    btn.disabled = false;
+    btn.textContent = 'ログインする';
+    if(error || !user) { errEl.textContent = 'ログインに失敗しました。メールアドレスとパスワードを確認してください。'; return; }
+    _currentUser = user;
+    await initAdminPage();
+    const dash = document.getElementById('adminDashboard');
+    if(!dash || dash.style.display === 'none') {
+      errEl.textContent = 'このアカウントには管理者権限がありません。';
+    }
+  }
+  window.adminInlineLogin = adminInlineLogin;
 
   async function adminLogout() {
     // パスワード制は廃止したので、管理者から抜けたい時はサイト自体からログアウトする
