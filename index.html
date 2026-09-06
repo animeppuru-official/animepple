@@ -3106,7 +3106,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v2026-09-06-2'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
+<script>window.APP_BUILD = 'v0.313.7'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
 <div id="themeScenery" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════
@@ -3150,7 +3150,7 @@
   <!-- ── タイトル検索タブ ── -->
   <div class="search-mode-panel" id="searchPanelTitle" style="display:none;">
     <div class="search-field">
-      <input id="overlaySearchInput" type="search" placeholder="タイトル・ジャンル・雰囲気で検索" autocomplete="off" />
+      <input id="overlaySearchInput" type="search" placeholder="タイトル・ジャンル・雰囲気で検索" data-i18n="phOverlaySearch" autocomplete="off" />
     </div>
     <button class="search-go search-go-yellow" id="overlaySearchBtn" data-i18n="btnSearchGo" style="width:100%;margin-top:.7rem;">検索</button>
     <!-- 直近の検索ワード（最大10件、空いてるスペースの有効活用） -->
@@ -3167,9 +3167,9 @@
   <div class="search-mode-panel" id="searchPanelPref">
     <!-- ①スライダー -->
     <div class="slider-page-nav" id="ovSliderPageNav">
-      <button type="button" id="ovSliderPagePrev" aria-label="前へ">‹</button>
+      <button type="button" id="ovSliderPagePrev" aria-label="前へ" data-i18n-aria="ariaPrev">‹</button>
       <span id="ovSliderPageLabel">作品の完成度（無で無視）</span>
-      <button type="button" class="slider-info-btn" id="ovSliderInfoBtn" aria-label="優先軸について">
+      <button type="button" class="slider-info-btn" id="ovSliderInfoBtn" aria-label="優先軸について" data-i18n-aria="ariaPriorityAxis">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d9a441" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="1" fill="#d9a441" stroke="none"/></svg>
       </button>
       <button type="button" id="ovSliderPageNext" aria-label="次へ">›</button>
@@ -3205,7 +3205,7 @@
           <span class="tag-section-count">最大10個 ・ <span id="overlayTagCount">0/10</span></span>
         </div>
         <div class="search-tag-input-wrap">
-          <input id="overlayTagInput" placeholder="キーワードでタグを追加（例: 泣ける、鬱、神作画）" maxlength="20" autocomplete="off" />
+          <input id="overlayTagInput" placeholder="キーワードでタグを追加（例: 泣ける、鬱、神作画）" data-i18n="phTagAddLong" maxlength="20" autocomplete="off" />
           <button class="search-tag-add-btn" id="overlayTagAddBtn" data-i18n="btnAdd">追加</button>
         </div>
         <div style="position:relative;">
@@ -3268,9 +3268,9 @@
           <span data-i18n="eraFilterLabel">年代で絞る</span>
         </label>
         <div class="sort-row-era-inputs">
-          <input type="number" id="overlayEraFrom" inputmode="numeric" placeholder="開始年" />
+          <input type="number" id="overlayEraFrom" inputmode="numeric" placeholder="開始年" data-i18n="phEraFrom" />
           <span>〜</span>
-          <input type="number" id="overlayEraTo" inputmode="numeric" placeholder="終了年" />
+          <input type="number" id="overlayEraTo" inputmode="numeric" placeholder="終了年" data-i18n="phEraTo" />
         </div>
       </div>
     </div>
@@ -3396,7 +3396,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.312.0</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.7</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -3434,7 +3434,7 @@
       </div>
       <div class="sec-head-right">
         <small id="pickupTimer">— 後に更新</small>
-        <button type="button" class="sec-nav-btn" aria-label="前へ" onclick="carouselPrev('pickupScroll','pickupDots')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button>
+        <button type="button" class="sec-nav-btn" aria-label="前へ" data-i18n-aria="ariaPrev" onclick="carouselPrev('pickupScroll','pickupDots')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button>
         <button type="button" class="sec-nav-btn" aria-label="次へ" onclick="carouselNext('pickupScroll','pickupDots')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button>
       </div>
     </div>
@@ -3453,7 +3453,7 @@
       </div>
       <div class="sec-head-right">
         <small id="seasonLabel">—</small>
-        <button type="button" class="sec-nav-btn" aria-label="前へ" onclick="carouselPrev('seasonScroll','seasonDots')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button>
+        <button type="button" class="sec-nav-btn" aria-label="前へ" data-i18n-aria="ariaPrev" onclick="carouselPrev('seasonScroll','seasonDots')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button>
         <button type="button" class="sec-nav-btn" aria-label="次へ" onclick="carouselNext('seasonScroll','seasonDots')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button>
       </div>
     </div>
@@ -3556,7 +3556,7 @@
         <div style="display:flex;gap:10px;">
           <button class="review-btn review-btn-list" id="goReviewListBtn">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
           <button type="button" class="review-btn board-entry-mobile-btn" id="boardEntryMobileBtn" data-i18n="boardEntryMobileBtn">💬 掲示板</button>
-          <button class="fav-toggle-btn" id="favToggleBtn" onclick="toggleFavorite()" aria-pressed="false" aria-label="お気に入り">♡︎</button>
+          <button class="fav-toggle-btn" id="favToggleBtn" onclick="toggleFavorite()" aria-pressed="false" aria-label="お気に入り" data-i18n-aria="ariaFavorite">♡︎</button>
         </div>
       </div>
       <div id="boardEntrySection" class="anime-side-board"></div>
@@ -3589,7 +3589,7 @@
 
       <!-- マスターグラフ + 世界の反応（スマホ幅では左右スワイプで切り替え。PC幅は今まで通り縦に並ぶ） -->
       <div class="slider-page-nav" id="graphWorldPageNav">
-        <button type="button" id="graphWorldPagePrev" aria-label="前へ">‹</button>
+        <button type="button" id="graphWorldPagePrev" aria-label="前へ" data-i18n-aria="ariaPrev">‹</button>
         <span id="graphWorldPageLabel" data-i18n="masterGraphTitle">みんなの評価グラフ</span>
         <button type="button" id="graphWorldPageNext" aria-label="次へ">›</button>
       </div>
@@ -3906,7 +3906,7 @@
     </div>
     </div>
     <div class="slider-page-nav" id="sliderPageNav">
-      <button type="button" id="sliderPagePrev" aria-label="前へ">‹</button>
+      <button type="button" id="sliderPagePrev" aria-label="前へ" data-i18n-aria="ariaPrev">‹</button>
       <span id="sliderPageLabel">作品の完成度</span>
       <button type="button" id="sliderPageNext" aria-label="次へ">›</button>
     </div>
@@ -3925,7 +3925,7 @@
       <div class="form-field">
         <label data-i18n="labelTags">タグ（最大3個）</label>
         <div class="tag-input-wrap">
-          <input id="reviewTagInput" placeholder="例: 泣ける、鬱展開、神作画…" maxlength="20" />
+          <input id="reviewTagInput" placeholder="例: 泣ける、鬱展開、神作画…" data-i18n="phTagAddShort" maxlength="20" />
           <button class="tag-add-btn" id="reviewTagAddBtn" data-i18n="btnAdd" type="button">追加</button>
         </div>
         <div class="tag-list" id="reviewTagList"></div>
@@ -3940,7 +3940,7 @@
           <label data-i18n="labelComment" style="margin:0;">コメント</label>
           <span id="reviewCommentCount" style="font-size:12px;color:#5c6d63;">0 / 500</span>
         </div>
-        <textarea id="reviewComment" maxlength="500" placeholder="作品の魅力や見どころを、やさしい言葉で書いてみましょう。"></textarea>
+        <textarea id="reviewComment" maxlength="500" placeholder="作品の魅力や見どころを、やさしい言葉で書いてみましょう。" data-i18n="phReviewComment"></textarea>
       </div>
       <div id="reviewTurnstile" style="margin:.75rem 0;"></div>
       <button class="submit-btn" id="submitReviewBtn">
@@ -4223,9 +4223,9 @@
       <div class="pop-sort-group" id="popEraGroup">
         <span class="pop-sort-group-label" data-i18n="popEraGroupLabel">年代</span>
         <div class="sort-row-era-inputs">
-          <input type="number" class="pop-year-input" id="popYearFromInput" inputmode="numeric" placeholder="開始年" style="width:5.5em;text-align:center;font-size:.9rem;padding:.5rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);" />
+          <input type="number" class="pop-year-input" id="popYearFromInput" inputmode="numeric" placeholder="開始年" data-i18n="phEraFrom" style="width:5.5em;text-align:center;font-size:.9rem;padding:.5rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);" />
           <span>〜</span>
-          <input type="number" class="pop-year-input" id="popYearToInput" inputmode="numeric" placeholder="終了年" style="width:5.5em;text-align:center;font-size:.9rem;padding:.5rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);" />
+          <input type="number" class="pop-year-input" id="popYearToInput" inputmode="numeric" placeholder="終了年" data-i18n="phEraTo" style="width:5.5em;text-align:center;font-size:.9rem;padding:.5rem .4rem;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);" />
           <button class="pop-year-clear" id="popYearClear" data-i18n="btnClear" style="background:none;border:none;color:var(--muted);font-size:.75rem;cursor:pointer;text-decoration:underline;white-space:nowrap;">クリア</button>
         </div>
       </div>
@@ -4264,7 +4264,7 @@
   </header>
   <div class="search-bar">
     <div class="search-bar-inner">
-      <input id="srQuery" type="search" placeholder="キーワードで絞り込む" autocomplete="off" />
+      <input id="srQuery" type="search" placeholder="キーワードで絞り込む" data-i18n="phRefineSearch" autocomplete="off" />
       <button class="search-go" id="srSearchBtn" data-i18n="btnSearchGo">検索</button>
     </div>
   </div>
@@ -4274,9 +4274,9 @@
   <div class="filter-panel" id="srFilterPanel">
     <!-- ①スライダー -->
     <div class="slider-page-nav" id="srSliderPageNav">
-      <button type="button" id="srSliderPagePrev" aria-label="前へ">‹</button>
+      <button type="button" id="srSliderPagePrev" aria-label="前へ" data-i18n-aria="ariaPrev">‹</button>
       <span id="srSliderPageLabel">作品の完成度（無で無視）</span>
-      <button type="button" class="slider-info-btn" id="srSliderInfoBtn" aria-label="優先軸について">
+      <button type="button" class="slider-info-btn" id="srSliderInfoBtn" aria-label="優先軸について" data-i18n-aria="ariaPriorityAxis">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d9a441" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="1" fill="#d9a441" stroke="none"/></svg>
       </button>
       <button type="button" id="srSliderPageNext" aria-label="次へ">›</button>
@@ -4304,7 +4304,7 @@
           <span class="tag-section-title" data-i18n="filterTagLabel">🏷 タグで絞る</span>
         </div>
         <div class="search-tag-input-wrap">
-          <input id="srTagInput" placeholder="タグを入力…" maxlength="20" autocomplete="off" />
+          <input id="srTagInput" placeholder="タグを入力…" data-i18n="phTagInputShort" maxlength="20" autocomplete="off" />
           <button class="search-tag-add-btn" id="srTagAddBtn" data-i18n="btnAdd">追加</button>
         </div>
         <div style="position:relative;">
@@ -4364,9 +4364,9 @@
           <span data-i18n="eraFilterLabel">年代で絞る</span>
         </label>
         <div class="sort-row-era-inputs">
-          <input type="number" id="srEraFrom" inputmode="numeric" placeholder="開始年" />
+          <input type="number" id="srEraFrom" inputmode="numeric" placeholder="開始年" data-i18n="phEraFrom" />
           <span>〜</span>
-          <input type="number" id="srEraTo" inputmode="numeric" placeholder="終了年" />
+          <input type="number" id="srEraTo" inputmode="numeric" placeholder="終了年" data-i18n="phEraTo" />
         </div>
       </div>
     </div>
@@ -5125,7 +5125,7 @@
         <p class="tip-field-label" data-i18n="tipCustomLabel">金額を自分で決める</p>
         <div class="tip-custom-field" id="tipCustomField">
           <span class="tip-custom-yen">¥</span>
-          <input id="tipCustomAmount" type="number" min="500" step="100" placeholder="500以上で自由に入力" class="tip-custom-input">
+          <input id="tipCustomAmount" type="number" min="500" step="100" placeholder="500以上で自由に入力" data-i18n="phTipCustomAmount" class="tip-custom-input">
         </div>
         <p id="tipCustomError" class="tip-custom-error" style="display:none;" data-i18n="tipCustomError">¥500以上で入力してください</p>
       </div>
@@ -5135,7 +5135,7 @@
           <span data-i18n="tipMessageLabel">ひとことメッセージ</span>
           <span class="tip-field-note" data-i18n="tipMessageNote">任意 · 開発者にだけ届きます</span>
         </p>
-        <textarea id="tipMessage" maxlength="200" rows="3" class="tip-msg-input" placeholder="開発者に届くメッセージ（任意）"></textarea>
+        <textarea id="tipMessage" maxlength="200" rows="3" class="tip-msg-input" placeholder="開発者に届くメッセージ（任意）" data-i18n="phTipMessage"></textarea>
       </div>
     </div>
 
@@ -5596,7 +5596,7 @@
     <div class="topbar">
       <div class="search">
         <span style="color:var(--muted2)">⌕</span>
-        <input id="animeSearch" list="animeSearchDatalist" placeholder="作品名を検索してください（例：進撃の巨人）" />
+        <input id="animeSearch" list="animeSearchDatalist" placeholder="作品名を検索してください（例：進撃の巨人）" data-i18n="phAnimeSearchExample" />
         <datalist id="animeSearchDatalist"></datalist>
       </div>
       <select id="countrySelect" style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--text);font-size:.82rem;padding:.5rem .6rem;">
@@ -6013,33 +6013,33 @@
     </div>
   </header>
   <div style="padding:1rem;max-width:480px;margin:0 auto;">
-    <h2 style="font-size:1.1rem;color:#dff0e6;margin:0 0 .5rem;">📮 お問い合わせ</h2>
-    <p style="font-size:.82rem;color:var(--muted);margin:0 0 1rem;">
+    <h2 style="font-size:1.1rem;color:#dff0e6;margin:0 0 .5rem;" data-i18n="contactPageTitle">📮 お問い合わせ</h2>
+    <p style="font-size:.82rem;color:var(--muted);margin:0 0 1rem;" data-i18n="contactPageDesc">
       ご意見・不具合報告・提携のご相談などは、こちらからお送りください。
     </p>
 
     <div id="contactFormSection">
-      <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.4rem;">お問い合わせの種類<span style="color:#ff8888;">*</span></label>
+      <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.4rem;"><span data-i18n="contactTypeLabel">お問い合わせの種類</span><span style="color:#ff8888;">*</span></label>
       <div id="contactCategoryChips" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem;"></div>
 
-      <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">お名前(任意)</label>
-      <input id="contactName" type="text" placeholder="お名前"
+      <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;" data-i18n="contactNameLabel">お名前(任意)</label>
+      <input id="contactName" type="text" placeholder="お名前" data-i18n="phContactName"
         style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;" />
 
-      <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">お問い合わせ内容<span style="color:#ff8888;">*</span></label>
-      <textarea id="contactMessage" rows="6" placeholder="内容をご記入ください"
+      <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;"><span data-i18n="contactMessageLabel">お問い合わせ内容</span><span style="color:#ff8888;">*</span></label>
+      <textarea id="contactMessage" rows="6" placeholder="内容をご記入ください" data-i18n="phContactMessage"
         style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;resize:vertical;"></textarea>
 
       <div id="contactTurnstile" style="margin-bottom:.8rem;"></div>
 
-      <button onclick="submitContactForm()" id="contactSubmitBtn"
+      <button onclick="submitContactForm()" id="contactSubmitBtn" data-i18n="contactSendBtn"
         style="width:100%;padding:.75rem;border-radius:10px;background:var(--brand);color:#0c2015;font-weight:800;border:none;cursor:pointer;">送信する</button>
       <p id="contactError" style="color:#ff6b6b;font-size:.78rem;margin-top:.6rem;"></p>
     </div>
 
     <div id="contactSuccessSection" style="display:none;text-align:center;padding:2rem 0;">
       <p style="font-size:1.3rem;margin-bottom:.5rem;">✅</p>
-      <p style="color:#dff0e6;font-size:.95rem;">お問い合わせを送信しました。ありがとうございます。</p>
+      <p style="color:#dff0e6;font-size:.95rem;" data-i18n="contactSentMessage">お問い合わせを送信しました。ありがとうございます。</p>
     </div>
   </div>
 </div>
@@ -6090,7 +6090,7 @@
       <div class="mypage-hero">
         <div class="mypage-avatar-wrap">
           <div class="mypage-avatar user-avatar" id="mypageAvatarIcon">か</div>
-          <button type="button" class="mypage-avatar-edit-badge mypage-owner-only" onclick="nav('my-icons')" aria-label="アイコンを変更">
+          <button type="button" class="mypage-avatar-edit-badge mypage-owner-only" onclick="nav('my-icons')" aria-label="アイコンを変更" data-i18n-aria="ariaChangeIcon">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
           </button>
         </div>
@@ -6103,7 +6103,7 @@
           <button class="mypage-btn-secondary" id="mypageEditBtn" onclick="openProfileEdit()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:-2px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>編集
           </button>
-          <button class="mypage-edit-btn" aria-label="設定" onclick="nav('settings')" style="display:none;">
+          <button class="mypage-edit-btn" aria-label="設定" data-i18n-aria="ariaSettings" onclick="nav('settings')" style="display:none;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
         </div>
@@ -6111,7 +6111,7 @@
           <button class="mypage-btn-primary" id="mypageFollowBtn" onclick="toggleFollowCurrentProfile()">フォローする</button>
           <button class="mypage-btn-secondary" id="mypageFriendBtn" onclick="handleFriendBtnClick()" style="white-space:nowrap;"></button>
           <button class="mypage-btn-secondary" id="mypageDmBtn" data-i18n="dmMenuLabel" style="display:none;white-space:nowrap;">メッセージ</button>
-          <button type="button" id="mypageMoreBtn" aria-label="その他の操作" style="width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;color:#bccfc3;cursor:pointer;">
+          <button type="button" id="mypageMoreBtn" aria-label="その他の操作" data-i18n-aria="ariaMoreActions" style="width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;color:#bccfc3;cursor:pointer;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
           </button>
         </div>
@@ -6309,34 +6309,34 @@
 <div class="auth-overlay" id="onboardOverlay" style="display:none;">
   <div class="auth-modal">
     <div class="auth-modal-header">
-      <h2>プロフィールを設定</h2>
+      <h2 data-i18n="onboardTitle">プロフィールを設定</h2>
     </div>
     <div class="auth-modal-body" style="gap:1rem;">
       <div>
         <label for="onboardUsername" style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem;" data-i18n="labelUsername2">ユーザー名</label>
-        <input type="text" id="onboardUsername" placeholder="ユーザー名" maxlength="10" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" name="onboard-display-name" style="width:100%;box-sizing:border-box;" />
+        <input type="text" id="onboardUsername" placeholder="ユーザー名" data-i18n="phUsername" maxlength="10" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" name="onboard-display-name" style="width:100%;box-sizing:border-box;" />
       </div>
       <div>
-        <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem;">性別</label>
+        <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem;" data-i18n="onboardGenderLabel">性別</label>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-          <label class="onboard-radio-chip"><input type="radio" name="onboardGender" value="male" /> 男性</label>
-          <label class="onboard-radio-chip"><input type="radio" name="onboardGender" value="female" /> 女性</label>
-          <label class="onboard-radio-chip"><input type="radio" name="onboardGender" value="unspecified" checked /> 回答しない</label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardGender" value="male" /> <span data-i18n="genderMale">男性</span></label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardGender" value="female" /> <span data-i18n="genderFemale">女性</span></label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardGender" value="unspecified" checked /> <span data-i18n="genderUnspecified">回答しない</span></label>
         </div>
       </div>
       <div>
-        <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem;">年代</label>
+        <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem;" data-i18n="onboardAgeLabel">年代</label>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="10s" /> 10代</label>
-          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="20s" /> 20代</label>
-          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="30s" /> 30代</label>
-          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="40s" /> 40代</label>
-          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="50s_plus" /> 50代以上</label>
-          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="unspecified" checked /> 回答しない</label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="10s" /> <span data-i18n="age10s">10代</span></label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="20s" /> <span data-i18n="age20s">20代</span></label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="30s" /> <span data-i18n="age30s">30代</span></label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="40s" /> <span data-i18n="age40s">40代</span></label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="50s_plus" /> <span data-i18n="age50sPlus">50代以上</span></label>
+          <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="unspecified" checked /> <span data-i18n="genderUnspecified">回答しない</span></label>
         </div>
       </div>
       <p class="auth-error" id="onboardError"></p>
-      <button class="auth-google-btn" id="onboardSubmitBtn" onclick="submitOnboarding()" style="justify-content:center;">はじめる</button>
+      <button class="auth-google-btn" id="onboardSubmitBtn" onclick="submitOnboarding()" style="justify-content:center;" data-i18n="onboardStartBtn">はじめる</button>
     </div>
   </div>
 </div>
@@ -8358,7 +8358,7 @@
     // ── サムネイル左上：上質なレビュー（ゴールド）→ AI予測 → 話題 → レビュー募集中（固定スタック） ──
     const qualityThumbBadge = isGold ? `<span class="quality-thumb-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="#2a2006"><path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>上質なレビュー</span>` : '';
     const aiThumbBadge = opts.aiBadge ? `<span class="ai-thumb-badge">${opts.aiBadge}</span>` : '';
-    const hotThumbBadge = opts.hotBadge ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;color:#3a2a06;background:#e8c463;padding:4px 9px;border-radius:20px;">🔥 話題</span>` : '';
+    const hotThumbBadge = opts.hotBadge ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;color:#3a2a06;background:#e8c463;padding:4px 9px;border-radius:20px;">${escapeHtml(t('hotTopicBadge'))}</span>` : '';
     const recruitThumbBadge = (opts.showRecruitBadge !== false && !opts.dummy) ? recruitBadgeHtml(item.kitsuId?'kitsu-'+item.kitsuId:item.id) : '';
     const thumbStack = (qualityThumbBadge || aiThumbBadge || hotThumbBadge || recruitThumbBadge) ? `<div class="thumb-badge-stack">${qualityThumbBadge}${aiThumbBadge}${hotThumbBadge}${recruitThumbBadge}</div>` : '';
     const rankBadgeHtml = opts.rankBadge ? `<span class="rank-badge" style="${opts.rankBadgeStyle||''}">${opts.rankBadge}</span>` : '';
@@ -8386,7 +8386,7 @@
         <div class="hcard-body">
           <h3>${title}</h3>
           <p>${meta}</p>
-          ${opts.dummy?'<span style="font-size:.66rem;color:#7a9a86;">※サンプル表示</span>':badgeGrid}
+          ${opts.dummy?`<span style="font-size:.66rem;color:#7a9a86;">${escapeHtml(t('sampleDisplayNote'))}</span>`:badgeGrid}
         </div>
       </div>`;
     }
@@ -8800,7 +8800,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.312.0';
+      if(vEl) vEl.textContent = 'v0.313.7';
     }
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
@@ -8866,7 +8866,7 @@
   // Kitsu API依存を撤去。未登録の作品ページへの自動アクセスは、
   // トップページ(未登録通知)へリダイレクトする形に変更。
   async function navAnime(kitsuId) {
-    alert('この作品はまだAnimeppleに登録されていません。');
+    alert(t('animeNotRegisteredAlert'));
     nav('home');
   }
   window.navAnime = navAnime;
@@ -9092,9 +9092,9 @@
   function updatePopPillLabels() {
     const pillEraLabel = document.getElementById('popPillEraLabel');
     if(pillEraLabel) {
-      if(popState.yearFrom && popState.yearTo) pillEraLabel.textContent = `${popState.yearFrom}〜${popState.yearTo}年`;
-      else if(popState.yearFrom) pillEraLabel.textContent = `${popState.yearFrom}年〜`;
-      else if(popState.yearTo) pillEraLabel.textContent = `〜${popState.yearTo}年`;
+      if(popState.yearFrom && popState.yearTo) pillEraLabel.textContent = (T.popEraRange[currentLang] || T.popEraRange.en)(popState.yearFrom, popState.yearTo);
+      else if(popState.yearFrom) pillEraLabel.textContent = tFn('popEraFrom', popState.yearFrom);
+      else if(popState.yearTo) pillEraLabel.textContent = tFn('popEraTo', popState.yearTo);
       else pillEraLabel.textContent = t('popEraNone');
     }
   }
@@ -9398,7 +9398,7 @@
       loadMore.style.display = items.length >= POP_PAGE_SIZE ? '' : 'none';
     } catch(e) {
       console.error(e);
-      if(reset) grid.innerHTML='<p style="color:var(--muted);padding:1rem;">読み込みに失敗しました</p>';
+      if(reset) grid.innerHTML=`<p style="color:var(--muted);padding:1rem;">${escapeHtml(t('loadFailedGeneric'))}</p>`;
     }
     popState.loading = false;
   }
@@ -9423,7 +9423,7 @@
         return `
         <span class="tag-chip">
           #${escapeHtml(label)}
-          <button type="button" data-ti="${i}" aria-label="削除">×</button>
+          <button type="button" data-ti="${i}" aria-label="削除" data-i18n-aria="ariaDelete">×</button>
         </span>
       `;}).join('');
       el.querySelectorAll('[data-ti]').forEach(btn=>{
@@ -10095,7 +10095,7 @@
     chipsEl.innerHTML = list.map(q => `
       <button type="button" class="recent-search-chip" data-q="${escapeHtml(q)}">
         <span class="recent-search-chip-label">${escapeHtml(q)}</span>
-        <span class="recent-search-chip-remove" data-remove-q="${escapeHtml(q)}" role="button" aria-label="削除">✕</span>
+        <span class="recent-search-chip-remove" data-remove-q="${escapeHtml(q)}" role="button" aria-label="削除" data-i18n-aria="ariaDelete">✕</span>
       </button>
     `).join('');
     chipsEl.querySelectorAll('.recent-search-chip-remove').forEach(btn => {
@@ -10746,7 +10746,7 @@
       document.getElementById('pickupScroll').innerHTML = pickupItems.length ? pickupItems.map(item=>{
         const itemWithKitsuId = { ...item, kitsuId: item.kitsuId || (item.id.startsWith('kitsu-') ? item.id.replace('kitsu-','') : null) };
         return renderAnimeCard(itemWithKitsuId, { style:'g' });
-      }).join('') : '<p style="color:var(--muted);padding:.5rem;">作品が増えると表示されます</p>';
+      }).join('') : `<p style="color:var(--muted);padding:.5rem;">${escapeHtml(t('moreTitlesComingNote'))}</p>`;
       // HTML挿入後にカルーセル初期化
       initCarousel('pickupScroll','pickupDots',7);
     });
@@ -11995,14 +11995,14 @@
           }
           renderAnimePage(id);
         } else {
-          document.getElementById('animeTitle').textContent='ページが見つかりません';
+          document.getElementById('animeTitle').textContent=t('animePageNotFoundTitle');
           document.getElementById('animeMeta').textContent='';
-          document.getElementById('animeDesc').textContent='トップに戻って別の作品を選んでください。';
+          document.getElementById('animeDesc').textContent=t('animePageNotFoundDesc');
           document.getElementById('goReviewBtn').style.display='none';
         }
       }).catch(()=>{
         if(currentAnimeId !== id) return;
-        document.getElementById('animeTitle').textContent='ページが見つかりません';
+        document.getElementById('animeTitle').textContent=t('animePageNotFoundTitle');
       });
       if(!pageIsPartial) return; // 部分キャッシュがあれば、背景フェッチは待たずこのまま下の描画処理へ進む
     } else if (page && sb) {
@@ -12042,9 +12042,9 @@
       }).catch(()=>{});
     }
     if (!page) {
-      document.getElementById('animeTitle').textContent='ページが見つかりません';
+      document.getElementById('animeTitle').textContent=t('animePageNotFoundTitle');
       document.getElementById('animeMeta').textContent='';
-      document.getElementById('animeDesc').textContent='トップに戻って別の作品を選んでください。';
+      document.getElementById('animeDesc').textContent=t('animePageNotFoundDesc');
       document.getElementById('goReviewBtn').style.display='none';
       return;
     }
@@ -14521,7 +14521,7 @@
         : `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" class="user-avatar-circle ${avatarFrameClass}" style="border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:${avatarText};cursor:pointer;">${escapeHtml(name.charAt(0))}</span>`);
     // 名前は相手のみ（自分はアイコンの緑枠で判別できる）。連投時は省略
     const nameHtml = (!isMine && !grouped)
-      ? `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="font-size:11.5px;font-weight:700;color:${nameColor};padding-left:2px;cursor:pointer;">${escapeHtml(name)}${isOfficial?' <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">公式</span>':''}</span>`
+      ? `<span onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" style="font-size:11.5px;font-weight:700;color:${nameColor};padding-left:2px;cursor:pointer;">${escapeHtml(name)}${isOfficial?` <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">${escapeHtml(t('officialBadge'))}</span>`:''}</span>`
       : '';
     // 引用ブロック：parent_id はそのまま使い、表示だけ入れ子をやめて本流に並べる（DMでは使わない）
     const q = opts.quote;
@@ -14626,7 +14626,7 @@
       const kebabMenu = (targetType, targetId, targetUserId) => {
         if(!_currentUser || targetUserId === _currentUser.id) return '';
         return `<div style="position:relative;">
-          <button type="button" class="board-kebab-btn" aria-label="メニュー" style="width:24px;height:22px;display:flex;align-items:center;justify-content:center;border:none;border-radius:6px;background:transparent;color:#82968a;cursor:pointer;">
+          <button type="button" class="board-kebab-btn" aria-label="メニュー" data-i18n-aria="ariaMenu" style="width:24px;height:22px;display:flex;align-items:center;justify-content:center;border:none;border-radius:6px;background:transparent;color:#82968a;cursor:pointer;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
           </button>
           <div class="board-kebab-menu" style="display:none;position:absolute;top:28px;right:0;z-index:20;width:148px;background:#22412f;border:1px solid rgba(255,255,255,.12);border-radius:11px;box-shadow:0 20px 44px -16px rgba(0,0,0,.85);padding:5px;">
@@ -15894,9 +15894,9 @@
       if(meta) meta.textContent = '';
       body.innerHTML = `
         <div style="border-radius:14px;border:1px dashed rgba(255,255,255,.14);background:rgba(255,255,255,.02);padding:20px;text-align:center;">
-          <p style="margin:0 0 8px;font-size:13px;font-weight:800;color:#dfeae3;">グラフはまだ作られていません</p>
-          <p style="margin:0 0 15px;font-size:11.5px;line-height:1.75;color:#8db5a0;">レビューを1件書くとカードにグラフが入り、シェアできるようになります。</p>
-          <button type="button" onclick="nav('search')" style="width:100%;height:40px;border-radius:10px;border:none;background:#5ec97a;color:#07200f;font-size:12.5px;font-weight:800;cursor:pointer;">レビューを書く</button>
+          <p style="margin:0 0 8px;font-size:13px;font-weight:800;color:#dfeae3;">${escapeHtml(t('valueGraphNotYetTitle'))}</p>
+          <p style="margin:0 0 15px;font-size:11.5px;line-height:1.75;color:#8db5a0;">${escapeHtml(t('valueGraphNotYetDesc'))}</p>
+          <button type="button" onclick="nav('search')" style="width:100%;height:40px;border-radius:10px;border:none;background:#5ec97a;color:#07200f;font-size:12.5px;font-weight:800;cursor:pointer;">${escapeHtml(t('writeReviewBtn'))}</button>
         </div>`;
       return;
     }
@@ -15908,10 +15908,10 @@
         <canvas id="valueProfileInlineCanvas" class="rc-canvas" width="320" height="320" style="aspect-ratio:1/1;"></canvas>
       </div>
       <div class="mypage-value-type-chip">
-        <span style="display:block;font-size:10.5px;color:#8db5a0;">好みのタイプ</span>
+        <span style="display:block;font-size:10.5px;color:#8db5a0;">${escapeHtml(t('preferenceTypeLabel'))}</span>
         <span style="display:block;margin-top:2px;font-size:14px;font-weight:800;color:#a7ecc4;">${escapeHtml(valueTypeLabelFrom(labAll, valsAll))}</span>
       </div>
-      ${items && items.length ? `<p style="margin:14px 0 8px;font-size:11.5px;font-weight:700;color:#8db5a0;">好みに近い作品</p>
+      ${items && items.length ? `<p style="margin:14px 0 8px;font-size:11.5px;font-weight:700;color:#8db5a0;">${escapeHtml(t('similarTitlesLabel'))}</p>
       <div id="valueProfileInlineRecs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;"></div>` : ''}`;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       const cEl = document.getElementById('valueProfileInlineCanvas');
@@ -17243,6 +17243,79 @@
     settingsAboutSub:{ ja:'利用規約、お問い合わせ', en:'Terms of use, contact' },
     settingsHistoryTitle:{ ja:'購入・ガチャ履歴', en:'Purchase & gacha history' },
     settingsHistoryLinkFromShop:{ ja:'購入・ガチャ履歴を見る', en:'View purchase & gacha history' },
+    paymentComingSoonAlert:{ ja:'決済システムは準備中です。もうしばらくお待ちください。', en:'The payment system is not ready yet. Please check back soon.', ko:'결제 시스템은 준비 중입니다. 잠시만 기다려 주세요.', 'zh-tw':'付款系統準備中，請稍候。', 'zh-cn':'支付系统准备中，请稍候。', es:'El sistema de pago aún no está listo. Vuelve pronto.', fr:'Le système de paiement n\'est pas encore prêt. Merci de patienter.', pt:'O sistema de pagamento ainda não está pronto. Volte em breve.', de:'Das Zahlungssystem ist noch nicht bereit. Bitte später erneut versuchen.', ar:'نظام الدفع ليس جاهزًا بعد. يرجى المحاولة لاحقًا.', th:'ระบบชำระเงินยังไม่พร้อมใช้งาน โปรดรอสักครู่', id:'Sistem pembayaran belum siap. Silakan coba lagi nanti.', ru:'Платёжная система ещё не готова. Попробуйте позже.', it:'Il sistema di pagamento non è ancora pronto. Riprova più tardi.', vi:'Hệ thống thanh toán chưa sẵn sàng. Vui lòng quay lại sau.' },
+    animeNotRegisteredAlert:{ ja:'この作品はまだAnimeppleに登録されていません。', en:'This title is not registered on Animepple yet.', ko:'이 작품은 아직 Animepple에 등록되지 않았습니다.', 'zh-tw':'此作品尚未在Animepple上註冊。', 'zh-cn':'此作品尚未在Animepple上注册。', es:'Este título aún no está registrado en Animepple.', fr:'Ce titre n\'est pas encore enregistré sur Animepple.', pt:'Este título ainda não está registrado no Animepple.', de:'Dieser Titel ist noch nicht bei Animepple registriert.', ar:'لم يتم تسجيل هذا العمل بعد في Animepple.', th:'ผลงานนี้ยังไม่ได้ลงทะเบียนใน Animepple', id:'Judul ini belum terdaftar di Animepple.', ru:'Это тайтл ещё не зарегистрирован в Animepple.', it:'Questo titolo non è ancora registrato su Animepple.', vi:'Tựa phim này chưa được đăng ký trên Animepple.' },
+    animePageNotFoundTitle:{ ja:'ページが見つかりません', en:'Page not found', ko:'페이지를 찾을 수 없습니다', 'zh-tw':'找不到頁面', 'zh-cn':'找不到页面', es:'Página no encontrada', fr:'Page introuvable', pt:'Página não encontrada', de:'Seite nicht gefunden', ar:'الصفحة غير موجودة', th:'ไม่พบหน้านี้', id:'Halaman tidak ditemukan', ru:'Страница не найдена', it:'Pagina non trovata', vi:'Không tìm thấy trang' },
+    animePageNotFoundDesc:{ ja:'トップに戻って別の作品を選んでください。', en:'Please go back to the top and choose another title.', ko:'홈으로 돌아가 다른 작품을 선택해 주세요.', 'zh-tw':'請返回首頁選擇其他作品。', 'zh-cn':'请返回首页选择其他作品。', es:'Vuelve al inicio y elige otro título.', fr:'Retournez à l\'accueil et choisissez un autre titre.', pt:'Volte ao início e escolha outro título.', de:'Bitte kehre zur Startseite zurück und wähle einen anderen Titel.', ar:'يرجى العودة إلى الصفحة الرئيسية واختيار عمل آخر.', th:'กรุณากลับไปหน้าแรกแล้วเลือกผลงานอื่น', id:'Silakan kembali ke beranda dan pilih judul lain.', ru:'Вернитесь на главную и выберите другой тайтл.', it:'Torna alla home e scegli un altro titolo.', vi:'Vui lòng quay lại trang chủ và chọn tựa khác.' },
+    followActionBtn:{ ja:'フォローする', en:'Follow', ko:'팔로우', 'zh-tw':'追蹤', 'zh-cn':'关注', es:'Seguir', fr:'Suivre', pt:'Seguir', de:'Folgen', ar:'متابعة', th:'ติดตาม', id:'Ikuti', ru:'Подписаться', it:'Segui', vi:'Theo dõi' },
+    favStatusWantToWatch:{ ja:'気になる', en:'Want to watch', ko:'관심 있음', 'zh-tw':'想看', 'zh-cn':'想看', es:'Quiero verlo', fr:'À voir', pt:'Quero ver', de:'Möchte ich sehen', ar:'أريد المشاهدة', th:'อยากดู', id:'Ingin nonton', ru:'Хочу посмотреть', it:'Da vedere', vi:'Muốn xem' },
+    favStatusWatched:{ ja:'視聴済み', en:'Watched', ko:'시청 완료', 'zh-tw':'已看完', 'zh-cn':'已看完', es:'Visto', fr:'Vu', pt:'Assistido', de:'Gesehen', ar:'تمت المشاهدة', th:'ดูแล้ว', id:'Sudah ditonton', ru:'Просмотрено', it:'Visto', vi:'Đã xem' },
+    phEraFrom:{ ja:'開始年', en:'From year', ko:'시작 연도', 'zh-tw':'開始年份', 'zh-cn':'开始年份', es:'Año inicial', fr:'Année de début', pt:'Ano inicial', de:'Startjahr', ar:'سنة البداية', th:'ปีเริ่มต้น', id:'Tahun mulai', ru:'Год начала', it:'Anno di inizio', vi:'Năm bắt đầu' },
+    phEraTo:{ ja:'終了年', en:'To year', ko:'종료 연도', 'zh-tw':'結束年份', 'zh-cn':'结束年份', es:'Año final', fr:'Année de fin', pt:'Ano final', de:'Endjahr', ar:'سنة النهاية', th:'ปีสิ้นสุด', id:'Tahun akhir', ru:'Год окончания', it:'Anno di fine', vi:'Năm kết thúc' },
+    phOverlaySearch:{ ja:'タイトル・ジャンル・雰囲気で検索', en:'Search by title, genre, or mood', ko:'제목·장르·분위기로 검색', 'zh-tw':'依標題、類型、氛圍搜尋', 'zh-cn':'按标题、类型、氛围搜索', es:'Buscar por título, género o ambiente', fr:'Rechercher par titre, genre ou ambiance', pt:'Buscar por título, gênero ou clima', de:'Suche nach Titel, Genre oder Stimmung', ar:'ابحث بالعنوان أو النوع أو الأجواء', th:'ค้นหาตามชื่อ ประเภท หรือบรรยากาศ', id:'Cari berdasarkan judul, genre, atau suasana', ru:'Поиск по названию, жанру или настроению', it:'Cerca per titolo, genere o atmosfera', vi:'Tìm theo tên, thể loại hoặc bầu không khí' },
+    phTagAddLong:{ ja:'キーワードでタグを追加（例: 泣ける、鬱、神作画）', en:'Add a tag keyword (e.g. tearjerker, dark, great animation)', ko:'키워드로 태그 추가 (예: 감동, 우울, 작화 갓)', 'zh-tw':'新增關鍵字標籤（例：催淚、壓抑、神作畫）', 'zh-cn':'添加关键词标签（如：催泪、压抑、神作画）', es:'Añadir etiqueta (ej: conmovedor, oscuro, gran animación)', fr:'Ajouter un tag (ex : émouvant, sombre, superbe animation)', pt:'Adicionar tag (ex: emocionante, sombrio, ótima animação)', de:'Tag hinzufügen (z. B. rührend, düster, tolle Animation)', ar:'أضف وسمًا (مثال: مؤثر، قاتم، رسوم رائعة)', th:'เพิ่มแท็กคำสำคัญ (เช่น น้ำตาไหล มืดหม่น ภาพสวย)', id:'Tambah tag kata kunci (mis. mengharukan, gelap, animasi bagus)', ru:'Добавить тег (напр. трогательно, мрачно, отличная анимация)', it:'Aggiungi un tag (es. commovente, cupo, ottima animazione)', vi:'Thêm thẻ từ khóa (vd: cảm động, u ám, hoạt họa đẹp)' },
+    phTagAddShort:{ ja:'例: 泣ける、鬱展開、神作画…', en:'e.g. tearjerker, dark plot, great animation…', ko:'예: 감동, 우울한 전개, 작화 갓…', 'zh-tw':'例：催淚、壓抑劇情、神作畫…', 'zh-cn':'如：催泪、压抑剧情、神作画…', es:'ej: conmovedor, trama oscura…', fr:'ex : émouvant, intrigue sombre…', pt:'ex: emocionante, trama sombria…', de:'z. B. rührend, düstere Handlung…', ar:'مثال: مؤثر، حبكة قاتمة…', th:'เช่น น้ำตาไหล เนื้อเรื่องมืดหม่น…', id:'mis. mengharukan, plot gelap…', ru:'напр. трогательно, мрачный сюжет…', it:'es. commovente, trama cupa…', vi:'vd: cảm động, cốt truyện u ám…' },
+    phReviewComment:{ ja:'作品の魅力や見どころを、やさしい言葉で書いてみましょう。', en:"Write about the title's charm and highlights, in your own words.", ko:'작품의 매력이나 볼거리를 편하게 적어보세요.', 'zh-tw':'請用簡單的話寫下作品的魅力與看點。', 'zh-cn':'请用简单的话写下作品的魅力与看点。', es:'Escribe el encanto y los puntos destacados de la obra.', fr:"Décrivez le charme et les points forts de l'œuvre.", pt:'Escreva sobre o charme e os destaques da obra.', de:'Beschreibe den Reiz und die Highlights des Titels.', ar:'اكتب عن سحر العمل وأبرز نقاطه.', th:'ลองเขียนถึงเสน่ห์และจุดเด่นของผลงานด้วยคำพูดง่ายๆ', id:'Tuliskan daya tarik dan sorotan judul ini.', ru:'Опишите привлекательность и ключевые моменты тайтла.', it:"Scrivi il fascino e i punti salienti dell'opera.", vi:'Hãy viết về sức hút và điểm nổi bật của tác phẩm.' },
+    phRefineSearch:{ ja:'キーワードで絞り込む', en:'Filter by keyword', ko:'키워드로 좁히기', 'zh-tw':'依關鍵字篩選', 'zh-cn':'按关键词筛选', es:'Filtrar por palabra clave', fr:'Filtrer par mot-clé', pt:'Filtrar por palavra-chave', de:'Nach Stichwort filtern', ar:'تصفية حسب الكلمة المفتاحية', th:'กรองด้วยคำสำคัญ', id:'Saring dengan kata kunci', ru:'Фильтр по ключевому слову', it:'Filtra per parola chiave', vi:'Lọc theo từ khóa' },
+    phTagInputShort:{ ja:'タグを入力…', en:'Enter a tag…', ko:'태그 입력…', 'zh-tw':'輸入標籤…', 'zh-cn':'输入标签…', es:'Escribe una etiqueta…', fr:'Saisir un tag…', pt:'Digite uma tag…', de:'Tag eingeben…', ar:'أدخل وسمًا…', th:'ใส่แท็ก…', id:'Masukkan tag…', ru:'Введите тег…', it:'Inserisci un tag…', vi:'Nhập thẻ…' },
+    phTipCustomAmount:{ ja:'500以上で自由に入力', en:'Enter any amount, 500 or more', ko:'500 이상 자유 입력', 'zh-tw':'500以上可自由輸入', 'zh-cn':'500以上可自由输入', es:'Ingresa cualquier monto desde 500', fr:'Saisissez un montant à partir de 500', pt:'Digite qualquer valor a partir de 500', de:'Beliebiger Betrag ab 500', ar:'أدخل أي مبلغ من 500 فأكثر', th:'ใส่จำนวนใดก็ได้ตั้งแต่ 500 ขึ้นไป', id:'Masukkan jumlah bebas mulai 500', ru:'Введите любую сумму от 500', it:'Inserisci un importo da 500 in su', vi:'Nhập số tiền tùy ý từ 500 trở lên' },
+    phTipMessage:{ ja:'開発者に届くメッセージ（任意）', en:'A message to the developer (optional)', ko:'개발자에게 전할 메시지 (선택)', 'zh-tw':'給開發者的留言（選填）', 'zh-cn':'给开发者的留言（选填）', es:'Mensaje para el desarrollador (opcional)', fr:'Message au développeur (facultatif)', pt:'Mensagem para o desenvolvedor (opcional)', de:'Nachricht an den Entwickler (optional)', ar:'رسالة إلى المطور (اختياري)', th:'ข้อความถึงผู้พัฒนา (ไม่บังคับ)', id:'Pesan untuk developer (opsional)', ru:'Сообщение разработчику (необязательно)', it:'Messaggio allo sviluppatore (facoltativo)', vi:'Lời nhắn cho nhà phát triển (không bắt buộc)' },
+    phAnimeSearchExample:{ ja:'作品名を検索してください（例：進撃の巨人）', en:'Search for a title (e.g. Attack on Titan)', ko:'작품명을 검색하세요 (예: 진격의 거인)', 'zh-tw':'請搜尋作品名稱（例：進擊的巨人）', 'zh-cn':'请搜索作品名称（如：进击的巨人）', es:'Busca un título (ej: Ataque a los Titanes)', fr:'Recherchez un titre (ex : Attaque des Titans)', pt:'Pesquise um título (ex: Ataque dos Titãs)', de:'Suche nach einem Titel (z. B. Attack on Titan)', ar:'ابحث عن عمل (مثال: هجوم العمالقة)', th:'ค้นหาชื่อผลงาน (เช่น Attack on Titan)', id:'Cari judul (mis. Attack on Titan)', ru:'Найдите тайтл (напр. Атака титанов)', it:'Cerca un titolo (es. Attacco dei Giganti)', vi:'Tìm tựa phim (vd: Đại chiến Titan)' },
+    phContactName:{ ja:'お名前', en:'Your name', ko:'이름', 'zh-tw':'姓名', 'zh-cn':'姓名', es:'Tu nombre', fr:'Votre nom', pt:'Seu nome', de:'Dein Name', ar:'اسمك', th:'ชื่อของคุณ', id:'Nama Anda', ru:'Ваше имя', it:'Il tuo nome', vi:'Tên của bạn' },
+    phContactMessage:{ ja:'内容をご記入ください', en:'Please enter your message', ko:'내용을 입력해 주세요', 'zh-tw':'請輸入內容', 'zh-cn':'请输入内容', es:'Escribe tu mensaje', fr:'Veuillez saisir votre message', pt:'Digite sua mensagem', de:'Bitte gib deine Nachricht ein', ar:'يرجى كتابة رسالتك', th:'กรุณากรอกข้อความ', id:'Silakan masukkan pesan Anda', ru:'Введите ваше сообщение', it:'Inserisci il tuo messaggio', vi:'Vui lòng nhập nội dung' },
+    phUsername:{ ja:'ユーザー名', en:'Username', ko:'사용자 이름', 'zh-tw':'使用者名稱', 'zh-cn':'用户名', es:'Nombre de usuario', fr:"Nom d'utilisateur", pt:'Nome de usuário', de:'Benutzername', ar:'اسم المستخدم', th:'ชื่อผู้ใช้', id:'Nama pengguna', ru:'Имя пользователя', it:'Nome utente', vi:'Tên người dùng' },
+    ariaPrev:{ ja:'前へ', en:'Previous', ko:'이전', 'zh-tw':'上一個', 'zh-cn':'上一个', es:'Anterior', fr:'Précédent', pt:'Anterior', de:'Zurück', ar:'السابق', th:'ก่อนหน้า', id:'Sebelumnya', ru:'Назад', it:'Precedente', vi:'Trước' },
+    ariaMoreActions:{ ja:'その他の操作', en:'More actions', ko:'추가 작업', 'zh-tw':'更多操作', 'zh-cn':'更多操作', es:'Más acciones', fr:'Autres actions', pt:'Mais ações', de:'Weitere Aktionen', ar:'إجراءات أخرى', th:'การดำเนินการอื่น', id:'Tindakan lainnya', ru:'Другие действия', it:'Altre azioni', vi:'Thao tác khác' },
+    ariaFavorite:{ ja:'お気に入り', en:'Favorite', ko:'즐겨찾기', 'zh-tw':'收藏', 'zh-cn':'收藏', es:'Favorito', fr:'Favori', pt:'Favorito', de:'Favorit', ar:'المفضلة', th:'รายการโปรด', id:'Favorit', ru:'Избранное', it:'Preferito', vi:'Yêu thích' },
+    ariaPriorityAxis:{ ja:'優先軸について', en:'About priority axes', ko:'우선 축에 대해', 'zh-tw':'關於優先軸', 'zh-cn':'关于优先轴', es:'Sobre los ejes prioritarios', fr:'À propos des axes prioritaires', pt:'Sobre os eixos prioritários', de:'Über Prioritätsachsen', ar:'حول المحاور ذات الأولوية', th:'เกี่ยวกับแกนที่ให้ความสำคัญ', id:'Tentang sumbu prioritas', ru:'О приоритетных осях', it:'Sugli assi prioritari', vi:'Về trục ưu tiên' },
+    ariaSettings:{ ja:'設定', en:'Settings', ko:'설정', 'zh-tw':'設定', 'zh-cn':'设置', es:'Configuración', fr:'Paramètres', pt:'Configurações', de:'Einstellungen', ar:'الإعدادات', th:'ตั้งค่า', id:'Pengaturan', ru:'Настройки', it:'Impostazioni', vi:'Cài đặt' },
+    ariaChangeIcon:{ ja:'アイコンを変更', en:'Change icon', ko:'아이콘 변경', 'zh-tw':'變更圖示', 'zh-cn':'更改图标', es:'Cambiar ícono', fr:"Changer l'icône", pt:'Alterar ícone', de:'Symbol ändern', ar:'تغيير الأيقونة', th:'เปลี่ยนไอคอน', id:'Ubah ikon', ru:'Изменить иконку', it:'Cambia icona', vi:'Đổi biểu tượng' },
+    ariaDelete:{ ja:'削除', en:'Delete', ko:'삭제', 'zh-tw':'刪除', 'zh-cn':'删除', es:'Eliminar', fr:'Supprimer', pt:'Excluir', de:'Löschen', ar:'حذف', th:'ลบ', id:'Hapus', ru:'Удалить', it:'Elimina', vi:'Xóa' },
+    ariaMenu:{ ja:'メニュー', en:'Menu', ko:'메뉴', 'zh-tw':'選單', 'zh-cn':'菜单', es:'Menú', fr:'Menu', pt:'Menu', de:'Menü', ar:'القائمة', th:'เมนู', id:'Menu', ru:'Меню', it:'Menu', vi:'Menu' },
+    ariaViewComment:{ ja:'コメントを見る', en:'View comment', ko:'댓글 보기', 'zh-tw':'查看留言', 'zh-cn':'查看留言', es:'Ver comentario', fr:'Voir le commentaire', pt:'Ver comentário', de:'Kommentar ansehen', ar:'عرض التعليق', th:'ดูความคิดเห็น', id:'Lihat komentar', ru:'Смотреть комментарий', it:'Vedi commento', vi:'Xem bình luận' },
+    ariaBack:{ ja:'戻る', en:'Back', ko:'뒤로', 'zh-tw':'返回', 'zh-cn':'返回', es:'Volver', fr:'Retour', pt:'Voltar', de:'Zurück', ar:'رجوع', th:'กลับ', id:'Kembali', ru:'Назад', it:'Indietro', vi:'Quay lại' },
+    authCreateAccountTitle:{ ja:'アカウントを作成', en:'Create account', ko:'계정 만들기', 'zh-tw':'建立帳號', 'zh-cn':'创建账户', es:'Crear cuenta', fr:'Créer un compte', pt:'Criar conta', de:'Konto erstellen', ar:'إنشاء حساب', th:'สร้างบัญชี', id:'Buat akun', ru:'Создать аккаунт', it:'Crea account', vi:'Tạo tài khoản' },
+    authCreateBtn:{ ja:'作成する', en:'Create', ko:'만들기', 'zh-tw':'建立', 'zh-cn':'创建', es:'Crear', fr:'Créer', pt:'Criar', de:'Erstellen', ar:'إنشاء', th:'สร้าง', id:'Buat', ru:'Создать', it:'Crea', vi:'Tạo' },
+    authLoginTitle:{ ja:'ログイン', en:'Log in', ko:'로그인', 'zh-tw':'登入', 'zh-cn':'登录', es:'Iniciar sesión', fr:'Connexion', pt:'Entrar', de:'Anmelden', ar:'تسجيل الدخول', th:'เข้าสู่ระบบ', id:'Masuk', ru:'Войти', it:'Accedi', vi:'Đăng nhập' },
+    authHaveAccount:{ ja:'すでにアカウントをお持ちですか？', en:'Already have an account?', ko:'이미 계정이 있으신가요?', 'zh-tw':'已經有帳號了嗎？', 'zh-cn':'已经有账户了吗？', es:'¿Ya tienes una cuenta?', fr:'Vous avez déjà un compte ?', pt:'Já tem uma conta?', de:'Hast du schon ein Konto?', ar:'هل لديك حساب بالفعل؟', th:'มีบัญชีอยู่แล้วใช่ไหม', id:'Sudah punya akun?', ru:'Уже есть аккаунт?', it:'Hai già un account?', vi:'Đã có tài khoản?' },
+    authNoAccount:{ ja:'アカウントがない方は', en:"Don't have an account?", ko:'계정이 없으신가요?', 'zh-tw':'還沒有帳號嗎？', 'zh-cn':'还没有账户？', es:'¿No tienes una cuenta?', fr:'Vous n\'avez pas de compte ?', pt:'Não tem uma conta?', de:'Noch kein Konto?', ar:'ليس لديك حساب؟', th:'ยังไม่มีบัญชีใช่ไหม', id:'Belum punya akun?', ru:'Нет аккаунта?', it:'Non hai un account?', vi:'Chưa có tài khoản?' },
+    authRegisterBtn:{ ja:'新規登録', en:'Sign up', ko:'회원가입', 'zh-tw':'註冊', 'zh-cn':'注册', es:'Registrarse', fr:'S\'inscrire', pt:'Cadastrar-se', de:'Registrieren', ar:'التسجيل', th:'สมัครสมาชิก', id:'Daftar', ru:'Регистрация', it:'Registrati', vi:'Đăng ký' },
+    onboardTitle:{ ja:'プロフィールを設定', en:'Set up your profile', ko:'프로필 설정', 'zh-tw':'設定個人資料', 'zh-cn':'设置个人资料', es:'Configura tu perfil', fr:'Configurez votre profil', pt:'Configure seu perfil', de:'Profil einrichten', ar:'إعداد الملف الشخصي', th:'ตั้งค่าโปรไฟล์', id:'Atur profil Anda', ru:'Настройте профиль', it:'Configura il tuo profilo', vi:'Thiết lập hồ sơ' },
+    onboardGenderLabel:{ ja:'性別', en:'Gender', ko:'성별', 'zh-tw':'性別', 'zh-cn':'性别', es:'Género', fr:'Genre', pt:'Gênero', de:'Geschlecht', ar:'الجنس', th:'เพศ', id:'Jenis kelamin', ru:'Пол', it:'Genere', vi:'Giới tính' },
+    onboardAgeLabel:{ ja:'年代', en:'Age group', ko:'연령대', 'zh-tw':'年齡層', 'zh-cn':'年龄段', es:'Grupo de edad', fr:"Tranche d'âge", pt:'Faixa etária', de:'Altersgruppe', ar:'الفئة العمرية', th:'ช่วงอายุ', id:'Kelompok usia', ru:'Возрастная группа', it:'Fascia d\'età', vi:'Nhóm tuổi' },
+    genderMale:{ ja:'男性', en:'Male', ko:'남성', 'zh-tw':'男性', 'zh-cn':'男性', es:'Hombre', fr:'Homme', pt:'Masculino', de:'Männlich', ar:'ذكر', th:'ชาย', id:'Pria', ru:'Мужской', it:'Uomo', vi:'Nam' },
+    genderFemale:{ ja:'女性', en:'Female', ko:'여성', 'zh-tw':'女性', 'zh-cn':'女性', es:'Mujer', fr:'Femme', pt:'Feminino', de:'Weiblich', ar:'أنثى', th:'หญิง', id:'Wanita', ru:'Женский', it:'Donna', vi:'Nữ' },
+    genderUnspecified:{ ja:'回答しない', en:'Prefer not to say', ko:'응답 안 함', 'zh-tw':'不透露', 'zh-cn':'不透露', es:'Prefiero no decirlo', fr:'Je préfère ne pas répondre', pt:'Prefiro não dizer', de:'Keine Angabe', ar:'أفضل عدم الإفصاح', th:'ไม่ระบุ', id:'Tidak ingin menjawab', ru:'Не указывать', it:'Preferisco non rispondere', vi:'Không muốn trả lời' },
+    age10s:{ ja:'10代', en:'Teens', ko:'10대', 'zh-tw':'10多歲', 'zh-cn':'10多岁', es:'Adolescente', fr:'Ado', pt:'Adolescente', de:'Teenager', ar:'المراهقون', th:'วัยรุ่น', id:'Remaja', ru:'Подросток', it:'Adolescente', vi:'Tuổi teen' },
+    age20s:{ ja:'20代', en:'20s', ko:'20대', 'zh-tw':'20多歲', 'zh-cn':'20多岁', es:'20 años', fr:'20 ans', pt:'20 anos', de:'20er', ar:'العشرينات', th:'วัย 20', id:'20-an', ru:'20 лет', it:'Anni 20', vi:'20 tuổi' },
+    age30s:{ ja:'30代', en:'30s', ko:'30대', 'zh-tw':'30多歲', 'zh-cn':'30多岁', es:'30 años', fr:'30 ans', pt:'30 anos', de:'30er', ar:'الثلاثينات', th:'วัย 30', id:'30-an', ru:'30 лет', it:'Anni 30', vi:'30 tuổi' },
+    age40s:{ ja:'40代', en:'40s', ko:'40대', 'zh-tw':'40多歲', 'zh-cn':'40多岁', es:'40 años', fr:'40 ans', pt:'40 anos', de:'40er', ar:'الأربعينات', th:'วัย 40', id:'40-an', ru:'40 лет', it:'Anni 40', vi:'40 tuổi' },
+    age50sPlus:{ ja:'50代以上', en:'50s+', ko:'50대 이상', 'zh-tw':'50歲以上', 'zh-cn':'50岁以上', es:'50+ años', fr:'50 ans et plus', pt:'50+ anos', de:'50+', ar:'50 فأكثر', th:'50 ปีขึ้นไป', id:'50-an ke atas', ru:'50 лет и старше', it:'50+ anni', vi:'50 tuổi trở lên' },
+    onboardStartBtn:{ ja:'はじめる', en:'Get started', ko:'시작하기', 'zh-tw':'開始使用', 'zh-cn':'开始使用', es:'Comenzar', fr:'Commencer', pt:'Começar', de:'Loslegen', ar:'ابدأ', th:'เริ่มต้น', id:'Mulai', ru:'Начать', it:'Inizia', vi:'Bắt đầu' },
+    contactPageTitle:{ ja:'📮 お問い合わせ', en:'📮 Contact us', ko:'📮 문의하기', 'zh-tw':'📮 聯絡我們', 'zh-cn':'📮 联系我们', es:'📮 Contáctanos', fr:'📮 Nous contacter', pt:'📮 Fale conosco', de:'📮 Kontakt', ar:'📮 اتصل بنا', th:'📮 ติดต่อเรา', id:'📮 Hubungi kami', ru:'📮 Связаться с нами', it:'📮 Contattaci', vi:'📮 Liên hệ' },
+    contactPageDesc:{ ja:'ご意見・不具合報告・提携のご相談などは、こちらからお送りください。', en:'Please send us your feedback, bug reports, or partnership inquiries here.', ko:'의견, 버그 신고, 제휴 문의 등은 이곳으로 보내주세요.', 'zh-tw':'意見、錯誤回報、合作洽詢等請由此傳送。', 'zh-cn':'意见、错误反馈、合作咨询等请由此发送。', es:'Envíanos tus comentarios, informes de errores o consultas de colaboración aquí.', fr:'Envoyez-nous vos commentaires, rapports de bugs ou demandes de partenariat ici.', pt:'Envie seus comentários, relatos de bugs ou consultas de parceria aqui.', de:'Sende uns hier dein Feedback, Fehlerberichte oder Partnerschaftsanfragen.', ar:'يرجى إرسال ملاحظاتك أو تقارير الأخطاء أو استفسارات الشراكة هنا.', th:'ส่งความคิดเห็น รายงานปัญหา หรือข้อเสนอความร่วมมือได้ที่นี่', id:'Kirimkan masukan, laporan bug, atau pertanyaan kerja sama di sini.', ru:'Отправьте нам отзывы, сообщения об ошибках или предложения о сотрудничестве здесь.', it:'Inviaci qui i tuoi commenti, segnalazioni di bug o richieste di collaborazione.', vi:'Vui lòng gửi phản hồi, báo lỗi hoặc đề nghị hợp tác tại đây.' },
+    contactTypeLabel:{ ja:'お問い合わせの種類', en:'Inquiry type', ko:'문의 유형', 'zh-tw':'諮詢類型', 'zh-cn':'咨询类型', es:'Tipo de consulta', fr:'Type de demande', pt:'Tipo de consulta', de:'Anfragetyp', ar:'نوع الاستفسار', th:'ประเภทการติดต่อ', id:'Jenis pertanyaan', ru:'Тип обращения', it:'Tipo di richiesta', vi:'Loại yêu cầu' },
+    contactNameLabel:{ ja:'お名前(任意)', en:'Name (optional)', ko:'이름(선택)', 'zh-tw':'姓名(選填)', 'zh-cn':'姓名(选填)', es:'Nombre (opcional)', fr:'Nom (facultatif)', pt:'Nome (opcional)', de:'Name (optional)', ar:'الاسم (اختياري)', th:'ชื่อ (ไม่บังคับ)', id:'Nama (opsional)', ru:'Имя (необязательно)', it:'Nome (facoltativo)', vi:'Tên (không bắt buộc)' },
+    contactMessageLabel:{ ja:'お問い合わせ内容', en:'Message', ko:'문의 내용', 'zh-tw':'諮詢內容', 'zh-cn':'咨询内容', es:'Mensaje', fr:'Message', pt:'Mensagem', de:'Nachricht', ar:'الرسالة', th:'ข้อความ', id:'Pesan', ru:'Сообщение', it:'Messaggio', vi:'Nội dung' },
+    contactSendBtn:{ ja:'送信する', en:'Send', ko:'보내기', 'zh-tw':'送出', 'zh-cn':'发送', es:'Enviar', fr:'Envoyer', pt:'Enviar', de:'Senden', ar:'إرسال', th:'ส่ง', id:'Kirim', ru:'Отправить', it:'Invia', vi:'Gửi' },
+    contactSentMessage:{ ja:'お問い合わせを送信しました。ありがとうございます。', en:'Your message has been sent. Thank you!', ko:'문의가 전송되었습니다. 감사합니다.', 'zh-tw':'已送出您的諮詢，謝謝。', 'zh-cn':'已发送您的咨询，谢谢。', es:'Tu mensaje ha sido enviado. ¡Gracias!', fr:'Votre message a été envoyé. Merci !', pt:'Sua mensagem foi enviada. Obrigado!', de:'Deine Nachricht wurde gesendet. Danke!', ar:'تم إرسال رسالتك. شكرًا لك!', th:'ส่งข้อความของคุณแล้ว ขอบคุณค่ะ/ครับ', id:'Pesan Anda telah terkirim. Terima kasih!', ru:'Ваше сообщение отправлено. Спасибо!', it:'Il tuo messaggio è stato inviato. Grazie!', vi:'Đã gửi tin nhắn của bạn. Cảm ơn!' },
+    contactCatCopyright:{ ja:'著作権について', en:'Copyright', ko:'저작권 관련', 'zh-tw':'關於著作權', 'zh-cn':'关于版权', es:'Derechos de autor', fr:'Droits d\'auteur', pt:'Direitos autorais', de:'Urheberrecht', ar:'حقوق النشر', th:'ลิขสิทธิ์', id:'Hak cipta', ru:'Авторские права', it:'Copyright', vi:'Bản quyền' },
+    contactCatTitleError:{ ja:'作品情報の誤り', en:'Incorrect title info', ko:'작품 정보 오류', 'zh-tw':'作品資訊錯誤', 'zh-cn':'作品信息错误', es:'Información incorrecta', fr:'Info incorrecte', pt:'Informação incorreta', de:'Falsche Titelinfo', ar:'معلومات خاطئة عن العمل', th:'ข้อมูลผลงานผิดพลาด', id:'Info judul salah', ru:'Неверная информация о тайтле', it:'Info titolo errata', vi:'Thông tin tựa phim sai' },
+    contactCatBug:{ ja:'不具合の報告', en:'Bug report', ko:'버그 신고', 'zh-tw':'錯誤回報', 'zh-cn':'错误反馈', es:'Reportar error', fr:'Signaler un bug', pt:'Reportar bug', de:'Fehler melden', ar:'الإبلاغ عن خطأ', th:'รายงานปัญหา', id:'Laporkan bug', ru:'Сообщить об ошибке', it:'Segnala un bug', vi:'Báo lỗi' },
+    contactCatTagError:{ ja:'あらすじ・タグの誤り', en:'Incorrect synopsis/tags', ko:'줄거리·태그 오류', 'zh-tw':'簡介・標籤錯誤', 'zh-cn':'简介・标签错误', es:'Sinopsis/etiquetas incorrectas', fr:'Synopsis/tags incorrects', pt:'Sinopse/tags incorretas', de:'Falsche Beschreibung/Tags', ar:'ملخص أو وسوم خاطئة', th:'เรื่องย่อ/แท็กผิดพลาด', id:'Sinopsis/tag salah', ru:'Неверное описание/теги', it:'Sinossi/tag errati', vi:'Tóm tắt/thẻ sai' },
+    contactCatFeatureRequest:{ ja:'機能のご要望', en:'Feature request', ko:'기능 요청', 'zh-tw':'功能建議', 'zh-cn':'功能建议', es:'Solicitud de función', fr:'Demande de fonctionnalité', pt:'Solicitação de recurso', de:'Funktionswunsch', ar:'طلب ميزة', th:'ขอฟีเจอร์ใหม่', id:'Permintaan fitur', ru:'Запрос функции', it:'Richiesta funzione', vi:'Đề xuất tính năng' },
+    contactCatAccount:{ ja:'アカウントについて', en:'Account issue', ko:'계정 관련', 'zh-tw':'關於帳號', 'zh-cn':'关于账户', es:'Problema de cuenta', fr:'Problème de compte', pt:'Problema de conta', de:'Kontoproblem', ar:'مشكلة في الحساب', th:'เกี่ยวกับบัญชี', id:'Masalah akun', ru:'Проблема с аккаунтом', it:'Problema account', vi:'Vấn đề tài khoản' },
+    contactCatOther:{ ja:'その他', en:'Other', ko:'기타', 'zh-tw':'其他', 'zh-cn':'其他', es:'Otro', fr:'Autre', pt:'Outro', de:'Sonstiges', ar:'أخرى', th:'อื่นๆ', id:'Lainnya', ru:'Другое', it:'Altro', vi:'Khác' },
+    valueGraphNotYetTitle:{ ja:'グラフはまだ作られていません', en:'No graph yet', ko:'아직 그래프가 없습니다', 'zh-tw':'尚未建立圖表', 'zh-cn':'尚未建立图表', es:'Aún no hay gráfico', fr:'Pas encore de graphique', pt:'Ainda não há gráfico', de:'Noch kein Diagramm', ar:'لا يوجد رسم بياني بعد', th:'ยังไม่มีกราฟ', id:'Belum ada grafik', ru:'Графика ещё нет', it:'Nessun grafico ancora', vi:'Chưa có biểu đồ' },
+    valueGraphNotYetDesc:{ ja:'レビューを1件書くとカードにグラフが入り、シェアできるようになります。', en:'Write one review to get a graph on your card that you can share.', ko:'리뷰를 1건 작성하면 카드에 그래프가 생기고 공유할 수 있어요.', 'zh-tw':'寫一則評論後，卡片就會出現圖表並可以分享。', 'zh-cn':'写一条评论后，卡片就会出现图表并可以分享。', es:'Escribe una reseña para tener un gráfico en tu tarjeta y compartirlo.', fr:'Rédigez un avis pour obtenir un graphique partageable sur votre carte.', pt:'Escreva uma avaliação para ter um gráfico no seu cartão e compartilhar.', de:'Schreibe eine Rezension, um ein teilbares Diagramm auf deiner Karte zu erhalten.', ar:'اكتب مراجعة واحدة للحصول على رسم بياني في بطاقتك يمكنك مشاركته.', th:'เขียนรีวิว 1 รายการเพื่อให้การ์ดมีกราฟและแชร์ได้', id:'Tulis satu ulasan agar kartu Anda memiliki grafik yang bisa dibagikan.', ru:'Напишите один отзыв, чтобы на карточке появился график для публикации.', it:'Scrivi una recensione per avere un grafico condivisibile sulla tua card.', vi:'Viết một đánh giá để có biểu đồ trên thẻ và chia sẻ được.' },
+    writeReviewBtn:{ ja:'レビューを書く', en:'Write a review', ko:'리뷰 작성하기', 'zh-tw':'撰寫評論', 'zh-cn':'撰写评论', es:'Escribir reseña', fr:'Rédiger un avis', pt:'Escrever avaliação', de:'Rezension schreiben', ar:'كتابة مراجعة', th:'เขียนรีวิว', id:'Tulis ulasan', ru:'Написать отзыв', it:'Scrivi una recensione', vi:'Viết đánh giá' },
+    preferenceTypeLabel:{ ja:'好みのタイプ', en:'Preference type', ko:'취향 유형', 'zh-tw':'喜好類型', 'zh-cn':'喜好类型', es:'Tipo de preferencia', fr:'Type de préférence', pt:'Tipo de preferência', de:'Präferenztyp', ar:'نوع التفضيل', th:'ประเภทที่ชอบ', id:'Tipe preferensi', ru:'Тип предпочтений', it:'Tipo di preferenza', vi:'Loại sở thích' },
+    similarTitlesLabel:{ ja:'好みに近い作品', en:'Titles that match your taste', ko:'취향에 가까운 작품', 'zh-tw':'符合喜好的作品', 'zh-cn':'符合喜好的作品', es:'Títulos afines a tu gusto', fr:'Titres proches de vos goûts', pt:'Títulos afins ao seu gosto', de:'Titel nach deinem Geschmack', ar:'أعمال قريبة من ذوقك', th:'ผลงานที่ใกล้เคียงรสนิยม', id:'Judul sesuai selera Anda', ru:'Тайтлы по вашему вкусу', it:'Titoli vicini ai tuoi gusti', vi:'Tựa phim hợp sở thích' },
+    officialBadge:{ ja:'公式', en:'Official', ko:'공식', 'zh-tw':'官方', 'zh-cn':'官方', es:'Oficial', fr:'Officiel', pt:'Oficial', de:'Offiziell', ar:'رسمي', th:'ทางการ', id:'Resmi', ru:'Официально', it:'Ufficiale', vi:'Chính thức' },
+    hotTopicBadge:{ ja:'🔥 話題', en:'🔥 Trending', ko:'🔥 화제', 'zh-tw':'🔥 話題', 'zh-cn':'🔥 话题', es:'🔥 Tendencia', fr:'🔥 Tendance', pt:'🔥 Em alta', de:'🔥 Im Trend', ar:'🔥 رائج', th:'🔥 กำลังฮิต', id:'🔥 Tren', ru:'🔥 В тренде', it:'🔥 Di tendenza', vi:'🔥 Xu hướng' },
+    sampleDisplayNote:{ ja:'※サンプル表示', en:'*Sample display', ko:'※ 샘플 표시', 'zh-tw':'※範例顯示', 'zh-cn':'※示例显示', es:'*Muestra de ejemplo', fr:'*Affichage exemple', pt:'*Exibição de exemplo', de:'*Beispielanzeige', ar:'* عرض توضيحي', th:'※ตัวอย่างการแสดงผล', id:'*Tampilan contoh', ru:'*Пример отображения', it:'*Visualizzazione di esempio', vi:'*Hiển thị mẫu' },
+    loadFailedGeneric:{ ja:'読み込みに失敗しました', en:'Failed to load', ko:'불러오기에 실패했습니다', 'zh-tw':'載入失敗', 'zh-cn':'加载失败', es:'Error al cargar', fr:'Échec du chargement', pt:'Falha ao carregar', de:'Laden fehlgeschlagen', ar:'فشل التحميل', th:'โหลดไม่สำเร็จ', id:'Gagal memuat', ru:'Не удалось загрузить', it:'Caricamento non riuscito', vi:'Tải không thành công' },
+    moreTitlesComingNote:{ ja:'作品が増えると表示されます', en:'This will appear as more titles are added', ko:'작품이 늘어나면 표시됩니다', 'zh-tw':'作品增加後會顯示', 'zh-cn':'作品增加后会显示', es:'Aparecerá cuando haya más títulos', fr:'Apparaîtra avec plus de titres', pt:'Aparecerá conforme mais títulos forem adicionados', de:'Erscheint, sobald mehr Titel hinzukommen', ar:'سيظهر عند إضافة المزيد من الأعمال', th:'จะแสดงเมื่อมีผลงานเพิ่มขึ้น', id:'Akan muncul saat judul bertambah', ru:'Появится по мере добавления тайтлов', it:'Apparirà con più titoli', vi:'Sẽ hiện khi có thêm tựa phim' },
     settingsHistorySub:{ ja:'コインの増減、ガチャの結果', en:'Coin changes and gacha results' },
     settingsHistoryTabCoin:{ ja:'コイン', en:'Coins' },
     settingsHistoryTabGacha:{ ja:'ガチャ', en:'Gacha' },
@@ -17485,10 +17558,6 @@
     questStep2Title: { ja:'SNSでシェアする', en:'Share on social media' },
     questStep2Body: { ja:'書いたレビューの共有カードを作って、外部に投稿します。', en:'Create the share card for your review and post it externally.' },
     questStep2Action: { ja:'シェアする', en:'Share' },
-    questCriteriaLabel: { ja:'上質と判定される条件', en:'Quality criteria' },
-    questCriteria1: { ja:'本文が120文字以上あること', en:'At least 120 characters of body text' },
-    questCriteria2: { ja:'価値観の投票を12軸すべて終えていること', en:'All 12 value axes voted' },
-    questCriteria3: { ja:'同じ作品への投稿が当日1件目であること', en:'First post for that title today' },
     questToGacha: { ja:'ガチャガチャへ', en:'Go to gacha' },
     coinShopDrawsSuffix: { ja:'回引けます', en:'draws available' },
     coinShopPacksHint: { ja:'ボーナス込みの枚数です', en:'Bonus included' },
@@ -17687,8 +17756,8 @@
     followingTitle: { ja:'フォロー中', en:'Following' },
     followersTitle: { ja:'フォロワー', en:'Followers' },
     followListEmpty:{ ja:'まだ誰もいません', en:'No one here yet' },
-    followBtn:      { ja:'フォローする', en:'Follow' },
-    followingBtn:   { ja:'フォロー中', en:'Following' },
+    followBtn:      { ja:'フォローする', en:'Follow', ko:'팔로우', 'zh-tw':'追蹤', 'zh-cn':'关注', es:'Seguir', fr:'Suivre', pt:'Seguir', de:'Folgen', ar:'متابعة', th:'ติดตาม', id:'Ikuti', ru:'Подписаться', it:'Segui', vi:'Theo dõi' },
+    followingBtn:   { ja:'フォロー中', en:'Following', ko:'팔로잉', 'zh-tw':'追蹤中', 'zh-cn':'已关注', es:'Siguiendo', fr:'Abonné', pt:'Seguindo', de:'Gefolgt', ar:'متابَع', th:'กำลังติดตาม', id:'Mengikuti', ru:'Подписан', it:'Seguito', vi:'Đang theo dõi' },
     showFriendsCountLabel: { ja:'友達の数を表示する', en:'Show friends count' },
     showFriendsCountDesc: { ja:'オフにすると、マイページに友達（相互フォロー）の人数を表示しません。', en:'When off, your friends (mutual follows) count is hidden from your profile.' },
     rankProgressTitle: { ja:'🏅 称号の道のり',en:'🏅 Rank Progress',ko:'🏅 칭호 진행도','zh-tw':'🏅 稱號之路','zh-cn':'🏅 称号之路',es:'🏅 Progreso de rango',fr:'🏅 Progression de rang',pt:'🏅 Progresso de patente',de:'🏅 Rang-Fortschritt',ar:'🏅 تقدم الرتبة',th:'🏅 เส้นทางยศ',id:'🏅 Progres peringkat',ru:'🏅 Прогресс звания',it:'🏅 Progressi di grado',vi:'🏅 Tiến trình danh hiệu' },
@@ -17706,6 +17775,9 @@
     popAxisPeriod: { ja:'期間',en:'Period',ko:'기간','zh-tw':'期間','zh-cn':'期间',es:'Periodo',fr:'Période',pt:'Período',de:'Zeitraum',ar:'الفترة',th:'ช่วงเวลา',id:'Periode',ru:'Период',it:'Periodo',vi:'Khoảng thời gian' },
     popAxisEra: { ja:'年代',en:'Era',ko:'연대','zh-tw':'年代','zh-cn':'年代',es:'Época',fr:'Époque',pt:'Época',de:'Ära',ar:'الحقبة',th:'ยุคสมัย',id:'Era',ru:'Эпоха',it:'Epoca',vi:'Thời kỳ' },
     popEraNone: { ja:'指定なし',en:'Any',ko:'지정 안 함','zh-tw':'不指定','zh-cn':'不指定',es:'Cualquiera',fr:'Toutes',pt:'Qualquer',de:'Beliebig',ar:'أي',th:'ไม่ระบุ',id:'Semua',ru:'Любая',it:'Qualsiasi',vi:'Bất kỳ' },
+    popEraRange: { ja:(a,b)=>`${a}〜${b}年`, en:(a,b)=>`${a}\u2013${b}`, ko:(a,b)=>`${a}~${b}년`, 'zh-tw':(a,b)=>`${a}〜${b}年`, 'zh-cn':(a,b)=>`${a}〜${b}年`, es:(a,b)=>`${a}\u2013${b}`, fr:(a,b)=>`${a}\u2013${b}`, pt:(a,b)=>`${a}\u2013${b}`, de:(a,b)=>`${a}\u2013${b}`, ar:(a,b)=>`${a}\u2013${b}`, th:(a,b)=>`${a}\u2013${b}`, id:(a,b)=>`${a}\u2013${b}`, ru:(a,b)=>`${a}\u2013${b}`, it:(a,b)=>`${a}\u2013${b}`, vi:(a,b)=>`${a}\u2013${b}` },
+    popEraFrom: { ja:(a)=>`${a}年〜`, en:(a)=>`${a}\u2013`, ko:(a)=>`${a}년~`, 'zh-tw':(a)=>`${a}年〜`, 'zh-cn':(a)=>`${a}年〜`, es:(a)=>`${a}\u2013`, fr:(a)=>`${a}\u2013`, pt:(a)=>`${a}\u2013`, de:(a)=>`${a}\u2013`, ar:(a)=>`${a}\u2013`, th:(a)=>`${a}\u2013`, id:(a)=>`${a}\u2013`, ru:(a)=>`${a}\u2013`, it:(a)=>`${a}\u2013`, vi:(a)=>`${a}\u2013` },
+    popEraTo: { ja:(b)=>`〜${b}年`, en:(b)=>`\u2013${b}`, ko:(b)=>`~${b}년`, 'zh-tw':(b)=>`〜${b}年`, 'zh-cn':(b)=>`〜${b}年`, es:(b)=>`\u2013${b}`, fr:(b)=>`\u2013${b}`, pt:(b)=>`\u2013${b}`, de:(b)=>`\u2013${b}`, ar:(b)=>`\u2013${b}`, th:(b)=>`\u2013${b}`, id:(b)=>`\u2013${b}`, ru:(b)=>`\u2013${b}`, it:(b)=>`\u2013${b}`, vi:(b)=>`\u2013${b}` },
     popSortGroupLabel: { ja:'並び順',en:'Sort',ko:'정렬','zh-tw':'排序','zh-cn':'排序',es:'Orden',fr:'Tri',pt:'Ordenar',de:'Sortierung',ar:'الترتيب',th:'จัดเรียง',id:'Urutkan',ru:'Сортировка',it:'Ordina',vi:'Sắp xếp' },
     popPeriodGroupLabel: { ja:'期間',en:'Period',ko:'기간','zh-tw':'期間','zh-cn':'期间',es:'Período',fr:'Période',pt:'Período',de:'Zeitraum',ar:'الفترة',th:'ช่วงเวลา',id:'Periode',ru:'Период',it:'Periodo',vi:'Khoảng thời gian' },
     popEraGroupLabel: { ja:'年代',en:'Decade',ko:'연대','zh-tw':'年代','zh-cn':'年代',es:'Década',fr:'Décennie',pt:'Década',de:'Jahrzehnt',ar:'العقد',th:'ทศวรรษ',id:'Dekade',ru:'Десятилетие',it:'Decennio',vi:'Thập kỷ' },
@@ -17943,6 +18015,11 @@
         else if(el.dataset.i18nHtml) el.innerHTML = val;
         else el.textContent = val;
       }
+    });
+    // アイコンのみのボタン等、見た目のテキストは無いが読み上げ用のaria-labelだけ翻訳したい場合
+    document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+      const val = t(el.dataset.i18nAria);
+      if(val && val !== el.dataset.i18nAria) el.setAttribute('aria-label', val);
     });
     // クッキーバナーの「詳細は◯◯をご覧ください」：中にプライバシーポリシーへのボタンを含むので、
     // 汎用のdata-i18n（textContentを丸ごと差し替える方式）だと中のボタンごと消えてしまうため、個別に組み立てる
@@ -18429,13 +18506,13 @@
   }
 
   const CONTACT_CATEGORIES = [
-    { id:'copyright', label:'著作権について' },
-    { id:'title', label:'作品情報の誤り' },
-    { id:'bug', label:'不具合の報告' },
-    { id:'tagError', label:'あらすじ・タグの誤り' },
-    { id:'featureRequest', label:'機能のご要望' },
-    { id:'account', label:'アカウントについて' },
-    { id:'other', label:'その他' },
+    { id:'copyright', get label() { return t('contactCatCopyright'); } },
+    { id:'title', get label() { return t('contactCatTitleError'); } },
+    { id:'bug', get label() { return t('contactCatBug'); } },
+    { id:'tagError', get label() { return t('contactCatTagError'); } },
+    { id:'featureRequest', get label() { return t('contactCatFeatureRequest'); } },
+    { id:'account', get label() { return t('contactCatAccount'); } },
+    { id:'other', get label() { return t('contactCatOther'); } },
   ];
   let _contactSelectedCategory = null;
   let _pendingContactPrefill = null; // 他の画面(アカウント復元等)から連携する時の下書き{category, message}
@@ -20734,7 +20811,7 @@
         : `<button type="button" class="rc-report-btn" data-review-id="${escapeHtml(rev.id||'')}" data-uid="${escapeHtml(userId||'')}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#eaa9a9;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('reportBtn'))}</button>
               <button type="button" class="rc-block-btn" data-uid="${escapeHtml(userId)}" style="display:flex;align-items:center;gap:9px;width:100%;height:36px;padding:0 11px;border:none;border-radius:8px;background:transparent;color:#b6c8bd;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">${escapeHtml(t('blockBtn'))}</button>`;
       const deleteBtnHtml = (_currentUser && userId) ? `<div style="margin-left:auto;margin-right:44px;position:relative;flex-shrink:0;">
-            <button type="button" class="rc-kebab-btn" aria-label="メニュー" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:transparent;color:#82968a;cursor:pointer;">
+            <button type="button" class="rc-kebab-btn" aria-label="メニュー" data-i18n-aria="ariaMenu" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:transparent;color:#82968a;cursor:pointer;">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
             </button>
             <div class="rc-kebab-menu" style="display:none;position:absolute;top:36px;right:-44px;z-index:20;width:148px;background:#22412f;border:1px solid rgba(255,255,255,.12);border-radius:11px;box-shadow:0 20px 44px -16px rgba(0,0,0,.85);padding:5px;">
@@ -20749,7 +20826,7 @@
       return `<div class="review-card-flip-wrap">
       <div class="review-card-flip-inner" id="rc-flip-${i}">
         <article class="review-card review-card-face review-card-front card-skin-${cardSkinId}${rev.quality?' is-quality':''}" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
-        <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="コメントを見る">
+        <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="コメントを見る" data-i18n-aria="ariaViewComment">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
         </button>
         <span class="rc-comment-label${hasComment?' has-comment':''}">${hasComment?'コメントあり':'コメントなし'}</span>
@@ -20771,7 +20848,7 @@
         </div>
         </article>
         <article class="review-card review-card-face review-card-back card-skin-${cardSkinId}${rev.quality?' is-quality':''}" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
-          <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="戻る">
+          <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="戻る" data-i18n-aria="ariaBack">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
           </button>
           <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank, cardBadgeSkinId)}</div>
@@ -21943,15 +22020,15 @@
     const ufield = document.getElementById('authUsernameField');
     document.getElementById('authError').textContent = '';
     if(mode === 'register') {
-      title.textContent = 'アカウントを作成';
-      btn.textContent = '作成する';
+      title.textContent = t('authCreateAccountTitle');
+      btn.textContent = t('authCreateBtn');
       ufield.style.display = '';
-      sw.innerHTML = `すでにアカウントをお持ちですか？<button onclick="showAuthModal('login')">ログイン</button>`;
+      sw.innerHTML = `${escapeHtml(t('authHaveAccount'))}<button onclick="showAuthModal('login')">${escapeHtml(t('authLoginTitle'))}</button>`;
     } else {
-      title.textContent = 'ログイン';
-      btn.textContent = 'ログイン';
+      title.textContent = t('authLoginTitle');
+      btn.textContent = t('authLoginTitle');
       ufield.style.display = 'none';
-      sw.innerHTML = `アカウントがない方は<button onclick="showAuthModal('register')">新規登録</button>`;
+      sw.innerHTML = `${escapeHtml(t('authNoAccount'))}<button onclick="showAuthModal('register')">${escapeHtml(t('authRegisterBtn'))}</button>`;
     }
     document.getElementById('authOverlay').style.display = 'flex';
   }
@@ -22500,8 +22577,8 @@
       return `<div>
         ${renderAnimeCard(cardItem, { style:'g', showReviewCount:false, showRecruitBadge:false })}
         <div class="mypage-fav-status-row">
-          <button class="mypage-fav-status-btn${!isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','want_to_watch')">気になる</button>
-          <button class="mypage-fav-status-btn${isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','watched')">視聴済み</button>
+          <button class="mypage-fav-status-btn${!isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','want_to_watch')">${escapeHtml(t('favStatusWantToWatch'))}</button>
+          <button class="mypage-fav-status-btn${isWatched?' active':''}" onclick="toggleFavoriteStatus('${f.anime_id}','watched')">${escapeHtml(t('favStatusWatched'))}</button>
         </div>
       </div>`;
     }).join('');
@@ -22979,8 +23056,6 @@
       </div>`;
     }).join('');
 
-    const criteria = [t('questCriteria1'), t('questCriteria2'), t('questCriteria3')];
-
     el.innerHTML = `
       <div class="dq-head">
         <div class="dq-head-copy">
@@ -23027,16 +23102,6 @@
       <div class="dq-steps">
         <span class="dq-section-label" data-i18n="questStepsLabel">達成のしかた</span>
         <div class="dq-steps-list">${stepsHtml}</div>
-      </div>
-
-      <div class="dq-criteria">
-        <span class="dq-section-label" data-i18n="questCriteriaLabel">上質と判定される条件</span>
-        <div class="dq-criteria-list">
-          ${criteria.map(c => `<span class="dq-criteria-item">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5cc98e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
-            ${escapeHtml(c)}
-          </span>`).join('')}
-        </div>
       </div>
 
       <button type="button" class="dq-gacha-link" onclick="nav('gacha')" data-i18n="questToGacha">ガチャガチャへ</button>
@@ -23120,7 +23185,7 @@
         <span class="cs-pack-price">¥${p.priceJpy.toLocaleString()}</span>
       </button>`).join('');
     grid.querySelectorAll('.coin-pack-card').forEach(btn => {
-      btn.onclick = () => alert('決済システムは準備中です。もうしばらくお待ちください。');
+      btn.onclick = () => alert(t('paymentComingSoonAlert'));
     });
   }
   async function renderCoinShopPage() {
