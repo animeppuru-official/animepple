@@ -5354,12 +5354,7 @@
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">ユーザーから投稿されたポスター画像。承認するとその作品のページに反映されます。</p>
       <div id="adminImageSubmissionsList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
     </div>
-    <!-- 退会予約中・退会済みアカウント -->
-    <div class="admin-section">
-      <h3 class="admin-section-title">🗑️ 退会予約中のアカウント</h3>
-      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">本人が削除ボタンを押した後、猶予期間中のアカウント一覧。まだ実データは消えていません。</p>
-      <div id="adminPendingDeletionList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
-    </div>
+    <!-- 退会済みアカウント -->
     <div class="admin-section">
       <h3 class="admin-section-title">📦 退会済みアカウントのバックアップ</h3>
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">実際にデータを消す前に取ったバックアップ一覧。本人から「データを返してほしい」と連絡があった時に、ここから中身を確認できます。</p>
@@ -6561,27 +6556,6 @@
       async signOut() {
         if(!sb) return;
         await sb.auth.signOut();
-      },
-      // アカウント削除：即座に消すのではなく「削除予約」にする。
-      // profiles.pending_deletion_at に「いつ消えるか」の日時を入れてサインアウトするだけ。
-      // 実際のデータ削除・認証情報の削除は、猶予期間が過ぎた後にサーバー側のEdge Function
-      // (定期実行)が行う。猶予期間中に再ログインすれば restoreAccount() で予約を取り消せる。
-      // 必要カラム（Supabase側で作成）：alter table profiles add column if not exists pending_deletion_at timestamptz;
-      async scheduleAccountDeletion(userId, graceDays) {
-        if(!sb || !userId) return { error: 'invalid' };
-        const deleteAt = new Date(Date.now() + (graceDays || 30) * 86400000).toISOString();
-        const { error } = await sb.from('profiles').update({ pending_deletion_at: deleteAt }).eq('id', userId);
-        return { error, deleteAt };
-      },
-      async getPendingDeletion(userId) {
-        if(!sb || !userId) return null;
-        const { data } = await sb.from('profiles').select('pending_deletion_at').eq('id', userId).maybeSingle();
-        return data?.pending_deletion_at || null;
-      },
-      async restoreAccount(userId) {
-        if(!sb || !userId) return { error: 'invalid' };
-        const { error } = await sb.from('profiles').update({ pending_deletion_at: null }).eq('id', userId);
-        return { error };
       },
       // 管理者用：deleted_account_archivesのスナップショットを、指定した「新しいuser_id」に付け替えて復元する。
       // 退会前のuser_idはもう存在しない(auth.usersから消えている)ので、必ず今実在するuser_idを指定すること。
@@ -17293,13 +17267,11 @@
     settingsLanguageLabel:{ ja:'表示言語', en:'Display language' },
     settingsChangeLanguageBtn:{ ja:'言語を変更', en:'Change language' },
     settingsPrivacyPolicyLink:{ ja:'プライバシーポリシー', en:'Privacy policy' },
-    settingsDeleteAccountDesc:{ ja:'アカウントを削除すると、レビュー・お気に入り・掲示板投稿など、すべてのデータが削除されます。削除予約から30日間はログインすればいつでも元に戻せます。30日を過ぎると完全に削除され、二度と復元できません。', en:'Deleting your account removes all your data, including reviews, favorites, and board posts. You can restore it anytime within 30 days by logging in. After 30 days, it is permanently deleted and cannot be recovered.' },
+    settingsDeleteAccountDesc:{ ja:'アカウントを削除すると、レビュー・お気に入り・掲示板投稿など、すべてのデータがすぐに削除されます。この操作は取り消せません。', en:'Deleting your account immediately removes all your data, including reviews, favorites, and board posts. This cannot be undone.' },
     settingsDeleteAccountBtn:{ ja:'アカウントを削除する', en:'Delete account' },
-    settingsDeleteAccountConfirm:{ ja:'アカウントを削除しますか？{n}日間はログインすれば元に戻せます。{n}日経つと自動的に完全に削除され、元に戻せなくなります。', en:'Delete your account? You can restore it by logging in within {n} days. After {n} days it will be permanently and irreversibly deleted.' },
+    settingsDeleteAccountConfirm:{ ja:'本当にアカウントを削除しますか？レビュー・お気に入り・掲示板の投稿など、すべてのデータがすぐに削除され、元に戻せません。', en:'Are you sure you want to delete your account? All your data, including reviews, favorites, and board posts, will be deleted immediately and cannot be undone.' },
     settingsDeleteAccountInProgress:{ ja:'処理しています…', en:'Processing…' },
-    settingsDeleteAccountScheduledAlert:{ ja:'アカウントの削除を予約しました。{n}日以内にログインすれば元に戻せます。', en:'Account deletion scheduled. Log in within {n} days to restore it.' },
-    accountPendingDeletionConfirm:{ ja:'このアカウントは削除予定です（あと{n}日）。ログインしたので、削除をキャンセルして元に戻しますか？', en:'This account is scheduled for deletion ({n} days left). Would you like to cancel the deletion since you logged in?' },
-    accountRestoredAlert:{ ja:'アカウントを復元しました', en:'Your account has been restored' },
+    settingsDeleteAccountDone:{ ja:'アカウントを削除しました。ご利用ありがとうございました。', en:'Your account has been deleted. Thank you for using Animepple.' },
     accountRestoreTitle:{ ja:'アカウントを復元する', en:'Restore your account' },
     accountRestoreDesc:{ ja:'以前使っていたアカウントのメールアドレスを送ると、運営が確認のうえデータを復元します。', en:'Send us the email address of your previous account, and we will verify and restore your data.' },
     accountRestoreSubmitBtn:{ ja:'復元をリクエストする', en:'Request restoration' },
@@ -19665,25 +19637,9 @@
   window.partnerLogin = partnerLogin;
   document.getElementById('partnerKeyInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') partnerLogin(); });
 
-  // 退会予約中(まだ猶予期間内)のアカウント一覧。管理者が手動で「今すぐ処理」できるようにしておく
-  // （本来は猶予期間が過ぎたら自動でEdge Function等が処理する想定だが、それが用意できるまでの代替手段）
+  // 退会済みアカウントのバックアップ一覧を読み込む
   async function loadAdminAccountDeletionData() {
-    const pendingEl = document.getElementById('adminPendingDeletionList');
     const archiveEl = document.getElementById('adminDeletedArchiveList');
-    if(pendingEl && sb) {
-      const { data } = await sb.from('profiles').select('id,username,pending_deletion_at').not('pending_deletion_at', 'is', null).order('pending_deletion_at', { ascending: true });
-      const rows = data || [];
-      pendingEl.innerHTML = rows.length ? rows.map(r => {
-        const deleteAt = new Date(r.pending_deletion_at);
-        const daysLeft = Math.ceil((deleteAt.getTime() - Date.now()) / 86400000);
-        const overdue = daysLeft <= 0;
-        return `<div class="admin-row">
-          <span>${escapeHtml(r.username||'(ユーザー名なし)')} <span style="color:var(--muted);font-size:.7rem;">${escapeHtml(r.id)}</span></span>
-          <span class="admin-badge" style="${overdue?'background:rgba(232,74,74,.15);color:#f0a3a3;':''}">${overdue ? '猶予期間終了・処理待ち' : `あと${daysLeft}日`}</span>
-          <button type="button" class="mypage-btn-secondary" style="height:30px;padding:0 10px;font-size:11px;" onclick="adminProcessAccountDeletion('${escapeHtml(r.id)}')">今すぐ削除処理する</button>
-        </div>`;
-      }).join('') : '<p style="font-size:.78rem;color:var(--muted);">退会予約中のアカウントはありません</p>';
-    }
     if(archiveEl && sb) {
       const { data } = await sb.from('deleted_account_archives').select('id,user_id,email,deleted_at').order('deleted_at', { ascending: false }).limit(30);
       const rows = data || [];
@@ -19695,13 +19651,6 @@
         </div>`).join('') : '<p style="font-size:.78rem;color:var(--muted);">バックアップはまだありません</p>';
     }
   }
-  window.adminProcessAccountDeletion = async function(userId) {
-    if(!confirm('このアカウントのデータを今すぐバックアップを取ってから完全に削除します。よろしいですか？')) return;
-    const { error } = await db.auth.deleteAccountData(userId);
-    if(error) { alert('一部失敗しました。コンソールを確認してください。'); console.warn(error); }
-    else alert('削除・バックアップが完了しました');
-    loadAdminAccountDeletionData();
-  };
   window.adminViewDeletedArchive = async function(archiveId) {
     const { data } = await sb.from('deleted_account_archives').select('*').eq('id', archiveId).maybeSingle();
     if(!data) { alert('見つかりませんでした'); return; }
@@ -21206,20 +21155,6 @@
   }
   window.enablePushNotifications = enablePushNotifications;
 
-  // ログイン時、削除予約中(まだ猶予期間内)のアカウントなら復元するか聞く
-  async function checkPendingAccountDeletion() {
-    if(!_currentUser) return;
-    const pendingAt = await db.auth.getPendingDeletion(_currentUser.id).catch(() => null);
-    if(!pendingAt) return;
-    const deleteDate = new Date(pendingAt);
-    if(deleteDate.getTime() <= Date.now()) return; // 既に猶予期間を過ぎている＝もうすぐサーバー側で消える対象。ここでは何もしない
-    const daysLeft = Math.max(1, Math.ceil((deleteDate.getTime() - Date.now()) / 86400000));
-    if(confirm(t('accountPendingDeletionConfirm').replace('{n}', daysLeft))) {
-      await db.auth.restoreAccount(_currentUser.id);
-      alert(t('accountRestoredAlert'));
-    }
-  }
-
   async function ensureLoggedInUsername() {
     if(!_currentUser || !sb) { window._loggedInUsername = null; window._loggedInAvatarUrl = null; renderHeaderAvatar(); return; }
     const profile = await db.profiles.get(_currentUser.id);
@@ -21253,21 +21188,33 @@
   }
   window.renderHeaderAvatar = renderHeaderAvatar;
 
-  const ACCOUNT_DELETE_GRACE_DAYS = 30;
   document.getElementById('settingsDeleteAccountBtn')?.addEventListener('click', async () => {
-    if(!_currentUser) return;
-    if(!confirm(t('settingsDeleteAccountConfirm').replace('{n}', ACCOUNT_DELETE_GRACE_DAYS))) return;
+    if(!_currentUser || !sb) return;
+    if(!confirm(t('settingsDeleteAccountConfirm'))) return;
     const btn = document.getElementById('settingsDeleteAccountBtn');
     btn.disabled = true;
     btn.textContent = t('settingsDeleteAccountInProgress');
-    const { error } = await db.auth.scheduleAccountDeletion(_currentUser.id, ACCOUNT_DELETE_GRACE_DAYS);
-    if(error) { alert(t('profileSaveFailedAlert')); btn.disabled = false; btn.textContent = t('settingsDeleteAccountBtn'); return; }
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.error || 'failed');
+    } catch(e) {
+      console.warn('delete-account failed:', e);
+      alert(t('profileSaveFailedAlert'));
+      btn.disabled = false;
+      btn.textContent = t('settingsDeleteAccountBtn');
+      return;
+    }
     await db.auth.signOut();
     _currentUser = null;
     window._loggedInUsername = null;
     window._loggedInAvatarUrl = null;
     renderHeaderAvatar();
-    alert(t('settingsDeleteAccountScheduledAlert').replace('{n}', ACCOUNT_DELETE_GRACE_DAYS));
+    alert(t('settingsDeleteAccountDone'));
     nav('home');
   });
 
@@ -21338,13 +21285,12 @@
       startFriendRequestWatch();
       updateCoinBadge();
       await applyMyEquippedCustomization();
-      checkPendingAccountDeletion();
     }
     // yourValueHeaderBtn は常時表示（Design案通り）
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); checkPendingAccountDeletion(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
