@@ -19682,9 +19682,13 @@
       const newUserId = document.getElementById('adminRestoreTargetUid').value.trim();
       if(!newUserId) return;
       if(!confirm(`ユーザーID ${newUserId} にこのバックアップを復元します。よろしいですか？`)) return;
-      const { error } = await db.auth.restoreArchivedAccount(data.id, newUserId);
-      if(error) { alert('一部失敗しました。コンソールを確認してください。'); console.warn(error); }
-      else alert('復元が完了しました');
+      const { data: res, error } = await sb.functions.invoke('restore-account', { body: { archiveId: data.id, newUserId } });
+      if(error || res?.error || (res?.errors && res.errors.length)) {
+        alert('一部失敗しました。コンソールを確認してください。');
+        console.warn(error || res?.error || res?.errors);
+      } else {
+        alert('復元が完了しました');
+      }
     };
   });
 
