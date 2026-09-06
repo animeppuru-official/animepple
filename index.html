@@ -22481,6 +22481,9 @@
       el.innerHTML = `<p style="padding:2rem;text-align:center;color:var(--muted,#9ab);font-size:.85rem;">${escapeHtml(t('loginRequired'))}</p>`;
       return;
     }
+    // 起動シーケンスのタイミング次第でapplyMyEquippedCustomizationがまだ終わっていない場合があるため、
+    // DM画面を開くたびにここでも自分のテーマを確実に反映させる（二重に呼んでも副作用はない）
+    await applyMyEquippedCustomization();
     const [status, profile] = await Promise.all([
       db.friendRequests.getStatus(_currentUser.id, otherUserId).catch(()=>'none'),
       db.profiles.get(otherUserId).catch(()=>null),
