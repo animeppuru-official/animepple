@@ -23397,6 +23397,16 @@
   // スクリプト冒頭ではなく最後に置くのは、ここで参照する変数（_currentUser等）の
   // let宣言がスクリプトの後半にあり、早い段階で呼ぶとTDZ（一時的なデッドゾーン）エラーになるため
   (async function bootRouteFromUrl() {
+    // #admin / #partner という昔ながらのハッシュ入りリンクも、通常のパスと同じ扱いで開けるようにする。
+    // （以前はスクリプトの早い段階でnav()を呼んでいたため、まだ宣言前の変数を参照してしまい
+    // 　TDZエラーでスクリプト全体が止まる原因になっていた。ここまで来れば全部宣言済みなので安全）
+    if(location.hash === '#admin' || location.hash === '#partner') {
+      const hashPage = location.hash.slice(1);
+      history.replaceState(null, '', location.pathname + location.search);
+      await _initAuthPromise.catch(()=>{});
+      nav(hashPage);
+      return;
+    }
     const route = parseRouteFromPath(location.pathname);
     // 重要：このIIFEは「本当に外部から新規着地した時」だけでなく、
     // スマホブラウザがメモリ節約のため戻る/進むボタンで裏側のページを丸ごと再読み込みした時にも
