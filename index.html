@@ -20588,9 +20588,10 @@
     initAdminPage();
   }
 
-  // URL hashで管理者ページへ
-  if(location.hash === '#admin') nav('admin');
-  if(location.hash === '#partner') nav('partner');
+  // 「#admin」「#partner」というURLハッシュへの対応は、まだ宣言されていない変数(let)を
+  // 参照する関数を、その宣言より前のタイミングで呼んでしまいTDZエラーでスクリプト全体が
+  // 停止する原因になっていたため削除。/admin, /partnerは通常のパスルーティング
+  // （bootRouteFromUrl）で既に開けるので、この特別扱いは元々不要だった。
 
   window.adminLogout = adminLogout;
   window.initAdminPage = initAdminPage;
