@@ -6577,7 +6577,10 @@
       //    （実行するとそのメール宛てに確認リンクが送られ、それを踏むまでは有効にならない）
       async linkBackupEmail(email) {
         if(!sb || !email) return { error: 'invalid' };
-        const { error } = await sb.auth.updateUser({ email });
+        const { error } = await sb.auth.updateUser(
+          { email },
+          { emailRedirectTo: 'https://animeppuru-official.github.io/animepple/' },
+        );
         return { error };
       },
       // ② sendMagicLink：ログイン画面から、そのメール宛てにログイン用リンクを送る
