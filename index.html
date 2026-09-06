@@ -4817,6 +4817,13 @@
       </div>
     </div>
     <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
+      <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .3rem;" data-i18n="backupEmailTitle">バックアップログイン用のメール</p>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .7rem;" data-i18n="backupEmailDesc">Googleアカウントが使えなくなった時のために、Googleとは別のメールアドレスを登録しておけます。登録すると、そのメール宛てにログイン用リンクが届き、ログインするとこのアカウントに入れます。今のGoogleログインには影響しません。</p>
+      <input id="backupEmailInput" type="email" placeholder="バックアップ用のメールアドレス" style="width:100%;height:42px;padding:0 14px;margin-bottom:.6rem;border-radius:10px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;">
+      <button class="mypage-btn-secondary" id="backupEmailSubmitBtn" data-i18n="backupEmailSubmitBtn">このメールを登録する</button>
+      <p id="backupEmailMsg" style="font-size:.72rem;margin:.5rem 0 0;"></p>
+    </div>
+    <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
       <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .3rem;" data-i18n="accountRestoreTitle">アカウントを復元する</p>
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .7rem;" data-i18n="accountRestoreDesc">以前使っていたアカウントのメールアドレスを送ると、運営が確認のうえデータを復元します。</p>
       <input id="accountRestoreEmail" type="email" placeholder="example@gmail.com" style="width:100%;height:42px;padding:0 14px;margin-bottom:.6rem;border-radius:10px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;">
@@ -6308,6 +6315,13 @@
         <span data-i18n="btnGoogleLogin">Googleでログイン / 新規登録</span>
       </button>
       <p class="auth-error" id="authError"></p>
+      <button type="button" id="magicLinkToggleBtn" onclick="document.getElementById('magicLinkSection').style.display='';magicLinkToggleBtn.style.display='none';" style="background:none;border:none;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;margin-top:4px;" data-i18n="magicLinkToggleBtn">Googleが使えない場合はこちら</button>
+      <div id="magicLinkSection" style="display:none;margin-top:8px;">
+        <p style="font-size:.72rem;color:var(--muted);margin:0 0 .5rem;" data-i18n="magicLinkDesc">設定であらかじめ登録しておいたバックアップ用メールアドレスを入力すると、ログイン用のリンクが届きます。</p>
+        <input id="magicLinkEmail" type="email" placeholder="バックアップ用のメールアドレス" style="width:100%;height:40px;padding:0 12px;margin-bottom:.5rem;border-radius:9px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;box-sizing:border-box;">
+        <button class="mypage-btn-secondary" id="magicLinkSendBtn" style="width:100%;" data-i18n="magicLinkSendBtn">ログイン用リンクを送る</button>
+        <p id="magicLinkMsg" style="font-size:.72rem;margin:.5rem 0 0;"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -6556,6 +6570,24 @@
       async signOut() {
         if(!sb) return;
         await sb.auth.signOut();
+      },
+      // Googleが凍結された時のためのバックアップ手段。パスワードは使わず、
+      // メールに送られるリンクを踏むだけでログインできる「マジックリンク」方式。
+      // ① linkBackupEmail：今ログイン中のアカウントに、バックアップ用の別メールを紐付ける
+      //    （実行するとそのメール宛てに確認リンクが送られ、それを踏むまでは有効にならない）
+      async linkBackupEmail(email) {
+        if(!sb || !email) return { error: 'invalid' };
+        const { error } = await sb.auth.updateUser({ email });
+        return { error };
+      },
+      // ② sendMagicLink：ログイン画面から、そのメール宛てにログイン用リンクを送る
+      async sendMagicLink(email) {
+        if(!sb || !email) return { error: 'invalid' };
+        const { error } = await sb.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: 'https://animeppuru-official.github.io/animepple/' },
+        });
+        return { error };
       },
       // 管理者用：deleted_account_archivesのスナップショットを、指定した「新しいuser_id」に付け替えて復元する。
       // 退会前のuser_idはもう存在しない(auth.usersから消えている)ので、必ず今実在するuser_idを指定すること。
@@ -17276,6 +17308,17 @@
     accountRestoreDesc:{ ja:'以前使っていたアカウントのメールアドレスを送ると、運営が確認のうえデータを復元します。', en:'Send us the email address of your previous account, and we will verify and restore your data.' },
     accountRestoreSubmitBtn:{ ja:'復元をリクエストする', en:'Request restoration' },
     accountRestoreInvalidEmail:{ ja:'正しいメールアドレスを入力してください', en:'Please enter a valid email address' },
+    backupEmailTitle:{ ja:'バックアップログイン用のメール', en:'Backup login email' },
+    backupEmailDesc:{ ja:'Googleアカウントが使えなくなった時のために、Googleとは別のメールアドレスを登録しておけます。登録すると、そのメール宛てにログイン用リンクが届き、ログインするとこのアカウントに入れます。今のGoogleログインには影響しません。', en:'Register an email address separate from Google in case your Google account becomes unavailable. A login link will be sent to it, and using it logs you into this same account. Your current Google login is unaffected.' },
+    backupEmailSubmitBtn:{ ja:'このメールを登録する', en:'Register this email' },
+    backupEmailSent:{ ja:'確認メールを送りました。メール内のリンクを開いて登録を完了してください。', en:'A confirmation email has been sent. Open the link in it to finish registering.' },
+    backupEmailFailed:{ ja:'登録に失敗しました', en:'Failed to register' },
+    magicLinkToggleBtn:{ ja:'Googleが使えない場合はこちら', en:"Can't use Google? Click here" },
+    magicLinkDesc:{ ja:'設定であらかじめ登録しておいたバックアップ用メールアドレスを入力すると、ログイン用のリンクが届きます。', en:'Enter the backup email you registered in advance, and a login link will be sent to it.' },
+    magicLinkSendBtn:{ ja:'ログイン用リンクを送る', en:'Send login link' },
+    magicLinkSent:{ ja:'ログイン用リンクを送りました。メールを確認してください。', en:'A login link has been sent. Please check your email.' },
+    magicLinkFailed:{ ja:'送信に失敗しました', en:'Failed to send' },
+    accountRestoreEmailMismatch:{ ja:'今ログイン中のメールアドレスと一致しません。復元したいメールアドレスで一度ログインし直してから、もう一度お試しください。', en:'This does not match your currently logged-in email. Please log in with the email you want to restore, then try again.' },
     accountRestoreMessageTemplate:{ ja:'アカウント復元リクエスト: {email}', en:'Account restore request: {email}' },
     deletedUserLabel:{ ja:'削除済みユーザー', en:'Deleted user' },
     deletedUserPostBody:{ ja:'[このユーザーは退会しました]', en:'[This user has deleted their account]' },
@@ -19668,28 +19711,34 @@
     const resultEl = document.getElementById('adminRestoreResult');
     if(!email) return;
     resultEl.innerHTML = '<p style="font-size:.78rem;color:var(--muted);">検索中…</p>';
-    const { data } = await sb.from('deleted_account_archives').select('*').eq('email', email).order('deleted_at', { ascending: false }).limit(1).maybeSingle();
-    if(!data) { resultEl.innerHTML = '<p style="font-size:.78rem;color:#eaa9a9;">このメールアドレスのバックアップは見つかりませんでした</p>'; return; }
-    const counts = Object.entries(data.snapshot || {}).map(([k,v]) => `${k}: ${Array.isArray(v)?v.length:0}件`).join(' / ');
-    resultEl.innerHTML = `
-      <div style="border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.7rem;font-size:.75rem;color:#dfeae3;">
-        <p style="margin:0 0 .4rem;">退会日: ${new Date(data.deleted_at).toLocaleString('ja-JP')}</p>
+    // 同じメールで複数回退会している場合、古いバックアップも埋もれず全部出す
+    const { data: list } = await sb.from('deleted_account_archives').select('*').eq('email', email).order('deleted_at', { ascending: false });
+    if(!list || !list.length) { resultEl.innerHTML = '<p style="font-size:.78rem;color:#eaa9a9;">このメールアドレスのバックアップは見つかりませんでした</p>'; return; }
+    resultEl.innerHTML = list.map((data, i) => {
+      const counts = Object.entries(data.snapshot || {}).map(([k,v]) => `${k}: ${Array.isArray(v)?v.length:0}件`).join(' / ');
+      return `
+      <div style="border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.7rem;font-size:.75rem;color:#dfeae3;margin-bottom:.6rem;">
+        <p style="margin:0 0 .4rem;">退会日: ${new Date(data.deleted_at).toLocaleString('ja-JP')}${list.length>1?`（${list.length}件中${i+1}件目・新しい順）`:''}</p>
         <p style="margin:0 0 .6rem;color:var(--muted);">${escapeHtml(counts)}</p>
-        <input id="adminRestoreTargetUid" type="text" placeholder="復元先の新しいユーザーID(UUID)" style="width:100%;height:34px;padding:0 10px;margin-bottom:.5rem;border-radius:8px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font-size:12px;">
-        <button type="button" class="mypage-btn-secondary" id="adminRestoreConfirmBtn" style="height:32px;padding:0 12px;font-size:12px;">このユーザーIDに復元する</button>
+        <input id="adminRestoreTargetUid-${data.id}" type="text" placeholder="復元先の新しいユーザーID(UUID)" style="width:100%;height:34px;padding:0 10px;margin-bottom:.5rem;border-radius:8px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font-size:12px;">
+        <button type="button" class="mypage-btn-secondary admin-restore-confirm-btn" data-archive-id="${data.id}" style="height:32px;padding:0 12px;font-size:12px;">このユーザーIDに復元する</button>
       </div>`;
-    document.getElementById('adminRestoreConfirmBtn').onclick = async () => {
-      const newUserId = document.getElementById('adminRestoreTargetUid').value.trim();
-      if(!newUserId) return;
-      if(!confirm(`ユーザーID ${newUserId} にこのバックアップを復元します。よろしいですか？`)) return;
-      const { data: res, error } = await sb.functions.invoke('restore-account', { body: { archiveId: data.id, newUserId } });
-      if(error || res?.error || (res?.errors && res.errors.length)) {
-        alert('一部失敗しました。コンソールを確認してください。');
-        console.warn(error || res?.error || res?.errors);
-      } else {
-        alert('復元が完了しました');
-      }
-    };
+    }).join('');
+    resultEl.querySelectorAll('.admin-restore-confirm-btn').forEach(btn => {
+      btn.onclick = async () => {
+        const archiveId = Number(btn.dataset.archiveId);
+        const newUserId = document.getElementById(`adminRestoreTargetUid-${archiveId}`).value.trim();
+        if(!newUserId) return;
+        if(!confirm(`ユーザーID ${newUserId} にこのバックアップを復元します。よろしいですか？`)) return;
+        const { data: res, error } = await sb.functions.invoke('restore-account', { body: { archiveId, newUserId } });
+        if(error || res?.error || (res?.errors && res.errors.length)) {
+          alert('一部失敗しました。コンソールを確認してください。');
+          console.warn(error || res?.error || res?.errors);
+        } else {
+          alert('復元が完了しました');
+        }
+      };
+    });
   });
 
   async function initAdminPage() {
@@ -20150,7 +20199,14 @@
       if(!filtered.length) { el.innerHTML = `<p style="font-size:.78rem;color:var(--muted);">お問い合わせはまだありません。</p>`; return; }
       const sorted = [...filtered].sort((a,b)=> (a.is_read === b.is_read) ? 0 : (a.is_read ? 1 : -1));
       const catLabel = id => (ADMIN_CONTACT_CATEGORIES.find(c=>c.id===id) || {}).label || id;
-      el.innerHTML = sorted.map(m => `
+      // 復元リクエストのメッセージから、メールアドレスと復元先ユーザーIDを自動で抜き出す
+      const RESTORE_EMAIL_RE = /アカウント復元リクエスト:\s*(\S+@\S+)/;
+      const RESTORE_UID_RE = /復元先\(今ログイン中\)のユーザーID:\s*([0-9a-fA-F-]{36})/;
+      el.innerHTML = sorted.map(m => {
+        const emailMatch = m.message.match(RESTORE_EMAIL_RE);
+        const uidMatch = m.message.match(RESTORE_UID_RE);
+        const isRestoreRequest = !!emailMatch;
+        return `
         <div style="border:1px solid ${m.is_read?'var(--line,#2a3830)':'rgba(94,201,122,.4)'};background:${m.is_read?'transparent':'rgba(94,201,122,.06)'};border-radius:10px;padding:10px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
             <span style="font-size:.78rem;font-weight:800;color:#dfeae3;">${escapeHtml(m.name || '匿名')}${m.is_read?'':' <span style="color:#8fe5ab;">・未読</span>'}</span>
@@ -20158,14 +20214,55 @@
           </div>
           <span style="display:inline-block;font-size:.66rem;font-weight:800;color:#e8c463;background:rgba(217,164,65,.14);border-radius:5px;padding:1px 6px;margin-bottom:6px;">${escapeHtml(catLabel(m.category))}</span>
           <p style="font-size:.8rem;color:#c3d4c9;white-space:pre-wrap;margin:0 0 8px;">${escapeHtml(m.message)}</p>
-          ${m.is_read ? '' : `<button type="button" class="admin-contact-read-btn" data-id="${m.id}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line,#2a3830);background:transparent;color:var(--muted);font-size:.7rem;cursor:pointer;">既読にする</button>`}
+          ${m.is_read ? '' : `<button type="button" class="admin-contact-read-btn" data-id="${m.id}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line,#2a3830);background:transparent;color:var(--muted);font-size:.7rem;cursor:pointer;margin-right:6px;">既読にする</button>`}
+          ${isRestoreRequest ? `<button type="button" class="admin-contact-restore-btn" data-email="${escapeHtml(emailMatch[1])}" data-uid="${escapeHtml(uidMatch?.[1] || '')}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(159,188,255,.4);background:rgba(159,188,255,.1);color:#b9c9ff;font-size:.7rem;cursor:pointer;">🔎 この人の保管データを探して復元する</button>` : ''}
+          <div class="admin-contact-restore-result" data-for="${m.id}" style="margin-top:8px;"></div>
         </div>
-      `).join('');
+      `;
+      }).join('');
       el.querySelectorAll('.admin-contact-read-btn').forEach(btn=>{
         btn.onclick = async () => {
           btn.disabled = true;
           await db.contactMessages.markRead(btn.dataset.id);
           renderAdminContactMessages();
+        };
+      });
+      el.querySelectorAll('.admin-contact-restore-btn').forEach(btn=>{
+        btn.onclick = async () => {
+          const email = btn.dataset.email;
+          const suggestedUid = btn.dataset.uid;
+          const resultEl = btn.parentElement.querySelector('.admin-contact-restore-result');
+          btn.disabled = true;
+          resultEl.innerHTML = '<p style="font-size:.75rem;color:var(--muted);">検索中…</p>';
+          const { data: list } = await sb.from('deleted_account_archives').select('*').eq('email', email).order('deleted_at', { ascending: false });
+          btn.disabled = false;
+          if(!list || !list.length) { resultEl.innerHTML = '<p style="font-size:.75rem;color:#eaa9a9;">このメールアドレスのバックアップは見つかりませんでした</p>'; return; }
+          resultEl.innerHTML = list.map((data, i) => {
+            const counts = Object.entries(data.snapshot || {}).map(([k,v]) => `${k}: ${Array.isArray(v)?v.length:0}件`).join(' / ');
+            return `
+            <div style="border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.6rem;font-size:.72rem;color:#dfeae3;margin-bottom:.5rem;">
+              <p style="margin:0 0 .3rem;">退会日: ${new Date(data.deleted_at).toLocaleString('ja-JP')}${list.length>1?`（${list.length}件中${i+1}件目・新しい順）`:''}</p>
+              <p style="margin:0 0 .5rem;color:var(--muted);">${escapeHtml(counts)}</p>
+              <input class="admin-contact-restore-uid" data-archive-id="${data.id}" type="text" value="${escapeHtml(suggestedUid)}" placeholder="復元先の新しいユーザーID(UUID)" style="width:100%;height:32px;padding:0 8px;margin-bottom:.4rem;border-radius:7px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font-size:11.5px;">
+              <button type="button" class="admin-contact-restore-confirm" data-archive-id="${data.id}" style="height:28px;padding:0 10px;border-radius:7px;border:none;background:var(--brand);color:#0c2015;font-weight:800;font-size:11px;cursor:pointer;">このIDに復元する</button>
+            </div>`;
+          }).join('');
+          resultEl.querySelectorAll('.admin-contact-restore-confirm').forEach(cbtn => {
+            cbtn.onclick = async () => {
+              const archiveId = Number(cbtn.dataset.archiveId);
+              const newUserId = resultEl.querySelector(`.admin-contact-restore-uid[data-archive-id="${archiveId}"]`).value.trim();
+              if(!newUserId) return;
+              if(!confirm(`ユーザーID ${newUserId} にこのバックアップを復元します。よろしいですか？`)) return;
+              const { data: res, error } = await sb.functions.invoke('restore-account', { body: { archiveId, newUserId } });
+              if(error || res?.error || (res?.errors && res.errors.length)) {
+                alert('一部失敗しました。コンソールを確認してください。');
+                console.warn(error || res?.error || res?.errors);
+              } else {
+                alert('復元が完了しました');
+                renderAdminContactMessages();
+              }
+            };
+          });
         };
       });
     } catch(e) {
@@ -21226,14 +21323,38 @@
   // アカウント復元リクエスト：直接contact_messagesに書き込むとRLSで弾かれるため、
   // 既存の「お問い合わせ」フォーム(Turnstile確認＋送信用Edge Function)にメールアドレスを
   // 入れた状態で連携する
+  // バックアップログイン用メールの登録
+  document.getElementById('backupEmailSubmitBtn')?.addEventListener('click', async () => {
+    const emailInput = document.getElementById('backupEmailInput');
+    const msgEl = document.getElementById('backupEmailMsg');
+    const email = emailInput.value.trim();
+    if(!email || !email.includes('@')) { msgEl.style.color = '#eaa9a9'; msgEl.textContent = t('accountRestoreInvalidEmail'); return; }
+    if(!_currentUser || !sb) return;
+    const btn = document.getElementById('backupEmailSubmitBtn');
+    btn.disabled = true;
+    const { error } = await db.auth.linkBackupEmail(email);
+    btn.disabled = false;
+    if(error) { msgEl.style.color = '#eaa9a9'; msgEl.textContent = t('backupEmailFailed'); return; }
+    msgEl.style.color = '#8fe0a8';
+    msgEl.textContent = t('backupEmailSent');
+    emailInput.value = '';
+  });
+
   document.getElementById('accountRestoreSubmitBtn')?.addEventListener('click', () => {
     const emailInput = document.getElementById('accountRestoreEmail');
     const msgEl = document.getElementById('accountRestoreMsg');
     const email = emailInput.value.trim();
     if(!email || !email.includes('@')) { msgEl.style.color = '#eaa9a9'; msgEl.textContent = t('accountRestoreInvalidEmail'); return; }
+    // なりすまし防止：今ログイン中のメールアドレスと一致する場合しか申請できないようにする。
+    // これにより「他人のメールを騙って復元を申請する」ことがそもそも送信の時点でできなくなる。
+    if(!_currentUser?.email || email.toLowerCase() !== _currentUser.email.toLowerCase()) {
+      msgEl.style.color = '#eaa9a9';
+      msgEl.textContent = t('accountRestoreEmailMismatch');
+      return;
+    }
     _pendingContactPrefill = {
       category: 'account',
-      message: t('accountRestoreMessageTemplate').replace('{email}', email) + (_currentUser ? `\n復元先(今ログイン中)のユーザーID: ${_currentUser.id}` : ''),
+      message: t('accountRestoreMessageTemplate').replace('{email}', email) + `\n復元先(今ログイン中)のユーザーID: ${_currentUser.id}`,
     };
     nav('contact');
   });
@@ -21954,6 +22075,21 @@
     }
   }
   window.authGoogle = authGoogle;
+
+  document.getElementById('magicLinkSendBtn')?.addEventListener('click', async () => {
+    const emailInput = document.getElementById('magicLinkEmail');
+    const msgEl = document.getElementById('magicLinkMsg');
+    const email = emailInput.value.trim();
+    if(!email || !email.includes('@')) { msgEl.style.color = '#eaa9a9'; msgEl.textContent = t('accountRestoreInvalidEmail'); return; }
+    if(!sb) return;
+    const btn = document.getElementById('magicLinkSendBtn');
+    btn.disabled = true;
+    const { error } = await db.auth.sendMagicLink(email);
+    btn.disabled = false;
+    if(error) { msgEl.style.color = '#eaa9a9'; msgEl.textContent = t('magicLinkFailed'); return; }
+    msgEl.style.color = '#8fe0a8';
+    msgEl.textContent = t('magicLinkSent');
+  });
 
   async function authSubmit() {
     const email = document.getElementById('authEmail').value.trim();
