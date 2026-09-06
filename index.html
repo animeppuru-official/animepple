@@ -4809,6 +4809,21 @@
       <p id="settingsEmailValue" style="font-size:.9rem;color:#dff0e6;margin:0;">—</p>
     </div>
     <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
+      <p style="font-size:.8rem;color:var(--muted);margin:0 0 .3rem;" data-i18n="settingsUserIdLabel">ユーザーID</p>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .5rem;" data-i18n="settingsUserIdDesc">アカウント復元をリクエストする時などに、運営から聞かれることがあります。</p>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <p id="settingsUserIdValue" style="font-size:.8rem;color:#dff0e6;margin:0;font-family:monospace;word-break:break-all;flex:1;">—</p>
+        <button type="button" class="mypage-btn-secondary" id="settingsUserIdCopyBtn" style="height:32px;padding:0 12px;font-size:11.5px;flex-shrink:0;" data-i18n="boardSheetCopy">コピー</button>
+      </div>
+    </div>
+    <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
+      <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .3rem;" data-i18n="accountRestoreTitle">アカウントを復元する</p>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .7rem;" data-i18n="accountRestoreDesc">以前使っていたアカウントのメールアドレスを送ると、運営が確認のうえデータを復元します。</p>
+      <input id="accountRestoreEmail" type="email" placeholder="example@gmail.com" style="width:100%;height:42px;padding:0 14px;margin-bottom:.6rem;border-radius:10px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;">
+      <button class="mypage-btn-secondary" id="accountRestoreSubmitBtn" data-i18n="accountRestoreSubmitBtn">復元をリクエストする</button>
+      <p id="accountRestoreMsg" style="font-size:.72rem;margin:.5rem 0 0;"></p>
+    </div>
+    <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
       <p style="font-size:.8rem;color:var(--muted);margin:0 0 .5rem;" data-i18n="settingsDeleteAccountDesc">アカウントを削除すると、レビュー・お気に入り・掲示板投稿など、すべてのデータが完全に削除されます。この操作は取り消せません。</p>
       <button class="mypage-btn-secondary" id="settingsDeleteAccountBtn" style="color:#ff8a8a;border-color:#7a3a3a;" data-i18n="settingsDeleteAccountBtn">アカウントを削除する</button>
     </div>
@@ -4916,20 +4931,6 @@
   </header>
   <div style="padding-top:.5rem;">
     <h2 style="font-size:1rem;color:#dff0e6;margin:0 1.1rem 1rem;" data-i18n="settingsNotifications">🔔 通知</h2>
-    <div class="mypage-section" style="padding:1rem 1.1rem;">
-      <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .5rem;" data-i18n="settingsPushTitle">プッシュ通知</p>
-      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .7rem;" data-i18n="settingsPushDesc">端末にプッシュ通知を送れるようにします。</p>
-      <button class="mypage-btn-secondary" id="settingsEnablePushBtn" data-i18n="settingsPushEnableBtn">プッシュ通知を有効にする</button>
-    </div>
-    <div class="mypage-section" style="padding:1rem 1.1rem;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;">
-        <div style="flex:1;min-width:0;">
-          <p style="font-size:.85rem;color:#dfeae3;font-weight:700;margin:0 0 .3rem;" data-i18n="settingsNotifFriendRequestTitle">友達申請の通知</p>
-          <p style="font-size:.72rem;color:var(--muted);margin:0;" data-i18n="settingsNotifFriendRequestDesc">友達申請が届いた時にバッジ・通知でお知らせします。</p>
-        </div>
-        <input type="checkbox" id="settingsNotifFriendRequestCb" checked style="width:20px;height:20px;flex-shrink:0;margin-top:.2rem;accent-color:var(--brand);" />
-      </div>
-    </div>
     <div>
       <button class="mypage-menu-row" onclick="nav('my-boards')">
         <span class="mypage-menu-row-icon">💬</span>
@@ -5350,6 +5351,24 @@
       <h3 class="admin-section-title">🖼️ 画像投稿の承認待ち</h3>
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">ユーザーから投稿されたポスター画像。承認するとその作品のページに反映されます。</p>
       <div id="adminImageSubmissionsList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
+    </div>
+    <!-- 退会予約中・退会済みアカウント -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🗑️ 退会予約中のアカウント</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">本人が削除ボタンを押した後、猶予期間中のアカウント一覧。まだ実データは消えていません。</p>
+      <div id="adminPendingDeletionList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">📦 退会済みアカウントのバックアップ</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">実際にデータを消す前に取ったバックアップ一覧。本人から「データを返してほしい」と連絡があった時に、ここから中身を確認できます。</p>
+      <div id="adminDeletedArchiveList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
+    </div>
+    <div class="admin-section">
+      <h3 class="admin-section-title">♻️ アカウントを復元する</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">「アカウント復元」のお問い合わせで届いたメールアドレスをここに入力すると、そのメールで退会したアカウントのデータを探して復元できます。復元先は、本人が今使っている新しいアカウントのユーザーID(復元対象の人にマイページURL等で確認してもらう)を指定してください。</p>
+      <input id="adminRestoreEmailInput" type="email" placeholder="復元したいアカウントのメールアドレス" style="width:100%;height:38px;padding:0 12px;margin-bottom:.5rem;border-radius:8px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font-size:12.5px;">
+      <button type="button" class="mypage-btn-secondary" id="adminRestoreSearchBtn" style="height:34px;padding:0 12px;font-size:12px;">このメールのバックアップを探す</button>
+      <div id="adminRestoreResult" style="margin-top:.6rem;"></div>
     </div>
     <!-- サイト監視 -->
     <div class="admin-section">
@@ -6497,7 +6516,6 @@
   const SUPABASE_URL  = 'https://ofbjfiuayfhdkgertxyo.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYmpmaXVheWZoZGtnZXJ0eHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzAxOTIsImV4cCI6MjA5ODIwNjE5Mn0.atbMSoL6d_-F-RRomwfjWeKe1YOMZi-48tnPx--Etco';
   // Turnstile サイトキーは公開情報（秘密鍵ではない）なので直書きで問題ない。
-  // ★かずまさんへ: Cloudflareでサイトキーを発行したら、下のプレースホルダーを差し替えてください
   const TURNSTILE_SITE_KEY = '0x4AAAAAADt8IYSLv7u6jj7S';
   let sb = null;
   try {
@@ -6541,6 +6559,133 @@
       async signOut() {
         if(!sb) return;
         await sb.auth.signOut();
+      },
+      // アカウント削除：即座に消すのではなく「削除予約」にする。
+      // profiles.pending_deletion_at に「いつ消えるか」の日時を入れてサインアウトするだけ。
+      // 実際のデータ削除・認証情報の削除は、猶予期間が過ぎた後にサーバー側のEdge Function
+      // (定期実行)が行う。猶予期間中に再ログインすれば restoreAccount() で予約を取り消せる。
+      // 必要カラム（Supabase側で作成）：alter table profiles add column if not exists pending_deletion_at timestamptz;
+      async scheduleAccountDeletion(userId, graceDays) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const deleteAt = new Date(Date.now() + (graceDays || 30) * 86400000).toISOString();
+        const { error } = await sb.from('profiles').update({ pending_deletion_at: deleteAt }).eq('id', userId);
+        return { error, deleteAt };
+      },
+      async getPendingDeletion(userId) {
+        if(!sb || !userId) return null;
+        const { data } = await sb.from('profiles').select('pending_deletion_at').eq('id', userId).maybeSingle();
+        return data?.pending_deletion_at || null;
+      },
+      async restoreAccount(userId) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const { error } = await sb.from('profiles').update({ pending_deletion_at: null }).eq('id', userId);
+        return { error };
+      },
+      // 管理者用：deleted_account_archivesのスナップショットを、指定した「新しいuser_id」に付け替えて復元する。
+      // 退会前のuser_idはもう存在しない(auth.usersから消えている)ので、必ず今実在するuser_idを指定すること。
+      async restoreArchivedAccount(archiveId, newUserId) {
+        if(!sb || !archiveId || !newUserId) return { error: 'invalid' };
+        const { data: archive } = await sb.from('deleted_account_archives').select('*').eq('id', archiveId).maybeSingle();
+        if(!archive) return { error: 'archive_not_found' };
+        const snapshot = archive.snapshot || {};
+        const errors = [];
+        // プロフィールはusername/bio等だけ引き継ぐ（idは新しい方を使う）
+        if(snapshot.profiles && snapshot.profiles[0]) {
+          const p = { ...snapshot.profiles[0], id: newUserId, pending_deletion_at: null };
+          const { error } = await sb.from('profiles').update(p).eq('id', newUserId);
+          if(error) errors.push(error);
+        }
+        const USER_ID_TABLES = ['reviews','review_values','favorites','board_reactions','user_skins','user_equipped_skins','user_icons','user_board_state','coin_transactions','gacha_pull_log','gacha_daily_state'];
+        for(const table of USER_ID_TABLES) {
+          const rows = (snapshot[table] || []).map(r => ({ ...r, user_id: newUserId }));
+          if(!rows.length) continue;
+          const { error } = await sb.from(table).insert(rows);
+          if(error) errors.push(error);
+        }
+        for(const row of (snapshot.direct_messages || [])) {
+          const fixed = { ...row };
+          if(fixed.sender_id === archive.user_id) fixed.sender_id = newUserId;
+          if(fixed.recipient_id === archive.user_id) fixed.recipient_id = newUserId;
+          const { error } = await sb.from('direct_messages').insert(fixed);
+          if(error) errors.push(error);
+        }
+        for(const row of (snapshot.follows || [])) {
+          const fixed = { ...row };
+          if(fixed.follower_id === archive.user_id) fixed.follower_id = newUserId;
+          if(fixed.following_id === archive.user_id) fixed.following_id = newUserId;
+          const { error } = await sb.from('follows').insert(fixed);
+          if(error) errors.push(error);
+        }
+        for(const row of (snapshot.friend_requests || [])) {
+          const fixed = { ...row };
+          if(fixed.requester_id === archive.user_id) fixed.requester_id = newUserId;
+          if(fixed.addressee_id === archive.user_id) fixed.addressee_id = newUserId;
+          const { error } = await sb.from('friend_requests').insert(fixed);
+          if(error) errors.push(error);
+        }
+        return { error: errors.length ? errors : null };
+      },
+      // 猶予期間を過ぎた後、実際にデータを消す処理そのものは変更なしで残しておく
+      // （↓のEdge Function側から、サービスロールで同じテーブル群に対して呼ばれる想定）
+      // 必要テーブル（Supabase側で作成）：
+      //   create table deleted_account_archives (
+      //     id bigserial primary key,
+      //     user_id uuid not null,
+      //     email text,
+      //     snapshot jsonb not null,
+      //     deleted_at timestamptz not null default now()
+      //   );
+      async deleteAccountData(userId, email) {
+        if(!sb || !userId) return { error: 'invalid' };
+        // 消す前に、本人に関わる全テーブルの中身をまるごとJSONにしてバックアップしておく。
+        // 「間違って消えてしまった」「後からやっぱり返してほしい」と言われた時に、
+        // 管理者が deleted_account_archives を見ればいつでも中身を渡せるようにするため。
+        const tableList = ['profiles','reviews','review_values','favorites','board_reactions','user_skins','user_equipped_skins','user_icons','user_board_state','coin_transactions','gacha_pull_log'];
+        const snapshot = {};
+        for(const tbl of tableList) {
+          const { data } = await sb.from(tbl).select('*').eq(tbl === 'profiles' ? 'id' : 'user_id', userId).catch(() => ({ data: [] }));
+          snapshot[tbl] = data || [];
+        }
+        const [{ data: sentDm }, { data: recvDm }, { data: follows1 }, { data: follows2 }, { data: fr1 }, { data: fr2 }] = await Promise.all([
+          sb.from('direct_messages').select('*').eq('sender_id', userId),
+          sb.from('direct_messages').select('*').eq('recipient_id', userId),
+          sb.from('follows').select('*').eq('follower_id', userId),
+          sb.from('follows').select('*').eq('following_id', userId),
+          sb.from('friend_requests').select('*').eq('requester_id', userId),
+          sb.from('friend_requests').select('*').eq('addressee_id', userId),
+        ]);
+        snapshot.direct_messages = [...(sentDm||[]), ...(recvDm||[])];
+        snapshot.follows = [...(follows1||[]), ...(follows2||[])];
+        snapshot.friend_requests = [...(fr1||[]), ...(fr2||[])];
+        await sb.from('deleted_account_archives').insert({ user_id: userId, email: email || null, snapshot }).catch(()=>{});
+
+        const tasks = [
+          sb.from('reviews').delete().eq('user_id', userId),
+          sb.from('review_values').delete().eq('user_id', userId),
+          sb.from('favorites').delete().eq('user_id', userId),
+          sb.from('board_reactions').delete().eq('user_id', userId),
+          sb.from('direct_messages').delete().or(`sender_id.eq.${userId},recipient_id.eq.${userId}`),
+          sb.from('follows').delete().or(`follower_id.eq.${userId},following_id.eq.${userId}`),
+          sb.from('friend_requests').delete().or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
+          sb.from('blocks').delete().or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`),
+          sb.from('user_skins').delete().eq('user_id', userId),
+          sb.from('user_equipped_skins').delete().eq('user_id', userId),
+          sb.from('user_icons').delete().eq('user_id', userId),
+          sb.from('user_board_state').delete().eq('user_id', userId),
+          sb.from('coin_transactions').delete().eq('user_id', userId),
+          sb.from('gacha_pull_log').delete().eq('user_id', userId),
+          sb.from('gacha_daily_state').delete().eq('user_id', userId),
+          sb.from('push_subscriptions').delete().eq('user_id', userId),
+          sb.from('daily_quest_progress').delete().eq('user_id', userId),
+        ];
+        // 掲示板の投稿は他の人の会話の一部になっているため削除ではなく匿名化する（本文と紐付くユーザー名を消す）
+        tasks.push(sb.from('board_posts').update({ user_id: null, username: t('deletedUserLabel'), body: t('deletedUserPostBody') }).eq('user_id', userId));
+        const results = await Promise.allSettled(tasks);
+        const failed = results.filter(r => r.status === 'rejected' || r.value?.error);
+        // 最後にプロフィール本体を削除
+        const { error: profileError } = await sb.from('profiles').delete().eq('id', userId);
+        if(profileError) failed.push(profileError);
+        return { error: failed.length ? failed : null };
       },
     },
 
@@ -8687,34 +8832,6 @@
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
       if(vEl) vEl.textContent = 'v0.312.0';
-    }
-    if (page==='settings-notifications') {
-      const pushBtn = document.getElementById('settingsEnablePushBtn');
-      if(pushBtn) {
-        pushBtn.onclick = async () => {
-          pushBtn.disabled = true;
-          const { error } = await enablePushNotifications();
-          pushBtn.disabled = false;
-          if(error) { alert(t('settingsPushFailedAlert')); return; }
-          alert(t('settingsPushEnabledAlert'));
-        };
-      }
-      const notifFriendReqCb = document.getElementById('settingsNotifFriendRequestCb');
-      if(notifFriendReqCb && sb) {
-        (async () => {
-          let uid = _currentUser?.id;
-          if(!uid) {
-            const { data } = await sb.auth.getSession();
-            uid = data?.session?.user?.id;
-          }
-          if(!uid) return;
-          const profile = await db.profiles.get(uid);
-          notifFriendReqCb.checked = profile?.notif_friend_request !== false;
-          notifFriendReqCb.onchange = async () => {
-            await db.profiles.upsert(uid, { notif_friend_request: notifFriendReqCb.checked });
-          };
-        })();
-      }
     }
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
@@ -17153,13 +17270,6 @@
     settingsSecuritySub:{ ja:'ログイン方法の管理', en:'Manage sign-in methods' },
     settingsPrivacySub:{ ja:'ブロック中のユーザーなど', en:'Blocked users and more' },
     settingsNotificationsSub:{ ja:'お知らせの受け取り方', en:'How you receive alerts' },
-    settingsPushTitle:{ ja:'プッシュ通知', en:'Push notifications' },
-    settingsPushDesc:{ ja:'端末にプッシュ通知を送れるようにします。', en:'Allow push notifications to this device.' },
-    settingsPushEnableBtn:{ ja:'プッシュ通知を有効にする', en:'Enable push notifications' },
-    settingsPushEnabledAlert:{ ja:'プッシュ通知を有効にしました', en:'Push notifications enabled' },
-    settingsPushFailedAlert:{ ja:'プッシュ通知を有効にできませんでした', en:'Could not enable push notifications' },
-    settingsNotifFriendRequestTitle:{ ja:'友達申請の通知', en:'Friend request notifications' },
-    settingsNotifFriendRequestDesc:{ ja:'友達申請が届いた時にバッジ・通知でお知らせします。', en:'Get notified when someone sends you a friend request.' },
     settingsDisplaySub:{ ja:'テーマ、フォント、言語設定', en:'Theme, font, language settings' },
     settingsAboutSub:{ ja:'利用規約、お問い合わせ', en:'Terms of use, contact' },
     settingsHistoryTitle:{ ja:'購入・ガチャ履歴', en:'Purchase & gacha history' },
@@ -17174,14 +17284,29 @@
     historyReasonPurchase:{ ja:'コイン購入', en:'Coin purchase' },
     settingsUsernameLabel:{ ja:'ユーザー名', en:'Username' },
     settingsEmailLabel:{ ja:'メールアドレス', en:'Email' },
+    settingsUserIdLabel:{ ja:'ユーザーID', en:'User ID' },
+    settingsUserIdDesc:{ ja:'アカウント復元をリクエストする時などに、運営から聞かれることがあります。', en:'You may be asked for this when requesting account restoration.' },
+    copiedLabel:{ ja:'コピーしました', en:'Copied' },
     settingsLoginMethodLabel:{ ja:'ログイン方法', en:'Login method' },
     settingsLanguageLabel:{ ja:'表示言語', en:'Display language' },
     settingsChangeLanguageBtn:{ ja:'言語を変更', en:'Change language' },
     settingsPrivacyPolicyLink:{ ja:'プライバシーポリシー', en:'Privacy policy' },
-    settingsDeleteAccountDesc:{ ja:'アカウントを削除すると、レビュー・お気に入り・掲示板投稿など、すべてのデータが完全に削除されます。この操作は取り消せません。', en:'Deleting your account permanently removes all your data, including reviews, favorites, and board posts. This cannot be undone.' },
+    settingsDeleteAccountDesc:{ ja:'アカウントを削除すると、レビュー・お気に入り・掲示板投稿など、すべてのデータが削除されます。削除予約から30日間はログインすればいつでも元に戻せます。30日を過ぎると完全に削除され、二度と復元できません。', en:'Deleting your account removes all your data, including reviews, favorites, and board posts. You can restore it anytime within 30 days by logging in. After 30 days, it is permanently deleted and cannot be recovered.' },
     settingsDeleteAccountBtn:{ ja:'アカウントを削除する', en:'Delete account' },
-    settingsDeleteAccountConfirm:{ ja:'本当にアカウントを削除しますか？この操作は取り消せません。', en:'Are you sure you want to delete your account? This cannot be undone.' },
-    settingsDeleteAccountNotReady:{ ja:'アカウント削除機能は現在準備中です。お問い合わせフォームからご連絡ください。', en:'Account deletion is not yet available. Please contact us instead.' },
+    settingsDeleteAccountConfirm:{ ja:'アカウントを削除しますか？{n}日間はログインすれば元に戻せます。{n}日経つと自動的に完全に削除され、元に戻せなくなります。', en:'Delete your account? You can restore it by logging in within {n} days. After {n} days it will be permanently and irreversibly deleted.' },
+    settingsDeleteAccountInProgress:{ ja:'処理しています…', en:'Processing…' },
+    settingsDeleteAccountScheduledAlert:{ ja:'アカウントの削除を予約しました。{n}日以内にログインすれば元に戻せます。', en:'Account deletion scheduled. Log in within {n} days to restore it.' },
+    accountPendingDeletionConfirm:{ ja:'このアカウントは削除予定です（あと{n}日）。ログインしたので、削除をキャンセルして元に戻しますか？', en:'This account is scheduled for deletion ({n} days left). Would you like to cancel the deletion since you logged in?' },
+    accountRestoredAlert:{ ja:'アカウントを復元しました', en:'Your account has been restored' },
+    accountRestoreTitle:{ ja:'アカウントを復元する', en:'Restore your account' },
+    accountRestoreDesc:{ ja:'以前使っていたアカウントのメールアドレスを送ると、運営が確認のうえデータを復元します。', en:'Send us the email address of your previous account, and we will verify and restore your data.' },
+    accountRestoreSubmitBtn:{ ja:'復元をリクエストする', en:'Request restoration' },
+    accountRestoreInvalidEmail:{ ja:'正しいメールアドレスを入力してください', en:'Please enter a valid email address' },
+    accountRestoreMessageTemplate:{ ja:'アカウント復元リクエスト: {email}', en:'Account restore request: {email}' },
+    accountRestoreSent:{ ja:'送信しました。運営からの連絡をお待ちください。', en:'Sent. Please wait for a response from us.' },
+    accountRestoreFailed:{ ja:'送信に失敗しました', en:'Failed to send' },
+    deletedUserLabel:{ ja:'削除済みユーザー', en:'Deleted user' },
+    deletedUserPostBody:{ ja:'[このユーザーは退会しました]', en:'[This user has deleted their account]' },
     myBoardsTitle:{ ja:'参加中の掲示板', en:'Your boards' },
     boardHubTitle:{ ja:'掲示板', en:'Boards' },
     boardHubNewTitle:{ ja:'新着', en:'New' },
@@ -17659,6 +17784,7 @@
     btnGoogleLogin: { ja:'Googleでログイン',en:'Continue with Google',ko:'Google로 로그인','zh-tw':'使用 Google 登入','zh-cn':'使用 Google 登录',es:'Continuar con Google',fr:'Continuer avec Google',pt:'Continuar com o Google',de:'Mit Google fortfahren',ar:'المتابعة مع Google',th:'ดำเนินการต่อด้วย Google',id:'Lanjutkan dengan Google',ru:'Продолжить с Google',it:'Continua con Google',vi:'Tiếp tục với Google' },
     authOrLabel:  { ja:'または',en:'or',ko:'또는','zh-tw':'或','zh-cn':'或',es:'o',fr:'ou',pt:'ou',de:'oder',ar:'أو',th:'หรือ',id:'atau',ru:'или',it:'o',vi:'hoặc' },
     logoutBtn:    { ja:'ログアウト',en:'Log Out',ko:'로그아웃','zh-tw':'登出','zh-cn':'退出',es:'Cerrar sesión',fr:'Se déconnecter',pt:'Sair',de:'Abmelden',ar:'تسجيل الخروج',th:'ออกจากระบบ',id:'Keluar',ru:'Выйти',it:'Esci',vi:'Đăng xuất' },
+    signedOutAlert: { ja:'ログアウトしました', en:'You have been logged out' },
     sortMostReview:{ ja:'レビューが多い順',en:'Most reviewed',ko:'리뷰 많은 순','zh-tw':'最多評論','zh-cn':'最多评论',es:'Más reseñado',fr:'Plus évalué',pt:'Mais avaliado',de:'Meistbewertet',ar:'الأكثر مراجعة',th:'รีวิวมากสุด',id:'Paling banyak diulas',ru:'Больше всего отзывов',it:'Più recensiti',vi:'Nhiều đánh giá nhất' },
     sortLeastReview:{ ja:'レビューが少ない順',en:'Least reviewed',ko:'리뷰 적은 순','zh-tw':'最少評論','zh-cn':'最少评论',es:'Menos reseñado',fr:'Moins évalué',pt:'Menos avaliado',de:'Wenigstbewertet',ar:'الأقل مراجعة',th:'รีวิวน้อยสุด',id:'Paling sedikit diulas',ru:'Меньше всего отзывов',it:'Meno recensiti',vi:'Ít đánh giá nhất' },
     // 作成ページ
@@ -19537,6 +19663,75 @@
   window.partnerLogin = partnerLogin;
   document.getElementById('partnerKeyInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') partnerLogin(); });
 
+  // 退会予約中(まだ猶予期間内)のアカウント一覧。管理者が手動で「今すぐ処理」できるようにしておく
+  // （本来は猶予期間が過ぎたら自動でEdge Function等が処理する想定だが、それが用意できるまでの代替手段）
+  async function loadAdminAccountDeletionData() {
+    const pendingEl = document.getElementById('adminPendingDeletionList');
+    const archiveEl = document.getElementById('adminDeletedArchiveList');
+    if(pendingEl && sb) {
+      const { data } = await sb.from('profiles').select('id,username,pending_deletion_at').not('pending_deletion_at', 'is', null).order('pending_deletion_at', { ascending: true });
+      const rows = data || [];
+      pendingEl.innerHTML = rows.length ? rows.map(r => {
+        const deleteAt = new Date(r.pending_deletion_at);
+        const daysLeft = Math.ceil((deleteAt.getTime() - Date.now()) / 86400000);
+        const overdue = daysLeft <= 0;
+        return `<div class="admin-row">
+          <span>${escapeHtml(r.username||'(ユーザー名なし)')} <span style="color:var(--muted);font-size:.7rem;">${escapeHtml(r.id)}</span></span>
+          <span class="admin-badge" style="${overdue?'background:rgba(232,74,74,.15);color:#f0a3a3;':''}">${overdue ? '猶予期間終了・処理待ち' : `あと${daysLeft}日`}</span>
+          <button type="button" class="mypage-btn-secondary" style="height:30px;padding:0 10px;font-size:11px;" onclick="adminProcessAccountDeletion('${escapeHtml(r.id)}')">今すぐ削除処理する</button>
+        </div>`;
+      }).join('') : '<p style="font-size:.78rem;color:var(--muted);">退会予約中のアカウントはありません</p>';
+    }
+    if(archiveEl && sb) {
+      const { data } = await sb.from('deleted_account_archives').select('id,user_id,email,deleted_at').order('deleted_at', { ascending: false }).limit(30);
+      const rows = data || [];
+      archiveEl.innerHTML = rows.length ? rows.map(r => `
+        <div class="admin-row">
+          <span>${escapeHtml(r.email||r.user_id)}</span>
+          <span style="color:var(--muted);font-size:.72rem;">${new Date(r.deleted_at).toLocaleDateString('ja-JP')}</span>
+          <button type="button" class="mypage-btn-secondary" style="height:30px;padding:0 10px;font-size:11px;" onclick="adminViewDeletedArchive(${r.id})">中身を見る</button>
+        </div>`).join('') : '<p style="font-size:.78rem;color:var(--muted);">バックアップはまだありません</p>';
+    }
+  }
+  window.adminProcessAccountDeletion = async function(userId) {
+    if(!confirm('このアカウントのデータを今すぐバックアップを取ってから完全に削除します。よろしいですか？')) return;
+    const { error } = await db.auth.deleteAccountData(userId);
+    if(error) { alert('一部失敗しました。コンソールを確認してください。'); console.warn(error); }
+    else alert('削除・バックアップが完了しました');
+    loadAdminAccountDeletionData();
+  };
+  window.adminViewDeletedArchive = async function(archiveId) {
+    const { data } = await sb.from('deleted_account_archives').select('*').eq('id', archiveId).maybeSingle();
+    if(!data) { alert('見つかりませんでした'); return; }
+    const win = window.open('', '_blank');
+    win.document.write(`<pre style="white-space:pre-wrap;font-family:monospace;padding:16px;">${JSON.stringify(data.snapshot, null, 2).replace(/</g,'&lt;')}</pre>`);
+  };
+
+  document.getElementById('adminRestoreSearchBtn')?.addEventListener('click', async () => {
+    const email = document.getElementById('adminRestoreEmailInput').value.trim();
+    const resultEl = document.getElementById('adminRestoreResult');
+    if(!email) return;
+    resultEl.innerHTML = '<p style="font-size:.78rem;color:var(--muted);">検索中…</p>';
+    const { data } = await sb.from('deleted_account_archives').select('*').eq('email', email).order('deleted_at', { ascending: false }).limit(1).maybeSingle();
+    if(!data) { resultEl.innerHTML = '<p style="font-size:.78rem;color:#eaa9a9;">このメールアドレスのバックアップは見つかりませんでした</p>'; return; }
+    const counts = Object.entries(data.snapshot || {}).map(([k,v]) => `${k}: ${Array.isArray(v)?v.length:0}件`).join(' / ');
+    resultEl.innerHTML = `
+      <div style="border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.7rem;font-size:.75rem;color:#dfeae3;">
+        <p style="margin:0 0 .4rem;">退会日: ${new Date(data.deleted_at).toLocaleString('ja-JP')}</p>
+        <p style="margin:0 0 .6rem;color:var(--muted);">${escapeHtml(counts)}</p>
+        <input id="adminRestoreTargetUid" type="text" placeholder="復元先の新しいユーザーID(UUID)" style="width:100%;height:34px;padding:0 10px;margin-bottom:.5rem;border-radius:8px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font-size:12px;">
+        <button type="button" class="mypage-btn-secondary" id="adminRestoreConfirmBtn" style="height:32px;padding:0 12px;font-size:12px;">このユーザーIDに復元する</button>
+      </div>`;
+    document.getElementById('adminRestoreConfirmBtn').onclick = async () => {
+      const newUserId = document.getElementById('adminRestoreTargetUid').value.trim();
+      if(!newUserId) return;
+      if(!confirm(`ユーザーID ${newUserId} にこのバックアップを復元します。よろしいですか？`)) return;
+      const { error } = await db.auth.restoreArchivedAccount(data.id, newUserId);
+      if(error) { alert('一部失敗しました。コンソールを確認してください。'); console.warn(error); }
+      else alert('復元が完了しました');
+    };
+  });
+
   async function initAdminPage() {
     const login = document.getElementById('adminLoginSection');
     const dash = document.getElementById('adminDashboard');
@@ -19556,6 +19751,7 @@
       loadAdminData();
       initAdminCountryCompare();
       setupAdminAnimeSearch();
+      loadAdminAccountDeletionData();
     } else {
       login.style.display='';
       dash.style.display='none';
@@ -20201,11 +20397,11 @@
         document.getElementById('adminRecentReviews').innerHTML = recentReviews.map(r=>`
           <div class="admin-row" style="flex-direction:column;align-items:flex-start;gap:.2rem;">
             <div style="display:flex;justify-content:space-between;width:100%;">
-              <span style="font-weight:700;color:#dff0e6;">${r.username||'ゲスト'}</span>
+              <span style="font-weight:700;color:#dff0e6;">${escapeHtml(r.username||'ゲスト')}</span>
               <span style="color:var(--muted);font-size:.72rem;">${new Date(r.created_at).toLocaleDateString('ja-JP')}</span>
             </div>
-            <span style="color:var(--muted);font-size:.75rem;">${r.anime_id}</span>
-            ${r.comment?`<span style="font-size:.8rem;color:#c8e6d4;">${r.comment.slice(0,60)}${r.comment.length>60?'…':''}</span>`:''}
+            <span style="color:var(--muted);font-size:.75rem;">${escapeHtml(String(r.anime_id))}</span>
+            ${r.comment?`<span style="font-size:.8rem;color:#c8e6d4;">${escapeHtml(r.comment.slice(0,60))}${r.comment.length>60?'…':''}</span>`:''}
             <div style="display:flex;gap:.3rem;">
               ${r.chart_moved?'<span class="admin-badge">グラフあり</span>':''}
               ${r.quality?'<span class="admin-badge" style="background:rgba(255,200,50,.15);color:#ffc832;">高品質</span>':''}
@@ -21007,6 +21203,20 @@
   }
   window.enablePushNotifications = enablePushNotifications;
 
+  // ログイン時、削除予約中(まだ猶予期間内)のアカウントなら復元するか聞く
+  async function checkPendingAccountDeletion() {
+    if(!_currentUser) return;
+    const pendingAt = await db.auth.getPendingDeletion(_currentUser.id).catch(() => null);
+    if(!pendingAt) return;
+    const deleteDate = new Date(pendingAt);
+    if(deleteDate.getTime() <= Date.now()) return; // 既に猶予期間を過ぎている＝もうすぐサーバー側で消える対象。ここでは何もしない
+    const daysLeft = Math.max(1, Math.ceil((deleteDate.getTime() - Date.now()) / 86400000));
+    if(confirm(t('accountPendingDeletionConfirm').replace('{n}', daysLeft))) {
+      await db.auth.restoreAccount(_currentUser.id);
+      alert(t('accountRestoredAlert'));
+    }
+  }
+
   async function ensureLoggedInUsername() {
     if(!_currentUser || !sb) { window._loggedInUsername = null; window._loggedInAvatarUrl = null; renderHeaderAvatar(); return; }
     const profile = await db.profiles.get(_currentUser.id);
@@ -21040,10 +21250,45 @@
   }
   window.renderHeaderAvatar = renderHeaderAvatar;
 
-  document.getElementById('settingsDeleteAccountBtn')?.addEventListener('click', () => {
+  const ACCOUNT_DELETE_GRACE_DAYS = 30;
+  document.getElementById('settingsDeleteAccountBtn')?.addEventListener('click', async () => {
     if(!_currentUser) return;
-    if(!confirm(t('settingsDeleteAccountConfirm'))) return;
-    alert(t('settingsDeleteAccountNotReady'));
+    if(!confirm(t('settingsDeleteAccountConfirm').replace('{n}', ACCOUNT_DELETE_GRACE_DAYS))) return;
+    const btn = document.getElementById('settingsDeleteAccountBtn');
+    btn.disabled = true;
+    btn.textContent = t('settingsDeleteAccountInProgress');
+    const { error } = await db.auth.scheduleAccountDeletion(_currentUser.id, ACCOUNT_DELETE_GRACE_DAYS);
+    if(error) { alert(t('profileSaveFailedAlert')); btn.disabled = false; btn.textContent = t('settingsDeleteAccountBtn'); return; }
+    await db.auth.signOut();
+    _currentUser = null;
+    window._loggedInUsername = null;
+    window._loggedInAvatarUrl = null;
+    renderHeaderAvatar();
+    alert(t('settingsDeleteAccountScheduledAlert').replace('{n}', ACCOUNT_DELETE_GRACE_DAYS));
+    nav('home');
+  });
+
+  // アカウント復元リクエスト：メールアドレスをcontact_messagesに送るだけ。
+  // 管理画面の「お問い合わせ」一覧にcategory='account_restore'として届き、
+  // 管理者がそのメールで手動確認のうえ復元する。
+  document.getElementById('accountRestoreSubmitBtn')?.addEventListener('click', async () => {
+    const emailInput = document.getElementById('accountRestoreEmail');
+    const msgEl = document.getElementById('accountRestoreMsg');
+    const email = emailInput.value.trim();
+    if(!email || !email.includes('@')) { msgEl.style.color = '#eaa9a9'; msgEl.textContent = t('accountRestoreInvalidEmail'); return; }
+    if(!sb) return;
+    const btn = document.getElementById('accountRestoreSubmitBtn');
+    btn.disabled = true;
+    const { error } = await sb.from('contact_messages').insert({
+      name: email,
+      category: 'account_restore',
+      message: t('accountRestoreMessageTemplate').replace('{email}', email) + (_currentUser ? `\n復元先(今ログイン中)のユーザーID: ${_currentUser.id}` : ''),
+    });
+    btn.disabled = false;
+    if(error) { msgEl.style.color = '#eaa9a9'; msgEl.textContent = t('accountRestoreFailed'); return; }
+    msgEl.style.color = '#8fe0a8';
+    msgEl.textContent = t('accountRestoreSent');
+    emailInput.value = '';
   });
 
   async function initAuth() {
@@ -21084,12 +21329,13 @@
       startFriendRequestWatch();
       updateCoinBadge();
       await applyMyEquippedCustomization();
+      checkPendingAccountDeletion();
     }
     // yourValueHeaderBtn は常時表示（Design案通り）
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); checkPendingAccountDeletion(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -21531,8 +21777,6 @@
   async function checkFriendRequestBadge() {
     if(!_currentUser || !sb) { _friendReqBadgeCount = 0; renderNotifBadges(); return; }
     try {
-      const profile = await db.profiles.get(_currentUser.id);
-      if(profile?.notif_friend_request === false) { _friendReqBadgeCount = 0; renderNotifBadges(); return; }
       _friendReqBadgeCount = await db.friendRequests.getIncomingCount(_currentUser.id);
     } catch(e) { console.warn('checkFriendRequestBadge:', e); }
     renderNotifBadges();
@@ -21793,7 +22037,11 @@
     if(!sb) return;
     await db.auth.signOut();
     _currentUser = null;
+    window._loggedInUsername = null;
+    window._loggedInAvatarUrl = null;
+    renderHeaderAvatar();
     renderMypage();
+    alert(t('signedOutAlert'));
   }
 
   let _myProfile = { username:'', bio:'' };
@@ -21963,6 +22211,17 @@
       const seEl = document.getElementById('settingsEmailValue');
       if(suEl) suEl.textContent = username;
       if(seEl) seEl.textContent = _currentUser.email;
+      const uidEl = document.getElementById('settingsUserIdValue');
+      if(uidEl) uidEl.textContent = _currentUser.id;
+      const uidCopyBtn = document.getElementById('settingsUserIdCopyBtn');
+      if(uidCopyBtn) {
+        uidCopyBtn.onclick = () => {
+          navigator.clipboard.writeText(_currentUser.id).then(() => {
+            uidCopyBtn.textContent = t('copiedLabel');
+            setTimeout(() => { uidCopyBtn.textContent = t('boardSheetCopy'); }, 1500);
+          }).catch(() => {});
+        };
+      }
     }
 
     document.getElementById('mypageUsernameText').textContent = username;
