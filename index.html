@@ -2106,9 +2106,9 @@
     }
     #page-board-value.active .board-composer, #page-board-general.active .board-composer, #page-dm.active .board-composer {
       flex:0 0 auto; position:static !important; margin:0 !important; padding:14px 1rem calc(14px + env(safe-area-inset-bottom));
-      border-top:1px solid rgba(255,255,255,.07); background:#0b1a11;
+      border-top:1px solid rgba(255,255,255,.07); background:var(--board-panel-bg, #0b1a11);
     }
-    .board-composer { position:sticky; bottom:0; margin:0 -1rem -.75rem; padding:14px 1rem 18px; border-top:1px solid rgba(255,255,255,.07); background:#0b1a11; }
+    .board-composer { position:sticky; bottom:0; margin:0 -1rem -.75rem; padding:14px 1rem 18px; border-top:1px solid rgba(255,255,255,.07); background:var(--board-panel-bg, #0b1a11); }
     .tag-suggest-wrap { margin-top:.5rem; }
     .tag-suggest-label { font-size:12px; font-weight:700; color:#82968a; margin:0 0 9px; }
     .tag-suggest-list { display:flex; flex-wrap:wrap; gap:8px; }
@@ -22447,7 +22447,9 @@
     }
     composer.innerHTML = `
       <div style="display:flex;gap:8px;align-items:flex-end;">
-        <textarea id="dmComposeInput" rows="1" placeholder="${escapeHtml(t('dmComposePlaceholder'))}" style="flex:1 1 auto;min-width:0;resize:none;max-height:120px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#eaf6ee;font-size:13.5px;"></textarea>
+        <div class="board-compose-field" style="border-radius:12px;">
+          <textarea id="dmComposeInput" rows="1" placeholder="${escapeHtml(t('dmComposePlaceholder'))}" style="border-radius:12px;max-height:120px;"></textarea>
+        </div>
         <button type="button" id="dmSendBtn" style="flex:0 0 auto;height:40px;padding:0 16px;border-radius:12px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:13px;cursor:pointer;">${escapeHtml(t('dmSendBtn'))}</button>
       </div>`;
     const input = composer.querySelector('#dmComposeInput');
