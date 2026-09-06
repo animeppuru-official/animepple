@@ -1409,17 +1409,20 @@
          入力欄が画面外へ飛んでしまうため、スクロール自体を成立させない */
       body.board-chat-mobile { position:fixed; inset:0; width:100%; overflow:hidden; }
       body.board-chat-mobile #page-board-value.active,
-      body.board-chat-mobile #page-board-general.active {
+      body.board-chat-mobile #page-board-general.active,
+      body.board-chat-mobile #page-dm.active {
         position:fixed; top:0; left:0; right:0; z-index:90;
         display:flex !important; flex-direction:column;
         height:var(--board-vh, 100vh); max-height:var(--board-vh, 100vh);
         min-height:0 !important; padding-bottom:0 !important; overflow:hidden;
       }
       body.board-chat-mobile #page-board-value.active .hdr,
-      body.board-chat-mobile #page-board-general.active .hdr { flex:0 0 auto; position:static !important; }
+      body.board-chat-mobile #page-board-general.active .hdr,
+      body.board-chat-mobile #page-dm.active .hdr { flex:0 0 auto; position:static !important; }
       /* 中間ラッパー：ここにも flex を通さないと会話部が縮まず3段にならない */
       body.board-chat-mobile #page-board-value.active .board-page-wrap,
-      body.board-chat-mobile #page-board-general.active .board-page-wrap {
+      body.board-chat-mobile #page-board-general.active .board-page-wrap,
+      body.board-chat-mobile #page-dm.active .board-page-wrap {
         flex:1 1 auto; min-height:0; display:flex; flex-direction:column;
         max-width:none !important; width:100% !important; padding:0 !important; overflow:hidden;
       }
@@ -6918,6 +6921,51 @@
         return map;
       },
     },
+    // ── ガチャの無料/広告枠（ローカル管理だとキャッシュ削除やシークレットモードで無限に引けてしまうため、
+    //    デイリークエストと同じ「日付+user_idキー」のテーブルでサーバー側に持たせる）──
+    // 必要テーブル（Supabase側で作成）：
+    //   create table gacha_daily_state (
+    //     user_id uuid not null references auth.users(id) on delete cascade,
+    //     gacha_date date not null,
+    //     free_used boolean not null default false,
+    //     ad_used_count integer not null default 0,
+    //     primary key (user_id, gacha_date)
+    //   );
+    gacha: {
+      todayStr() { return new Date().toISOString().slice(0, 10); },
+      async getToday(userId) {
+        if(!sb || !userId) return { free_used: false, ad_used_count: 0 };
+        const today = this.todayStr();
+        const { data } = await sb.from('gacha_daily_state').select('*').eq('user_id', userId).eq('gacha_date', today).maybeSingle();
+        return data || { user_id: userId, gacha_date: today, free_used: false, ad_used_count: 0 };
+      },
+      // 呼ぶ前に必ずgetTodayで確認済みの前提だが、二重送信対策として更新時にも
+      // free_used=falseの行だけを狙って更新する（既に使用済みなら0件更新になり無視される）
+      async markFreeUsed(userId) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const today = this.todayStr();
+        const { data: existing } = await sb.from('gacha_daily_state').select('*').eq('user_id', userId).eq('gacha_date', today).maybeSingle();
+        if(!existing) {
+          const { error } = await sb.from('gacha_daily_state').insert({ user_id: userId, gacha_date: today, free_used: true });
+          return { error };
+        }
+        if(existing.free_used) return { error: 'already_used' };
+        const { error } = await sb.from('gacha_daily_state').update({ free_used: true }).eq('user_id', userId).eq('gacha_date', today).eq('free_used', false);
+        return { error };
+      },
+      async markAdUsed(userId, limit) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const today = this.todayStr();
+        const { data: existing } = await sb.from('gacha_daily_state').select('*').eq('user_id', userId).eq('gacha_date', today).maybeSingle();
+        if(!existing) {
+          const { error } = await sb.from('gacha_daily_state').insert({ user_id: userId, gacha_date: today, ad_used_count: 1 });
+          return { error };
+        }
+        if(existing.ad_used_count >= limit) return { error: 'limit_reached' };
+        const { error } = await sb.from('gacha_daily_state').update({ ad_used_count: existing.ad_used_count + 1 }).eq('user_id', userId).eq('gacha_date', today).eq('ad_used_count', existing.ad_used_count);
+        return { error };
+      },
+    },
     coins: {
       async get(userId) {
         if(!sb || !userId) return 0;
@@ -10791,29 +10839,16 @@
     }
     return candidates[Math.floor(Math.random() * candidates.length)] || null;
   }
-  function gachaTodayKey(userId) {
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD（端末のローカル日付）
-    return { free: `animepple_gacha_free_${userId}_${today}`, ad: `animepple_gacha_ad_${userId}_${today}` };
-  }
   const GACHA_AD_LIMIT = 3;
   const GACHA_COIN_REWARD = 100; // デイリークエスト達成報酬＝ガチャ1回分のコイン
   const GACHA_COIN_COST = 100; // コインでガチャを1回引く時の消費量
   const GACHA_COIN10_COST = 1000; // コインで10連を引く時の消費量
   const GACHA_HOLD_MS = 3000; // 長押し時間。この間ずっとリンゴジュースが枠にたまる演出が走る
-  function getGachaState(userId) {
-    const keys = gachaTodayKey(userId);
-    return {
-      freeUsed: localStorage.getItem(keys.free) === '1',
-      adUsedCount: Number(localStorage.getItem(keys.ad) || 0),
-    };
-  }
-  function markGachaFreeUsed(userId) {
-    localStorage.setItem(gachaTodayKey(userId).free, '1');
-  }
-  function markGachaAdUsed(userId) {
-    const keys = gachaTodayKey(userId);
-    const count = Number(localStorage.getItem(keys.ad) || 0) + 1;
-    localStorage.setItem(keys.ad, String(count));
+  // 無料/広告枠の残数はdb.gacha（Supabaseのgacha_daily_stateテーブル）で管理する。
+  // ローカルストレージだとキャッシュ削除・シークレットモードで無限に引けてしまうため。
+  async function getGachaState(userId) {
+    const row = await db.gacha.getToday(userId);
+    return { freeUsed: !!row.free_used, adUsedCount: row.ad_used_count || 0 };
   }
   let _gachaLastPick = null; // 直近の「本日のおすすめ」（結果カードから作品ページへ飛ぶ用）
 
@@ -10857,14 +10892,14 @@
   }
 
   // 残り回数：無料1＋広告3＝4回。ドットで見せる
-  function updateGachaRemain() {
+  async function updateGachaRemain() {
     const dots = document.getElementById('gachaRemainDots');
     const num = document.getElementById('gachaRemainNum');
     const soldOut = document.getElementById('gachaSoldOut');
     const total = 1 + GACHA_AD_LIMIT;
     let left = 0;
     if(_currentUser) {
-      const st = getGachaState(_currentUser.id);
+      const st = await getGachaState(_currentUser.id);
       left = (st.freeUsed ? 0 : 1) + Math.max(0, GACHA_AD_LIMIT - st.adUsedCount);
     } else {
       left = total;
@@ -10935,11 +10970,11 @@
     grid.innerHTML = cells.join('');
   }
 
-  function updateGachaButtons() {
+  async function updateGachaButtons() {
     const freeBtn = document.getElementById('gachaFreeBtn');
     const coinBtn = document.getElementById('gachaCoinBtn');
     const coin10Btn = document.getElementById('gachaCoin10Btn');
-    updateGachaRemain();
+    await updateGachaRemain();
     if(!freeBtn) return;
     const coinLabel = document.getElementById('gachaCoinBtnLabel');
     if(coinLabel) coinLabel.textContent = GACHA_COIN_COST.toLocaleString();
@@ -10951,7 +10986,7 @@
       if(coin10Btn) coin10Btn.disabled = true;
       return;
     }
-    const state = getGachaState(_currentUser.id);
+    const state = await getGachaState(_currentUser.id);
     const remaining = Math.max(0, GACHA_AD_LIMIT - state.adUsedCount);
     const label = freeBtn.querySelector('.gacha-hold-body span:last-child');
     if(!state.freeUsed) {
@@ -10998,7 +11033,7 @@
   }
 
   // 結果：確定枠（アニメカード）＋おまけ枠（レア度で枠色と光彩が変わる）
-  function showGachaResult(pick, item, isDup) {
+  async function showGachaResult(pick, item, isDup) {
     const overlay = document.getElementById('gachaResultOverlay');
     const pickEl = document.getElementById('gachaResultPick');
     const bonusEl = document.getElementById('gachaResultBonus');
@@ -11056,7 +11091,7 @@
 
     // 一番引きたい瞬間に次の1回を置く
     if(againBtn) {
-      const remaining = _currentUser ? Math.max(0, GACHA_AD_LIMIT - getGachaState(_currentUser.id).adUsedCount) : 0;
+      const remaining = _currentUser ? Math.max(0, GACHA_AD_LIMIT - (await getGachaState(_currentUser.id)).adUsedCount) : 0;
       againBtn.style.display = remaining > 0 ? '' : 'none';
       againBtn.innerHTML = '<span class="gacha-btn-icon">▶</span><span>' + escapeHtml(t('gachaAgainBtn').replace('{n}', remaining)) + '</span>';
       againBtn.onclick = () => { overlay.style.display = 'none'; runGacha('ad'); };
@@ -11082,10 +11117,11 @@
 
   async function runGacha(kind) {
     if(!_currentUser) { alert(t('loginRequiredAlert')); return; }
-    const state = getGachaState(_currentUser.id);
+    const state = await getGachaState(_currentUser.id);
     if(kind === 'free') {
       if(state.freeUsed) return;
-      markGachaFreeUsed(_currentUser.id);
+      const { error } = await db.gacha.markFreeUsed(_currentUser.id);
+      if(error) { alert(t('gachaLimitReachedAlert')); updateGachaButtons(); return; } // 既に他端末等で使用済み
     } else if(kind === 'ad') {
       if(state.adUsedCount >= GACHA_AD_LIMIT) return;
       // 実際の広告SDKは未接続。押す前に対価が分かるよう確認だけ出す
@@ -11093,7 +11129,8 @@
       const freeBtn = document.getElementById('gachaFreeBtn');
       if(freeBtn) { const lb = freeBtn.querySelector('span:last-child'); if(lb) lb.textContent = t('gachaAdPlaying'); }
       await new Promise(r => setTimeout(r, 1200));
-      markGachaAdUsed(_currentUser.id);
+      const { error } = await db.gacha.markAdUsed(_currentUser.id, GACHA_AD_LIMIT);
+      if(error) { alert(t('gachaLimitReachedAlert')); updateGachaButtons(); return; } // 既に上限到達済み（多重タップ対策）
     } else if(kind === 'coin' || kind === 'coin10') {
       const cost = kind === 'coin' ? GACHA_COIN_COST : GACHA_COIN10_COST;
       const { error } = await db.coins.spend(_currentUser.id, cost);
@@ -16913,6 +16950,7 @@
     gachaCoin10Btn:{ ja:'コイン{n}枚で10連', en:'10-pull for {n} coins', ko:'코인 {n}개로 10연차', 'zh-tw':'花{n}枚硬幣抽10次', 'zh-cn':'花{n}枚硬币抽10次', es:'Tirada x10 por {n} monedas', fr:'Tirage x10 pour {n} pièces', pt:'Puxada x10 por {n} moedas', de:'10er-Ziehung für {n} Münzen', ar:'سحب 10 مقابل {n} عملة', th:'สุ่ม 10 ครั้งด้วยเหรียญ {n} เหรียญ', id:'Tarik 10x dengan {n} koin', ru:'10 попыток за {n} монет', it:'Estrazione x10 per {n} monete', vi:'Quay 10 lần với {n} xu' },
     gachaHoldLabel:{ ja:'3秒長押しでガチャを引く', en:'Hold for 3 seconds to draw', ko:'3초간 길게 눌러서 뽑기', 'zh-tw':'長按3秒進行抽獎', 'zh-cn':'长按3秒进行抽奖', es:'Mantén presionado 3 segundos para tirar', fr:'Maintenez 3 secondes pour tirer', pt:'Segure por 3 segundos para puxar', de:'3 Sekunden halten zum Ziehen', ar:'اضغط مطولاً لمدة 3 ثوانٍ للسحب', th:'กดค้าง 3 วินาทีเพื่อสุ่ม', id:'Tahan 3 detik untuk menarik', ru:'Удерживайте 3 секунды, чтобы вытянуть', it:'Tieni premuto per 3 secondi per estrarre', vi:'Giữ 3 giây để quay' },
     gachaCoinInsufficientAlert:{ ja:'コインが足りません', en:'Not enough coins', ko:'코인이 부족합니다', 'zh-tw':'硬幣不足', 'zh-cn':'硬币不足', es:'No tienes suficientes monedas', fr:'Pièces insuffisantes', pt:'Moedas insuficientes', de:'Nicht genug Münzen', ar:'العملات غير كافية', th:'เหรียญไม่เพียงพอ', id:'Koin tidak cukup', ru:'Недостаточно монет', it:'Monete insufficienti', vi:'Không đủ xu' },
+    gachaLimitReachedAlert:{ ja:'本日の回数はもう使い切っています', en:'You have already used today\'s draws' },
     gachaResultTitleBatch:{ ja:'{n}個手に入れました', en:'You got {n} items', ko:'{n}개 획득했습니다', 'zh-tw':'獲得了{n}個', 'zh-cn':'获得了{n}个', es:'¡Obtuviste {n} objetos!', fr:'Vous avez obtenu {n} objets !', pt:'Você obteve {n} itens!', de:'Du hast {n} Gegenstände erhalten!', ar:'حصلت على {n} عنصرًا!', th:'คุณได้รับ {n} ชิ้น!', id:'Anda mendapatkan {n} item!', ru:'Вы получили {n} предметов!', it:'Hai ottenuto {n} oggetti!', vi:'Bạn đã nhận được {n} vật phẩm!' },
     questShareQualityReviewTask:{ ja:'上質なレビューを書いて、SNSでシェアする', en:'Write a quality review and share it on social media', ko:'양질의 리뷰를 작성하고 SNS에서 공유하기', 'zh-tw':'撰寫優質評論並在社群媒體分享', 'zh-cn':'撰写优质评论并在社交媒体分享', es:'Escribe una reseña de calidad y compártela en redes sociales', fr:'Rédigez un avis de qualité et partagez-le sur les réseaux sociaux', pt:'Escreva uma avaliação de qualidade e compartilhe nas redes sociais', de:'Schreibe eine hochwertige Rezension und teile sie in sozialen Netzwerken', ar:'اكتب مراجعة عالية الجودة وشاركها على وسائل التواصل الاجتماعي', th:'เขียนรีวิวคุณภาพแล้วแชร์ลงโซเชียล', id:'Tulis ulasan berkualitas dan bagikan di media sosial', ru:'Напишите качественный отзыв и поделитесь им в соцсетях', it:'Scrivi una recensione di qualità e condividila sui social', vi:'Viết một đánh giá chất lượng và chia sẻ lên mạng xã hội' },
     questClaimBtn:{ ja:'コイン{n}枚を受け取る', en:'Claim {n} coins', ko:'코인 {n}개 받기', 'zh-tw':'領取{n}枚硬幣', 'zh-cn':'领取{n}枚硬币', es:'Reclamar {n} monedas', fr:'Récupérer {n} pièces', pt:'Resgatar {n} moedas', de:'{n} Münzen abholen', ar:'استلام {n} عملة', th:'รับเหรียญ {n} เหรียญ', id:'Klaim {n} koin', ru:'Получить {n} монет', it:'Riscuoti {n} monete', vi:'Nhận {n} xu' },
