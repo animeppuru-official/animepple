@@ -3106,7 +3106,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.16'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
+<script>window.APP_BUILD = 'v0.313.18'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
 <div id="themeScenery" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════
@@ -3396,7 +3396,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.16</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.18</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -7431,7 +7431,7 @@
       },
       async getByIds(ids) {
         if(!sb) return [];
-        const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url,meta,description,year,episodes,genres,categories,category_ids,studios,streaming,broadcast_start,broadcast_end').in('id', ids);
+        const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url,meta,description,description_en,description_ko,description_zh_tw,description_zh_cn,description_es,description_fr,description_pt,description_de,description_ar,description_th,description_id,description_ru,description_it,description_vi,year,episodes,genres,categories,category_ids,studios,streaming,broadcast_start,broadcast_end').in('id', ids);
         return data || [];
       },
       async getAllTitles() {
@@ -8800,7 +8800,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.313.16';
+      if(vEl) vEl.textContent = 'v0.313.18';
     }
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
@@ -11958,10 +11958,18 @@
             meta: p.meta || '',
             image: p.image_url || '',
             description: p.description || '',
+            description_en: p.description_en || '', description_ko: p.description_ko || '',
+            description_zh_tw: p.description_zh_tw || '', description_zh_cn: p.description_zh_cn || '',
+            description_es: p.description_es || '', description_fr: p.description_fr || '',
+            description_pt: p.description_pt || '', description_de: p.description_de || '',
+            description_ar: p.description_ar || '', description_th: p.description_th || '',
+            description_id: p.description_id || '', description_ru: p.description_ru || '',
+            description_it: p.description_it || '', description_vi: p.description_vi || '',
             genres: p.genres || [],
             categories: p.categories || [],
             categoryIds: p.category_ids || [],
             streaming: p.streaming || [],
+            studios: p.studios || [],
             year: p.year || '',
             episodes: p.episodes || '',
             broadcastStart: p.broadcast_start || '',
@@ -12019,10 +12027,18 @@
             meta: p.meta || '',
             image: p.image_url || '',
             description: p.description || '',
+            description_en: p.description_en || '', description_ko: p.description_ko || '',
+            description_zh_tw: p.description_zh_tw || '', description_zh_cn: p.description_zh_cn || '',
+            description_es: p.description_es || '', description_fr: p.description_fr || '',
+            description_pt: p.description_pt || '', description_de: p.description_de || '',
+            description_ar: p.description_ar || '', description_th: p.description_th || '',
+            description_id: p.description_id || '', description_ru: p.description_ru || '',
+            description_it: p.description_it || '', description_vi: p.description_vi || '',
             genres: p.genres || [],
             categories: p.categories || [],
             categoryIds: p.category_ids || [],
             streaming: p.streaming || [],
+            studios: p.studios || [],
             year: p.year || '',
             episodes: p.episodes || '',
             broadcastStart: p.broadcast_start || '',
@@ -16726,16 +16742,34 @@
     db.adClicks.insert(slotId, typeof currentAnimeId!=='undefined' ? currentAnimeId : null);
   }
 
+  // 現在の言語に対応する description_xx 列名を返す（無ければnull＝原文表示のみ）
+  function descriptionColumnForLang(lang) {
+    const map = {
+      en:'description_en', ko:'description_ko', 'zh-tw':'description_zh_tw', 'zh-cn':'description_zh_cn',
+      es:'description_es', fr:'description_fr', pt:'description_pt', de:'description_de',
+      ar:'description_ar', th:'description_th', id:'description_id', ru:'description_ru',
+      it:'description_it', vi:'description_vi',
+    };
+    return map[lang] || null;
+  }
+
   // 配信サービスリンクを生成
-  // あらすじを表示。日本語選択中は翻訳キャッシュを確認し、無ければ翻訳して保存する
+  // あらすじを表示。日本語選択中は翻訳キャッシュを確認し、無ければ翻訳して保存する。
+  // 日本語以外の言語では、あらかじめ一括翻訳して保存してある description_xx 列があればそれを使う
   async function renderAnimeDescription(page, id) {
     const el = document.getElementById('animeDesc');
     if (!el) return;
     const original = page.description || '';
     if (!original) { el.textContent = ''; return; }
 
-    // 日本語以外、またはDB_MODEがsupabaseでない場合は原文表示のみ
-    if (currentLang !== 'ja' || DB_MODE !== 'supabase' || !sb) {
+    // 日本語以外の言語：事前翻訳済みの列があればそれを表示（無ければ原文のまま）
+    if (currentLang !== 'ja') {
+      const col = descriptionColumnForLang(currentLang);
+      if (col && page[col]) { el.textContent = page[col]; return; }
+      el.textContent = original;
+      return;
+    }
+    if (DB_MODE !== 'supabase' || !sb) {
       el.textContent = original;
       return;
     }
