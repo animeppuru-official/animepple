@@ -3106,7 +3106,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.11'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
+<script>window.APP_BUILD = 'v0.313.14'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
 <div id="themeScenery" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════
@@ -3295,7 +3295,7 @@
 <div class="priority-popover-overlay" id="ovPriorityPopoverOverlay" style="display:none;">
   <div class="priority-popover-box">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="#d9a441" stroke="none"><polygon points="12 3 14.6 8.6 20.8 9.3 16.2 13.5 17.5 19.6 12 16.5 6.5 19.6 7.8 13.5 3.2 9.3 9.4 8.6"/></svg>
-    <p><b style="color:#d9a441;">星</b>を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。星が1つも無い場合は、全軸の平均的な近さで検索します。</p>
+    <p data-i18n="priorityAxisExplain"><b style="color:#d9a441;">星</b>を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。星が1つも無い場合は、全軸の平均的な近さで検索します。</p>
     <button type="button" id="ovPriorityPopoverClose" data-i18n="gachaCloseBtn">閉じる</button>
   </div>
 </div>
@@ -3396,7 +3396,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.11</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.14</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -8800,7 +8800,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.313.11';
+      if(vEl) vEl.textContent = 'v0.313.14';
     }
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
@@ -16513,9 +16513,9 @@
       if (emphasize && row.matchPercent != null) {
         const m = row.matchPercent;
         const grade = m >= 85
-          ? { bar:'#63e6a2', track:'rgba(99,230,162,.16)', h:'8px', pct:'#8ff0be', w:'700', tier:'ドンピシャ', tBg:'rgba(99,230,162,.16)', tColor:'#8ff0be', tBorder:'rgba(99,230,162,.5)' }
-          : m >= 80 ? { bar:'#4fbe86', track:'rgba(79,190,134,.14)', h:'6px', pct:'#79d7a6', w:'700', tier:'好相性', tBg:'rgba(79,190,134,.12)', tColor:'#79d7a6', tBorder:'rgba(79,190,134,.4)' }
-          : { bar:'#3f8f6a', track:'rgba(63,143,106,.14)', h:'4px', pct:'#7d9086', w:'600', tier:'まあまあ', tBg:'rgba(255,255,255,.04)', tColor:'#8ea296', tBorder:'rgba(255,255,255,.12)' };
+          ? { bar:'#63e6a2', track:'rgba(99,230,162,.16)', h:'8px', pct:'#8ff0be', w:'700', tier:t('matchTierPerfect'), tBg:'rgba(99,230,162,.16)', tColor:'#8ff0be', tBorder:'rgba(99,230,162,.5)' }
+          : m >= 80 ? { bar:'#4fbe86', track:'rgba(79,190,134,.14)', h:'6px', pct:'#79d7a6', w:'700', tier:t('matchTierGood'), tBg:'rgba(79,190,134,.12)', tColor:'#79d7a6', tBorder:'rgba(79,190,134,.4)' }
+          : { bar:'#3f8f6a', track:'rgba(63,143,106,.14)', h:'4px', pct:'#7d9086', w:'600', tier:t('matchTierOk'), tBg:'rgba(255,255,255,.04)', tColor:'#8ea296', tBorder:'rgba(255,255,255,.12)' };
         const breakdownArgs = `${row.tagScore},${srTagsActive.length},${row.priorityDist===Infinity?'null':row.priorityDist},${row.match===Infinity?'null':row.match}`;
         mb = `<div style="position:relative;">
           <button type="button" style="display:block;width:100%;text-align:left;padding:0;border:none;background:transparent;cursor:pointer;" onclick="event.stopPropagation();openMatchBreakdown(${breakdownArgs});">
@@ -17178,7 +17178,7 @@
     gachaCoin10Btn:{ ja:'コイン{n}枚で10連', en:'10-pull for {n} coins', ko:'코인 {n}개로 10연차', 'zh-tw':'花{n}枚硬幣抽10次', 'zh-cn':'花{n}枚硬币抽10次', es:'Tirada x10 por {n} monedas', fr:'Tirage x10 pour {n} pièces', pt:'Puxada x10 por {n} moedas', de:'10er-Ziehung für {n} Münzen', ar:'سحب 10 مقابل {n} عملة', th:'สุ่ม 10 ครั้งด้วยเหรียญ {n} เหรียญ', id:'Tarik 10x dengan {n} koin', ru:'10 попыток за {n} монет', it:'Estrazione x10 per {n} monete', vi:'Quay 10 lần với {n} xu' },
     gachaHoldLabel:{ ja:'3秒長押しでガチャを引く', en:'Hold for 3 seconds to draw', ko:'3초간 길게 눌러서 뽑기', 'zh-tw':'長按3秒進行抽獎', 'zh-cn':'长按3秒进行抽奖', es:'Mantén presionado 3 segundos para tirar', fr:'Maintenez 3 secondes pour tirer', pt:'Segure por 3 segundos para puxar', de:'3 Sekunden halten zum Ziehen', ar:'اضغط مطولاً لمدة 3 ثوانٍ للسحب', th:'กดค้าง 3 วินาทีเพื่อสุ่ม', id:'Tahan 3 detik untuk menarik', ru:'Удерживайте 3 секунды, чтобы вытянуть', it:'Tieni premuto per 3 secondi per estrarre', vi:'Giữ 3 giây để quay' },
     gachaCoinInsufficientAlert:{ ja:'コインが足りません', en:'Not enough coins', ko:'코인이 부족합니다', 'zh-tw':'硬幣不足', 'zh-cn':'硬币不足', es:'No tienes suficientes monedas', fr:'Pièces insuffisantes', pt:'Moedas insuficientes', de:'Nicht genug Münzen', ar:'العملات غير كافية', th:'เหรียญไม่เพียงพอ', id:'Koin tidak cukup', ru:'Недостаточно монет', it:'Monete insufficienti', vi:'Không đủ xu' },
-    gachaLimitReachedAlert:{ ja:'本日の回数はもう使い切っています', en:'You have already used today\'s draws' },
+    gachaLimitReachedAlert:{ ja:'本日の回数はもう使い切っています', en:'You have already used today\'s draws', ko:'오늘의 횟수를 이미 다 사용했어요', 'zh-tw':'今天的次數已經用完了', 'zh-cn':'今天的次数已经用完了', es:'Ya has usado tus tiradas de hoy', fr:'Vous avez déjà utilisé vos tirages du jour', pt:'Você já usou seus sorteios de hoje', de:'Du hast deine heutigen Ziehungen bereits verbraucht', ar:'لقد استخدمت سحوبات اليوم بالفعل', th:'ใช้จำนวนครั้งของวันนี้หมดแล้ว', id:'Anda sudah menggunakan tarikan hari ini', ru:'Вы уже использовали сегодняшние попытки', it:'Hai già usato le estrazioni di oggi', vi:'Bạn đã dùng hết lượt quay hôm nay' },
     gachaResultTitleBatch:{ ja:'{n}個手に入れました', en:'You got {n} items', ko:'{n}개 획득했습니다', 'zh-tw':'獲得了{n}個', 'zh-cn':'获得了{n}个', es:'¡Obtuviste {n} objetos!', fr:'Vous avez obtenu {n} objets !', pt:'Você obteve {n} itens!', de:'Du hast {n} Gegenstände erhalten!', ar:'حصلت على {n} عنصرًا!', th:'คุณได้รับ {n} ชิ้น!', id:'Anda mendapatkan {n} item!', ru:'Вы получили {n} предметов!', it:'Hai ottenuto {n} oggetti!', vi:'Bạn đã nhận được {n} vật phẩm!' },
     questShareQualityReviewTask:{ ja:'上質なレビューを書いて、SNSでシェアする', en:'Write a quality review and share it on social media', ko:'양질의 리뷰를 작성하고 SNS에서 공유하기', 'zh-tw':'撰寫優質評論並在社群媒體分享', 'zh-cn':'撰写优质评论并在社交媒体分享', es:'Escribe una reseña de calidad y compártela en redes sociales', fr:'Rédigez un avis de qualité et partagez-le sur les réseaux sociaux', pt:'Escreva uma avaliação de qualidade e compartilhe nas redes sociais', de:'Schreibe eine hochwertige Rezension und teile sie in sozialen Netzwerken', ar:'اكتب مراجعة عالية الجودة وشاركها على وسائل التواصل الاجتماعي', th:'เขียนรีวิวคุณภาพแล้วแชร์ลงโซเชียล', id:'Tulis ulasan berkualitas dan bagikan di media sosial', ru:'Напишите качественный отзыв и поделитесь им в соцсетях', it:'Scrivi una recensione di qualità e condividila sui social', vi:'Viết một đánh giá chất lượng và chia sẻ lên mạng xã hội' },
     questClaimBtn:{ ja:'コイン{n}枚を受け取る', en:'Claim {n} coins', ko:'코인 {n}개 받기', 'zh-tw':'領取{n}枚硬幣', 'zh-cn':'领取{n}枚硬币', es:'Reclamar {n} monedas', fr:'Récupérer {n} pièces', pt:'Resgatar {n} moedas', de:'{n} Münzen abholen', ar:'استلام {n} عملة', th:'รับเหรียญ {n} เหรียญ', id:'Klaim {n} koin', ru:'Получить {n} монет', it:'Riscuoti {n} monete', vi:'Nhận {n} xu' },
@@ -17512,47 +17512,47 @@
     iconSortObtained: { ja:'入手順', en:'By obtained date' },
     loginRequiredAlert: { ja:'ログインが必要です。', en:'Please log in first.' },
     loginRequired: { ja:'ログインが必要です', en:'Please log in', ko:'로그인이 필요합니다', 'zh-tw':'需要登入', 'zh-cn':'需要登录', es:'Inicia sesión para continuar', fr:'Veuillez vous connecter', pt:'Faça login para continuar', de:'Bitte melde dich an', ar:'يرجى تسجيل الدخول', th:'กรุณาเข้าสู่ระบบ', id:'Silakan masuk', ru:'Пожалуйста, войдите', it:'Effettua l\'accesso', vi:'Vui lòng đăng nhập' },
-    gachaTitle: { ja:'ガチャガチャ', en:'Gacha' },
-    gachaStageIdle: { ja:'ボタンを3秒長押し', en:'Hold a button for 3 seconds' },
-    gachaFreeBtn: { ja:'無料で引く', en:'Free draw' },
-    gachaFreeBtnUsed: { ja:'本日は引き終わりました', en:'Already used today' },
-    gachaAdBtn: { ja:'広告を見て引く（残り{n}回・30秒）', en:'Watch a 30s ad to draw ({n} left)' },
-    gachaAdPlaying: { ja:'広告を再生中…', en:'Playing ad…' },
-    gachaLead: { ja:'1日1回無料。広告を見るとあと3回引けます。', en:'One free draw a day. Watch an ad for 3 more.' },
-    gachaRemainLabel: { ja:'今日の残り', en:'Left today' },
-    gachaAdBtnUsed: { ja:'広告分は今日の上限です', en:'Ad draws used up' },
-    gachaAdConfirm: { ja:'30秒の広告を見ると1回引けます。途中でやめると回数は消費されません。', en:'Watch a 30s ad for one draw. Quitting early does not use a draw.' },
-    gachaSpinning: { ja:'回しています…', en:'Spinning…' },
-    gachaPoolTitle: { ja:'出るもの', en:'What you can get' },
-    gachaPoolNote: { ja:'1回で2枠', en:'2 slots per draw' },
-    gachaFixedBadge: { ja:'確定', en:'Guaranteed' },
+    gachaTitle: { ja:'ガチャガチャ', en:'Gacha', ko:'가챠', 'zh-tw':'扭蛋', 'zh-cn':'扭蛋', es:'Gacha', fr:'Gacha', pt:'Gacha', de:'Gacha', ar:'جاتشا', th:'กาชา', id:'Gacha', ru:'Гача', it:'Gacha', vi:'Gacha' },
+    gachaStageIdle: { ja:'ボタンを3秒長押し', en:'Hold a button for 3 seconds', ko:'버튼을 3초간 길게 누르세요', 'zh-tw':'長按按鈕3秒', 'zh-cn':'长按按钮3秒', es:'Mantén pulsado un botón 3 segundos', fr:'Maintenez un bouton pendant 3 secondes', pt:'Segure um botão por 3 segundos', de:'Halte eine Taste 3 Sekunden gedrückt', ar:'اضغط مطولًا على زر لمدة 3 ثوانٍ', th:'กดปุ่มค้างไว้ 3 วินาที', id:'Tahan tombol selama 3 detik', ru:'Удерживайте кнопку 3 секунды', it:'Tieni premuto un pulsante per 3 secondi', vi:'Giữ nút trong 3 giây' },
+    gachaFreeBtn: { ja:'無料で引く', en:'Free draw', ko:'무료로 뽑기', 'zh-tw':'免費抽', 'zh-cn':'免费抽', es:'Tirada gratis', fr:'Tirage gratuit', pt:'Sorteio grátis', de:'Kostenlose Ziehung', ar:'سحب مجاني', th:'สุ่มฟรี', id:'Tarikan gratis', ru:'Бесплатная попытка', it:'Estrazione gratuita', vi:'Quay miễn phí' },
+    gachaFreeBtnUsed: { ja:'本日は引き終わりました', en:'Already used today', ko:'오늘은 이미 뽑았어요', 'zh-tw':'今天已經抽過了', 'zh-cn':'今天已经抽过了', es:'Ya usado hoy', fr:'Déjà utilisé aujourd\'hui', pt:'Já usado hoje', de:'Heute bereits verwendet', ar:'تم الاستخدام اليوم بالفعل', th:'ใช้วันนี้ไปแล้ว', id:'Sudah digunakan hari ini', ru:'Уже использовано сегодня', it:'Già utilizzato oggi', vi:'Đã dùng hôm nay' },
+    gachaAdBtn: { ja:'広告を見て引く（残り{n}回・30秒）', en:'Watch a 30s ad to draw ({n} left)', ko:'광고를 보고 뽑기 (남은 {n}회・30초)', 'zh-tw':'看廣告抽獎（剩{n}次・30秒）', 'zh-cn':'看广告抽奖（剩{n}次・30秒）', es:'Mira un anuncio de 30s para tirar (quedan {n})', fr:'Regardez une pub de 30s pour tirer ({n} restants)', pt:'Assista a um anúncio de 30s para sortear ({n} restantes)', de:'Schau eine 30-Sek-Werbung für eine Ziehung (noch {n})', ar:'شاهد إعلانًا لمدة 30 ثانية للسحب (المتبقي {n})', th:'ดูโฆษณา 30 วินาทีเพื่อสุ่ม (เหลือ {n} ครั้ง)', id:'Tonton iklan 30 detik untuk menarik (sisa {n})', ru:'Смотрите рекламу 30 сек для попытки (осталось {n})', it:'Guarda un annuncio di 30s per estrarre ({n} rimasti)', vi:'Xem quảng cáo 30s để quay (còn {n} lượt)' },
+    gachaAdPlaying: { ja:'広告を再生中…', en:'Playing ad…', ko:'광고 재생 중…', 'zh-tw':'廣告播放中…', 'zh-cn':'广告播放中…', es:'Reproduciendo anuncio…', fr:'Lecture de la publicité…', pt:'Reproduzindo anúncio…', de:'Werbung wird abgespielt…', ar:'جارٍ تشغيل الإعلان…', th:'กำลังเล่นโฆษณา…', id:'Memutar iklan…', ru:'Идёт показ рекламы…', it:'Riproduzione annuncio…', vi:'Đang phát quảng cáo…' },
+    gachaLead: { ja:'1日1回無料。広告を見るとあと3回引けます。', en:'One free draw a day. Watch an ad for 3 more.', ko:'하루 1회 무료. 광고를 보면 3회 더 뽑을 수 있어요.', 'zh-tw':'每天1次免費。看廣告可再抽3次。', 'zh-cn':'每天1次免费。看广告可再抽3次。', es:'Una tirada gratis al día. Mira anuncios para 3 más.', fr:'Un tirage gratuit par jour. Regardez des pubs pour 3 de plus.', pt:'Um sorteio grátis por dia. Assista anúncios para mais 3.', de:'Eine kostenlose Ziehung pro Tag. Für 3 weitere Werbung ansehen.', ar:'سحب مجاني واحد يوميًا. شاهد إعلانًا لثلاث محاولات إضافية.', th:'ฟรีวันละ 1 ครั้ง ดูโฆษณาเพื่อรับเพิ่มอีก 3 ครั้ง', id:'Satu tarikan gratis sehari. Tonton iklan untuk 3 lagi.', ru:'Одна бесплатная попытка в день. Смотрите рекламу для ещё 3.', it:'Un\'estrazione gratuita al giorno. Guarda annunci per altre 3.', vi:'Miễn phí 1 lượt mỗi ngày. Xem quảng cáo để có thêm 3 lượt.' },
+    gachaRemainLabel: { ja:'今日の残り', en:'Left today', ko:'오늘 남은 횟수', 'zh-tw':'今日剩餘', 'zh-cn':'今日剩余', es:'Restantes hoy', fr:'Restants aujourd\'hui', pt:'Restantes hoje', de:'Heute übrig', ar:'المتبقي اليوم', th:'เหลือวันนี้', id:'Sisa hari ini', ru:'Осталось сегодня', it:'Rimasti oggi', vi:'Còn lại hôm nay' },
+    gachaAdBtnUsed: { ja:'広告分は今日の上限です', en:'Ad draws used up', ko:'광고 횟수를 오늘 다 썼어요', 'zh-tw':'廣告次數今天已達上限', 'zh-cn':'广告次数今天已达上限', es:'Tiradas por anuncio agotadas', fr:'Tirages via pub épuisés', pt:'Sorteios por anúncio esgotados', de:'Werbe-Ziehungen aufgebraucht', ar:'استُنفدت سحوبات الإعلانات', th:'ใช้โควตาโฆษณาหมดแล้ว', id:'Tarikan iklan sudah habis', ru:'Попытки за рекламу исчерпаны', it:'Estrazioni via annuncio esaurite', vi:'Đã hết lượt quay từ quảng cáo' },
+    gachaAdConfirm: { ja:'30秒の広告を見ると1回引けます。途中でやめると回数は消費されません。', en:'Watch a 30s ad for one draw. Quitting early does not use a draw.', ko:'30초 광고를 보면 1회 뽑을 수 있어요. 도중에 그만두면 횟수는 차감되지 않아요.', 'zh-tw':'看30秒廣告即可抽1次。中途取消不會消耗次數。', 'zh-cn':'看30秒广告即可抽1次。中途取消不会消耗次数。', es:'Mira un anuncio de 30s para una tirada. Salir antes no consume intento.', fr:'Regardez une pub de 30s pour un tirage. Quitter tôt ne consomme pas de tirage.', pt:'Assista a um anúncio de 30s para um sorteio. Sair antes não consome o sorteio.', de:'Schau eine 30-Sek-Werbung für eine Ziehung. Vorzeitiges Beenden verbraucht keine Ziehung.', ar:'شاهد إعلانًا لمدة 30 ثانية لسحبة واحدة. الخروج مبكرًا لا يستهلك محاولة.', th:'ดูโฆษณา 30 วินาทีเพื่อสุ่ม 1 ครั้ง หากออกกลางคันจะไม่เสียโควตา', id:'Tonton iklan 30 detik untuk satu tarikan. Keluar lebih awal tidak menggunakan tarikan.', ru:'Смотрите рекламу 30 сек для одной попытки. Досрочный выход не расходует попытку.', it:'Guarda un annuncio di 30s per un\'estrazione. Uscire prima non consuma l\'estrazione.', vi:'Xem quảng cáo 30s để có 1 lượt quay. Thoát giữa chừng sẽ không mất lượt.' },
+    gachaSpinning: { ja:'回しています…', en:'Spinning…', ko:'돌리는 중…', 'zh-tw':'轉動中…', 'zh-cn':'转动中…', es:'Girando…', fr:'En rotation…', pt:'Girando…', de:'Dreht sich…', ar:'جارٍ التدوير…', th:'กำลังหมุน…', id:'Memutar…', ru:'Крутится…', it:'In rotazione…', vi:'Đang quay…' },
+    gachaPoolTitle: { ja:'出るもの', en:'What you can get', ko:'나올 수 있는 것', 'zh-tw':'可能獲得', 'zh-cn':'可能获得', es:'Lo que puedes obtener', fr:'Ce que vous pouvez obtenir', pt:'O que você pode ganhar', de:'Was du bekommen kannst', ar:'ما يمكنك الحصول عليه', th:'สิ่งที่จะได้รับ', id:'Yang bisa Anda dapatkan', ru:'Что можно получить', it:'Cosa puoi ottenere', vi:'Những gì bạn có thể nhận' },
+    gachaPoolNote: { ja:'1回で2枠', en:'2 slots per draw', ko:'1회에 2개', 'zh-tw':'每次2個名額', 'zh-cn':'每次2个名额', es:'2 espacios por tirada', fr:'2 emplacements par tirage', pt:'2 vagas por sorteio', de:'2 Plätze pro Ziehung', ar:'مكانان لكل سحب', th:'2 ช่องต่อการสุ่ม 1 ครั้ง', id:'2 slot per tarikan', ru:'2 слота за попытку', it:'2 slot per estrazione', vi:'2 ô mỗi lượt quay' },
+    gachaFixedBadge: { ja:'確定', en:'Guaranteed', ko:'확정', 'zh-tw':'必得', 'zh-cn':'必得', es:'Garantizado', fr:'Garanti', pt:'Garantido', de:'Garantiert', ar:'مضمون', th:'รับประกัน', id:'Dijamin', ru:'Гарантировано', it:'Garantito', vi:'Đảm bảo' },
     gachaFixedBadge2: { ja:'本日のおすすめ', en:"Today's pick" },
-    gachaFixedName: { ja:'本日のおすすめアニメ', en:"Today's anime pick" },
-    gachaFixedDesc: { ja:'あなたの12軸グラフに近い作品を1本ピック。必ず1枚出ます。', en:'One title close to your 12-axis graph. Always included.' },
-    gachaBonusLabel: { ja:'おまけ枠（レア度で排出）', en:'Bonus slot (by rarity)' },
-    gachaBonusDesc: { ja:'マイページのアイコン図鑑から使えます。', en:'Use it from your icon collection.' },
-    gachaBonusUse: { ja:'図鑑で見る', en:'Open collection' },
-    gachaDup: { ja:'すでに持っているものでした', en:'You already had this one' },
-    gachaItemListLabel: { ja:'景品一覧', en:'All items' },
-    gachaCollectTitle: { ja:'集めたもの', en:'Your collection' },
-    gachaCollectBtn: { ja:'図鑑を開く', en:'Open collection' },
+    gachaFixedName: { ja:'本日のおすすめアニメ', en:"Today's anime pick", ko:'오늘의 추천 애니메', 'zh-tw':'今日推薦動畫', 'zh-cn':'今日推荐动画', es:'Anime recomendado de hoy', fr:'Anime recommandé du jour', pt:'Anime recomendado de hoje', de:'Heutiger Anime-Tipp', ar:'أنمي اليوم المقترح', th:'อนิเมะแนะนำวันนี้', id:'Rekomendasi anime hari ini', ru:'Аниме дня', it:'Anime consigliato di oggi', vi:'Anime gợi ý hôm nay' },
+    gachaFixedDesc: { ja:'あなたの12軸グラフに近い作品を1本ピック。必ず1枚出ます。', en:'One title close to your 12-axis graph. Always included.', ko:'당신의 12축 그래프와 가까운 작품 1편을 선정. 반드시 1장 나와요.', 'zh-tw':'挑選1部接近你12軸圖表的作品。必定會出現。', 'zh-cn':'挑选1部接近你12轴图表的作品。必定会出现。', es:'Un título cercano a tu gráfico de 12 ejes. Siempre incluido.', fr:'Un titre proche de votre graphique à 12 axes. Toujours inclus.', pt:'Um título próximo ao seu gráfico de 12 eixos. Sempre incluído.', de:'Ein Titel nahe deinem 12-Achsen-Diagramm. Immer enthalten.', ar:'عمل واحد قريب من رسمك البياني ذي 12 محورًا. مضمّن دائمًا.', th:'ผลงาน 1 เรื่องที่ใกล้เคียงกราฟ 12 แกนของคุณ ได้รับเสมอ', id:'Satu judul dekat dengan grafik 12 sumbu Anda. Selalu disertakan.', ru:'Один тайтл, близкий к вашему 12-осевому графику. Всегда включён.', it:'Un titolo vicino al tuo grafico a 12 assi. Sempre incluso.', vi:'Một tựa phim gần với biểu đồ 12 trục của bạn. Luôn có trong lượt quay.' },
+    gachaBonusLabel: { ja:'おまけ枠（レア度で排出）', en:'Bonus slot (by rarity)', ko:'보너스 슬롯 (희귀도별 배출)', 'zh-tw':'額外名額（依稀有度）', 'zh-cn':'额外名额（按稀有度）', es:'Espacio extra (por rareza)', fr:'Emplacement bonus (par rareté)', pt:'Vaga bônus (por raridade)', de:'Bonusplatz (nach Seltenheit)', ar:'مكان إضافي (حسب الندرة)', th:'ช่องโบนัส (ตามระดับความหายาก)', id:'Slot bonus (berdasarkan rarity)', ru:'Бонусный слот (по редкости)', it:'Slot bonus (per rarità)', vi:'Ô thưởng (theo độ hiếm)' },
+    gachaBonusDesc: { ja:'マイページのアイコン図鑑から使えます。', en:'Use it from your icon collection.', ko:'마이페이지의 아이콘 도감에서 사용할 수 있어요.', 'zh-tw':'可從我的頁面的頭像圖鑑使用。', 'zh-cn':'可从我的页面的头像图鉴使用。', es:'Úsalo desde tu colección de íconos.', fr:'Utilisez-le depuis votre collection d\'icônes.', pt:'Use a partir da sua coleção de ícones.', de:'Nutze es aus deiner Symbolsammlung.', ar:'استخدمه من مجموعة الأيقونات الخاصة بك.', th:'ใช้งานได้จากคลังไอคอนในมายเพจ', id:'Gunakan dari koleksi ikon Anda.', ru:'Используйте из вашей коллекции иконок.', it:'Usalo dalla tua collezione di icone.', vi:'Dùng từ bộ sưu tập biểu tượng của bạn.' },
+    gachaBonusUse: { ja:'図鑑で見る', en:'Open collection', ko:'도감에서 보기', 'zh-tw':'在圖鑑中查看', 'zh-cn':'在图鉴中查看', es:'Ver en la colección', fr:'Voir dans la collection', pt:'Ver na coleção', de:'In der Sammlung ansehen', ar:'عرض في المجموعة', th:'ดูในคลัง', id:'Lihat di koleksi', ru:'Смотреть в коллекции', it:'Vedi nella collezione', vi:'Xem trong bộ sưu tập' },
+    gachaDup: { ja:'すでに持っているものでした', en:'You already had this one', ko:'이미 가지고 있는 아이템이에요', 'zh-tw':'這個你已經擁有了', 'zh-cn':'这个你已经拥有了', es:'Ya tenías este', fr:'Vous l\'aviez déjà', pt:'Você já tinha este', de:'Das hattest du schon', ar:'كان هذا لديك بالفعل', th:'คุณมีอันนี้อยู่แล้ว', id:'Anda sudah punya yang ini', ru:'У вас уже был этот предмет', it:'Lo avevi già', vi:'Bạn đã có cái này rồi' },
+    gachaItemListLabel: { ja:'景品一覧', en:'All items', ko:'전체 아이템 목록', 'zh-tw':'獎品清單', 'zh-cn':'奖品清单', es:'Todos los premios', fr:'Tous les lots', pt:'Todos os prêmios', de:'Alle Preise', ar:'كل الجوائز', th:'รายการของรางวัลทั้งหมด', id:'Semua item', ru:'Все призы', it:'Tutti i premi', vi:'Tất cả vật phẩm' },
+    gachaCollectTitle: { ja:'集めたもの', en:'Your collection', ko:'모은 것', 'zh-tw':'已收集', 'zh-cn':'已收集', es:'Tu colección', fr:'Votre collection', pt:'Sua coleção', de:'Deine Sammlung', ar:'مجموعتك', th:'สิ่งที่สะสมได้', id:'Koleksi Anda', ru:'Ваша коллекция', it:'La tua collezione', vi:'Bộ sưu tập của bạn' },
+    gachaCollectBtn: { ja:'図鑑を開く', en:'Open collection', ko:'도감 열기', 'zh-tw':'開啟圖鑑', 'zh-cn':'打开图鉴', es:'Abrir colección', fr:'Ouvrir la collection', pt:'Abrir coleção', de:'Sammlung öffnen', ar:'فتح المجموعة', th:'เปิดคลัง', id:'Buka koleksi', ru:'Открыть коллекцию', it:'Apri collezione', vi:'Mở bộ sưu tập' },
     gachaResultTitle1: { ja:'手に入れました', en:'You got it' },
     gachaResultTitle2: { ja:'2つ手に入れました', en:'You got 2 things' },
-    gachaPickMeta: { ja:'あなたのグラフに近い作品です', en:'Close to your graph' },
-    gachaPickOpen: { ja:'作品を見る', en:'View title' },
-    gachaPickFav: { ja:'お気に入り', en:'Favorite' },
-    gachaPickFavDone: { ja:'追加しました', en:'Added' },
-    gachaAgainBtn: { ja:'広告を見てもう1回（残り{n}回）', en:'Watch an ad for one more ({n} left)' },
-    gachaSoldOutTitle: { ja:'今日はここまで', en:"That's all for today" },
-    gachaSoldOutSub: { ja:'次に引けるのは', en:'Next draw:' },
-    gachaResetAt: { ja:'明日 0:00', en:'tomorrow 0:00' },
-    gachaSoldOutPlus: { ja:'アニメップル＋なら毎日3回（広告なし）', en:'Animepple+ gives 3 draws a day, ad-free' },
-    gachaProbBtn: { ja:'確率と景品一覧', en:'Odds & prize list' },
-    gachaCoinOnce: { ja:'1回引く', en:'Single draw' },
+    gachaPickMeta: { ja:'あなたのグラフに近い作品です', en:'Close to your graph', ko:'당신의 그래프와 가까운 작품이에요', 'zh-tw':'接近你圖表的作品', 'zh-cn':'接近你图表的作品', es:'Un título cercano a tu gráfico', fr:'Proche de votre graphique', pt:'Próximo ao seu gráfico', de:'Nahe deinem Diagramm', ar:'قريب من رسمك البياني', th:'ผลงานที่ใกล้เคียงกราฟของคุณ', id:'Dekat dengan grafik Anda', ru:'Близко к вашему графику', it:'Vicino al tuo grafico', vi:'Gần với biểu đồ của bạn' },
+    gachaPickOpen: { ja:'作品を見る', en:'View title', ko:'작품 보기', 'zh-tw':'查看作品', 'zh-cn':'查看作品', es:'Ver título', fr:'Voir le titre', pt:'Ver título', de:'Titel ansehen', ar:'عرض العمل', th:'ดูผลงาน', id:'Lihat judul', ru:'Смотреть тайтл', it:'Vedi titolo', vi:'Xem tựa phim' },
+    gachaPickFav: { ja:'お気に入り', en:'Favorite', ko:'즐겨찾기', 'zh-tw':'收藏', 'zh-cn':'收藏', es:'Favorito', fr:'Favori', pt:'Favorito', de:'Favorit', ar:'المفضلة', th:'รายการโปรด', id:'Favorit', ru:'Избранное', it:'Preferito', vi:'Yêu thích' },
+    gachaPickFavDone: { ja:'追加しました', en:'Added', ko:'추가했어요', 'zh-tw':'已加入', 'zh-cn':'已加入', es:'Añadido', fr:'Ajouté', pt:'Adicionado', de:'Hinzugefügt', ar:'تمت الإضافة', th:'เพิ่มแล้ว', id:'Ditambahkan', ru:'Добавлено', it:'Aggiunto', vi:'Đã thêm' },
+    gachaAgainBtn: { ja:'広告を見てもう1回（残り{n}回）', en:'Watch an ad for one more ({n} left)', ko:'광고를 보고 한 번 더 (남은 {n}회)', 'zh-tw':'看廣告再抽一次（剩{n}次）', 'zh-cn':'看广告再抽一次（剩{n}次）', es:'Mira un anuncio para una más (quedan {n})', fr:'Regardez une pub pour un de plus ({n} restants)', pt:'Assista a um anúncio para mais um ({n} restantes)', de:'Schau Werbung für eine weitere (noch {n})', ar:'شاهد إعلانًا لمحاولة أخرى (المتبقي {n})', th:'ดูโฆษณาเพื่อรับอีก 1 ครั้ง (เหลือ {n} ครั้ง)', id:'Tonton iklan untuk satu lagi (sisa {n})', ru:'Смотрите рекламу для ещё одной (осталось {n})', it:'Guarda un annuncio per un\'altra ({n} rimasti)', vi:'Xem quảng cáo để có thêm 1 lượt (còn {n})' },
+    gachaSoldOutTitle: { ja:'今日はここまで', en:"That's all for today", ko:'오늘은 여기까지예요', 'zh-tw':'今天就到這裡', 'zh-cn':'今天就到这里', es:'Eso es todo por hoy', fr:'C\'est tout pour aujourd\'hui', pt:'Isso é tudo por hoje', de:'Das war\'s für heute', ar:'هذا كل شيء لهذا اليوم', th:'วันนี้หมดแค่นี้', id:'Itu saja untuk hari ini', ru:'На сегодня всё', it:'Tutto per oggi', vi:'Hôm nay đến đây thôi' },
+    gachaSoldOutSub: { ja:'次に引けるのは', en:'Next draw:', ko:'다음에 뽑을 수 있는 시간', 'zh-tw':'下次可抽的時間', 'zh-cn':'下次可抽的时间', es:'Próxima tirada:', fr:'Prochain tirage :', pt:'Próximo sorteio:', de:'Nächste Ziehung:', ar:'السحب التالي:', th:'ครั้งต่อไปที่สุ่มได้', id:'Tarikan berikutnya:', ru:'Следующая попытка:', it:'Prossima estrazione:', vi:'Lượt quay tiếp theo:' },
+    gachaResetAt: { ja:'明日 0:00', en:'tomorrow 0:00', ko:'내일 0시', 'zh-tw':'明天0:00', 'zh-cn':'明天0:00', es:'mañana 0:00', fr:'demain 0h00', pt:'amanhã 0:00', de:'morgen 0:00 Uhr', ar:'غدًا الساعة 0:00', th:'พรุ่งนี้ 0:00 น.', id:'besok 0:00', ru:'завтра в 0:00', it:'domani ore 0:00', vi:'ngày mai 0:00' },
+    gachaSoldOutPlus: { ja:'アニメップル＋なら毎日3回（広告なし）', en:'Animepple+ gives 3 draws a day, ad-free', ko:'애니메플+라면 매일 3회 (광고 없이)', 'zh-tw':'Animepple+每天可抽3次（無廣告）', 'zh-cn':'Animepple+每天可抽3次（无广告）', es:'Animepple+ te da 3 tiradas al día, sin anuncios', fr:'Animepple+ offre 3 tirages par jour, sans pub', pt:'Animepple+ dá 3 sorteios por dia, sem anúncios', de:'Animepple+ gibt dir 3 werbefreie Ziehungen täglich', ar:'يمنحك Animepple+ 3 سحوبات يوميًا بدون إعلانات', th:'Animepple+ ให้สุ่มได้วันละ 3 ครั้ง (ไม่มีโฆษณา)', id:'Animepple+ memberi 3 tarikan sehari, tanpa iklan', ru:'Animepple+ даёт 3 попытки в день без рекламы', it:'Animepple+ offre 3 estrazioni al giorno, senza pubblicità', vi:'Animepple+ cho 3 lượt quay mỗi ngày, không quảng cáo' },
+    gachaProbBtn: { ja:'確率と景品一覧', en:'Odds & prize list', ko:'확률 및 아이템 목록', 'zh-tw':'機率與獎品清單', 'zh-cn':'概率与奖品清单', es:'Probabilidades y premios', fr:'Probabilités et lots', pt:'Probabilidades e prêmios', de:'Chancen & Preisliste', ar:'الاحتمالات وقائمة الجوائز', th:'อัตราความน่าจะเป็นและรายการรางวัล', id:'Peluang & daftar hadiah', ru:'Шансы и список призов', it:'Probabilità e lista premi', vi:'Tỷ lệ & danh sách phần thưởng' },
+    gachaCoinOnce: { ja:'1回引く', en:'Single draw', ko:'1회 뽑기', 'zh-tw':'抽1次', 'zh-cn':'抽1次', es:'Tirada única', fr:'Tirage unique', pt:'Sorteio único', de:'Einzelziehung', ar:'سحبة واحدة', th:'สุ่ม 1 ครั้ง', id:'Tarik 1x', ru:'Одна попытка', it:'Estrazione singola', vi:'Quay 1 lần' },
     gachaCoin10Note: { ja:'10連で引く', en:'10-pull' },
     gachaCoin10Tag: { ja:'SR以上1枚確定', en:'SR+ guaranteed' },
-    gachaLedIdle: { ja:'待機中', en:'Standby' },
-    gachaSeriesLabel: { ja:'シリーズ', en:'Series' },
+    gachaLedIdle: { ja:'待機中', en:'Standby', ko:'대기 중', 'zh-tw':'待機中', 'zh-cn':'待机中', es:'En espera', fr:'En attente', pt:'Em espera', de:'Bereit', ar:'وضع الاستعداد', th:'สแตนด์บาย', id:'Siaga', ru:'Ожидание', it:'In attesa', vi:'Chờ' },
+    gachaSeriesLabel: { ja:'シリーズ', en:'Series', ko:'시리즈', 'zh-tw':'系列', 'zh-cn':'系列', es:'Serie', fr:'Série', pt:'Série', de:'Serie', ar:'السلسلة', th:'ซีรีส์', id:'Seri', ru:'Серия', it:'Serie', vi:'Chuỗi' },
     coinShopBalanceLabel: { ja:'いま持っているコイン', en:'Your coins' },
     coinShopUseOnce: { ja:'1回引く', en:'Single draw' },
     coinShopUseTen: { ja:'10連で引く', en:'10-pull' },
@@ -17586,15 +17586,15 @@
     legalShikin: { ja:'資金決済法に基づく表示', en:'Payment services disclosure' },
     coinShopTagPopular: { ja:'人気', en:'Popular' },
     coinShopTagBest: { ja:'最もお得', en:'Best value' },
-    gachaSeriesHint: { ja:'横スクロールで追加分が並びます', en:'Scroll sideways for more' },
-    gachaLedFilling: { ja:'注入中', en:'Pouring' },
-    gachaStageFilling: { ja:'リンゴジュースがたまっていきます…', en:'Filling with apple juice…' },
-    gachaShopSubFrom: { ja:'から', en:'+' },
-    gachaShopSubBonus: { ja:'ボーナス最大{n}%', en:'up to +{n}% bonus' },
-    gachaQuestSubReady: { ja:'達成 ・ 受け取れます', en:'Done ・ ready to claim' },
-    gachaQuestSubOpen: { ja:'0 / 1 達成', en:'0 / 1 done' },
-    gachaProbTitle: { ja:'確率と景品一覧', en:'Odds & prize list' },
-    gachaEmptyPool: { ja:'景品は準備中です。もうしばらくお待ちください。', en:'Prizes are coming soon.' },
+    gachaSeriesHint: { ja:'横スクロールで追加分が並びます', en:'Scroll sideways for more', ko:'옆으로 스크롤하면 더 볼 수 있어요', 'zh-tw':'左右滑動查看更多', 'zh-cn':'左右滑动查看更多', es:'Desliza hacia los lados para ver más', fr:'Faites défiler latéralement pour en voir plus', pt:'Deslize lateralmente para ver mais', de:'Seitlich scrollen für mehr', ar:'مرر أفقيًا لمزيد', th:'เลื่อนด้านข้างเพื่อดูเพิ่มเติม', id:'Geser ke samping untuk lebih banyak', ru:'Прокрутите вбок, чтобы увидеть больше', it:'Scorri lateralmente per altro', vi:'Vuốt ngang để xem thêm' },
+    gachaLedFilling: { ja:'注入中', en:'Pouring', ko:'채우는 중', 'zh-tw':'注入中', 'zh-cn':'注入中', es:'Vertiendo', fr:'Remplissage', pt:'Enchendo', de:'Einfüllen', ar:'جارٍ الصب', th:'กำลังเติม', id:'Mengisi', ru:'Наливается', it:'Versamento', vi:'Đang rót' },
+    gachaStageFilling: { ja:'リンゴジュースがたまっていきます…', en:'Filling with apple juice…', ko:'사과주스가 채워지고 있어요…', 'zh-tw':'蘋果汁正在注入中…', 'zh-cn':'苹果汁正在注入中…', es:'Llenando con jugo de manzana…', fr:'Remplissage de jus de pomme…', pt:'Enchendo com suco de maçã…', de:'Wird mit Apfelsaft gefüllt…', ar:'جارٍ التعبئة بعصير التفاح…', th:'กำลังเติมน้ำแอปเปิ้ล…', id:'Mengisi dengan jus apel…', ru:'Наполняется яблочным соком…', it:'Riempimento con succo di mela…', vi:'Đang rót nước táo…' },
+    gachaShopSubFrom: { ja:'から', en:'+', ko:'부터', 'zh-tw':'起', 'zh-cn':'起', es:'desde', fr:'à partir de', pt:'a partir de', de:'ab', ar:'من', th:'เริ่มต้น', id:'mulai dari', ru:'от', it:'da', vi:'từ' },
+    gachaShopSubBonus: { ja:'ボーナス最大{n}%', en:'up to +{n}% bonus', ko:'최대 보너스 {n}%', 'zh-tw':'最高獎勵{n}%', 'zh-cn':'最高奖励{n}%', es:'bono de hasta +{n}%', fr:'bonus jusqu\'à +{n}%', pt:'bônus de até +{n}%', de:'bis zu +{n}% Bonus', ar:'مكافأة تصل إلى +{n}٪', th:'โบนัสสูงสุด +{n}%', id:'bonus hingga +{n}%', ru:'бонус до +{n}%', it:'bonus fino a +{n}%', vi:'thưởng lên đến +{n}%' },
+    gachaQuestSubReady: { ja:'達成 ・ 受け取れます', en:'Done ・ ready to claim', ko:'달성 ・ 수령 가능', 'zh-tw':'已達成 ・ 可領取', 'zh-cn':'已达成 ・ 可领取', es:'Completado ・ listo para reclamar', fr:'Terminé ・ prêt à réclamer', pt:'Concluído ・ pronto para resgatar', de:'Erledigt ・ bereit zum Abholen', ar:'مكتمل ・ جاهز للاستلام', th:'สำเร็จ ・ รับได้เลย', id:'Selesai ・ siap diklaim', ru:'Выполнено ・ можно забрать', it:'Completato ・ pronto per il ritiro', vi:'Hoàn thành ・ sẵn sàng nhận' },
+    gachaQuestSubOpen: { ja:'0 / 1 達成', en:'0 / 1 done', ko:'0 / 1 달성', 'zh-tw':'0 / 1 已達成', 'zh-cn':'0 / 1 已达成', es:'0 / 1 completado', fr:'0 / 1 terminé', pt:'0 / 1 concluído', de:'0 / 1 erledigt', ar:'0 / 1 مكتمل', th:'0 / 1 สำเร็จ', id:'0 / 1 selesai', ru:'0 / 1 выполнено', it:'0 / 1 completato', vi:'0 / 1 hoàn thành' },
+    gachaProbTitle: { ja:'確率と景品一覧', en:'Odds & prize list', ko:'확률 및 아이템 목록', 'zh-tw':'機率與獎品清單', 'zh-cn':'概率与奖品清单', es:'Probabilidades y premios', fr:'Probabilités et lots', pt:'Probabilidades e prêmios', de:'Chancen & Preisliste', ar:'الاحتمالات وقائمة الجوائز', th:'อัตราความน่าจะเป็นและรายการรางวัล', id:'Peluang & daftar hadiah', ru:'Шансы и список призов', it:'Probabilità e lista premi', vi:'Tỷ lệ & danh sách phần thưởng' },
+    gachaEmptyPool: { ja:'景品は準備中です。もうしばらくお待ちください。', en:'Prizes are coming soon.', ko:'아이템은 준비 중이에요. 조금만 기다려 주세요.', 'zh-tw':'獎品準備中，請稍候。', 'zh-cn':'奖品准备中，请稍候。', es:'Los premios llegarán pronto.', fr:'Les lots arrivent bientôt.', pt:'Os prêmios estão a caminho.', de:'Preise kommen bald.', ar:'الجوائز قادمة قريبًا.', th:'ของรางวัลกำลังเตรียมพร้อม โปรดรอสักครู่', id:'Hadiah akan segera hadir.', ru:'Призы скоро появятся.', it:'I premi arriveranno presto.', vi:'Phần thưởng sắp có.' },
     gachaCloseBtn: { ja:'閉じる', en:'Close', ko:'닫기', 'zh-tw':'關閉', 'zh-cn':'关闭', es:'Cerrar', fr:'Fermer', pt:'Fechar', de:'Schließen', ar:'إغلاق', th:'ปิด', id:'Tutup', ru:'Закрыть', it:'Chiudi', vi:'Đóng' },
     cancelBtn: { ja:'キャンセル', en:'Cancel' },
     boardMoreLabel: { ja:'この投稿の操作', en:'Post actions' },
@@ -17758,7 +17758,14 @@
     authSwitchLogin:{ ja:'すでにアカウントをお持ちですか？',en:'Already have an account?',ko:'이미 계정이 있으신가요?','zh-tw':'已有帳號？','zh-cn':'已有账号？',es:'¿Ya tienes cuenta?',fr:'Déjà un compte ?',pt:'Já tem uma conta?',de:'Haben Sie schon ein Konto?',ar:'لديك حساب بالفعل؟',th:'มีบัญชีอยู่แล้ว?',id:'Sudah punya akun?',ru:'Уже есть аккаунт?',it:'Hai già un account?',vi:'Đã có tài khoản?' },
     authSwitchRegister:{ ja:'アカウントがない方は',en:'No account yet?',ko:'계정이 없으신가요?','zh-tw':'沒有帳號？','zh-cn':'没有账号？',es:'¿No tienes cuenta?',fr:'Pas encore de compte ?',pt:'Não tem uma conta?',de:'Noch kein Konto?',ar:'ليس لديك حساب؟',th:'ยังไม่มีบัญชี?',id:'Belum punya akun?',ru:'Нет аккаунта?',it:'Non hai un account?',vi:'Chưa có tài khoản?' },
     graphMatchBadge:{ ja:'一致度 {n}%',en:'Match {n}%',ko:'일치도 {n}%','zh-tw':'匹配度 {n}%','zh-cn':'匹配度 {n}%',es:'Coincidencia {n}%',fr:'Correspondance {n}%',pt:'Correspondência {n}%',de:'Übereinstimmung {n}%',ar:'التطابق {n}%',th:'ความตรงกัน {n}%',id:'Kecocokan {n}%',ru:'Совпадение {n}%',it:'Corrispondenza {n}%',vi:'Khớp {n}%' },
-    matchBreakdownTitle:{ ja:'一致度の内訳', en:'Match breakdown' },
+    matchBreakdownTitle:{ ja:'一致度の内訳', en:'Match breakdown', ko:'일치도 내역', 'zh-tw':'符合度明細', 'zh-cn':'匹配度明细', es:'Detalle de coincidencia', fr:'Détail de correspondance', pt:'Detalhe de correspondência', de:'Übereinstimmungsdetails', ar:'تفاصيل التطابق', th:'รายละเอียดความตรงกัน', id:'Rincian kecocokan', ru:'Детали совпадения', it:'Dettaglio corrispondenza', vi:'Chi tiết mức khớp' },
+    matchLabelTags: { ja:'タグ', en:'Tags', ko:'태그', 'zh-tw':'標籤', 'zh-cn':'标签', es:'Etiquetas', fr:'Tags', pt:'Tags', de:'Tags', ar:'الوسوم', th:'แท็ก', id:'Tag', ru:'Теги', it:'Tag', vi:'Thẻ' },
+    matchLabelPriority: { ja:'優先軸', en:'Priority', ko:'우선 축', 'zh-tw':'優先軸', 'zh-cn':'优先轴', es:'Prioridad', fr:'Priorité', pt:'Prioridade', de:'Priorität', ar:'الأولوية', th:'ลำดับความสำคัญ', id:'Prioritas', ru:'Приоритет', it:'Priorità', vi:'Ưu tiên' },
+    matchLabelGraph: { ja:'グラフ', en:'Graph', ko:'그래프', 'zh-tw':'圖表', 'zh-cn':'图表', es:'Gráfico', fr:'Graphique', pt:'Gráfico', de:'Diagramm', ar:'الرسم البياني', th:'กราฟ', id:'Grafik', ru:'График', it:'Grafico', vi:'Biểu đồ' },
+    matchTagsMatchedCount: { ja:(a,b)=>`${a}/${b}個一致`, en:(a,b)=>`${a}/${b} matched`, ko:(a,b)=>`${a}/${b}개 일치`, 'zh-tw':(a,b)=>`${a}/${b}項符合`, 'zh-cn':(a,b)=>`${a}/${b}项匹配`, es:(a,b)=>`${a}/${b} coinciden`, fr:(a,b)=>`${a}/${b} correspondent`, pt:(a,b)=>`${a}/${b} correspondem`, de:(a,b)=>`${a}/${b} stimmen überein`, ar:(a,b)=>`${a}/${b} متطابقة`, th:(a,b)=>`ตรงกัน ${a}/${b}`, id:(a,b)=>`${a}/${b} cocok`, ru:(a,b)=>`${a}/${b} совпадений`, it:(a,b)=>`${a}/${b} corrispondenti`, vi:(a,b)=>`${a}/${b} khớp` },
+    matchTierPerfect: { ja:'ドンピシャ', en:'Perfect match', ko:'완벽 일치', 'zh-tw':'完全命中', 'zh-cn':'完全命中', es:'Coincidencia perfecta', fr:'Correspondance parfaite', pt:'Combinação perfeita', de:'Perfekte Übereinstimmung', ar:'تطابق مثالي', th:'ตรงเป๊ะ', id:'Cocok sempurna', ru:'Идеальное совпадение', it:'Corrispondenza perfetta', vi:'Khớp hoàn hảo' },
+    matchTierGood: { ja:'好相性', en:'Great match', ko:'궁합 좋음', 'zh-tw':'高相性', 'zh-cn':'高契合', es:'Buena coincidencia', fr:'Bonne correspondance', pt:'Boa combinação', de:'Gute Übereinstimmung', ar:'توافق جيد', th:'เข้ากันดี', id:'Cocok baik', ru:'Хорошее совпадение', it:'Buona corrispondenza', vi:'Hợp tốt' },
+    matchTierOk: { ja:'まあまあ', en:'Decent match', ko:'적당함', 'zh-tw':'還算符合', 'zh-cn':'还算符合', es:'Coincidencia decente', fr:'Correspondance correcte', pt:'Combinação razoável', de:'Ordentliche Übereinstimmung', ar:'تطابق مقبول', th:'พอใช้', id:'Cukup cocok', ru:'Неплохое совпадение', it:'Corrispondenza discreta', vi:'Khớp tạm ổn' },
     priorityMatchBadge:{ ja:'⭐ 優先軸 {n}%',en:'⭐ Priority {n}%',ko:'⭐ 우선 {n}%','zh-tw':'⭐ 優先 {n}%','zh-cn':'⭐ 优先 {n}%',es:'⭐ Prioridad {n}%',fr:'⭐ Priorité {n}%',pt:'⭐ Prioridade {n}%',de:'⭐ Priorität {n}%',ar:'⭐ أولوية {n}%',th:'⭐ ลำดับความสำคัญ {n}%',id:'⭐ Prioritas {n}%',ru:'⭐ Приоритет {n}%',it:'⭐ Priorità {n}%',vi:'⭐ Ưu tiên {n}%' },
     priorityAxisHint:{ ja:'この軸を優先して検索',en:'Prioritize this axis in search',ko:'이 축을 우선하여 검색','zh-tw':'優先以此軸搜尋','zh-cn':'优先以此轴搜索',es:'Priorizar este eje en la búsqueda',fr:'Prioriser cet axe dans la recherche',pt:'Priorizar este eixo na busca',de:'Diese Achse bei der Suche priorisieren',ar:'إعطاء الأولوية لهذا المحور في البحث',th:'จัดลำดับความสำคัญแกนนี้ในการค้นหา',id:'Prioritaskan sumbu ini dalam pencarian',ru:'Приоритет этой оси в поиске',it:'Dai priorità a questo asse nella ricerca',vi:'Ưu tiên trục này khi tìm kiếm' },
     priorityAxisExplain:{ ja:'⭐ を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。⭐が1つも無い場合は、全軸の平均的な近さで検索します。',en:'Axes marked with ⭐ take priority: results favor anime closest to that value on those axes. With no ⭐, all axes are averaged equally.',ko:'⭐ 표시한 축은 다른 축보다 우선하여 "그 수치에 가까운 작품"을 검색합니다. ⭐가 하나도 없으면 전체 축의 평균 근접도로 검색합니다.','zh-tw':'標記⭐的軸會優先搜尋「數值最接近」的作品。若未標記任何⭐，則以全部軸的平均接近度搜尋。','zh-cn':'标记⭐的轴会优先搜索"数值最接近"的作品。若未标记任何⭐，则以全部轴的平均接近度搜索。',es:'Los ejes marcados con ⭐ tienen prioridad: se buscan animes más cercanos a ese valor. Sin ⭐, se promedian todos los ejes por igual.',fr:'Les axes marqués d\u2019une ⭐ sont prioritaires : les résultats favorisent les animes les plus proches de cette valeur. Sans ⭐, tous les axes sont moyennés également.',pt:'Eixos marcados com ⭐ têm prioridade: os resultados favorecem animes mais próximos desse valor. Sem ⭐, todos os eixos são igualmente calculados na média.',de:'Mit ⭐ markierte Achsen haben Priorität: Ergebnisse bevorzugen Anime, die diesem Wert am nächsten sind. Ohne ⭐ werden alle Achsen gleich gemittelt.',ar:'المحاور المميزة بـ ⭐ لها الأولوية: تفضل النتائج الأنمي الأقرب لتلك القيمة. بدون ⭐، يتم حساب متوسط جميع المحاور بالتساوي.',th:'แกนที่ทำเครื่องหมาย ⭐ จะถูกจัดลำดับความสำคัญ ผลลัพธ์จะเน้นอนิเมะที่ใกล้เคียงค่านั้นที่สุด หากไม่มี ⭐ เลย จะใช้ค่าเฉลี่ยของทุกแกนเท่าๆกัน',id:'Sumbu bertanda ⭐ diprioritaskan: hasil mengutamakan anime yang paling dekat dengan nilai tersebut. Tanpa ⭐, semua sumbu dirata-ratakan sama.',ru:'Оси с ⭐ имеют приоритет: результаты предпочитают аниме, наиболее близкие к этому значению. Без ⭐ все оси усредняются одинаково.',it:'Gli assi contrassegnati con ⭐ hanno la priorità: i risultati favoriscono anime più vicini a quel valore. Senza ⭐, tutti gli assi vengono mediati allo stesso modo.',vi:'Các trục đánh dấu ⭐ được ưu tiên: kết quả ưu tiên anime gần giá trị đó nhất. Không có ⭐, tất cả trục được tính trung bình như nhau.' },
@@ -18005,10 +18012,10 @@
         <span style="width:34px;flex:0 0 34px;text-align:right;font-size:11px;font-weight:700;color:#dfeae3;">${val==null?'—':val+'%'}</span>
       </div>`;
     body.innerHTML = `
-      ${srTagsActive.length ? row(currentLang==='ja'?'タグ':'Tags', tagTotal ? Math.round(tagScore/tagTotal*100) : null, '#5cc98e') : ''}
-      ${priorityAxes.size ? row(currentLang==='ja'?'優先軸':'Priority', priorityPct, '#d9a441') : ''}
-      ${row(currentLang==='ja'?'グラフ':'Graph', graphPct, '#5cc98e')}
-      ${srTagsActive.length ? `<p style="font-size:.72rem;color:var(--muted,#9ab);margin-top:.4rem;">${escapeHtml(String(tagScore))}/${escapeHtml(String(tagTotal))}${currentLang==='ja'?'個一致':' matched'}</p>` : ''}
+      ${srTagsActive.length ? row(t('matchLabelTags'), tagTotal ? Math.round(tagScore/tagTotal*100) : null, '#5cc98e') : ''}
+      ${priorityAxes.size ? row(t('matchLabelPriority'), priorityPct, '#d9a441') : ''}
+      ${row(t('matchLabelGraph'), graphPct, '#5cc98e')}
+      ${srTagsActive.length ? `<p style="font-size:.72rem;color:var(--muted,#9ab);margin-top:.4rem;">${escapeHtml((T.matchTagsMatchedCount[currentLang]||T.matchTagsMatchedCount.en)(tagScore, tagTotal))}</p>` : ''}
     `;
     overlay.classList.add('open');
   }
