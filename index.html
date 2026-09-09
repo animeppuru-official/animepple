@@ -20,8 +20,8 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="アニメップル｜グラフでアニメの好みをドンピシャ検索" />
   <meta property="og:description" content="みんなのレビューグラフでアニメの雰囲気・特徴を可視化。自分の好みにドンピシャな作品が見つかるアニメコミュニティ。" />
-  <meta property="og:image" content="https://animeppuru-official.github.io/animepple/ogp.png" />
-  <meta property="og:url" content="https://animeppuru-official.github.io/animepple/" />
+  <meta property="og:image" content="https://animepple.com/ogp.png" />
+  <meta property="og:url" content="https://animepple.com/" />
   <meta property="og:site_name" content="アニメップル" />
   <meta property="og:locale" content="ja_JP" />
 
@@ -29,12 +29,12 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="アニメップル｜グラフでアニメの好みをドンピシャ検索" />
   <meta name="twitter:description" content="みんなのレビューグラフでアニメの雰囲気・特徴を可視化。自分の好みにドンピシャな作品が見つかるアニメコミュニティ。" />
-  <meta name="twitter:image" content="https://animeppuru-official.github.io/animepple/ogp.png" />
+  <meta name="twitter:image" content="https://animepple.com/ogp.png" />
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/animepple/favicon.png" />
-  <link rel="manifest" href="/animepple/manifest.json" />
-  <link rel="stylesheet" href="/animepple/skins.css" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/skins.css" />
   <link rel="apple-touch-icon" href="icons/赤リンゴ.jpe" />
   <meta name="theme-color" content="#0e1a13" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -3106,7 +3106,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.28'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
+<script>window.APP_BUILD = 'v0.313.29'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
 <div id="themeScenery" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════
@@ -3396,7 +3396,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.28</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.29</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -8819,7 +8819,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.313.28';
+      if(vEl) vEl.textContent = 'v0.313.29';
     }
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
@@ -10847,12 +10847,12 @@
   ════════════════════════════ */
   // アイコン図鑑：カタログ本体。image は今後1つずつ追加していく（nullのままでも「入手済みだが未実装」として扱われる）
   const ICON_CATALOG = [
-    { id:1, rarity:1, image:'https://animeppuru-official.github.io/animepple/icons/icon1.jpe', default:true },
-    { id:2, rarity:2, image:'https://animeppuru-official.github.io/animepple/icons/icon2.jpe', unlockMinQuality:8 },   // アニメ通
-    { id:3, rarity:3, image:'https://animeppuru-official.github.io/animepple/icons/icon3.jpe', unlockMinQuality:30 },  // ベテランレビュアー
-    { id:4, rarity:3, image:'https://animeppuru-official.github.io/animepple/icons/icon4.jpe', unlockMinQuality:70 },  // レジェンド
-    { id:5, rarity:4, image:'https://animeppuru-official.github.io/animepple/icons/icon5.jpe', unlockMinQuality:90 },  // マスターオブグラフ
-    { id:6, rarity:4, image:'https://animeppuru-official.github.io/animepple/icons/icon6.jpe', unlockMinQuality:100 }, // 殿堂入り
+    { id:1, rarity:1, image:'https://animepple.com/icons/icon1.jpe', default:true },
+    { id:2, rarity:2, image:'https://animepple.com/icons/icon2.jpe', unlockMinQuality:8 },   // アニメ通
+    { id:3, rarity:3, image:'https://animepple.com/icons/icon3.jpe', unlockMinQuality:30 },  // ベテランレビュアー
+    { id:4, rarity:3, image:'https://animepple.com/icons/icon4.jpe', unlockMinQuality:70 },  // レジェンド
+    { id:5, rarity:4, image:'https://animepple.com/icons/icon5.jpe', unlockMinQuality:90 },  // マスターオブグラフ
+    { id:6, rarity:4, image:'https://animepple.com/icons/icon6.jpe', unlockMinQuality:100 }, // 殿堂入り
     { id:7, rarity:1, image:null },
     { id:8, rarity:1, image:null },
     { id:9, rarity:1, image:null },
@@ -12786,7 +12786,7 @@
     const btn = document.getElementById('mypageShareCardBtn');
     const iconsRow = document.getElementById('mypageShareIconsRow');
     if(!btn) return;
-    const shareUrl = `https://animeppuru-official.github.io/animepple/user/${data.userId}`;
+    const shareUrl = `https://animepple.com/user/${data.userId}`;
     const shareText = t('shareProfileText').replace('{username}', data.username || '');
     if(iconsRow) {
       iconsRow.innerHTML = buildShareIconsHtmlGeneric();
@@ -13420,7 +13420,7 @@
         if(_currentUser && review && review.quality) db.quests.markCompleted(_currentUser.id).catch(()=>{});
         const title = getTitle(page) || page.title || page.titleEn || '';
         const shareText = t('shareReviewText').replace('{title}', title);
-        const shareUrl = `https://animeppuru-official.github.io/animepple/anime/${page.id}/reviews`;
+        const shareUrl = `https://animepple.com/anime/${page.id}/reviews`;
         let urlToUse = shareUrl;
         if(review) {
           btn.style.opacity = '.5';
@@ -13493,7 +13493,7 @@
           if(!blob) throw new Error('blob is null');
           const title = getTitle(page) || page.title || page.titleEn || '';
           const shareText = t('shareReviewText').replace('{title}', title);
-          const shareUrl = `https://animeppuru-official.github.io/animepple/anime/${page.id}/reviews`;
+          const shareUrl = `https://animepple.com/anime/${page.id}/reviews`;
           const file = new File([blob], 'animepple-review.png', { type: 'image/png' });
           // スマホ：OS標準の共有シートを開く（画像添付済み・本文は各アプリ側で編集可能な状態で渡る）
           if(navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -13687,7 +13687,7 @@
       : t('writeGoodReviewToUnlock');
     el.innerHTML = `
       <div style="display:flex;align-items:flex-end;gap:.5rem;">
-        <img src="https://animeppuru-official.github.io/animepple/mascot.png" alt="アニメップルちゃん" style="width:64px;height:auto;flex-shrink:0;" />
+        <img src="https://animepple.com/mascot.png" alt="アニメップルちゃん" style="width:64px;height:auto;flex-shrink:0;" />
         <div class="mascot-balloon" style="position:static;transform:none;">${msg}</div>
       </div>
     `;
@@ -21360,7 +21360,7 @@
     try {
       const permission = await Notification.requestPermission();
       if(permission !== 'granted') return { error: 'denied' };
-      const reg = await navigator.serviceWorker.register('/animepple/sw.js');
+      const reg = await navigator.serviceWorker.register('/sw.js');
       await navigator.serviceWorker.ready;
       let sub = await reg.pushManager.getSubscription();
       if(!sub) {
@@ -22160,7 +22160,7 @@
       const { error } = await sb.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://animeppuru-official.github.io/animepple/',
+          redirectTo: 'https://animepple.com/',
           queryParams: {
             prompt: 'select_account',
           },
