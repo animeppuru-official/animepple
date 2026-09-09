@@ -3109,7 +3109,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.32'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
+<script>window.APP_BUILD = 'v0.313.33'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
 <div id="themeScenery" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════
@@ -3399,7 +3399,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.32</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.33</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -3513,6 +3513,8 @@
       <button class="legal-link" onclick="openLegal('terms')" data-i18n="footerTerms">利用規約</button>
       <span style="margin:0 .4rem;">·</span>
       <button class="legal-link" onclick="nav('privacy')" data-i18n="footerPrivacy">プライバシーポリシー</button>
+      <span style="margin:0 .4rem;">·</span>
+      <button class="legal-link" onclick="nav('refund-policy')">返金ポリシー</button>
       <span style="margin:0 .4rem;">·</span>
       <button class="legal-link" onclick="nav('contact')" data-i18n="footerContact">お問い合わせ</button>
     </div>
@@ -5193,6 +5195,11 @@
         <span class="mypage-menu-row-label" data-i18n="settingsPrivacyPolicyLink">プライバシーポリシー</span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
+      <button class="mypage-menu-row" onclick="nav('refund-policy')">
+        <span class="mypage-menu-row-icon">💳</span>
+        <span class="mypage-menu-row-label">返金ポリシー</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
     </div>
     <p style="font-size:.75rem;color:var(--muted);margin:1rem 1.1rem;" id="settingsVersionText"></p>
   </div>
@@ -5329,7 +5336,42 @@
   </div>
 </div>
 
+<!-- 返金ポリシー -->
+<div class="page" id="page-refund-policy">
+  <div class="privacy-content-wrap">
+    <button type="button" class="back-btn" onclick="nav('settings-about')" data-i18n-aria="ariaBack" aria-label="戻る">‹</button>
+    <h1>返金ポリシー</h1>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.5rem;">最終更新: 2026年9月 / バージョン 1.0</p>
+
+    <section class="pp-section">
+      <h2>1. 対象となる購入</h2>
+      <p>本ポリシーは、アニメップル＋（サブスクリプション）、コインパック（アプリ内通貨の購入）、投げ銭（サポーター向けの任意の支払い）に適用されます。決済は、当社の決済代行事業者（Merchant of Record）であるPaddle.com Market Limitedを通じて処理されます。</p>
+    </section>
+
+    <section class="pp-section">
+      <h2>2. コインパック・ガチャについて</h2>
+      <p>コインおよびガチャで入手したアイテムは、購入・使用が完了したデジタルコンテンツであるため、原則として返金には応じられません。ただし、二重決済など、購入手続き自体に明らかな不具合があった場合はこの限りではありません。</p>
+    </section>
+
+    <section class="pp-section">
+      <h2>3. サブスクリプション（アニメップル＋等）について</h2>
+      <p>サブスクリプションは、いつでも次回更新日より前に解約できます。解約すると、現在の請求期間の終了時点でサービスが終了し、日割りでの返金は行われません。ただし、決済直後の誤操作など、明らかな理由がある場合は、購入から14日以内にお問い合わせいただければ個別に対応します。</p>
+    </section>
+
+    <section class="pp-section">
+      <h2>4. 投げ銭について</h2>
+      <p>投げ銭は、運営者の活動を支援する目的の任意の支払いであり、性質上返金の対象とはなりません。</p>
+    </section>
+
+    <section class="pp-section">
+      <h2>5. お問い合わせ方法</h2>
+      <p>返金に関するご相談は、お問い合わせフォーム（種類：「アカウントについて」）よりご連絡ください。内容を確認のうえ、個別に対応いたします。</p>
+    </section>
+  </div>
+</div>
+
 <div class="page" id="page-admin">
+
   <header class="hdr">
     <div class="hdr-inner">
       <span style="color:var(--brand);font-weight:800;">🔐 管理者ダッシュボード</span>
@@ -8822,7 +8864,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.313.32';
+      if(vEl) vEl.textContent = 'v0.313.33';
     }
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
