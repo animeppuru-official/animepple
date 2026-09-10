@@ -3111,7 +3111,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.40'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.41'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -14173,12 +14173,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    async function callSubscriptionFn(fnName) {
+    async function callSubscriptionFn(fnName, bodyObj) {
       const { data: sessionData } = await sb.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
       const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${accessToken}` },
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          ...(bodyObj ? { 'Content-Type': 'application/json' } : {}),
+        },
+        body: bodyObj ? JSON.stringify(bodyObj) : undefined,
       });
       const resJson = await res.json();
       if(!res.ok || !resJson.ok) throw new Error(resJson.error || `${fnName} failed`);
@@ -14231,7 +14235,28 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // ① 未契約：通常の購読ボタン
+      // ① 未契約なら通常の購読、② 他の有料プランを契約中ならプラン変更(二重契約防止)
+      const hasOtherActivePlan = currentPlan !== 'free' && currentPlan !== btnPlan && !cancelScheduled;
+      if(hasOtherActivePlan) {
+        btn.textContent = btnPlan === 'creators' ? t('planUpgradeBtn') : t('planDowngradeBtn');
+        btn.classList.remove('plan-btn-current');
+        btn.onclick = async () => {
+          if(!confirm(t('planChangeConfirm'))) return;
+          btn.disabled = true;
+          try {
+            await callSubscriptionFn('change-subscription-plan', { newPlan: btnPlan });
+            alert(t('planChangeDoneAlert'));
+            renderPlanPage();
+          } catch(e) {
+            console.error('プラン変更に失敗:', e);
+            alert(t('planChangeFailAlert'));
+          } finally {
+            btn.disabled = false;
+          }
+        };
+        return;
+      }
+
       btn.textContent = paymentsReady ? t('planChooseBtn') : t('planSoonBtn');
       btn.classList.remove('plan-btn-current');
       btn.onclick = () => {
@@ -17698,6 +17723,11 @@ document.addEventListener('DOMContentLoaded', () => {
     planResumeFailAlert: { ja:'再開処理に失敗しました。時間をおいて再度お試しいただくか、お問い合わせください。', en:'Resuming failed. Please try again later or contact support.' },
     planRenewsOnLabel: { ja:'次回支払い日: {date}', en:'Next billing date: {date}' },
     planEndsOnLabel: { ja:'{date}に終了予定（それまでは利用できます）', en:'Ends on {date} (you can use it until then)' },
+    planUpgradeBtn: { ja:'アップグレードする', en:'Upgrade' },
+    planDowngradeBtn: { ja:'ダウングレードする', en:'Downgrade' },
+    planChangeConfirm: { ja:'プランを変更します。差額はすぐに精算されます。よろしいですか？', en:'This will change your plan and settle the price difference immediately. Continue?' },
+    planChangeDoneAlert: { ja:'プランを変更しました。', en:'Your plan has been changed.' },
+    planChangeFailAlert: { ja:'プラン変更に失敗しました。時間をおいて再度お試しいただくか、お問い合わせください。', en:'Changing plan failed. Please try again later or contact support.' },
     planSoonBtn: { ja:'準備中', en:'Coming soon' },
     planSoonTitle: { ja:'サブスクは近日公開予定です', en:'Subscriptions are coming soon' },
     planSoonSub: { ja:'開始したらお知らせします。今は特典の内容だけ確認できます。', en:'We will let you know when they open. For now you can review what each plan includes.' },
