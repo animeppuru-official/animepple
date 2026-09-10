@@ -3111,7 +3111,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.38'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.39'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -6822,7 +6822,7 @@ document.addEventListener('DOMContentLoaded', () => {
     profiles: {
       async get(userId) {
         if(!sb) return null;
-        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin').eq('id', userId).single();
+        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,plan_paddle_subscription_id,plan_renews_at').eq('id', userId).single();
         return data;
       },
       async getByIds(userIds) {
