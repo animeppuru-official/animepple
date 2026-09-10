@@ -3111,7 +3111,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.41'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.42'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -6824,7 +6824,7 @@ document.addEventListener('DOMContentLoaded', () => {
     profiles: {
       async get(userId) {
         if(!sb) return null;
-        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,plan_paddle_subscription_id,plan_renews_at,plan_cancel_scheduled').eq('id', userId).single();
+        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,plan_paddle_subscription_id,plan_renews_at,plan_cancel_scheduled,pending_plan,pending_plan_effective_at').eq('id', userId).single();
         return data;
       },
       async getByIds(userIds) {
@@ -14137,12 +14137,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPlan = 'free';
     let cancelScheduled = false;
     let renewsAt = null;
+    let pendingPlan = null;
+    let pendingPlanEffectiveAt = null;
     if(_currentUser) {
       try {
         const profile = await db.profiles.get(_currentUser.id);
         currentPlan = (profile && (profile.plan === 'plus' || profile.plan === 'creators')) ? profile.plan : 'free';
         cancelScheduled = !!(profile && profile.plan_cancel_scheduled);
         renewsAt = profile ? profile.plan_renews_at : null;
+        pendingPlan = profile ? profile.pending_plan : null;
+        pendingPlanEffectiveAt = profile ? profile.pending_plan_effective_at : null;
       } catch(e) { console.warn('プラン取得に失敗:', e); }
     }
 
@@ -14174,6 +14178,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function callSubscriptionFn(fnName, bodyObj) {
+      await callSubscriptionFnRaw(fnName, bodyObj);
+    }
+
+    async function callSubscriptionFnRaw(fnName, bodyObj) {
       const { data: sessionData } = await sb.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
       const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
@@ -14186,6 +14194,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const resJson = await res.json();
       if(!res.ok || !resJson.ok) throw new Error(resJson.error || `${fnName} failed`);
+      return resJson;
     }
 
     root.querySelectorAll('.plan-subscribe-btn').forEach(btn => {
@@ -14214,7 +14223,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if(btnPlan === currentPlan) {
-        // ② 契約中・解約予約なし：解約するボタン
+        // ② 契約中・解約予約なし：解約するボタン(ダウングレード予約中ならその旨も出す)
         btn.textContent = t('planCancelBtn');
         btn.classList.remove('plan-btn-primary', 'plan-btn-gold');
         btn.classList.add('plan-btn-current');
@@ -14235,17 +14244,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // ① 未契約なら通常の購読、② 他の有料プランを契約中ならプラン変更(二重契約防止)
-      const hasOtherActivePlan = currentPlan !== 'free' && currentPlan !== btnPlan && !cancelScheduled;
-      if(hasOtherActivePlan) {
-        btn.textContent = btnPlan === 'creators' ? t('planUpgradeBtn') : t('planDowngradeBtn');
-        btn.classList.remove('plan-btn-current');
+      // 予約中のダウングレード先プラン：予約を確認・取り消しできるボタンにする
+      if(btnPlan === pendingPlan) {
+        const dateStr = formatRenewDate(pendingPlanEffectiveAt);
+        btn.textContent = t('planPendingBtn').replace('{date}', dateStr);
+        btn.classList.remove('plan-btn-primary', 'plan-btn-gold');
+        btn.classList.add('plan-btn-current');
         btn.onclick = async () => {
-          if(!confirm(t('planChangeConfirm'))) return;
+          if(!confirm(t('planCancelPendingConfirm'))) return;
           btn.disabled = true;
           try {
-            await callSubscriptionFn('change-subscription-plan', { newPlan: btnPlan });
-            alert(t('planChangeDoneAlert'));
+            await callSubscriptionFn('cancel-pending-plan-change');
+            alert(t('planCancelPendingDoneAlert'));
+            renderPlanPage();
+          } catch(e) {
+            console.error('予約取り消しに失敗:', e);
+            alert(t('planChangeFailAlert'));
+          } finally {
+            btn.disabled = false;
+          }
+        };
+        return;
+      }
+
+      // ① 未契約なら通常の購読、② 他の有料プランを契約中ならプラン変更(二重契約防止)
+      const hasOtherActivePlan = currentPlan !== 'free' && currentPlan !== btnPlan && !cancelScheduled && !pendingPlan;
+      const PLAN_RANK = { free: 0, plus: 1, creators: 2 };
+      const isDowngradeBtn = hasOtherActivePlan && (PLAN_RANK[btnPlan] < PLAN_RANK[currentPlan]);
+      if(hasOtherActivePlan) {
+        btn.textContent = isDowngradeBtn ? t('planDowngradeBtn') : t('planUpgradeBtn');
+        btn.classList.remove('plan-btn-current');
+        btn.onclick = async () => {
+          if(!confirm(isDowngradeBtn ? t('planDowngradeConfirm') : t('planUpgradeConfirm'))) return;
+          btn.disabled = true;
+          try {
+            const result = await callSubscriptionFnRaw('change-subscription-plan', { newPlan: btnPlan });
+            alert(result.scheduled ? t('planDowngradeScheduledAlert').replace('{date}', formatRenewDate(result.effectiveAt)) : t('planChangeDoneAlert'));
             renderPlanPage();
           } catch(e) {
             console.error('プラン変更に失敗:', e);
@@ -17728,6 +17762,12 @@ document.addEventListener('DOMContentLoaded', () => {
     planChangeConfirm: { ja:'プランを変更します。差額はすぐに精算されます。よろしいですか？', en:'This will change your plan and settle the price difference immediately. Continue?' },
     planChangeDoneAlert: { ja:'プランを変更しました。', en:'Your plan has been changed.' },
     planChangeFailAlert: { ja:'プラン変更に失敗しました。時間をおいて再度お試しいただくか、お問い合わせください。', en:'Changing plan failed. Please try again later or contact support.' },
+    planUpgradeConfirm: { ja:'今すぐアップグレードします。差額はすぐに精算されます。よろしいですか？', en:'This will upgrade you now and settle the price difference immediately. Continue?' },
+    planDowngradeConfirm: { ja:'ダウングレードを予約します。今の請求期間の終わりまでは今のプランを使い続けられ、次回請求日から新しいプランに切り替わります（今すぐの請求は発生しません）。よろしいですか？', en:'This will schedule a downgrade. You can keep using your current plan until the end of this billing period, and it will switch on your next billing date (no charge now). Continue?' },
+    planDowngradeScheduledAlert: { ja:'ダウングレードを予約しました。{date}から新しいプランに切り替わります。', en:'Your downgrade is scheduled. It will take effect on {date}.' },
+    planPendingBtn: { ja:'{date}に変更予定（取り消す）', en:'Scheduled for {date} (cancel)' },
+    planCancelPendingConfirm: { ja:'予約中のダウングレードを取り消しますか？', en:'Cancel the scheduled downgrade?' },
+    planCancelPendingDoneAlert: { ja:'予約を取り消しました。', en:'The scheduled change has been canceled.' },
     planSoonBtn: { ja:'準備中', en:'Coming soon' },
     planSoonTitle: { ja:'サブスクは近日公開予定です', en:'Subscriptions are coming soon' },
     planSoonSub: { ja:'開始したらお知らせします。今は特典の内容だけ確認できます。', en:'We will let you know when they open. For now you can review what each plan includes.' },
