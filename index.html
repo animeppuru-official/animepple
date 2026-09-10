@@ -1021,6 +1021,14 @@
     .plan-card-desc { margin:7px 0 0; font-size:11.5px; line-height:1.7; color:#8db5a0; }
     .plan-card-desc.is-accent { color:#a7ecc4; }
     .plan-card-desc.is-gold { color:#dccaa0; }
+    /* [追加] 「このプランは◯月◯日にダウングレードされます」を、契約中カードの本体に
+       はっきり表示する。今までは他プランのカードに小さいリンクが出るだけで、
+       契約中のカード自体には何も表示されず分かりにくかった */
+    .plan-pending-banner {
+      margin:10px 0 0; padding:9px 11px; border-radius:9px;
+      background:rgba(240,201,74,.12); border:1px solid rgba(240,201,74,.35);
+      font-size:11.5px; font-weight:700; color:#f0e4c8; line-height:1.6;
+    }
     .plan-feats { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
     .plan-feat { display:flex; gap:9px; align-items:flex-start; font-size:12px; line-height:1.65; color:#c3d4c9; }
     .plan-card.is-featured .plan-feat { color:#dfeae3; }
@@ -3152,7 +3160,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.48'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.49'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -5072,6 +5080,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="plan-card-name">アニメップル＋<span class="plan-plus-badge">＋</span></p>
           <p class="plan-card-price"><span class="plan-card-amount">¥500</span><span class="plan-card-per" data-i18n="planPerMonth">/ 月</span></p>
           <p class="plan-card-desc is-accent" data-i18n="planPlusDesc2">広告なしで、グラフをもっと深く見たい人へ。</p>
+          <p class="plan-pending-banner" data-plan="plus" style="display:none;"></p>
         </div>
         <ul class="plan-feats">
           <li class="plan-feat"><span class="plan-feat-check">✓</span><span><b data-i18n="planFeatNoAds">広告なし</b></span></li>
@@ -5094,6 +5103,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="plan-card-name">アニメップルクリエイターズ</p>
           <p class="plan-card-price"><span class="plan-card-amount">¥1,500</span><span class="plan-card-per" data-i18n="planPerMonth">/ 月</span></p>
           <p class="plan-card-desc is-gold" data-i18n="planCreatorDesc2">記事を書く人・データを使う人へ。＋の全機能を含みます。</p>
+          <p class="plan-pending-banner" data-plan="creators" style="display:none;"></p>
         </div>
         <ul class="plan-feats">
           <li class="plan-feat is-gold"><span class="plan-feat-check">✓</span><span><b data-i18n="planFeatAllPlus">アニメップル＋のすべて</b></span></li>
@@ -14246,6 +14256,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // [追加] ダウングレード予約中は、契約中のプラン(今の上位プラン)のカード自体に
+    // 「◯月◯日に◯◯へ変更されます」とはっきり表示する。他プランのカードの小さいリンクだけでは
+    // 見落とされるため、一番見るはずの「今契約しているカード」にも同じ情報を出す
+    root.querySelectorAll('.plan-pending-banner').forEach(el => {
+      const elPlan = el.dataset.plan;
+      if(elPlan === currentPlan && pendingPlan) {
+        const dateStr = formatRenewDate(pendingPlanEffectiveAt);
+        const targetName = pendingPlan === 'plus' ? 'アニメップル＋' : pendingPlan === 'creators' ? 'アニメップルクリエイターズ' : t('planFreeTitle');
+        el.textContent = t('planWillChangeToLabel').replace('{date}', dateStr).replace('{plan}', targetName);
+        el.style.display = '';
+      } else {
+        el.style.display = 'none';
+      }
+    });
+
     async function callSubscriptionFn(fnName, bodyObj) {
       await callSubscriptionFnRaw(fnName, bodyObj);
     }
@@ -17878,6 +17903,7 @@ document.addEventListener('DOMContentLoaded', () => {
     planCancelPendingConfirm: { ja:'予約中のダウングレードを取り消しますか？', en:'Cancel the scheduled downgrade?' },
     planCancelPendingDoneAlert: { ja:'予約を取り消しました。', en:'The scheduled change has been canceled.' },
     planBlockedByCancelBtn: { ja:'解約予約中は変更できません', en:'Unavailable while cancellation is scheduled' },
+    planWillChangeToLabel: { ja:'{date}に「{plan}」へ変更されます', en:'This will change to "{plan}" on {date}' },
     planSoonBtn: { ja:'準備中', en:'Coming soon' },
     planSoonTitle: { ja:'サブスクは近日公開予定です', en:'Subscriptions are coming soon' },
     planSoonSub: { ja:'開始したらお知らせします。今は特典の内容だけ確認できます。', en:'We will let you know when they open. For now you can review what each plan includes.' },
