@@ -3111,7 +3111,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.39'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.40'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -5043,6 +5043,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="plan-card-foot">
           <button type="button" class="plan-btn plan-btn-primary plan-subscribe-btn" data-plan="plus" data-i18n="planChooseBtn">このプランにする</button>
           <p class="plan-cancel-note" data-i18n="planCancelNote">いつでも解約できます</p>
+          <p class="plan-renew-date" data-plan="plus" style="display:none;"></p>
         </div>
       </div>
 
@@ -5064,6 +5065,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="plan-card-foot">
           <button type="button" class="plan-btn plan-btn-gold plan-subscribe-btn" data-plan="creators" data-i18n="planChooseBtn">このプランにする</button>
           <p class="plan-cancel-note is-gold" data-i18n="planCancelNote">いつでも解約できます</p>
+          <p class="plan-renew-date" data-plan="creators" style="display:none;"></p>
         </div>
       </div>
     </div>
@@ -6822,7 +6824,7 @@ document.addEventListener('DOMContentLoaded', () => {
     profiles: {
       async get(userId) {
         if(!sb) return null;
-        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,plan_paddle_subscription_id,plan_renews_at').eq('id', userId).single();
+        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,plan_paddle_subscription_id,plan_renews_at,plan_cancel_scheduled').eq('id', userId).single();
         return data;
       },
       async getByIds(userIds) {
@@ -14116,17 +14118,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const TIP_AMOUNTS = [500, 1000, 3000, 5000, 10000];
   const TIP_HIGHLIGHT = [1000, 3000]; // 目立たせる金額
   let _tipSelectedAmount = null;
-  // ── プラン（サブスク）：実際のprofiles.planを見て、契約中なら「解約する」ボタンに切り替える ──
+  // ── プラン（サブスク）：実際のprofiles.planを見て、状態に応じてボタンを切り替える。
+  // 状態は3つ：①未契約→購読ボタン ②契約中(解約予約なし)→解約するボタン
+  // ③契約中(解約予約あり)→サブスクを再開するボタン ──
+  function formatRenewDate(iso) {
+    if(!iso) return '';
+    try {
+      const d = new Date(iso);
+      return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+    } catch(e) { return ''; }
+  }
+
   async function renderPlanPage() {
     const root = document.getElementById('page-settings-plan');
     if(!root) return;
     const paymentsReady = true; // サンドボックス経由でのPaddle決済に対応
 
     let currentPlan = 'free';
+    let cancelScheduled = false;
+    let renewsAt = null;
     if(_currentUser) {
       try {
         const profile = await db.profiles.get(_currentUser.id);
         currentPlan = (profile && (profile.plan === 'plus' || profile.plan === 'creators')) ? profile.plan : 'free';
+        cancelScheduled = !!(profile && profile.plan_cancel_scheduled);
+        renewsAt = profile ? profile.plan_renews_at : null;
       } catch(e) { console.warn('プラン取得に失敗:', e); }
     }
 
@@ -14143,12 +14159,58 @@ document.addEventListener('DOMContentLoaded', () => {
       freeBtn.style.display = (currentPlan === 'free') ? '' : 'none';
     }
 
+    // 次回支払い日／終了予定日の表示
+    root.querySelectorAll('.plan-renew-date').forEach(el => {
+      const elPlan = el.dataset.plan;
+      if(elPlan === currentPlan && renewsAt) {
+        const dateStr = formatRenewDate(renewsAt);
+        el.textContent = cancelScheduled
+          ? t('planEndsOnLabel').replace('{date}', dateStr)
+          : t('planRenewsOnLabel').replace('{date}', dateStr);
+        el.style.display = '';
+      } else {
+        el.style.display = 'none';
+      }
+    });
+
+    async function callSubscriptionFn(fnName) {
+      const { data: sessionData } = await sb.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+      const resJson = await res.json();
+      if(!res.ok || !resJson.ok) throw new Error(resJson.error || `${fnName} failed`);
+    }
+
     root.querySelectorAll('.plan-subscribe-btn').forEach(btn => {
       const btnPlan = btn.dataset.plan;
       btn.classList.toggle('is-soon', !paymentsReady);
 
+      if(btnPlan === currentPlan && cancelScheduled) {
+        // ③ 契約中・解約予約あり：サブスクを再開するボタン
+        btn.textContent = t('planResumeBtn');
+        btn.classList.remove('plan-btn-primary', 'plan-btn-gold');
+        btn.classList.add('plan-btn-current');
+        btn.onclick = async () => {
+          btn.disabled = true;
+          try {
+            await callSubscriptionFn('resume-subscription');
+            alert(t('planResumeDoneAlert'));
+            renderPlanPage();
+          } catch(e) {
+            console.error('再開処理に失敗:', e);
+            alert(t('planResumeFailAlert'));
+          } finally {
+            btn.disabled = false;
+          }
+        };
+        return;
+      }
+
       if(btnPlan === currentPlan) {
-        // 契約中のプラン：購読ボタンではなく解約ボタンに切り替える
+        // ② 契約中・解約予約なし：解約するボタン
         btn.textContent = t('planCancelBtn');
         btn.classList.remove('plan-btn-primary', 'plan-btn-gold');
         btn.classList.add('plan-btn-current');
@@ -14156,14 +14218,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if(!confirm(t('planCancelConfirm'))) return;
           btn.disabled = true;
           try {
-            const { data: sessionData } = await sb.auth.getSession();
-            const accessToken = sessionData?.session?.access_token;
-            const res = await fetch(`${SUPABASE_URL}/functions/v1/cancel-subscription`, {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${accessToken}` },
-            });
-            const json = await res.json();
-            if(!res.ok || !json.ok) throw new Error(json.error || 'cancel failed');
+            await callSubscriptionFn('cancel-subscription');
             alert(t('planCancelDoneAlert'));
             renderPlanPage();
           } catch(e) {
@@ -14176,7 +14231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // 契約していないプラン：通常の購読ボタン
+      // ① 未契約：通常の購読ボタン
       btn.textContent = paymentsReady ? t('planChooseBtn') : t('planSoonBtn');
       btn.classList.remove('plan-btn-current');
       btn.onclick = () => {
@@ -17638,6 +17693,11 @@ document.addEventListener('DOMContentLoaded', () => {
     planCancelConfirm: { ja:'解約すると、次回の請求日以降は自動的に無料プランに戻ります。現在の請求期間の終わりまでは引き続き有料機能を使えます。解約しますか？', en:'Canceling will return you to the free plan after your next billing date. You can keep using paid features until the end of the current period. Cancel now?' },
     planCancelDoneAlert: { ja:'解約を受け付けました。現在の請求期間の終わりまでは有料機能を引き続き利用できます。', en:'Your cancellation was received. You can keep using paid features until the end of the current billing period.' },
     planCancelFailAlert: { ja:'解約処理に失敗しました。時間をおいて再度お試しいただくか、お問い合わせください。', en:'Cancellation failed. Please try again later or contact support.' },
+    planResumeBtn: { ja:'サブスクを再開する', en:'Resume subscription' },
+    planResumeDoneAlert: { ja:'サブスクリプションを再開しました。次回請求日から通常通り課金されます。', en:'Your subscription has been resumed. Billing will continue as normal from the next billing date.' },
+    planResumeFailAlert: { ja:'再開処理に失敗しました。時間をおいて再度お試しいただくか、お問い合わせください。', en:'Resuming failed. Please try again later or contact support.' },
+    planRenewsOnLabel: { ja:'次回支払い日: {date}', en:'Next billing date: {date}' },
+    planEndsOnLabel: { ja:'{date}に終了予定（それまでは利用できます）', en:'Ends on {date} (you can use it until then)' },
     planSoonBtn: { ja:'準備中', en:'Coming soon' },
     planSoonTitle: { ja:'サブスクは近日公開予定です', en:'Subscriptions are coming soon' },
     planSoonSub: { ja:'開始したらお知らせします。今は特典の内容だけ確認できます。', en:'We will let you know when they open. For now you can review what each plan includes.' },
