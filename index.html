@@ -1056,6 +1056,18 @@
       font-size:13px; font-weight:800; cursor:pointer;
     }
     .plan-btn-cancel:hover { background:rgba(255,255,255,.06); }
+    /* [追加] 契約していないカードのボタン(新規購読・アップグレード・ダウングレード・予約中)は、
+       あえて控えめな輪郭線だけのスタイルにする。契約中カードの「解約する」ボタンだけが
+       はっきり目立つようにして、「今の契約に関する操作」と「他プランへの寄り道」の重みを分ける */
+    .plan-btn-outline {
+      background:transparent; font-weight:700; cursor:pointer;
+    }
+    .plan-btn-outline.is-plus-style { border:1.5px solid rgba(92,201,142,.5); color:#a7ecc4; }
+    .plan-btn-outline.is-plus-style:hover { background:rgba(92,201,142,.1); }
+    .plan-btn-outline.is-gold-style { border:1.5px solid rgba(217,164,65,.5); color:#e8c463; }
+    .plan-btn-outline.is-gold-style:hover { background:rgba(217,164,65,.1); }
+    .plan-btn-outline.is-neutral-style { border:1.5px solid rgba(255,255,255,.2); color:#8db5a0; }
+    .plan-btn-outline.is-neutral-style:hover { background:rgba(255,255,255,.05); }
     .plan-btn-primary { background:#5ec97a; color:#07200f; }
     .plan-btn-gold { background:linear-gradient(135deg,#f3d786,#d9a441); color:#2a2006; }
     .plan-btn.is-soon { background:rgba(94,201,122,.28); color:rgba(7,32,15,.55); cursor:default; }
@@ -3128,7 +3140,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.44'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.45'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -14190,6 +14202,13 @@ document.addEventListener('DOMContentLoaded', () => {
       freeBtn.style.display = (currentPlan === 'free') ? '' : 'none';
     }
 
+    // [追加] 「おすすめ」は新規のお客さん向けの演出。既に何か契約中の人には不要で、
+    // 「ご契約中」ラベルと競合して分かりにくくなるだけなので非表示にする
+    const recommendRibbon = root.querySelector('.plan-ribbon');
+    if(recommendRibbon) {
+      recommendRibbon.style.display = (currentPlan === 'free') ? '' : 'none';
+    }
+
     // [追加] 「今どのプランを契約しているか」がひと目で分かるよう、該当カードだけ枠を強調する
     root.querySelectorAll('.plan-card[data-plan]').forEach(card => {
       card.classList.toggle('is-active-plan', card.dataset.plan === currentPlan);
@@ -14232,7 +14251,7 @@ document.addEventListener('DOMContentLoaded', () => {
     root.querySelectorAll('.plan-subscribe-btn').forEach(btn => {
       const btnPlan = btn.dataset.plan;
       btn.classList.toggle('is-soon', !paymentsReady);
-      btn.classList.remove('plan-btn-cancel'); // 再描画のたびにリセットしてクラスが残らないようにする
+      btn.classList.remove('plan-btn-cancel', 'plan-btn-outline', 'is-plus-style', 'is-gold-style', 'is-neutral-style'); // 再描画のたびにリセットしてクラスが残らないようにする
 
       if(btnPlan === currentPlan && cancelScheduled) {
         // ③ 契約中・解約予約あり：サブスクを再開するボタン
@@ -14278,12 +14297,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // 予約中のダウングレード先プラン：予約を確認・取り消しできるボタンにする
+      // 予約中のダウングレード先プラン：予約を確認・取り消しできるボタンにする(控えめな輪郭線)
       if(btnPlan === pendingPlan) {
         const dateStr = formatRenewDate(pendingPlanEffectiveAt);
         btn.textContent = t('planPendingBtn').replace('{date}', dateStr);
-        btn.classList.remove('plan-btn-primary', 'plan-btn-gold');
-        btn.classList.add('plan-btn-current');
+        btn.classList.remove('plan-btn-primary', 'plan-btn-gold', 'plan-btn-current');
+        btn.classList.add('plan-btn-outline', btnPlan === 'creators' ? 'is-gold-style' : 'is-plus-style');
         btn.onclick = async () => {
           if(!confirm(t('planCancelPendingConfirm'))) return;
           btn.disabled = true;
@@ -14308,6 +14327,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if(hasOtherActivePlan) {
         btn.textContent = isDowngradeBtn ? t('planDowngradeBtn') : t('planUpgradeBtn');
         btn.classList.remove('plan-btn-current');
+        if(isDowngradeBtn) {
+          // ダウングレードは積極的に勧める操作ではないので、あえて控えめな見た目にする
+          btn.classList.remove('plan-btn-primary', 'plan-btn-gold');
+          btn.classList.add('plan-btn-outline', 'is-neutral-style');
+        }
+        // アップグレードは今まで通り(plan-btn-primary/plan-btn-gold)の目立つボタンのまま
         btn.onclick = async () => {
           btn.disabled = true;
           try {
