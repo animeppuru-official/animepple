@@ -1037,6 +1037,8 @@
       transition:transform .16s cubic-bezier(.34,1.56,.64,1);
     }
     .plan-btn:hover { transform:translateY(-2px); }
+    .plan-btn:disabled { cursor:not-allowed; opacity:.55; transform:none; }
+    .plan-btn:disabled:hover { transform:none; }
     .plan-btn-current { border:1px solid rgba(255,255,255,.12); background:transparent; color:#8db5a0; font-size:12.5px; font-weight:700; cursor:default; }
     .plan-btn-current:hover { transform:none; }
     /* [追加] 「現在契約中」のカードだと一目で分かるよう、ラベル＋強い枠で他の2枚と差をつける */
@@ -1050,6 +1052,12 @@
       display:inline-flex; align-items:center; height:22px; padding:0 11px; border-radius:11px;
       background:#5cc98e; color:#07200f; font-size:10.5px; font-weight:800; white-space:nowrap;
     }
+    /* [修正] クリエイターズが契約中のときは、＋と見分けがつくよう金色の枠にする */
+    .plan-card.is-creators.is-active-plan {
+      border-color:#e8c463;
+      box-shadow:0 0 0 3px rgba(232,196,99,.22), 0 0 24px rgba(232,196,99,.12);
+    }
+    .plan-card.is-creators.is-active-plan::before { background:#e8c463; color:#2a2006; }
     /* [追加] 解約ボタン：押せることが分かるよう、はっきり縁取りする(利用中の灰色ボタンと区別) */
     .plan-btn-cancel {
       border:1.5px solid rgba(255,255,255,.28); background:transparent; color:#dfeae3;
@@ -3144,7 +3152,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.47'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.48'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -14219,7 +14227,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // [追加] 「今どのプランを契約しているか」がひと目で分かるよう、該当カードだけ枠を強調する
     root.querySelectorAll('.plan-card[data-plan]').forEach(card => {
-      card.classList.toggle('is-active-plan', card.dataset.plan === currentPlan);
+      // [修正] 無料プランには元々「利用中」の表示があるため、契約中の緑/金枠は
+      // 有料プラン(＋・クリエイターズ)のときだけ付ける(二重表示を避ける)
+      card.classList.toggle('is-active-plan', card.dataset.plan === currentPlan && currentPlan !== 'free');
     });
 
     // 次回支払い日／終了予定日の表示
@@ -14263,9 +14273,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if(btnPlan === currentPlan && cancelScheduled) {
         // ③ 契約中・解約予約あり：サブスクを再開するボタン
+        // [修正] plan-btn-current(利用中/無効風の灰色)を使い回していたため、押せるボタンに
+        // 見えなかった。前向きな操作なので、そのプランのブランドカラーで塗りつぶす
         btn.textContent = t('planResumeBtn');
-        btn.classList.remove('plan-btn-primary', 'plan-btn-gold');
-        btn.classList.add('plan-btn-current');
+        btn.classList.remove('plan-btn-current');
+        btn.classList.add(btnPlan === 'creators' ? 'plan-btn-gold' : 'plan-btn-primary');
+        btn.disabled = false;
         btn.onclick = async () => {
           btn.disabled = true;
           try {
@@ -14325,6 +14338,19 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = false;
           }
         };
+        return;
+      }
+
+      // [追加] 解約予約中(cancelScheduled)に他のプランカードを見た場合、以前は条件から
+      // 漏れて「新規契約」ボタンになってしまい、押すとPaddle側に別サブスクが
+      // もう1本できてしまう(二重契約)事故があった。解約予約を取り消すまでは
+      // 他プランへの契約・変更を一切できないようにする
+      if(cancelScheduled && currentPlan !== 'free' && btnPlan !== currentPlan) {
+        btn.textContent = t('planBlockedByCancelBtn');
+        btn.classList.remove('plan-btn-primary', 'plan-btn-gold', 'plan-btn-current');
+        btn.classList.add('plan-btn-outline', 'is-neutral-style');
+        btn.disabled = true;
+        btn.onclick = null;
         return;
       }
 
@@ -17851,6 +17877,7 @@ document.addEventListener('DOMContentLoaded', () => {
     planPendingBtn: { ja:'{date}に変更予定（取り消す）', en:'Scheduled for {date} (cancel)' },
     planCancelPendingConfirm: { ja:'予約中のダウングレードを取り消しますか？', en:'Cancel the scheduled downgrade?' },
     planCancelPendingDoneAlert: { ja:'予約を取り消しました。', en:'The scheduled change has been canceled.' },
+    planBlockedByCancelBtn: { ja:'解約予約中は変更できません', en:'Unavailable while cancellation is scheduled' },
     planSoonBtn: { ja:'準備中', en:'Coming soon' },
     planSoonTitle: { ja:'サブスクは近日公開予定です', en:'Subscriptions are coming soon' },
     planSoonSub: { ja:'開始したらお知らせします。今は特典の内容だけ確認できます。', en:'We will let you know when they open. For now you can review what each plan includes.' },
