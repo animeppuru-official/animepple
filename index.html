@@ -3111,7 +3111,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.35'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
+<script>window.APP_BUILD = 'v0.313.36'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
 <div id="themeScenery" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════
@@ -14111,13 +14111,19 @@
   const TIP_AMOUNTS = [500, 1000, 3000, 5000, 10000];
   const TIP_HIGHLIGHT = [1000, 3000]; // 目立たせる金額
   let _tipSelectedAmount = null;
-  // ── プラン（サブスク）：決済が繋がるまでは「準備中」の状態として見せる。
-  // ボタンを押せる見た目のまま無反応にせず、代わりに通知登録を受け取る ──
-  function renderPlanPage() {
+  // ── プラン（サブスク）：実際のprofiles.planを見て、契約中なら「解約する」ボタンに切り替える ──
+  async function renderPlanPage() {
     const root = document.getElementById('page-settings-plan');
     if(!root) return;
     const paymentsReady = true; // サンドボックス経由でのPaddle決済に対応
-    const currentPlan = 'free';  // 将来 purchases / subscriptions から取得
+
+    let currentPlan = 'free';
+    if(_currentUser) {
+      try {
+        const profile = await db.profiles.get(_currentUser.id);
+        currentPlan = (profile && (profile.plan === 'plus' || profile.plan === 'creators')) ? profile.plan : 'free';
+      } catch(e) { console.warn('プラン取得に失敗:', e); }
+    }
 
     const currentEl = document.getElementById('planCurrentValue');
     if(currentEl) {
@@ -14127,14 +14133,46 @@
     }
 
     root.querySelectorAll('.plan-subscribe-btn').forEach(btn => {
+      const btnPlan = btn.dataset.plan;
       btn.classList.toggle('is-soon', !paymentsReady);
+
+      if(btnPlan === currentPlan) {
+        // 契約中のプラン：購読ボタンではなく解約ボタンに切り替える
+        btn.textContent = t('planCancelBtn');
+        btn.classList.remove('plan-btn-primary', 'plan-btn-gold');
+        btn.classList.add('plan-btn-current');
+        btn.onclick = async () => {
+          if(!confirm(t('planCancelConfirm'))) return;
+          btn.disabled = true;
+          try {
+            const { data: sessionData } = await sb.auth.getSession();
+            const accessToken = sessionData?.session?.access_token;
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/cancel-subscription`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${accessToken}` },
+            });
+            const json = await res.json();
+            if(!res.ok || !json.ok) throw new Error(json.error || 'cancel failed');
+            alert(t('planCancelDoneAlert'));
+            renderPlanPage();
+          } catch(e) {
+            console.error('解約処理に失敗:', e);
+            alert(t('planCancelFailAlert'));
+          } finally {
+            btn.disabled = false;
+          }
+        };
+        return;
+      }
+
+      // 契約していないプラン：通常の購読ボタン
       btn.textContent = paymentsReady ? t('planChooseBtn') : t('planSoonBtn');
+      btn.classList.remove('plan-btn-current');
       btn.onclick = () => {
         if(!paymentsReady) return;
-        const plan = btn.dataset.plan;
-        const priceId = PADDLE_PRICE_IDS.plan[plan];
+        const priceId = PADDLE_PRICE_IDS.plan[btnPlan];
         if(!priceId) { alert(t('paymentComingSoonAlert')); return; }
-        openPaddleCheckout(priceId, { kind: 'subscription', plan });
+        openPaddleCheckout(priceId, { kind: 'subscription', plan: btnPlan });
       };
     });
 
@@ -17585,6 +17623,10 @@
     planRecommended: { ja:'おすすめ', en:'Recommended' },
     planChooseBtn: { ja:'このプランにする', en:'Choose this plan' },
     planCancelNote: { ja:'いつでも解約できます', en:'Cancel anytime' },
+    planCancelBtn: { ja:'解約する', en:'Cancel subscription' },
+    planCancelConfirm: { ja:'解約すると、次回の請求日以降は自動的に無料プランに戻ります。現在の請求期間の終わりまでは引き続き有料機能を使えます。解約しますか？', en:'Canceling will return you to the free plan after your next billing date. You can keep using paid features until the end of the current period. Cancel now?' },
+    planCancelDoneAlert: { ja:'解約を受け付けました。現在の請求期間の終わりまでは有料機能を引き続き利用できます。', en:'Your cancellation was received. You can keep using paid features until the end of the current billing period.' },
+    planCancelFailAlert: { ja:'解約処理に失敗しました。時間をおいて再度お試しいただくか、お問い合わせください。', en:'Cancellation failed. Please try again later or contact support.' },
     planSoonBtn: { ja:'準備中', en:'Coming soon' },
     planSoonTitle: { ja:'サブスクは近日公開予定です', en:'Subscriptions are coming soon' },
     planSoonSub: { ja:'開始したらお知らせします。今は特典の内容だけ確認できます。', en:'We will let you know when they open. For now you can review what each plan includes.' },
