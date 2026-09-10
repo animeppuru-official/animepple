@@ -1066,8 +1066,12 @@
     .plan-btn-outline.is-plus-style:hover { background:rgba(92,201,142,.1); }
     .plan-btn-outline.is-gold-style { border:1.5px solid rgba(217,164,65,.5); color:#e8c463; }
     .plan-btn-outline.is-gold-style:hover { background:rgba(217,164,65,.1); }
-    .plan-btn-outline.is-neutral-style { border:1.5px solid rgba(255,255,255,.2); color:#8db5a0; }
-    .plan-btn-outline.is-neutral-style:hover { background:rgba(255,255,255,.05); }
+    .plan-btn-outline.is-neutral-style {
+      background:transparent; border:none; height:auto; padding:8px 0;
+      color:#5c6d63; font-size:12px; font-weight:600; text-decoration:underline;
+      text-underline-offset:3px; box-shadow:none;
+    }
+    .plan-btn-outline.is-neutral-style:hover { color:#8db5a0; transform:none; }
     .plan-btn-primary { background:#5ec97a; color:#07200f; }
     .plan-btn-gold { background:linear-gradient(135deg,#f3d786,#d9a441); color:#2a2006; }
     .plan-btn.is-soon { background:rgba(94,201,122,.28); color:rgba(7,32,15,.55); cursor:default; }
@@ -3140,7 +3144,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.45'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.47'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -14202,8 +14206,12 @@ document.addEventListener('DOMContentLoaded', () => {
       freeBtn.style.display = (currentPlan === 'free') ? '' : 'none';
     }
 
-    // [追加] 「おすすめ」は新規のお客さん向けの演出。既に何か契約中の人には不要で、
-    // 「ご契約中」ラベルと競合して分かりにくくなるだけなので非表示にする
+    // [修正] 「おすすめ」演出(リボン＋緑の強調枠)は新規のお客さん向け。既に何か契約中の人には
+    // 不要で、「ご契約中」の枠と紛らわしくなるだけなので、リボンだけでなく枠自体も消す
+    const plusCard = root.querySelector('.plan-card[data-plan="plus"]');
+    if(plusCard) {
+      plusCard.classList.toggle('is-featured', currentPlan === 'free');
+    }
     const recommendRibbon = root.querySelector('.plan-ribbon');
     if(recommendRibbon) {
       recommendRibbon.style.display = (currentPlan === 'free') ? '' : 'none';
