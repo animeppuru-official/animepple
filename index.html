@@ -1039,6 +1039,23 @@
     .plan-btn:hover { transform:translateY(-2px); }
     .plan-btn-current { border:1px solid rgba(255,255,255,.12); background:transparent; color:#8db5a0; font-size:12.5px; font-weight:700; cursor:default; }
     .plan-btn-current:hover { transform:none; }
+    /* [追加] 「現在契約中」のカードだと一目で分かるよう、ラベル＋強い枠で他の2枚と差をつける */
+    .plan-card.is-active-plan {
+      border:2px solid #5cc98e;
+      box-shadow:0 0 0 3px rgba(92,201,142,.22), 0 0 24px rgba(92,201,142,.12);
+    }
+    .plan-card.is-active-plan::before {
+      content:'ご契約中';
+      position:absolute; top:-11px; right:16px;
+      display:inline-flex; align-items:center; height:22px; padding:0 11px; border-radius:11px;
+      background:#5cc98e; color:#07200f; font-size:10.5px; font-weight:800; white-space:nowrap;
+    }
+    /* [追加] 解約ボタン：押せることが分かるよう、はっきり縁取りする(利用中の灰色ボタンと区別) */
+    .plan-btn-cancel {
+      border:1.5px solid rgba(255,255,255,.28); background:transparent; color:#dfeae3;
+      font-size:13px; font-weight:800; cursor:pointer;
+    }
+    .plan-btn-cancel:hover { background:rgba(255,255,255,.06); }
     .plan-btn-primary { background:#5ec97a; color:#07200f; }
     .plan-btn-gold { background:linear-gradient(135deg,#f3d786,#d9a441); color:#2a2006; }
     .plan-btn.is-soon { background:rgba(94,201,122,.28); color:rgba(7,32,15,.55); cursor:default; }
@@ -3111,7 +3128,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.43'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.44'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -5007,7 +5024,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- 3枚横並び。高さを揃えてCTAを1本の線に並べる -->
     <div class="plan-grid">
       <!-- 無料 -->
-      <div class="plan-card">
+      <div class="plan-card" data-plan="free">
         <div class="plan-card-head">
           <p class="plan-card-name" data-i18n="planFreeTitle">無料プラン</p>
           <p class="plan-card-price"><span class="plan-card-amount">¥0</span></p>
@@ -5025,7 +5042,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <!-- アニメップル＋（おすすめ） -->
-      <div class="plan-card is-featured">
+      <div class="plan-card is-featured" data-plan="plus">
         <span class="plan-ribbon" data-i18n="planRecommended">おすすめ</span>
         <div class="plan-card-head">
           <p class="plan-card-name">アニメップル＋<span class="plan-plus-badge">＋</span></p>
@@ -5048,7 +5065,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <!-- アニメップルクリエイターズ -->
-      <div class="plan-card is-creators">
+      <div class="plan-card is-creators" data-plan="creators">
         <div class="plan-card-head">
           <p class="plan-card-name">アニメップルクリエイターズ</p>
           <p class="plan-card-price"><span class="plan-card-amount">¥1,500</span><span class="plan-card-per" data-i18n="planPerMonth">/ 月</span></p>
@@ -14173,6 +14190,11 @@ document.addEventListener('DOMContentLoaded', () => {
       freeBtn.style.display = (currentPlan === 'free') ? '' : 'none';
     }
 
+    // [追加] 「今どのプランを契約しているか」がひと目で分かるよう、該当カードだけ枠を強調する
+    root.querySelectorAll('.plan-card[data-plan]').forEach(card => {
+      card.classList.toggle('is-active-plan', card.dataset.plan === currentPlan);
+    });
+
     // 次回支払い日／終了予定日の表示
     root.querySelectorAll('.plan-renew-date').forEach(el => {
       const elPlan = el.dataset.plan;
@@ -14210,6 +14232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     root.querySelectorAll('.plan-subscribe-btn').forEach(btn => {
       const btnPlan = btn.dataset.plan;
       btn.classList.toggle('is-soon', !paymentsReady);
+      btn.classList.remove('plan-btn-cancel'); // 再描画のたびにリセットしてクラスが残らないようにする
 
       if(btnPlan === currentPlan && cancelScheduled) {
         // ③ 契約中・解約予約あり：サブスクを再開するボタン
@@ -14233,10 +14256,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if(btnPlan === currentPlan) {
-        // ② 契約中・解約予約なし：解約するボタン(ダウングレード予約中ならその旨も出す)
+        // ② 契約中・解約予約なし：解約するボタン(押せることが分かるよう専用スタイルにする)
         btn.textContent = t('planCancelBtn');
-        btn.classList.remove('plan-btn-primary', 'plan-btn-gold');
-        btn.classList.add('plan-btn-current');
+        btn.classList.remove('plan-btn-primary', 'plan-btn-gold', 'plan-btn-current');
+        btn.classList.add('plan-btn-cancel');
+        btn.disabled = false;
         btn.onclick = async () => {
           if(!confirm(t('planCancelConfirm'))) return;
           btn.disabled = true;
