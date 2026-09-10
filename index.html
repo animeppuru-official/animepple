@@ -3111,7 +3111,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.42'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.43'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -6583,10 +6583,20 @@ document.addEventListener('DOMContentLoaded', () => {
   //   Paddle.Environment.set('production') に変更し、PADDLE_CLIENT_TOKENを本番用トークンに差し替える
   const PADDLE_CLIENT_TOKEN = 'test_efd17e7481a7e43505858a3c864';
   let _paddleReady = false;
+  let _onPaddleCheckoutCompleted = null; // 直前に開いたCheckoutが完了した時に1回だけ呼ばれるコールバック
   function initPaddle() {
     if(typeof Paddle === 'undefined' || _paddleReady) return;
     Paddle.Environment.set('sandbox');
-    Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN });
+    Paddle.Initialize({
+      token: PADDLE_CLIENT_TOKEN,
+      eventCallback: (ev) => {
+        if(ev && ev.name === 'checkout.completed' && _onPaddleCheckoutCompleted) {
+          const cb = _onPaddleCheckoutCompleted;
+          _onPaddleCheckoutCompleted = null;
+          cb();
+        }
+      },
+    });
     _paddleReady = true;
   }
 
@@ -14275,12 +14285,27 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = isDowngradeBtn ? t('planDowngradeBtn') : t('planUpgradeBtn');
         btn.classList.remove('plan-btn-current');
         btn.onclick = async () => {
-          if(!confirm(isDowngradeBtn ? t('planDowngradeConfirm') : t('planUpgradeConfirm'))) return;
           btn.disabled = true;
           try {
-            const result = await callSubscriptionFnRaw('change-subscription-plan', { newPlan: btnPlan });
-            alert(result.scheduled ? t('planDowngradeScheduledAlert').replace('{date}', formatRenewDate(result.effectiveAt)) : t('planChangeDoneAlert'));
-            renderPlanPage();
+            if(isDowngradeBtn) {
+              if(!confirm(t('planDowngradeConfirm'))) { btn.disabled = false; return; }
+              const result = await callSubscriptionFnRaw('change-subscription-plan', { newPlan: btnPlan });
+              alert(t('planDowngradeScheduledAlert').replace('{date}', formatRenewDate(result.effectiveAt)));
+              renderPlanPage();
+            } else {
+              // アップグレードは、必ずPaddleの決済画面(金額・支払い方法が見える画面)を
+              // 経由して支払ってもらう。裏で自動的にカードへ課金することはしない。
+              const tx = await callSubscriptionFnRaw('create-upgrade-transaction', { newPlan: btnPlan });
+              initPaddle();
+              if(typeof Paddle === 'undefined') { alert(t('paymentComingSoonAlert')); btn.disabled = false; return; }
+              _onPaddleCheckoutCompleted = () => {
+                // 決済完了イベント。実際のプラン切り替えはWebhook側で行われるため、
+                // 反映が間に合うよう少し待ってから画面を再取得する
+                alert(t('planChangeDoneAlert'));
+                setTimeout(renderPlanPage, 1500);
+              };
+              Paddle.Checkout.open({ transactionId: tx.transaction_id });
+            }
           } catch(e) {
             console.error('プラン変更に失敗:', e);
             alert(t('planChangeFailAlert'));
@@ -17763,6 +17788,7 @@ document.addEventListener('DOMContentLoaded', () => {
     planChangeDoneAlert: { ja:'プランを変更しました。', en:'Your plan has been changed.' },
     planChangeFailAlert: { ja:'プラン変更に失敗しました。時間をおいて再度お試しいただくか、お問い合わせください。', en:'Changing plan failed. Please try again later or contact support.' },
     planUpgradeConfirm: { ja:'今すぐアップグレードします。差額はすぐに精算されます。よろしいですか？', en:'This will upgrade you now and settle the price difference immediately. Continue?' },
+    planUpgradeConfirmAmount: { ja:'今すぐアップグレードします。今回の差額として¥{amount}が今すぐ請求されます。よろしいですか？', en:'This will upgrade you now. You will be charged ¥{amount} immediately for the price difference. Continue?' },
     planDowngradeConfirm: { ja:'ダウングレードを予約します。今の請求期間の終わりまでは今のプランを使い続けられ、次回請求日から新しいプランに切り替わります（今すぐの請求は発生しません）。よろしいですか？', en:'This will schedule a downgrade. You can keep using your current plan until the end of this billing period, and it will switch on your next billing date (no charge now). Continue?' },
     planDowngradeScheduledAlert: { ja:'ダウングレードを予約しました。{date}から新しいプランに切り替わります。', en:'Your downgrade is scheduled. It will take effect on {date}.' },
     planPendingBtn: { ja:'{date}に変更予定（取り消す）', en:'Scheduled for {date} (cancel)' },
