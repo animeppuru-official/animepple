@@ -3111,7 +3111,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.34'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
+<script>window.APP_BUILD = 'v0.313.35'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
 <div id="themeScenery" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════
@@ -6623,25 +6623,41 @@
   }
 
   // 投げ銭の自由金額用：事前登録が無い金額は、その場限りの非カタログ価格として作る
-  function openPaddleCheckoutCustomAmount(amountJpy, extraCustomData) {
+  // 注意: Paddle.js（ブラウザ側）の Checkout.open() は priceId か transactionId しか受け付けず、
+  // price:{...} オブジェクトを直接渡すことはできない（サーバー側Transactions API専用の機能）。
+  // そのため、先にEdge Function(create-tip-transaction)でPaddle上にtransactionを作成し、
+  // 返ってきたtransactionIdをCheckoutに渡す2段階の流れにする。
+  async function openPaddleCheckoutCustomAmount(amountJpy, extraCustomData) {
     if(!_currentUser) { showAuthModal('login'); return; }
     initPaddle();
     if(typeof Paddle === 'undefined') { alert(t('paymentComingSoonAlert')); return; }
-    Paddle.Checkout.open({
-      items: [{
-        price: {
-          description: 'アニメップル 投げ銭',
-          name: '投げ銭',
-          billing_cycle: null,
-          trial_period: null,
-          tax_mode: 'account_setting',
-          unit_price: { amount: String(Math.round(amountJpy)), currency_code: 'JPY' },
+    try {
+      const { data: sessionData } = await sb.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if(!accessToken) { showAuthModal('login'); return; }
+
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/create-tip-transaction`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
         },
-        quantity: 1,
-      }],
-      customer: _currentUser.email ? { email: _currentUser.email } : undefined,
-      customData: { user_id: _currentUser.id, kind: 'tip_custom', ...(extraCustomData || {}) },
-    });
+        body: JSON.stringify({
+          amount_jpy: Math.round(amountJpy),
+          message: (extraCustomData && extraCustomData.message) || '',
+        }),
+      });
+      const json = await res.json();
+      if(!res.ok || !json.transaction_id) {
+        console.error('投げ銭取引の作成に失敗:', json);
+        alert(t('paymentComingSoonAlert'));
+        return;
+      }
+      Paddle.Checkout.open({ transactionId: json.transaction_id });
+    } catch(e) {
+      console.error('投げ銭チェックアウトの起動に失敗:', e);
+      alert(t('paymentComingSoonAlert'));
+    }
   }
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYmpmaXVheWZoZGtnZXJ0eHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzAxOTIsImV4cCI6MjA5ODIwNjE5Mn0.atbMSoL6d_-F-RRomwfjWeKe1YOMZi-48tnPx--Etco';
   // Turnstile サイトキーは公開情報（秘密鍵ではない）なので直書きで問題ない。
