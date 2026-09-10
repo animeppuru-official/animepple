@@ -5,6 +5,8 @@
   <!-- Google AdSense サイト所有権確認用 -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2190088532520045"
      crossorigin="anonymous"></script>
+  <!-- Paddle（コインパック・サブスクリプション・投げ銭の決済） -->
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
   <!-- GitHub Pages用SPAルーティング復元：404.htmlが保存したリダイレクト先URLを、実際のURLとして復元する -->
   <script>
     (function () {
@@ -3109,7 +3111,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.33'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
+<script>window.APP_BUILD = 'v0.313.34'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');</script>
 <div id="themeScenery" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════
@@ -3399,7 +3401,7 @@
 <div class="page active" id="page-home">
   <header class="hdr">
     <div class="hdr-inner">
-      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.33</span></span>
+      <span class="logo" onclick="nav('home')" style="white-space:nowrap;">アニメ<em>ップル</em><span style="font-size:.55rem;color:var(--muted);margin-left:.4rem;font-weight:400;opacity:.6;">v0.313.34</span></span>
       <div class="hdr-right">
         <button class="lang-current-btn" id="langBtn" onclick="openLang()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
@@ -6568,6 +6570,79 @@
   ════════════════════════════ */
   const DB_MODE = 'supabase'; // 'local' | 'supabase'
   const SUPABASE_URL  = 'https://ofbjfiuayfhdkgertxyo.supabase.co';
+
+  // ── Paddle（決済）設定 ──
+  // 今はサンドボックス（テスト環境）。本番稼働の際は下の2行を本番用に差し替える：
+  //   Paddle.Environment.set('production') に変更し、PADDLE_CLIENT_TOKENを本番用トークンに差し替える
+  const PADDLE_CLIENT_TOKEN = 'test_efd17e7481a7e43505858a3c864';
+  let _paddleReady = false;
+  function initPaddle() {
+    if(typeof Paddle === 'undefined' || _paddleReady) return;
+    Paddle.Environment.set('sandbox');
+    Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN });
+    _paddleReady = true;
+  }
+
+  // コインパック・サブスクリプション・投げ銭の Paddle 価格ID一覧
+  // （Paddleダッシュボードの「カタログ」で作成した各商品の価格IDと対応させる）
+  const PADDLE_PRICE_IDS = {
+    coin: {
+      p120:   'pri_01m233zt24z2w6pckgh6m38pps',
+      p480:   'pri_01m24tk5j1n866zw9148sx5m61',
+      p980:   'pri_01m24tq637e68thhtf68wge0h3',
+      p1800:  'pri_01m24try6fapzxxjf5mchdz57y',
+      p3000:  'pri_01m24ttgway787ypv8vqe1e8cj',
+      p4900:  'pri_01m24twhezq5cte0r88mgbbt3n',
+      p9800:  'pri_01m24ty2khxfh7ryv62202r61s',
+      p24000: 'pri_01m24tzd6pyckc28axe6zm1mkh',
+    },
+    plan: {
+      plus:     'pri_01m24v1pgwvqsbegxn2m2syekj',
+      creators: 'pri_01m24v3mwmthfa07ppwr129eaj',
+    },
+    tip: {
+      500:   'pri_01m24v618zfh7m7c6sn7aa4w2v',
+      1000:  'pri_01m24v6swwvcm9mwbwktew7525',
+      3000:  'pri_01m24v7xapdwk9gd8v2vvswqz1',
+      5000:  'pri_01m24v8kfsa0e1ba2w8gmwvhqd',
+      10000: 'pri_01m24v94m0am2gg2p8f72dkp6n',
+    },
+  };
+
+  // Paddleのチェックアウトを開く共通処理。
+  // customDataにuser_idを必ず入れる（Webhook側で「誰が買ったか」を特定するために使う）
+  function openPaddleCheckout(priceId, extraCustomData) {
+    if(!_currentUser) { showAuthModal('login'); return; }
+    initPaddle();
+    if(typeof Paddle === 'undefined') { alert(t('paymentComingSoonAlert')); return; }
+    Paddle.Checkout.open({
+      items: [{ priceId, quantity: 1 }],
+      customer: _currentUser.email ? { email: _currentUser.email } : undefined,
+      customData: { user_id: _currentUser.id, ...(extraCustomData || {}) },
+    });
+  }
+
+  // 投げ銭の自由金額用：事前登録が無い金額は、その場限りの非カタログ価格として作る
+  function openPaddleCheckoutCustomAmount(amountJpy, extraCustomData) {
+    if(!_currentUser) { showAuthModal('login'); return; }
+    initPaddle();
+    if(typeof Paddle === 'undefined') { alert(t('paymentComingSoonAlert')); return; }
+    Paddle.Checkout.open({
+      items: [{
+        price: {
+          description: 'アニメップル 投げ銭',
+          name: '投げ銭',
+          billing_cycle: null,
+          trial_period: null,
+          tax_mode: 'account_setting',
+          unit_price: { amount: String(Math.round(amountJpy)), currency_code: 'JPY' },
+        },
+        quantity: 1,
+      }],
+      customer: _currentUser.email ? { email: _currentUser.email } : undefined,
+      customData: { user_id: _currentUser.id, kind: 'tip_custom', ...(extraCustomData || {}) },
+    });
+  }
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYmpmaXVheWZoZGtnZXJ0eHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzAxOTIsImV4cCI6MjA5ODIwNjE5Mn0.atbMSoL6d_-F-RRomwfjWeKe1YOMZi-48tnPx--Etco';
   // Turnstile サイトキーは公開情報（秘密鍵ではない）なので直書きで問題ない。
   const TURNSTILE_SITE_KEY = '0x4AAAAAADt8IYSLv7u6jj7S';
@@ -8864,7 +8939,7 @@
     }
     if (page==='settings-about') {
       const vEl = document.getElementById('settingsVersionText');
-      if(vEl) vEl.textContent = 'v0.313.33';
+      if(vEl) vEl.textContent = 'v0.313.34';
     }
     if (page==='notifications') { renderNotifications().catch(console.error); }
     if (page==='friend-requests') { renderFriendRequestsPage().catch(console.error); }
@@ -14025,7 +14100,7 @@
   function renderPlanPage() {
     const root = document.getElementById('page-settings-plan');
     if(!root) return;
-    const paymentsReady = false; // Paddle審査完了後に true にすると本来のフローに戻る
+    const paymentsReady = true; // サンドボックス経由でのPaddle決済に対応
     const currentPlan = 'free';  // 将来 purchases / subscriptions から取得
 
     const currentEl = document.getElementById('planCurrentValue');
@@ -14040,8 +14115,10 @@
       btn.textContent = paymentsReady ? t('planChooseBtn') : t('planSoonBtn');
       btn.onclick = () => {
         if(!paymentsReady) return;
-        // TODO: Paddle Checkout を開き、成功時に subscriptions を更新する Edge Function を呼ぶ
-        alert(t('planSoonTitle'));
+        const plan = btn.dataset.plan;
+        const priceId = PADDLE_PRICE_IDS.plan[plan];
+        if(!priceId) { alert(t('paymentComingSoonAlert')); return; }
+        openPaddleCheckout(priceId, { kind: 'subscription', plan });
       };
     });
 
@@ -14157,8 +14234,7 @@
     setSummary();
 
     if(confirmBtn) {
-      // 決済が繋がるまでは「準備中」の状態として見せる（押せる見た目で無反応にしない）
-      const paymentsReady = false;
+      const paymentsReady = true; // サンドボックス経由でのPaddle決済に対応
       confirmBtn.classList.toggle('is-soon', !paymentsReady);
       confirmBtn.textContent = paymentsReady ? t('tipConfirmBtn') : t('tipSoonBtn');
       confirmBtn.onclick = () => {
@@ -14167,9 +14243,13 @@
           alert(t('tipAmountRequiredAlert'));
           return;
         }
-        // TODO: Paddleアカウント審査完了後、ここでPaddle Checkoutを開き、
-        // 成功時にpurchasesテーブルへ記録するEdge Functionを呼ぶ（メッセージも同送）
-        alert(t('tipComingSoonNote'));
+        const message = msgEl ? msgEl.value.slice(0, 200) : '';
+        const priceId = PADDLE_PRICE_IDS.tip[_tipSelectedAmount];
+        if(priceId) {
+          openPaddleCheckout(priceId, { kind: 'tip', amount: _tipSelectedAmount, message });
+        } else {
+          openPaddleCheckoutCustomAmount(_tipSelectedAmount, { message });
+        }
       };
     }
     if(notifyBtn) {
@@ -23343,8 +23423,25 @@
         <span class="cs-pack-price">¥${p.priceJpy.toLocaleString()}</span>
       </button>`).join('');
     grid.querySelectorAll('.coin-pack-card').forEach(btn => {
-      btn.onclick = () => alert(t('paymentComingSoonAlert'));
+      const packId = btn.dataset.packId;
+      const pack = COIN_PACKS.find(p => p.id === packId);
+      btn.onclick = () => {
+        const priceId = PADDLE_PRICE_IDS.coin[packId];
+        if(!priceId) { alert(t('paymentComingSoonAlert')); return; }
+        openPaddleCheckout(priceId, { kind: 'coin_pack', pack_id: packId, coins: pack ? pack.coins : null });
+      };
     });
+    // おすすめパック（別コンテナのため個別に配線）
+    if(bestEl) {
+      const bestBtn = bestEl.querySelector('.coin-pack-card');
+      if(bestBtn) {
+        bestBtn.onclick = () => {
+          const priceId = PADDLE_PRICE_IDS.coin[best.id];
+          if(!priceId) { alert(t('paymentComingSoonAlert')); return; }
+          openPaddleCheckout(priceId, { kind: 'coin_pack', pack_id: best.id, coins: best.coins });
+        };
+      }
+    }
   }
   async function renderCoinShopPage() {
     const balEl = document.getElementById('coinShopBalance');
