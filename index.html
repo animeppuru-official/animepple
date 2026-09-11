@@ -3253,7 +3253,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.65'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.66'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -6758,6 +6758,10 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ════════════════════════════
      DATA & CONSTANTS
   ════════════════════════════ */
+  // [追加] 無料プランの機能制限判定に使う、現在のプランのキャッシュ。
+  // applyLang()等、スクリプト読み込み直後に同期的に呼ばれる処理からも参照されるため、
+  // IIFEの最初(TDZに引っかからない位置)で宣言しておく。値の読み込み自体はloadMyPlan()で行う
+  let _currentPlan = 'free';
   /* ════════════════════════════
      SUPABASE 設定
      切り替え: mode を 'supabase' に変更するだけ
@@ -22162,10 +22166,8 @@ document.addEventListener('DOMContentLoaded', () => {
   ════════════════════════════ */
   let _authMode = 'register'; // 'register' | 'login'
   let _currentUser = null;
-  // [追加] 無料プランの機能制限判定に使う、現在のプランのキャッシュ。
-  // 毎回db.profiles.get()を呼ぶと重いページで頻繁に呼び出せないため、ログイン時に1回読み、
-  // キャッシュしておく(プラン変更時はrenderPlanPage側で個別にDBを見るのでここは影響しない)
-  let _currentPlan = 'free';
+  // 無料プランの機能制限判定に使う、現在のプランのキャッシュ本体は
+  // スクリプト先頭(IIFE冒頭)で宣言している(TDZ回避のため)。ここでは読み込み関数だけ定義する。
   async function loadMyPlan() {
     if(!_currentUser) { _currentPlan = 'free'; updateBoardSidebarAd(); return; }
     try {
