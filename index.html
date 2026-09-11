@@ -3253,7 +3253,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.68'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.70'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -14454,7 +14454,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const shard = _boardShardChoice[key];
     const shardedType = shardedBoardType('general', shard);
-    el.innerHTML = `<div id="boardPanel"></div>`;
+    // [修正] 毎回el.innerHTMLをリセットしていたため、投稿後の再描画のたびに「一覧が一瞬消えて
+    // 1秒ほどで戻る」ちらつきが発生していた。初回だけ枠を作り、2回目以降は使い回す
+    let panel = el.querySelector('#boardPanel');
+    if(!panel) {
+      el.innerHTML = `<div id="boardPanel"></div>`;
+      panel = el.querySelector('#boardPanel');
+    }
     // 板ヘッダーのサブ行：参加人数・今アクティブ人数（＋サーバーが分かれている時だけ番号と、変更リンクを出す）
     // 「アクティブ」はリアルタイムの入室人数（Presence）。参加人数（過去に投稿したことがある人数）とは別物
     db.boardState.getBoardStats(animeId, shardedType, currentLang).then(stats => {
@@ -14467,7 +14473,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const liveEl = document.getElementById('boardGeneralLiveCount');
       if(liveEl) liveEl.textContent = count;
     });
-    await renderBoardPostsInto(el.querySelector('#boardPanel'), animeId, shardedType, () => renderBoardGeneral(animeId));
+    await renderBoardPostsInto(panel, animeId, shardedType, () => renderBoardGeneral(animeId));
     if(_currentUser) db.boardState.markRead(_currentUser.id, animeId, shardedType, currentLang).then(()=>checkUnreadBoards()).catch(()=>{});
     startBoardRealtime(animeId, shardedType, currentLang, () => renderBoardGeneral(animeId));
   }
@@ -15151,8 +15157,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     // 板ヘッダーのサブ行：参加人数・今アクティブ人数（選択中のタイプの掲示板について）
-    el.innerHTML = `<div id="boardPanel"></div>`;
-    const panel = el.querySelector('#boardPanel');
+    // [修正] 以前は毎回ここでel.innerHTMLをリセットしていたため、投稿後の再描画のたびに
+    // 「一覧が一瞬消えて1秒ほどで戻る」ちらつきが発生していた(LINE等では起きない挙動)。
+    // 初回だけ枠を作り、2回目以降は既存の枠をそのまま使い回す(中身の更新はrenderBoardPostsInto側の
+    // 1回のinnerHTML差し替えに任せる。それまでは今表示されている内容がそのまま残る)
+    let panel = el.querySelector('#boardPanel');
+    if(!panel) {
+      el.innerHTML = `<div id="boardPanel"></div>`;
+      panel = el.querySelector('#boardPanel');
+    }
     if(myGroup !== _boardActiveTab) {
       el.parentElement?.querySelector('.board-composer')?.remove();
       panel.innerHTML = `<div class="board-locked-sheet" style="display:flex;align-items:center;justify-content:center;padding:40px 20px;">
@@ -24069,34 +24082,36 @@ document.addEventListener('DOMContentLoaded', () => {
       : `<p style="text-align:center;color:var(--muted,#9ab);font-size:.85rem;padding:2rem 0;">${escapeHtml(t('dmEmpty'))}</p>`;
 
     // 入力欄：掲示板と同じく、スクロール領域の外（.board-page-wrap直下）に置いて固定する
+    // [修正] 以前は毎回composer.innerHTMLを作り直していたため、相手からのメッセージ受信(リアルタイム)の
+    // たびに、自分が入力中の下書きが消えてしまっていた。初回だけ作り、以後は使い回す
     const composerWrap = panel.parentElement.parentElement;
     let composer = composerWrap.querySelector('.board-composer');
     if(!composer) {
       composer = document.createElement('div');
       composer.className = 'board-composer';
       composerWrap.appendChild(composer);
-    }
-    composer.innerHTML = `
+      composer.innerHTML = `
       <div style="display:flex;gap:8px;align-items:flex-end;">
         <div class="board-compose-field" style="border-radius:12px;">
           <textarea id="dmComposeInput" rows="1" placeholder="${escapeHtml(t('dmComposePlaceholder'))}" style="border-radius:12px;max-height:120px;"></textarea>
         </div>
         <button type="button" id="dmSendBtn" style="flex:0 0 auto;height:40px;padding:0 16px;border-radius:12px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:13px;cursor:pointer;">${escapeHtml(t('dmSendBtn'))}</button>
       </div>`;
-    const input = composer.querySelector('#dmComposeInput');
-    const sendBtn = composer.querySelector('#dmSendBtn');
-    const send = async () => {
-      const body = input.value.trim();
-      if(!body) return;
-      sendBtn.disabled = true;
-      const { error } = await db.dm.post(meId, otherId, body);
-      sendBtn.disabled = false;
-      if(error) { alert(t('profileSaveFailedAlert')); return; }
-      input.value = '';
-      await renderDmMessages(panel, meId, otherId, otherProfile);
-    };
-    sendBtn.onclick = send;
-    input.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
+      const input = composer.querySelector('#dmComposeInput');
+      const sendBtn = composer.querySelector('#dmSendBtn');
+      const send = async () => {
+        const body = input.value.trim();
+        if(!body) return;
+        sendBtn.disabled = true;
+        const { error } = await db.dm.post(meId, otherId, body);
+        sendBtn.disabled = false;
+        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        input.value = '';
+        await renderDmMessages(panel, meId, otherId, otherProfile);
+      };
+      sendBtn.onclick = send;
+      input.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
+    }
 
     requestAnimationFrame(() => {
       scrollBoardToBottom(panel.parentElement);
