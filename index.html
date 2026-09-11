@@ -1677,7 +1677,10 @@
       border:1px solid var(--board-input-border, rgba(255,255,255,.14)); background:var(--board-input-bg, #12291d); color:#e8f0ea;
       font-size:14px; line-height:1.5; font-family:inherit; resize:none; outline:none;
       transition:border-color .16s ease;
+      /* [追加] 入力欄右側に出る謎の上下矢印(ネイティブスクロールバー)を消す */
+      scrollbar-width:none; -ms-overflow-style:none;
     }
+    .board-compose-field textarea::-webkit-scrollbar { display:none; }
     .board-compose-field textarea:focus { border-color:rgba(92,201,142,.5); }
     .board-compose-count { position:absolute; right:14px; bottom:9px; font-size:9px; color:#5c6d63; pointer-events:none; }
     #boardComposeBtn {
@@ -2250,6 +2253,13 @@
     }
     #page-board-value.active .board-chat-scroll, #page-board-general.active .board-chat-scroll, #page-dm.active .board-chat-scroll {
       flex:1 1 auto !important; min-height:0 !important; overflow-y:auto !important;
+      /* [追加] スクロールバーの見た目だけ消す(スクロール自体は引き続きできる) */
+      scrollbar-width:none; -ms-overflow-style:none;
+    }
+    #page-board-value.active .board-chat-scroll::-webkit-scrollbar,
+    #page-board-general.active .board-chat-scroll::-webkit-scrollbar,
+    #page-dm.active .board-chat-scroll::-webkit-scrollbar {
+      display:none;
     }
     #page-board-value.active .board-composer, #page-board-general.active .board-composer, #page-dm.active .board-composer {
       flex:0 0 auto; position:static !important; margin:0 !important; padding:14px 1rem calc(14px + env(safe-area-inset-bottom));
@@ -3253,7 +3263,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.70'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.72'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -14454,10 +14464,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const shard = _boardShardChoice[key];
     const shardedType = shardedBoardType('general', shard);
-    // [修正] 毎回el.innerHTMLをリセットしていたため、投稿後の再描画のたびに「一覧が一瞬消えて
-    // 1秒ほどで戻る」ちらつきが発生していた。初回だけ枠を作り、2回目以降は使い回す
+    // [修正] 「パネルがあれば使い回す」だけだと、サーバー選択画面(#boardPanel内に
+    // .board-shard-pick-btnが残っている状態)から実チャットへの切り替え時にも使い回されてしまい、
+    // うまく表示が切り替わらず「サーバーに入れない」不具合になっていた。
+    // サーバー選択画面から来た場合は必ず作り直し、それ以外(送信後の再描画等)だけ使い回す
     let panel = el.querySelector('#boardPanel');
-    if(!panel) {
+    const cameFromPicker = panel && panel.querySelector('.board-shard-pick-btn, .board-locked-sheet');
+    if(!panel || cameFromPicker) {
       el.innerHTML = `<div id="boardPanel"></div>`;
       panel = el.querySelector('#boardPanel');
     }
@@ -15157,12 +15170,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     // 板ヘッダーのサブ行：参加人数・今アクティブ人数（選択中のタイプの掲示板について）
-    // [修正] 以前は毎回ここでel.innerHTMLをリセットしていたため、投稿後の再描画のたびに
-    // 「一覧が一瞬消えて1秒ほどで戻る」ちらつきが発生していた(LINE等では起きない挙動)。
-    // 初回だけ枠を作り、2回目以降は既存の枠をそのまま使い回す(中身の更新はrenderBoardPostsInto側の
-    // 1回のinnerHTML差し替えに任せる。それまでは今表示されている内容がそのまま残る)
+    // [修正] 「パネルがあれば使い回す」だけだと、サーバー選択画面・ロック画面(#boardPanel内に
+    // .board-shard-pick-btnや.board-locked-sheetが残っている状態)から実チャットへの切り替え時にも
+    // 使い回されてしまい、うまく表示が切り替わらず「入れない」不具合になっていた。
+    // それらの画面から来た場合は必ず作り直し、それ以外(送信後の再描画等)だけ使い回す
     let panel = el.querySelector('#boardPanel');
-    if(!panel) {
+    const cameFromPicker = panel && panel.querySelector('.board-shard-pick-btn, .board-locked-sheet');
+    if(!panel || cameFromPicker) {
       el.innerHTML = `<div id="boardPanel"></div>`;
       panel = el.querySelector('#boardPanel');
     }
