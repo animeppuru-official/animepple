@@ -153,9 +153,15 @@
     .search-close {
       display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 15px;
       border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03);
-      color:#dfeae3; font-weight:700; font-size:13px; cursor:pointer; margin-bottom:22px;
+      color:#dfeae3; font-weight:700; font-size:13px; cursor:pointer;
     }
     .search-close:hover { background:rgba(255,255,255,.08); }
+    /* [追加] 「閉じる」ボタンと、無料プラン向けスライダー案内を横並びにする行 */
+    .search-overlay-topbar {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      flex-wrap:wrap; margin-bottom:22px;
+    }
+    .search-overlay-topbar .slider-limit-upsell { margin:0; flex:1 1 auto; min-width:180px; }
     .search-field { display:flex; gap:10px; margin-bottom:28px; }
     .search-field input { flex:1 1 auto; min-width:0; height:52px; padding:0 18px; border-radius:13px; border:1px solid rgba(255,255,255,.1); background:#07150d; color:#e8f0ea; font:inherit; font-size:15px; }
     .search-go { height:52px; padding:0 28px; border-radius:13px; background:#5cc98e; color:#07160d; font-weight:700; font-size:15px; border:none; cursor:pointer; white-space:nowrap; }
@@ -411,6 +417,24 @@
     .sl-row.is-slider-limited { opacity:.4; filter:grayscale(.4); pointer-events:none; }
     /* 「無」の軸は優先度(星)ボタンを押せない（全プラン共通） */
     .sl-priority-btn:disabled { opacity:.3; cursor:not-allowed; pointer-events:none; }
+    /* [追加] タグ上限に達している間、入力欄・追加ボタン・タグ一覧を灰色にして操作不可を示す */
+    .search-tag-input-wrap input:disabled,
+    .search-tag-input-wrap button:disabled {
+      opacity:.4; cursor:not-allowed;
+    }
+    .tag-browse-panel.is-tag-input-locked { opacity:.4; filter:grayscale(.5); pointer-events:none; }
+    /* [追加] ＋限定機能で、無料プランにはデータ自体を見せない時の共通プレースホルダー */
+    .premium-feature-locked {
+      grid-column:1/-1; display:flex; flex-direction:column; align-items:center; gap:10px;
+      padding:22px 16px; border-radius:12px; border:1px dashed rgba(240,201,74,.35);
+      background:rgba(240,201,74,.05); text-align:center;
+    }
+    .premium-feature-locked-text { margin:0; font-size:12.5px; color:#e8c463; font-weight:700; line-height:1.7; }
+    .premium-feature-locked-btn {
+      padding:8px 18px; border-radius:9px; border:1px solid rgba(240,201,74,.5);
+      background:rgba(240,201,74,.16); color:#e8c463; font-size:12px; font-weight:800; cursor:pointer;
+    }
+    .premium-feature-locked-btn:hover { background:rgba(240,201,74,.26); }
     .sort-row-era-toggle input[type="checkbox"] { accent-color:var(--brand); width:15px; height:15px; cursor:pointer; }
     .sort-row-era-inputs { display:flex; align-items:center; gap:.3rem; }
     .sort-row-era-inputs input[type="number"] {
@@ -3229,7 +3253,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.62'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.65'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -3272,10 +3296,17 @@ document.addEventListener('DOMContentLoaded', () => {
 ═══════════════════════════════════ -->
 <div class="search-overlay" id="searchOverlay">
   <div class="search-overlay-card">
-  <button class="search-close" id="closeSearch">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg>
-    <span data-i18n="btnClose">閉じる</span>
-  </button>
+  <div class="search-overlay-topbar">
+    <button class="search-close" id="closeSearch">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg>
+      <span data-i18n="btnClose">閉じる</span>
+    </button>
+    <!-- [追加] 無料プラン向け：最初から常時表示の「2個まで」案内＋誘導ボタン -->
+    <div class="slider-limit-upsell" id="ovSliderLimitUpsell" style="display:none;">
+      <span data-i18n="sliderLimitUpsellText">無料プランは2個まで動かせます</span>
+      <button type="button" class="slider-limit-upsell-btn" onclick="showPlusUpsellPrompt()" data-i18n="sliderLimitUpsellBtn">＋を見る</button>
+    </div>
+  </div>
 
   <!-- タブ切り替え：お好み検索（初期表示）／タイトル検索 -->
   <div class="search-mode-tabs">
@@ -3316,10 +3347,6 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     <!-- [追加] 無料プラン向け：12項目中いくつ動かしているか(N/2)の表示 -->
     <p class="slider-limit-counter" id="ovSliderLimitCounter" style="display:none;"></p>
-    <div class="slider-limit-upsell" id="ovSliderLimitUpsell" style="display:none;">
-      <span data-i18n="sliderLimitUpsellText">無料プランは2項目まで同時に使えます。</span>
-      <button type="button" class="slider-limit-upsell-btn" onclick="showPlusUpsellPrompt()" data-i18n="sliderLimitUpsellBtn">＋を見る</button>
-    </div>
     <!-- スマホ版：インフォボタンを押すとモーダル中央にポップオーバー表示 -->
     <div class="review-slider-swiper-wrap">
       <div class="review-slider-swiper" id="ovSliderSwiper">
@@ -3344,7 +3371,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="tag-section">
         <div class="tag-section-head">
           <span class="tag-section-title" data-i18n="filterTagLabel">🏷 タグで絞る</span>
-          <span class="tag-section-count"><span id="overlayTagMaxLabel"></span><span id="overlayTagCount">0/10</span></span>
+          <span class="tag-section-count"><span id="overlayTagMaxLabel"></span><span id="overlayTagCount"></span></span>
         </div>
         <div class="search-tag-input-wrap">
           <input id="overlayTagInput" placeholder="キーワードでタグを追加（例: 泣ける、鬱、神作画）" data-i18n="phTagAddLong" maxlength="20" autocomplete="off" />
@@ -4428,7 +4455,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- [追加] 無料プラン向け：12項目中いくつ動かしているか(N/2)の表示 -->
     <p class="slider-limit-counter" id="srSliderLimitCounter" style="display:none;"></p>
     <div class="slider-limit-upsell" id="srSliderLimitUpsell" style="display:none;">
-      <span data-i18n="sliderLimitUpsellText">無料プランは2項目まで同時に使えます。</span>
+      <span data-i18n="sliderLimitUpsellText">無料プランは2個まで動かせます</span>
       <button type="button" class="slider-limit-upsell-btn" onclick="showPlusUpsellPrompt()" data-i18n="sliderLimitUpsellBtn">＋を見る</button>
     </div>
     <div class="review-slider-swiper-wrap">
@@ -9812,7 +9839,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const box = document.getElementById('overlayTagSelectedBox');
         if(box) box.style.display = tags.length ? '' : 'none';
         const countEl = document.getElementById('overlayTagCount');
-        if(countEl) countEl.textContent = `${tags.length}/${maxTags}`;
+        // [修正] 無料プランは実際の上限(1個)を表示する。固定の10個ではなく実態に合わせる
+        const effectiveMax = isFreePlan() ? 1 : maxTags;
+        if(countEl) countEl.textContent = `${tags.length}/${effectiveMax}`;
       }
     }
     render();
@@ -9824,7 +9853,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const input=document.getElementById(inputId), btn=document.getElementById(addBtnId);
     const renderChips=makeTagChipUI(listId, tags, maxTags);
     const browsePanelIdByList = { overlayTagList: 'tagBrowsePanel', srTagList: 'srTagBrowsePanel' };
-    const render = () => { renderChips(); const pid = browsePanelIdByList[listId]; if(pid) syncTagBrowseChips(pid, tags); };
+    // [追加] 上限(無料プランなら1個、有料プランなら10個)に達したら、消すまで
+    // 入力欄・追加ボタン自体を触れなくする(タグ一覧からの選択も含めて完全ブロック)
+    function updateTagInputLockState() {
+      const effectiveMax = opts.getMaxTags ? opts.getMaxTags() : maxTags;
+      const locked = tags.length >= effectiveMax;
+      if(input) input.disabled = locked;
+      if(btn) btn.disabled = locked;
+      const pid = browsePanelIdByList[listId];
+      if(pid) {
+        const panel = document.getElementById(pid);
+        if(panel) panel.classList.toggle('is-tag-input-locked', locked);
+      }
+    }
+    const render = () => { renderChips(); const pid = browsePanelIdByList[listId]; if(pid) syncTagBrowseChips(pid, tags); updateTagInputLockState(); };
     async function addTag() {
       let v=input.value.trim().replace(/^#/,'');
       if (!v) return;
@@ -9858,6 +9900,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (btn) btn.onclick=addTag;
     if (input) input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addTag(); } });
+    updateTagInputLockState(); // 初期表示時点でも(既にタグが入っている再訪問時など)ロック状態を反映
     return render;
   }
 
@@ -10355,7 +10398,8 @@ document.addEventListener('DOMContentLoaded', () => {
       counterEl.textContent = t('sliderLimitCounter').replace('{n}', activeCount);
       counterEl.classList.toggle('is-full', isFull);
     }
-    if(upsellEl) upsellEl.style.display = isFull ? '' : 'none';
+    // [修正] 誘導欄は上限に達してから出すのではなく、無料プランなら最初から常時表示にする
+    if(upsellEl) upsellEl.style.display = '';
     rows.forEach(row => {
       const key = row.dataset.key;
       const isUnset = (storeA[key] === -1 || storeA[key] === undefined) && (storeB[key] === -1 || storeB[key] === undefined);
@@ -12660,6 +12704,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const content = document.getElementById('worldStatsContent');
     const tabs = document.getElementById('worldPeriodTabs');
     if(!section||!content||!tabs) return;
+
+    // [追加] 「世界の反応」は＋限定機能。無料プランはデータ自体を出さず、ロック案内に差し替える
+    if(isFreePlan()) {
+      section.style.display = '';
+      tabs.style.display = 'none';
+      content.innerHTML = `<div class="premium-feature-locked">
+        <p class="premium-feature-locked-text">${t('worldStatsLockedText')}</p>
+        <button type="button" class="premium-feature-locked-btn" onclick="showPlusUpsellPrompt()">${t('plusUpsellBtn')}</button>
+      </div>`;
+      return;
+    }
+    tabs.style.display = '';
 
     async function draw(period) {
       let entries = [];
@@ -16700,14 +16756,23 @@ document.addEventListener('DOMContentLoaded', () => {
         <span style="display:block;font-size:10.5px;color:#8db5a0;">${escapeHtml(t('preferenceTypeLabel'))}</span>
         <span style="display:block;margin-top:2px;font-size:14px;font-weight:800;color:#a7ecc4;">${escapeHtml(valueTypeLabelFrom(labAll, valsAll))}</span>
       </div>
-      ${items && items.length ? `<p style="margin:14px 0 8px;font-size:11.5px;font-weight:700;color:#8db5a0;">${escapeHtml(t('similarTitlesLabel'))}</p>
-      <div id="valueProfileInlineRecs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;"></div>` : ''}`;
+      ${items && items.length ? (
+        isFreePlan()
+          ? `<p style="margin:14px 0 8px;font-size:11.5px;font-weight:700;color:#8db5a0;">${escapeHtml(t('similarTitlesLabel'))}</p>
+             <div class="premium-feature-locked">
+               <p class="premium-feature-locked-text">${escapeHtml(t('valueRecsLockedText'))}</p>
+               <button type="button" class="premium-feature-locked-btn" onclick="showPlusUpsellPrompt()">${escapeHtml(t('plusUpsellBtn'))}</button>
+             </div>`
+          : `<p style="margin:14px 0 8px;font-size:11.5px;font-weight:700;color:#8db5a0;">${escapeHtml(t('similarTitlesLabel'))}</p>
+      <div id="valueProfileInlineRecs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;"></div>`
+      ) : ''}`;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       const cEl = document.getElementById('valueProfileInlineCanvas');
       // 閉じた状態(display:none)の中にあるcanvasはサイズが取れず正しく描けないため、開いてる時だけ描く
       if(cEl && collapseEl && collapseEl.style.display !== 'none') drawRadar(cEl, labAll, valsAll, 'rgba(94,201,122,0.32)', '#8fe5ab');
+      // [追加] おすすめ作品カードは＋限定なので、無料プランではデータを流し込まない(ロック表示のまま)
       const recEl = document.getElementById('valueProfileInlineRecs');
-      if(recEl && items) recEl.innerHTML = items.map(item=>renderAnimeCard(item, { style:'g' })).join('');
+      if(recEl && items && !isFreePlan()) recEl.innerHTML = items.map(item=>renderAnimeCard(item, { style:'g' })).join('');
     }));
   }
 
@@ -16962,6 +17027,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const section = document.getElementById('similarAnimeSection');
     const grid = document.getElementById('similarAnimeGrid');
     if(!section || !grid) return;
+    // [追加] 「似ている作品」は＋限定機能。無料プランはデータ自体を出さず、ロック案内に差し替える
+    if(isFreePlan()) {
+      section.style.display = '';
+      grid.innerHTML = `<div class="premium-feature-locked">
+        <p class="premium-feature-locked-text">${t('similarAnimeLockedText')}</p>
+        <button type="button" class="premium-feature-locked-btn" onclick="showPlusUpsellPrompt()">${t('plusUpsellBtn')}</button>
+      </div>`;
+      return;
+    }
     const showEmpty = () => {
       section.style.display='';
       grid.innerHTML = `<p style="font-size:.78rem;color:var(--muted);margin:0;grid-column:1/-1;">${t('similarAnimeEmpty') || 'マスターグラフができてから表示されます'}</p>`;
@@ -17863,7 +17937,7 @@ document.addEventListener('DOMContentLoaded', () => {
     countryOther: { ja:'その他',en:'Other',ko:'기타','zh-tw':'其他','zh-cn':'其他',es:'Otro',fr:'Autre',pt:'Outro',de:'Andere',ar:'أخرى',th:'อื่นๆ',id:'Lainnya',ru:'Другое',it:'Altro',vi:'Khác' },
     sliderUnset: { ja:'無', en:'—', ko:'무', 'zh-tw':'無', 'zh-cn':'无', es:'—', fr:'—', pt:'—', de:'—', ar:'—',th:'—',id:'—',ru:'—',it:'—',vi:'—' },
     sliderLimitCounter: { ja:'{n}/2 項目を使用中', en:'{n}/2 sliders in use' },
-    sliderLimitUpsellText: { ja:'無料プランは2項目まで同時に使えます。', en:'Free plan allows up to 2 sliders at once.' },
+    sliderLimitUpsellText: { ja:'無料プランは2個まで動かせます', en:'Free plan: move up to 2 sliders' },
     sliderLimitUpsellBtn: { ja:'＋を見る', en:'See +' },
     graphIncompleteMsg: { ja:'この状態で投稿するとレビューとして表示されますが、みんなの評価グラフへのデータ集計はされません。', en:'You can post like this and it will show as a review, but it will not be counted in the master graph.', ko:'이 상태로 게시하면 리뷰로 표시되지만, 모두의 평가 그래프 집계에는 반영되지 않습니다.', 'zh-tw':'以此狀態發佈會顯示為評論，但不會計入大家的評分圖。', 'zh-cn':'以此状态发布会显示为评论，但不会计入大家的评分图。', es:'Puedes publicar así y se mostrará como reseña, pero no se contará en el gráfico general.', fr:"Vous pouvez publier ainsi, l'avis sera affiché mais ne sera pas compté dans le graphique général.", pt:'Você pode postar assim e aparecerá como avaliação, mas não será contado no gráfico geral.', de:'Du kannst so posten, es wird als Bewertung angezeigt, aber nicht in die Gesamtgrafik einberechnet.', ar:'يمكنك النشر هكذا وستظهر كمراجعة، لكنها لن تُحتسب في الرسم البياني العام.',th:'โพสต์แบบนี้จะแสดงเป็นรีวิว แต่จะไม่ถูกนับในกราฟรวม',id:'Anda bisa memposting begini, akan tampil sebagai ulasan, tapi tidak dihitung di grafik utama.',ru:'Можно опубликовать так, отзыв отобразится, но не войдёт в общий график.',it:'Puoi pubblicare così, apparirà come recensione ma non conteggiata nel grafico principale.',vi:'Bạn có thể đăng vậy, sẽ hiện là đánh giá nhưng không tính vào biểu đồ chính.' },
     graphCompleteMsg: { ja:'すべて入力済みです。', en:'All fields are filled in.', ko:'모두 입력 완료되었습니다.', 'zh-tw':'已全部填寫完成。', 'zh-cn':'已全部填写完成。', es:'Todos los campos están completos.', fr:'Tous les champs sont remplis.', pt:'Todos os campos preenchidos.', de:'Alle Felder sind ausgefüllt.', ar:'تم ملء جميع الحقول.',th:'กรอกครบทุกช่องแล้ว',id:'Semua kolom telah diisi.',ru:'Все поля заполнены.',it:'Tutti i campi sono compilati.',vi:'Đã điền đầy đủ.' },
@@ -18722,7 +18796,13 @@ document.addEventListener('DOMContentLoaded', () => {
     eraFilterLabel: { ja:'年代で絞る',en:'Filter by year',ko:'연도로 좁히기','zh-tw':'依年代篩選','zh-cn':'按年代筛选',es:'Filtrar por año',fr:'Filtrer par année',pt:'Filtrar por ano',de:'Nach Jahr filtern',ar:'تصفية حسب السنة',th:'กรองตามปี',id:'Filter berdasarkan tahun',ru:'Фильтр по году',it:'Filtra per anno',vi:'Lọc theo năm' },
     plusOnlyBadge: { ja:'＋限定', en:'+ only' },
     plusUpsellConfirm: { ja:'この機能はアニメップル＋限定です。プランページを見てみますか？', en:'This feature is available on Anime Apple+. Check out the plans page?' },
-    tagLimitFreeHint: { ja:'無料プランは1個まで', en:'1 tag max on Free plan' },
+    tagLimitFreeHint: { ja:'（無料プランは1個まで）', en:'(1 tag max on Free plan)' },
+    tagLimitPaidHint: { ja:'（最大10個）', en:'(up to 10)' },
+    plusUpsellBtn: { ja:'＋を見る', en:'See +' },
+    similarAnimeLockedText: { ja:'「似ている作品」はアニメップル＋限定機能です。', en:'"Similar titles" is an Anime Apple+ feature.' },
+    worldStatsLockedText: { ja:'「世界の反応」はアニメップル＋限定機能です。', en:'"World reaction" is an Anime Apple+ feature.' },
+    valueRecsLockedText: { ja:'あなたの好みに近い作品のおすすめは、アニメップル＋限定機能です。', en:'Recommendations based on your taste are an Anime Apple+ feature.' },
+    matchBreakdownLockedText: { ja:'一致度の内訳は、アニメップル＋限定機能です。', en:'The match breakdown is an Anime Apple+ feature.' },
     gachaUnlimitedLabel: { ja:'無制限', en:'Unlimited' },
     dmBothPaidRequiredAlert: { ja:'DMは、あなたと相手の両方がアニメップル＋以上のプランに加入している場合だけ使えます。', en:'DMs are only available when both you and the other person are on Anime Apple+ or higher.' },
     boardChatLimitAdConfirm: { ja:'本日の価値観掲示板チャットの上限(5回)に達しました。広告を見て15分間フリーで使えます（アニメップル＋なら回数制限なしで使えます）。広告を見ますか？', en:'You have reached today\'s limit (5 messages) for this board. Watch an ad for 15 minutes of unlimited chat (Anime Apple+ removes this limit entirely). Watch the ad?' },
@@ -18732,7 +18812,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sortReviewsDesc:{ ja:'レビューが多い順',en:'Most reviewed',ko:'리뷰 많은 순','zh-tw':'評論最多','zh-cn':'评论最多',es:'Más reseñados',fr:'Plus d\'avis',pt:'Mais avaliados',de:'Meistbewertet',ar:'الأكثر مراجعة',th:'รีวิวมากสุด',id:'Paling banyak diulas',ru:'Больше всего отзывов',it:'Più recensiti',vi:'Nhiều đánh giá nhất' },
     sortReviewsAsc:{ ja:'レビューが少ない順',en:'Least reviewed',ko:'리뷰 적은 순','zh-tw':'評論最少','zh-cn':'评论最少',es:'Menos reseñados',fr:'Moins d\'avis',pt:'Menos avaliados',de:'Wenigstbewertet',ar:'الأقل مراجعة',th:'รีวิวน้อยสุด',id:'Paling sedikit diulas',ru:'Меньше всего отзывов',it:'Meno recensiti',vi:'Ít đánh giá nhất' },
     sortMatch:    { ja:'好みグラフに近い順',en:'Closest to my taste',ko:'취향 그래프에 가까운 순','zh-tw':'最接近喜好圖','zh-cn':'最接近喜好图',es:'Más cercano a mi gusto',fr:'Plus proche de mes goûts',pt:'Mais próximo do meu gosto',de:'Am nächsten meinem Geschmack',ar:'الأقرب لذوقي',th:'ใกล้เคียงกับรสนิยม',id:'Paling sesuai selera',ru:'Ближе всего к моему вкусу',it:'Più vicino ai miei gusti',vi:'Gần gu nhất' },
-    filterTagLabel:{ ja:'🏷 タグで絞る（最大10個）',en:'🏷 Filter by tags (up to 10)',ko:'🏷 태그로 좁히기 (최대 10개)','zh-tw':'🏷 以標籤篩選（最多10個）','zh-cn':'🏷 按标签筛选（最多10个）',es:'🏷 Filtrar por etiquetas',fr:'🏷 Filtrer par tags',pt:'🏷 Filtrar por tags',de:'🏷 Nach Tags filtern',ar:'🏷 تصفية حسب الوسوم',th:'🏷 กรองด้วยแท็ก',id:'🏷 Filter dengan tag',ru:'🏷 Фильтр по тегам',it:'🏷 Filtra per tag',vi:'🏷 Lọc theo thẻ' },
+    filterTagLabel:{ ja:'🏷 タグで絞る',en:'🏷 Filter by tags',ko:'🏷 태그로 좁히기','zh-tw':'🏷 以標籤篩選','zh-cn':'🏷 按标签筛选',es:'🏷 Filtrar por etiquetas',fr:'🏷 Filtrer par tags',pt:'🏷 Filtrar por tags',de:'🏷 Nach Tags filtern',ar:'🏷 تصفية حسب الوسوم',th:'🏷 กรองด้วยแท็ก',id:'🏷 Filter dengan tag',ru:'🏷 Фильтр по тегам',it:'🏷 Filtra per tag',vi:'🏷 Lọc theo thẻ' },
     filterChartA: { ja:'作品の完成度（無で無視）',en:'Production Quality (unset=ignore)',ko:'작품 완성도 (미설정=무시)','zh-tw':'作品完成度（未設定=忽略）','zh-cn':'作品完成度（未设置=忽略）',es:'Calidad (sin ajustar=ignorar)',fr:'Qualité (non réglé=ignorer)',pt:'Qualidade (não definido=ignorar)',de:'Qualität (nicht gesetzt=ignorieren)',ar:'جودة الإنتاج (غير محدد=تجاهل)',th:'คุณภาพงานสร้าง (ไม่ตั้งค่า=ไม่นับ)',id:'Kualitas Produksi (belum diatur=abaikan)',ru:'Качество (не задано=игнор.)',it:'Qualità (non impostato=ignora)',vi:'Chất lượng (chưa đặt=bỏ qua)' },
     yourValuesTitle:{ ja:'あなたの価値観', en:'Your values', ko:'당신의 가치관', 'zh-tw':'你的價值觀', 'zh-cn':'你的价值观', es:'Tus valores', fr:'Vos valeurs', pt:'Seus valores', de:'Deine Werte', ar:'قيمك', th:'คุณค่าของคุณ', id:'Nilai Anda', ru:'Ваши ценности', it:'I tuoi valori', vi:'Giá trị của bạn' },
     yourValuesDesc:{ ja:'レビュー投稿・お気に入り・レビュー閲覧などの行動から、あなたの好みを12項目で可視化しています。', en:'Your preferences are visualized across 12 dimensions based on actions like posting reviews, favoriting, and browsing reviews.', ko:'리뷰 작성・즐겨찾기・리뷰 열람 등의 행동으로 당신의 취향을 12개 항목으로 시각화합니다.', 'zh-tw':'根據發表評論、收藏、瀏覽評論等行為，以12個項目視覺化你的喜好。', 'zh-cn':'根据发表评论、收藏、浏览评论等行为，以12个项目可视化你的喜好。', es:'Tus preferencias se visualizan en 12 dimensiones según acciones como publicar reseñas, marcar favoritos y ver reseñas.', fr:'Vos préférences sont visualisées sur 12 dimensions à partir d\'actions comme la publication d\'avis, les favoris et la consultation d\'avis.', pt:'Suas preferências são visualizadas em 12 dimensões com base em ações como postar avaliações, favoritar e navegar por avaliações.', de:'Deine Vorlieben werden anhand von 12 Dimensionen basierend auf Aktionen wie Rezensionen schreiben, Favorisieren und Rezensionen ansehen visualisiert.', ar:'يتم تصور تفضيلاتك عبر 12 بُعدًا بناءً على أفعال مثل نشر المراجعات والمفضلة وتصفح المراجعات.', th:'แสดงรสนิยมของคุณใน 12 มิติ จากพฤติกรรมต่างๆ เช่น การโพสต์รีวิว การเพิ่มรายการโปรด และการดูรีวิว', id:'Preferensi Anda divisualisasikan dalam 12 dimensi berdasarkan tindakan seperti memposting ulasan, menandai favorit, dan menelusuri ulasan.', ru:'Ваши предпочтения визуализируются по 12 параметрам на основе таких действий, как публикация отзывов, добавление в избранное и просмотр отзывов.', it:'Le tue preferenze vengono visualizzate su 12 dimensioni in base ad azioni come pubblicare recensioni, aggiungere ai preferiti e sfogliare recensioni.', vi:'Sở thích của bạn được trực quan hóa qua 12 khía cạnh dựa trên các hành động như đăng đánh giá, yêu thích và xem đánh giá.' },
@@ -18868,6 +18948,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('matchBreakdownOverlay');
     const body = document.getElementById('matchBreakdownBody');
     if(!overlay || !body) return;
+    // [追加] 「一致度の内訳」は＋限定機能。無料プランはデータ自体を出さず、ロック案内に差し替える
+    if(isFreePlan()) {
+      body.innerHTML = `<div class="premium-feature-locked">
+        <p class="premium-feature-locked-text">${escapeHtml(t('matchBreakdownLockedText'))}</p>
+        <button type="button" class="premium-feature-locked-btn" onclick="showPlusUpsellPrompt()">${escapeHtml(t('plusUpsellBtn'))}</button>
+      </div>`;
+      overlay.classList.add('open');
+      return;
+    }
     const distToPct = (dist) => (dist === Infinity || dist == null) ? null : Math.max(0, Math.round(100 - dist * 10));
     const priorityPct = priorityAxes.size ? distToPct(priorityDist) : null;
     const graphPct = distToPct(graphDist);
@@ -18898,9 +18987,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.lang-code-label').forEach(el => {
       el.textContent = currentLang.split('-')[0].toUpperCase();
     });
-    // タグ上限ラベル（「最大10個 ・ 」部分）
+    // タグ上限ラベル（「最大10個 ・ 」部分）：無料プランは実際の上限(1個)を表示する
     const tagMaxLabelEl = document.getElementById('overlayTagMaxLabel');
-    if(tagMaxLabelEl) tagMaxLabelEl.textContent = tFn('tagMaxCountLabel', 10);
+    if(tagMaxLabelEl) tagMaxLabelEl.textContent = tFn('tagMaxCountLabel', isFreePlan() ? 1 : 10);
     // data-i18n属性を持つ全要素を自動翻訳
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.dataset.i18n;
@@ -22092,17 +22181,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function applyTagLimitHint() {
     document.querySelectorAll('.tag-section-title').forEach(titleEl => {
       let hint = titleEl.parentElement.querySelector('.tag-limit-hint');
-      if(isFreePlan()) {
-        if(!hint) {
-          hint = document.createElement('span');
-          hint.className = 'tag-limit-hint';
-          titleEl.insertAdjacentElement('afterend', hint);
-        }
-        hint.textContent = t('tagLimitFreeHint');
-      } else if(hint) {
-        hint.remove();
+      if(!hint) {
+        hint = document.createElement('span');
+        hint.className = 'tag-limit-hint';
+        titleEl.insertAdjacentElement('afterend', hint);
       }
+      // [修正] 見出しに固定で「最大10個」と書いていたのをやめ、実際のプランに応じた
+      // 上限(無料は1個、＋以上は10個)を常に表示する
+      hint.textContent = isFreePlan() ? t('tagLimitFreeHint') : t('tagLimitPaidHint');
+      hint.classList.toggle('is-free', isFreePlan());
     });
+    // [追加] 「最大10個 ・ 」の接頭ラベルも、開くたびに最新のプランで更新する
+    const tagMaxLabelEl = document.getElementById('overlayTagMaxLabel');
+    if(tagMaxLabelEl) tagMaxLabelEl.textContent = tFn('tagMaxCountLabel', isFreePlan() ? 1 : 10);
   }
 
   function isFreePlan() { return _currentPlan === 'free'; }
