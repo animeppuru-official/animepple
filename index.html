@@ -342,6 +342,22 @@
     .sort-row select { padding:.6rem .75rem; border-radius:10px; background:var(--card2); border:1px solid var(--line); color:var(--text); font:inherit; width:100%; }
     .sort-row-era { flex:0 0 auto; display:flex; flex-direction:column; gap:.35rem; }
     .sort-row-era-toggle { display:flex; align-items:center; gap:.35rem; font-size:.78rem; color:var(--muted); white-space:nowrap; cursor:pointer; }
+    /* [追加] 無料プランの機能制限：使えない項目を灰色にし、鍵バッジを付ける共通スタイル */
+    .premium-locked-control { opacity:.4; filter:grayscale(.5); pointer-events:none; }
+    .premium-lock-badge {
+      display:inline-flex; align-items:center; gap:3px; margin-left:6px; padding:2px 7px;
+      border-radius:8px; background:rgba(240,201,74,.14); border:1px solid rgba(240,201,74,.35);
+      color:#e8c463; font-size:10px; font-weight:800; white-space:nowrap; cursor:pointer;
+      pointer-events:auto; vertical-align:middle;
+    }
+    .premium-lock-badge:hover { background:rgba(240,201,74,.22); }
+    /* [追加] 管理者用プラン切り替えボタン */
+    .admin-plan-switch-btn {
+      padding:8px 14px; border-radius:9px; border:1.5px solid rgba(240,201,74,.4);
+      background:rgba(240,201,74,.08); color:#e8c463; font-size:12px; font-weight:800; cursor:pointer;
+    }
+    .admin-plan-switch-btn:hover { background:rgba(240,201,74,.18); }
+    .admin-plan-switch-btn.is-current { background:#e8c463; color:#2a2006; }
     .sort-row-era-toggle input[type="checkbox"] { accent-color:var(--brand); width:15px; height:15px; cursor:pointer; }
     .sort-row-era-inputs { display:flex; align-items:center; gap:.3rem; }
     .sort-row-era-inputs input[type="number"] {
@@ -3160,7 +3176,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.49'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.51'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -6286,6 +6302,17 @@ document.addEventListener('DOMContentLoaded', () => {
       <div id="mypageRankProgress"></div>
     </div>
 
+    <!-- [追加] 管理者専用：テスト用にプランを即座に切り替えられるパネル(実際の課金は発生しない) -->
+    <div class="mypage-section mypage-owner-only" id="mypageAdminPlanPanel" style="display:none;">
+      <p style="font-size:11px;color:#e8c463;font-weight:800;margin:0 0 8px;">🛠 管理者用：プラン切り替え（テスト用・課金なし）</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="admin-plan-switch-btn" data-plan="free">無料</button>
+        <button type="button" class="admin-plan-switch-btn" data-plan="plus">＋</button>
+        <button type="button" class="admin-plan-switch-btn" data-plan="creators">クリエイターズ</button>
+      </div>
+      <p id="mypageAdminPlanCurrent" style="font-size:10.5px;color:#8db5a0;margin:8px 0 0;"></p>
+    </div>
+
     <!-- マイページカードを共有 -->
     <div class="mypage-section mypage-owner-only">
       <div class="mypage-share-row">
@@ -9323,6 +9350,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function renderPopular() {
+    applyEraFilterLock(); // [追加] 無料プランは年代絞り込みを使えないようにする
 
     // スマホ幅：並び順→セレクト、期間/年代→絞り込みモーダルへ移動（PC幅は元の位置に戻す）
     const popBarInner = document.querySelector('#page-popular .pop-sort-bar-inner');
@@ -10254,6 +10282,7 @@ document.addEventListener('DOMContentLoaded', () => {
     buildSliders('overlayFilterB',getAxisB(),overlayProfileB,'ov-b',axisB);
     setupSliderPageSwiper('ovSliderSwiper','ovSliderPagePrev','ovSliderPageNext','ovSliderPageLabel');
     setupEraToggle('overlayEraToggle','overlayEraFrom','overlayEraTo');
+    applyEraFilterLock(); // [追加] 無料プランは年代絞り込みを使えないようにする
     // タグ入力の初期化もここで行う（currentLang等の初期化が全て終わった後に実行するため）
     if(!renderOverlayTags) {
       renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true});
@@ -16771,6 +16800,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function renderSearch() {
+    applyEraFilterLock(); // [追加] 無料プランは年代絞り込みを使えないようにする
     requestAnimationFrame(updateStickyOffsets); // ページ表示後に実際の高さを測ってsticky位置を合わせる
     document.getElementById('srQuery').value=srSearchState.q;
 
@@ -18375,6 +18405,8 @@ document.addEventListener('DOMContentLoaded', () => {
     filterTitle:  { ja:'🎛 条件を変えて再検索',en:'🎛 Refine & Search Again',ko:'🎛 조건 변경 후 재검색','zh-tw':'🎛 變更條件重新搜尋','zh-cn':'🎛 更改条件重新搜索',es:'🎛 Ajustar y buscar de nuevo',fr:'🎛 Modifier et rechercher',pt:'🎛 Ajustar e pesquisar novamente',de:'🎛 Anpassen & erneut suchen',ar:'🎛 تعديل الشروط وإعادة البحث',th:'🎛 ปรับเงื่อนไขแล้วค้นหาอีกครั้ง',id:'🎛 Ubah kondisi & cari lagi',ru:'🎛 Изменить и искать снова',it:'🎛 Modifica e cerca di nuovo',vi:'🎛 Đổi điều kiện & tìm lại' },
     sortLabel:    { ja:'並び替え',en:'Sort by',ko:'정렬','zh-tw':'排序','zh-cn':'排序',es:'Ordenar',fr:'Trier',pt:'Ordenar',de:'Sortieren',ar:'ترتيب',th:'เรียงลำดับ',id:'Urutkan',ru:'Сортировка',it:'Ordina',vi:'Sắp xếp' },
     eraFilterLabel: { ja:'年代で絞る',en:'Filter by year',ko:'연도로 좁히기','zh-tw':'依年代篩選','zh-cn':'按年代筛选',es:'Filtrar por año',fr:'Filtrer par année',pt:'Filtrar por ano',de:'Nach Jahr filtern',ar:'تصفية حسب السنة',th:'กรองตามปี',id:'Filter berdasarkan tahun',ru:'Фильтр по году',it:'Filtra per anno',vi:'Lọc theo năm' },
+    plusOnlyBadge: { ja:'＋限定', en:'+ only' },
+    plusUpsellConfirm: { ja:'この機能はアニメップル＋限定です。プランページを見てみますか？', en:'This feature is available on Anime Apple+. Check out the plans page?' },
     sortRelevance:{ ja:'関連度順',en:'Relevance',ko:'관련도순','zh-tw':'相關度','zh-cn':'相关度',es:'Relevancia',fr:'Pertinence',pt:'Relevância',de:'Relevanz',ar:'الصلة',th:'ตามความเกี่ยวข้อง',id:'Relevansi',ru:'По релевантности',it:'Rilevanza',vi:'Liên quan nhất' },
     sortReviewsDesc:{ ja:'レビューが多い順',en:'Most reviewed',ko:'리뷰 많은 순','zh-tw':'評論最多','zh-cn':'评论最多',es:'Más reseñados',fr:'Plus d\'avis',pt:'Mais avaliados',de:'Meistbewertet',ar:'الأكثر مراجعة',th:'รีวิวมากสุด',id:'Paling banyak diulas',ru:'Больше всего отзывов',it:'Più recensiti',vi:'Nhiều đánh giá nhất' },
     sortReviewsAsc:{ ja:'レビューが少ない順',en:'Least reviewed',ko:'리뷰 적은 순','zh-tw':'評論最少','zh-cn':'评论最少',es:'Menos reseñados',fr:'Moins d\'avis',pt:'Menos avaliados',de:'Wenigstbewertet',ar:'الأقل مراجعة',th:'รีวิวน้อยสุด',id:'Paling sedikit diulas',ru:'Меньше всего отзывов',it:'Meno recensiti',vi:'Ít đánh giá nhất' },
@@ -21720,6 +21752,77 @@ document.addEventListener('DOMContentLoaded', () => {
   ════════════════════════════ */
   let _authMode = 'register'; // 'register' | 'login'
   let _currentUser = null;
+  // [追加] 無料プランの機能制限判定に使う、現在のプランのキャッシュ。
+  // 毎回db.profiles.get()を呼ぶと重いページで頻繁に呼び出せないため、ログイン時に1回読み、
+  // キャッシュしておく(プラン変更時はrenderPlanPage側で個別にDBを見るのでここは影響しない)
+  let _currentPlan = 'free';
+  async function loadMyPlan() {
+    if(!_currentUser) { _currentPlan = 'free'; return; }
+    try {
+      const profile = await db.profiles.get(_currentUser.id);
+      _currentPlan = (profile && (profile.plan === 'plus' || profile.plan === 'creators')) ? profile.plan : 'free';
+    } catch(e) {
+      console.warn('プラン取得に失敗、無料プラン扱いにします:', e);
+      _currentPlan = 'free';
+    }
+  }
+  function isFreePlan() { return _currentPlan === 'free'; }
+
+  // [追加] 無料プランの機能制限：共通のロック処理。
+  // controlEls: 触れなくする対象(input/selectなど)の配列
+  // labelEl: 鍵バッジを付ける場所(見出しやラベルの要素)
+  function applyPremiumLock(controlEls, labelEl) {
+    controlEls.forEach(el => { if(el) el.classList.add('premium-locked-control'); });
+    if(labelEl && !labelEl.querySelector('.premium-lock-badge')) {
+      const badge = document.createElement('span');
+      badge.className = 'premium-lock-badge';
+      badge.textContent = '🔒 ' + t('plusOnlyBadge');
+      badge.onclick = (e) => { e.preventDefault(); e.stopPropagation(); showPlusUpsellPrompt(); };
+      labelEl.appendChild(badge);
+    }
+  }
+  function removePremiumLock(controlEls, labelEl) {
+    controlEls.forEach(el => { if(el) el.classList.remove('premium-locked-control'); });
+    const badge = labelEl?.querySelector('.premium-lock-badge');
+    if(badge) badge.remove();
+  }
+  function showPlusUpsellPrompt() {
+    if(confirm(t('plusUpsellConfirm'))) { nav('settings-plan'); }
+  }
+
+  // [追加] 年代での絞り込みは＋限定機能。検索ページ・絞り込みモーダル・人気ページの
+  // 3箇所にある年代入力それぞれに、プランに応じてロックをかけたり外したりする
+  function applyEraFilterLock() {
+    const targets = [
+      { toggle: 'srEraToggle', from: 'srEraFrom', to: 'srEraTo' },
+      { toggle: 'overlayEraToggle', from: 'overlayEraFrom', to: 'overlayEraTo' },
+    ];
+    targets.forEach(({ toggle, from, to }) => {
+      const toggleEl = document.getElementById(toggle);
+      const fromEl = document.getElementById(from);
+      const toEl = document.getElementById(to);
+      const labelEl = toggleEl?.closest('.sort-row-era-toggle');
+      if(!toggleEl || !labelEl) return;
+      if(isFreePlan()) {
+        toggleEl.checked = false;
+        applyPremiumLock([toggleEl, fromEl, toEl], labelEl);
+      } else {
+        removePremiumLock([toggleEl, fromEl, toEl], labelEl);
+      }
+    });
+    // 人気ページの年代入力(チェックボックスが無く、常時表示の2つの数値欄)
+    const popFromEl = document.getElementById('popYearFromInput');
+    const popToEl = document.getElementById('popYearToInput');
+    const popLabelEl = document.getElementById('popEraGroup')?.querySelector('.pop-sort-group-label');
+    if(popFromEl && popToEl && popLabelEl) {
+      if(isFreePlan()) {
+        popFromEl.value = ''; popToEl.value = '';
+        applyPremiumLock([popFromEl, popToEl], popLabelEl);
+      } else {
+        removePremiumLock([popFromEl, popToEl], popLabelEl);
+      }
+    }
+  }
 
   // 起動時にセッション確認
   /* ════════════════════════════════════════════════════
@@ -21963,12 +22066,13 @@ document.addEventListener('DOMContentLoaded', () => {
       startFriendRequestWatch();
       updateCoinBadge();
       await applyMyEquippedCustomization();
+      loadMyPlan();
     }
     // yourValueHeaderBtn は常時表示（Design案通り）
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); loadMyPlan(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); _currentPlan = 'free'; }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -22811,6 +22915,43 @@ document.addEventListener('DOMContentLoaded', () => {
     let profileData = null;
     if(sb) {
       profileData = await db.profiles.get(targetUserId);
+    }
+
+    // [追加] 管理者専用：プラン切り替えパネルの表示制御(本人ページ・is_adminの時だけ)
+    const adminPlanPanel = document.getElementById('mypageAdminPlanPanel');
+    if(adminPlanPanel) {
+      if(isOwnPage && profileData?.is_admin) {
+        adminPlanPanel.style.display = '';
+        const currentPlanLabel = { free: '無料', plus: '＋', creators: 'クリエイターズ' }[profileData.plan] || '無料';
+        const currentEl = document.getElementById('mypageAdminPlanCurrent');
+        if(currentEl) currentEl.textContent = `現在のプラン: ${currentPlanLabel}`;
+        adminPlanPanel.querySelectorAll('.admin-plan-switch-btn').forEach(btn => {
+          btn.classList.toggle('is-current', btn.dataset.plan === (profileData.plan || 'free'));
+          btn.onclick = async () => {
+            btn.disabled = true;
+            try {
+              const { data: sessionData } = await sb.auth.getSession();
+              const accessToken = sessionData?.session?.access_token;
+              const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-set-plan`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newPlan: btn.dataset.plan }),
+              });
+              const resJson = await res.json();
+              if(!res.ok || !resJson.ok) throw new Error(resJson.error || 'failed');
+              await loadMyPlan();
+              renderMypage();
+            } catch(e) {
+              console.error('管理者プラン切り替えに失敗:', e);
+              alert('プラン切り替えに失敗しました');
+            } finally {
+              btn.disabled = false;
+            }
+          };
+        });
+      } else {
+        adminPlanPanel.style.display = 'none';
+      }
     }
 
     if(!isOwnPage && !profileData) {
