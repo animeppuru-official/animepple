@@ -358,6 +358,38 @@
     }
     .admin-plan-switch-btn:hover { background:rgba(240,201,74,.18); }
     .admin-plan-switch-btn.is-current { background:#e8c463; color:#2a2006; }
+    /* [追加] タグ絞り込み見出しの「無料プランは1個まで」案内 */
+    .tag-limit-hint {
+      display:inline-flex; align-items:center; margin-left:6px; padding:2px 7px;
+      border-radius:8px; background:rgba(240,201,74,.14); border:1px solid rgba(240,201,74,.35);
+      color:#e8c463; font-size:10px; font-weight:800; white-space:nowrap;
+    }
+    /* [追加] DM：両者とも有料プランでないとグレーアウトする(押すとアラート/アップセルは出る) */
+    .dm-btn-locked { opacity:.4; filter:grayscale(.6); }
+    /* [追加] 価値観掲示板の無料プラン向け「残り〇/5回」表示 */
+    .board-chat-quota-hint {
+      margin:4px 0 0; font-size:10.5px; text-align:center; color:#8db5a0;
+    }
+    .board-chat-quota-hint.is-zero { color:#e8c463; font-weight:700; }
+    .board-chat-quota-hint.is-ad-active { color:#a7ecc4; font-weight:700; }
+    /* [追加] 掲示板の右余白に出すスカイスクレイパー広告(160×600・無料プラン限定)。
+       画面幅が狭いと余白自体が無くなるため、1280px未満では常に非表示にする */
+    .board-sidebar-ad {
+      position:fixed; top:80px; right:24px; width:160px; height:600px; z-index:40;
+    }
+    .board-sidebar-ad-inner {
+      width:100%; height:100%; border-radius:10px; border:1px dashed rgba(255,255,255,.18);
+      background:rgba(255,255,255,.03); display:flex; align-items:center; justify-content:center;
+    }
+    .board-sidebar-ad-label { font-size:11px; color:#5c6d63; font-weight:700; letter-spacing:.1em; }
+    @media (max-width: 1279px) { .board-sidebar-ad { display:none !important; } }
+    /* [追加] 有料プラン(＋・クリエイターズ)では、既存のホーム/作品ページ/検索結果の広告枠(.ad-wrap)も
+       含めて全部非表示にする。bodyにこのクラスを付けるだけで一括制御できるようにし、
+       個別の広告を直し忘れるミスを防ぐ */
+    body.plan-hides-ads .ad-wrap,
+    body.plan-hides-ads .board-sidebar-ad {
+      display:none !important;
+    }
     .sort-row-era-toggle input[type="checkbox"] { accent-color:var(--brand); width:15px; height:15px; cursor:pointer; }
     .sort-row-era-inputs { display:flex; align-items:center; gap:.3rem; }
     .sort-row-era-inputs input[type="number"] {
@@ -3176,13 +3208,21 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.51'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.61'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
 });
 </script>
 <div id="themeScenery" aria-hidden="true"></div>
+
+<!-- [追加] 無料プラン向け：掲示板ページ(PC・広い画面のみ)の右余白に出すスカイスクレイパー広告枠。
+     実際の広告SDKは未接続のためプレースホルダー表示。表示制御はupdateBoardSidebarAd()で行う -->
+<div id="boardSidebarAd" class="board-sidebar-ad" style="display:none;" aria-hidden="true">
+  <div class="board-sidebar-ad-inner">
+    <span class="board-sidebar-ad-label">広告</span>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════
      LANGUAGE SELECTOR OVERLAY
@@ -5079,10 +5119,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="plan-card-desc" data-i18n="planFreeDesc2">レビュー・掲示板・グラフはすべて無料で使えます。</p>
         </div>
         <ul class="plan-feats">
-          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatReview12">レビュー投稿・12軸グラフ</span></li>
-          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatBoards">掲示板・価値観掲示板</span></li>
-          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatFavGacha">お気に入り・ガチャガチャ</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatReviewLimited">レビュー投稿・12軸グラフ（1日3件まで）</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatBoardsLimited">掲示板（価値観掲示板は1日5回まで）</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatFavGachaLimited">お気に入り・ガチャガチャ（1日2回、2回目は広告視聴）</span></li>
           <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatCardShare">カードのシェア</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✗</span><span data-i18n="planFeatSearchLimited">検索の年代絞り込み・タグ複数指定は利用不可</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✗</span><span data-i18n="planFeatNoDm">DMは相手も＋以上でないと利用不可</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✗</span><span data-i18n="planFeatHasAds">広告が表示されます</span></li>
         </ul>
         <div class="plan-card-foot">
           <span class="plan-btn plan-btn-current" id="planFreeBtn" data-i18n="planInUse">利用中</span>
@@ -5104,7 +5147,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatOverlay">自分のグラフと作品の重ね合わせ</span></li>
           <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatUnlimitedFav">お気に入り・履歴の無制限保存</span></li>
           <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatExclusiveIcon">限定アイコン・＋バッジ</span></li>
-          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatGacha3">ガチャの回数が1日3回</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatGachaNoAd">ガチャ2回目も広告なし</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatSearchFull">検索の年代絞り込み・タグ複数指定が可能</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatReviewUnlimited">レビュー投稿が無制限</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatChatUnlimited">価値観掲示板チャットが無制限</span></li>
+          <li class="plan-feat"><span class="plan-feat-check">✓</span><span data-i18n="planFeatDmIfBothPlus">相手も＋以上ならDM利用可</span></li>
         </ul>
         <div class="plan-card-foot">
           <button type="button" class="plan-btn plan-btn-primary plan-subscribe-btn" data-plan="plus" data-i18n="planChooseBtn">このプランにする</button>
@@ -5158,11 +5205,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="plan-compare-row plan-compare-head">
             <span data-i18n="planCompareFeature">機能</span><span data-i18n="planFreeShort">無料</span><span class="is-accent">＋</span><span class="is-gold">Creators</span>
           </div>
-          <div class="plan-compare-row"><span data-i18n="planFeatReview12">レビュー・12軸グラフ</span><span class="ok">✓</span><span class="ok">✓</span><span class="ok">✓</span></div>
-          <div class="plan-compare-row"><span data-i18n="planFeatBoards">掲示板・価値観掲示板</span><span class="ok">✓</span><span class="ok">✓</span><span class="ok">✓</span></div>
+          <div class="plan-compare-row"><span data-i18n="planCompareReview">レビュー投稿（1日あたり）</span><span class="num">3</span><span class="ok" data-i18n="planCompareUnlimited">無制限</span><span class="ok" data-i18n="planCompareUnlimited">無制限</span></div>
+          <div class="plan-compare-row"><span data-i18n="planCompareBoardChat">価値観掲示板チャット（1日）</span><span class="num">5</span><span class="ok" data-i18n="planCompareUnlimited">無制限</span><span class="ok" data-i18n="planCompareUnlimited">無制限</span></div>
+          <div class="plan-compare-row"><span data-i18n="planCompareSearchFilter">検索の年代・タグ複数指定</span><span class="no">—</span><span class="ok">✓</span><span class="ok">✓</span></div>
+          <div class="plan-compare-row"><span data-i18n="planCompareDm">DM（相手も条件を満たす場合）</span><span class="no">—</span><span class="ok">✓</span><span class="ok">✓</span></div>
           <div class="plan-compare-row"><span data-i18n="planFeatNoAds">広告なし</span><span class="no">—</span><span class="ok">✓</span><span class="ok">✓</span></div>
           <div class="plan-compare-row"><span data-i18n="planCompareWorldPartial">世界の反応（全期間・国別）</span><span class="partial" data-i18n="planComparePartial">一部</span><span class="ok">✓</span><span class="ok">✓</span></div>
-          <div class="plan-compare-row"><span data-i18n="planCompareGachaCount">ガチャの回数（1日）</span><span class="num">1</span><span class="num is-accent">3</span><span class="num is-gold">3</span></div>
+          <div class="plan-compare-row"><span data-i18n="planCompareGachaCount">ガチャの回数（1日・2回目の広告有無）</span><span class="num" data-i18n="planCompareGachaFreeNote">2回（2回目は広告）</span><span class="ok" data-i18n="planCompareGachaPaidNote">2回（広告なし）</span><span class="ok" data-i18n="planCompareGachaPaidNote">2回（広告なし）</span></div>
           <div class="plan-compare-row"><span data-i18n="planCompareArticlePost">記事の広場に投稿</span><span class="no">—</span><span class="no">—</span><span class="ok">✓</span></div>
           <div class="plan-compare-row"><span data-i18n="planCompareCsvCommercial">CSV書き出し・商用利用</span><span class="no">—</span><span class="no">—</span><span class="ok">✓</span></div>
         </div>
@@ -5174,7 +5223,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <p class="plan-faq-title" data-i18n="planFaqTitle">よくある質問</p>
       <div class="plan-faq-list">
         <details class="plan-faq-item"><summary data-i18n="planFaqQ1">解約するとどうなりますか</summary><p data-i18n="planFaqA1">解約後も期間の終わりまで有料機能を使えます。その後は無料プランに戻り、投稿したレビューや記事はそのまま残ります。</p></details>
-        <details class="plan-faq-item"><summary data-i18n="planFaqQ2">無料でできることは減りますか</summary><p data-i18n="planFaqA2">減りません。レビュー投稿・12軸グラフ・掲示板は今後も無料で使えます。</p></details>
+        <details class="plan-faq-item"><summary data-i18n="planFaqQ2">無料でできることは減りますか</summary><p data-i18n="planFaqA2new">レビュー投稿（1日3件）・掲示板（価値観掲示板は1日5回）・ガチャ（1日2回、2回目は広告）は無料のままお使いいただけます。検索の年代絞り込み・タグ複数指定・DMなど一部機能はアニメップル＋以上が必要です。</p></details>
         <details class="plan-faq-item"><summary data-i18n="planFaqQ3">＋とクリエイターズは併用できますか</summary><p data-i18n="planFaqA3">併用は不要です。クリエイターズにはアニメップル＋のすべての機能が含まれます。</p></details>
         <details class="plan-faq-item"><summary data-i18n="planFaqQ4">支払い方法は何が使えますか</summary><p data-i18n="planFaqA4">クレジットカードに対応予定です。詳細は公開時にお知らせします。</p></details>
       </div>
@@ -7413,6 +7462,50 @@ document.addEventListener('DOMContentLoaded', () => {
         return data || [];
       },
     },
+    // ── 価値観掲示板チャットの無料プラン日次制限（gachaと同じ日付+user_idキーの仕組み）──
+    // 必要テーブル（Supabase側で作成）：
+    //   create table board_chat_daily_state (
+    //     user_id uuid not null references auth.users(id) on delete cascade,
+    //     chat_date date not null,
+    //     message_count integer not null default 0,
+    //     ad_unlock_until timestamptz,
+    //     primary key (user_id, chat_date)
+    //   );
+    //   alter table board_chat_daily_state enable row level security;
+    //   create policy "own row rw" on board_chat_daily_state for all
+    //     using (auth.uid() = user_id) with check (auth.uid() = user_id);
+    boardChat: {
+      todayStr() { return new Date().toISOString().slice(0, 10); },
+      async getToday(userId) {
+        if(!sb || !userId) return { message_count: 0, ad_unlock_until: null };
+        const today = this.todayStr();
+        const { data } = await sb.from('board_chat_daily_state').select('*').eq('user_id', userId).eq('chat_date', today).maybeSingle();
+        return data || { user_id: userId, chat_date: today, message_count: 0, ad_unlock_until: null };
+      },
+      async incrementCount(userId) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const today = this.todayStr();
+        const { data: existing } = await sb.from('board_chat_daily_state').select('*').eq('user_id', userId).eq('chat_date', today).maybeSingle();
+        if(!existing) {
+          const { error } = await sb.from('board_chat_daily_state').insert({ user_id: userId, chat_date: today, message_count: 1 });
+          return { error };
+        }
+        const { error } = await sb.from('board_chat_daily_state').update({ message_count: existing.message_count + 1 }).eq('user_id', userId).eq('chat_date', today);
+        return { error };
+      },
+      async unlockWithAd(userId) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const today = this.todayStr();
+        const until = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        const { data: existing } = await sb.from('board_chat_daily_state').select('*').eq('user_id', userId).eq('chat_date', today).maybeSingle();
+        if(!existing) {
+          const { error } = await sb.from('board_chat_daily_state').insert({ user_id: userId, chat_date: today, ad_unlock_until: until });
+          return { error };
+        }
+        const { error } = await sb.from('board_chat_daily_state').update({ ad_unlock_until: until }).eq('user_id', userId).eq('chat_date', today);
+        return { error };
+      },
+    },
     // 必要テーブル（Supabase側で作成）：
     //   create table coin_transactions (
     //     id bigserial primary key,
@@ -8919,6 +9012,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('page-anime-active', page === 'anime');
     currentPage = page;
     currentAnimeId = animeId || null;
+    updateBoardSidebarAd(); // [追加] 掲示板系ページかどうかで広告枠の表示を切り替える
     // URLの更新（全ページ対応。fromPopStateの時は戻る/進むボタン由来なのでURLを触らない）。
     // 重要：この処理は、下の各ページ用レンダリング関数（renderAnimePage等）を呼ぶより「前」に
     // 行う必要がある。renderAnimePage内のcorrectAnimeUrlSlug()は、アニメ情報がキャッシュに
@@ -9701,7 +9795,14 @@ document.addEventListener('DOMContentLoaded', () => {
     async function addTag() {
       let v=input.value.trim().replace(/^#/,'');
       if (!v) return;
-      if (tags.length>=maxTags) { input.value=''; return; }
+      // [修正] 無料プランは検索タグを1個までに制限する。opts.getMaxTagsが渡されていれば
+      // 固定のmaxTagsではなく、その時点のプランに応じた上限をその都度計算する
+      const effectiveMax = opts.getMaxTags ? opts.getMaxTags() : maxTags;
+      if (tags.length>=effectiveMax) {
+        input.value='';
+        if(opts.onMaxReached) opts.onMaxReached(effectiveMax);
+        return;
+      }
       input.value='';
       const originalInput = v;
       // 検索用タグ入力: 日本語形（レビュータグ照合用）と英語形（Kitsuジャンル照合用）の両方を、
@@ -10096,7 +10197,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ════════════════════════════ */
   // internalKeys: 保存・照合用のキー（常にaxisA/axisB＝日本語の内部キーを渡す）。
   // labelsは表示用の翻訳済みラベル。省略時はlabelsをキーとしても使う（既存呼び出しとの後方互換）。
-  function buildSliders(containerId, labels, store, prefix, internalKeys) {
+  function buildSliders(containerId, labels, store, prefix, internalKeys, companionStore) {
     const keys = internalKeys || labels;
     const el=document.getElementById(containerId); if(!el) return;
     // スライダーのHTMLを生成（グリッドはJS計測後に配置）
@@ -10136,6 +10237,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const out=input.closest('.sl-row').querySelector('output');
       input.addEventListener('input',()=>{
         const v = Number(input.value);
+        const wasUnset = store[key] === -1 || store[key] === undefined;
+        // [追加] 無料プランは、12項目のスライダーのうち同時に動かせるのは2個まで。
+        // 「無」から実際の値に変えようとした瞬間だけチェックし、既に動かしてある軸を
+        // 動かす分(値を変えるだけ)や、無に戻す操作は常に許可する
+        if(isFreePlan() && wasUnset && v !== -1) {
+          const activeInStore = Object.values(store).filter(x => x !== -1 && x !== undefined).length;
+          const activeInCompanion = companionStore ? Object.values(companionStore).filter(x => x !== -1 && x !== undefined).length : 0;
+          if(activeInStore + activeInCompanion >= 2) {
+            input.value = -1;
+            if(out) out.textContent = t('sliderUnset');
+            input.classList.add('slider-unset');
+            setFillPct(input);
+            showPlusUpsellPrompt();
+            return;
+          }
+        }
         store[key]=v;
         if(out) out.textContent = v===-1?t('sliderUnset'):v;
         input.classList.toggle('slider-unset', v===-1);
@@ -10278,14 +10395,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 開くたびに必ず「お好み検索」タブを初期表示にする
     switchSearchMode('pref');
     // 開くたびに現在の値でスライダーを再構築する（前回の値が見た目に残らないように）
-    buildSliders('overlayFilterA',getAxisA(),overlayProfileA,'ov-a',axisA);
-    buildSliders('overlayFilterB',getAxisB(),overlayProfileB,'ov-b',axisB);
+    buildSliders('overlayFilterA',getAxisA(),overlayProfileA,'ov-a',axisA,overlayProfileB);
+    buildSliders('overlayFilterB',getAxisB(),overlayProfileB,'ov-b',axisB,overlayProfileA);
     setupSliderPageSwiper('ovSliderSwiper','ovSliderPagePrev','ovSliderPageNext','ovSliderPageLabel');
     setupEraToggle('overlayEraToggle','overlayEraFrom','overlayEraTo');
-    applyEraFilterLock(); // [追加] 無料プランは年代絞り込みを使えないようにする
+    applyEraFilterLock(); applyTagLimitHint(); // [追加] 無料プランは年代絞り込み・タグ複数指定を使えないようにする
     // タグ入力の初期化もここで行う（currentLang等の初期化が全て終わった後に実行するため）
     if(!renderOverlayTags) {
-      renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true});
+      renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true, getMaxTags: () => isFreePlan() ? 1 : 10, onMaxReached: () => { if(isFreePlan()) showPlusUpsellPrompt(); }});
       setupTagBrowsePanel();
     } else {
       renderOverlayTags();
@@ -11304,7 +11421,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return candidates[Math.floor(Math.random() * candidates.length)] || null;
   }
-  const GACHA_AD_LIMIT = 3;
+  // [修正] 無料プランは「無料1回＋広告視聴で1回」の合計2回まで。＋・クリエイターズは
+  // 無制限(runGacha/updateGachaButtons側でisFreePlan()を見て、この上限自体を適用しない)
+  const GACHA_AD_LIMIT = 1;
   const GACHA_COIN_REWARD = 100; // デイリークエスト達成報酬＝ガチャ1回分のコイン
   const GACHA_COIN_COST = 100; // コインでガチャを1回引く時の消費量
   const GACHA_COIN10_COST = 1000; // コインで10連を引く時の消費量
@@ -11356,7 +11475,7 @@ document.addEventListener('DOMContentLoaded', () => {
     questBadge?.classList.toggle('is-on', completed && !claimed);
   }
 
-  // 残り回数：無料1＋広告3＝4回。ドットで見せる
+  // 残り回数：無料1＋広告1(無料プランのみ広告が必要、有料プランは2回とも無料)＝2回。ドットで見せる
   async function updateGachaRemain() {
     const dots = document.getElementById('gachaRemainDots');
     const num = document.getElementById('gachaRemainNum');
@@ -11459,10 +11578,20 @@ document.addEventListener('DOMContentLoaded', () => {
       freeBtn.disabled = false;
       if(label) label.textContent = t('gachaFreeBtn');
     } else {
-      // 無料分を使い切ったら、同じボタンが広告を見て引くボタンに変わる（別枠には出さない）
+      // 無料分を使い切ったら、同じボタンが2回目のボタンに変わる（別枠には出さない）。
+      // [修正] 「広告」と表示するのは無料プランだけ。＋・クリエイターズは広告なしで
+      // 2回目も無料で引けるので、そのままの文言にする
       freeBtn.dataset.kind = 'ad';
       freeBtn.disabled = remaining <= 0;
-      if(label) label.textContent = remaining <= 0 ? t('gachaAdBtnUsed') : t('gachaAdBtn').replace('{n}', remaining);
+      if(label) {
+        if(remaining <= 0) {
+          label.textContent = t('gachaAdBtnUsed');
+        } else if(isFreePlan()) {
+          label.textContent = t('gachaAdBtn').replace('{n}', remaining);
+        } else {
+          label.textContent = t('gachaFreeBtn');
+        }
+      }
     }
     db.coins.get(_currentUser.id).then(coins => {
       if(coinBtn) coinBtn.disabled = coins < GACHA_COIN_COST;
@@ -11589,11 +11718,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if(error) { alert(t('gachaLimitReachedAlert')); updateGachaButtons(); return; } // 既に他端末等で使用済み
     } else if(kind === 'ad') {
       if(state.adUsedCount >= GACHA_AD_LIMIT) return;
-      // 実際の広告SDKは未接続。押す前に対価が分かるよう確認だけ出す
-      if(!confirm(t('gachaAdConfirm'))) return;
-      const freeBtn = document.getElementById('gachaFreeBtn');
-      if(freeBtn) { const lb = freeBtn.querySelector('span:last-child'); if(lb) lb.textContent = t('gachaAdPlaying'); }
-      await new Promise(r => setTimeout(r, 1200));
+      // [修正] どのプランも1日2回まで無料。無料プランだけ2回目に広告視聴が必要で、
+      // ＋・クリエイターズは2回目も広告なしでそのまま引ける(確認・待機演出をスキップするだけ)
+      if(isFreePlan()) {
+        // 実際の広告SDKは未接続。押す前に対価が分かるよう確認だけ出す
+        if(!confirm(t('gachaAdConfirm'))) return;
+        const freeBtn = document.getElementById('gachaFreeBtn');
+        if(freeBtn) { const lb = freeBtn.querySelector('span:last-child'); if(lb) lb.textContent = t('gachaAdPlaying'); }
+        await new Promise(r => setTimeout(r, 1200));
+      }
       const { error } = await db.gacha.markAdUsed(_currentUser.id, GACHA_AD_LIMIT);
       if(error) { alert(t('gachaLimitReachedAlert')); updateGachaButtons(); return; } // 既に上限到達済み（多重タップ対策）
     } else if(kind === 'coin' || kind === 'coin10') {
@@ -12924,7 +13057,22 @@ document.addEventListener('DOMContentLoaded', () => {
     return score;
   }
 
-  document.getElementById('submitReviewBtn').onclick=()=>{
+  // [追加] 無料プランはレビュー投稿(上質・通常問わず)を1日3回まで
+  async function checkDailyReviewQuota() {
+    if(!isFreePlan() || !_currentUser || !sb) return { allowed: true };
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const { count } = await sb.from('reviews').select('id', { count: 'exact', head: true })
+      .eq('user_id', _currentUser.id).gte('created_at', todayStart.toISOString());
+    if((count || 0) >= 3) {
+      alert(t('reviewDailyLimitAlert'));
+      return { allowed: false };
+    }
+    return { allowed: true };
+  }
+
+  document.getElementById('submitReviewBtn').onclick=async()=>{
+    const quota = await checkDailyReviewQuota();
+    if(!quota.allowed) return;
     const chartAObjPreCheck = Object.fromEntries(axisA.map((k,i)=>[k, vA[i]===-1?0:vA[i]]));
     const chartBObjPreCheck = Object.fromEntries(axisB.map((k,i)=>[k, vB[i]===-1?0:vB[i]]));
     const isFullGraphPreCheck = vA.every(v=>v!==-1) && vB.every(v=>v!==-1);
@@ -12948,7 +13096,7 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             proceedReviewSubmit(axisKey, axisGroup);
           }
-        });
+        }, existing);
       })();
     } else {
       proceedReviewSubmit(null, null);
@@ -13873,7 +14021,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 価値観掲示板：マスターグラフ対象レビュー投稿時に「一番重要な項目」を選ばせるポップアップ
-  function showValuePollModal(onSelect) {
+  function showValuePollModal(onSelect, existing) {
     const dispA = getAxisA(), dispB = getAxisB();
     const items = [
       ...axisA.map((key,i)=>({key, label: dispA[i]})),
@@ -13883,9 +14031,15 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,10,7,.72);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;';
     const box = document.createElement('div');
     box.style.cssText = 'width:100%;max-width:520px;background:#22412f;border:1px solid rgba(255,255,255,.1);border-radius:20px;box-shadow:0 40px 100px -30px rgba(0,0,0,.85);padding:28px 28px 24px;max-height:80vh;overflow-y:auto;';
+    // [追加] 既に価値観を選んでいる場合、モーダルの最初の画面で「今の選択」がひと目で分かるようにする
+    const currentLabel = existing?.axis_key ? (items.find(it => it.key === existing.axis_key)?.label) : null;
+    const currentNoticeHtml = currentLabel
+      ? `<p style="margin:0 0 14px;padding:9px 12px;border-radius:9px;background:rgba(240,201,74,.1);border:1px solid rgba(240,201,74,.3);font-size:12.5px;color:#e8c463;">${escapeHtml(t('valuePollCurrentLabel').replace('{value}', currentLabel))}</p>`
+      : '';
     box.innerHTML = `
       <h3 style="font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:20px;margin:0 0 6px;color:#e8f0ea;">${escapeHtml(t('valuePollTitle'))}</h3>
-      <p style="margin:0 0 20px;font-size:13px;color:#82968a;">${escapeHtml(t('valuePollHint'))}</p>
+      <p style="margin:0 0 12px;font-size:13px;color:#82968a;">${escapeHtml(t('valuePollHint'))}</p>
+      ${currentNoticeHtml}
       <div id="valuePollGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;"></div>
       <button type="button" id="valuePollSkipBtn" style="width:100%;height:44px;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#82968a;font-weight:700;font-size:13.5px;cursor:pointer;">${escapeHtml(t('valuePollSkip'))}</button>
     `;
@@ -13896,9 +14050,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.textContent = item.label;
-      btn.style.cssText = 'height:46px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#dfeae3;font-weight:700;font-size:13.5px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;';
-      btn.onmouseenter = () => { btn.style.background='rgba(92,201,142,.14)'; btn.style.borderColor='rgba(92,201,142,.4)'; btn.style.color='#9be3bd'; };
-      btn.onmouseleave = () => { btn.style.background='rgba(255,255,255,.03)'; btn.style.borderColor='rgba(255,255,255,.12)'; btn.style.color='#dfeae3'; };
+      const isCurrent = existing?.axis_key === item.key;
+      btn.style.cssText = isCurrent
+        ? 'height:46px;border-radius:11px;border:1.5px solid rgba(240,201,74,.55);background:rgba(240,201,74,.14);color:#e8c463;font-weight:800;font-size:13.5px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;'
+        : 'height:46px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#dfeae3;font-weight:700;font-size:13.5px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;';
+      btn.onmouseenter = () => { if(!isCurrent) { btn.style.background='rgba(92,201,142,.14)'; btn.style.borderColor='rgba(92,201,142,.4)'; btn.style.color='#9be3bd'; } };
+      btn.onmouseleave = () => { if(!isCurrent) { btn.style.background='rgba(255,255,255,.03)'; btn.style.borderColor='rgba(255,255,255,.12)'; btn.style.color='#dfeae3'; } };
       btn.onclick = () => { document.body.removeChild(overlay); onSelect(item.key, axisKeyToGroup(item.key)); };
       grid.appendChild(btn);
     });
@@ -15069,6 +15226,41 @@ document.addEventListener('DOMContentLoaded', () => {
       <span style="flex:1 1 auto;height:1px;background:${accent?'rgba(229,72,77,.45)':'rgba(255,255,255,.06)'};"></span>
     </div>`;
   }
+  // [追加] 価値観掲示板の入力欄付近に「残り〇/5回」を表示する(無料プランのみ・通常掲示板は対象外)
+  async function updateBoardChatQuotaHint(boardType, hintEl) {
+    if(!hintEl) return;
+    if(boardTypeBase(boardType) === 'general' || !isFreePlan() || !_currentUser) {
+      hintEl.style.display = 'none';
+      return;
+    }
+    const state = await db.boardChat.getToday(_currentUser.id);
+    const adActive = !!state.ad_unlock_until && new Date(state.ad_unlock_until).getTime() > Date.now();
+    hintEl.style.display = '';
+    hintEl.classList.remove('is-zero', 'is-ad-active');
+    if(adActive) {
+      const minutesLeft = Math.max(1, Math.ceil((new Date(state.ad_unlock_until).getTime() - Date.now()) / 60000));
+      hintEl.textContent = t('boardChatAdActiveHint').replace('{min}', minutesLeft);
+      hintEl.classList.add('is-ad-active');
+    } else {
+      const left = Math.max(0, 5 - (state.message_count || 0));
+      hintEl.textContent = t('boardChatQuotaHint').replace('{left}', left);
+      if(left === 0) hintEl.classList.add('is-zero');
+    }
+  }
+  // [追加] 価値観掲示板(通常掲示板は対象外)のチャットは、無料プランは1日5回まで。
+  // 上限に達したら、1つのポップアップの文言だけで「広告を見て15分延長」と
+  // 「＋なら制限なし」の両方を案内する(キャンセルしても別のポップは出さない)
+  async function checkAndConsumeBoardChatQuota(boardType) {
+    if(boardTypeBase(boardType) === 'general' || !isFreePlan()) return { allowed: true };
+    const state = await db.boardChat.getToday(_currentUser.id);
+    const adActive = !!state.ad_unlock_until && new Date(state.ad_unlock_until).getTime() > Date.now();
+    if(adActive || (state.message_count || 0) < 5) return { allowed: true };
+    if(!confirm(t('boardChatLimitAdConfirm'))) return { allowed: false };
+    await new Promise(r => setTimeout(r, 1200)); // 実際の広告SDK未接続。対価が分かるよう待機演出だけ入れる
+    const { error } = await db.boardChat.unlockWithAd(_currentUser.id);
+    if(error) { alert(t('gachaLimitReachedAlert')); return { allowed: false }; }
+    return { allowed: true };
+  }
   async function renderBoardPostsInto(panel, animeId, boardType, rerenderFn) {
     let posts = await db.board.list(animeId, boardType, currentLang);
     // 表示期限：古い投稿は一覧から除外（DBには残るが表示だけしない）
@@ -15361,6 +15553,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
           </div>
           <p class="board-enter-hint">${escapeHtml(t('boardEnterHint'))}</p>
+          <p class="board-chat-quota-hint" id="boardChatQuotaHint" style="display:none;"></p>
         </div>`;
       // ── キーボード対応（スマホ）──
       // 日本語入力ではキーボード＋予測変換で下から約258px消える。visualViewport の
@@ -15415,6 +15608,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if(composeInput) composeInput.addEventListener('input', growCompose);
       const composeCount = composer.querySelector('#boardComposeCount');
       const composeBtn = composer.querySelector('#boardComposeBtn');
+      const quotaHintEl = composer.querySelector('#boardChatQuotaHint');
+      updateBoardChatQuotaHint(boardType, quotaHintEl); // [追加] 残り回数表示の初期表示
       // 返信チップ：入力欄のすぐ上に「〇〇に返信」＋引用本文を表示。✕で解除できる
       window.setBoardReplyTarget = (target) => {
         _boardReplyTarget = target;
@@ -15449,10 +15644,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = composer.querySelector('#boardComposeInput');
         const body = input.value.trim().slice(0, BOARD_MAX_LEN);
         if(!body) return;
+        // [追加] 価値観掲示板は無料プラン1日5回まで
+        const quota = await checkAndConsumeBoardChatQuota(boardType);
+        if(!quota.allowed) return;
         const username = (_currentUser && window._loggedInUsername) || t('guest');
         const parentId = _boardReplyTarget ? _boardReplyTarget.id : undefined;
         const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, parentId, currentLang);
         if(error) { alert(t('profileSaveFailedAlert')); return; }
+        await db.boardChat.incrementCount(_currentUser.id).catch(()=>{}); // カウントは失敗しても投稿自体は成立させる
+        updateBoardChatQuotaHint(boardType, quotaHintEl); // [追加] 送信後に残り回数表示を更新
         _boardReplyTarget = null;
         // 投稿後は必ず最新に貼り付ける（3段構成では会話コンテナ側）。
         // rerenderFnは非同期（DB再取得を挟む）ため、完了を待たずにスクロールすると
@@ -16794,13 +16994,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setupSrTagInput() {
-    const renderSrTags = setupTagInput('srTagInput','srTagAddBtn','srTagList',srTagsActive,10,{translateToJa:true});
+    const renderSrTags = setupTagInput('srTagInput','srTagAddBtn','srTagList',srTagsActive,10,{translateToJa:true, getMaxTags: () => isFreePlan() ? 1 : 10, onMaxReached: () => { if(isFreePlan()) showPlusUpsellPrompt(); }});
     setupTagBrowsePanel('srTagBrowseToggle','srTagBrowsePanel','srTagBrowseToggleLabel',srTagsActive,renderSrTags);
     setupEraToggle('srEraToggle','srEraFrom','srEraTo');
   }
 
   async function renderSearch() {
-    applyEraFilterLock(); // [追加] 無料プランは年代絞り込みを使えないようにする
+    applyEraFilterLock(); applyTagLimitHint(); // [追加] 無料プランは年代絞り込み・タグ複数指定を使えないようにする
     requestAnimationFrame(updateStickyOffsets); // ページ表示後に実際の高さを測ってsticky位置を合わせる
     document.getElementById('srQuery').value=srSearchState.q;
 
@@ -16828,8 +17028,8 @@ document.addEventListener('DOMContentLoaded', () => {
       _ss.value = srSearchState.sort;
     }
 
-    buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a',axisA);
-    buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b',axisB);
+    buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a',axisA,srProfileB);
+    buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b',axisB,srProfileA);
     setupSliderPageSwiper('srSliderSwiper','srSliderPagePrev','srSliderPageNext','srSliderPageLabel');
     setupSrTagInput();
 
@@ -17073,8 +17273,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const sortEl = document.getElementById('srSortSelect');
     const qEl = document.getElementById('srQuery');
     if (sortEl) sortEl.value = (qEl && qEl.value.trim()) ? 'relevance' : 'match';
-    buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a',axisA);
-    buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b',axisB);
+    buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a',axisA,srProfileB);
+    buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b',axisB,srProfileA);
   }
   document.getElementById('srResetBtn').onclick=resetSearchFilters;
 
@@ -18194,6 +18394,27 @@ document.addEventListener('DOMContentLoaded', () => {
     boardLoginRequired:{ ja:'投稿にはログインが必要です。', en:'Log in to post.' },
     valuePollTitle:{ ja:'この作品で一番重要な項目は？', en:'What matters most in this title?', ko:'이 작품에서 가장 중요한 항목은?', 'zh-tw':'這部作品中最重要的項目是？', 'zh-cn':'这部作品中最重要的项目是？', es:'¿Qué es lo más importante en este título?', fr:'Quel est le plus important dans ce titre ?', pt:'O que é mais importante neste título?', de:'Was ist bei diesem Titel am wichtigsten?', ar:'ما الأهم في هذا العمل؟', th:'อะไรสำคัญที่สุดในผลงานนี้?', id:'Apa yang paling penting di judul ini?', ru:'Что важнее всего в этом тайтле?', it:'Cosa conta di più in questo titolo?', vi:'Điều gì quan trọng nhất ở tựa phim này?' },
     valuePollHint:{ ja:'選ぶと、同じ価値観の人だけの掲示板に参加できます', en:'Pick one to unlock the board for people who share your take', ko:'선택하면 같은 가치관을 가진 사람들만의 게시판에 참여할 수 있어요', 'zh-tw':'選擇後可以加入與你價值觀相同的人專屬的板', 'zh-cn':'选择后可以加入与你价值观相同的人专属的板块', es:'Elige uno para desbloquear el foro de quienes piensan como tú', fr:'Choisissez-en un pour débloquer le forum de ceux qui partagent votre avis', pt:'Escolha um para desbloquear o fórum de quem pensa como você', de:'Wähle eine Option, um das Board für Gleichgesinnte freizuschalten', ar:'اختر واحدًا لفتح لوحة لمن يشاركونك الرأي', th:'เลือกหนึ่งข้อเพื่อปลดล็อกบอร์ดสำหรับคนที่คิดเหมือนกัน', id:'Pilih satu untuk membuka papan bagi orang dengan pandangan serupa', ru:'Выберите один пункт, чтобы открыть доску для единомышленников', it:'Scegline uno per sbloccare la bacheca di chi la pensa come te', vi:'Chọn một để mở khóa bảng cho người cùng quan điểm' },
+    valuePollCurrentLabel: { ja:'現在あなたが選んでいる価値観：{value}', en:'Your current selection: {value}' },
+    reviewDailyLimitAlert: { ja:'無料プランは1日3件までレビューを投稿できます。明日また投稿できます（アニメップル＋なら無制限です）。', en:'Free plan allows up to 3 reviews per day. You can post again tomorrow (Anime Apple+ removes this limit).' },
+    planFeatReviewLimited: { ja:'レビュー投稿・12軸グラフ（1日3件まで）', en:'Post reviews & 12-axis graphs (up to 3/day)' },
+    planFeatBoardsLimited: { ja:'掲示板（価値観掲示板は1日5回まで）', en:'Boards (value boards limited to 5 messages/day)' },
+    planFeatFavGachaLimited: { ja:'お気に入り・ガチャガチャ（1日2回、2回目は広告視聴）', en:'Favorites & Gacha (2/day, 2nd requires an ad)' },
+    planFeatSearchLimited: { ja:'検索の年代絞り込み・タグ複数指定は利用不可', en:'Year filter & multiple tags not available in search' },
+    planFeatNoDm: { ja:'DMは相手も＋以上でないと利用不可', en:'DMs require the other person to also be on + or higher' },
+    planFeatHasAds: { ja:'広告が表示されます', en:'Ads are shown' },
+    planFeatGachaNoAd: { ja:'ガチャ2回目も広告なし', en:'2nd Gacha pull also ad-free' },
+    planFeatSearchFull: { ja:'検索の年代絞り込み・タグ複数指定が可能', en:'Year filter & multiple tags available in search' },
+    planFeatReviewUnlimited: { ja:'レビュー投稿が無制限', en:'Unlimited reviews' },
+    planFeatChatUnlimited: { ja:'価値観掲示板チャットが無制限', en:'Unlimited value board chat' },
+    planFeatDmIfBothPlus: { ja:'相手も＋以上ならDM利用可', en:'DMs available if the other person is also on + or higher' },
+    planCompareReview: { ja:'レビュー投稿（1日あたり）', en:'Reviews per day' },
+    planCompareBoardChat: { ja:'価値観掲示板チャット（1日）', en:'Value board chat per day' },
+    planCompareSearchFilter: { ja:'検索の年代・タグ複数指定', en:'Year filter & multiple tags in search' },
+    planCompareDm: { ja:'DM（相手も条件を満たす場合）', en:'DMs (when the other person also qualifies)' },
+    planCompareUnlimited: { ja:'無制限', en:'Unlimited' },
+    planCompareGachaFreeNote: { ja:'2回（2回目は広告）', en:'2 (2nd needs an ad)' },
+    planCompareGachaPaidNote: { ja:'2回（広告なし）', en:'2 (no ad needed)' },
+    planFaqA2new: { ja:'レビュー投稿（1日3件）・掲示板（価値観掲示板は1日5回）・ガチャ（1日2回、2回目は広告）は無料のままお使いいただけます。検索の年代絞り込み・タグ複数指定・DMなど一部機能はアニメップル＋以上が必要です。', en:'Reviews (3/day), boards (value board chat limited to 5/day), and Gacha (2/day, 2nd needs an ad) remain free. Some features like the year filter, multiple tags, and DMs require Anime Apple+ or higher.' },
     valuePollSkip:{ ja:'選ばず投稿する', en:'Post without choosing', ko:'선택하지 않고 게시하기', 'zh-tw':'不選擇直接發佈', 'zh-cn':'不选择直接发布', es:'Publicar sin elegir', fr:'Publier sans choisir', pt:'Publicar sem escolher', de:'Ohne Auswahl posten', ar:'النشر دون اختيار', th:'โพสต์โดยไม่เลือก', id:'Kirim tanpa memilih', ru:'Опубликовать без выбора', it:'Pubblica senza scegliere', vi:'Đăng mà không chọn' },
     valueChangeConfirmTitle:{ ja:'価値観を変更しますか？', en:'Change your value type?' },
     valueChangeConfirmBefore:{ ja:'前回は', en:'You previously voted for' },
@@ -18407,6 +18628,12 @@ document.addEventListener('DOMContentLoaded', () => {
     eraFilterLabel: { ja:'年代で絞る',en:'Filter by year',ko:'연도로 좁히기','zh-tw':'依年代篩選','zh-cn':'按年代筛选',es:'Filtrar por año',fr:'Filtrer par année',pt:'Filtrar por ano',de:'Nach Jahr filtern',ar:'تصفية حسب السنة',th:'กรองตามปี',id:'Filter berdasarkan tahun',ru:'Фильтр по году',it:'Filtra per anno',vi:'Lọc theo năm' },
     plusOnlyBadge: { ja:'＋限定', en:'+ only' },
     plusUpsellConfirm: { ja:'この機能はアニメップル＋限定です。プランページを見てみますか？', en:'This feature is available on Anime Apple+. Check out the plans page?' },
+    tagLimitFreeHint: { ja:'無料プランは1個まで', en:'1 tag max on Free plan' },
+    gachaUnlimitedLabel: { ja:'無制限', en:'Unlimited' },
+    dmBothPaidRequiredAlert: { ja:'DMは、あなたと相手の両方がアニメップル＋以上のプランに加入している場合だけ使えます。', en:'DMs are only available when both you and the other person are on Anime Apple+ or higher.' },
+    boardChatLimitAdConfirm: { ja:'本日の価値観掲示板チャットの上限(5回)に達しました。広告を見て15分間フリーで使えます（アニメップル＋なら回数制限なしで使えます）。広告を見ますか？', en:'You have reached today\'s limit (5 messages) for this board. Watch an ad for 15 minutes of unlimited chat (Anime Apple+ removes this limit entirely). Watch the ad?' },
+    boardChatQuotaHint: { ja:'本日の残り{left}/5回（無料プラン）', en:'{left}/5 messages left today (Free plan)' },
+    boardChatAdActiveHint: { ja:'広告視聴中の特典：あと{min}分間フリーで送信できます', en:'Ad bonus: unlimited messages for {min} more minute(s)' },
     sortRelevance:{ ja:'関連度順',en:'Relevance',ko:'관련도순','zh-tw':'相關度','zh-cn':'相关度',es:'Relevancia',fr:'Pertinence',pt:'Relevância',de:'Relevanz',ar:'الصلة',th:'ตามความเกี่ยวข้อง',id:'Relevansi',ru:'По релевантности',it:'Rilevanza',vi:'Liên quan nhất' },
     sortReviewsDesc:{ ja:'レビューが多い順',en:'Most reviewed',ko:'리뷰 많은 순','zh-tw':'評論最多','zh-cn':'评论最多',es:'Más reseñados',fr:'Plus d\'avis',pt:'Mais avaliados',de:'Meistbewertet',ar:'الأكثر مراجعة',th:'รีวิวมากสุด',id:'Paling banyak diulas',ru:'Больше всего отзывов',it:'Più recensiti',vi:'Nhiều đánh giá nhất' },
     sortReviewsAsc:{ ja:'レビューが少ない順',en:'Least reviewed',ko:'리뷰 적은 순','zh-tw':'評論最少','zh-cn':'评论最少',es:'Menos reseñados',fr:'Moins d\'avis',pt:'Menos avaliados',de:'Wenigstbewertet',ar:'الأقل مراجعة',th:'รีวิวน้อยสุด',id:'Paling sedikit diulas',ru:'Меньше всего отзывов',it:'Meno recensiti',vi:'Ít đánh giá nhất' },
@@ -21757,7 +21984,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // キャッシュしておく(プラン変更時はrenderPlanPage側で個別にDBを見るのでここは影響しない)
   let _currentPlan = 'free';
   async function loadMyPlan() {
-    if(!_currentUser) { _currentPlan = 'free'; return; }
+    if(!_currentUser) { _currentPlan = 'free'; updateBoardSidebarAd(); return; }
     try {
       const profile = await db.profiles.get(_currentUser.id);
       _currentPlan = (profile && (profile.plan === 'plus' || profile.plan === 'creators')) ? profile.plan : 'free';
@@ -21765,14 +21992,54 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('プラン取得に失敗、無料プラン扱いにします:', e);
       _currentPlan = 'free';
     }
+    updateBoardSidebarAd(); // [追加] プラン確定後に広告表示を再評価
   }
+  // [追加] タグ絞り込みの見出しに、無料プランでは「1個まで」の案内を出す
+  function applyTagLimitHint() {
+    document.querySelectorAll('.tag-section-title').forEach(titleEl => {
+      let hint = titleEl.parentElement.querySelector('.tag-limit-hint');
+      if(isFreePlan()) {
+        if(!hint) {
+          hint = document.createElement('span');
+          hint.className = 'tag-limit-hint';
+          titleEl.insertAdjacentElement('afterend', hint);
+        }
+        hint.textContent = t('tagLimitFreeHint');
+      } else if(hint) {
+        hint.remove();
+      }
+    });
+  }
+
   function isFreePlan() { return _currentPlan === 'free'; }
+
+  // [追加] 掲示板系ページ(価値観掲示板・通常掲示板・DM)を無料プランで開いている時だけ、
+  // 右余白のスカイスクレイパー広告を表示する。画面が狭い時はCSS側(@media)で強制非表示にする
+  const BOARD_AD_PAGES = ['board-value', 'board-general', 'dm'];
+  // [修正] 掲示板のサイドバー広告だけでなく、ホーム・作品ページ・検索結果にある
+  // 既存の広告枠(.ad-wrap)も含めて、有料プラン(＋・クリエイターズ)では一括して
+  // 非表示にする。bodyにクラスを付け、CSS側の1ルールで全広告を確実に消す方式にすることで、
+  // 個別の広告ごとに直し忘れるのを防ぐ
+  function updateBoardSidebarAd() {
+    document.body.classList.toggle('plan-hides-ads', !isFreePlan());
+    const ad = document.getElementById('boardSidebarAd');
+    if(!ad) return;
+    const shouldShow = BOARD_AD_PAGES.includes(currentPage) && isFreePlan();
+    ad.style.display = shouldShow ? '' : 'none';
+  }
 
   // [追加] 無料プランの機能制限：共通のロック処理。
   // controlEls: 触れなくする対象(input/selectなど)の配列
   // labelEl: 鍵バッジを付ける場所(見出しやラベルの要素)
   function applyPremiumLock(controlEls, labelEl) {
-    controlEls.forEach(el => { if(el) el.classList.add('premium-locked-control'); });
+    // [修正] pointer-events:noneだけだと、<label>で囲まれたチェックボックスは
+    // ラベルクリック経由でチェックが入ってしまう(labelのクリックはinputのpointer-events設定を
+    // 経由せず直接反映される)。本物のdisabled属性も付けて、どこを押しても操作できないようにする
+    controlEls.forEach(el => {
+      if(!el) return;
+      el.classList.add('premium-locked-control');
+      el.disabled = true;
+    });
     if(labelEl && !labelEl.querySelector('.premium-lock-badge')) {
       const badge = document.createElement('span');
       badge.className = 'premium-lock-badge';
@@ -21782,7 +22049,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   function removePremiumLock(controlEls, labelEl) {
-    controlEls.forEach(el => { if(el) el.classList.remove('premium-locked-control'); });
+    controlEls.forEach(el => {
+      if(!el) return;
+      el.classList.remove('premium-locked-control');
+      el.disabled = false;
+    });
     const badge = labelEl?.querySelector('.premium-lock-badge');
     if(badge) badge.remove();
   }
@@ -22072,7 +22343,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 認証状態変化を監視
     db.auth.onAuthChange((session) => {
       _currentUser = session?.user || null;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); loadMyPlan(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); _currentPlan = 'free'; }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); loadMyPlan(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); _currentPlan = 'free'; updateBoardSidebarAd(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -23074,11 +23345,21 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             friendBtn.textContent = t('friendBtnNone');
           }
-          // DM：友達同士だけ「メッセージ」ボタンを出す
+          // DM：友達同士だけ「メッセージ」ボタンを出す。
+          // [追加] さらに、自分・相手の両方が有料プラン(＋かクリエイターズ)の時だけ実際に使える。
+          // どちらかが無料プランなら、ボタン自体は見えるが灰色になり押しても送れない
           const dmBtn = document.getElementById('mypageDmBtn');
           if(dmBtn) {
-            dmBtn.style.display = friendStatus === 'friends' ? '' : 'none';
-            dmBtn.onclick = () => openDmThread(targetUserId);
+            const isFriends = friendStatus === 'friends';
+            dmBtn.style.display = isFriends ? '' : 'none';
+            if(isFriends) {
+              const otherIsPaid = profileData?.plan === 'plus' || profileData?.plan === 'creators';
+              const bothPaid = !isFreePlan() && otherIsPaid;
+              dmBtn.classList.toggle('dm-btn-locked', !bothPaid);
+              dmBtn.onclick = bothPaid
+                ? () => openDmThread(targetUserId)
+                : () => { if(!isFreePlan()) { alert(t('dmBothPaidRequiredAlert')); } else { showPlusUpsellPrompt(); } };
+            }
           }
         }
         if(moreBtn) {
