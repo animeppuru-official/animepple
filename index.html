@@ -3253,7 +3253,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.66'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.67'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -15800,7 +15800,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const parentId = _boardReplyTarget ? _boardReplyTarget.id : undefined;
         const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, parentId, currentLang);
         if(error) { alert(t('profileSaveFailedAlert')); return; }
-        await db.boardChat.incrementCount(_currentUser.id).catch(()=>{}); // カウントは失敗しても投稿自体は成立させる
+        const { error: chatCountError } = await db.boardChat.incrementCount(_currentUser.id);
+        if(chatCountError) console.warn('board_chat_daily_state 更新失敗:', chatCountError.message); // カウントは失敗しても投稿自体は成立させる
         updateBoardChatQuotaHint(boardType, quotaHintEl); // [追加] 送信後に残り回数表示を更新
         _boardReplyTarget = null;
         // 投稿後は必ず最新に貼り付ける（3段構成では会話コンテナ側）。
