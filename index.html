@@ -390,6 +390,27 @@
     body.plan-hides-ads .board-sidebar-ad {
       display:none !important;
     }
+    /* [追加] 無料プラン向け：スライダー使用数(N/2)カウンターと上限案内 */
+    .slider-limit-counter {
+      margin:2px 0 8px; font-size:11.5px; font-weight:700; color:#8db5a0; text-align:center;
+    }
+    .slider-limit-counter.is-full { color:#e8c463; font-weight:800; }
+    .slider-limit-upsell {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin:0 0 10px; padding:9px 12px; border-radius:9px;
+      background:rgba(240,201,74,.1); border:1px solid rgba(240,201,74,.3);
+      font-size:11.5px; color:#e8c463; font-weight:700;
+    }
+    .slider-limit-upsell-btn {
+      flex:0 0 auto; padding:6px 12px; border-radius:8px; border:1px solid rgba(240,201,74,.5);
+      background:rgba(240,201,74,.18); color:#e8c463; font-size:11px; font-weight:800; cursor:pointer;
+      white-space:nowrap;
+    }
+    .slider-limit-upsell-btn:hover { background:rgba(240,201,74,.28); }
+    /* 上限に達した時、動かしていない(無のままの)スライダーを灰色にする */
+    .sl-row.is-slider-limited { opacity:.4; filter:grayscale(.4); pointer-events:none; }
+    /* 「無」の軸は優先度(星)ボタンを押せない（全プラン共通） */
+    .sl-priority-btn:disabled { opacity:.3; cursor:not-allowed; pointer-events:none; }
     .sort-row-era-toggle input[type="checkbox"] { accent-color:var(--brand); width:15px; height:15px; cursor:pointer; }
     .sort-row-era-inputs { display:flex; align-items:center; gap:.3rem; }
     .sort-row-era-inputs input[type="number"] {
@@ -3208,7 +3229,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.61'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.62'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -3292,6 +3313,12 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="priority-note ov-priority-note-pc" id="ovPriorityNote">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="#d9a441" stroke="none"><polygon points="12 3 14.6 8.6 20.8 9.3 16.2 13.5 17.5 19.6 12 16.5 6.5 19.6 7.8 13.5 3.2 9.3 9.4 8.6"/></svg>
       <span data-i18n="priorityAxisExplain"><b style="color:#d9a441;">星</b>を付けた軸は、他の軸より優先して「その数値に近い作品」を検索します。星が1つも無い場合は、全軸の平均的な近さで検索します。</span>
+    </div>
+    <!-- [追加] 無料プラン向け：12項目中いくつ動かしているか(N/2)の表示 -->
+    <p class="slider-limit-counter" id="ovSliderLimitCounter" style="display:none;"></p>
+    <div class="slider-limit-upsell" id="ovSliderLimitUpsell" style="display:none;">
+      <span data-i18n="sliderLimitUpsellText">無料プランは2項目まで同時に使えます。</span>
+      <button type="button" class="slider-limit-upsell-btn" onclick="showPlusUpsellPrompt()" data-i18n="sliderLimitUpsellBtn">＋を見る</button>
     </div>
     <!-- スマホ版：インフォボタンを押すとモーダル中央にポップオーバー表示 -->
     <div class="review-slider-swiper-wrap">
@@ -4397,6 +4424,12 @@ document.addEventListener('DOMContentLoaded', () => {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d9a441" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="1" fill="#d9a441" stroke="none"/></svg>
       </button>
       <button type="button" id="srSliderPageNext" aria-label="次へ">›</button>
+    </div>
+    <!-- [追加] 無料プラン向け：12項目中いくつ動かしているか(N/2)の表示 -->
+    <p class="slider-limit-counter" id="srSliderLimitCounter" style="display:none;"></p>
+    <div class="slider-limit-upsell" id="srSliderLimitUpsell" style="display:none;">
+      <span data-i18n="sliderLimitUpsellText">無料プランは2項目まで同時に使えます。</span>
+      <button type="button" class="slider-limit-upsell-btn" onclick="showPlusUpsellPrompt()" data-i18n="sliderLimitUpsellBtn">＋を見る</button>
     </div>
     <div class="review-slider-swiper-wrap">
       <div class="review-slider-swiper" id="srSliderSwiper">
@@ -10205,15 +10238,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const key = keys[i];
       const v = store[key]!==undefined ? store[key] : -1;
       const isPriority = priorityAxes.has(key);
+      const isUnset = v === -1;
       return `
-      <div class="sl-row has-priority${isPriority?' is-priority':''}">
+      <div class="sl-row has-priority${isPriority?' is-priority':''}" data-key="${key}">
         <span class="sl-label">${label}<span class="sl-priority-badge" style="display:${isPriority?'inline-flex':'none'};">優先</span></span>
         <div class="sl-track-wrap">
           <canvas class="sl-grid-canvas" height="18"></canvas>
           <input type="range" min="-1" max="10" step="1" value="${v}" data-key="${key}" id="${prefix}-${key}" class="${v===-1?'slider-unset':''}" />
         </div>
         <output>${v===-1?t('sliderUnset'):v}</output>
-        <button type="button" class="sl-priority-btn${isPriority?' active':''}" data-key="${key}" title="${t('priorityAxisHint')||'この軸を優先して検索'}">
+        <button type="button" class="sl-priority-btn${isPriority?' active':''}" data-key="${key}" title="${t('priorityAxisHint')||'この軸を優先して検索'}"${isUnset?' disabled':''}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="${isPriority?'#d9a441':'none'}" stroke="${isPriority?'#d9a441':'#5c6d63'}" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 3 14.6 8.6 20.8 9.3 16.2 13.5 17.5 19.6 12 16.5 6.5 19.6 7.8 13.5 3.2 9.3 9.4 8.6"/></svg>
         </button>
       </div>
@@ -10238,9 +10272,11 @@ document.addEventListener('DOMContentLoaded', () => {
       input.addEventListener('input',()=>{
         const v = Number(input.value);
         const wasUnset = store[key] === -1 || store[key] === undefined;
-        // [追加] 無料プランは、12項目のスライダーのうち同時に動かせるのは2個まで。
+        // 無料プランは、12項目のスライダーのうち同時に動かせるのは2個まで。
         // 「無」から実際の値に変えようとした瞬間だけチェックし、既に動かしてある軸を
-        // 動かす分(値を変えるだけ)や、無に戻す操作は常に許可する
+        // 動かす分(値を変えるだけ)や、無に戻す操作は常に許可する。
+        // [修正] ポップアップで止めるのではなく、上限に達した時点で他のスライダーを
+        // グレーアウト＆操作不可にしておく(updateSliderLimitUI)ので、ここは万一のフォールバックのみ
         if(isFreePlan() && wasUnset && v !== -1) {
           const activeInStore = Object.values(store).filter(x => x !== -1 && x !== undefined).length;
           const activeInCompanion = companionStore ? Object.values(companionStore).filter(x => x !== -1 && x !== undefined).length : 0;
@@ -10249,7 +10285,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if(out) out.textContent = t('sliderUnset');
             input.classList.add('slider-unset');
             setFillPct(input);
-            showPlusUpsellPrompt();
             return;
           }
         }
@@ -10257,11 +10292,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if(out) out.textContent = v===-1?t('sliderUnset'):v;
         input.classList.toggle('slider-unset', v===-1);
         setFillPct(input);
+        // [追加] 「無」から値が入った/値から「無」に戻った瞬間、優先度(星)ボタンの有効/無効を切り替える(全プラン共通)
+        const row = input.closest('.sl-row');
+        const priorityBtn = row?.querySelector('.sl-priority-btn');
+        if(priorityBtn) priorityBtn.disabled = (v === -1);
+        if(v === -1 && priorityAxes.has(key)) {
+          // 「無」に戻したら優先指定も一緒に解除する(無い軸を優先扱いにはできないため)
+          priorityAxes.delete(key);
+          row.classList.remove('is-priority');
+          const badge = row.querySelector('.sl-priority-badge');
+          if(badge) badge.style.display = 'none';
+          priorityBtn.classList.remove('active');
+          const svg = priorityBtn.querySelector('svg');
+          if(svg) { svg.setAttribute('fill','none'); svg.setAttribute('stroke','#5c6d63'); }
+        }
+        updateSliderLimitUI(prefix.startsWith('ov') ? 'ov' : 'sr');
       });
     });
 
     el.querySelectorAll('.sl-priority-btn').forEach(btn=>{
       btn.addEventListener('click',()=>{
+        if(btn.disabled) return;
         const key=btn.dataset.key;
         const row = btn.closest('.sl-row');
         const badge = row?.querySelector('.sl-priority-badge');
@@ -10275,6 +10326,43 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  // [追加] 無料プラン向け：12項目中いくつのスライダーを動かしているか(N/2)を表示し、
+  // 上限に達したら残りのスライダーをグレーアウト＆操作不可にする。＋・クリエイターズは制限なし
+  const SLIDER_LIMIT_CONTEXTS = {
+    ov: { storeA: () => overlayProfileA, storeB: () => overlayProfileB, containerIds: ['overlayFilterA', 'overlayFilterB'], counterId: 'ovSliderLimitCounter', upsellId: 'ovSliderLimitUpsell' },
+    sr: { storeA: () => srProfileA, storeB: () => srProfileB, containerIds: ['srFilterA', 'srFilterB'], counterId: 'srSliderLimitCounter', upsellId: 'srSliderLimitUpsell' },
+  };
+  function updateSliderLimitUI(context) {
+    const cfg = SLIDER_LIMIT_CONTEXTS[context];
+    if(!cfg) return;
+    const counterEl = document.getElementById(cfg.counterId);
+    const upsellEl = document.getElementById(cfg.upsellId);
+    const rows = cfg.containerIds.flatMap(id => Array.from(document.querySelectorAll(`#${id} .sl-row`)));
+    if(!isFreePlan()) {
+      // ＋・クリエイターズは制限なし：カウンター非表示、グレーアウトも一切かけない
+      if(counterEl) counterEl.style.display = 'none';
+      if(upsellEl) upsellEl.style.display = 'none';
+      rows.forEach(row => row.classList.remove('is-slider-limited'));
+      return;
+    }
+    const storeA = cfg.storeA(), storeB = cfg.storeB();
+    const activeCount = Object.values(storeA).filter(x => x !== -1 && x !== undefined).length
+      + Object.values(storeB).filter(x => x !== -1 && x !== undefined).length;
+    const isFull = activeCount >= 2;
+    if(counterEl) {
+      counterEl.style.display = '';
+      counterEl.textContent = t('sliderLimitCounter').replace('{n}', activeCount);
+      counterEl.classList.toggle('is-full', isFull);
+    }
+    if(upsellEl) upsellEl.style.display = isFull ? '' : 'none';
+    rows.forEach(row => {
+      const key = row.dataset.key;
+      const isUnset = (storeA[key] === -1 || storeA[key] === undefined) && (storeB[key] === -1 || storeB[key] === undefined);
+      row.classList.toggle('is-slider-limited', isFull && isUnset);
+    });
+  }
+
 
   /* ════════════════════════════
      SEARCH OVERLAY
@@ -10397,6 +10485,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 開くたびに現在の値でスライダーを再構築する（前回の値が見た目に残らないように）
     buildSliders('overlayFilterA',getAxisA(),overlayProfileA,'ov-a',axisA,overlayProfileB);
     buildSliders('overlayFilterB',getAxisB(),overlayProfileB,'ov-b',axisB,overlayProfileA);
+    updateSliderLimitUI('ov'); // [追加] 初期表示時にもN/2表示・グレーアウトを反映
     setupSliderPageSwiper('ovSliderSwiper','ovSliderPagePrev','ovSliderPageNext','ovSliderPageLabel');
     setupEraToggle('overlayEraToggle','overlayEraFrom','overlayEraTo');
     applyEraFilterLock(); applyTagLimitHint(); // [追加] 無料プランは年代絞り込み・タグ複数指定を使えないようにする
@@ -17030,6 +17119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a',axisA,srProfileB);
     buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b',axisB,srProfileA);
+    updateSliderLimitUI('sr'); // [追加] 初期表示時にもN/2表示・グレーアウトを反映
     setupSliderPageSwiper('srSliderSwiper','srSliderPagePrev','srSliderPageNext','srSliderPageLabel');
     setupSrTagInput();
 
@@ -17275,6 +17365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sortEl) sortEl.value = (qEl && qEl.value.trim()) ? 'relevance' : 'match';
     buildSliders('srFilterA',getAxisA(),srProfileA,'sr-a',axisA,srProfileB);
     buildSliders('srFilterB',getAxisB(),srProfileB,'sr-b',axisB,srProfileA);
+    updateSliderLimitUI('sr'); // [追加] 初期表示時にもN/2表示・グレーアウトを反映
   }
   document.getElementById('srResetBtn').onclick=resetSearchFilters;
 
@@ -17771,6 +17862,9 @@ document.addEventListener('DOMContentLoaded', () => {
     countryAll:   { ja:'すべての国',en:'All Countries',ko:'모든 국가','zh-tw':'所有國家','zh-cn':'所有国家',es:'Todos los países',fr:'Tous les pays',pt:'Todos os países',de:'Alle Länder',ar:'كل الدول',th:'ทุกประเทศ',id:'Semua Negara',ru:'Все страны',it:'Tutti i paesi',vi:'Tất cả quốc gia' },
     countryOther: { ja:'その他',en:'Other',ko:'기타','zh-tw':'其他','zh-cn':'其他',es:'Otro',fr:'Autre',pt:'Outro',de:'Andere',ar:'أخرى',th:'อื่นๆ',id:'Lainnya',ru:'Другое',it:'Altro',vi:'Khác' },
     sliderUnset: { ja:'無', en:'—', ko:'무', 'zh-tw':'無', 'zh-cn':'无', es:'—', fr:'—', pt:'—', de:'—', ar:'—',th:'—',id:'—',ru:'—',it:'—',vi:'—' },
+    sliderLimitCounter: { ja:'{n}/2 項目を使用中', en:'{n}/2 sliders in use' },
+    sliderLimitUpsellText: { ja:'無料プランは2項目まで同時に使えます。', en:'Free plan allows up to 2 sliders at once.' },
+    sliderLimitUpsellBtn: { ja:'＋を見る', en:'See +' },
     graphIncompleteMsg: { ja:'この状態で投稿するとレビューとして表示されますが、みんなの評価グラフへのデータ集計はされません。', en:'You can post like this and it will show as a review, but it will not be counted in the master graph.', ko:'이 상태로 게시하면 리뷰로 표시되지만, 모두의 평가 그래프 집계에는 반영되지 않습니다.', 'zh-tw':'以此狀態發佈會顯示為評論，但不會計入大家的評分圖。', 'zh-cn':'以此状态发布会显示为评论，但不会计入大家的评分图。', es:'Puedes publicar así y se mostrará como reseña, pero no se contará en el gráfico general.', fr:"Vous pouvez publier ainsi, l'avis sera affiché mais ne sera pas compté dans le graphique général.", pt:'Você pode postar assim e aparecerá como avaliação, mas não será contado no gráfico geral.', de:'Du kannst so posten, es wird als Bewertung angezeigt, aber nicht in die Gesamtgrafik einberechnet.', ar:'يمكنك النشر هكذا وستظهر كمراجعة، لكنها لن تُحتسب في الرسم البياني العام.',th:'โพสต์แบบนี้จะแสดงเป็นรีวิว แต่จะไม่ถูกนับในกราฟรวม',id:'Anda bisa memposting begini, akan tampil sebagai ulasan, tapi tidak dihitung di grafik utama.',ru:'Можно опубликовать так, отзыв отобразится, но не войдёт в общий график.',it:'Puoi pubblicare così, apparirà come recensione ma non conteggiata nel grafico principale.',vi:'Bạn có thể đăng vậy, sẽ hiện là đánh giá nhưng không tính vào biểu đồ chính.' },
     graphCompleteMsg: { ja:'すべて入力済みです。', en:'All fields are filled in.', ko:'모두 입력 완료되었습니다.', 'zh-tw':'已全部填寫完成。', 'zh-cn':'已全部填写完成。', es:'Todos los campos están completos.', fr:'Tous les champs sont remplis.', pt:'Todos os campos preenchidos.', de:'Alle Felder sind ausgefüllt.', ar:'تم ملء جميع الحقول.',th:'กรอกครบทุกช่องแล้ว',id:'Semua kolom telah diisi.',ru:'Все поля заполнены.',it:'Tutti i campi sono compilati.',vi:'Đã điền đầy đủ.' },
     maturityEarly:  { ja:'有効レビュー数が少ないため参考値です', en:'Few valid reviews — values are tentative', ko:'유효 리뷰 수가 적어 참고용입니다', 'zh-tw':'有效評論數較少，僅供參考', 'zh-cn':'有效评论数较少，仅供参考', es:'Pocas reseñas válidas, valor referencial', fr:'Peu d\'avis valides, valeur indicative', pt:'Poucas avaliações válidas, valor referencial', de:'Wenige gültige Bewertungen, Richtwert', ar:'مراجعات صالحة قليلة، قيمة تقريبية',th:'มีรีวิวที่ใช้ได้น้อย เป็นค่าอ้างอิง',id:'Sedikit ulasan valid, nilai sementara',ru:'Мало валидных отзывов — значения предварительные',it:'Poche recensioni valide, valore indicativo',vi:'Ít đánh giá hợp lệ, giá trị tham khảo' },
