@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.92'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.93'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -19861,6 +19861,7 @@ document.addEventListener('DOMContentLoaded', () => {
             input.style.display = 'none';
             suggestions.style.display = 'none';
             suggestions.innerHTML = '';
+            updateContactSubmitState();
           };
         });
       }, 200);
@@ -19873,8 +19874,29 @@ document.addEventListener('DOMContentLoaded', () => {
         input.style.display = '';
         input.value = '';
         input.focus();
+        updateContactSubmitState();
       };
     }
+  }
+
+  // [追加] 必須項目が全部揃うまで送信ボタンを押せなくする(ライブバリデーション)。
+  // 「作品名を入力しただけ」では満たさず、候補から実際にクリックして選ぶまで未選択扱いにする
+  function updateContactSubmitState() {
+    const btn = document.getElementById('contactSubmitBtn');
+    if(!btn) return;
+    const message = document.getElementById('contactMessage')?.value.trim() || '';
+    let ok = !!_contactSelectedCategory && !!message && message.length <= 2000;
+    if(ok && CONTACT_CATEGORIES_NEEDING_ANIME.includes(_contactSelectedCategory)) {
+      ok = !!_contactSelectedAnime;
+    }
+    if(ok && _contactSelectedCategory === 'copyright') {
+      const replyEmail = document.getElementById('contactReplyEmail')?.value.trim() || '';
+      const confirmed = document.getElementById('contactCopyrightConfirm')?.checked || false;
+      ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyEmail) && confirmed;
+    }
+    btn.disabled = !ok;
+    btn.style.opacity = ok ? '1' : '.5';
+    btn.style.cursor = ok ? 'pointer' : 'not-allowed';
   }
 
   function initContactPage() {
@@ -19916,14 +19938,20 @@ document.addEventListener('DOMContentLoaded', () => {
           const animeFieldsEl = document.getElementById('contactAnimeFields');
           if(animeFieldsEl) animeFieldsEl.style.display = CONTACT_CATEGORIES_NEEDING_ANIME.includes(_contactSelectedCategory) ? '' : 'none';
           if(copyrightFieldsEl) copyrightFieldsEl.style.display = (_contactSelectedCategory === 'copyright') ? '' : 'none';
+          updateContactSubmitState();
         };
       });
-      if(prefillCategory) {
-        const chip = chipsWrap.querySelector(`.contact-category-chip[data-id="${prefillCategory}"]`);
-        if(chip) chip.click();
-      }
+      // [変更] 開いた時は「著作権について」を初期選択にする(何も属さない状態で始まっていたのを修正)
+      const defaultCategory = prefillCategory || 'copyright';
+      const chip = chipsWrap.querySelector(`.contact-category-chip[data-id="${defaultCategory}"]`);
+      if(chip) chip.click();
     }
+    // [追加] 入力の変化に合わせて送信ボタンの押せる/押せないをリアルタイムに更新
+    document.getElementById('contactMessage').oninput = updateContactSubmitState;
+    document.getElementById('contactReplyEmail').oninput = updateContactSubmitState;
+    document.getElementById('contactCopyrightConfirm').onchange = updateContactSubmitState;
     renderContactTurnstile();
+    updateContactSubmitState();
   }
   window.initContactPage = initContactPage;
 
