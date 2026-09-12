@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.97'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.99'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -7415,7 +7415,7 @@ document.addEventListener('DOMContentLoaded', () => {
     notices: {
       async listForUser(userId) {
         if(!sb || !userId) return [];
-        const { data } = await sb.from('user_notices').select('id,title,message,is_read,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(30);
+        const { data } = await sb.from('user_notices').select('id,title,message,is_read,created_at,kind').eq('user_id', userId).order('created_at', { ascending: false }).limit(30);
         return data || [];
       },
       async countUnread(userId) {
@@ -15456,6 +15456,46 @@ document.addEventListener('DOMContentLoaded', () => {
   // 注意：body.board-chat-mobileクラスはPC/スマホ問わず掲示板ページなら常に付与されるが、
   // それを内側スクロール領域に変えるCSSは @media (max-width:767px) の中でしか効いていない。
   // そのためクラスの有無ではなく「panelが実際にスクロールコンテナになっているか」で判定する。
+  // [追加] 一番下から離れている間、常に出しておく「一番下へ戻る」ボタン。
+  // 「新着へ移動」ピルは新着があった時だけ出るが、こちらは新着の有無に関係なく
+  // スクロール位置だけを見て出し引きする(単純に読み返している時のためのもの)
+  function setupBoardScrollToBottomBtn(panel) {
+    const wrap = panel.parentElement;
+    if(!wrap) return;
+    wrap.style.position = 'relative';
+    let btn = wrap.querySelector('.board-scroll-bottom-btn');
+    if(!btn) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'board-scroll-bottom-btn';
+      btn.setAttribute('aria-label', '一番下へ移動');
+      btn.style.cssText = 'position:sticky;bottom:14px;right:14px;margin-left:auto;margin-right:14px;z-index:14;width:38px;height:38px;border-radius:50%;background:#153524;border:1px solid rgba(92,201,142,.4);color:#a7ecc4;font-size:17px;line-height:1;cursor:pointer;box-shadow:0 10px 22px -10px rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;';
+      btn.innerHTML = '↓';
+      btn.onclick = () => {
+        const sc = panel.closest('.board-chat-scroll') || panel;
+        if(sc && sc.scrollHeight > sc.clientHeight + 8) sc.scrollTo({ top: sc.scrollHeight, behavior: 'smooth' });
+        else window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      };
+      wrap.appendChild(btn);
+    }
+    // wasNearBottomと同じ判定基準(100px以内なら「下にいる」扱い)に揃える
+    const checkVisibility = () => {
+      const isPanelScroller = panel.scrollHeight > panel.clientHeight + 8
+        || document.body.classList.contains('board-chat-mobile');
+      const distanceFromBottom = isPanelScroller
+        ? (panel.scrollHeight - panel.scrollTop - panel.clientHeight)
+        : (document.body.scrollHeight - window.scrollY - window.innerHeight);
+      btn.style.display = distanceFromBottom > 100 ? 'flex' : 'none';
+    };
+    checkVisibility();
+    if(!wrap.dataset.scrollBtnBound) {
+      wrap.dataset.scrollBtnBound = '1';
+      const scroller = panel.closest('.board-chat-scroll');
+      if(scroller) scroller.addEventListener('scroll', checkVisibility);
+      window.addEventListener('scroll', checkVisibility);
+    }
+  }
+
   function scrollBoardToBottom(panel) {
     if(panel && panel.scrollHeight > panel.clientHeight + 4) {
       panel.scrollTop = panel.scrollHeight;
@@ -15814,6 +15854,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _boardNewSincePill++;
       updateBoardNewPill(panel);
     }
+    setupBoardScrollToBottomBtn(panel); // [追加] 一番下から離れている間は常に「↓」ボタンを出す
     // 既読表示：投稿全体のうち一番新しいものが自分の投稿なら、その下に「既読N・たった今」を出す。
     // （返信としてネストされてる投稿は対象外。トップレベル投稿のみ、DOM構造上さかのぼりやすいため）
     if(_currentUser && posts.length) {
@@ -18316,6 +18357,25 @@ document.addEventListener('DOMContentLoaded', () => {
     reportReasonInappropriate:{ ja:'不適切な内容（暴力・性的など）', en:'Inappropriate content (violence, sexual, etc.)', ko:'부적절한 콘텐츠(폭력·성적 등)', 'zh-tw':'不當內容（暴力・色情等）', 'zh-cn':'不当内容（暴力・色情等）', es:'Contenido inapropiado (violencia, sexual, etc.)', fr:'Contenu inapproprié (violence, sexuel, etc.)', pt:'Conteúdo inadequado (violência, sexual, etc.)', de:'Unangemessener Inhalt (Gewalt, sexuell usw.)', ar:'محتوى غير لائق (عنف، جنسي، إلخ)', th:'เนื้อหาที่ไม่เหมาะสม (ความรุนแรง เรื่องเพศ ฯลฯ)', id:'Konten tidak pantas (kekerasan, seksual, dll.)', ru:'Неприемлемый контент (насилие, сексуальный контент и т.д.)', it:'Contenuto inappropriato (violenza, sessuale, ecc.)', vi:'Nội dung không phù hợp (bạo lực, tình dục, v.v.)' },
     reportReasonImpersonation:{ ja:'なりすまし', en:'Impersonation', ko:'사칭', 'zh-tw':'冒充他人', 'zh-cn':'冒充他人', es:'Suplantación de identidad', fr:'Usurpation d\'identité', pt:'Personificação', de:'Identitätsdiebstahl', ar:'انتحال شخصية', th:'การปลอมตัว', id:'Peniruan identitas', ru:'Выдача себя за другого', it:'Furto d\'identità', vi:'Mạo danh' },
     reportReasonOther:{ ja:'その他', en:'Other', ko:'기타', 'zh-tw':'其他', 'zh-cn':'其他', es:'Otro', fr:'Autre', pt:'Outro', de:'Sonstiges', ar:'أخرى', th:'อื่นๆ', id:'Lainnya', ru:'Другое', it:'Altro', vi:'Khác' },
+    // [追加] 警告・凍結・凍結解除のお知らせ文面。ユーザーに実際に届く文言はここだけで組み立てる
+    // (管理者が入力する内部メモは一切混ぜない)。ja/enのみ用意、他言語は後日まとめて翻訳予定
+    noticeWarnTitle: { ja:'⚠️ 警告を受けています', en:'⚠️ You have received a warning' },
+    noticeWarnBodyPrefix: { ja:'以下の理由により、利用規約に反する行為が確認されたため警告いたします。', en:'You are receiving a warning because we confirmed activity that violates our Terms of Service, for the following reason:' },
+    noticeReasonLabel: { ja:'理由', en:'Reason' },
+    noticeSuspendTitleTemp: { ja:'🚫 アカウントが一時的に利用停止されています', en:'🚫 Your account has been temporarily suspended' },
+    noticeSuspendTitlePermanent: { ja:'🚫 アカウントが無期限で利用停止されています', en:'🚫 Your account has been suspended indefinitely' },
+    noticeSuspendBodyPrefix: { ja:'以下の理由により、利用規約に反する行為が確認されたためアカウントを利用停止といたします。', en:'Your account has been suspended because we confirmed activity that violates our Terms of Service, for the following reason:' },
+    noticeSuspendUntilLabel: { ja:'解除予定', en:'Suspended until' },
+    noticeSuspendPermanentLabel: { ja:'無期限', en:'Indefinite' },
+    noticeSuspendEscalationNote: { ja:'このまま違反が続いた場合、アカウントが無期限で利用停止となることがあります。', en:'If violations continue, your account may be suspended indefinitely in the future.' },
+    noticeUnsuspendTitle: { ja:'✅ 利用停止が解除されました', en:'✅ Your suspension has been lifted' },
+    noticeUnsuspendBody: { ja:'利用停止期間が終了したため、アカウントの利用を再開できます。', en:'Your suspension period has ended and you can now use your account again.' },
+    suspendAppealBtn: { ja:'この措置に納得いかない場合はこちら', en:'If you disagree with this action, contact us here' },
+    moderationReasonSelectLabel: { ja:'理由（ユーザーに表示されます）', en:'Reason (shown to the user)' },
+    moderationAdminNoteLabel: { ja:'管理者用メモ（ユーザーには表示されません）', en:'Internal note (not shown to the user)' },
+    moderationDurationLabel: { ja:'凍結日数', en:'Suspension duration (days)' },
+    moderationPermanentLabel: { ja:'永久BAN（無期限）', en:'Permanent ban (indefinite)' },
+    moderationPermanentConfirm: { ja:'本当に無期限で利用停止にしますか？この操作は特に慎重に行ってください。', en:'Are you sure you want to suspend this account indefinitely? Please proceed with extra caution.' },
     reportDetailPlaceholder:{ ja:'詳しい状況（任意。「その他」を選んだ場合は必須）', en:'Details (optional; required if "Other" is selected)', ko:'자세한 상황(선택 사항, "기타" 선택 시 필수)', 'zh-tw':'詳細狀況（選填，選擇「其他」時必填）', 'zh-cn':'详细情况（选填，选择“其他”时必填）', es:'Detalles (opcional; obligatorio si eliges "Otro")', fr:'Détails (facultatif ; requis si "Autre" est sélectionné)', pt:'Detalhes (opcional; obrigatório se "Outro" for selecionado)', de:'Details (optional; erforderlich bei „Sonstiges“)', ar:'التفاصيل (اختياري؛ إلزامي عند اختيار "أخرى")', th:'รายละเอียด (ไม่บังคับ ยกเว้นเลือก "อื่นๆ")', id:'Detail (opsional; wajib jika memilih "Lainnya")', ru:'Подробности (необязательно; обязательно при выборе «Другое»)', it:'Dettagli (facoltativo; obbligatorio se selezioni "Altro")', vi:'Chi tiết (không bắt buộc; bắt buộc nếu chọn "Khác")' },
     btnCancel:{ ja:'キャンセル', en:'Cancel', ko:'취소', 'zh-tw':'取消', 'zh-cn':'取消', es:'Cancelar', fr:'Annuler', pt:'Cancelar', de:'Abbrechen', ar:'إلغاء', th:'ยกเลิก', id:'Batal', ru:'Отмена', it:'Annulla', vi:'Hủy' },
     reportSubmitBtn:{ ja:'通報する', en:'Submit report', ko:'신고하기', 'zh-tw':'送出檢舉', 'zh-cn':'提交举报', es:'Enviar reporte', fr:'Envoyer le signalement', pt:'Enviar denúncia', de:'Meldung senden', ar:'إرسال البلاغ', th:'ส่งรายงาน', id:'Kirim laporan', ru:'Отправить жалобу', it:'Invia segnalazione', vi:'Gửi báo cáo' },
@@ -21888,29 +21948,13 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `; }).join('') : '<p style="font-size:.78rem;color:var(--muted);">通報を受けたユーザーはいません</p>';
       el.querySelectorAll('.admin-acct-warn-btn').forEach(btn => {
-        btn.onclick = async () => {
-          const reason = prompt('警告の理由（相手のマイページに表示されます）', '');
-          if(reason === null) return;
-          btn.disabled = true;
-          try { await callModerateUser({ targetUserId: btn.dataset.uid, action: 'warn', reason }); renderAdminAccountsList(); }
-          catch(e) { console.error('警告に失敗:', e); alert('警告の送信に失敗しました'); btn.disabled = false; }
+        btn.onclick = () => {
+          openModerationModal('warn', btn.dataset.uid, () => renderAdminAccountsList());
         };
       });
       el.querySelectorAll('.admin-acct-suspend-btn').forEach(btn => {
-        btn.onclick = async () => {
-          const durationInput = prompt('凍結日数を入力してください（空欄のままだと無期限凍結）', '7');
-          if(durationInput === null) return;
-          const durationDays = durationInput.trim() ? Number(durationInput.trim()) : null;
-          if(durationInput.trim() && (!Number.isFinite(durationDays) || durationDays <= 0)) { alert('日数は正の数で入力してください'); return; }
-          const reason = prompt('凍結の理由（本人には現状表示されます）', '');
-          if(reason === null) return;
-          if(!confirm(`このユーザーを${durationDays ? durationDays + '日間' : '無期限で'}凍結します。よろしいですか？`)) return;
-          btn.disabled = true;
-          try {
-            await callModerateUser({ targetUserId: btn.dataset.uid, action: 'suspend', reason, durationDays });
-            renderAdminAccountsList();
-            renderAdminSuspendedUsers();
-          } catch(e) { console.error('凍結に失敗:', e); alert('凍結処理に失敗しました'); btn.disabled = false; }
+        btn.onclick = () => {
+          openModerationModal('suspend', btn.dataset.uid, () => { renderAdminAccountsList(); renderAdminSuspendedUsers(); });
         };
       });
       el.querySelectorAll('.admin-acct-unsuspend-btn').forEach(btn => {
@@ -21939,6 +21983,68 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const resJson = await res.json();
     if(!res.ok || !resJson.ok) throw new Error(resJson.error || 'failed');
+  }
+
+  // [追加] 警告・凍結の共通モーダル。以前はprompt()で自由記述を1回聞くだけだったが、
+  // ユーザーに届く文面は理由コード(reasonCode)だけで組み立てる方式にしたため、
+  // 「理由を選ぶ」＋「管理者用の内部メモ(ユーザーには見せない)」＋(凍結時)「日数 or 永久BAN」の
+  // 3点を確認するモーダルに差し替えた。永久BANは選択→送信時にさらに確認ダイアログを挟む(二段階確認)
+  function openModerationModal(action, targetUserId, onSuccess) {
+    const isSuspend = action === 'suspend';
+    document.getElementById('moderationModalOverlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'moderationModalOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;';
+    overlay.innerHTML = `
+      <div style="width:100%;max-width:380px;background:#16241c;border-radius:16px;padding:18px;box-sizing:border-box;">
+        <h3 style="margin:0 0 12px;font-size:14px;color:#eaf6ee;font-weight:800;">${isSuspend ? '🚫 凍結' : '⚠️ 警告'}</h3>
+        <label style="font-size:12px;color:#8db5a0;display:block;margin-bottom:.3rem;">${escapeHtml(t('moderationReasonSelectLabel'))}</label>
+        <select id="modReasonSelect" style="width:100%;padding:.55rem;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#eaf6ee;font-size:13px;margin-bottom:.8rem;box-sizing:border-box;">
+          ${REPORT_REASONS.map(r => `<option value="${r.id}">${escapeHtml(t(r.key))}</option>`).join('')}
+        </select>
+        ${isSuspend ? `
+          <label style="font-size:12px;color:#8db5a0;display:block;margin-bottom:.3rem;">${escapeHtml(t('moderationDurationLabel'))}</label>
+          <input id="modDurationInput" type="number" min="1" value="7" style="width:100%;padding:.55rem;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#eaf6ee;font-size:13px;margin-bottom:.5rem;box-sizing:border-box;">
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:.8rem;cursor:pointer;">
+            <input id="modPermanentCheck" type="checkbox" style="accent-color:#ea5454;">
+            <span style="font-size:12.5px;color:#ea9a9a;font-weight:700;">${escapeHtml(t('moderationPermanentLabel'))}</span>
+          </label>
+        ` : ''}
+        <label style="font-size:12px;color:#8db5a0;display:block;margin-bottom:.3rem;">${escapeHtml(t('moderationAdminNoteLabel'))}</label>
+        <textarea id="modAdminNoteInput" rows="3" style="width:100%;padding:.55rem;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#eaf6ee;font-size:13px;margin-bottom:1rem;resize:vertical;box-sizing:border-box;"></textarea>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="modCancelBtn" style="flex:1;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#b6c8bd;font-weight:700;font-size:13px;cursor:pointer;">キャンセル</button>
+          <button type="button" id="modSubmitBtn" style="flex:1;height:40px;border-radius:10px;border:none;background:${isSuspend?'#ea5454':'#e8c463'};color:#1b1005;font-weight:800;font-size:13px;cursor:pointer;">${isSuspend?'凍結する':'警告する'}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.remove(); });
+    overlay.querySelector('#modCancelBtn').onclick = () => overlay.remove();
+    const permanentCheck = overlay.querySelector('#modPermanentCheck');
+    const durationInput = overlay.querySelector('#modDurationInput');
+    if(permanentCheck) {
+      permanentCheck.onchange = () => { if(durationInput) durationInput.disabled = permanentCheck.checked; };
+    }
+    overlay.querySelector('#modSubmitBtn').onclick = async () => {
+      const reasonCode = overlay.querySelector('#modReasonSelect').value;
+      const adminNote = overlay.querySelector('#modAdminNoteInput').value.trim();
+      const permanent = permanentCheck ? permanentCheck.checked : false;
+      const durationDays = (isSuspend && !permanent) ? Number(durationInput.value || 7) : null;
+      if(isSuspend && !permanent && (!Number.isFinite(durationDays) || durationDays <= 0)) { alert('日数は正の数で入力してください'); return; }
+      // 永久BANは特に取り返しがつきにくいため、二段階目の確認を必ず挟む
+      if(isSuspend && permanent && !confirm(t('moderationPermanentConfirm'))) return;
+      const btn = overlay.querySelector('#modSubmitBtn');
+      btn.disabled = true;
+      try {
+        await callModerateUser({ targetUserId, action, reasonCode, adminNote: adminNote || null, durationDays, permanent });
+        overlay.remove();
+        if(onSuccess) onSuccess();
+      } catch(e) {
+        console.error('モデレーション操作に失敗:', e);
+        alert(isSuspend ? '凍結処理に失敗しました' : '警告の送信に失敗しました');
+        btn.disabled = false;
+      }
+    };
   }
 
   // [追加] 凍結中のユーザー一覧＋解除ボタン
@@ -22228,19 +22334,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const report = reports.find(r => String(r.id) === btn.dataset.reportId);
             const targetUserId = await resolveReportTargetUserId(report).catch(()=>null);
             if(!targetUserId) { alert('対象ユーザーの特定に失敗しました（投稿が既に削除済み等の可能性があります）'); return; }
-            // [変更] 警告文は「通報を受けた旨」＋「通報の種別・理由」から自動で組み立てる。
-            // 管理者はその場で編集もできる(prompt初期値として表示)
-            const typeLabel = REPORT_TYPE_LABEL[report.target_type] || String(report.target_type);
-            const defaultReason = `通報を受けました（種別: ${typeLabel.replace(/^[^\s]+\s/, '')} / 理由: ${report.reason || '未記入'}）。利用規約に沿った行動をお願いします。`;
-            const reason = prompt('警告の理由（相手のマイページに表示されます。編集できます）', defaultReason);
-            if(reason === null) return;
-            btn.disabled = true;
-            try {
-              await callModerateUser({ targetUserId, action: 'warn', reason });
+            openModerationModal('warn', targetUserId, async () => {
               await db.reports.resolve(report.id);
               btn.closest('[data-report-id]').remove();
               renderAdminAccountsList();
-            } catch(e) { console.error('警告に失敗:', e); alert('警告の送信に失敗しました'); btn.disabled = false; }
+            });
           };
         });
         reportsEl.querySelectorAll('.admin-suspend-report-btn').forEach(btn=>{
@@ -22248,21 +22346,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const report = reports.find(r => String(r.id) === btn.dataset.reportId);
             const targetUserId = await resolveReportTargetUserId(report).catch(()=>null);
             if(!targetUserId) { alert('対象ユーザーの特定に失敗しました（投稿が既に削除済み等の可能性があります）'); return; }
-            const durationInput = prompt('凍結日数を入力してください（空欄のままだと無期限凍結）', '7');
-            if(durationInput === null) return;
-            const durationDays = durationInput.trim() ? Number(durationInput.trim()) : null;
-            if(durationInput.trim() && (!Number.isFinite(durationDays) || durationDays <= 0)) { alert('日数は正の数で入力してください'); return; }
-            const reason = prompt('凍結の理由（本人には現状表示されます）', report.reason || '');
-            if(reason === null) return;
-            if(!confirm(`このユーザーを${durationDays ? durationDays + '日間' : '無期限で'}凍結します。よろしいですか？`)) return;
-            btn.disabled = true;
-            try {
-              await callModerateUser({ targetUserId, action: 'suspend', reason, durationDays });
+            openModerationModal('suspend', targetUserId, async () => {
               await db.reports.resolve(report.id);
               btn.closest('[data-report-id]').remove();
               renderAdminSuspendedUsers();
               renderAdminAccountsList();
-            } catch(e) { console.error('凍結に失敗:', e); alert('凍結処理に失敗しました'); btn.disabled = false; }
+            });
           };
         });
         reportsEl.querySelectorAll('.admin-resolve-report-btn').forEach(btn=>{
@@ -23034,19 +23123,30 @@ document.addEventListener('DOMContentLoaded', () => {
   window.closeChatTurnstileModal = closeChatTurnstileModal;
 
   // [追加] 通報対応(凍結)：凍結中のアカウントでログインしようとした時に全画面で表示する案内。
-  // サインアウト済みの状態でこれを出すので、閉じる操作は用意していない(リロードすればログイン画面に戻る)
-  function showSuspendedScreen(reason, until) {
+  // サインアウト済みの状態でこれを出すので、閉じる操作は「解除に納得いかない場合」のお問い合わせのみ用意する。
+  // 文面は理由コード(reasonCode)からテンプレで組み立てる。管理者の内部メモ(adminNote)はここには一切出さない
+  function showSuspendedScreen(reasonCode, until, permanent) {
     document.getElementById('suspendedScreenOverlay')?.remove();
-    const untilText = until ? `${new Date(until).toLocaleString('ja-JP')}まで` : '無期限で';
+    const reasonEntry = REPORT_REASONS.find(r => r.id === reasonCode);
+    const reasonLabel = reasonEntry ? t(reasonEntry.key) : t('reportReasonOther');
     const overlay = document.createElement('div');
     overlay.id = 'suspendedScreenOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0b0f0d;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0b0f0d;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;overflow-y:auto;';
     overlay.innerHTML = `<div style="max-width:360px;">
-      <p style="font-size:15px;color:#eee;font-weight:800;margin:0 0 12px;">アカウントが利用停止されています</p>
-      <p style="font-size:13px;color:#ccc;line-height:1.7;margin:0 0 8px;">${escapeHtml(untilText)}ご利用いただけません。</p>
-      ${reason ? `<p style="font-size:12px;color:#999;line-height:1.6;">理由: ${escapeHtml(reason)}</p>` : ''}
+      <p style="font-size:15px;color:#eee;font-weight:800;margin:0 0 12px;">${escapeHtml(permanent ? t('noticeSuspendTitlePermanent') : t('noticeSuspendTitleTemp'))}</p>
+      <p style="font-size:13px;color:#ccc;line-height:1.7;margin:0 0 8px;">${escapeHtml(t('noticeSuspendBodyPrefix'))}</p>
+      <p style="font-size:13px;color:#eee;font-weight:700;margin:0 0 10px;">${escapeHtml(t('noticeReasonLabel'))}: ${escapeHtml(reasonLabel)}</p>
+      ${!permanent && until ? `<p style="font-size:12px;color:#999;line-height:1.6;margin:0 0 8px;">${escapeHtml(t('noticeSuspendUntilLabel'))}: ${escapeHtml(new Date(until).toLocaleString('ja-JP'))}</p>` : ''}
+      ${permanent ? `<p style="font-size:12px;color:#999;line-height:1.6;margin:0 0 8px;">${escapeHtml(t('noticeSuspendPermanentLabel'))}</p>` : ''}
+      <p style="font-size:11.5px;color:#e8a0a0;line-height:1.6;margin:0 0 20px;">${escapeHtml(t('noticeSuspendEscalationNote'))}</p>
+      <button type="button" id="suspendAppealBtn" style="padding:.6rem 1.2rem;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#ccc;font-size:12.5px;cursor:pointer;">${escapeHtml(t('suspendAppealBtn'))}</button>
     </div>`;
     document.body.appendChild(overlay);
+    overlay.querySelector('#suspendAppealBtn').onclick = () => {
+      _pendingContactPrefill = { category: 'account', message: '' };
+      overlay.remove();
+      nav('contact');
+    };
   }
 
   // [追加] ベータ版中、ガチャ・プラン(サブスク)・コインショップの各ページを
@@ -23360,11 +23460,11 @@ document.addEventListener('DOMContentLoaded', () => {
     async function checkSuspensionGate() {
       if(!_currentUser || !sb) return false;
       try {
-        const { data } = await sb.from('profiles').select('is_suspended,suspended_until,suspension_reason').eq('id', _currentUser.id).maybeSingle();
+        const { data } = await sb.from('profiles').select('is_suspended,suspended_until,suspension_reason_code,suspension_permanent').eq('id', _currentUser.id).maybeSingle();
         if(!data) return false;
         const stillActive = data.is_suspended && (!data.suspended_until || new Date(data.suspended_until).getTime() > Date.now());
         if(stillActive) {
-          showSuspendedScreen(data.suspension_reason, data.suspended_until);
+          showSuspendedScreen(data.suspension_reason_code, data.suspended_until, data.suspension_permanent);
           await sb.auth.signOut().catch(()=>{});
           _currentUser = null;
           return true;
@@ -24280,12 +24380,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if(warningBanner) {
       if(isOwnPage && sb) {
         try {
-          const { data: latestWarning } = await sb.from('warnings').select('id,reason,created_at').eq('user_id', targetUserId).eq('acknowledged', false).order('created_at', { ascending: false }).limit(1).maybeSingle();
+          const { data: latestWarning } = await sb.from('warnings').select('id,reason_code,created_at').eq('user_id', targetUserId).eq('acknowledged', false).order('created_at', { ascending: false }).limit(1).maybeSingle();
           if(latestWarning) {
+            const reasonEntry = REPORT_REASONS.find(r => r.id === latestWarning.reason_code);
+            const reasonLabel = reasonEntry ? t(reasonEntry.key) : t('reportReasonOther');
             warningBanner.style.display = '';
             warningBanner.style.cssText += 'border:1px solid rgba(234,169,169,.4);background:rgba(234,169,169,.08);border-radius:12px;padding:14px;';
-            warningBanner.innerHTML = `<p style="font-size:12px;color:#eaa9a9;font-weight:800;margin:0 0 6px;">⚠️ 運営から警告を受けています</p>
-              <p style="font-size:11.5px;color:#ddd;line-height:1.6;margin:0 0 10px;">${latestWarning.reason ? escapeHtml(latestWarning.reason) : '利用規約に反する行為が確認されました。'}</p>
+            warningBanner.innerHTML = `<p style="font-size:12px;color:#eaa9a9;font-weight:800;margin:0 0 6px;">${escapeHtml(t('noticeWarnTitle'))}</p>
+              <p style="font-size:11.5px;color:#ddd;line-height:1.6;margin:0 0 6px;">${escapeHtml(t('noticeWarnBodyPrefix'))}</p>
+              <p style="font-size:11.5px;color:#eaa9a9;font-weight:700;margin:0 0 10px;">${escapeHtml(t('noticeReasonLabel'))}: ${escapeHtml(reasonLabel)}</p>
               <p style="font-size:10.5px;color:#8db5a0;margin:0 0 10px;">${new Date(latestWarning.created_at).toLocaleDateString('ja-JP')}</p>
               <button type="button" id="warningAckBtn" style="font-size:12px;font-weight:800;padding:.4rem .9rem;border-radius:9px;background:rgba(234,169,169,.15);border:1px solid rgba(234,169,169,.4);color:#eaa9a9;cursor:pointer;">了承しました</button>`;
             const ackBtn = document.getElementById('warningAckBtn');
@@ -24913,18 +25016,24 @@ document.addEventListener('DOMContentLoaded', () => {
         </span>
       </div>`;
     }).join('');
-    // [追加] 運営からの個別お知らせ(著作権削除の連絡など)。未読を上に
+    // [追加] 運営からの個別お知らせ(著作権削除の連絡など)。未読を上に。
+    // kind==='unsuspend'(自動解除)だけは、保存されているtitle/messageを使わず
+    // その場の表示言語でテンプレート(t())から組み立てる
     const sortedNotices = [...notices].sort((a,b)=> (a.is_read === b.is_read) ? 0 : (a.is_read ? 1 : -1));
-    const noticeRowsHtml = sortedNotices.map(n => `
+    const noticeRowsHtml = sortedNotices.map(n => {
+      const isUnsuspend = n.kind === 'unsuspend';
+      const titleText = isUnsuspend ? t('noticeUnsuspendTitle') : n.title;
+      const bodyText = isUnsuspend ? `${t('noticeUnsuspendBody')}\n${t('noticeSuspendEscalationNote')}` : n.message;
+      return `
       <div class="mypage-section" data-notice-id="${n.id}" style="border:1px solid ${n.is_read?'var(--line,#2a3830)':'rgba(94,201,122,.4)'};background:${n.is_read?'transparent':'rgba(94,201,122,.06)'};border-radius:10px;padding:10px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-size:.82rem;font-weight:800;color:#dfeae3;">📢 ${escapeHtml(n.title)}</span>
+          <span style="font-size:.82rem;font-weight:800;color:#dfeae3;">📢 ${escapeHtml(titleText)}</span>
           <span style="font-size:.68rem;color:var(--muted);">${escapeHtml(formatRelativeTime(n.created_at))}</span>
         </div>
-        <p style="font-size:.8rem;color:#c3d4c9;white-space:pre-wrap;margin:0 0 8px;">${escapeHtml(n.message)}</p>
+        <p style="font-size:.8rem;color:#c3d4c9;white-space:pre-wrap;margin:0 0 8px;">${escapeHtml(bodyText)}</p>
         ${n.is_read ? '' : `<button type="button" class="notif-notice-read-btn" data-id="${n.id}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line,#2a3830);background:transparent;color:var(--muted);font-size:.7rem;cursor:pointer;">既読にする</button>`}
       </div>
-    `).join('');
+    `; }).join('');
     el.innerHTML = friendRowsHtml + noticeRowsHtml;
     el.querySelectorAll('.notif-friend-accept').forEach(btn=>{
       btn.onclick = async () => {
