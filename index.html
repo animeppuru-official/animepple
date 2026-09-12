@@ -2512,6 +2512,7 @@
       border-radius:999px; padding:.4rem .8rem; font-size:.75rem; cursor:pointer; white-space:nowrap;
     }
     .admin-nav-pill:hover { background:rgba(94,201,122,.12); color:#dff0e6; border-color:var(--brand); }
+    .admin-nav-pill.is-current { background:var(--brand); color:#07200f; border-color:var(--brand); font-weight:800; }
     .admin-group-header {
       font-size:.7rem; color:var(--brand); font-weight:800; letter-spacing:.05em; text-transform:uppercase;
       margin:1.3rem 0 .5rem; padding-top:.3rem;
@@ -3281,7 +3282,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.80'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.81'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -5602,13 +5603,14 @@ document.addEventListener('DOMContentLoaded', () => {
   </header>
 
   <div class="admin-nav-bar" id="adminNavBar" style="display:none;">
-    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-overview')">📊 概要</button>
-    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-demand')">🔎 需要</button>
-    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-ratings')">⭐ 評価</button>
-    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-geo')">🌍 国・言語</button>
-    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-revenue')">💰 収益</button>
-    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-reviews')">📝 レビュー</button>
-    <button class="admin-nav-pill" onclick="adminScrollTo('admin-group-reports')">🚨 通報</button>
+    <button class="admin-nav-pill" data-admin-page="admin-group-overview" onclick="adminShowPage('admin-group-overview')">📊 概要</button>
+    <button class="admin-nav-pill" data-admin-page="admin-group-demand" onclick="adminShowPage('admin-group-demand')">🔎 需要</button>
+    <button class="admin-nav-pill" data-admin-page="admin-group-ratings" onclick="adminShowPage('admin-group-ratings')">⭐ 評価</button>
+    <button class="admin-nav-pill" data-admin-page="admin-group-geo" onclick="adminShowPage('admin-group-geo')">🌍 国・言語</button>
+    <button class="admin-nav-pill" data-admin-page="admin-group-revenue" onclick="adminShowPage('admin-group-revenue')">💰 収益</button>
+    <button class="admin-nav-pill" data-admin-page="admin-group-reviews" onclick="adminShowPage('admin-group-reviews')">📝 レビュー</button>
+    <button class="admin-nav-pill" data-admin-page="admin-group-user-submissions" onclick="adminShowPage('admin-group-user-submissions')">🗂 ユーザー投稿</button>
+    <button class="admin-nav-pill" data-admin-page="admin-group-maintenance" onclick="adminShowPage('admin-group-maintenance')">🔧 メンテナンス</button>
   </div>
 
   <!-- ログインしていない場合：サイト本来のログイン方法(Googleボタン1つ)をそのまま置く -->
@@ -5625,27 +5627,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   <!-- ダッシュボード -->
   <div id="adminDashboard" style="display:none;padding:1rem;">
-    <div id="admin-group-overview">
+    <div id="admin-group-overview" class="admin-page-group">
     <div class="admin-group-header">概要</div>
-    <!-- お問い合わせ一覧 -->
-    <div class="admin-section">
-      <h3 class="admin-section-title">✉️ お問い合わせ</h3>
-      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">フォームから届いたお問い合わせ。メールではなく、ここに直接届きます。</p>
-      <div id="adminContactCategoryTabs" style="display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.7rem;"></div>
-      <div id="adminContactMessagesList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
-    </div>
-    <!-- 画像投稿：承認待ち一覧 -->
-    <div class="admin-section">
-      <h3 class="admin-section-title">🖼️ 画像投稿の承認待ち</h3>
-      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">ユーザーから投稿されたポスター画像。承認するとその作品のページに反映されます。</p>
-      <div id="adminImageSubmissionsList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
-    </div>
-    <!-- 退会済みアカウント -->
-    <div class="admin-section">
-      <h3 class="admin-section-title">📦 退会済みアカウントのバックアップ</h3>
-      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">実際にデータを消す前に取ったバックアップ一覧。本人から「データを返してほしい」と連絡があった時に、ここから中身を確認できます。保管期間は半年で、それを過ぎたものは自動で削除されます。</p>
-      <div id="adminDeletedArchiveList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
-    </div>
     <!-- サイト監視 -->
     <div class="admin-section">
       <h3 class="admin-section-title">🩺 サイト監視（直近のエラー）</h3>
@@ -5676,7 +5659,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     </div><!-- /admin-group-overview -->
 
-    <div id="admin-group-demand">
+    <div id="admin-group-demand" class="admin-page-group">
     <div class="admin-group-header">需要データ</div>
     <!-- 急上昇タグ -->
     <div class="admin-section">
@@ -5705,7 +5688,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     </div><!-- /admin-group-demand -->
 
-    <div id="admin-group-ratings">
+    <div id="admin-group-ratings" class="admin-page-group">
     <div class="admin-group-header">評価データ</div>
 
     <!-- 軸別平均スコア -->
@@ -5757,7 +5740,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     </div><!-- /admin-group-ratings -->
 
-    <div id="admin-group-geo">
+    <div id="admin-group-geo" class="admin-page-group">
     <div class="admin-group-header">国・言語・デバイス</div>
     <!-- 国別PV -->
     <div class="admin-section">
@@ -5778,7 +5761,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     </div><!-- /admin-group-geo -->
 
-    <div id="admin-group-revenue">
+    <div id="admin-group-revenue" class="admin-page-group">
     <div class="admin-group-header">収益・エンゲージメント</div>
     <!-- 広告・アフィリンククリック -->
     <div class="admin-section">
@@ -5794,7 +5777,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     </div><!-- /admin-group-revenue -->
 
-    <div id="admin-group-reviews">
+    <div id="admin-group-reviews" class="admin-page-group">
     <div class="admin-group-header">レビュー一覧</div>
     <!-- 最近のレビュー -->
     <div class="admin-section">
@@ -5809,14 +5792,35 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     </div><!-- /admin-group-reviews -->
 
-    <div id="admin-group-reports">
-    <div class="admin-group-header">通報一覧</div>
+    <div id="admin-group-user-submissions" class="admin-page-group">
+    <div class="admin-group-header">ユーザー投稿</div>
+    <!-- 通報一覧 -->
     <div class="admin-section">
       <h3 class="admin-section-title">🚨 未対応の通報</h3>
       <div id="adminReportsList"></div>
     </div>
-    </div><!-- /admin-group-reports -->
+    <!-- 画像投稿：承認待ち一覧 -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🖼️ 画像投稿の承認待ち</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">ユーザーから投稿されたポスター画像。承認するとその作品のページに反映されます。</p>
+      <div id="adminImageSubmissionsList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
+    </div>
+    <!-- お問い合わせ一覧（アカウント復元の相談もここに届く） -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">✉️ お問い合わせ</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">フォームから届いたお問い合わせ。メールではなく、ここに直接届きます。アカウント復元の相談もここ(種類:アカウント)に届きます。</p>
+      <div id="adminContactCategoryTabs" style="display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.7rem;"></div>
+      <div id="adminContactMessagesList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
+    </div>
+    <!-- 退会済みアカウント -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">📦 退会済みアカウントのバックアップ</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">実際にデータを消す前に取ったバックアップ一覧。本人から「データを返してほしい」と連絡があった時に、ここから中身を確認できます。保管期間は半年で、それを過ぎたものは自動で削除されます。</p>
+      <div id="adminDeletedArchiveList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
+    </div>
+    </div><!-- /admin-group-user-submissions -->
 
+    <div id="admin-group-maintenance" class="admin-page-group">
     <div class="admin-group-header">メンテナンス</div>
     <div class="admin-section">
       <h3 class="admin-section-title">🏷️ Kitsuジャンル一括登録</h3>
@@ -5827,6 +5831,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <button class="admin-btn" disabled style="opacity:.4;cursor:not-allowed;">Kitsuジャンル一括登録（廃止済み）</button>
       <p id="seedKitsuGenresResult" style="font-size:.78rem;color:var(--brand);margin:.6rem 0 0;"></p>
     </div>
+    </div><!-- /admin-group-maintenance -->
   </div>
 </div>
 
@@ -20910,6 +20915,7 @@ document.addEventListener('DOMContentLoaded', () => {
       login.style.display='none';
       dash.style.display='';
       if(navBar) navBar.style.display='flex';
+      adminShowPage('admin-group-overview'); // [追加] タブ=ページ化に伴い、開いた時は概要ページを表示
       loadAdminData();
       initAdminCountryCompare();
       setupAdminAnimeSearch();
@@ -20923,12 +20929,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ナビピルからのスクロール移動
-  function adminScrollTo(groupId) {
-    const el = document.getElementById(groupId);
-    if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  // [変更] 以前は全グループを1ページに並べてスクロール移動するだけだったが、
+  // タブごとに独立したページとして表示するよう変更。非選択グループはdisplay:noneにする
+  function adminShowPage(groupId) {
+    document.querySelectorAll('.admin-page-group').forEach(el => {
+      el.style.display = (el.id === groupId) ? '' : 'none';
+    });
+    document.querySelectorAll('.admin-nav-pill').forEach(btn => {
+      btn.classList.toggle('is-current', btn.dataset.adminPage === groupId);
+    });
+    document.getElementById('adminDashboard')?.scrollTo({ top: 0, behavior: 'instant' });
   }
-  window.adminScrollTo = adminScrollTo;
+  window.adminShowPage = adminShowPage;
 
   // 汎用: ラベル付き横棒リストを描画（ランキング・比率どちらにも使う）
   function renderAdminBarList(containerId, items, opts) {
