@@ -69,6 +69,15 @@
 
     /* ── PAGES ── */
     .page { display:none; min-height:100vh; padding-bottom:5rem; }
+    /* [追加] ベータ版：ガチャ・プラン・コインショップページのロック表示 */
+    .page.beta-locked { position:relative; }
+    .page.beta-locked > *:not(.beta-lock-overlay) { filter:grayscale(1) brightness(.55); pointer-events:none; user-select:none; }
+    .beta-lock-overlay { position:absolute; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
+      padding:24px; text-align:center; background:rgba(10,10,12,.28); }
+    .beta-lock-box { background:rgba(20,20,24,.92); border:1px solid rgba(255,255,255,.12); border-radius:16px;
+      padding:28px 24px; max-width:320px; color:#eee; }
+    .beta-lock-icon { font-size:32px; margin-bottom:10px; }
+    .beta-lock-msg { font-size:14px; line-height:1.6; color:#ddd; }
     body.admin-fullpage .page { padding-bottom:0; }
     .page.active { display:block; }
 
@@ -358,12 +367,12 @@
     }
     .premium-lock-badge:hover { background:rgba(240,201,74,.22); }
     /* [追加] 管理者用プラン切り替えボタン */
-    .admin-plan-switch-btn {
+    .admin-plan-switch-btn, .admin-beta-switch-btn {
       padding:8px 14px; border-radius:9px; border:1.5px solid rgba(240,201,74,.4);
       background:rgba(240,201,74,.08); color:#e8c463; font-size:12px; font-weight:800; cursor:pointer;
     }
-    .admin-plan-switch-btn:hover { background:rgba(240,201,74,.18); }
-    .admin-plan-switch-btn.is-current { background:#e8c463; color:#2a2006; }
+    .admin-plan-switch-btn:hover, .admin-beta-switch-btn:hover { background:rgba(240,201,74,.18); }
+    .admin-plan-switch-btn.is-current, .admin-beta-switch-btn.is-current { background:#e8c463; color:#2a2006; }
     /* [追加] タグ絞り込み見出しの「無料プランは1個まで」案内 */
     .tag-limit-hint {
       display:inline-flex; align-items:center; margin-left:6px; padding:2px 7px;
@@ -3263,7 +3272,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.73'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.75'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -6432,6 +6441,17 @@ document.addEventListener('DOMContentLoaded', () => {
       <p id="mypageAdminPlanCurrent" style="font-size:10.5px;color:#8db5a0;margin:8px 0 0;"></p>
     </div>
 
+    <!-- [追加] 管理者専用：サイト全体のベータ版/完成版を切り替えるパネル(全ユーザーに反映) -->
+    <div class="mypage-section mypage-owner-only" id="mypageAdminBetaPanel" style="display:none;">
+      <p style="font-size:11px;color:#e8c463;font-weight:800;margin:0 0 8px;">🛠 管理者用：ベータ版 / 完成版 切り替え（サイト全体に反映）</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="admin-beta-switch-btn" data-beta="true">ベータ版</button>
+        <button type="button" class="admin-beta-switch-btn" data-beta="false">完成版</button>
+      </div>
+      <p id="mypageAdminBetaCurrent" style="font-size:10.5px;color:#8db5a0;margin:8px 0 0;"></p>
+    </div>
+
+
     <!-- マイページカードを共有 -->
     <div class="mypage-section mypage-owner-only">
       <div class="mypage-share-row">
@@ -6772,6 +6792,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // applyLang()等、スクリプト読み込み直後に同期的に呼ばれる処理からも参照されるため、
   // IIFEの最初(TDZに引っかからない位置)で宣言しておく。値の読み込み自体はloadMyPlan()で行う
   let _currentPlan = 'free';
+  // [追加] ベータ版フラグ。true の間はガチャ・サブスク・コイン課金をロックし、
+  // それ以外の機能制限(isFeatureRestricted()判定箇所)は無料プランでも＋プラン相当で全開放する。
+  // 広告表示(isFreePlan()/updateBoardSidebarAd())はこのフラグの影響を受けず、実際のプランのまま動く。
+  // 初期値はtrue(ベータ運用中)。実際の値はSupabaseのapp_settingsテーブルから
+  // 起動時にloadBetaMode()で読み込んで上書きする(管理者がマイページから切り替え可能にするため)。
+  let BETA_MODE = true;
+  // [追加] app_settingsテーブル(key='beta_mode', value=boolean)からベータ状態を読み込む。
+  // 全ユーザー共通のサイト全体設定なので、ログイン有無に関わらず読み込む(RLSはSELECTのみ全員許可)。
+  // 取得失敗時は安全側(現在値=true)のまま変更しない
+  async function loadBetaMode() {
+    if(!sb) return;
+    try {
+      const { data, error } = await sb.from('app_settings').select('value').eq('key', 'beta_mode').single();
+      if(!error && data && typeof data.value === 'boolean') BETA_MODE = data.value;
+    } catch(e) {
+      console.warn('ベータ状態の取得に失敗、既定値のままにします:', e);
+    }
+  }
   /* ════════════════════════════
      SUPABASE 設定
      切り替え: mode を 'supabase' に変更するだけ
@@ -9854,7 +9892,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(box) box.style.display = tags.length ? '' : 'none';
         const countEl = document.getElementById('overlayTagCount');
         // [修正] 無料プランは実際の上限(1個)を表示する。固定の10個ではなく実態に合わせる
-        const effectiveMax = isFreePlan() ? 1 : maxTags;
+        const effectiveMax = isFeatureRestricted() ? 1 : maxTags;
         if(countEl) countEl.textContent = `${tags.length}/${effectiveMax}`;
       }
     }
@@ -10334,7 +10372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 動かす分(値を変えるだけ)や、無に戻す操作は常に許可する。
         // [修正] ポップアップで止めるのではなく、上限に達した時点で他のスライダーを
         // グレーアウト＆操作不可にしておく(updateSliderLimitUI)ので、ここは万一のフォールバックのみ
-        if(isFreePlan() && wasUnset && v !== -1) {
+        if(isFeatureRestricted() && wasUnset && v !== -1) {
           const activeInStore = Object.values(store).filter(x => x !== -1 && x !== undefined).length;
           const activeInCompanion = companionStore ? Object.values(companionStore).filter(x => x !== -1 && x !== undefined).length : 0;
           if(activeInStore + activeInCompanion >= 2) {
@@ -10396,7 +10434,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const counterEl = document.getElementById(cfg.counterId);
     const upsellEl = document.getElementById(cfg.upsellId);
     const rows = cfg.containerIds.flatMap(id => Array.from(document.querySelectorAll(`#${id} .sl-row`)));
-    if(!isFreePlan()) {
+    if(!isFeatureRestricted()) {
       // ＋・クリエイターズは制限なし：カウンター非表示、グレーアウトも一切かけない
       if(counterEl) counterEl.style.display = 'none';
       if(upsellEl) upsellEl.style.display = 'none';
@@ -10549,7 +10587,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applyEraFilterLock(); applyTagLimitHint(); // [追加] 無料プランは年代絞り込み・タグ複数指定を使えないようにする
     // タグ入力の初期化もここで行う（currentLang等の初期化が全て終わった後に実行するため）
     if(!renderOverlayTags) {
-      renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true, getMaxTags: () => isFreePlan() ? 1 : 10, onMaxReached: () => { if(isFreePlan()) showPlusUpsellPrompt(); }});
+      renderOverlayTags = setupTagInput('overlayTagInput','overlayTagAddBtn','overlayTagList',overlayTags,10,{translateToJa:true, getMaxTags: () => isFeatureRestricted() ? 1 : 10, onMaxReached: () => { if(isFeatureRestricted()) showPlusUpsellPrompt(); }});
       setupTagBrowsePanel();
     } else {
       renderOverlayTags();
@@ -11569,7 +11607,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return candidates[Math.floor(Math.random() * candidates.length)] || null;
   }
   // [修正] 無料プランは「無料1回＋広告視聴で1回」の合計2回まで。＋・クリエイターズは
-  // 無制限(runGacha/updateGachaButtons側でisFreePlan()を見て、この上限自体を適用しない)
+  // 無制限(runGacha/updateGachaButtons側でisFeatureRestricted()を見て、この上限自体を適用しない)
   const GACHA_AD_LIMIT = 1;
   const GACHA_COIN_REWARD = 100; // デイリークエスト達成報酬＝ガチャ1回分のコイン
   const GACHA_COIN_COST = 100; // コインでガチャを1回引く時の消費量
@@ -11733,7 +11771,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(label) {
         if(remaining <= 0) {
           label.textContent = t('gachaAdBtnUsed');
-        } else if(isFreePlan()) {
+        } else if(isFeatureRestricted()) {
           label.textContent = t('gachaAdBtn').replace('{n}', remaining);
         } else {
           label.textContent = t('gachaFreeBtn');
@@ -11867,7 +11905,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(state.adUsedCount >= GACHA_AD_LIMIT) return;
       // [修正] どのプランも1日2回まで無料。無料プランだけ2回目に広告視聴が必要で、
       // ＋・クリエイターズは2回目も広告なしでそのまま引ける(確認・待機演出をスキップするだけ)
-      if(isFreePlan()) {
+      if(isFeatureRestricted()) {
         // 実際の広告SDKは未接続。押す前に対価が分かるよう確認だけ出す
         if(!confirm(t('gachaAdConfirm'))) return;
         const freeBtn = document.getElementById('gachaFreeBtn');
@@ -12045,6 +12083,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initGachaPage() {
+    if(applyBetaLock('page-gacha', 'ベータ版ではガチャは準備中です。完成版で解禁予定です。')) return;
     setGachaStageIdle();
     if(!_gachaActiveSeriesId) _gachaActiveSeriesId = getActiveGachaSeriesList()[0]?.id || null;
     renderGachaSeriesBanners();
@@ -12720,7 +12759,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!section||!content||!tabs) return;
 
     // [追加] 「世界の反応」は＋限定機能。無料プランはデータ自体を出さず、ロック案内に差し替える
-    if(isFreePlan()) {
+    if(isFeatureRestricted()) {
       section.style.display = '';
       tabs.style.display = 'none';
       content.innerHTML = `<div class="premium-feature-locked">
@@ -13218,7 +13257,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // [追加] 無料プランはレビュー投稿(上質・通常問わず)を1日3回まで
   async function checkDailyReviewQuota() {
-    if(!isFreePlan() || !_currentUser || !sb) return { allowed: true };
+    if(!isFeatureRestricted() || !_currentUser || !sb) return { allowed: true };
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     const { count } = await sb.from('reviews').select('id', { count: 'exact', head: true })
       .eq('user_id', _currentUser.id).gte('created_at', todayStart.toISOString());
@@ -14550,6 +14589,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function renderPlanPage() {
     const root = document.getElementById('page-settings-plan');
     if(!root) return;
+    if(applyBetaLock('page-settings-plan', 'ベータ版ではプランのご購入は準備中です。今は全員が＋プラン相当の機能を無料でお使いいただけます。')) return;
     const paymentsReady = true; // サンドボックス経由でのPaddle決済に対応
 
     let currentPlan = 'free';
@@ -15408,7 +15448,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // [追加] 価値観掲示板の入力欄付近に「残り〇/5回」を表示する(無料プランのみ・通常掲示板は対象外)
   async function updateBoardChatQuotaHint(boardType, hintEl) {
     if(!hintEl) return;
-    if(boardTypeBase(boardType) === 'general' || !isFreePlan() || !_currentUser) {
+    if(boardTypeBase(boardType) === 'general' || !isFeatureRestricted() || !_currentUser) {
       hintEl.style.display = 'none';
       return;
     }
@@ -15430,7 +15470,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 上限に達したら、1つのポップアップの文言だけで「広告を見て15分延長」と
   // 「＋なら制限なし」の両方を案内する(キャンセルしても別のポップは出さない)
   async function checkAndConsumeBoardChatQuota(boardType) {
-    if(boardTypeBase(boardType) === 'general' || !isFreePlan()) return { allowed: true };
+    if(boardTypeBase(boardType) === 'general' || !isFeatureRestricted()) return { allowed: true };
     const state = await db.boardChat.getToday(_currentUser.id);
     const adActive = !!state.ad_unlock_until && new Date(state.ad_unlock_until).getTime() > Date.now();
     if(adActive || (state.message_count || 0) < 5) return { allowed: true };
@@ -16801,7 +16841,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <span style="display:block;margin-top:2px;font-size:14px;font-weight:800;color:#a7ecc4;">${escapeHtml(valueTypeLabelFrom(labAll, valsAll))}</span>
       </div>
       ${items && items.length ? (
-        isFreePlan()
+        isFeatureRestricted()
           ? `<p style="margin:14px 0 8px;font-size:11.5px;font-weight:700;color:#8db5a0;">${escapeHtml(t('similarTitlesLabel'))}</p>
              <div class="premium-feature-locked">
                <p class="premium-feature-locked-text">${escapeHtml(t('valueRecsLockedText'))}</p>
@@ -16816,7 +16856,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(cEl && collapseEl && collapseEl.style.display !== 'none') drawRadar(cEl, labAll, valsAll, 'rgba(94,201,122,0.32)', '#8fe5ab');
       // [追加] おすすめ作品カードは＋限定なので、無料プランではデータを流し込まない(ロック表示のまま)
       const recEl = document.getElementById('valueProfileInlineRecs');
-      if(recEl && items && !isFreePlan()) recEl.innerHTML = items.map(item=>renderAnimeCard(item, { style:'g' })).join('');
+      if(recEl && items && !isFeatureRestricted()) recEl.innerHTML = items.map(item=>renderAnimeCard(item, { style:'g' })).join('');
     }));
   }
 
@@ -17072,7 +17112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('similarAnimeGrid');
     if(!section || !grid) return;
     // [追加] 「似ている作品」は＋限定機能。無料プランはデータ自体を出さず、ロック案内に差し替える
-    if(isFreePlan()) {
+    if(isFeatureRestricted()) {
       section.style.display = '';
       grid.innerHTML = `<div class="premium-feature-locked">
         <p class="premium-feature-locked-text">${t('similarAnimeLockedText')}</p>
@@ -17201,7 +17241,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setupSrTagInput() {
-    const renderSrTags = setupTagInput('srTagInput','srTagAddBtn','srTagList',srTagsActive,10,{translateToJa:true, getMaxTags: () => isFreePlan() ? 1 : 10, onMaxReached: () => { if(isFreePlan()) showPlusUpsellPrompt(); }});
+    const renderSrTags = setupTagInput('srTagInput','srTagAddBtn','srTagList',srTagsActive,10,{translateToJa:true, getMaxTags: () => isFeatureRestricted() ? 1 : 10, onMaxReached: () => { if(isFeatureRestricted()) showPlusUpsellPrompt(); }});
     setupTagBrowsePanel('srTagBrowseToggle','srTagBrowsePanel','srTagBrowseToggleLabel',srTagsActive,renderSrTags);
     setupEraToggle('srEraToggle','srEraFrom','srEraTo');
   }
@@ -18993,7 +19033,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = document.getElementById('matchBreakdownBody');
     if(!overlay || !body) return;
     // [追加] 「一致度の内訳」は＋限定機能。無料プランはデータ自体を出さず、ロック案内に差し替える
-    if(isFreePlan()) {
+    if(isFeatureRestricted()) {
       body.innerHTML = `<div class="premium-feature-locked">
         <p class="premium-feature-locked-text">${escapeHtml(t('matchBreakdownLockedText'))}</p>
         <button type="button" class="premium-feature-locked-btn" onclick="showPlusUpsellPrompt()">${escapeHtml(t('plusUpsellBtn'))}</button>
@@ -19033,7 +19073,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // タグ上限ラベル（「最大10個 ・ 」部分）：無料プランは実際の上限(1個)を表示する
     const tagMaxLabelEl = document.getElementById('overlayTagMaxLabel');
-    if(tagMaxLabelEl) tagMaxLabelEl.textContent = tFn('tagMaxCountLabel', isFreePlan() ? 1 : 10);
+    if(tagMaxLabelEl) tagMaxLabelEl.textContent = tFn('tagMaxCountLabel', isFeatureRestricted() ? 1 : 10);
     // data-i18n属性を持つ全要素を自動翻訳
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.dataset.i18n;
@@ -22230,15 +22270,42 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       // [修正] 見出しに固定で「最大10個」と書いていたのをやめ、実際のプランに応じた
       // 上限(無料は1個、＋以上は10個)を常に表示する
-      hint.textContent = isFreePlan() ? t('tagLimitFreeHint') : t('tagLimitPaidHint');
-      hint.classList.toggle('is-free', isFreePlan());
+      hint.textContent = isFeatureRestricted() ? t('tagLimitFreeHint') : t('tagLimitPaidHint');
+      hint.classList.toggle('is-free', isFeatureRestricted());
     });
     // [追加] 「最大10個 ・ 」の接頭ラベルも、開くたびに最新のプランで更新する
     const tagMaxLabelEl = document.getElementById('overlayTagMaxLabel');
-    if(tagMaxLabelEl) tagMaxLabelEl.textContent = tFn('tagMaxCountLabel', isFreePlan() ? 1 : 10);
+    if(tagMaxLabelEl) tagMaxLabelEl.textContent = tFn('tagMaxCountLabel', isFeatureRestricted() ? 1 : 10);
   }
 
   function isFreePlan() { return _currentPlan === 'free'; }
+  // [追加] 機能制限(タグ・スライダー・ガチャ回数・DM・レビュー投稿・似ている作品等)専用の判定。
+  // isFreePlan()と中身を分けているのは、ベータ版中は無料ユーザーもこちらだけ＋相当にしたいが、
+  // 広告表示(isFreePlan()を直接見ているupdateBoardSidebarAd())は実際のプランのまま維持したいため。
+  function isFeatureRestricted() { return !BETA_MODE && isFreePlan(); }
+
+  // [追加] ベータ版中、ガチャ・プラン(サブスク)・コインショップの各ページを
+  // ページ全体グレーアウト＋操作不可にする共通ヘルパー。対象コンテナ(.page要素)の中に
+  // ロック用オーバーレイを重ねて表示し、中身のクリックを一切通さない。
+  // 戻り値true = ロック中(呼び出し元は以降の初期化処理をスキップしてよい)
+  function applyBetaLock(pageId, messageText) {
+    const root = document.getElementById(pageId);
+    if(!root) return false;
+    if(!BETA_MODE) {
+      root.classList.remove('beta-locked');
+      const old = root.querySelector(':scope > .beta-lock-overlay');
+      if(old) old.remove();
+      return false;
+    }
+    root.classList.add('beta-locked');
+    if(!root.querySelector(':scope > .beta-lock-overlay')) {
+      const overlay = document.createElement('div');
+      overlay.className = 'beta-lock-overlay';
+      overlay.innerHTML = `<div class="beta-lock-box"><div class="beta-lock-icon">🔒</div><div class="beta-lock-msg">${escapeHtml(messageText)}</div></div>`;
+      root.appendChild(overlay);
+    }
+    return true;
+  }
 
   // [追加] 掲示板系ページ(価値観掲示板・通常掲示板・DM)を無料プランで開いている時だけ、
   // 右余白のスカイスクレイパー広告を表示する。画面が狭い時はCSS側(@media)で強制非表示にする
@@ -22301,7 +22368,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const toEl = document.getElementById(to);
       const labelEl = toggleEl?.closest('.sort-row-era-toggle');
       if(!toggleEl || !labelEl) return;
-      if(isFreePlan()) {
+      if(isFeatureRestricted()) {
         toggleEl.checked = false;
         applyPremiumLock([toggleEl, fromEl, toEl], labelEl);
       } else {
@@ -22313,7 +22380,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const popToEl = document.getElementById('popYearToInput');
     const popLabelEl = document.getElementById('popEraGroup')?.querySelector('.pop-sort-group-label');
     if(popFromEl && popToEl && popLabelEl) {
-      if(isFreePlan()) {
+      if(isFeatureRestricted()) {
         popFromEl.value = ''; popToEl.value = '';
         applyPremiumLock([popFromEl, popToEl], popLabelEl);
       } else {
@@ -23452,6 +23519,43 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // [追加] 管理者専用：ベータ版/完成版 切り替えパネルの表示制御(本人ページ・is_adminの時だけ)
+    const adminBetaPanel = document.getElementById('mypageAdminBetaPanel');
+    if(adminBetaPanel) {
+      if(isOwnPage && profileData?.is_admin) {
+        adminBetaPanel.style.display = '';
+        const currentEl = document.getElementById('mypageAdminBetaCurrent');
+        if(currentEl) currentEl.textContent = `現在の状態: ${BETA_MODE ? 'ベータ版' : '完成版'}（反映には他ユーザーの画面再読み込みが必要）`;
+        adminBetaPanel.querySelectorAll('.admin-beta-switch-btn').forEach(btn => {
+          const btnIsBeta = btn.dataset.beta === 'true';
+          btn.classList.toggle('is-current', btnIsBeta === BETA_MODE);
+          btn.onclick = async () => {
+            btn.disabled = true;
+            try {
+              const { data: sessionData } = await sb.auth.getSession();
+              const accessToken = sessionData?.session?.access_token;
+              const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-set-beta-mode`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ betaMode: btnIsBeta }),
+              });
+              const resJson = await res.json();
+              if(!res.ok || !resJson.ok) throw new Error(resJson.error || 'failed');
+              BETA_MODE = btnIsBeta;
+              renderMypage();
+            } catch(e) {
+              console.error('ベータ状態の切り替えに失敗:', e);
+              alert('切り替えに失敗しました');
+            } finally {
+              btn.disabled = false;
+            }
+          };
+        });
+      } else {
+        adminBetaPanel.style.display = 'none';
+      }
+    }
+
     if(!isOwnPage && !profileData) {
       document.getElementById('mypageUsernameText').textContent = t('userNotFound');
       document.getElementById('mypageBioSection').style.display = 'none';
@@ -23581,11 +23685,11 @@ document.addEventListener('DOMContentLoaded', () => {
             dmBtn.style.display = isFriends ? '' : 'none';
             if(isFriends) {
               const otherIsPaid = profileData?.plan === 'plus' || profileData?.plan === 'creators';
-              const bothPaid = !isFreePlan() && otherIsPaid;
+              const bothPaid = !isFeatureRestricted() && otherIsPaid;
               dmBtn.classList.toggle('dm-btn-locked', !bothPaid);
               dmBtn.onclick = bothPaid
                 ? () => openDmThread(targetUserId)
-                : () => { if(!isFreePlan()) { alert(t('dmBothPaidRequiredAlert')); } else { showPlusUpsellPrompt(); } };
+                : () => { if(!isFeatureRestricted()) { alert(t('dmBothPaidRequiredAlert')); } else { showPlusUpsellPrompt(); } };
             }
           }
         }
@@ -24430,6 +24534,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   async function renderCoinShopPage() {
+    if(applyBetaLock('page-coin-shop', 'ベータ版ではコインの購入は準備中です。完成版で解禁予定です。')) return;
     const balEl = document.getElementById('coinShopBalance');
     if(!balEl) return;
     let coins = 0;
@@ -24677,6 +24782,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // スクリプト冒頭ではなく最後に置くのは、ここで参照する変数（_currentUser等）の
   // let宣言がスクリプトの後半にあり、早い段階で呼ぶとTDZ（一時的なデッドゾーン）エラーになるため
   (async function bootRouteFromUrl() {
+    await loadBetaMode().catch(()=>{});
     // #admin / #partner という昔ながらのハッシュ入りリンクも、通常のパスと同じ扱いで開けるようにする。
     // （以前はスクリプトの早い段階でnav()を呼んでいたため、まだ宣言前の変数を参照してしまい
     // 　TDZエラーでスクリプト全体が止まる原因になっていた。ここまで来れば全部宣言済みなので安全）
