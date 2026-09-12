@@ -78,6 +78,10 @@
       padding:28px 24px; max-width:320px; color:#eee; }
     .beta-lock-icon { font-size:32px; margin-bottom:10px; }
     .beta-lock-msg { font-size:14px; line-height:1.6; color:#ddd; }
+    /* [追加] 完成版段階でのクリエイターズカード個別ロック */
+    .plan-card.is-creators-locked { filter:grayscale(1) brightness(.7); position:relative; }
+    .plan-card.is-creators-locked .plan-subscribe-btn { cursor:not-allowed; }
+    .plan-creators-lock-note { font-size:10.5px; color:#8db5a0; margin:6px 0 0; text-align:center; }
     body.admin-fullpage .page { padding-bottom:0; }
     .page.active { display:block; }
 
@@ -3272,7 +3276,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.75'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.76'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -6441,12 +6445,13 @@ document.addEventListener('DOMContentLoaded', () => {
       <p id="mypageAdminPlanCurrent" style="font-size:10.5px;color:#8db5a0;margin:8px 0 0;"></p>
     </div>
 
-    <!-- [追加] 管理者専用：サイト全体のベータ版/完成版を切り替えるパネル(全ユーザーに反映) -->
+    <!-- [追加] 管理者専用：サイト全体の公開段階(ベータ版/完成版/クリエイターズ解禁)を切り替えるパネル(全ユーザーに反映) -->
     <div class="mypage-section mypage-owner-only" id="mypageAdminBetaPanel" style="display:none;">
-      <p style="font-size:11px;color:#e8c463;font-weight:800;margin:0 0 8px;">🛠 管理者用：ベータ版 / 完成版 切り替え（サイト全体に反映）</p>
+      <p style="font-size:11px;color:#e8c463;font-weight:800;margin:0 0 8px;">🛠 管理者用：公開段階の切り替え（サイト全体に反映）</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button type="button" class="admin-beta-switch-btn" data-beta="true">ベータ版</button>
-        <button type="button" class="admin-beta-switch-btn" data-beta="false">完成版</button>
+        <button type="button" class="admin-beta-switch-btn" data-stage="beta">ベータ版</button>
+        <button type="button" class="admin-beta-switch-btn" data-stage="released">完成版（記事の広場・クリエイターズは準備中）</button>
+        <button type="button" class="admin-beta-switch-btn" data-stage="creators_open">クリエイターズ解禁</button>
       </div>
       <p id="mypageAdminBetaCurrent" style="font-size:10.5px;color:#8db5a0;margin:8px 0 0;"></p>
     </div>
@@ -6792,22 +6797,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // applyLang()等、スクリプト読み込み直後に同期的に呼ばれる処理からも参照されるため、
   // IIFEの最初(TDZに引っかからない位置)で宣言しておく。値の読み込み自体はloadMyPlan()で行う
   let _currentPlan = 'free';
-  // [追加] ベータ版フラグ。true の間はガチャ・サブスク・コイン課金をロックし、
-  // それ以外の機能制限(isFeatureRestricted()判定箇所)は無料プランでも＋プラン相当で全開放する。
-  // 広告表示(isFreePlan()/updateBoardSidebarAd())はこのフラグの影響を受けず、実際のプランのまま動く。
-  // 初期値はtrue(ベータ運用中)。実際の値はSupabaseのapp_settingsテーブルから
-  // 起動時にloadBetaMode()で読み込んで上書きする(管理者がマイページから切り替え可能にするため)。
-  let BETA_MODE = true;
-  // [追加] app_settingsテーブル(key='beta_mode', value=boolean)からベータ状態を読み込む。
+  // [追加] サイトの公開段階。'beta'(ベータ版) → 'released'(完成版、クリエイターズのみロック)
+  // → 'creators_open'(クリエイターズ解禁、記事の広場公開後) の3段階。
+  // ベータ版フラグ(BETA_MODE)はこの値から導出する後方互換の関数として残す。
+  let RELEASE_STAGE = 'beta';
+  function isBetaStage() { return RELEASE_STAGE === 'beta'; }
+  // [追加] クリエイターズプランが選べない(記事の広場が未公開の)段階かどうか。
+  // beta中はページ全体がロックされるため実質関係ないが、released段階ではここだけで判定する
+  function isCreatorsLocked() { return RELEASE_STAGE !== 'creators_open'; }
+  // [追加] app_settingsテーブル(key='release_stage', value=text)からサイトの公開段階を読み込む。
   // 全ユーザー共通のサイト全体設定なので、ログイン有無に関わらず読み込む(RLSはSELECTのみ全員許可)。
-  // 取得失敗時は安全側(現在値=true)のまま変更しない
-  async function loadBetaMode() {
+  // 取得失敗時・値が想定外の時は安全側(現在値='beta')のまま変更しない
+  async function loadReleaseStage() {
     if(!sb) return;
     try {
-      const { data, error } = await sb.from('app_settings').select('value').eq('key', 'beta_mode').single();
-      if(!error && data && typeof data.value === 'boolean') BETA_MODE = data.value;
+      const { data, error } = await sb.from('app_settings').select('value').eq('key', 'release_stage').single();
+      if(!error && data && ['beta','released','creators_open'].includes(data.value)) RELEASE_STAGE = data.value;
     } catch(e) {
-      console.warn('ベータ状態の取得に失敗、既定値のままにします:', e);
+      console.warn('公開段階の取得に失敗、既定値のままにします:', e);
     }
   }
   /* ════════════════════════════
@@ -14854,6 +14861,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if(arrow) arrow.textContent = open ? t('planCompareClose') : t('planCompareOpen');
       };
     }
+
+    // [追加] 記事の広場が未公開の間(released段階)は、上のボタン処理が何を設定していても、
+    // クリエイターズカードだけ上書きしてロック表示にする(＋カードはそのまま購入可能)。
+    // beta段階はページ全体が既にapplyBetaLock()でロックされているのでここは実質素通り。
+    const creatorsCard = root.querySelector('.plan-card[data-plan="creators"]');
+    if(creatorsCard) {
+      creatorsCard.classList.toggle('is-creators-locked', isCreatorsLocked());
+      let lockNote = creatorsCard.querySelector('.plan-creators-lock-note');
+      if(isCreatorsLocked()) {
+        const creatorsBtn = creatorsCard.querySelector('.plan-subscribe-btn');
+        if(creatorsBtn) {
+          creatorsBtn.disabled = true;
+          creatorsBtn.textContent = '準備中';
+          creatorsBtn.onclick = null;
+        }
+        if(!lockNote) {
+          lockNote = document.createElement('p');
+          lockNote.className = 'plan-creators-lock-note';
+          lockNote.textContent = '記事の広場の公開に合わせて解禁予定です';
+          creatorsCard.querySelector('.plan-card-foot')?.appendChild(lockNote);
+        }
+      } else if(lockNote) {
+        lockNote.remove();
+      }
+    }
   }
 
   function renderTipPage() {
@@ -22282,7 +22314,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // [追加] 機能制限(タグ・スライダー・ガチャ回数・DM・レビュー投稿・似ている作品等)専用の判定。
   // isFreePlan()と中身を分けているのは、ベータ版中は無料ユーザーもこちらだけ＋相当にしたいが、
   // 広告表示(isFreePlan()を直接見ているupdateBoardSidebarAd())は実際のプランのまま維持したいため。
-  function isFeatureRestricted() { return !BETA_MODE && isFreePlan(); }
+  function isFeatureRestricted() { return !isBetaStage() && isFreePlan(); }
 
   // [追加] ベータ版中、ガチャ・プラン(サブスク)・コインショップの各ページを
   // ページ全体グレーアウト＋操作不可にする共通ヘルパー。対象コンテナ(.page要素)の中に
@@ -22291,7 +22323,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function applyBetaLock(pageId, messageText) {
     const root = document.getElementById(pageId);
     if(!root) return false;
-    if(!BETA_MODE) {
+    if(!isBetaStage()) {
       root.classList.remove('beta-locked');
       const old = root.querySelector(':scope > .beta-lock-overlay');
       if(old) old.remove();
@@ -23519,16 +23551,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // [追加] 管理者専用：ベータ版/完成版 切り替えパネルの表示制御(本人ページ・is_adminの時だけ)
+    // [追加] 管理者専用：公開段階切り替えパネルの表示制御(本人ページ・is_adminの時だけ)
     const adminBetaPanel = document.getElementById('mypageAdminBetaPanel');
     if(adminBetaPanel) {
       if(isOwnPage && profileData?.is_admin) {
         adminBetaPanel.style.display = '';
+        const stageLabel = { beta: 'ベータ版', released: '完成版', creators_open: 'クリエイターズ解禁' }[RELEASE_STAGE] || RELEASE_STAGE;
         const currentEl = document.getElementById('mypageAdminBetaCurrent');
-        if(currentEl) currentEl.textContent = `現在の状態: ${BETA_MODE ? 'ベータ版' : '完成版'}（反映には他ユーザーの画面再読み込みが必要）`;
+        if(currentEl) currentEl.textContent = `現在の状態: ${stageLabel}（反映には他ユーザーの画面再読み込みが必要）`;
         adminBetaPanel.querySelectorAll('.admin-beta-switch-btn').forEach(btn => {
-          const btnIsBeta = btn.dataset.beta === 'true';
-          btn.classList.toggle('is-current', btnIsBeta === BETA_MODE);
+          const btnStage = btn.dataset.stage;
+          btn.classList.toggle('is-current', btnStage === RELEASE_STAGE);
           btn.onclick = async () => {
             btn.disabled = true;
             try {
@@ -23537,14 +23570,14 @@ document.addEventListener('DOMContentLoaded', () => {
               const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-set-beta-mode`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ betaMode: btnIsBeta }),
+                body: JSON.stringify({ releaseStage: btnStage }),
               });
               const resJson = await res.json();
               if(!res.ok || !resJson.ok) throw new Error(resJson.error || 'failed');
-              BETA_MODE = btnIsBeta;
+              RELEASE_STAGE = btnStage;
               renderMypage();
             } catch(e) {
-              console.error('ベータ状態の切り替えに失敗:', e);
+              console.error('公開段階の切り替えに失敗:', e);
               alert('切り替えに失敗しました');
             } finally {
               btn.disabled = false;
@@ -24782,7 +24815,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // スクリプト冒頭ではなく最後に置くのは、ここで参照する変数（_currentUser等）の
   // let宣言がスクリプトの後半にあり、早い段階で呼ぶとTDZ（一時的なデッドゾーン）エラーになるため
   (async function bootRouteFromUrl() {
-    await loadBetaMode().catch(()=>{});
+    await loadReleaseStage().catch(()=>{});
     // #admin / #partner という昔ながらのハッシュ入りリンクも、通常のパスと同じ扱いで開けるようにする。
     // （以前はスクリプトの早い段階でnav()を呼んでいたため、まだ宣言前の変数を参照してしまい
     // 　TDZエラーでスクリプト全体が止まる原因になっていた。ここまで来れば全部宣言済みなので安全）
