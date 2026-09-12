@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.93'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.95'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -21614,6 +21614,34 @@ document.addEventListener('DOMContentLoaded', () => {
     { id:'other', label:'その他' },
   ];
   // 管理者向け：お問い合わせ一覧（未読を上・新しい順。カテゴリタブで絞り込み）
+  // [追加] 著作権通報のカードから、対象作品の現在の画像を確認するためのポップアップ。
+  // 画像があればそのまま表示、無ければ「無い」旨を出す(ページ遷移はしない)
+  async function showAdminAnimeImagePreview(animeId, animeTitle) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `<div style="max-width:90vw;max-height:90vh;text-align:center;"><p style="color:#eee;font-size:13px;margin:0 0 10px;">読み込み中…</p></div>`;
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) close(); });
+    document.body.appendChild(overlay);
+    let imageUrl = null;
+    try {
+      const { data } = await sb.from('anime_pages').select('image_url').eq('id', animeId).maybeSingle();
+      imageUrl = data?.image_url || null;
+    } catch(e) { console.warn('showAdminAnimeImagePreview:', e); }
+    overlay.innerHTML = imageUrl
+      ? `<div style="max-width:90vw;max-height:90vh;text-align:center;">
+          <p style="color:#eee;font-size:13px;margin:0 0 10px;">${escapeHtml(animeTitle)}</p>
+          <img src="${escapeHtml(imageUrl)}" style="max-width:100%;max-height:72vh;border-radius:10px;">
+          <br><button type="button" id="animePreviewCloseBtn" style="margin-top:14px;padding:.55rem 1.3rem;border-radius:9px;border:none;background:#5ec97a;color:#07200f;font-weight:800;cursor:pointer;">閉じる</button>
+        </div>`
+      : `<div style="text-align:center;">
+          <p style="color:#eee;font-size:14px;margin:0 0 14px;">「${escapeHtml(animeTitle)}」に画像は登録されていません</p>
+          <button type="button" id="animePreviewCloseBtn" style="padding:.55rem 1.3rem;border-radius:9px;border:none;background:#5ec97a;color:#07200f;font-weight:800;cursor:pointer;">閉じる</button>
+        </div>`;
+    overlay.querySelector('#animePreviewCloseBtn').onclick = close;
+  }
+  window.showAdminAnimeImagePreview = showAdminAnimeImagePreview;
+
   async function renderAdminContactMessages() {
     const el = document.getElementById('adminContactMessagesList');
     const tabsEl = document.getElementById('adminContactCategoryTabs');
@@ -21655,12 +21683,15 @@ document.addEventListener('DOMContentLoaded', () => {
           <span style="display:inline-block;font-size:.66rem;font-weight:800;color:#e8c463;background:rgba(217,164,65,.14);border-radius:5px;padding:1px 6px;margin-bottom:6px;">${escapeHtml(catLabel(m.category))}</span>
           ${copyrightEmailMatch ? `
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
-            <a href="mailto:${escapeHtml(copyrightEmailMatch[1])}" style="font-size:.72rem;font-weight:700;color:#b9c9ff;background:rgba(159,188,255,.1);border:1px solid rgba(159,188,255,.4);border-radius:6px;padding:2px 8px;text-decoration:none;">✉️ ${escapeHtml(copyrightEmailMatch[1])}</a>
-            ${copyrightAnimeMatch ? `<a href="#" onclick="nav('anime','${escapeHtml(copyrightAnimeMatch[2])}');return false;" style="font-size:.72rem;font-weight:700;color:#a7ecc4;background:rgba(94,201,122,.12);border:1px solid rgba(94,201,122,.4);border-radius:6px;padding:2px 8px;text-decoration:none;">🎬 ${escapeHtml(copyrightAnimeMatch[1])}</a>` : ''}
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(copyrightEmailMatch[1])}&authuser=sapotoforamu@gmail.com" target="_blank" rel="noopener noreferrer" style="font-size:.72rem;font-weight:700;color:#b9c9ff;background:rgba(159,188,255,.1);border:1px solid rgba(159,188,255,.4);border-radius:6px;padding:2px 8px;text-decoration:none;">✉️ ${escapeHtml(copyrightEmailMatch[1])}</a>
+            ${copyrightAnimeMatch ? `<a href="#" onclick="showAdminAnimeImagePreview('${escapeHtml(copyrightAnimeMatch[2])}','${escapeHtml(copyrightAnimeMatch[1]).replace(/'/g,"\\'")}');return false;" style="font-size:.72rem;font-weight:700;color:#a7ecc4;background:rgba(94,201,122,.12);border:1px solid rgba(94,201,122,.4);border-radius:6px;padding:2px 8px;text-decoration:none;">🎬 ${escapeHtml(copyrightAnimeMatch[1])}</a>` : ''}
           </div>` : ''}
           <p style="font-size:.8rem;color:#c3d4c9;white-space:pre-wrap;margin:0 0 8px;">${escapeHtml(m.message)}</p>
           ${m.is_read ? '' : `<button type="button" class="admin-contact-read-btn" data-id="${m.id}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line,#2a3830);background:transparent;color:var(--muted);font-size:.7rem;cursor:pointer;margin-right:6px;">既読にする</button>`}
-          ${(copyrightEmailMatch && copyrightAnimeMatch) ? `<button type="button" class="admin-copyright-takedown-btn" data-id="${m.id}" data-email="${escapeHtml(copyrightEmailMatch[1])}" data-anime-id="${escapeHtml(copyrightAnimeMatch[2])}" data-anime-title="${escapeHtml(copyrightAnimeMatch[1])}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(234,84,84,.4);background:rgba(234,84,84,.1);color:#ea5454;font-size:.7rem;cursor:pointer;margin-right:6px;">🗑️ 画像を削除して対応</button>` : ''}
+          ${(copyrightEmailMatch && copyrightAnimeMatch) ? `
+            <button type="button" class="admin-copyright-delete-btn" data-id="${m.id}" data-email="${escapeHtml(copyrightEmailMatch[1])}" data-anime-id="${escapeHtml(copyrightAnimeMatch[2])}" data-anime-title="${escapeHtml(copyrightAnimeMatch[1])}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(234,84,84,.4);background:rgba(234,84,84,.1);color:#ea5454;font-size:.7rem;cursor:pointer;margin-right:6px;">🗑️ 画像を削除する</button>
+            <button type="button" class="admin-copyright-gmail-btn" data-id="${m.id}" data-email="${escapeHtml(copyrightEmailMatch[1])}" data-anime-title="${escapeHtml(copyrightAnimeMatch[1])}" disabled style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(159,188,255,.4);background:rgba(159,188,255,.1);color:#b9c9ff;font-size:.7rem;cursor:not-allowed;opacity:.4;margin-right:6px;">✉️ Gmailで返信</button>
+          ` : ''}
           ${isRestoreRequest ? `<button type="button" class="admin-contact-restore-btn" data-email="${escapeHtml(emailMatch[1])}" data-uid="${escapeHtml(uidMatch?.[1] || '')}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(159,188,255,.4);background:rgba(159,188,255,.1);color:#b9c9ff;font-size:.7rem;cursor:pointer;">🔎 この人の保管データを探して復元する</button>` : ''}
           <div class="admin-contact-restore-result" data-for="${m.id}" style="margin-top:8px;"></div>
         </div>
@@ -21673,14 +21704,13 @@ document.addEventListener('DOMContentLoaded', () => {
           renderAdminContactMessages();
         };
       });
-      // [追加] 著作権通報の「画像を削除して対応」：
-      // ①その作品の画像を削除 → ②投稿した本人が分かれば「お知らせ」で報告 →
-      // ③通報者への返信メールをmailtoテンプレートで開く → ④お問い合わせを既読にする
-      el.querySelectorAll('.admin-copyright-takedown-btn').forEach(btn=>{
+      // [変更] 著作権通報の対応を2段階に分ける：
+      // ①「画像を削除する」→ その場で削除＋(分かれば)投稿者へお知らせ。この時点ではメールは送らない
+      // ②画像削除が成功して初めて「✉️ Gmailで返信」が押せるようになる(削除前は無効化)
+      el.querySelectorAll('.admin-copyright-delete-btn').forEach(btn=>{
         btn.onclick = async () => {
           const animeId = btn.dataset.animeId;
           const animeTitle = btn.dataset.animeTitle;
-          const email = btn.dataset.email;
           if(!confirm(`「${animeTitle}」の画像を削除します。よろしいですか？`)) return;
           btn.disabled = true;
           try {
@@ -21695,17 +21725,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 `「${animeTitle}」に投稿していただいた画像について、著作権者の方からご指摘があったため削除いたしました。ご了承ください。`
               ).catch(e => console.warn('お知らせ送信に失敗:', e));
             }
-            await db.contactMessages.markRead(btn.dataset.id);
-            // 通報者への返信メールをテンプレート付きで開く(本文は編集可能)
-            const subject = encodeURIComponent(`「${animeTitle}」の画像削除について`);
-            const body = encodeURIComponent(`ご連絡ありがとうございます。\n\nご指摘いただきました「${animeTitle}」の画像につきまして、確認の上、削除いたしました。\nこの度はご不便・ご迷惑をおかけしましたことを深くお詫び申し上げます。\n\n今後このようなことがないよう努めてまいります。`);
-            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-            renderAdminContactMessages();
+            btn.textContent = '✅ 削除済み';
+            btn.style.opacity = '.6';
+            btn.style.cursor = 'default';
+            const gmailBtn = btn.parentElement.querySelector(`.admin-copyright-gmail-btn[data-id="${btn.dataset.id}"]`);
+            if(gmailBtn) { gmailBtn.disabled = false; gmailBtn.style.opacity = '1'; gmailBtn.style.cursor = 'pointer'; }
           } catch(e) {
-            console.error('画像削除対応に失敗:', e);
+            console.error('画像削除に失敗:', e);
             alert('画像の削除に失敗しました');
             btn.disabled = false;
           }
+        };
+      });
+      el.querySelectorAll('.admin-copyright-gmail-btn').forEach(btn=>{
+        btn.onclick = async () => {
+          if(btn.disabled) return;
+          const email = btn.dataset.email;
+          const animeTitle = btn.dataset.animeTitle;
+          await db.contactMessages.markRead(btn.dataset.id);
+          // 通報者への返信メールをテンプレート付きでGmailの作成画面(Web)で開く(本文は編集可能)
+          const subject = encodeURIComponent(`「${animeTitle}」の画像削除について`);
+          const body = encodeURIComponent(`ご連絡ありがとうございます。\n\nご指摘いただきました「${animeTitle}」の画像につきまして、確認の上、削除いたしました。\nこの度はご不便・ご迷惑をおかけしましたことを深くお詫び申し上げます。\n\n今後このようなことがないよう努めてまいります。`);
+          window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${subject}&body=${body}&authuser=sapotoforamu@gmail.com`, '_blank');
+          renderAdminContactMessages();
         };
       });
       el.querySelectorAll('.admin-contact-restore-btn').forEach(btn=>{
