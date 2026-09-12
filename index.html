@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.84'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.85'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -11621,7 +11621,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { tier:'SR', kind:'custom', category:'frame',       skinId:'sample01_frame', key:'sample01-sr-frame' },
         { tier:'SR', kind:'custom', category:'badge',       skinId:'sample01_title', key:'sample01-sr-badge' },
         ...Array.from({length:2}, (_,i)=>({ tier:'SSR', kind:'icon', starRarity:4, image:null, key:`sample01-ssr${i+1}` })),
-        { tier:'SSR', kind:'custom', category:'card',   skinId:'sample01_card',   key:'sample01-ssr-card' },
         { tier:'UR', kind:'icon', starRarity:5, image:null, key:'sample01-ur1' },
         { tier:'UR', kind:'custom', category:'mypage', skinId:'sample01_mypage', key:'sample01-ur-mypage' },
         { tier:'LR', kind:'custom', category:'board',  skinId:'sample01_board',  key:'sample01-lr-board' },
@@ -14067,7 +14066,7 @@ document.addEventListener('DOMContentLoaded', () => {
           try {
             const mySkin = _currentUser ? await db.customization.getEquipped(_currentUser.id).catch(() => null) : null;
             review.frameId = mySkin?.frame_id || 'default';
-            const blob = await generateReviewCardImage(page, review, isVoted, mySkin?.card_skin || 'default');
+            const blob = await generateReviewCardImage(page, review, isVoted, 'default');
             if(!blob) throw new Error('blob is null');
             const cardUrl = await uploadShareCard(blob, title, shareUrl);
             if(cardUrl) {
@@ -14129,7 +14128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const mySkin2 = _currentUser ? await db.customization.getEquipped(_currentUser.id).catch(() => null) : null;
           review.frameId = mySkin2?.frame_id || 'default';
-          const blob = await generateReviewCardImage(page, review, isVoted, mySkin2?.card_skin || 'default');
+          const blob = await generateReviewCardImage(page, review, isVoted, 'default');
           if(!blob) throw new Error('blob is null');
           const title = getTitle(page) || page.title || page.titleEn || '';
           const shareText = t('shareReviewText').replace('{title}', title);
@@ -22088,7 +22087,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // アカウント登録済みユーザーのアイコン画像をまとめて取得
     let avatarMap = {};
     let cardRankQualityCounts = {};
-    let cardSkinMap = {}; // 将来: { user_id: 装備中のカードスキンID }。今は誰も所持していないので常に空
     let cardFrameMap = {}; // 将来: { user_id: 装備中のアイコンフレームID }。今は誰も所持していないので常に空
     let cardBadgeSkinMap = {}; // 将来: { user_id: 装備中の称号バッジスキンID }。今は誰も所持していないので常に空
     if(sb) {
@@ -22102,9 +22100,10 @@ document.addEventListener('DOMContentLoaded', () => {
           cardRankQualityCounts = (rankFilterVal !== 'all') ? filteredQualityCounts : await db.reviews.getQualityCountsByUserIds(userIds);
         } catch(e) { console.warn('review rank fetch:', e); }
         try {
+          // [変更] レビューカード自体の見た目カスタム(card_skin)は撤去したので、ここでは
+          // 引き続き使うフレーム・称号バッジ分だけ取り出す
           const equippedMap = await db.customization.getEquippedForUsers(userIds);
           Object.entries(equippedMap).forEach(([uid, row]) => {
-            cardSkinMap[uid] = row.card_skin || 'default';
             cardFrameMap[uid] = row.frame_id || 'default';
             cardBadgeSkinMap[uid] = row.badge_skin || 'default';
           });
@@ -22117,7 +22116,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const name = rev.userName||rev.username||'ゲスト';
       const colors=['#5ec97a','#7cb9e8','#f4a261','#e76f51','#a8dadc','#e9c46a'];
       const userId = rev.userId || rev.user_id || null;
-      const cardSkinId = (userId && cardSkinMap[userId]) || 'default'; // 将来ガチャで手に入れたスキンをここに反映する
       const cardFrameId = (userId && cardFrameMap[userId]) || 'default'; // 将来ガチャで手に入れたアイコンフレームをここに反映する
       const cardBadgeSkinId = (userId && cardBadgeSkinMap[userId]) || 'default'; // 将来ガチャで手に入れた称号バッジデザインをここに反映する
       const cardQualityCount = userId ? (cardRankQualityCounts[userId] || 0) : 0;
@@ -22154,7 +22152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : `<p class="review-card-back-text">${commentTextEscaped || '<span style="color:var(--muted);">コメントはありません</span>'}</p>`;
       return `<div class="review-card-flip-wrap">
       <div class="review-card-flip-inner" id="rc-flip-${i}">
-        <article class="review-card review-card-face review-card-front card-skin-${cardSkinId}${rev.quality?' is-quality':''}" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
+        <article class="review-card review-card-face review-card-front card-skin-default${rev.quality?' is-quality':''}" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
         <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="コメントを見る" data-i18n-aria="ariaViewComment">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
         </button>
@@ -22176,7 +22174,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-fbi="${i}" width="280" height="200"></canvas></div>
         </div>
         </article>
-        <article class="review-card review-card-face review-card-back card-skin-${cardSkinId}${rev.quality?' is-quality':''}" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
+        <article class="review-card review-card-face review-card-back card-skin-default${rev.quality?' is-quality':''}" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
           <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="戻る" data-i18n-aria="ariaBack">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
           </button>
@@ -24969,7 +24967,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const CUSTOMIZE_TABS = [
     { id: 'board', labelKey: 'customizeTabBoard', className: (id) => `board-skin-${id}`, bubbleClass: (id) => `bubble-skin-${id} is-mine` },
     { id: 'mypage', labelKey: 'customizeTabMypage', className: (id) => `mypage-skin-${id}` },
-    { id: 'card', labelKey: 'customizeTabCard', className: (id) => `card-skin-${id}` },
     { id: 'frame', labelKey: 'customizeTabFrame', className: (id) => `avatar-frame-${id}` },
     { id: 'badge', labelKey: 'customizeTabBadge', hofOnly: true },
     { id: 'badge_color', labelKey: 'customizeTabBadgeColor', className: (id) => `badge-skin-${id}` },
