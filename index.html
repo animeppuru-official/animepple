@@ -3281,13 +3281,22 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.77'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.78'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
 });
 </script>
 <div id="themeScenery" aria-hidden="true"></div>
+<!-- [追加] 掲示板・DM共通：bot対策Turnstileの確認モーダル。1回通れば一定時間(サーバー側で管理)は
+     再確認不要。連投そのものの防止はレート制限(RPC check_chat_send_allowed)側で行う -->
+<div id="chatTurnstileModal" style="display:none;position:fixed;inset:0;z-index:9000;align-items:center;justify-content:center;background:rgba(10,10,12,.6);padding:16px;">
+  <div style="background:#1a1d1f;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:24px 20px;max-width:320px;width:100%;text-align:center;">
+    <p style="font-size:13px;color:#ddd;margin:0 0 14px;">連投防止のため、bot確認にご協力ください。</p>
+    <div id="chatTurnstileWidget" style="display:flex;justify-content:center;"></div>
+    <button type="button" onclick="closeChatTurnstileModal()" style="margin-top:14px;background:none;border:none;color:#8db5a0;font-size:12px;cursor:pointer;text-decoration:underline;">キャンセル</button>
+  </div>
+</div>
 
 <!-- [追加] 無料プラン向け：掲示板ページ(PC・広い画面のみ)の右余白に出すスカイスクレイパー広告枠。
      実際の広告SDKは未接続のためプレースホルダー表示。表示制御はupdateBoardSidebarAd()で行う -->
@@ -7707,6 +7716,9 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       async post(senderId, recipientId, body) {
         if(!sb || !senderId || !recipientId || !body) return { error: 'invalid' };
+        // [追加] 連投防止(レート制限)＋bot対策(Turnstile)。DBへのinsertより前にチェックする
+        const gate = await checkChatSendAllowed('dm_message', DM_RATE_LIMIT.count, DM_RATE_LIMIT.windowSec);
+        if(!gate.allowed) return { error: { code: gate.reason || 'blocked', retryAfterSeconds: gate.retry_after_seconds } };
         const { error } = await sb.from('direct_messages').insert({ sender_id: senderId, recipient_id: recipientId, body });
         return { error };
       },
@@ -7884,6 +7896,9 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       async post(animeId, boardType, userId, username, body, parentId, lang) {
         if(!sb || !userId) return { error: 'no user' };
+        // [追加] 連投防止(レート制限)＋bot対策(Turnstile)。DBへのinsertより前にチェックする
+        const gate = await checkChatSendAllowed('board_post', BOARD_RATE_LIMIT.count, BOARD_RATE_LIMIT.windowSec);
+        if(!gate.allowed) return { error: { code: gate.reason || 'blocked', retryAfterSeconds: gate.retry_after_seconds } };
         const { error } = await sb.from('board_posts').insert({
           anime_id: animeId, board_type: boardType, user_id: userId,
           username: username || null, body, parent_id: parentId || null, lang: lang || 'ja',
@@ -15909,7 +15924,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const username = (_currentUser && window._loggedInUsername) || t('guest');
         const parentId = _boardReplyTarget ? _boardReplyTarget.id : undefined;
         const { error } = await db.board.post(animeId, boardType, _currentUser.id, username, body, parentId, currentLang);
-        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        if(error) {
+          if(error.code === 'turnstile_required') { openChatTurnstileModal(submitCompose); return; }
+          if(error.code === 'rate_limited') { alert(`連続投稿を検知しました。${error.retryAfterSeconds ? error.retryAfterSeconds + '秒' : '少し'}待ってからもう一度お試しください。`); return; }
+          alert(t('profileSaveFailedAlert')); return;
+        }
         const { error: chatCountError } = await db.boardChat.incrementCount(_currentUser.id);
         if(chatCountError) console.warn('board_chat_daily_state 更新失敗:', chatCountError.message); // カウントは失敗しても投稿自体は成立させる
         updateBoardChatQuotaHint(boardType, quotaHintEl); // [追加] 送信後に残り回数表示を更新
@@ -22318,6 +22337,75 @@ document.addEventListener('DOMContentLoaded', () => {
   // 広告表示(isFreePlan()を直接見ているupdateBoardSidebarAd())は実際のプランのまま維持したいため。
   function isFeatureRestricted() { return !isBetaStage() && isFreePlan(); }
 
+  // [追加] 掲示板投稿・DM送信 共通：連投防止(レート制限)＋bot対策(Turnstile、初回のみ)。
+  // レビュー投稿(submit-review)と違い、チャットは1メッセージごとにTurnstileを出すとUXが壊れるため、
+  // 「一定時間有効な確認済みフラグ(verified_chat_sessions)」＋「送信回数の窓(rate_limits)」の
+  // 2段構えにし、実際の判定はSupabase側のRPC check_chat_send_allowed(SECURITY DEFINER)で行う。
+  // クライアントはこの関数を経由してから投稿することで、両方の判定を一度に受け取れる
+  const BOARD_RATE_LIMIT = { count: 15, windowSec: 30 };
+  const DM_RATE_LIMIT = { count: 15, windowSec: 30 };
+  async function checkChatSendAllowed(kind, limit, windowSec) {
+    if(!sb) return { allowed: true };
+    try {
+      const { data, error } = await sb.rpc('check_chat_send_allowed', { p_kind: kind, p_limit: limit, p_window_seconds: windowSec });
+      if(error) { console.warn('送信可否チェックに失敗、投稿は許可します:', error.message); return { allowed: true }; }
+      return data || { allowed: true };
+    } catch(e) {
+      console.warn('送信可否チェックに失敗、投稿は許可します:', e);
+      return { allowed: true };
+    }
+  }
+  let _chatTurnstileWidgetId = null;
+  let _chatTurnstileOnSuccess = null;
+  function renderChatTurnstileWidget(retries) {
+    retries = retries || 0;
+    const container = document.getElementById('chatTurnstileWidget');
+    if(!container) return;
+    if(typeof turnstile === 'undefined' || !turnstile.render) {
+      if(retries < 20) setTimeout(()=>renderChatTurnstileWidget(retries+1), 250);
+      return;
+    }
+    if(_chatTurnstileWidgetId !== null) {
+      try { turnstile.reset(_chatTurnstileWidgetId); return; } catch(_) { /* 古いウィジェットが無効なら作り直す */ }
+    }
+    _chatTurnstileWidgetId = turnstile.render(container, {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: async (token) => {
+        try {
+          const { data: sessionData } = await sb.auth.getSession();
+          const accessToken = sessionData?.session?.access_token;
+          const res = await fetch(`${SUPABASE_URL}/functions/v1/verify-chat-turnstile`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ turnstileToken: token }),
+          });
+          const resJson = await res.json();
+          if(!res.ok || !resJson.ok) throw new Error(resJson.error || 'failed');
+          closeChatTurnstileModal();
+          const cb = _chatTurnstileOnSuccess;
+          _chatTurnstileOnSuccess = null;
+          if(cb) cb();
+        } catch(e) {
+          console.error('チャットのbot確認に失敗:', e);
+          alert('確認に失敗しました。もう一度お試しください。');
+          try { turnstile.reset(_chatTurnstileWidgetId); } catch(_) {}
+        }
+      },
+    });
+  }
+  function openChatTurnstileModal(onSuccess) {
+    _chatTurnstileOnSuccess = onSuccess;
+    const modal = document.getElementById('chatTurnstileModal');
+    if(modal) modal.style.display = 'flex';
+    renderChatTurnstileWidget();
+  }
+  function closeChatTurnstileModal() {
+    _chatTurnstileOnSuccess = null;
+    const modal = document.getElementById('chatTurnstileModal');
+    if(modal) modal.style.display = 'none';
+  }
+  window.closeChatTurnstileModal = closeChatTurnstileModal;
+
   // [追加] ベータ版中、ガチャ・プラン(サブスク)・コインショップの各ページを
   // ページ全体グレーアウト＋操作不可にする共通ヘルパー。対象コンテナ(.page要素)の中に
   // ロック用オーバーレイを重ねて表示し、中身のクリックを一切通さない。
@@ -24270,7 +24358,11 @@ document.addEventListener('DOMContentLoaded', () => {
         sendBtn.disabled = true;
         const { error } = await db.dm.post(meId, otherId, body);
         sendBtn.disabled = false;
-        if(error) { alert(t('profileSaveFailedAlert')); return; }
+        if(error) {
+          if(error.code === 'turnstile_required') { openChatTurnstileModal(send); return; }
+          if(error.code === 'rate_limited') { alert(`連続送信を検知しました。${error.retryAfterSeconds ? error.retryAfterSeconds + '秒' : '少し'}待ってからもう一度お試しください。`); return; }
+          alert(t('profileSaveFailedAlert')); return;
+        }
         input.value = '';
         await renderDmMessages(panel, meId, otherId, otherProfile);
       };
