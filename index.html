@@ -3263,7 +3263,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.72'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.73'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -14346,8 +14346,15 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Promise(resolve => {
       if(!sb) return resolve([]);
       let done = false;
-      const ch = sb.channel(boardPresenceChannelName(animeId, shardedType, lang));
-      const finish = (ids) => { if(done) return; done = true; resolve(ids); setTimeout(()=>sb.removeChannel(ch), 0); };
+      const topic = boardPresenceChannelName(animeId, shardedType, lang);
+      // [修正] joinBoardPresence()と同じchannel名(トピック)を使っているため、
+      // このpeek用チャンネルの削除(下のremoveChannel)が終わる前に実入室(joinBoardPresence)が
+      // 呼ばれると、sb.channel()が既にsubscribe済みのこのインスタンスを使い回してしまい、
+      // 「cannot add presence callbacks after subscribe()」で例外になっていた
+      // （掲示板の中身が表示されない不具合の原因）。生成前に同名トピックの残骸を必ず消してから作る。
+      sb.getChannels().filter(c => c.topic === `realtime:${topic}`).forEach(c => sb.removeChannel(c));
+      const ch = sb.channel(topic);
+      const finish = (ids) => { if(done) return; done = true; resolve(ids); sb.removeChannel(ch); };
       ch.on('presence', { event: 'sync' }, () => finish(Object.keys(ch.presenceState())));
       ch.subscribe(status => { if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') finish([]); });
       setTimeout(() => finish([]), 3000); // 念のためのタイムアウト保険
@@ -14364,7 +14371,12 @@ document.addEventListener('DOMContentLoaded', () => {
   function joinBoardPresence(animeId, shardedType, lang, onCountChange) {
     leaveBoardPresence();
     if(!sb) return;
-    const ch = sb.channel(boardPresenceChannelName(animeId, shardedType, lang), {
+    const topic = boardPresenceChannelName(animeId, shardedType, lang);
+    // [修正] peekRoomPresence()等が同名トピックのチャンネルをまだ削除しきっていない場合、
+    // sb.channel()がその残骸(subscribe済み)を再利用してしまい、直後のch.on('presence',...)で
+    // 例外が飛んで掲示板の描画が止まっていた。作る前に同名トピックを必ず一掃する。
+    sb.getChannels().filter(c => c.topic === `realtime:${topic}`).forEach(c => sb.removeChannel(c));
+    const ch = sb.channel(topic, {
       config: { presence: { key: (_currentUser?.id || ('guest_'+Math.random().toString(36).slice(2))) } }
     });
     ch.on('presence', { event: 'sync' }, () => onCountChange(Object.keys(ch.presenceState()).length));
