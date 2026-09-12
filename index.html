@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.86'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.87'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -5805,6 +5805,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="admin-group-header">ユーザー投稿</div>
     <div class="admin-subnav-bar">
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="reports" onclick="adminShowUserSubTab('reports')">🚨 通報</button>
+      <button type="button" class="admin-subnav-pill" data-user-sub-tab="accounts" onclick="adminShowUserSubTab('accounts')">📋 アカウント一覧</button>
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="suspended" onclick="adminShowUserSubTab('suspended')">🚫 凍結中</button>
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="images" onclick="adminShowUserSubTab('images')">🖼️ 画像投稿</button>
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="contact" onclick="adminShowUserSubTab('contact')">✉️ お問い合わせ</button>
@@ -5814,6 +5815,12 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="admin-user-submission-tab" data-user-sub-tab="reports">
       <h3 class="admin-section-title">🚨 未対応の通報</h3>
       <div id="adminReportsList"></div>
+    </div>
+    <!-- [追加] 通報・警告の件数を常に把握できるアカウント一覧 -->
+    <div class="admin-user-submission-tab" data-user-sub-tab="accounts">
+      <h3 class="admin-section-title">📋 通報・警告を受けたアカウント一覧</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">通報を1回でも受けたことがあるユーザーを、通報件数が多い順に表示。通報5回以上は🟡イエローカード（凍結を検討する目安）として色分けしています。件数は履歴の累計で、対応済みにしても減りません。</p>
+      <div id="adminAccountsList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
     </div>
     <!-- [追加] 凍結中のユーザー一覧 -->
     <div class="admin-user-submission-tab" data-user-sub-tab="suspended">
@@ -21550,6 +21557,89 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // [追加] 通報・警告を受けたアカウント一覧(report_count/warning_countを常に把握できるようにする)
+  async function renderAdminAccountsList() {
+    const el = document.getElementById('adminAccountsList');
+    if(!el || !sb) return;
+    try {
+      const { data, error } = await sb.from('profiles')
+        .select('id,username,report_count,warning_count,is_suspended,suspended_until')
+        .gt('report_count', 0)
+        .order('report_count', { ascending: false })
+        .limit(200);
+      if(error) throw error;
+      const rows = data || [];
+      el.innerHTML = rows.length ? rows.map(r => {
+        const isYellow = r.report_count >= 5 && !r.is_suspended;
+        return `
+        <div class="admin-row" style="flex-direction:column;align-items:flex-start;gap:.2rem;${isYellow ? 'border:1px solid rgba(255,200,50,.4);background:rgba(255,200,50,.06);border-radius:10px;padding:.6rem;' : ''}" data-account-uid="${r.id}">
+          <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+            <span style="font-weight:700;color:#dff0e6;">${escapeHtml(r.username || '(ユーザー名未設定)')}${isYellow ? ' 🟡' : ''}${r.is_suspended ? ' 🚫凍結中' : ''}</span>
+          </div>
+          <span style="font-size:.78rem;color:var(--muted);">通報: ${r.report_count}件 ／ 警告: ${r.warning_count}件</span>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.3rem;">
+            ${r.is_suspended
+              ? `<button type="button" class="admin-acct-unsuspend-btn" data-uid="${r.id}" style="font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">凍結解除</button>`
+              : `<button type="button" class="admin-acct-warn-btn" data-uid="${r.id}" style="font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:rgba(255,200,50,.12);border:1px solid rgba(255,200,50,.35);color:#ffc832;cursor:pointer;">⚠️ 警告</button>
+                 <button type="button" class="admin-acct-suspend-btn" data-uid="${r.id}" style="font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:rgba(234,84,84,.12);border:1px solid rgba(234,84,84,.4);color:#ea5454;cursor:pointer;">🚫 凍結</button>`
+            }
+          </div>
+        </div>
+      `; }).join('') : '<p style="font-size:.78rem;color:var(--muted);">通報を受けたユーザーはいません</p>';
+      el.querySelectorAll('.admin-acct-warn-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const reason = prompt('警告の理由（相手のマイページに表示されます）', '');
+          if(reason === null) return;
+          btn.disabled = true;
+          try { await callModerateUser({ targetUserId: btn.dataset.uid, action: 'warn', reason }); renderAdminAccountsList(); }
+          catch(e) { console.error('警告に失敗:', e); alert('警告の送信に失敗しました'); btn.disabled = false; }
+        };
+      });
+      el.querySelectorAll('.admin-acct-suspend-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const durationInput = prompt('凍結日数を入力してください（空欄のままだと無期限凍結）', '7');
+          if(durationInput === null) return;
+          const durationDays = durationInput.trim() ? Number(durationInput.trim()) : null;
+          if(durationInput.trim() && (!Number.isFinite(durationDays) || durationDays <= 0)) { alert('日数は正の数で入力してください'); return; }
+          const reason = prompt('凍結の理由（本人には現状表示されます）', '');
+          if(reason === null) return;
+          if(!confirm(`このユーザーを${durationDays ? durationDays + '日間' : '無期限で'}凍結します。よろしいですか？`)) return;
+          btn.disabled = true;
+          try {
+            await callModerateUser({ targetUserId: btn.dataset.uid, action: 'suspend', reason, durationDays });
+            renderAdminAccountsList();
+            renderAdminSuspendedUsers();
+          } catch(e) { console.error('凍結に失敗:', e); alert('凍結処理に失敗しました'); btn.disabled = false; }
+        };
+      });
+      el.querySelectorAll('.admin-acct-unsuspend-btn').forEach(btn => {
+        btn.onclick = async () => {
+          if(!confirm('凍結を解除しますか？')) return;
+          btn.disabled = true;
+          try { await callModerateUser({ targetUserId: btn.dataset.uid, action: 'unsuspend' }); renderAdminAccountsList(); renderAdminSuspendedUsers(); }
+          catch(e) { console.error('凍結解除に失敗:', e); alert('解除に失敗しました'); btn.disabled = false; }
+        };
+      });
+    } catch(e) {
+      console.warn('renderAdminAccountsList:', e);
+      el.innerHTML = '<p style="font-size:.78rem;color:var(--muted);">読み込みに失敗しました</p>';
+    }
+  }
+  // [追加] 通報一覧・アカウント一覧どちらからでも呼べるよう、管理者トークン付きでの
+  // admin-moderate-user呼び出しをここで共通化しておく(通報一覧側の定義と重複するがスコープが
+  // 別関数内にあるため、こちらにも同名の薄いラッパーを置く)
+  async function callModerateUser(payload) {
+    const { data: sessionData } = await sb.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-moderate-user`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const resJson = await res.json();
+    if(!res.ok || !resJson.ok) throw new Error(resJson.error || 'failed');
+  }
+
   // [追加] 凍結中のユーザー一覧＋解除ボタン
   async function renderAdminSuspendedUsers() {
     const el = document.getElementById('adminSuspendedList');
@@ -21600,6 +21690,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAdminImageSubmissions();
     renderAdminContactMessages();
     renderAdminSuspendedUsers();
+    renderAdminAccountsList();
     try {
       // サイト監視: 直近のエラーログ
       const since24h = new Date(Date.now() - 24*3600*1000).toISOString();
@@ -21805,13 +21896,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const report = reports.find(r => String(r.id) === btn.dataset.reportId);
             const targetUserId = await resolveReportTargetUserId(report).catch(()=>null);
             if(!targetUserId) { alert('対象ユーザーの特定に失敗しました（投稿が既に削除済み等の可能性があります）'); return; }
-            const reason = prompt('警告の理由（相手のマイページに表示されます）', report.reason || '');
+            // [変更] 警告文は「通報を受けた旨」＋「通報の種別・理由」から自動で組み立てる。
+            // 管理者はその場で編集もできる(prompt初期値として表示)
+            const typeLabel = REPORT_TYPE_LABEL[report.target_type] || String(report.target_type);
+            const defaultReason = `通報を受けました（種別: ${typeLabel.replace(/^[^\s]+\s/, '')} / 理由: ${report.reason || '未記入'}）。利用規約に沿った行動をお願いします。`;
+            const reason = prompt('警告の理由（相手のマイページに表示されます。編集できます）', defaultReason);
             if(reason === null) return;
             btn.disabled = true;
             try {
               await callModerateUser({ targetUserId, action: 'warn', reason });
               await db.reports.resolve(report.id);
               btn.closest('[data-report-id]').remove();
+              renderAdminAccountsList();
             } catch(e) { console.error('警告に失敗:', e); alert('警告の送信に失敗しました'); btn.disabled = false; }
           };
         });
@@ -21833,6 +21929,7 @@ document.addEventListener('DOMContentLoaded', () => {
               await db.reports.resolve(report.id);
               btn.closest('[data-report-id]').remove();
               renderAdminSuspendedUsers();
+              renderAdminAccountsList();
             } catch(e) { console.error('凍結に失敗:', e); alert('凍結処理に失敗しました'); btn.disabled = false; }
           };
         });
@@ -23839,18 +23936,30 @@ document.addEventListener('DOMContentLoaded', () => {
       profileData = await db.profiles.get(targetUserId);
     }
 
-    // [追加] 通報対応(警告)：本人ページの時だけ、直近の警告があればバナー表示する
+    // [追加] 通報対応(警告)：本人ページの時だけ、未了承の警告があればバナー表示する
     const warningBanner = document.getElementById('mypageWarningBanner');
     if(warningBanner) {
       if(isOwnPage && sb) {
         try {
-          const { data: latestWarning } = await sb.from('warnings').select('reason,created_at').eq('user_id', targetUserId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+          const { data: latestWarning } = await sb.from('warnings').select('id,reason,created_at').eq('user_id', targetUserId).eq('acknowledged', false).order('created_at', { ascending: false }).limit(1).maybeSingle();
           if(latestWarning) {
             warningBanner.style.display = '';
             warningBanner.style.cssText += 'border:1px solid rgba(234,169,169,.4);background:rgba(234,169,169,.08);border-radius:12px;padding:14px;';
             warningBanner.innerHTML = `<p style="font-size:12px;color:#eaa9a9;font-weight:800;margin:0 0 6px;">⚠️ 運営から警告を受けています</p>
-              <p style="font-size:11.5px;color:#ddd;line-height:1.6;margin:0 0 4px;">${latestWarning.reason ? escapeHtml(latestWarning.reason) : '利用規約に反する行為が確認されました。'}</p>
-              <p style="font-size:10.5px;color:#8db5a0;margin:0;">${new Date(latestWarning.created_at).toLocaleDateString('ja-JP')}</p>`;
+              <p style="font-size:11.5px;color:#ddd;line-height:1.6;margin:0 0 10px;">${latestWarning.reason ? escapeHtml(latestWarning.reason) : '利用規約に反する行為が確認されました。'}</p>
+              <p style="font-size:10.5px;color:#8db5a0;margin:0 0 10px;">${new Date(latestWarning.created_at).toLocaleDateString('ja-JP')}</p>
+              <button type="button" id="warningAckBtn" style="font-size:12px;font-weight:800;padding:.4rem .9rem;border-radius:9px;background:rgba(234,169,169,.15);border:1px solid rgba(234,169,169,.4);color:#eaa9a9;cursor:pointer;">了承しました</button>`;
+            const ackBtn = document.getElementById('warningAckBtn');
+            if(ackBtn) {
+              ackBtn.onclick = async () => {
+                ackBtn.disabled = true;
+                try {
+                  await sb.rpc('acknowledge_warning', { p_warning_id: latestWarning.id });
+                  warningBanner.style.display = 'none';
+                  warningBanner.innerHTML = '';
+                } catch(e) { console.error('警告の了承に失敗:', e); alert('了承の送信に失敗しました'); ackBtn.disabled = false; }
+              };
+            }
           } else {
             warningBanner.style.display = 'none';
           }
