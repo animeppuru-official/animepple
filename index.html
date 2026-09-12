@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.87'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.91'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -6346,6 +6346,29 @@ document.addEventListener('DOMContentLoaded', () => {
       <input id="contactName" type="text" placeholder="お名前" data-i18n="phContactName"
         style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;" />
 
+      <!-- [追加] 著作権についての通報を選んだ時だけ出す専用項目 -->
+      <div id="contactCopyrightFields" style="display:none;border:1px solid rgba(217,164,65,.35);background:rgba(217,164,65,.06);border-radius:12px;padding:.9rem;margin-bottom:.8rem;">
+        <p style="font-size:.74rem;color:#e8c463;font-weight:800;margin:0 0 .7rem;">著作権に関するご連絡は、著作権者ご本人またはその正当な代理人からのみ受け付けています。</p>
+
+        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">返信用メールアドレス<span style="color:#ff8888;">*</span></label>
+        <input id="contactReplyEmail" type="email" placeholder="reply@example.com"
+          style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;" />
+
+        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">対象の作品<span style="color:#ff8888;">*</span></label>
+        <input id="contactAnimeSearchInput" type="text" placeholder="作品名で検索"
+          style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;" />
+        <div id="contactAnimeSuggestions" style="display:none;max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;margin-top:.3rem;background:var(--card2);"></div>
+        <div id="contactSelectedAnimeDisplay" style="display:none;align-items:center;gap:.5rem;margin-top:.5rem;padding:.5rem;border-radius:9px;background:rgba(94,201,122,.1);border:1px solid rgba(94,201,122,.35);">
+          <span style="font-size:.82rem;color:#a7ecc4;font-weight:700;flex:1;" id="contactSelectedAnimeTitle"></span>
+          <button type="button" id="contactSelectedAnimeClear" style="background:none;border:none;color:#8db5a0;font-size:.75rem;cursor:pointer;text-decoration:underline;">変更</button>
+        </div>
+
+        <label style="display:flex;align-items:flex-start;gap:8px;margin-top:.9rem;cursor:pointer;">
+          <input id="contactCopyrightConfirm" type="checkbox" style="margin-top:3px;accent-color:#5ec97a;">
+          <span style="font-size:.76rem;color:#c3d4c9;line-height:1.5;">私は、上記対象作品の著作権者本人、またはその正当な権限を有する代理人です。</span>
+        </label>
+      </div>
+
       <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;"><span data-i18n="contactMessageLabel">お問い合わせ内容</span><span style="color:#ff8888;">*</span></label>
       <textarea id="contactMessage" rows="6" placeholder="内容をご記入ください" data-i18n="phContactMessage"
         style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;resize:vertical;"></textarea>
@@ -7385,6 +7408,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       },
     },
+    // ── お知らせ（運営からユーザー個人への通知。著作権削除の連絡等） ──
+    notices: {
+      async listForUser(userId) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('user_notices').select('id,title,message,is_read,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(30);
+        return data || [];
+      },
+      async countUnread(userId) {
+        if(!sb || !userId) return 0;
+        const { count } = await sb.from('user_notices').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('is_read', false);
+        return count || 0;
+      },
+      async markRead(id) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('user_notices').update({ is_read: true }).eq('id', id);
+        return { error };
+      },
+      // 管理者用：ユーザー個人宛にお知らせを送る(RLS側でis_adminのみ許可)
+      async send(userId, title, message) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const { error } = await sb.from('user_notices').insert({ user_id: userId, title, message });
+        return { error };
+      },
+    },
     // ── お問い合わせ（投稿自体はEdge Function経由。ここは管理者が読む側だけ） ──
     contactMessages: {
       async listAll() {
@@ -7445,6 +7492,19 @@ document.addEventListener('DOMContentLoaded', () => {
       async reject(submissionId, note) {
         if(!sb) return { error: 'invalid' };
         const { error } = await sb.from('image_submissions').update({ status: 'rejected', reviewer_note: note || null, reviewed_at: new Date().toISOString() }).eq('id', submissionId);
+        return { error };
+      },
+      // [追加] 著作権対応：ある作品に直近で「承認された」画像を投稿したユーザーを探す
+      // (お知らせを送る相手を特定するため。見つからない場合はnull＝運営が直接入れた画像等)
+      async findLatestApprovedUploader(animeId) {
+        if(!sb) return null;
+        const { data } = await sb.from('image_submissions').select('user_id').eq('anime_id', animeId).eq('status', 'approved').order('reviewed_at', { ascending: false }).limit(1).maybeSingle();
+        return data?.user_id || null;
+      },
+      // [追加] 著作権対応：作品のポスター画像を削除する(プレースホルダー表示に戻す)
+      async removeAnimeImage(animeId) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('anime_pages').update({ image_url: null }).eq('id', animeId);
         return { error };
       },
     },
@@ -7855,10 +7915,11 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     // ── 通報：掲示板投稿・レビューを通報する。閲覧は管理者ページから ──
     reports: {
-      async submit(reporterId, targetType, targetId, reason) {
+      async submit(reporterId, targetType, targetId, reason, contentSnapshot) {
         if(!sb) return { error: 'invalid' };
         const { error } = await sb.from('reports').insert({
           reporter_id: reporterId || null, target_type: targetType, target_id: targetId, reason: reason || null,
+          content_snapshot: contentSnapshot || null,
         });
         return { error };
       },
@@ -17106,10 +17167,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const reasonEntry = REPORT_REASONS.find(r => r.id === checked.value);
       const reasonLabel = reasonEntry ? t(reasonEntry.key) : checked.value;
       const reason = detail ? `${reasonLabel}：${detail}` : reasonLabel;
+      // [追加] 通報時点で選ばせている本文をその場でスナップショットして一緒に送る。
+      // 後から対象が削除されても、通報された内容自体は管理者が確認できるようにするため
+      // (以前は管理者側で毎回ライブ参照していたため、削除後は本文が消えてしまっていた)
+      const candidateMap = new Map((candidates||[]).map(c => [String(c.id), c.body]));
+      const snapshotParts = finalTargetIds.map(id => candidateMap.get(String(id))).filter(b => typeof b === 'string' && b.length);
+      const contentSnapshot = snapshotParts.length ? snapshotParts.join('\n---\n') : null;
       const btn = overlay.querySelector('#reportSheetSubmit');
       btn.disabled = true;
       // 複数選んでも1つの通報としてまとめる（target_idはカンマ区切りで複数入れる）
-      const { error } = await db.reports.submit(_currentUser.id, targetType, finalTargetIds.join(','), reason);
+      const { error } = await db.reports.submit(_currentUser.id, targetType, finalTargetIds.join(','), reason, contentSnapshot);
       overlay.remove();
       if(error) { alert(t('profileSaveFailedAlert')); return; }
       alert(t('reportSentAlert'));
@@ -19731,6 +19798,54 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
   let _contactSelectedCategory = null;
   let _pendingContactPrefill = null; // 他の画面(アカウント復元等)から連携する時の下書き{category, message}
+  let _contactSelectedAnime = null; // [追加] 著作権フォームで選んだ対象作品 {id, title}
+  let _contactAnimeSearchDebounce = null;
+
+  // [追加] 著作権フォーム専用：作品名から検索して選ばせる。既存のdb.animePages.search()を流用
+  function initContactAnimeSearch() {
+    const input = document.getElementById('contactAnimeSearchInput');
+    const suggestions = document.getElementById('contactAnimeSuggestions');
+    const selectedDisplay = document.getElementById('contactSelectedAnimeDisplay');
+    const selectedTitle = document.getElementById('contactSelectedAnimeTitle');
+    const clearBtn = document.getElementById('contactSelectedAnimeClear');
+    if(!input || input.dataset.init) return;
+    input.dataset.init = '1';
+    input.addEventListener('input', () => {
+      clearTimeout(_contactAnimeSearchDebounce);
+      const q = input.value.trim();
+      if(q.length < 2) { suggestions.style.display = 'none'; suggestions.innerHTML = ''; return; }
+      _contactAnimeSearchDebounce = setTimeout(async () => {
+        const results = await db.animePages.search(q, 8).catch(() => []);
+        if(!results.length) { suggestions.style.display = 'none'; suggestions.innerHTML = ''; return; }
+        suggestions.innerHTML = results.map(a => `
+          <button type="button" class="contact-anime-suggest-item" data-id="${escapeHtml(a.id)}" data-title="${escapeHtml(a.title || a.title_en || '')}"
+            style="display:block;width:100%;text-align:left;padding:.6rem .7rem;border:none;background:none;color:#dfeae3;font-size:.85rem;cursor:pointer;border-bottom:1px solid var(--line,#2a3830);">
+            ${escapeHtml(a.title || a.title_en || '(無題)')}
+          </button>`).join('');
+        suggestions.style.display = '';
+        suggestions.querySelectorAll('.contact-anime-suggest-item').forEach(item => {
+          item.onclick = () => {
+            _contactSelectedAnime = { id: item.dataset.id, title: item.dataset.title };
+            selectedTitle.textContent = item.dataset.title;
+            selectedDisplay.style.display = 'flex';
+            input.style.display = 'none';
+            suggestions.style.display = 'none';
+            suggestions.innerHTML = '';
+          };
+        });
+      }, 300);
+    });
+    if(clearBtn && !clearBtn.dataset.init) {
+      clearBtn.dataset.init = '1';
+      clearBtn.onclick = () => {
+        _contactSelectedAnime = null;
+        selectedDisplay.style.display = 'none';
+        input.style.display = '';
+        input.value = '';
+        input.focus();
+      };
+    }
+  }
 
   function initContactPage() {
     document.getElementById('contactFormSection').style.display = '';
@@ -19738,10 +19853,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('contactName').value = '';
     document.getElementById('contactMessage').value = _pendingContactPrefill?.message || '';
     document.getElementById('contactError').textContent = '';
+    // [追加] 著作権フォーム側のリセット
+    document.getElementById('contactReplyEmail').value = '';
+    document.getElementById('contactCopyrightConfirm').checked = false;
+    _contactSelectedAnime = null;
+    document.getElementById('contactSelectedAnimeDisplay').style.display = 'none';
+    document.getElementById('contactAnimeSearchInput').style.display = '';
+    document.getElementById('contactAnimeSearchInput').value = '';
+    document.getElementById('contactAnimeSuggestions').style.display = 'none';
+    initContactAnimeSearch();
     _contactSelectedCategory = _pendingContactPrefill?.category || null;
     const prefillCategory = _pendingContactPrefill?.category || null;
     _pendingContactPrefill = null;
     const chipsWrap = document.getElementById('contactCategoryChips');
+    const copyrightFieldsEl = document.getElementById('contactCopyrightFields');
     if(chipsWrap) {
       chipsWrap.innerHTML = CONTACT_CATEGORIES.map(c => `
         <button type="button" class="contact-category-chip" data-id="${c.id}" style="height:34px;padding:0 13px;border-radius:9px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:#c3d4c9;font-size:.76rem;font-weight:700;cursor:pointer;">${escapeHtml(c.label)}</button>
@@ -19755,6 +19880,8 @@ document.addEventListener('DOMContentLoaded', () => {
             c.style.borderColor = active ? 'rgba(94,201,122,.55)' : 'var(--line,#2a3830)';
             c.style.color = active ? '#a7ecc4' : '#c3d4c9';
           });
+          // [追加] 著作権カテゴリの時だけ専用項目を出す
+          if(copyrightFieldsEl) copyrightFieldsEl.style.display = (_contactSelectedCategory === 'copyright') ? '' : 'none';
         };
       });
       if(prefillCategory) {
@@ -19768,7 +19895,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function submitContactForm() {
     const name = document.getElementById('contactName').value.trim();
-    const message = document.getElementById('contactMessage').value.trim();
+    let message = document.getElementById('contactMessage').value.trim();
     const errEl = document.getElementById('contactError');
     const btn = document.getElementById('contactSubmitBtn');
     errEl.textContent = '';
@@ -19776,6 +19903,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!_contactSelectedCategory) { errEl.textContent = 'お問い合わせの種類を選んでください。'; return; }
     if(!message) { errEl.textContent = 'お問い合わせ内容を入力してください。'; return; }
     if(message.length > 2000) { errEl.textContent = '内容が長すぎます(2000文字以内)。'; return; }
+
+    // [追加] 著作権カテゴリの必須項目チェック。
+    // 管理画面側はメッセージ本文を正規表現で解析するだけなので、Edge Function自体は変更していない
+    // （アカウント復元リクエストの下書き連携と同じやり方を踏襲）
+    if(_contactSelectedCategory === 'copyright') {
+      const replyEmail = document.getElementById('contactReplyEmail').value.trim();
+      const confirmed = document.getElementById('contactCopyrightConfirm').checked;
+      if(!replyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyEmail)) { errEl.textContent = '返信用メールアドレスを正しく入力してください。'; return; }
+      if(!_contactSelectedAnime) { errEl.textContent = '対象の作品を検索して選択してください。'; return; }
+      if(!confirmed) { errEl.textContent = '著作権者ご本人または正当な代理人であることの確認にチェックしてください。'; return; }
+      message = `著作権に関する通報\n返信用メールアドレス: ${replyEmail}\n対象作品: ${_contactSelectedAnime.title}（作品ID: ${_contactSelectedAnime.id}）\n---\n${message}`;
+    }
 
     const turnstileToken = (typeof turnstile !== 'undefined' && _contactTurnstileWidgetId !== null)
       ? turnstile.getResponse(_contactTurnstileWidgetId) : null;
@@ -21434,10 +21573,15 @@ document.addEventListener('DOMContentLoaded', () => {
       // 復元リクエストのメッセージから、メールアドレスと復元先ユーザーIDを自動で抜き出す
       const RESTORE_EMAIL_RE = /アカウント復元リクエスト:\s*(\S+@\S+)/;
       const RESTORE_UID_RE = /復元先\(今ログイン中\)のユーザーID:\s*([0-9a-fA-F-]{36})/;
+      // [追加] 著作権通報のメッセージから、返信用メール・対象作品を自動で抜き出す(送信時に本文へ埋め込んでいる)
+      const COPYRIGHT_EMAIL_RE = /返信用メールアドレス:\s*(\S+@\S+)/;
+      const COPYRIGHT_ANIME_RE = /対象作品:\s*(.+?)（作品ID:\s*([^）]+)）/;
       el.innerHTML = sorted.map(m => {
         const emailMatch = m.message.match(RESTORE_EMAIL_RE);
         const uidMatch = m.message.match(RESTORE_UID_RE);
         const isRestoreRequest = !!emailMatch;
+        const copyrightEmailMatch = m.message.match(COPYRIGHT_EMAIL_RE);
+        const copyrightAnimeMatch = m.message.match(COPYRIGHT_ANIME_RE);
         return `
         <div style="border:1px solid ${m.is_read?'var(--line,#2a3830)':'rgba(94,201,122,.4)'};background:${m.is_read?'transparent':'rgba(94,201,122,.06)'};border-radius:10px;padding:10px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -21445,8 +21589,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="font-size:.68rem;color:var(--muted);">${escapeHtml(formatRelativeTime(m.created_at))}</span>
           </div>
           <span style="display:inline-block;font-size:.66rem;font-weight:800;color:#e8c463;background:rgba(217,164,65,.14);border-radius:5px;padding:1px 6px;margin-bottom:6px;">${escapeHtml(catLabel(m.category))}</span>
+          ${copyrightEmailMatch ? `
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
+            <a href="mailto:${escapeHtml(copyrightEmailMatch[1])}" style="font-size:.72rem;font-weight:700;color:#b9c9ff;background:rgba(159,188,255,.1);border:1px solid rgba(159,188,255,.4);border-radius:6px;padding:2px 8px;text-decoration:none;">✉️ ${escapeHtml(copyrightEmailMatch[1])}</a>
+            ${copyrightAnimeMatch ? `<a href="#" onclick="nav('anime','${escapeHtml(copyrightAnimeMatch[2])}');return false;" style="font-size:.72rem;font-weight:700;color:#a7ecc4;background:rgba(94,201,122,.12);border:1px solid rgba(94,201,122,.4);border-radius:6px;padding:2px 8px;text-decoration:none;">🎬 ${escapeHtml(copyrightAnimeMatch[1])}</a>` : ''}
+          </div>` : ''}
           <p style="font-size:.8rem;color:#c3d4c9;white-space:pre-wrap;margin:0 0 8px;">${escapeHtml(m.message)}</p>
           ${m.is_read ? '' : `<button type="button" class="admin-contact-read-btn" data-id="${m.id}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line,#2a3830);background:transparent;color:var(--muted);font-size:.7rem;cursor:pointer;margin-right:6px;">既読にする</button>`}
+          ${(copyrightEmailMatch && copyrightAnimeMatch) ? `<button type="button" class="admin-copyright-takedown-btn" data-id="${m.id}" data-email="${escapeHtml(copyrightEmailMatch[1])}" data-anime-id="${escapeHtml(copyrightAnimeMatch[2])}" data-anime-title="${escapeHtml(copyrightAnimeMatch[1])}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(234,84,84,.4);background:rgba(234,84,84,.1);color:#ea5454;font-size:.7rem;cursor:pointer;margin-right:6px;">🗑️ 画像を削除して対応</button>` : ''}
           ${isRestoreRequest ? `<button type="button" class="admin-contact-restore-btn" data-email="${escapeHtml(emailMatch[1])}" data-uid="${escapeHtml(uidMatch?.[1] || '')}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(159,188,255,.4);background:rgba(159,188,255,.1);color:#b9c9ff;font-size:.7rem;cursor:pointer;">🔎 この人の保管データを探して復元する</button>` : ''}
           <div class="admin-contact-restore-result" data-for="${m.id}" style="margin-top:8px;"></div>
         </div>
@@ -21457,6 +21607,41 @@ document.addEventListener('DOMContentLoaded', () => {
           btn.disabled = true;
           await db.contactMessages.markRead(btn.dataset.id);
           renderAdminContactMessages();
+        };
+      });
+      // [追加] 著作権通報の「画像を削除して対応」：
+      // ①その作品の画像を削除 → ②投稿した本人が分かれば「お知らせ」で報告 →
+      // ③通報者への返信メールをmailtoテンプレートで開く → ④お問い合わせを既読にする
+      el.querySelectorAll('.admin-copyright-takedown-btn').forEach(btn=>{
+        btn.onclick = async () => {
+          const animeId = btn.dataset.animeId;
+          const animeTitle = btn.dataset.animeTitle;
+          const email = btn.dataset.email;
+          if(!confirm(`「${animeTitle}」の画像を削除します。よろしいですか？`)) return;
+          btn.disabled = true;
+          try {
+            const { error } = await db.imageSubmissions.removeAnimeImage(animeId);
+            if(error) throw error;
+            // 投稿した本人が分かれば、マイページの「お知らせ」で本人に報告する
+            const uploaderId = await db.imageSubmissions.findLatestApprovedUploader(animeId).catch(()=>null);
+            if(uploaderId) {
+              await db.notices.send(
+                uploaderId,
+                '画像を削除しました',
+                `「${animeTitle}」に投稿していただいた画像について、著作権者の方からご指摘があったため削除いたしました。ご了承ください。`
+              ).catch(e => console.warn('お知らせ送信に失敗:', e));
+            }
+            await db.contactMessages.markRead(btn.dataset.id);
+            // 通報者への返信メールをテンプレート付きで開く(本文は編集可能)
+            const subject = encodeURIComponent(`「${animeTitle}」の画像削除について`);
+            const body = encodeURIComponent(`ご連絡ありがとうございます。\n\nご指摘いただきました「${animeTitle}」の画像につきまして、確認の上、削除いたしました。\nこの度はご不便・ご迷惑をおかけしましたことを深くお詫び申し上げます。\n\n今後このようなことがないよう努めてまいります。`);
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+            renderAdminContactMessages();
+          } catch(e) {
+            console.error('画像削除対応に失敗:', e);
+            alert('画像の削除に失敗しました');
+            btn.disabled = false;
+          }
         };
       });
       el.querySelectorAll('.admin-contact-restore-btn').forEach(btn=>{
@@ -21845,6 +22030,37 @@ document.addEventListener('DOMContentLoaded', () => {
       // [追加] target_typeのラベル。以前はreview以外を全部「掲示板投稿」扱いにしてしまい、
       // ユーザー通報(target_type==='user')が誤表示されていたので、3種類をきちんと出し分ける
       const REPORT_TYPE_LABEL = { review: '📝 レビュー', user: '👤 ユーザー', post: '💬 掲示板投稿' };
+      // [追加] target_id(掲示板投稿/レビューのid、複数選択時はカンマ区切り)から、
+      // 実際に通報された本文をまとめて取得する。今まではIDしか出ておらず内容が分からなかった
+      const postIds = [...new Set(reports.filter(r=>r.target_type==='post').flatMap(r=>String(r.target_id).split(',')))];
+      const reviewIds = [...new Set(reports.filter(r=>r.target_type==='review').flatMap(r=>String(r.target_id).split(',')))];
+      const postBodyMap = {}, reviewBodyMap = {};
+      try {
+        if(postIds.length) {
+          const { data } = await sb.from('board_posts').select('id,body').in('id', postIds);
+          (data||[]).forEach(p=>{ postBodyMap[p.id] = p.body; });
+        }
+        if(reviewIds.length) {
+          const { data } = await sb.from('reviews').select('id,comment').in('id', reviewIds);
+          (data||[]).forEach(r=>{ reviewBodyMap[r.id] = r.comment; });
+        }
+      } catch(e) { console.warn('report target content fetch:', e); }
+      function reportedContentHtml(report) {
+        if(report.target_type !== 'post' && report.target_type !== 'review') return '';
+        // [変更] まず通報時点のスナップショット(content_snapshot)を優先して使う。
+        // これがある通報は、対象が後から削除されても本文がちゃんと見える。
+        // 無い場合(このスナップショット機能を入れる前の古い通報)だけ、従来通りライブ参照にフォールバックする
+        let bodies;
+        if(report.content_snapshot) {
+          bodies = report.content_snapshot.split('\n---\n');
+        } else {
+          const map = report.target_type === 'post' ? postBodyMap : reviewBodyMap;
+          const ids = String(report.target_id).split(',');
+          bodies = ids.map(id => map[id]).filter(b => typeof b === 'string' && b.length);
+        }
+        if(!bodies.length) return `<p style="font-size:.75rem;color:var(--muted);font-style:italic;">（本文を取得できませんでした。対象が削除済み、または通報時点の記録が無い古い通報の可能性があります）</p>`;
+        return bodies.map(b => `<p style="font-size:.8rem;color:#dfeae3;background:rgba(255,255,255,.04);border-radius:8px;padding:.5rem .6rem;margin:.15rem 0;white-space:pre-wrap;word-break:break-word;">${escapeHtml(b.slice(0,300))}</p>`).join('');
+      }
       const reportsEl = document.getElementById('adminReportsList');
       if(reportsEl) {
         reportsEl.innerHTML = reports.length ? reports.map(r=>`
@@ -21853,7 +22069,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <span style="font-weight:700;color:#dff0e6;">${REPORT_TYPE_LABEL[r.target_type] || `💬 ${escapeHtml(String(r.target_type))}`}</span>
               <span style="color:var(--muted);font-size:.72rem;">${new Date(r.created_at).toLocaleDateString('ja-JP')}</span>
             </div>
-            <span style="color:var(--muted);font-size:.75rem;">対象ID: ${escapeHtml(r.target_id)}</span>
+            ${reportedContentHtml(r)}
             <span style="color:var(--muted);font-size:.75rem;">通報者: ${escapeHtml(reporterNameMap[r.reporter_id] || (r.reporter_id ? '(退会済み等)' : '不明'))}</span>
             ${r.reason ? `<span style="font-size:.8rem;color:#eaa9a9;">理由: ${escapeHtml(r.reason)}</span>` : ''}
             <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem;">
@@ -23091,7 +23307,7 @@ document.addEventListener('DOMContentLoaded', () => {
     db.auth.onAuthChange(async (session) => {
       _currentUser = session?.user || null;
       if(_currentUser && await checkSuspensionGate()) return;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); loadMyPlan(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); _currentPlan = 'free'; updateBoardSidebarAd(); }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); loadMyPlan(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; _unreadNoticeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); _currentPlan = 'free'; updateBoardSidebarAd(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -23517,11 +23733,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // 友達申請が1件でもあればそちらを数字で優先表示、無ければ掲示板未読の●だけ出す。
   let _boardHasUnreadFlag = false;
   let _friendReqBadgeCount = 0;
+  let _unreadNoticeCount = 0; // [追加] 運営からのお知らせ未読数
   function renderNotifBadges() {
     ['bnavNotifBadge', 'bnavcNotifBadge'].forEach(id => {
       const badge = document.getElementById(id);
       if(!badge) return;
-      if(_friendReqBadgeCount > 0) { badge.textContent = _friendReqBadgeCount; badge.style.display = ''; }
+      const total = _friendReqBadgeCount + _unreadNoticeCount;
+      if(total > 0) { badge.textContent = total; badge.style.display = ''; }
       else if(_boardHasUnreadFlag) { badge.textContent = '●'; badge.style.display = ''; }
       else { badge.style.display = 'none'; }
     });
@@ -23531,14 +23749,19 @@ document.addEventListener('DOMContentLoaded', () => {
     renderNotifBadges();
   }
   async function checkFriendRequestBadge() {
-    if(!_currentUser || !sb) { _friendReqBadgeCount = 0; renderNotifBadges(); return; }
+    if(!_currentUser || !sb) { _friendReqBadgeCount = 0; _unreadNoticeCount = 0; renderNotifBadges(); return; }
     try {
       _friendReqBadgeCount = await db.friendRequests.getIncomingCount(_currentUser.id);
     } catch(e) { console.warn('checkFriendRequestBadge:', e); }
+    // [追加] 運営からのお知らせ未読数も、同じバッジ更新のタイミングで一緒に見に行く
+    try {
+      _unreadNoticeCount = await db.notices.countUnread(_currentUser.id);
+    } catch(e) { console.warn('checkFriendRequestBadge(notices):', e); }
     renderNotifBadges();
     const menuBadge = document.getElementById('menuBadgeFriendReq');
     if(menuBadge) {
-      if(_friendReqBadgeCount > 0) { menuBadge.textContent = _friendReqBadgeCount; menuBadge.style.display = ''; }
+      const menuTotal = _friendReqBadgeCount + _unreadNoticeCount;
+      if(menuTotal > 0) { menuBadge.textContent = menuTotal; menuBadge.style.display = ''; }
       else { menuBadge.style.display = 'none'; }
     }
   }
@@ -24554,13 +24777,16 @@ document.addEventListener('DOMContentLoaded', () => {
       el.innerHTML = `<p style="font-size:.85rem;color:var(--muted);text-align:center;padding:2rem 0;">${escapeHtml(t('notificationsEmpty'))}</p>`;
       return;
     }
-    const incoming = await db.friendRequests.listIncoming(_currentUser.id).catch(()=>[]);
-    if(!incoming.length) {
+    const [incoming, notices] = await Promise.all([
+      db.friendRequests.listIncoming(_currentUser.id).catch(()=>[]),
+      db.notices.listForUser(_currentUser.id).catch(()=>[]),
+    ]);
+    if(!incoming.length && !notices.length) {
       el.innerHTML = `<p style="font-size:.85rem;color:var(--muted);text-align:center;padding:2rem 0;">${escapeHtml(t('notificationsEmpty'))}</p>`;
       return;
     }
     const profiles = await Promise.all(incoming.map(r => db.profiles.get(r.requester_id).catch(()=>null)));
-    el.innerHTML = incoming.map((r, i) => {
+    const friendRowsHtml = incoming.map((r, i) => {
       const p = profiles[i];
       const name = p?.username || t('userNotFound');
       return `<div class="mypage-menu-row" data-requester-id="${escapeHtml(r.requester_id)}" style="cursor:default;gap:10px;">
@@ -24571,6 +24797,19 @@ document.addEventListener('DOMContentLoaded', () => {
         </span>
       </div>`;
     }).join('');
+    // [追加] 運営からの個別お知らせ(著作権削除の連絡など)。未読を上に
+    const sortedNotices = [...notices].sort((a,b)=> (a.is_read === b.is_read) ? 0 : (a.is_read ? 1 : -1));
+    const noticeRowsHtml = sortedNotices.map(n => `
+      <div class="mypage-section" data-notice-id="${n.id}" style="border:1px solid ${n.is_read?'var(--line,#2a3830)':'rgba(94,201,122,.4)'};background:${n.is_read?'transparent':'rgba(94,201,122,.06)'};border-radius:10px;padding:10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:.82rem;font-weight:800;color:#dfeae3;">📢 ${escapeHtml(n.title)}</span>
+          <span style="font-size:.68rem;color:var(--muted);">${escapeHtml(formatRelativeTime(n.created_at))}</span>
+        </div>
+        <p style="font-size:.8rem;color:#c3d4c9;white-space:pre-wrap;margin:0 0 8px;">${escapeHtml(n.message)}</p>
+        ${n.is_read ? '' : `<button type="button" class="notif-notice-read-btn" data-id="${n.id}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line,#2a3830);background:transparent;color:var(--muted);font-size:.7rem;cursor:pointer;">既読にする</button>`}
+      </div>
+    `).join('');
+    el.innerHTML = friendRowsHtml + noticeRowsHtml;
     el.querySelectorAll('.notif-friend-accept').forEach(btn=>{
       btn.onclick = async () => {
         btn.disabled = true;
@@ -24584,6 +24823,13 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = true;
         await db.friendRequests.decline(btn.dataset.uid, _currentUser.id);
         checkFriendRequestBadge();
+        renderNotifications();
+      };
+    });
+    el.querySelectorAll('.notif-notice-read-btn').forEach(btn=>{
+      btn.onclick = async () => {
+        btn.disabled = true;
+        await db.notices.markRead(btn.dataset.id);
         renderNotifications();
       };
     });
