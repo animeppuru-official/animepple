@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.85'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.86'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -9869,7 +9869,19 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       all = await getPopularCandidates();
     }
-    const withCount = all.map(a=>({...a, _reviewCount: reviewCountInPeriod(a.id, period)}));
+    // [修正] 以前はブラウザにキャッシュ済みの(訪問済みの)作品のレビューしか見ておらず、
+    // 未訪問の作品が実際の件数によらず0件扱いになりランキングが不正確だった。
+    // 全作品ぶんの生レビューを1回で取得する仕組み(検索用マスターグラフと共通)に差し替える
+    const rawReviews = await ensureAllReviewsRawCache();
+    const byAnime = {};
+    rawReviews.forEach(r => { (byAnime[r.animeId] ||= []).push(r); });
+    const bound = periodBoundMs(period);
+    const withCount = all.map(a => {
+      const scoped = byAnime[a.id] || [];
+      const valid = filterGraphReviews(scoped);
+      const filtered = (bound === null) ? valid : valid.filter(r => new Date(r.createdAt || 0).getTime() >= bound);
+      return { ...a, _reviewCount: filtered.length };
+    });
     withCount.sort((a,b)=>b._reviewCount-a._reviewCount);
     return withCount.slice(page*POP_PAGE_SIZE, (page+1)*POP_PAGE_SIZE);
   }
@@ -16196,6 +16208,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function invalidateSearchMasterGraphCache() {
     _searchMasterGraphCache = null;
     _searchMasterGraphPromise = null;
+    _allReviewsRawCache = null; // [追加]
   }
   async function ensureSearchMasterGraphCache() {
     if(_searchMasterGraphCache) return _searchMasterGraphCache;
@@ -16237,9 +16250,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       _searchMasterGraphCache = cache;
       window._debugSearchCache = cache; // デバッグ用：DevToolsコンソールから中身を確認できるようにする
+      _allReviewsRawCache = localRows; // [追加] 人気ページのレビュー順(期間別)集計用に生の行も保持しておく
       return cache;
     })();
     return _searchMasterGraphPromise;
+  }
+  // [追加] 人気ページ「レビュー順」用：全作品の生レビュー行(期間で絞り込めるようcreatedAt付き)を返す。
+  // 以前はブラウザにキャッシュ済みの(＝そのユーザーが開いたことのある)作品のレビューしか
+  // 見ておらず、未訪問の作品が実際の件数によらず0件扱いになる不具合があったため、
+  // 検索用マスターグラフと同じ「全件取得」の仕組みを流用するようにした
+  let _allReviewsRawCache = null;
+  async function ensureAllReviewsRawCache() {
+    await ensureSearchMasterGraphCache();
+    return _allReviewsRawCache || [];
   }
 
   function hasSrProfile(){ return Object.values(srProfileA).some(v=>v!==-1)||Object.values(srProfileB).some(v=>v!==-1); }
