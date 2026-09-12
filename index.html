@@ -3281,7 +3281,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.78'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.80'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -7458,6 +7458,10 @@ document.addEventListener('DOMContentLoaded', () => {
       async add(blockerId, blockedId) {
         if(!sb || !blockerId || !blockedId) return { error: 'invalid' };
         const { error } = await sb.from('blocks').insert({ blocker_id: blockerId, blocked_id: blockedId });
+        // [追加] ブロックしたら友達関係も解消する。DMは友達関係のRLSだけを見て許可される作りなので、
+        // 友達のままだとブロック後もDMが送受信できてしまう抜けがあったため。
+        // 削除処理自体は既存のdb.friendRequests.unfriend()と同じなので、それをそのまま呼ぶ
+        if(!error) await db.friendRequests.unfriend(blockerId, blockedId).catch(()=>{});
         return { error };
       },
       async remove(blockerId, blockedId) {
@@ -21625,15 +21629,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 未対応の通報
       const reports = await db.reports.listUnresolved();
+      // [追加] 通報者のユーザー名をまとめて取得(nullは弾く。匿名通報等でreporter_idが無い場合は「不明」表示)
+      const reporterIds = [...new Set(reports.map(r=>r.reporter_id).filter(Boolean))];
+      const reporterProfiles = reporterIds.length ? await db.profiles.getByIds(reporterIds).catch(()=>[]) : [];
+      const reporterNameMap = Object.fromEntries(reporterProfiles.map(p=>[p.id, p.username]));
+      // [追加] target_typeのラベル。以前はreview以外を全部「掲示板投稿」扱いにしてしまい、
+      // ユーザー通報(target_type==='user')が誤表示されていたので、3種類をきちんと出し分ける
+      const REPORT_TYPE_LABEL = { review: '📝 レビュー', user: '👤 ユーザー', post: '💬 掲示板投稿' };
       const reportsEl = document.getElementById('adminReportsList');
       if(reportsEl) {
         reportsEl.innerHTML = reports.length ? reports.map(r=>`
           <div class="admin-row" style="flex-direction:column;align-items:flex-start;gap:.2rem;" data-report-id="${r.id}">
             <div style="display:flex;justify-content:space-between;width:100%;">
-              <span style="font-weight:700;color:#dff0e6;">${r.target_type==='review'?'📝 レビュー':'💬 掲示板投稿'}</span>
+              <span style="font-weight:700;color:#dff0e6;">${REPORT_TYPE_LABEL[r.target_type] || `💬 ${escapeHtml(String(r.target_type))}`}</span>
               <span style="color:var(--muted);font-size:.72rem;">${new Date(r.created_at).toLocaleDateString('ja-JP')}</span>
             </div>
             <span style="color:var(--muted);font-size:.75rem;">対象ID: ${escapeHtml(r.target_id)}</span>
+            <span style="color:var(--muted);font-size:.75rem;">通報者: ${escapeHtml(reporterNameMap[r.reporter_id] || (r.reporter_id ? '(退会済み等)' : '不明'))}</span>
+            ${r.reason ? `<span style="font-size:.8rem;color:#eaa9a9;">理由: ${escapeHtml(r.reason)}</span>` : ''}
             <button type="button" class="admin-resolve-report-btn" data-report-id="${r.id}" style="margin-top:.3rem;font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">対応済みにする</button>
           </div>
         `).join('') : '<p style="font-size:.8rem;color:var(--muted);">未対応の通報はありません</p>';
