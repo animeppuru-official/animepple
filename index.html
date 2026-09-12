@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.82'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.84'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -5805,6 +5805,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="admin-group-header">ユーザー投稿</div>
     <div class="admin-subnav-bar">
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="reports" onclick="adminShowUserSubTab('reports')">🚨 通報</button>
+      <button type="button" class="admin-subnav-pill" data-user-sub-tab="suspended" onclick="adminShowUserSubTab('suspended')">🚫 凍結中</button>
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="images" onclick="adminShowUserSubTab('images')">🖼️ 画像投稿</button>
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="contact" onclick="adminShowUserSubTab('contact')">✉️ お問い合わせ</button>
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="archive" onclick="adminShowUserSubTab('archive')">📦 退会済みアカウント</button>
@@ -5813,6 +5814,12 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="admin-user-submission-tab" data-user-sub-tab="reports">
       <h3 class="admin-section-title">🚨 未対応の通報</h3>
       <div id="adminReportsList"></div>
+    </div>
+    <!-- [追加] 凍結中のユーザー一覧 -->
+    <div class="admin-user-submission-tab" data-user-sub-tab="suspended">
+      <h3 class="admin-section-title">🚫 凍結中のユーザー</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">現在アカウントが凍結されているユーザー。「解除」を押すとすぐにログインできるようになります。</p>
+      <div id="adminSuspendedList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
     </div>
     <!-- 画像投稿：承認待ち一覧 -->
     <div class="admin-user-submission-tab" data-user-sub-tab="images">
@@ -6467,6 +6474,9 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div id="mypageRankProgress"></div>
     </div>
+
+    <!-- [追加] 通報対応(警告)：自分が運営から警告を受けている場合に表示。本人ページのみ -->
+    <div class="mypage-section mypage-owner-only" id="mypageWarningBanner" style="display:none;"></div>
 
     <!-- [追加] 管理者専用：テスト用にプランを即座に切り替えられるパネル(実際の課金は発生しない) -->
     <div class="mypage-section mypage-owner-only" id="mypageAdminPlanPanel" style="display:none;">
@@ -21518,10 +21528,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // [追加] 凍結中のユーザー一覧＋解除ボタン
+  async function renderAdminSuspendedUsers() {
+    const el = document.getElementById('adminSuspendedList');
+    if(!el || !sb) return;
+    try {
+      const { data, error } = await sb.from('profiles')
+        .select('id,username,suspended_until,suspension_reason')
+        .eq('is_suspended', true)
+        .order('suspended_until', { ascending: true, nullsFirst: true });
+      if(error) throw error;
+      const rows = data || [];
+      el.innerHTML = rows.length ? rows.map(r => `
+        <div class="admin-row" style="flex-direction:column;align-items:flex-start;gap:.2rem;" data-suspended-uid="${r.id}">
+          <div style="display:flex;justify-content:space-between;width:100%;">
+            <span style="font-weight:700;color:#dff0e6;">${escapeHtml(r.username || '(ユーザー名未設定)')}</span>
+            <span style="color:var(--muted);font-size:.72rem;">${r.suspended_until ? new Date(r.suspended_until).toLocaleString('ja-JP') + 'まで' : '無期限'}</span>
+          </div>
+          ${r.suspension_reason ? `<span style="font-size:.78rem;color:#eaa9a9;">理由: ${escapeHtml(r.suspension_reason)}</span>` : ''}
+          <button type="button" class="admin-unsuspend-btn" data-uid="${r.id}" style="margin-top:.3rem;font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">解除</button>
+        </div>
+      `).join('') : '<p style="font-size:.78rem;color:var(--muted);">現在凍結中のユーザーはいません</p>';
+      el.querySelectorAll('.admin-unsuspend-btn').forEach(btn => {
+        btn.onclick = async () => {
+          if(!confirm('凍結を解除しますか？')) return;
+          btn.disabled = true;
+          try {
+            const { data: sessionData } = await sb.auth.getSession();
+            const accessToken = sessionData?.session?.access_token;
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-moderate-user`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ targetUserId: btn.dataset.uid, action: 'unsuspend' }),
+            });
+            const resJson = await res.json();
+            if(!res.ok || !resJson.ok) throw new Error(resJson.error || 'failed');
+            btn.closest('[data-suspended-uid]').remove();
+          } catch(e) { console.error('凍結解除に失敗:', e); alert('解除に失敗しました'); btn.disabled = false; }
+        };
+      });
+    } catch(e) {
+      console.warn('renderAdminSuspendedUsers:', e);
+      el.innerHTML = '<p style="font-size:.78rem;color:var(--muted);">読み込みに失敗しました</p>';
+    }
+  }
+
   async function loadAdminData() {
     if(!sb) return;
     renderAdminImageSubmissions();
     renderAdminContactMessages();
+    renderAdminSuspendedUsers();
     try {
       // サイト監視: 直近のエラーログ
       const since24h = new Date(Date.now() - 24*3600*1000).toISOString();
@@ -21687,9 +21743,77 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="color:var(--muted);font-size:.75rem;">対象ID: ${escapeHtml(r.target_id)}</span>
             <span style="color:var(--muted);font-size:.75rem;">通報者: ${escapeHtml(reporterNameMap[r.reporter_id] || (r.reporter_id ? '(退会済み等)' : '不明'))}</span>
             ${r.reason ? `<span style="font-size:.8rem;color:#eaa9a9;">理由: ${escapeHtml(r.reason)}</span>` : ''}
-            <button type="button" class="admin-resolve-report-btn" data-report-id="${r.id}" style="margin-top:.3rem;font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">対応済みにする</button>
+            <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem;">
+              <button type="button" class="admin-warn-report-btn" data-report-id="${r.id}" style="font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:rgba(255,200,50,.12);border:1px solid rgba(255,200,50,.35);color:#ffc832;cursor:pointer;">⚠️ 警告</button>
+              <button type="button" class="admin-suspend-report-btn" data-report-id="${r.id}" style="font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:rgba(234,84,84,.12);border:1px solid rgba(234,84,84,.4);color:#ea5454;cursor:pointer;">🚫 凍結</button>
+              <button type="button" class="admin-resolve-report-btn" data-report-id="${r.id}" style="font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">対応済みにする</button>
+            </div>
           </div>
         `).join('') : '<p style="font-size:.8rem;color:var(--muted);">未対応の通報はありません</p>';
+        // [追加] 通報のtarget_type/target_idから、実際の投稿者(user_id)を特定する。
+        // target_type==='user'の時はtarget_id自体がuser_id、'post'/'review'の時は
+        // 対象コンテンツを引いてuser_idを取る(複数選択通報はカンマ区切りなので先頭の1件を見る)
+        async function resolveReportTargetUserId(report) {
+          if(report.target_type === 'user') return report.target_id;
+          const firstId = String(report.target_id).split(',')[0];
+          if(report.target_type === 'post') {
+            const { data } = await sb.from('board_posts').select('user_id').eq('id', firstId).maybeSingle();
+            return data?.user_id || null;
+          }
+          if(report.target_type === 'review') {
+            const { data } = await sb.from('reviews').select('user_id').eq('id', firstId).maybeSingle();
+            return data?.user_id || null;
+          }
+          return null;
+        }
+        // [追加] 警告・凍結の実行本体。管理者の認証トークンを付けてadmin-moderate-userを呼ぶ
+        async function callModerateUser(payload) {
+          const { data: sessionData } = await sb.auth.getSession();
+          const accessToken = sessionData?.session?.access_token;
+          const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-moderate-user`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const resJson = await res.json();
+          if(!res.ok || !resJson.ok) throw new Error(resJson.error || 'failed');
+        }
+        reportsEl.querySelectorAll('.admin-warn-report-btn').forEach(btn=>{
+          btn.onclick = async () => {
+            const report = reports.find(r => String(r.id) === btn.dataset.reportId);
+            const targetUserId = await resolveReportTargetUserId(report).catch(()=>null);
+            if(!targetUserId) { alert('対象ユーザーの特定に失敗しました（投稿が既に削除済み等の可能性があります）'); return; }
+            const reason = prompt('警告の理由（相手のマイページに表示されます）', report.reason || '');
+            if(reason === null) return;
+            btn.disabled = true;
+            try {
+              await callModerateUser({ targetUserId, action: 'warn', reason });
+              await db.reports.resolve(report.id);
+              btn.closest('[data-report-id]').remove();
+            } catch(e) { console.error('警告に失敗:', e); alert('警告の送信に失敗しました'); btn.disabled = false; }
+          };
+        });
+        reportsEl.querySelectorAll('.admin-suspend-report-btn').forEach(btn=>{
+          btn.onclick = async () => {
+            const report = reports.find(r => String(r.id) === btn.dataset.reportId);
+            const targetUserId = await resolveReportTargetUserId(report).catch(()=>null);
+            if(!targetUserId) { alert('対象ユーザーの特定に失敗しました（投稿が既に削除済み等の可能性があります）'); return; }
+            const durationInput = prompt('凍結日数を入力してください（空欄のままだと無期限凍結）', '7');
+            if(durationInput === null) return;
+            const durationDays = durationInput.trim() ? Number(durationInput.trim()) : null;
+            if(durationInput.trim() && (!Number.isFinite(durationDays) || durationDays <= 0)) { alert('日数は正の数で入力してください'); return; }
+            const reason = prompt('凍結の理由（本人には現状表示されます）', report.reason || '');
+            if(reason === null) return;
+            if(!confirm(`このユーザーを${durationDays ? durationDays + '日間' : '無期限で'}凍結します。よろしいですか？`)) return;
+            btn.disabled = true;
+            try {
+              await callModerateUser({ targetUserId, action: 'suspend', reason, durationDays });
+              await db.reports.resolve(report.id);
+              btn.closest('[data-report-id]').remove();
+              renderAdminSuspendedUsers();
+            } catch(e) { console.error('凍結に失敗:', e); alert('凍結処理に失敗しました'); btn.disabled = false; }
+          };
+        });
         reportsEl.querySelectorAll('.admin-resolve-report-btn').forEach(btn=>{
           btn.onclick = async () => {
             await db.reports.resolve(btn.dataset.reportId);
@@ -22459,6 +22583,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.closeChatTurnstileModal = closeChatTurnstileModal;
 
+  // [追加] 通報対応(凍結)：凍結中のアカウントでログインしようとした時に全画面で表示する案内。
+  // サインアウト済みの状態でこれを出すので、閉じる操作は用意していない(リロードすればログイン画面に戻る)
+  function showSuspendedScreen(reason, until) {
+    document.getElementById('suspendedScreenOverlay')?.remove();
+    const untilText = until ? `${new Date(until).toLocaleString('ja-JP')}まで` : '無期限で';
+    const overlay = document.createElement('div');
+    overlay.id = 'suspendedScreenOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0b0f0d;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;';
+    overlay.innerHTML = `<div style="max-width:360px;">
+      <p style="font-size:15px;color:#eee;font-weight:800;margin:0 0 12px;">アカウントが利用停止されています</p>
+      <p style="font-size:13px;color:#ccc;line-height:1.7;margin:0 0 8px;">${escapeHtml(untilText)}ご利用いただけません。</p>
+      ${reason ? `<p style="font-size:12px;color:#999;line-height:1.6;">理由: ${escapeHtml(reason)}</p>` : ''}
+    </div>`;
+    document.body.appendChild(overlay);
+  }
+
   // [追加] ベータ版中、ガチャ・プラン(サブスク)・コインショップの各ページを
   // ページ全体グレーアウト＋操作不可にする共通ヘルパー。対象コンテナ(.page要素)の中に
   // ロック用オーバーレイを重ねて表示し、中身のクリックを一切通さない。
@@ -22765,6 +22905,24 @@ document.addEventListener('DOMContentLoaded', () => {
   async function initAuth() {
     if(!sb) return;
 
+    // [追加] 通報対応(凍結)：ログインが確定した直後に凍結状態を確認し、凍結中ならログイン処理自体を
+    // その場で打ち切ってサインアウトさせる。呼び出し元でtrueが返ったら以降の初期化処理を続けない
+    async function checkSuspensionGate() {
+      if(!_currentUser || !sb) return false;
+      try {
+        const { data } = await sb.from('profiles').select('is_suspended,suspended_until,suspension_reason').eq('id', _currentUser.id).maybeSingle();
+        if(!data) return false;
+        const stillActive = data.is_suspended && (!data.suspended_until || new Date(data.suspended_until).getTime() > Date.now());
+        if(stillActive) {
+          showSuspendedScreen(data.suspension_reason, data.suspended_until);
+          await sb.auth.signOut().catch(()=>{});
+          _currentUser = null;
+          return true;
+        }
+      } catch(e) { console.warn('凍結状態の確認に失敗:', e); }
+      return false;
+    }
+
     // OAuthリダイレクト後のURLハッシュを明示的に処理
     // （GitHub PagesのようなSPAでは自動処理が効かない場合があるため）
     if(location.hash && location.hash.includes('access_token')) {
@@ -22772,6 +22930,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, error } = await sb.auth.getSession();
         if(data?.session) {
           _currentUser = data.session.user;
+          if(await checkSuspensionGate()) return;
           // ハッシュを消してホームにとどまる
           history.replaceState(null, '', location.pathname + location.search);
           const postLoginRedirect = sessionStorage.getItem('animepple_post_login_redirect');
@@ -22796,6 +22955,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const session = await db.auth.getSession();
     if(session?.user) {
       _currentUser = session.user;
+      if(await checkSuspensionGate()) return;
       checkOnboarding(); updateProfileCountry();
       loadMyGoldAnimeIds();
       ensureLoggedInUsername();
@@ -22810,8 +22970,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // yourValueHeaderBtn は常時表示（Design案通り）
     // 認証状態変化を監視
-    db.auth.onAuthChange((session) => {
+    db.auth.onAuthChange(async (session) => {
       _currentUser = session?.user || null;
+      if(_currentUser && await checkSuspensionGate()) return;
       if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); loadMyPlan(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); _currentPlan = 'free'; updateBoardSidebarAd(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
@@ -23655,6 +23816,27 @@ document.addEventListener('DOMContentLoaded', () => {
     let profileData = null;
     if(sb) {
       profileData = await db.profiles.get(targetUserId);
+    }
+
+    // [追加] 通報対応(警告)：本人ページの時だけ、直近の警告があればバナー表示する
+    const warningBanner = document.getElementById('mypageWarningBanner');
+    if(warningBanner) {
+      if(isOwnPage && sb) {
+        try {
+          const { data: latestWarning } = await sb.from('warnings').select('reason,created_at').eq('user_id', targetUserId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+          if(latestWarning) {
+            warningBanner.style.display = '';
+            warningBanner.style.cssText += 'border:1px solid rgba(234,169,169,.4);background:rgba(234,169,169,.08);border-radius:12px;padding:14px;';
+            warningBanner.innerHTML = `<p style="font-size:12px;color:#eaa9a9;font-weight:800;margin:0 0 6px;">⚠️ 運営から警告を受けています</p>
+              <p style="font-size:11.5px;color:#ddd;line-height:1.6;margin:0 0 4px;">${latestWarning.reason ? escapeHtml(latestWarning.reason) : '利用規約に反する行為が確認されました。'}</p>
+              <p style="font-size:10.5px;color:#8db5a0;margin:0;">${new Date(latestWarning.created_at).toLocaleDateString('ja-JP')}</p>`;
+          } else {
+            warningBanner.style.display = 'none';
+          }
+        } catch(e) { console.warn('警告履歴の取得に失敗:', e); warningBanner.style.display = 'none'; }
+      } else {
+        warningBanner.style.display = 'none';
+      }
     }
 
     // [追加] 管理者専用：プラン切り替えパネルの表示制御(本人ページ・is_adminの時だけ)
