@@ -2397,6 +2397,15 @@
     .admin-kpi-val { font-size:1.6rem; font-weight:800; color:var(--brand); }
     .admin-kpi-label { font-size:.75rem; color:var(--muted); margin-top:.2rem; }
     .admin-section { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:1rem; margin-bottom:.75rem; }
+    /* [追加] 「ユーザー投稿」ページ内の4分割サブタブ */
+    .admin-subnav-bar { display:flex; gap:.35rem; overflow-x:auto; margin-bottom:.9rem; -webkit-overflow-scrolling:touch; }
+    .admin-subnav-pill {
+      flex-shrink:0; background:var(--card2); border:1px solid var(--line); color:var(--muted);
+      border-radius:999px; padding:.4rem .8rem; font-size:.74rem; cursor:pointer; white-space:nowrap;
+    }
+    .admin-subnav-pill:hover { background:rgba(94,201,122,.12); color:#dff0e6; border-color:var(--brand); }
+    .admin-subnav-pill.is-current { background:var(--brand); color:#07200f; border-color:var(--brand); font-weight:800; }
+    .admin-user-submission-tab { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:1rem; margin-bottom:.75rem; }
     .admin-trend-toggle { display:flex; gap:.4rem; margin-bottom:.6rem; }
     .admin-trend-btn { background:var(--card); border:1px solid var(--line); border-radius:999px; padding:.25rem .75rem; font-size:.74rem; color:var(--muted); cursor:pointer; }
     .admin-trend-btn.active { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
@@ -3282,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.81'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.82'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -5794,26 +5803,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <div id="admin-group-user-submissions" class="admin-page-group">
     <div class="admin-group-header">ユーザー投稿</div>
+    <div class="admin-subnav-bar">
+      <button type="button" class="admin-subnav-pill" data-user-sub-tab="reports" onclick="adminShowUserSubTab('reports')">🚨 通報</button>
+      <button type="button" class="admin-subnav-pill" data-user-sub-tab="images" onclick="adminShowUserSubTab('images')">🖼️ 画像投稿</button>
+      <button type="button" class="admin-subnav-pill" data-user-sub-tab="contact" onclick="adminShowUserSubTab('contact')">✉️ お問い合わせ</button>
+      <button type="button" class="admin-subnav-pill" data-user-sub-tab="archive" onclick="adminShowUserSubTab('archive')">📦 退会済みアカウント</button>
+    </div>
     <!-- 通報一覧 -->
-    <div class="admin-section">
+    <div class="admin-user-submission-tab" data-user-sub-tab="reports">
       <h3 class="admin-section-title">🚨 未対応の通報</h3>
       <div id="adminReportsList"></div>
     </div>
     <!-- 画像投稿：承認待ち一覧 -->
-    <div class="admin-section">
+    <div class="admin-user-submission-tab" data-user-sub-tab="images">
       <h3 class="admin-section-title">🖼️ 画像投稿の承認待ち</h3>
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">ユーザーから投稿されたポスター画像。承認するとその作品のページに反映されます。</p>
       <div id="adminImageSubmissionsList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
     </div>
     <!-- お問い合わせ一覧（アカウント復元の相談もここに届く） -->
-    <div class="admin-section">
+    <div class="admin-user-submission-tab" data-user-sub-tab="contact">
       <h3 class="admin-section-title">✉️ お問い合わせ</h3>
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">フォームから届いたお問い合わせ。メールではなく、ここに直接届きます。アカウント復元の相談もここ(種類:アカウント)に届きます。</p>
       <div id="adminContactCategoryTabs" style="display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.7rem;"></div>
       <div id="adminContactMessagesList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
     </div>
     <!-- 退会済みアカウント -->
-    <div class="admin-section">
+    <div class="admin-user-submission-tab" data-user-sub-tab="archive">
       <h3 class="admin-section-title">📦 退会済みアカウントのバックアップ</h3>
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">実際にデータを消す前に取ったバックアップ一覧。本人から「データを返してほしい」と連絡があった時に、ここから中身を確認できます。保管期間は半年で、それを過ぎたものは自動で削除されます。</p>
       <div id="adminDeletedArchiveList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
@@ -20938,9 +20953,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.admin-nav-pill').forEach(btn => {
       btn.classList.toggle('is-current', btn.dataset.adminPage === groupId);
     });
+    // [追加] ユーザー投稿ページを開いた時は、常に先頭(通報)のサブタブから表示する
+    if(groupId === 'admin-group-user-submissions') adminShowUserSubTab('reports');
     document.getElementById('adminDashboard')?.scrollTo({ top: 0, behavior: 'instant' });
   }
   window.adminShowPage = adminShowPage;
+
+  // [追加] 「ユーザー投稿」ページ内の4分割(通報/画像投稿/お問い合わせ/退会済みアカウント)の出し分け
+  function adminShowUserSubTab(tabId) {
+    document.querySelectorAll('.admin-user-submission-tab').forEach(el => {
+      el.style.display = (el.dataset.userSubTab === tabId) ? '' : 'none';
+    });
+    document.querySelectorAll('.admin-subnav-pill').forEach(btn => {
+      btn.classList.toggle('is-current', btn.dataset.userSubTab === tabId);
+    });
+  }
+  window.adminShowUserSubTab = adminShowUserSubTab;
 
   // 汎用: ラベル付き横棒リストを描画（ランキング・比率どちらにも使う）
   function renderAdminBarList(containerId, items, opts) {
