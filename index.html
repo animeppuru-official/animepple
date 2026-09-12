@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.95'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.97'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -7462,13 +7462,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const path = `${userId}/${animeId}-${Date.now()}.jpg`;
         const { error: uploadError } = await sb.storage.from('anime-image-submissions').upload(path, blob, { contentType: 'image/jpeg' });
         if(uploadError) return { error: uploadError };
-        const { error } = await sb.from('image_submissions').insert({ anime_id: animeId, user_id: userId, image_path: path });
+        // [追加] 投稿者のユーザー名・メールアドレスをこの時点でスナップショットしておく。
+        // 著作権指摘で削除した時、退会・改名されていても投稿者が誰だったか分かるようにするため
+        const username = window._loggedInUsername || null;
+        const email = _currentUser?.email || null;
+        const { error } = await sb.from('image_submissions').insert({ anime_id: animeId, user_id: userId, image_path: path, username, email });
         return { error };
       },
       // 管理者向け：承認待ち一覧（画像は非公開バケットのため、表示用に一時的な署名付きURLを発行する）
       async listPending() {
         if(!sb) return [];
-        const { data } = await sb.from('image_submissions').select('id, anime_id, user_id, image_path, created_at').eq('status', 'pending').order('created_at', { ascending: true });
+        const { data } = await sb.from('image_submissions').select('id, anime_id, user_id, username, email, image_path, created_at').eq('status', 'pending').order('created_at', { ascending: true });
         if(!data || !data.length) return [];
         const withUrls = await Promise.all(data.map(async row => {
           const { data: signed } = await sb.storage.from('anime-image-submissions').createSignedUrl(row.image_path, 600);
@@ -7498,11 +7502,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return { error };
       },
       // [追加] 著作権対応：ある作品に直近で「承認された」画像を投稿したユーザーを探す
-      // (お知らせを送る相手を特定するため。見つからない場合はnull＝運営が直接入れた画像等)
+      // (お知らせを送る相手を特定するため。見つからない場合はnull＝運営が直接入れた画像等)。
+      // username/emailは投稿時点のスナップショットなので、退会・改名後でも当時の情報が分かる
       async findLatestApprovedUploader(animeId) {
         if(!sb) return null;
-        const { data } = await sb.from('image_submissions').select('user_id').eq('anime_id', animeId).eq('status', 'approved').order('reviewed_at', { ascending: false }).limit(1).maybeSingle();
-        return data?.user_id || null;
+        const { data } = await sb.from('image_submissions').select('user_id,username,email').eq('anime_id', animeId).eq('status', 'approved').order('reviewed_at', { ascending: false }).limit(1).maybeSingle();
+        return data || null;
       },
       // [追加] 著作権対応：作品のポスター画像を削除する(プレースホルダー表示に戻す)
       async removeAnimeImage(animeId) {
@@ -21683,7 +21688,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span style="display:inline-block;font-size:.66rem;font-weight:800;color:#e8c463;background:rgba(217,164,65,.14);border-radius:5px;padding:1px 6px;margin-bottom:6px;">${escapeHtml(catLabel(m.category))}</span>
           ${copyrightEmailMatch ? `
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
-            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(copyrightEmailMatch[1])}&authuser=sapotoforamu@gmail.com" target="_blank" rel="noopener noreferrer" style="font-size:.72rem;font-weight:700;color:#b9c9ff;background:rgba(159,188,255,.1);border:1px solid rgba(159,188,255,.4);border-radius:6px;padding:2px 8px;text-decoration:none;">✉️ ${escapeHtml(copyrightEmailMatch[1])}</a>
+            <span style="font-size:.72rem;font-weight:700;color:#8db5a0;background:rgba(159,188,255,.06);border:1px solid rgba(159,188,255,.25);border-radius:6px;padding:2px 8px;">✉️ ${escapeHtml(copyrightEmailMatch[1])}</span>
             ${copyrightAnimeMatch ? `<a href="#" onclick="showAdminAnimeImagePreview('${escapeHtml(copyrightAnimeMatch[2])}','${escapeHtml(copyrightAnimeMatch[1]).replace(/'/g,"\\'")}');return false;" style="font-size:.72rem;font-weight:700;color:#a7ecc4;background:rgba(94,201,122,.12);border:1px solid rgba(94,201,122,.4);border-radius:6px;padding:2px 8px;text-decoration:none;">🎬 ${escapeHtml(copyrightAnimeMatch[1])}</a>` : ''}
           </div>` : ''}
           <p style="font-size:.8rem;color:#c3d4c9;white-space:pre-wrap;margin:0 0 8px;">${escapeHtml(m.message)}</p>
@@ -21704,32 +21709,43 @@ document.addEventListener('DOMContentLoaded', () => {
           renderAdminContactMessages();
         };
       });
-      // [変更] 著作権通報の対応を2段階に分ける：
-      // ①「画像を削除する」→ その場で削除＋(分かれば)投稿者へお知らせ。この時点ではメールは送らない
-      // ②画像削除が成功して初めて「✉️ Gmailで返信」が押せるようになる(削除前は無効化)
+      // [変更] 著作権通報の対応：
+      // ①「画像を削除する」→ その場で削除＋(分かれば)投稿者へお知らせ →
+      //   成功したらそのままGmail作成画面を自動で開く(確認クリック不要)
+      // ②「✉️ Gmailで返信」は、削除前は安全策として無効化。削除後は押せる状態のまま残し、
+      //   手動でもう一度開き直したい時に使えるようにする
+      function openCopyrightReplyGmail(email, animeTitle) {
+        const subject = encodeURIComponent(`「${animeTitle}」の画像削除について`);
+        const body = encodeURIComponent(`ご連絡ありがとうございます。\n\nご指摘いただきました「${animeTitle}」の画像につきまして、確認の上、削除いたしました。\nこの度はご不便・ご迷惑をおかけしましたことを深くお詫び申し上げます。\n\n今後このようなことがないよう努めてまいります。`);
+        window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${subject}&body=${body}&authuser=sapotoforamu@gmail.com`, '_blank');
+      }
       el.querySelectorAll('.admin-copyright-delete-btn').forEach(btn=>{
         btn.onclick = async () => {
           const animeId = btn.dataset.animeId;
           const animeTitle = btn.dataset.animeTitle;
+          const email = btn.dataset.email;
           if(!confirm(`「${animeTitle}」の画像を削除します。よろしいですか？`)) return;
           btn.disabled = true;
           try {
             const { error } = await db.imageSubmissions.removeAnimeImage(animeId);
             if(error) throw error;
             // 投稿した本人が分かれば、マイページの「お知らせ」で本人に報告する
-            const uploaderId = await db.imageSubmissions.findLatestApprovedUploader(animeId).catch(()=>null);
-            if(uploaderId) {
+            const uploader = await db.imageSubmissions.findLatestApprovedUploader(animeId).catch(()=>null);
+            if(uploader?.user_id) {
               await db.notices.send(
-                uploaderId,
+                uploader.user_id,
                 '画像を削除しました',
                 `「${animeTitle}」に投稿していただいた画像について、著作権者の方からご指摘があったため削除いたしました。ご了承ください。`
               ).catch(e => console.warn('お知らせ送信に失敗:', e));
             }
+            await db.contactMessages.markRead(btn.dataset.id);
             btn.textContent = '✅ 削除済み';
             btn.style.opacity = '.6';
             btn.style.cursor = 'default';
             const gmailBtn = btn.parentElement.querySelector(`.admin-copyright-gmail-btn[data-id="${btn.dataset.id}"]`);
             if(gmailBtn) { gmailBtn.disabled = false; gmailBtn.style.opacity = '1'; gmailBtn.style.cursor = 'pointer'; }
+            // 削除が成立した瞬間に、確認なしでそのままGmail作成画面を開く
+            openCopyrightReplyGmail(email, animeTitle);
           } catch(e) {
             console.error('画像削除に失敗:', e);
             alert('画像の削除に失敗しました');
@@ -21738,16 +21754,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       });
       el.querySelectorAll('.admin-copyright-gmail-btn').forEach(btn=>{
-        btn.onclick = async () => {
+        btn.onclick = () => {
           if(btn.disabled) return;
-          const email = btn.dataset.email;
-          const animeTitle = btn.dataset.animeTitle;
-          await db.contactMessages.markRead(btn.dataset.id);
-          // 通報者への返信メールをテンプレート付きでGmailの作成画面(Web)で開く(本文は編集可能)
-          const subject = encodeURIComponent(`「${animeTitle}」の画像削除について`);
-          const body = encodeURIComponent(`ご連絡ありがとうございます。\n\nご指摘いただきました「${animeTitle}」の画像につきまして、確認の上、削除いたしました。\nこの度はご不便・ご迷惑をおかけしましたことを深くお詫び申し上げます。\n\n今後このようなことがないよう努めてまいります。`);
-          window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${subject}&body=${body}&authuser=sapotoforamu@gmail.com`, '_blank');
-          renderAdminContactMessages();
+          openCopyrightReplyGmail(btn.dataset.email, btn.dataset.animeTitle);
         };
       });
       el.querySelectorAll('.admin-contact-restore-btn').forEach(btn=>{
@@ -21816,6 +21825,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ${p.previewUrl ? `<img src="${escapeHtml(p.previewUrl)}" style="width:80px;height:112px;object-fit:cover;border-radius:6px;flex:0 0 80px;background:#141c19;">` : `<div style="width:80px;height:112px;flex:0 0 80px;background:#141c19;border-radius:6px;"></div>`}
             <div style="flex:1 1 auto;min-width:0;">
               <div style="font-size:.82rem;font-weight:800;color:#dfeae3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(title)}</div>
+              <div style="font-size:.72rem;color:#8db5a0;margin-bottom:2px;">投稿者: ${escapeHtml(p.username || '(ユーザー名未設定)')}${p.email ? ` ／ ${escapeHtml(p.email)}` : ''}</div>
               <div style="font-size:.7rem;color:var(--muted);margin-bottom:8px;">${escapeHtml(formatRelativeTime(p.created_at))}</div>
               <div style="display:flex;gap:6px;">
                 <button type="button" class="admin-img-approve-btn" data-id="${p.id}" style="height:32px;padding:0 12px;border-radius:8px;border:none;background:#5ec97a;color:#07200f;font-size:.75rem;font-weight:800;cursor:pointer;">承認する</button>
