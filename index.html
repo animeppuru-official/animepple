@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.91'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.92'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -6346,14 +6346,8 @@ document.addEventListener('DOMContentLoaded', () => {
       <input id="contactName" type="text" placeholder="お名前" data-i18n="phContactName"
         style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;" />
 
-      <!-- [追加] 著作権についての通報を選んだ時だけ出す専用項目 -->
-      <div id="contactCopyrightFields" style="display:none;border:1px solid rgba(217,164,65,.35);background:rgba(217,164,65,.06);border-radius:12px;padding:.9rem;margin-bottom:.8rem;">
-        <p style="font-size:.74rem;color:#e8c463;font-weight:800;margin:0 0 .7rem;">著作権に関するご連絡は、著作権者ご本人またはその正当な代理人からのみ受け付けています。</p>
-
-        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">返信用メールアドレス<span style="color:#ff8888;">*</span></label>
-        <input id="contactReplyEmail" type="email" placeholder="reply@example.com"
-          style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;" />
-
+      <!-- [追加] 作品を特定する必要があるカテゴリ(著作権/作品情報の誤り/あらすじ・タグの誤り)で出す共通の作品選択欄 -->
+      <div id="contactAnimeFields" style="display:none;margin-bottom:.8rem;">
         <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">対象の作品<span style="color:#ff8888;">*</span></label>
         <input id="contactAnimeSearchInput" type="text" placeholder="作品名で検索"
           style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;" />
@@ -6362,8 +6356,17 @@ document.addEventListener('DOMContentLoaded', () => {
           <span style="font-size:.82rem;color:#a7ecc4;font-weight:700;flex:1;" id="contactSelectedAnimeTitle"></span>
           <button type="button" id="contactSelectedAnimeClear" style="background:none;border:none;color:#8db5a0;font-size:.75rem;cursor:pointer;text-decoration:underline;">変更</button>
         </div>
+      </div>
 
-        <label style="display:flex;align-items:flex-start;gap:8px;margin-top:.9rem;cursor:pointer;">
+      <!-- [追加] 著作権についての通報を選んだ時だけ出す専用項目(返信先の確認まわり) -->
+      <div id="contactCopyrightFields" style="display:none;border:1px solid rgba(217,164,65,.35);background:rgba(217,164,65,.06);border-radius:12px;padding:.9rem;margin-bottom:.8rem;">
+        <p style="font-size:.74rem;color:#e8c463;font-weight:800;margin:0 0 .7rem;">著作権に関するご連絡は、著作権者ご本人またはその正当な代理人からのみ受け付けています。</p>
+
+        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">返信用メールアドレス<span style="color:#ff8888;">*</span></label>
+        <input id="contactReplyEmail" type="email" placeholder="reply@example.com"
+          style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;" />
+
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
           <input id="contactCopyrightConfirm" type="checkbox" style="margin-top:3px;accent-color:#5ec97a;">
           <span style="font-size:.76rem;color:#c3d4c9;line-height:1.5;">私は、上記対象作品の著作権者本人、またはその正当な権限を有する代理人です。</span>
         </label>
@@ -19798,10 +19801,34 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
   let _contactSelectedCategory = null;
   let _pendingContactPrefill = null; // 他の画面(アカウント復元等)から連携する時の下書き{category, message}
-  let _contactSelectedAnime = null; // [追加] 著作権フォームで選んだ対象作品 {id, title}
+  let _contactSelectedAnime = null; // [追加] 作品選択欄で選んだ対象作品 {id, title}
   let _contactAnimeSearchDebounce = null;
+  let _contactAnimeCandidatesCache = null; // [追加] 作品選択欄の検索候補(ローカル全件+Supabase)
+  // 対象の作品を必須にするカテゴリ(著作権/作品情報の誤り/あらすじ・タグの誤り)
+  const CONTACT_CATEGORIES_NEEDING_ANIME = ['copyright', 'title', 'tagError'];
 
-  // [追加] 著作権フォーム専用：作品名から検索して選ばせる。既存のdb.animePages.search()を流用
+  // [追加] 作品選択欄の検索候補を用意する。以前はSupabaseのanime_pagesテーブルだけを
+  // db.animePages.search()で検索していたため、ローカルの元データ(seedAnime)にしかない
+  // 作品がヒットせず「候補が出ない」原因になっていた。実際の検索ページと同じデータソース
+  // (ローカル全件+Supabase全件)にして、同じfuzzyIncludes()で一致判定する
+  async function getContactAnimeCandidates() {
+    if(_contactAnimeCandidatesCache) return _contactAnimeCandidatesCache;
+    let list = (DB_MODE === 'supabase' && sb) ? getSeedOnly() : getAll();
+    if(DB_MODE === 'supabase' && sb) {
+      try {
+        const { items: dbPages } = await db.animePages.getAllForSearch();
+        const existingIds = new Set(list.map(a=>a.id));
+        const dbItems = (dbPages||[]).filter(p=>!existingIds.has(p.id)).map(p=>({
+          id: p.id, title: p.title||p.title_en||'', titleEn: p.title_en||p.title||'', meta: p.meta||'',
+        }));
+        list = [...list, ...dbItems];
+      } catch(e) { console.warn('contact anime candidates fetch:', e); }
+    }
+    _contactAnimeCandidatesCache = list;
+    return list;
+  }
+
+  // [追加] 作品選択欄：作品名から検索して選ばせる
   function initContactAnimeSearch() {
     const input = document.getElementById('contactAnimeSearchInput');
     const suggestions = document.getElementById('contactAnimeSuggestions');
@@ -19812,15 +19839,18 @@ document.addEventListener('DOMContentLoaded', () => {
     input.dataset.init = '1';
     input.addEventListener('input', () => {
       clearTimeout(_contactAnimeSearchDebounce);
-      const q = input.value.trim();
-      if(q.length < 2) { suggestions.style.display = 'none'; suggestions.innerHTML = ''; return; }
+      const q = input.value.trim().toLowerCase();
+      if(q.length < 1) { suggestions.style.display = 'none'; suggestions.innerHTML = ''; return; }
       _contactAnimeSearchDebounce = setTimeout(async () => {
-        const results = await db.animePages.search(q, 8).catch(() => []);
-        if(!results.length) { suggestions.style.display = 'none'; suggestions.innerHTML = ''; return; }
+        const candidates = await getContactAnimeCandidates();
+        const results = candidates
+          .filter(a => fuzzyIncludes(`${a.title||''} ${a.titleEn||''} ${a.meta||''}`.toLowerCase(), q))
+          .slice(0, 8);
+        if(!results.length) { suggestions.style.display = ''; suggestions.innerHTML = '<p style="padding:.6rem .7rem;margin:0;font-size:.8rem;color:var(--muted);">見つかりませんでした</p>'; return; }
         suggestions.innerHTML = results.map(a => `
-          <button type="button" class="contact-anime-suggest-item" data-id="${escapeHtml(a.id)}" data-title="${escapeHtml(a.title || a.title_en || '')}"
+          <button type="button" class="contact-anime-suggest-item" data-id="${escapeHtml(a.id)}" data-title="${escapeHtml(a.title || a.titleEn || '')}"
             style="display:block;width:100%;text-align:left;padding:.6rem .7rem;border:none;background:none;color:#dfeae3;font-size:.85rem;cursor:pointer;border-bottom:1px solid var(--line,#2a3830);">
-            ${escapeHtml(a.title || a.title_en || '(無題)')}
+            ${escapeHtml(a.title || a.titleEn || '(無題)')}
           </button>`).join('');
         suggestions.style.display = '';
         suggestions.querySelectorAll('.contact-anime-suggest-item').forEach(item => {
@@ -19833,7 +19863,7 @@ document.addEventListener('DOMContentLoaded', () => {
             suggestions.innerHTML = '';
           };
         });
-      }, 300);
+      }, 200);
     });
     if(clearBtn && !clearBtn.dataset.init) {
       clearBtn.dataset.init = '1';
@@ -19853,7 +19883,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('contactName').value = '';
     document.getElementById('contactMessage').value = _pendingContactPrefill?.message || '';
     document.getElementById('contactError').textContent = '';
-    // [追加] 著作権フォーム側のリセット
+    // [追加] 作品選択欄・著作権フォーム側のリセット
+    document.getElementById('contactAnimeFields').style.display = 'none';
     document.getElementById('contactReplyEmail').value = '';
     document.getElementById('contactCopyrightConfirm').checked = false;
     _contactSelectedAnime = null;
@@ -19880,7 +19911,10 @@ document.addEventListener('DOMContentLoaded', () => {
             c.style.borderColor = active ? 'rgba(94,201,122,.55)' : 'var(--line,#2a3830)';
             c.style.color = active ? '#a7ecc4' : '#c3d4c9';
           });
-          // [追加] 著作権カテゴリの時だけ専用項目を出す
+          // [変更] 作品選択欄は著作権/作品情報の誤り/あらすじ・タグの誤りの3カテゴリで出す。
+          // 返信メール＋確認チェックボックスは著作権だけ
+          const animeFieldsEl = document.getElementById('contactAnimeFields');
+          if(animeFieldsEl) animeFieldsEl.style.display = CONTACT_CATEGORIES_NEEDING_ANIME.includes(_contactSelectedCategory) ? '' : 'none';
           if(copyrightFieldsEl) copyrightFieldsEl.style.display = (_contactSelectedCategory === 'copyright') ? '' : 'none';
         };
       });
@@ -19904,16 +19938,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!message) { errEl.textContent = 'お問い合わせ内容を入力してください。'; return; }
     if(message.length > 2000) { errEl.textContent = '内容が長すぎます(2000文字以内)。'; return; }
 
-    // [追加] 著作権カテゴリの必須項目チェック。
-    // 管理画面側はメッセージ本文を正規表現で解析するだけなので、Edge Function自体は変更していない
-    // （アカウント復元リクエストの下書き連携と同じやり方を踏襲）
+    // [変更] 対象作品の必須チェックは3カテゴリ共通。返信メール・確認チェックボックスは著作権のみ
+    if(CONTACT_CATEGORIES_NEEDING_ANIME.includes(_contactSelectedCategory)) {
+      if(!_contactSelectedAnime) { errEl.textContent = '対象の作品を検索して選択してください。'; return; }
+    }
     if(_contactSelectedCategory === 'copyright') {
       const replyEmail = document.getElementById('contactReplyEmail').value.trim();
       const confirmed = document.getElementById('contactCopyrightConfirm').checked;
       if(!replyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyEmail)) { errEl.textContent = '返信用メールアドレスを正しく入力してください。'; return; }
-      if(!_contactSelectedAnime) { errEl.textContent = '対象の作品を検索して選択してください。'; return; }
       if(!confirmed) { errEl.textContent = '著作権者ご本人または正当な代理人であることの確認にチェックしてください。'; return; }
       message = `著作権に関する通報\n返信用メールアドレス: ${replyEmail}\n対象作品: ${_contactSelectedAnime.title}（作品ID: ${_contactSelectedAnime.id}）\n---\n${message}`;
+    } else if(CONTACT_CATEGORIES_NEEDING_ANIME.includes(_contactSelectedCategory)) {
+      message = `対象作品: ${_contactSelectedAnime.title}（作品ID: ${_contactSelectedAnime.id}）\n---\n${message}`;
     }
 
     const turnstileToken = (typeof turnstile !== 'undefined' && _contactTurnstileWidgetId !== null)
