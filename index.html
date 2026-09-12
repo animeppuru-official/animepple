@@ -78,10 +78,15 @@
       padding:28px 24px; max-width:320px; color:#eee; }
     .beta-lock-icon { font-size:32px; margin-bottom:10px; }
     .beta-lock-msg { font-size:14px; line-height:1.6; color:#ddd; }
-    /* [追加] 完成版段階でのクリエイターズカード個別ロック */
-    .plan-card.is-creators-locked { filter:grayscale(1) brightness(.7); position:relative; }
-    .plan-card.is-creators-locked .plan-subscribe-btn { cursor:not-allowed; }
-    .plan-creators-lock-note { font-size:10.5px; color:#8db5a0; margin:6px 0 0; text-align:center; }
+    /* [追加] 完成版段階でのクリエイターズカード個別ロック(ボタン本体には触れず上に重ねる方式) */
+    .plan-card.is-creators-locked { position:relative; }
+    .plan-card.is-creators-locked > *:not(.plan-creators-lock-overlay) { filter:grayscale(1) brightness(.7); }
+    .plan-creators-lock-overlay { position:absolute; inset:0; z-index:5; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; text-align:center; padding:16px;
+      background:rgba(10,10,12,.32); border-radius:14px; }
+    .plan-creators-lock-badge { background:rgba(20,20,24,.92); border:1px solid rgba(255,255,255,.14);
+      border-radius:20px; padding:8px 16px; font-size:13px; font-weight:800; color:#eee; }
+    .plan-creators-lock-note { font-size:10.5px; color:#ddd; margin:8px 0 0; max-width:220px; }
     body.admin-fullpage .page { padding-bottom:0; }
     .page.active { display:block; }
 
@@ -3276,7 +3281,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.76'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.313.77'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -14865,25 +14870,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // [追加] 記事の広場が未公開の間(released段階)は、上のボタン処理が何を設定していても、
     // クリエイターズカードだけ上書きしてロック表示にする(＋カードはそのまま購入可能)。
     // beta段階はページ全体が既にapplyBetaLock()でロックされているのでここは実質素通り。
+    // [修正] ボタン本体のdisabled/onclickを直接書き換えると、解禁時に元の状態へ戻す処理が
+    // 既存のボタン分岐(購読/変更/解約等)側に無く、ロック解除後もボタンが押せないままになる不具合が
+    // あった。ボタンには一切触れず、カードの上に透明な受け皿を重ねてクリックだけ止める方式にする
     const creatorsCard = root.querySelector('.plan-card[data-plan="creators"]');
     if(creatorsCard) {
       creatorsCard.classList.toggle('is-creators-locked', isCreatorsLocked());
-      let lockNote = creatorsCard.querySelector('.plan-creators-lock-note');
+      let overlay = creatorsCard.querySelector('.plan-creators-lock-overlay');
       if(isCreatorsLocked()) {
-        const creatorsBtn = creatorsCard.querySelector('.plan-subscribe-btn');
-        if(creatorsBtn) {
-          creatorsBtn.disabled = true;
-          creatorsBtn.textContent = '準備中';
-          creatorsBtn.onclick = null;
+        if(!overlay) {
+          overlay = document.createElement('div');
+          overlay.className = 'plan-creators-lock-overlay';
+          overlay.innerHTML = `<div class="plan-creators-lock-badge">🔒 準備中</div><p class="plan-creators-lock-note">記事の広場の公開に合わせて解禁予定です</p>`;
+          creatorsCard.appendChild(overlay);
         }
-        if(!lockNote) {
-          lockNote = document.createElement('p');
-          lockNote.className = 'plan-creators-lock-note';
-          lockNote.textContent = '記事の広場の公開に合わせて解禁予定です';
-          creatorsCard.querySelector('.plan-card-foot')?.appendChild(lockNote);
-        }
-      } else if(lockNote) {
-        lockNote.remove();
+      } else if(overlay) {
+        overlay.remove();
       }
     }
   }
