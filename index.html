@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.313.99'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.314.0'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -7762,20 +7762,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data } = await sb.from('profiles').select('coins').eq('id', userId).maybeSingle();
         return data?.coins || 0;
       },
+      // [変更] セキュリティレビュー対応：以前はここでprofiles.coinsを直接UPDATEしていたため、
+      // ログイン済みの誰でも自分のcoinsを好きな値に書き換えられてしまっていた。
+      // adjust_coins RPC(SECURITY DEFINER、残高不足チェック・行ロック付き)経由に変更した。
       async add(userId, amount, reason) {
         if(!sb || !userId || !amount) return { error: 'invalid' };
-        const current = await this.get(userId);
-        const { error } = await sb.from('profiles').update({ coins: current + amount }).eq('id', userId);
-        if(!error) await sb.from('coin_transactions').insert({ user_id: userId, amount, reason: reason || 'unknown' }).catch(()=>{});
-        return { error };
+        const { data, error } = await sb.rpc('adjust_coins', { p_amount: amount, p_reason: reason || 'unknown' });
+        return { error, coins: data };
       },
       async spend(userId, amount, reason) {
         if(!sb || !userId || !amount) return { error: 'invalid' };
-        const current = await this.get(userId);
-        if(current < amount) return { error: 'insufficient' };
-        const { error } = await sb.from('profiles').update({ coins: current - amount }).eq('id', userId);
-        if(!error) await sb.from('coin_transactions').insert({ user_id: userId, amount: -amount, reason: reason || 'unknown' }).catch(()=>{});
-        return { error };
+        const { data, error } = await sb.rpc('adjust_coins', { p_amount: -amount, p_reason: reason || 'unknown' });
+        if(error && /insufficient/i.test(error.message || '')) return { error: 'insufficient' };
+        return { error, coins: data };
       },
       async listTransactions(userId, limit) {
         if(!sb || !userId) return [];
