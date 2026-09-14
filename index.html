@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.314.2'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.314.3'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -7802,16 +7802,17 @@ document.addEventListener('DOMContentLoaded', () => {
           await sb.from('daily_quest_progress').insert({ user_id: userId, quest_date: today, completed: true });
         }
       },
-      // 達成済み・未受け取りの時だけコインを付与する
+      // [変更] セキュリティレビュー対応：以前は「未受領か確認→受領済みにする」の間に
+      // 競合状態(TOCTOU)があり、ほぼ同時に2回呼ぶと二重に受け取れてしまっていた。
+      // claim_daily_quest RPC(UPDATE ... WHERE claimed=false 1発＋行ロック付きコイン加算)に変更。
       async claim(userId, rewardAmount) {
         if(!sb || !userId) return { error: 'invalid' };
-        const today = this.todayStr();
-        const { data: existing } = await sb.from('daily_quest_progress').select('*').eq('user_id', userId).eq('quest_date', today).maybeSingle();
-        if(!existing || !existing.completed) return { error: 'not_complete' };
-        if(existing.claimed) return { error: 'already_claimed' };
-        const { error: e1 } = await sb.from('daily_quest_progress').update({ claimed: true }).eq('user_id', userId).eq('quest_date', today);
-        if(e1) return { error: e1 };
-        return db.coins.add(userId, rewardAmount, 'daily_quest');
+        const { data, error } = await sb.rpc('claim_daily_quest', { p_reward: rewardAmount });
+        if(error) {
+          if(/already_claimed_or_not_complete/i.test(error.message || '')) return { error: 'already_claimed' };
+          return { error };
+        }
+        return { error: null, coins: data };
       },
     },
     dm: {
