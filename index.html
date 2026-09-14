@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.314.4'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.314.5'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -7157,19 +7157,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── プロフィール ──
     profiles: {
+      // [変更] セキュリティレビュー対応：本人以外の行はplan_paddle_subscription_id等の
+      // 機微な列を返さない専用ビュー(profiles_public)を見るようにした。
+      // 本人自身を見る時だけ、今まで通りprofilesテーブルから全部取得する
       async get(userId) {
         if(!sb) return null;
-        const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,plan_paddle_subscription_id,plan_renews_at,plan_cancel_scheduled,pending_plan,pending_plan_effective_at').eq('id', userId).single();
+        if(_currentUser && userId === _currentUser.id) {
+          const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,plan_paddle_subscription_id,plan_renews_at,plan_cancel_scheduled,pending_plan,pending_plan_effective_at').eq('id', userId).single();
+          return data;
+        }
+        const { data } = await sb.from('profiles_public').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan').eq('id', userId).single();
         return data;
       },
       async getByIds(userIds) {
         if(!sb || !userIds || !userIds.length) return [];
-        const { data } = await sb.from('profiles').select('id,username,avatar_url,is_admin').in('id', userIds);
+        const { data } = await sb.from('profiles_public').select('id,username,avatar_url,is_admin').in('id', userIds);
         return data || [];
       },
       async getUsername(userId) {
         if(!sb) return null;
-        const { data } = await sb.from('profiles').select('username').eq('id', userId).single();
+        if(_currentUser && userId === _currentUser.id) {
+          const { data } = await sb.from('profiles').select('username').eq('id', userId).single();
+          return data?.username || null;
+        }
+        const { data } = await sb.from('profiles_public').select('username').eq('id', userId).single();
         return data?.username || null;
       },
       async upsert(userId, fields) {
