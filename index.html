@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.314.3'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.314.4'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -6650,6 +6650,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <input type="text" id="profileEditUsername" maxlength="10" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" name="profile-display-name" />
           <p style="margin:.3rem 0 0;font-size:.72rem;color:var(--muted);text-align:right;"><span id="profileEditUsernameCount">0</span> / 10</p>
         </div>
+        <!-- [追加] 保存失敗時(なりすまし防止の予約語エラー等)をその場で表示する -->
+        <p id="profileEditError" style="margin:0 0 .5rem;font-size:.78rem;color:#ea9a9a;"></p>
         <div class="auth-field">
           <label data-i18n="labelBio">自己紹介</label>
           <textarea id="profileEditBio" maxlength="60" rows="3" autocomplete="off" style="padding:.65rem .9rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;font-family:inherit;resize:vertical;"></textarea>
@@ -7171,8 +7173,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return data?.username || null;
       },
       async upsert(userId, fields) {
-        if(!sb) return;
-        await sb.from('profiles').upsert({ id: userId, ...fields });
+        if(!sb) return { error: 'no db' };
+        const { error } = await sb.from('profiles').upsert({ id: userId, ...fields });
+        return { error };
       },
       async countAll() {
         if(!sb) return 0;
@@ -12993,13 +12996,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // アカウント登録済みユーザーのアイコン画像をまとめて取得
     let avatarMap = {};
+    let adminMap = {}; // [追加] 管理者バッジ表示用
     let cardRankQualityCounts = {};
     if(sb) {
       const userIds = [...new Set(reviews.map(r=>r.userId).filter(Boolean))];
       if(userIds.length) {
         try {
           const profiles = await db.profiles.getByIds(userIds);
-          profiles.forEach(p=>{ if(p.avatar_url) avatarMap[p.id]=p.avatar_url; });
+          profiles.forEach(p=>{ if(p.avatar_url) avatarMap[p.id]=p.avatar_url; if(p.is_admin) adminMap[p.id]=true; });
         } catch(e) { console.warn('review avatar fetch:', e); }
         try {
           cardRankQualityCounts = await db.reviews.getQualityCountsByUserIds(userIds);
@@ -13042,7 +13046,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${avatarUrl?`<img src="${escapeHtml(avatarUrl)}" alt="" style="object-fit:cover;display:block;">`:(()=>{const name=displayName;if(name==='ゲスト')return '<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="8" r="5" fill="rgba(140,198,160,0.5)"/><ellipse cx="12" cy="20" rx="8" ry="5" fill="rgba(140,198,160,0.5)"/></svg>';return name.slice(0,1);})()}
               </div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-                <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${escapeHtml(displayName)}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}${countryBadgeHtml(rev.countryCode||rev.country_code)}</span>
+                <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${escapeHtml(displayName)}${rev.userId && adminMap[rev.userId] ? ` <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">${escapeHtml(t('officialBadge'))}</span>` : ''}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${escapeHtml(rev._trollType||'')}</span>`:''}${countryBadgeHtml(rev.countryCode||rev.country_code)}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${rev.createdAt?new Date(rev.createdAt).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'}):''}</span>
               </div>
             </div>
@@ -22627,12 +22631,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let cardRankQualityCounts = {};
     let cardFrameMap = {}; // 将来: { user_id: 装備中のアイコンフレームID }。今は誰も所持していないので常に空
     let cardBadgeSkinMap = {}; // 将来: { user_id: 装備中の称号バッジスキンID }。今は誰も所持していないので常に空
+    let adminMap = {}; // [追加] 管理者バッジ表示用
     if(sb) {
       const userIds = [...new Set(sorted.map(r=>r.userId||r.user_id).filter(Boolean))];
       if(userIds.length) {
         try {
           const profiles = await db.profiles.getByIds(userIds);
-          profiles.forEach(p=>{ if(p.avatar_url) avatarMap[p.id]=p.avatar_url; });
+          profiles.forEach(p=>{ if(p.avatar_url) avatarMap[p.id]=p.avatar_url; if(p.is_admin) adminMap[p.id]=true; });
         } catch(e) { console.warn('review avatar fetch:', e); }
         try {
           cardRankQualityCounts = (rankFilterVal !== 'all') ? filteredQualityCounts : await db.reviews.getQualityCountsByUserIds(userIds);
@@ -22700,7 +22705,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="display:flex;align-items:flex-start;gap:.6rem;flex:1;min-width:0;">
             <div${userOnclick} class="user-avatar-circle avatar-frame-${cardFrameId}" style="border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
             <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-              <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${name}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
+              <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${name}${userId && adminMap[userId] ? ` <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">${escapeHtml(t('officialBadge'))}</span>` : ''}${rev.isAiGenerated?` <span style="background:rgba(94,201,122,.18);color:#8ee26f;font-size:.62rem;padding:.05rem .4rem;border-radius:5px;font-weight:800;">${t('aiGeneratedBadge')}</span>`:''}${rev._isTroll?` <span style="background:#ff4d4d;color:#fff;font-size:.62rem;padding:.05rem .35rem;border-radius:5px;font-weight:800;">🚩荒らし:${rev._trollType||''}</span>`:''}${flag}</span>
               <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
             </div>
             ${deleteBtnHtml}
@@ -22721,7 +22726,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;">
               <div${userOnclick} class="user-avatar-circle avatar-frame-${cardFrameId}" style="border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
               <div style="display:flex;flex-direction:column;gap:.1rem;min-width:0;">
-                <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${name}${flag}</span>
+                <span class="rc-name"${userOnclick} style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${name}${userId && adminMap[userId] ? ` <span style="padding:1px 5px;border-radius:4px;background:rgba(201,167,230,.16);font-size:9.5px;color:#d9c2ef;">${escapeHtml(t('officialBadge'))}</span>` : ''}${flag}</span>
                 <span style="font-size:.68rem;color:var(--muted);">${dateStr}</span>
               </div>
             </div>
@@ -24874,6 +24879,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const bioEl = document.getElementById('profileEditBio');
     unameEl.value = _myProfile.username;
     bioEl.value = _myProfile.bio;
+    const errEl = document.getElementById('profileEditError');
+    if(errEl) errEl.textContent = '';
     document.getElementById('profileEditOverlay').style.display = 'flex';
     const unameCount = document.getElementById('profileEditUsernameCount');
     const bioCount = document.getElementById('profileEditBioCount');
@@ -24901,10 +24908,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!_currentUser || !sb) return;
     const username = document.getElementById('profileEditUsername').value.trim() || _myProfile.username;
     const bio = document.getElementById('profileEditBio').value.trim().slice(0,60);
-    await db.profiles.upsert(_currentUser.id, {
+    const errEl = document.getElementById('profileEditError');
+    if(errEl) errEl.textContent = '';
+    const { error } = await db.profiles.upsert(_currentUser.id, {
       username,
       bio,
     });
+    if(error) {
+      // [追加] なりすまし防止トリガー(予約語チェック)にかかった場合は、分かりやすい文言で
+      // その場に表示する。今までは保存の成否を一切見ておらず、失敗しても画面が
+      // 何事もなく閉じてしまっていた(=保存できていないのに気づけない不具合があった)
+      const msg = /使用できません/.test(error.message || '')
+        ? error.message
+        : t('profileSaveFailedAlert');
+      if(errEl) errEl.textContent = msg; else alert(msg);
+      return;
+    }
     _currentUser._username = username;
     closeProfileEdit();
     renderMypage();
