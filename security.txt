@@ -1,0 +1,4 @@
+Contact: mailto:sapotoforamu@gmail.com
+Expires: 2027-09-14T00:00:00.000Z
+Preferred-Languages: ja, en
+Canonical: https://animepple.com/.well-known/security.txt

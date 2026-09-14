@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.314.1'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.314.2'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -12664,7 +12664,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if ((!page || pageIsPartial) && sb) {
       // ローカルキャッシュにない場合はSupabaseから取得して表示
       db.animePages.getByIds([id]).then(rows => {
-        console.log('DEBUG getByIds result:', id, rows);
         if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら何もしない
         if(rows && rows[0]) {
           const p = rows[0];
@@ -21105,8 +21104,6 @@ document.addEventListener('DOMContentLoaded', () => {
       window._realAI.consumer = { t: '消費者行動サマリー', b: '全体の消費者行動データを表示しています。' };
       window._realAI.ip = { t: 'IP戦略サマリー', b: ip.sequelDemand ? `続編需要率<strong>${ip.sequelDemand.demand_ratio}%</strong>です。` : 'データが不足しています。' };
       updateAI(document.querySelector('.nav-item.active')?.dataset.view || 'dashboard');
-
-      console.log('6パック実データ反映完了:', title, { sentiment, fanInsight, trend, global, consumer, ip });
     } catch(e) {
       console.warn('loadRealAnimeData error:', e);
     }
