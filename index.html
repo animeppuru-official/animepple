@@ -3291,7 +3291,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
-<script>window.APP_BUILD = 'v0.314.0'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
+<script>window.APP_BUILD = 'v0.314.1'; console.log('%c[animepple build] ' + window.APP_BUILD, 'color:#5cc98e;font-weight:bold;');
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('logoBuildVersion');
   if(el) el.textContent = window.APP_BUILD;
@@ -11111,7 +11111,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function thumbHtml(item) {
-    return item.image?`<img src="${item.image}" alt="${item.title}" style="width:100%;height:100%;object-fit:cover;" />`:noImagePlaceholderHtml();
+    return item.image?`<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.title||'')}" style="width:100%;height:100%;object-fit:cover;" />`:noImagePlaceholderHtml();
   }
 
   // ピックアップ：自社DB（anime_pages）のみが対象。全体レビュー数の50%未満の作品からランダムに選出、30分ごとに入れ替わる
@@ -12854,7 +12854,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAnimeDescription(page, id);
     document.getElementById('goReviewBtn').style.display='';
     const thumb=document.getElementById('animeThumbHero');
-    thumb.innerHTML=page.image?`<img src="${page.image}" alt="${page.title}" style="width:100%;height:100%;object-fit:cover;display:block;" />`:noImagePlaceholderHtml('responsive');
+    thumb.innerHTML=page.image?`<img src="${escapeHtml(page.image)}" alt="${escapeHtml(page.title||'')}" style="width:100%;height:100%;object-fit:cover;display:block;" />`:noImagePlaceholderHtml('responsive');
     // 画像が無い（プレースホルダーの）時だけ、タップで画像投稿ページへ行けるようにする
     if(!page.image) {
       thumb.style.cursor = 'pointer';
