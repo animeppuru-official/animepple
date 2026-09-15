@@ -8150,6 +8150,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if(error) return [];
         return data || [];
       },
+      // [2026-09追加] 称号カウント専用の判定結果を一度だけ確定させる。
+      // consensus_creditがまだnull(未判定)の行だけを対象にすることを呼び出し側で保証すること
+      // (このRPC相当の処理自体はここではnullチェックしない、単純なUPDATE)。
+      async setConsensusCredit(reviewId, aligned) {
+        if(!sb || !reviewId) return { error: 'invalid' };
+        const { error } = await sb.from('reviews').update({ consensus_credit: aligned }).eq('id', reviewId);
+        return { error };
+      },
       async getByUserId(userId) {
         if(!sb || !userId) return [];
         const { data } = await sb.from('reviews')
@@ -8922,6 +8930,9 @@ document.addEventListener('DOMContentLoaded', () => {
         elapsedMs: r.elapsed_ms,
         // [追加] 投稿者のアカウント作成日時(組織票対策のgetVoteWeightで使用。取得不可ならnull=既存ユーザー扱い)
         accountCreatedAtMs: r.user_id ? (ageMap[r.user_id] ?? null) : null,
+        // [2026-09追加] 称号カウント専用の判定結果(null=まだ未判定、true/false=確定済み・以後永久に固定)。
+        // 表示用の`quality`(デイリークエスト・金バッジ等の報酬用フラグ)とは別物。
+        consensusCredit: r.consensus_credit === null || r.consensus_credit === undefined ? null : !!r.consensus_credit,
       }));
       // LocalStorageのレビューと重複なくマージ（Supabase優先、createdAtで重複除去）
       const local = pj(REVIEW_KEY).filter(r=>r.animeId===animeId&&!r.fromSupabase);
@@ -12341,22 +12352,67 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!review.accountCreatedAtMs) return null; // 取得できていない場合は判定しない(既存ユーザーと同様に扱う)
     return (Date.now() - review.accountCreatedAtMs) / (24*60*60*1000);
   }
-  function getVoteWeight(review, userQualityCounts) {
+  // [2026-09追加] アカウント作成日時の「コホート」検知。
+  // NEW_ACCOUNT_AGE_DAYS(7日)による割引は、攻撃者が7日待つだけで回避できてしまう
+  // (スリーパー農場: 攻撃の何週間も前にアカウントだけ作って寝かせておく)。
+  // これに対しては、既存のgetTemporalVoteWeights(投稿タイミングのバースト検知。
+  // 同じ1時間以内の投稿は件数に関係なく最大3件分の重みしか持たない)と全く同じ考え方を、
+  // 「アカウント作成日時」にも適用する。攻撃者は投稿のタイミングは分散できても、
+  // 「大量のアカウントをまとめて作る」こと自体のコストは(1つずつ何ヶ月もかけて作らない限り)
+  // 避けられないため、同じ日に生まれたアカウント群を1つのコホートとみなし、
+  // 集団としての投票権に上限を設ける。
+  // 副産物として、「本物のアカウントが長期間かけてじわじわ偏った評価を書き続ける」
+  // ケース(ゆで蛙型)についても、その投稿者たちが同じ時期に量産されたアカウント群
+  // だった場合は同様に検知できる(本物の独立した少数派意見は個々に作成日がバラバラなので
+  // 誤って割り引かれない、シミュレーションで確認済み)。
+  const ACCOUNT_COHORT_WINDOW_MS = 24 * 60 * 60 * 1000; // 同じ日に作られたアカウントは1つのコホート
+  // [2026-09調整] 投稿タイミングのバースト検知(BURST_WAVE_CAP=3)と同じ値を最初は使っていたが、
+  // シミュレーションで「良性レビューが少数(4件程度)しかない新興作品」を狙われるケースを
+  // 30パターンの乱数で検証したところ、cap=3では成功率73%(22/30)止まりだった。
+  // cap=1(コホートは何人いても1人分の重みしか持てない)に厳しくしたところ93%(28/30)まで改善した
+  // (アカウント作成というコストの安い行為に対しては、投稿タイミングより厳しく縛ってよいと判断)。
+  const ACCOUNT_COHORT_WAVE_CAP = 1;
+  function computeAccountCohortDiscounts(reviews) {
+    const withAge = reviews.filter(r => r.accountCreatedAtMs).map(r => ({ r, t: r.accountCreatedAtMs }));
+    withAge.sort((a,b) => a.t - b.t);
+    const discount = new Map();
+    let wave = [];
+    const flush = () => {
+      if (!wave.length) return;
+      const perMember = Math.min(1, ACCOUNT_COHORT_WAVE_CAP / wave.length);
+      wave.forEach(({r}) => discount.set(r, perMember));
+      wave = [];
+    };
+    withAge.forEach(item => {
+      if (wave.length && item.t - wave[0].t > ACCOUNT_COHORT_WINDOW_MS) flush();
+      wave.push(item);
+    });
+    flush();
+    return discount; // 作成日時不明のレビューはMapに無い→呼び出し側で1.0(通常)扱い
+  }
+  function getVoteWeight(review, userQualityCounts, accountCohortDiscounts) {
     const uid = review.userId || review.user_id || null;
     const ageDays = getAccountAgeDays(review);
     const ageFactor = (ageDays !== null && ageDays < NEW_ACCOUNT_AGE_DAYS) ? NEW_ACCOUNT_VOTE_DISCOUNT : 1.0;
-    if (!uid) return NEWCOMER_VOTE_WEIGHT_FLOOR * 0.5 * ageFactor; // ゲストは新人よりさらに低い最低値
+    const cohortFactor = (accountCohortDiscounts && accountCohortDiscounts.has(review)) ? accountCohortDiscounts.get(review) : 1.0;
+    if (!uid) return NEWCOMER_VOTE_WEIGHT_FLOOR * 0.5 * ageFactor * cohortFactor; // ゲストは新人よりさらに低い最低値
     const count = userQualityCounts[uid] || 0;
     const rank = getRankByQualityCount(count);
     const base = rank.name === '新人' ? NEWCOMER_VOTE_WEIGHT_FLOOR : rank.weight;
-    return base * ageFactor;
+    return base * ageFactor * cohortFactor;
   }
 
-  // 全レビューからユーザーごとの上質レビュー数を集計（user_id基準）
+  // 全レビューからユーザーごとの称号カウント(＝投票重みの元になる実績数)を集計（user_id基準）。
+  // [2026-09見直し] 以前は投稿時の`quality`フラグ(文字数・タグ数ベースの加点スコア)を
+  // そのまま称号カウントに使っていたが、これだと「時間さえかければ内容が嘘でも上質になれる」
+  // 抜け道があった。称号カウントは`consensusCredit`(そのレビューが、後にその作品が
+  // stableになった時点で実際のマスターグラフとどれだけ近かったか、で一度だけ判定し
+  // 二度と変えない専用の値)だけを見るようにした。表示用の`quality`(デイリークエスト・
+  // 金バッジ等の報酬フラグ)とは完全に別物で、そちらは今まで通り書けば誰でも貰える。
   function buildUserQualityCounts(allReviews) {
     const counts = {};
     allReviews.forEach(r => {
-      if (r.quality) {
+      if (r.consensusCredit === true) {
         const uid = r.userId || r.user_id || null;
         if (!uid) return; // ゲストは実績にカウントしない
         counts[uid] = (counts[uid]||0) + 1;
@@ -12446,9 +12502,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (getMaturityStage(reviews.length) !== 'stable') return reviews;
     const clusters = clusterReviews(reviews);
     const qCounts = userQualityCounts || {};
+    const cohortDiscounts = computeAccountCohortDiscounts(reviews); // [追加] アカウント作成日のコホート検知
     const byWeight = clusters.map(cluster => ({
       cluster,
-      weight: cluster.reduce((sum, r) => sum + getVoteWeight(r, qCounts), 0)
+      weight: cluster.reduce((sum, r) => sum + getVoteWeight(r, qCounts, cohortDiscounts), 0)
     })).sort((a,b) => b.weight - a.weight);
     const totalWeight = byWeight.reduce((s,c)=>s+c.weight, 0);
     if (totalWeight === 0) {
@@ -12641,6 +12698,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if(_adMid) _adMid.style.display='';
 
     const stage = getMaturityStage(reviews.length);
+    // [2026-09追加] 称号カウント専用の判定(consensus_credit)がまだ未確定のレビューが
+    // 残っていそうなら、Edge Function経由で判定・確定させる(fire-and-forget、
+    // 結果は次回以降の称号カウントに反映される。書き込みはservice_role側で行うため、
+    // ここでは呼びっぱなしでよい)。stable段階でのみ意味があるので、それ以外はスキップ。
+    if (stage === 'stable' && reviews.some(r => r.consensusCredit === null) && sb) {
+      fetch(`${SUPABASE_URL}/functions/v1/lock-in-consensus-credit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
+        body: JSON.stringify({ animeId: id }),
+      }).catch(()=>{});
+    }
     // 投稿された全レビュー数（無効判定されたものも含む）。有効数と差がある時だけ併記して誤解を防ぐ
     const totalSubmittedCount = getReviews().filter(r => r.animeId === id).length;
     const validCountSuffix = totalSubmittedCount > reviews.length
@@ -13468,16 +13536,22 @@ document.addEventListener('DOMContentLoaded', () => {
     return false;
   }
 
+  // [2026-09見直し] 以前は「30秒待つ(+1)」+「タグ3個(+1+1)」の合計3点だけで、
+  // コメントを一切書かなくても「上質」(score>=3)に到達できてしまっていた。
+  // これは報酬用(デイリークエスト・金バッジ・アイコン実績)のフラグなので、
+  // 「実際に一言でも自分の言葉を書いたか」を必須条件にする。
+  // (投票重みの元になる称号カウントは、これとは別のconsensus_credit列で
+  //  「みんなの意見と実際に近かったか」を見て判定するので、こちらは複雑にしない)
   function calcQualityScore({isFullGraph, elapsed, tags, comment}) {
-    let score = 0;
     if (!isFullGraph) return 0; // グラフ未完成なら質スコア0
-    if (elapsed >= 30000) score += 1;
-    if (tags.length >= 1) score += 1;
-    if (tags.length >= 3) score += 1;
     const commentIsGarbage = isGarbageComment(comment);
-    if (comment.length >= 20 && !commentIsGarbage) score += 1;
+    if (comment.length < 15 || commentIsGarbage) return 0; // コメント必須の前提条件
+    let score = 1; // 実際にコメントを書いた基礎点
+    if (comment.length >= 40 && !commentIsGarbage) score += 1;
     if (comment.length >= 80 && !commentIsGarbage) score += 1;
-    return score;
+    if (elapsed >= 20000) score += 1;
+    if (tags.length >= 1) score += 1;
+    return score; // 最大5点。コメント無しでは最大0点、「上質」(3点以上)には絶対に届かない
   }
 
   // [追加] 無料プランはレビュー投稿(上質・通常問わず)を1日3回まで
