@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -5484,7 +5484,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <h2>1. 運営者情報</h2>
       <p>サービス名: アニメップル（Animepple）<br>
       運営者: <span style="color:var(--muted);">アニメップル運営事務局</span><br>
-      連絡先: <span style="color:var(--muted);">sapotoforamu@gmail.com</span></p>
+      連絡先: <span style="color:var(--muted);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bac9dbcad5ced5dcd5c8dbd7cffaddd7dbd3d694d9d5d7">[email&#160;protected]</a></span></p>
     </section>
 
     <section class="pp-section">
@@ -6867,7 +6867,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </nav>
 <div id="bnavLongpressDim"></div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 (function () {
   /* ════════════════════════════
      DATA & CONSTANTS
@@ -8867,12 +8867,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const _validReviewsCache = new Map();
   const _avgChartCache = new Map();
 
+  // アカウント作成日時のキャッシュ(user_id → created_atのミリ秒)。
+  // ページ内で何度もfetchRemoteReviewsが呼ばれても同じユーザーには問い合わせないようにする。
+  const _accountCreatedAtCache = new Map();
+  // [追加] 組織票対策(投票権へのアカウント年齢反映)のため、レビュー投稿者のアカウント作成日時を
+  // まとめて取得する。profiles_publicビューにcreated_atを追加してから使うこと(下記コメント参照)。
+  //   alter view/再作成が必要: profiles_publicビューにcreated_atを追加する
+  //   create or replace view public.profiles_public as
+  //     select id, username, bio, favorite_genres, avatar_url, gender, age_group,
+  //            country_code, show_friends_count, is_admin, plan, created_at
+  //     from public.profiles;
+  async function fetchAccountCreatedAtMap(userIds) {
+    const uncached = [...new Set(userIds)].filter(uid => uid && !_accountCreatedAtCache.has(uid));
+    if (uncached.length && sb) {
+      try {
+        const { data } = await sb.from('profiles_public').select('id,created_at').in('id', uncached);
+        (data || []).forEach(row => {
+          _accountCreatedAtCache.set(row.id, row.created_at ? new Date(row.created_at).getTime() : null);
+        });
+      } catch (e) { console.warn('fetchAccountCreatedAtMap:', e); }
+      // 取得できなかった分は「不明」として記録し、毎回問い合わせに行かないようにする
+      uncached.forEach(uid => { if (!_accountCreatedAtCache.has(uid)) _accountCreatedAtCache.set(uid, null); });
+    }
+    const map = {};
+    userIds.forEach(uid => { if (uid) map[uid] = _accountCreatedAtCache.get(uid) ?? null; });
+    return map;
+  }
+
   // Supabaseからレビューを非同期取得してLocalStorageにマージ
   async function fetchRemoteReviews(animeId) {
     if(DB_MODE !== 'supabase' || !sb) return;
     try {
       const data = await db.reviews.getByAnimeId(animeId);
       if(!data) return;
+      // [追加] 組織票対策: 投稿者のアカウント作成日時をまとめて取得しておく
+      const ageMap = await fetchAccountCreatedAtMap(data.map(r => r.user_id));
       // Supabaseのデータ形式をLocalStorage形式に変換してマージ
       const remote = data.map(r=>({
         id: r.id,
@@ -8891,6 +8920,8 @@ document.addEventListener('DOMContentLoaded', () => {
         quality: !!r.quality,
         qualityScore: r.quality_score || 0,
         elapsedMs: r.elapsed_ms,
+        // [追加] 投稿者のアカウント作成日時(組織票対策のgetVoteWeightで使用。取得不可ならnull=既存ユーザー扱い)
+        accountCreatedAtMs: r.user_id ? (ageMap[r.user_id] ?? null) : null,
       }));
       // LocalStorageのレビューと重複なくマージ（Supabase優先、createdAtで重複除去）
       const local = pj(REVIEW_KEY).filter(r=>r.animeId===animeId&&!r.fromSupabase);
@@ -12288,16 +12319,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 「多数派クラスタを決める投票権」専用の重み（組織票対策）。
-  // 実際の点数集計(expandByWeight)には使わない。ここだけ新人(実績0〜2件)の重みを0にする。
-  // → 新規アカウントを量産する組織票が「多数派」に選ばれることを防ぐ。
+  // 実際の点数集計(expandByWeight)には使わない。
   // 新作アニメで新人しかレビューしていない場合でも、実際の点数計算(getReviewWeight)は
   // 影響を受けないので、初期レビューが消えることはない。
+  //
+  // [2026-09修正] 以前は新人(実績0〜2件)の投票権を完全に0にしていたが、これだと
+  // 「新人しかいない集団(15件)」対「他の作品で3件だけ実績を作った1アカウント」で
+  // 後者が無条件に勝ってしまうバグがあった(投票権重み0の集団は合計0となり、
+  // 重み>0のクラスタが件数に関係なく総取りしてしまうため)。
+  // シミュレーションで検証済みの対策として、新人にも僅かな投票権フロアを持たせ、
+  // 「大勢集まれば意味を持つ」形に変更した。
+  // さらに、新規アカウント(作成7日未満)には別途大幅な割引を掛ける。これにより、
+  // 「新規アカウントを大量に用意して分散投稿する」組織票(バースト検知を回避する
+  // ペース配分をされても)にも一定の耐性を持たせる。7日待てば回避できてしまうが、
+  // 即席のアカウント量産に対するコストを上げる効果はある(完全な防御ではない、
+  // 詳細はanimepple_reference.txt「マスターグラフのシミュレーション」参照)。
+  const NEWCOMER_VOTE_WEIGHT_FLOOR = 0.15;
+  const NEW_ACCOUNT_AGE_DAYS = 7;
+  const NEW_ACCOUNT_VOTE_DISCOUNT = 0.05;
+  function getAccountAgeDays(review) {
+    if (!review.accountCreatedAtMs) return null; // 取得できていない場合は判定しない(既存ユーザーと同様に扱う)
+    return (Date.now() - review.accountCreatedAtMs) / (24*60*60*1000);
+  }
   function getVoteWeight(review, userQualityCounts) {
     const uid = review.userId || review.user_id || null;
-    if (!uid) return 0; // ゲスト（未ログイン）も投票権なし
+    const ageDays = getAccountAgeDays(review);
+    const ageFactor = (ageDays !== null && ageDays < NEW_ACCOUNT_AGE_DAYS) ? NEW_ACCOUNT_VOTE_DISCOUNT : 1.0;
+    if (!uid) return NEWCOMER_VOTE_WEIGHT_FLOOR * 0.5 * ageFactor; // ゲストは新人よりさらに低い最低値
     const count = userQualityCounts[uid] || 0;
     const rank = getRankByQualityCount(count);
-    return rank.name === '新人' ? 0 : rank.weight;
+    const base = rank.name === '新人' ? NEWCOMER_VOTE_WEIGHT_FLOOR : rank.weight;
+    return base * ageFactor;
   }
 
   // 全レビューからユーザーごとの上質レビュー数を集計（user_id基準）
@@ -12386,6 +12438,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ※ここで使う重みは投票権専用（getVoteWeight。新人・ゲストは0）。
   //   実際の点数計算（expandByWeight・getReviewWeight）とは別物で、
   //   新人だけのレビューが点数計算から消えることはない。
+  const MIN_MAIN_CLUSTER_SIZE = 3; // 「多数派」として採用するクラスタの最低件数(絶対数)
   function getMainClusterReviews(reviews, userQualityCounts) {
     if (reviews.length < 3) return reviews; // 少数なら全部使う
     // 成熟度が「growing」段階（5〜9件）ではクラスタリングをスキップする。
@@ -12409,11 +12462,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (totalTemporal === 0) return reviews; // それでも判定不能なら全件使う
       const topTemporal = byTemporal[0];
       if (topTemporal.weight < totalTemporal * 0.3) return reviews;
+      // [追加] 件数があまりに少ないクラスタは、どれだけ重みが集中していても採用しない
+      if (topTemporal.cluster.length < MIN_MAIN_CLUSTER_SIZE) return reviews;
       return topTemporal.cluster;
     }
     const top = byWeight[0];
     // 最重量クラスタが全体重みの30%未満しかない場合は分裂しすぎなので全部使う（フォールバック）
     if (top.weight < totalWeight * 0.3) return reviews;
+    // [2026-09追加] クラスタの「件数」の絶対数が少なすぎる場合も却下する。
+    // 新人の投票権フロア導入前は「新人集団の重み合計=0」となり得たため、
+    // 重み>0のクラスタがたった1〜2件でも無条件に総取りしてしまうバグがあった
+    // (例: 新人15件 vs 他作品で実績を積んだ1アカウントが極端な評価を1件投稿→
+    //  1件だけのクラスタが15件を完封していた)。フロア導入で「重み合計0」は
+    // 起きにくくなったが、念のため多層防御として「上位クラスタは最低3件以上」
+    // という絶対数の下限も設ける。
+    if (top.cluster.length < MIN_MAIN_CLUSTER_SIZE) return reviews;
     return top.cluster;
   }
 
@@ -25823,5 +25886,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 })();
 </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"a125a6f456314355b35a4871ce8ff05c","r":1,"spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
+
