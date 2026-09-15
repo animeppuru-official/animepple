@@ -8902,6 +8902,29 @@ document.addEventListener('DOMContentLoaded', () => {
     return map;
   }
 
+  // [2026-09追加] 横断的な「要注意アカウント」検知用。指定したユーザーたちが、
+  // 何件の"別の"作品でcoordinated_reject=true(仲間付きで多数派クラスタから弾かれた)
+  // になっているかをまとめて取得する。reviewsテーブルは閲覧自体は誰でもできる設計
+  // (レビュー一覧表示に必要)なので、このSELECTは特別な権限を必要としない。
+  const _serialOffenderCache = new Map();
+  async function fetchSerialOffenderCounts(userIds) {
+    const uncached = [...new Set(userIds)].filter(uid => uid && !_serialOffenderCache.has(uid));
+    if (uncached.length && sb) {
+      try {
+        const { data } = await sb.from('reviews').select('user_id,anime_id').in('user_id', uncached).eq('coordinated_reject', true);
+        const perUserAnimeSet = new Map();
+        (data || []).forEach(row => {
+          if (!perUserAnimeSet.has(row.user_id)) perUserAnimeSet.set(row.user_id, new Set());
+          perUserAnimeSet.get(row.user_id).add(row.anime_id);
+        });
+        uncached.forEach(uid => { _serialOffenderCache.set(uid, perUserAnimeSet.has(uid) ? perUserAnimeSet.get(uid).size : 0); });
+      } catch (e) { console.warn('fetchSerialOffenderCounts:', e); uncached.forEach(uid => _serialOffenderCache.set(uid, 0)); }
+    }
+    const map = {};
+    userIds.forEach(uid => { if (uid) map[uid] = _serialOffenderCache.get(uid) ?? 0; });
+    return map;
+  }
+
   // Supabaseからレビューを非同期取得してLocalStorageにマージ
   async function fetchRemoteReviews(animeId) {
     if(DB_MODE !== 'supabase' || !sb) return;
@@ -8910,6 +8933,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if(!data) return;
       // [追加] 組織票対策: 投稿者のアカウント作成日時をまとめて取得しておく
       const ageMap = await fetchAccountCreatedAtMap(data.map(r => r.user_id));
+      // [2026-09追加] 横断的な要注意アカウントのカウントもまとめて取得しておく
+      const offenderMap = await fetchSerialOffenderCounts(data.map(r => r.user_id));
       // Supabaseのデータ形式をLocalStorage形式に変換してマージ
       const remote = data.map(r=>({
         id: r.id,
@@ -8933,6 +8958,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // [2026-09追加] 称号カウント専用の判定結果(null=まだ未判定、true/false=確定済み・以後永久に固定)。
         // 表示用の`quality`(デイリークエスト・金バッジ等の報酬用フラグ)とは別物。
         consensusCredit: r.consensus_credit === null || r.consensus_credit === undefined ? null : !!r.consensus_credit,
+        // [2026-09追加] 横断的な要注意カウント(何件の別作品でcoordinated_reject=trueになったか)
+        serialOffenderCount: r.user_id ? (offenderMap[r.user_id] ?? 0) : 0,
       }));
       // LocalStorageのレビューと重複なくマージ（Supabase優先、createdAtで重複除去）
       const local = pj(REVIEW_KEY).filter(r=>r.animeId===animeId&&!r.fromSupabase);
@@ -12322,11 +12349,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // userQualityCounts: { userId: 上質レビュー数 } のマップ
   // ※以前はusername(表示名)で識別していたが、表示名は変更可能・重複しうるため、
   //   安定したuser_idで識別するように変更した。ゲスト（未ログイン、userId無し）は常に重み1。
+  // [2026-09追加] 横断的な「要注意アカウント」ペナルティ。複数の作品で繰り返し
+  // 「仲間付きで多数派クラスタから弾かれた」(＝孤独な少数派意見ではなく徒党を組んだ偏り)
+  // 実績があるアカウントは、以後すべての作品で重みを大きく割り引く。
+  const SERIAL_OFFENDER_STRIKE_THRESHOLD = 3;
+  const SERIAL_OFFENDER_PENALTY = 0.1;
+  function getSerialOffenderFactor(review) {
+    return (review.serialOffenderCount || 0) >= SERIAL_OFFENDER_STRIKE_THRESHOLD ? SERIAL_OFFENDER_PENALTY : 1.0;
+  }
   function getReviewWeight(review, userQualityCounts) {
     const uid = review.userId || review.user_id || null;
-    if (!uid) return 1.0; // ゲストは常に重み1
+    const offenderFactor = getSerialOffenderFactor(review);
+    if (!uid) return 1.0 * offenderFactor; // ゲストは常に重み1
     const count = userQualityCounts[uid] || 0;
-    return getRankByQualityCount(count).weight;
+    return getRankByQualityCount(count).weight * offenderFactor;
   }
 
   // 「多数派クラスタを決める投票権」専用の重み（組織票対策）。
@@ -12395,11 +12431,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const ageDays = getAccountAgeDays(review);
     const ageFactor = (ageDays !== null && ageDays < NEW_ACCOUNT_AGE_DAYS) ? NEW_ACCOUNT_VOTE_DISCOUNT : 1.0;
     const cohortFactor = (accountCohortDiscounts && accountCohortDiscounts.has(review)) ? accountCohortDiscounts.get(review) : 1.0;
-    if (!uid) return NEWCOMER_VOTE_WEIGHT_FLOOR * 0.5 * ageFactor * cohortFactor; // ゲストは新人よりさらに低い最低値
+    const offenderFactor = getSerialOffenderFactor(review);
+    if (!uid) return NEWCOMER_VOTE_WEIGHT_FLOOR * 0.5 * ageFactor * cohortFactor * offenderFactor; // ゲストは新人よりさらに低い最低値
     const count = userQualityCounts[uid] || 0;
     const rank = getRankByQualityCount(count);
     const base = rank.name === '新人' ? NEWCOMER_VOTE_WEIGHT_FLOOR : rank.weight;
-    return base * ageFactor * cohortFactor;
+    return base * ageFactor * cohortFactor * offenderFactor;
   }
 
   // 全レビューからユーザーごとの称号カウント(＝投票重みの元になる実績数)を集計（user_id基準）。
@@ -12583,13 +12620,41 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 重みを反映した値配列を作る（重み1.5なら1.5倍の影響を持たせるため整数複製で近似）
+  // [2026-09追加] 「新人(quality_count 0〜2)」集団が、集計(トリム平均)に対して
+  // 持てる合計影響力を、頭数に関わらず一定割合までに制限する。
+  //
+  // 発見の経緯: getVoteWeight側(新人フロア・年齢割引・コホート検知)は「どのクラスタが
+  // 多数派として選ばれるか」にしか効かない。ところが、クラスタ距離のしきい値ぎりぎりの
+  // 偏り(真値から均等に約2.2ずらす)を計算してくる攻撃者は、荒らしクラスタとして
+  // 分離されず良性側と"同じ"主要クラスタに混ざり込める。一度同じクラスタに入って
+  // しまえば、あとは投票権と無関係な単純な頭数(トリム平均)勝負になり、新人アカウントを
+  // 大量に(年齢・コホート判定も回避しつつ)用意するだけで、投票権対策を丸ごと迂回して
+  // 表示グラフ自体を大きく歪められることがシミュレーションで確認された
+  // (良性20人に対し新人攻撃者15〜60人で、対策無しだと誤差1.5〜1.9まで悪化)。
+  //
+  // 対策: 個々の新人の得点は今まで通りゼロにしない(本物の新規ユーザーを守る方針は維持)が、
+  // 「新人」という属性の集団全体が持てる合計影響力を、全体重みの一定割合(40%)までに
+  // 制限する。上限を超えた分は全員一律にスケールダウンする。少数の新人(本物の新規ファン)
+  // にはほぼ影響が無く、大量動員された時だけ効く(シミュレーションで誤差を4〜6割程度
+  // 軽減できることを確認済み。良性側も全員新人という究極的に見分ける材料が無いケースでは
+  // 完全には防げない、そこは他のアルゴリズム的手段では原理的に埋まらない領域として許容する)。
+  const NEWCOMER_COLLECTIVE_CAP_RATIO = 0.4;
   function expandByWeight(reviews, valueExtractor, userQualityCounts) {
+    const items = reviews.map(r => {
+      const uid = r.userId || r.user_id || null;
+      const count = uid ? (userQualityCounts[uid] || 0) : 0;
+      const isNewcomer = !uid || getRankByQualityCount(count).name === '新人';
+      return { weight: getReviewWeight(r, userQualityCounts), value: valueExtractor(r), isNewcomer };
+    });
+    const totalWeight = items.reduce((s, i) => s + i.weight, 0);
+    const newcomerWeight = items.reduce((s, i) => s + (i.isNewcomer ? i.weight : 0), 0);
+    const cap = totalWeight * NEWCOMER_COLLECTIVE_CAP_RATIO;
+    const scale = (newcomerWeight > cap && newcomerWeight > 0) ? cap / newcomerWeight : 1.0;
     const out = [];
-    reviews.forEach(r => {
-      const w = getReviewWeight(r, userQualityCounts);
-      const v = valueExtractor(r);
+    items.forEach(i => {
+      const w = i.isNewcomer ? i.weight * scale : i.weight;
       const repeats = Math.round(w * 2); // 0.5刻みの重みに対応するため2倍精度で複製
-      for (let i=0; i<repeats; i++) out.push(v);
+      for (let k = 0; k < repeats; k++) out.push(i.value);
     });
     return out;
   }
