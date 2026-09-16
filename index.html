@@ -4964,19 +4964,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsAccount">アカウント</span><span class="settings-row-sub" data-i18n="settingsAccountSub">プロフィール、メールアドレス</span></span>
         <span class="settings-row-arrow">›</span>
       </button>
-      <button class="settings-row" onclick="nav('settings-security')">
-        <span class="settings-row-icon" style="background:rgba(94,170,255,.12);color:#9cc6ff;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsSecurity">セキュリティとアカウントアクセス</span><span class="settings-row-sub" data-i18n="settingsSecuritySub">ログイン方法の管理</span></span>
-        <span class="settings-row-arrow">›</span>
-      </button>
       <button class="settings-row" onclick="nav('settings-privacy')">
         <span class="settings-row-icon" style="background:rgba(217,164,65,.12);color:#e8c463;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
         <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsPrivacy">プライバシーと安全</span><span class="settings-row-sub" data-i18n="settingsPrivacySub">ブロック中のユーザーなど</span></span>
-        <span class="settings-row-arrow">›</span>
-      </button>
-      <button class="settings-row" onclick="nav('settings-notifications')">
-        <span class="settings-row-icon" style="background:rgba(229,72,77,.12);color:#eaa9a9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
-        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsNotifications">通知</span><span class="settings-row-sub" data-i18n="settingsNotificationsSub">お知らせの受け取り方</span></span>
         <span class="settings-row-arrow">›</span>
       </button>
       <button class="settings-row" onclick="nav('settings-plan')">
@@ -5033,6 +5023,10 @@ document.addEventListener('DOMContentLoaded', () => {
       <p id="settingsEmailValue" style="font-size:.9rem;color:#dff0e6;margin:0;">—</p>
     </div>
     <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
+      <p style="font-size:.8rem;color:var(--muted);margin:0 0 .3rem;" data-i18n="settingsLoginMethodLabel">ログイン方法</p>
+      <p style="font-size:.9rem;color:#dff0e6;margin:0;">Google</p>
+    </div>
+    <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
       <p style="font-size:.8rem;color:var(--muted);margin:0 0 .3rem;" data-i18n="settingsUserIdLabel">ユーザーID</p>
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .5rem;" data-i18n="settingsUserIdDesc">アカウント復元をリクエストする時などに、運営から聞かれることがあります。</p>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -5056,29 +5050,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="settings-row-icon" style="background:rgba(234,169,169,.1);color:#eaa9a9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
         <span class="settings-row-body"><span class="settings-row-title" style="color:#eaa9a9;" data-i18n="logoutBtn">ログアウト</span></span>
       </button>
-    </div>
-  </div>
-</div>
-
-<!-- 設定：セキュリティとアカウントアクセス -->
-<div class="page mypage-page-wrap" id="page-settings-security">
-  <header class="hdr">
-    <div class="hdr-inner">
-      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
-      <div class="hdr-right">
-        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
-          <span class="lang-code-label">JP</span>
-        </button>
-      </div>
-    </div>
-  </header>
-  <div style="padding:1.1rem;">
-    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="settingsSecurity">🔐 セキュリティとアカウントアクセス</h2>
-    <div class="mypage-section" style="border-top:none;padding:0;">
-      <p style="font-size:.8rem;color:var(--muted);margin:0 0 .3rem;" data-i18n="settingsLoginMethodLabel">ログイン方法</p>
-      <p style="font-size:.9rem;color:#dff0e6;margin:0;">Google</p>
     </div>
   </div>
 </div>
@@ -5135,32 +5106,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <option value="4" data-i18n="countOpt4">4個</option>
         <option value="5" data-i18n="countOpt5">5個</option>
       </select>
-    </div>
-  </div>
-</div>
-
-<!-- 設定：通知 -->
-<div class="page mypage-page-wrap" id="page-settings-notifications">
-  <header class="hdr">
-    <div class="hdr-inner">
-      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
-      <div class="hdr-right">
-        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
-        <button class="lang-current-btn" onclick="openLang()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
-          <span class="lang-code-label">JP</span>
-        </button>
-      </div>
-    </div>
-  </header>
-  <div style="padding-top:.5rem;">
-    <h2 style="font-size:1rem;color:#dff0e6;margin:0 1.1rem 1rem;" data-i18n="settingsNotifications">🔔 通知</h2>
-    <div>
-      <button class="mypage-menu-row" onclick="nav('my-boards')">
-        <span class="mypage-menu-row-icon">💬</span>
-        <span class="mypage-menu-row-label" data-i18n="myBoardsTitle">参加中の掲示板の通知設定</span>
-        <span class="mypage-menu-row-arrow">›</span>
-      </button>
     </div>
   </div>
 </div>
@@ -9105,9 +9050,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'customize': '/mypage/customize',
     settings: '/settings',
     'settings-account': '/settings/account',
-    'settings-security': '/settings/security',
     'settings-privacy': '/settings/privacy',
-    'settings-notifications': '/settings/notifications',
     'settings-plan': '/settings/plan',
     'settings-display': '/settings/display',
     'settings-about': '/settings/about',
@@ -13601,14 +13544,21 @@ document.addEventListener('DOMContentLoaded', () => {
     return false;
   }
 
-  // [2026-09見直し] 以前は「30秒待つ(+1)」+「タグ3個(+1+1)」の合計3点だけで、
+  // [2026-09見直し1] 以前は「30秒待つ(+1)」+「タグ3個(+1+1)」の合計3点だけで、
   // コメントを一切書かなくても「上質」(score>=3)に到達できてしまっていた。
   // これは報酬用(デイリークエスト・金バッジ・アイコン実績)のフラグなので、
   // 「実際に一言でも自分の言葉を書いたか」を必須条件にする。
+  // [2026-09見直し2] さらに重大な見落としがあった: このスコアはグラフの中身(chartA/chartB)を
+  // 一切見ておらず、「isFullGraph(12軸を触ったか)」しか確認していなかった。つまり
+  // 全軸を同じ値(例えば全部8)にする・ほぼ動かさない、といった明らかに適当なグラフでも、
+  // コメントさえ書けば「上質」になれてしまっていた。マスターグラフ集計で使っている
+  // isGraphValidReview(全軸同一値・低分散・ミラー・投稿が速すぎる、を弾く既存のチェック)を
+  // ここでも必須条件にする。「文章はしっかり書いたが、グラフは適当」という汚染を防ぐのが狙い。
   // (投票重みの元になる称号カウントは、これとは別のconsensus_credit列で
   //  「みんなの意見と実際に近かったか」を見て判定するので、こちらは複雑にしない)
-  function calcQualityScore({isFullGraph, elapsed, tags, comment}) {
+  function calcQualityScore({isFullGraph, elapsed, tags, comment, chartA, chartB, chartMoved}) {
     if (!isFullGraph) return 0; // グラフ未完成なら質スコア0
+    if (!isGraphValidReview({ chartA, chartB, chartMoved, elapsedMs: elapsed })) return 0; // グラフ自体が適当なら質スコア0
     const commentIsGarbage = isGarbageComment(comment);
     if (comment.length < 15 || commentIsGarbage) return 0; // コメント必須の前提条件
     let score = 1; // 実際にコメントを書いた基礎点
@@ -13616,7 +13566,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (comment.length >= 80 && !commentIsGarbage) score += 1;
     if (elapsed >= 20000) score += 1;
     if (tags.length >= 1) score += 1;
-    return score; // 最大5点。コメント無しでは最大0点、「上質」(3点以上)には絶対に届かない
+    // [2026-09見直し3] 「まあまあ良かったと思います」のような当たり障りのない
+    // 15〜39文字の一言＋タグ1個＋20秒待つ、だけでbase(1)+elapsed(1)+tag(1)=3点になり
+    // 「上質」に届いてしまう抜け穴があった。elapsed/タグはコメントの中身と無関係な
+    // ボーナスなので、それだけで上質の基準を満たせるのは本末転倒。
+    // 上質を名乗るにはコメント自体が最低40文字(score+=1の壁)を超えている必要がある、とする。
+    if (comment.length < 40) score = Math.min(score, 2); // 40文字未満は「上質」(3点)には絶対届かない
+    return score; // 最大5点。コメント無し/ゴミ/短すぎ/グラフが適当な場合は「上質」には届かない
   }
 
   // [追加] 無料プランはレビュー投稿(上質・通常問わず)を1日3回まで
@@ -13642,7 +13598,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 価値観投票（マスターグラフ反映）は「上質レビュー」＝質スコア3点以上の時だけ出す。
     // 以前はisGraphValidReview（荒らし検知）だけで判定していて、質スコア条件が抜けていたバグを修正。
     const commentPreCheck = document.getElementById('reviewComment').value.trim();
-    const qualityScorePreCheck = calcQualityScore({ isFullGraph: isFullGraphPreCheck, elapsed: elapsedPreCheck, tags: reviewTags, comment: commentPreCheck });
+    const qualityScorePreCheck = calcQualityScore({ isFullGraph: isFullGraphPreCheck, elapsed: elapsedPreCheck, tags: reviewTags, comment: commentPreCheck, chartA: chartAObjPreCheck, chartB: chartBObjPreCheck, chartMoved: true });
     const isValidMasterGraph = qualityScorePreCheck >= 3 && isGraphValidReview({
       chartA: chartAObjPreCheck, chartB: chartBObjPreCheck, chartMoved: true, elapsedMs: elapsedPreCheck,
     });
@@ -14480,14 +14436,14 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 質スコア計算（0〜5点）。3点以上を「上質レビュー」とする
-    const elapsed = Date.now() - _reviewStartTime;
-    const qualityScore = calcQualityScore({isFullGraph, elapsed, tags, comment});
-    const isQuality = qualityScore >= 3;
-
     // 保存用：「無」(-1)は0に変換
     const chartAObj = Object.fromEntries(axisA.map((k,i)=>[k, vA[i]===-1?0:vA[i]]));
     const chartBObj = Object.fromEntries(axisB.map((k,i)=>[k, vB[i]===-1?0:vB[i]]));
+
+    // 質スコア計算（0〜5点）。3点以上を「上質レビュー」とする
+    const elapsed = Date.now() - _reviewStartTime;
+    const qualityScore = calcQualityScore({isFullGraph, elapsed, tags, comment, chartA: chartAObj, chartB: chartBObj, chartMoved: isFullGraph});
+    const isQuality = qualityScore >= 3;
 
     const review={
       animeId:currentAnimeId,
@@ -18678,15 +18634,11 @@ document.addEventListener('DOMContentLoaded', () => {
     rankNextLabel:{ ja:'次: {name} まであと {n}件', en:'Next: {name} in {n} more', ko:'다음: {name}까지 {n}건 남음', 'zh-tw':'下一級：{name}，還差 {n} 件', 'zh-cn':'下一级：{name}，还差 {n} 件', es:'Siguiente: {name} (faltan {n})', fr:'Suivant : {name} (encore {n})', pt:'Próximo: {name} (faltam {n})', de:'Nächster: {name} (noch {n})', ar:'التالي: {name} (متبقٍ {n})', th:'ถัดไป: {name} อีก {n} รายการ', id:'Berikutnya: {name} (kurang {n})', ru:'Далее: {name} (осталось {n})', it:'Prossimo: {name} (mancano {n})', vi:'Tiếp theo: {name} (còn {n})' },
     rankBadgeCountLabel:{ ja:'称号 {a} / {b} 獲得', en:'{a} / {b} titles earned', ko:'칭호 {a} / {b} 획득', 'zh-tw':'已獲得稱號 {a} / {b}', 'zh-cn':'已获得称号 {a} / {b}', es:'{a} / {b} títulos obtenidos', fr:'{a} / {b} titres obtenus', pt:'{a} / {b} títulos obtidos', de:'{a} / {b} Titel erhalten', ar:'تم الحصول على {a} / {b} لقبًا', th:'ได้รับยศ {a} / {b}', id:'{a} / {b} gelar diperoleh', ru:'Получено титулов: {a} / {b}', it:'{a} / {b} titoli ottenuti', vi:'Đã đạt {a} / {b} danh hiệu' },
     settingsAccount:{ ja:'アカウント', en:'Account' },
-    settingsSecurity:{ ja:'セキュリティとアカウントアクセス', en:'Security and account access' },
     settingsPrivacy:{ ja:'プライバシーと安全', en:'Privacy and safety' },
-    settingsNotifications:{ ja:'通知', en:'Notifications' },
     settingsDisplay:{ ja:'アクセシビリティ、表示、言語', en:'Accessibility, display, and languages' },
     settingsAbout:{ ja:'追加リソース・ヘルプ', en:'Additional resources and help' },
     settingsAccountSub:{ ja:'プロフィール、メールアドレス', en:'Profile, email address' },
-    settingsSecuritySub:{ ja:'ログイン方法の管理', en:'Manage sign-in methods' },
     settingsPrivacySub:{ ja:'ブロック中のユーザーなど', en:'Blocked users and more' },
-    settingsNotificationsSub:{ ja:'お知らせの受け取り方', en:'How you receive alerts' },
     settingsDisplaySub:{ ja:'テーマ、フォント、言語設定', en:'Theme, font, language settings' },
     settingsAboutSub:{ ja:'利用規約、お問い合わせ', en:'Terms of use, contact' },
     settingsHistoryTitle:{ ja:'購入・ガチャ履歴', en:'Purchase & gacha history' },
