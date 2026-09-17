@@ -99,9 +99,9 @@
     /* ── HEADER ── */
     .hdr { position:sticky; top:0; z-index:100; background:var(--hdr-bg, rgba(7,21,13,.9)); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,.06); }
     /* [2026-09追加] スマホ幅で、スクロール中はヘッダー／ボトムナビを一時的に隠して見やすくする。
-       スクロールが止まったら(300ms操作が無ければ)また出す。JS側でbody.scroll-hide-chromeを付け外しする */
+       スクロールが止まったら(60ms操作が無ければ)すぐ出す。JS側でbody.scroll-hide-chromeを付け外しする */
     @media (max-width:767px) {
-      .hdr, .bnav-carousel { transition:transform .22s ease; }
+      .hdr, .bnav-carousel { transition:transform .15s ease; }
       body.scroll-hide-chrome .hdr { transform:translateY(-100%); }
       body.scroll-hide-chrome .bnav-carousel { transform:translateY(100%); }
     }
@@ -2411,6 +2411,11 @@
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23dfeae3' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
       background-repeat:no-repeat; background-position:right 12px center;
     }
+    /* [2026-09追加] PCのChromeはcolor-scheme:darkだけだとOSテーマ次第でプルダウンの
+       選択肢一覧が白背景のまま出ることがあるため、optionに直接色を指定して確実に揃える */
+    select.rl-filter-btn option {
+      background:#173322; color:#dfeae3;
+    }
     #rlFilterToggleBtn { display:none; }
     .pop-mobile-only { display:none; }
     .rl-filter-btn:hover { background:rgba(255,255,255,.06); }
@@ -4002,7 +4007,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- フィルター行：PC・スマホともに1行に収める。スマホ幅は期間/国/実績をモーダルへ移動する -->
     <div id="rlFilterRow" style="display:flex;align-items:center;gap:10px;">
       <button type="button" id="rlFilterToggleBtn" class="rl-filter-btn" style="flex-shrink:0;">
-        <span data-i18n="filterToggleLabel">🎛 絞り込み</span>
+        <span data-i18n="filterToggleLabel">絞り込み</span>
       </button>
       <div id="rlPeriodWrap" style="position:relative;flex-shrink:0;">
         <button type="button" id="rlPeriodBtn" class="rl-filter-btn">
@@ -4060,7 +4065,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <!-- スマホ版：「絞り込み」ボタンから開くモーダル（期間/国/実績を中に格納する。実体はJSで移動） -->
   <div class="priority-popover-overlay" id="rlFilterModalOverlay" style="display:none;">
     <div class="priority-popover-box" style="max-width:360px;text-align:left;">
-      <p style="margin:0 0 14px;font-size:.9rem;font-weight:700;color:#dfeae3;" data-i18n="filterToggleLabel">🎛 絞り込み</p>
+      <p style="margin:0 0 14px;font-size:.9rem;font-weight:700;color:#dfeae3;" data-i18n="filterToggleLabel">絞り込み</p>
       <div id="rlFilterModalBody" style="display:flex;flex-direction:column;gap:14px;"></div>
       <button type="button" id="rlFilterModalCloseBtn" data-i18n="gachaCloseBtn" style="width:100%;margin-top:18px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#dfeae3;font-weight:700;font-size:13px;cursor:pointer;">閉じる</button>
     </div>
@@ -4440,7 +4445,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <option value="reviews" data-i18n="popSortReviews">レビュー数</option>
       </select>
       <button type="button" id="popFilterToggleBtn" class="rl-filter-btn pop-mobile-only" style="flex-shrink:0;">
-        <span data-i18n="filterToggleLabel">🎛 絞り込み</span>
+        <span data-i18n="filterToggleLabel">絞り込み</span>
       </button>
       <div class="pop-sort-group" id="popBaseGroup">
         <span class="pop-sort-group-label" data-i18n="popSortGroupLabel">並び順</span>
@@ -4483,7 +4488,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <!-- スマホ版：「絞り込み」ボタンから開くモーダル（期間/年代を中に格納する。実体はJSで移動） -->
   <div class="priority-popover-overlay" id="popFilterModalOverlay" style="display:none;">
     <div class="priority-popover-box" style="max-width:360px;text-align:left;">
-      <p style="margin:0 0 14px;font-size:.9rem;font-weight:700;color:#dfeae3;" data-i18n="filterToggleLabel">🎛 絞り込み</p>
+      <p style="margin:0 0 14px;font-size:.9rem;font-weight:700;color:#dfeae3;" data-i18n="filterToggleLabel">絞り込み</p>
       <div id="popFilterModalBody" style="display:flex;flex-direction:column;gap:14px;"></div>
       <button type="button" id="popFilterModalCloseBtn" data-i18n="gachaCloseBtn" style="width:100%;margin-top:18px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#dfeae3;font-weight:700;font-size:13px;cursor:pointer;">閉じる</button>
     </div>
@@ -9085,6 +9090,7 @@ document.addEventListener('DOMContentLoaded', () => {
     notifications: '/notifications',
     contact: '/contact',
     privacy: '/privacy-policy',
+    'refund-policy': '/refund-policy',
     admin: '/admin',
     partner: '/partner',
   };
@@ -19200,7 +19206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     recentSearchTitle:{ ja:'🕘 最近の検索', en:'🕘 Recent searches', ko:'🕘 최근 검색', 'zh-tw':'🕘 最近搜尋', 'zh-cn':'🕘 最近搜索', es:'🕘 Búsquedas recientes', fr:'🕘 Recherches récentes', pt:'🕘 Pesquisas recentes', de:'🕘 Letzte Suchen', ar:'🕘 عمليات البحث الأخيرة', th:'🕘 การค้นหาล่าสุด', id:'🕘 Pencarian terbaru', ru:'🕘 Недавние запросы', it:'🕘 Ricerche recenti', vi:'🕘 Tìm kiếm gần đây' },
     clearAllBtn:{ ja:'すべて消去', en:'Clear all', ko:'모두 지우기', 'zh-tw':'全部清除', 'zh-cn':'全部清除', es:'Borrar todo', fr:'Tout effacer', pt:'Limpar tudo', de:'Alles löschen', ar:'مسح الكل', th:'ล้างทั้งหมด', id:'Hapus semua', ru:'Очистить всё', it:'Cancella tutto', vi:'Xóa tất cả' },
     heroCtaSearch:{ ja:'🔍 作品を探す', en:'🔍 Find a title', ko:'🔍 작품 찾기', 'zh-tw':'🔍 尋找作品', 'zh-cn':'🔍 寻找作品', es:'🔍 Buscar título', fr:'🔍 Trouver un titre', pt:'🔍 Buscar título', de:'🔍 Titel finden', ar:'🔍 البحث عن عمل', th:'🔍 ค้นหาผลงาน', id:'🔍 Cari judul', ru:'🔍 Найти тайтл', it:'🔍 Trova un titolo', vi:'🔍 Tìm tựa phim' },
-    filterToggleLabel:{ ja:'🎛 絞り込み', en:'🎛 Filters', ko:'🎛 필터', 'zh-tw':'🎛 篩選', 'zh-cn':'🎛 筛选', es:'🎛 Filtros', fr:'🎛 Filtres', pt:'🎛 Filtros', de:'🎛 Filter', ar:'🎛 عوامل التصفية', th:'🎛 ตัวกรอง', id:'🎛 Filter', ru:'🎛 Фильтры', it:'🎛 Filtri', vi:'🎛 Bộ lọc' },
+    filterToggleLabel:{ ja:'絞り込み', en:'Filters', ko:'필터', 'zh-tw':'篩選', 'zh-cn':'筛选', es:'Filtros', fr:'Filtres', pt:'Filtros', de:'Filter', ar:'عوامل التصفية', th:'ตัวกรอง', id:'Filter', ru:'Фильтры', it:'Filtri', vi:'Bộ lọc' },
     boardEntryMobileBtn:{ ja:'💬 掲示板', en:'💬 Board', ko:'💬 게시판', 'zh-tw':'💬 掲示板', 'zh-cn':'💬 板块', es:'💬 Foro', fr:'💬 Forum', pt:'💬 Quadro', de:'💬 Board', ar:'💬 اللوحة', th:'💬 บอร์ด', id:'💬 Papan', ru:'💬 Доска', it:'💬 Bacheca', vi:'💬 Bảng' },
     tagGroupGenre:{ ja:'ジャンル', en:'Genre', ko:'장르', 'zh-tw':'類型', 'zh-cn':'类型', es:'Género', fr:'Genre', pt:'Gênero', de:'Genre', ar:'النوع', th:'แนว', id:'Genre', ru:'Жанр', it:'Genere', vi:'Thể loại' },
     notificationsPageTitle:{ ja:'🔔 お知らせ', en:'🔔 Notifications', ko:'🔔 알림', 'zh-tw':'🔔 通知', 'zh-cn':'🔔 通知', es:'🔔 Notificaciones', fr:'🔔 Notifications', pt:'🔔 Notificações', de:'🔔 Benachrichtigungen', ar:'🔔 الإشعارات', th:'🔔 การแจ้งเตือน', id:'🔔 Notifikasi', ru:'🔔 Уведомления', it:'🔔 Notifiche', vi:'🔔 Thông báo' },
@@ -23539,16 +23545,21 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', updateCookieBannerOffset);
 
   // [2026-09追加] スマホ幅：スクロール中はヘッダー／ボトムナビを隠し、止まったら出す。
-  // スクロールイベントが来るたびbody.scroll-hide-chromeを付け、300ms操作が無ければ外す
+  // スクロールイベントが来るたびbody.scroll-hide-chromeを付け、60ms操作が無ければ外す
   // （方向は見ずシンプルに「動いてる間だけ隠す」仕様）。CSS側は@media(max-width:767px)で
   // 効かせているので、PC幅ではこのクラスが付いても見た目に影響しない。
   let _scrollHideTimer = null;
-  function onScrollActivityForChromeHide() {
+  function onScrollActivityForChromeHide(e) {
+    // captureで拾うとカルーセル等の横スクロール（scrollLeft変化）も拾ってしまうため、
+    // ページ本体の縦スクロールだけに限定する（e.targetがdocument/window以外は無視）。
+    const target = e.target;
+    const isPageScroll = target === document || target === window || target === document.documentElement || target === document.body;
+    if (!isPageScroll) return;
     document.body.classList.add('scroll-hide-chrome');
     clearTimeout(_scrollHideTimer);
     _scrollHideTimer = setTimeout(() => {
       document.body.classList.remove('scroll-hide-chrome');
-    }, 300);
+    }, 60);
   }
   window.addEventListener('scroll', onScrollActivityForChromeHide, { passive: true, capture: true });
 
@@ -24396,23 +24407,16 @@ document.addEventListener('DOMContentLoaded', () => {
   window.submitOnboarding = submitOnboarding;
 
   function showAuthModal(mode) {
+    // [2026-09修正] 認証モーダルはGoogleボタンのみの実装に簡略化済みで、
+    // #authSubmitBtn/#authSwitch/#authUsernameFieldはHTMLに存在しない。
+    // 以前はこれらをnullチェック無しで参照しており、お気に入り・投げ銭・コインショップ・
+    // プラン購入・掲示板ハブのログイン導線等、showAuthModal('login')を呼ぶ全箇所で
+    // TypeErrorになりモーダルが一切開かない不具合があった。
     _authMode = mode;
     const title = document.getElementById('authTitle');
-    const btn = document.getElementById('authSubmitBtn');
-    const sw = document.getElementById('authSwitch');
-    const ufield = document.getElementById('authUsernameField');
-    document.getElementById('authError').textContent = '';
-    if(mode === 'register') {
-      title.textContent = t('authCreateAccountTitle');
-      btn.textContent = t('authCreateBtn');
-      ufield.style.display = '';
-      sw.innerHTML = `${escapeHtml(t('authHaveAccount'))}<button onclick="showAuthModal('login')">${escapeHtml(t('authLoginTitle'))}</button>`;
-    } else {
-      title.textContent = t('authLoginTitle');
-      btn.textContent = t('authLoginTitle');
-      ufield.style.display = 'none';
-      sw.innerHTML = `${escapeHtml(t('authNoAccount'))}<button onclick="showAuthModal('register')">${escapeHtml(t('authRegisterBtn'))}</button>`;
-    }
+    if(title) title.textContent = mode === 'register' ? t('authCreateAccountTitle') : t('authLoginTitle');
+    const errEl = document.getElementById('authError');
+    if(errEl) errEl.textContent = '';
     document.getElementById('authOverlay').style.display = 'flex';
   }
   function closeAuthModal() {
@@ -25836,7 +25840,9 @@ document.addEventListener('DOMContentLoaded', () => {
     { id: 'badge', labelKey: 'customizeTabBadge', hofOnly: true },
     { id: 'badge_color', labelKey: 'customizeTabBadgeColor', className: (id) => `badge-skin-${id}` },
   ];
-  let _customizeActiveTab = 'bubble';
+  let _customizeActiveTab = 'board'; // [2026-09修正] 旧タブID'bubble'はCUSTOMIZE_TABSに存在せず、
+  // 初回表示でCUSTOMIZE_TABS.find()がundefinedを返し直後のtab.hofOnly参照でTypeErrorになり
+  // #customizeBodyが空のまま止まっていた(タブを自分でクリックすれば正常表示された)。
   async function renderCustomizePage() {
     const tabsEl = document.getElementById('customizeTabs');
     const bodyEl = document.getElementById('customizeBody');
