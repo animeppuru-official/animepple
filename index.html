@@ -8157,7 +8157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageSize = 1000;
         while (true) {
           const { data, error } = await sb.from('reviews')
-            .select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated,username,quality,elapsed_ms,tags')
+            .select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated,username,quality,elapsed_ms,tags,created_at')
             .range(from, from + pageSize - 1);
           if (error) { console.warn('getAllForCluster error:', error); break; }
           if (!data || !data.length) break;
