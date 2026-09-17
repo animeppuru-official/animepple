@@ -8242,13 +8242,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return data || [];
       },
       // 作品ごとのPV数を集計（期間指定可）。人気ページの「人気順」（PV数ベース）用
+      // [2026-09-17修正] 以前はpv_logsを生でSELECTしてJS側で1件ずつ数えていたが、
+      // SupabaseのPostgRESTには1回のSELECTで返す行数に既定の上限(1000行)があり、
+      // ログが蓄積してその上限を超えると「全期間」のような絞り込みの緩いクエリほど
+      // 古い行しか返らなくなり、実際より少ない集計になってしまう不具合があった
+      // (「今日」のPV数が「全期間」のPV数を上回るという矛盾として発覚)。
+      // Postgres側でGROUP BYして集計するRPC関数(get_pv_counts_by_anime、要事前作成)に
+      // 差し替え、行数上限の影響を受けないようにする。
       async getCountsByAnime(sinceIso) {
         if(!sb) return {};
-        let q = sb.from('pv_logs').select('anime_id');
-        if(sinceIso) q = q.gte('viewed_at', sinceIso);
-        const { data } = await q;
+        const { data, error } = await sb.rpc('get_pv_counts_by_anime', { since_ts: sinceIso || null });
+        if(error) { console.warn('getCountsByAnime rpc:', error.message); return {}; }
         const counts = {};
-        (data||[]).forEach(row => { if(row.anime_id) counts[row.anime_id] = (counts[row.anime_id]||0) + 1; });
+        (data||[]).forEach(row => { if(row.anime_id) counts[row.anime_id] = Number(row.cnt) || 0; });
         return counts;
       },
     },
