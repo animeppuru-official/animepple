@@ -10066,9 +10066,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if(reset) popState.items = items;
       else popState.items = [...popState.items, ...items];
 
-      if(reset) grid.innerHTML='';
-      grid.innerHTML += popState.items.map((a,i)=>{
-        const globalIdx = popState.items.length - items.length + i; // 通しの順位（追加読み込み対応）
+      // [修正] 以前は追加読み込み時、grid.innerHTML+=でpopState.items「全体」(既存分+新規分)を
+      // 再描画して既存のgrid.innerHTMLの後ろに継ぎ足していたため、2ページ目以降を開くたびに
+      // それまで表示済みだった分がもう一度重複表示され、「20件以降はまた同じ20件を繰り返す」
+      // 状態になっていた。常にpopState.items全体でgrid.innerHTMLを丸ごと作り直す方式に統一する。
+      grid.innerHTML = popState.items.map((a,i)=>{
+        const globalIdx = i; // 通しの順位（追加読み込み対応）
         const top1 = globalIdx === 0, top3 = globalIdx < 3;
         const rankBadge = top3 ? `${globalIdx+1}` : '';
         const rankBadgeStyle = top3 ? `top:9px;right:9px;min-width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#07160d;background:linear-gradient(150deg,#e8c463,#d9a441);border-radius:8px;box-shadow:0 4px 10px -3px rgba(217,164,65,.7);` : '';
