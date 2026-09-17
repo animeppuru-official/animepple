@@ -23653,22 +23653,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.addEventListener('resize', updateCookieBannerOffset);
 
-  // [2026-09追加] スマホ幅：スクロール中はヘッダー／ボトムナビを隠し、止まったら出す。
-  // スクロールイベントが来るたびbody.scroll-hide-chromeを付け、60ms操作が無ければ外す
-  // （方向は見ずシンプルに「動いてる間だけ隠す」仕様）。CSS側は@media(max-width:767px)で
-  // 効かせているので、PC幅ではこのクラスが付いても見た目に影響しない。
+  // [2026-09追加、2026-09-17方向判定に修正] スマホ幅：下にスクロールしている間だけ
+  // ヘッダー／ボトムナビを隠し、止まったら出す。上にスクロールしている間も出したままにする
+  // （以前は方向を見ずに「動いてる間は常に隠す」仕様だったが、上スクロール中も隠れてしまい
+  // 使いにくいとの指摘を受けて、前回のscrollY との差分で方向を判定する方式に変更）。
+  // CSS側は@media(max-width:767px)で効かせているので、PC幅ではこのクラスが付いても見た目に影響しない。
   let _scrollHideTimer = null;
+  let _lastScrollYForChromeHide = window.scrollY || document.documentElement.scrollTop || 0;
   function onScrollActivityForChromeHide(e) {
     // captureで拾うとカルーセル等の横スクロール（scrollLeft変化）も拾ってしまうため、
     // ページ本体の縦スクロールだけに限定する（e.targetがdocument/window以外は無視）。
     const target = e.target;
     const isPageScroll = target === document || target === window || target === document.documentElement || target === document.body;
     if (!isPageScroll) return;
-    document.body.classList.add('scroll-hide-chrome');
+    const currentY = window.scrollY || document.documentElement.scrollTop || 0;
+    const isScrollingDown = currentY > _lastScrollYForChromeHide;
+    _lastScrollYForChromeHide = currentY;
     clearTimeout(_scrollHideTimer);
-    _scrollHideTimer = setTimeout(() => {
+    if (isScrollingDown) {
+      document.body.classList.add('scroll-hide-chrome');
+      _scrollHideTimer = setTimeout(() => {
+        document.body.classList.remove('scroll-hide-chrome');
+      }, 60);
+    } else {
+      // 上にスクロール中、または動いていない → 常に表示する
       document.body.classList.remove('scroll-hide-chrome');
-    }, 60);
+    }
   }
   window.addEventListener('scroll', onScrollActivityForChromeHide, { passive: true, capture: true });
 
