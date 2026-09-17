@@ -92,6 +92,13 @@
 
     /* ── HEADER ── */
     .hdr { position:sticky; top:0; z-index:100; background:var(--hdr-bg, rgba(7,21,13,.9)); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,.06); }
+    /* [2026-09追加] スマホ幅で、スクロール中はヘッダー／ボトムナビを一時的に隠して見やすくする。
+       スクロールが止まったら(300ms操作が無ければ)また出す。JS側でbody.scroll-hide-chromeを付け外しする */
+    @media (max-width:767px) {
+      .hdr, .bnav-carousel { transition:transform .22s ease; }
+      body.scroll-hide-chrome .hdr { transform:translateY(-100%); }
+      body.scroll-hide-chrome .bnav-carousel { transform:translateY(100%); }
+    }
     .hdr-inner { display:flex; align-items:center; justify-content:space-between; padding:.7rem 1rem; gap:.7rem; }
     .logo { font-size:1.18rem; font-weight:900; letter-spacing:.02em; cursor:pointer; }
     .logo em { color:var(--brand); font-style:normal; }
@@ -533,7 +540,11 @@
     .sec-head small { color:var(--muted); font-size:.8rem; }
 
     /* ── HSCROLL ── */
-    .carousel-wrap { position:relative; overflow:hidden; width:100%; padding-top:6px; margin-top:-6px; }
+    /* [2026-09修正] touch-action指定が無かったため、カルーセルを横にスワイプすると
+       ブラウザ自身の「戻る/進む」スワイプナビゲーション(画面全体が横に動くジェスチャー)と
+       競合していた。pan-yで「縦方向のみブラウザ標準のタッチ操作を許可、横方向はJS側(下の
+       touchstart/touchend)に任せる」ことを明示し、ブラウザ側のジェスチャーを抑える。 */
+    .carousel-wrap { position:relative; overflow:hidden; width:100%; padding-top:6px; margin-top:-6px; touch-action:pan-y; }
     .carousel-track { display:flex; transition:transform .15s ease; will-change:transform; padding:0; margin:0; gap:0; }
     .carousel-page { display:flex; gap:.5rem; padding:6px .75rem .6rem; flex-shrink:0; box-sizing:border-box; }
     .carousel-dots { display:flex; justify-content:center; gap:.4rem; padding:.15rem 0 .2rem; }
@@ -23511,6 +23522,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.style.setProperty('--bnav-offset', h + 'px');
   }
   window.addEventListener('resize', updateCookieBannerOffset);
+
+  // [2026-09追加] スマホ幅：スクロール中はヘッダー／ボトムナビを隠し、止まったら出す。
+  // スクロールイベントが来るたびbody.scroll-hide-chromeを付け、300ms操作が無ければ外す
+  // （方向は見ずシンプルに「動いてる間だけ隠す」仕様）。CSS側は@media(max-width:767px)で
+  // 効かせているので、PC幅ではこのクラスが付いても見た目に影響しない。
+  let _scrollHideTimer = null;
+  function onScrollActivityForChromeHide() {
+    document.body.classList.add('scroll-hide-chrome');
+    clearTimeout(_scrollHideTimer);
+    _scrollHideTimer = setTimeout(() => {
+      document.body.classList.remove('scroll-hide-chrome');
+    }, 300);
+  }
+  window.addEventListener('scroll', onScrollActivityForChromeHide, { passive: true, capture: true });
 
   // 起動時: 未同意 or バージョン違いならバナーを表示
   (function initCookieBanner() {
