@@ -49,6 +49,12 @@
       --bg:#07150d; --card:#0e2219; --card2:#122a1e;
       --line:#2a5a3e; --text:#e8f8ed; --muted:#8db5a0;
       --brand:#5ec97a; --brand2:#8ee26f; --red:#e84a4a;
+      /* [2026-09追加] color-schemeを一度も宣言してなかったため、appearance:noneを付けた
+         selectでも、ブラウザによっては背景など一部がライトモードのネイティブ配色のまま
+         残ってしまい(例:人気ページの「人気順」セレクトだけ明るい背景になる)、ダークな
+         サイト全体から浮いて見えていた。ここで明示することでフォーム部品・スクロールバー等が
+         最初からダーク基調で描画されるようになる */
+      color-scheme: dark;
     }
     *, *::before, *::after { box-sizing: border-box; }
     html { -webkit-text-size-adjust:100%; }
@@ -2396,6 +2402,15 @@
     .rl-tab, .rl-country { background:var(--card2); border:1px solid var(--line); color:var(--muted); border-radius:999px; padding:.25rem .65rem; font-size:.75rem; cursor:pointer; white-space:nowrap; flex-shrink:0; }
     .rl-tab.active, .rl-country.active { background:var(--brand); color:#0c2015; border-color:var(--brand); font-weight:700; }
     .rl-filter-btn { display:inline-flex; align-items:center; gap:8px; height:42px; padding:0 15px; border-radius:11px; background:#173322; border:1px solid rgba(255,255,255,.12); color:#dfeae3; font-size:13.5px; font-weight:700; cursor:pointer; }
+    /* [2026-09追加] ソート・絞り込み系の見た目統一。今まで場所ごとにバラバラだった
+       (色が違う/シェブロンの有無が違う/ブラウザ標準の矢印任せ等)selectを全部これに揃える。
+       appearance:noneでOS標準の矢印を消し、同じSVGシェブロンを自前で描く */
+    select.rl-filter-btn {
+      appearance:none; -webkit-appearance:none; -moz-appearance:none;
+      padding-right:34px; font:inherit;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23dfeae3' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 12px center;
+    }
     #rlFilterToggleBtn { display:none; }
     .pop-mobile-only { display:none; }
     .rl-filter-btn:hover { background:rgba(255,255,255,.06); }
@@ -3509,7 +3524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- ③ソート -->
     <div class="sort-row-sort" style="margin-top:.9rem;">
       <label for="overlaySortSelect" data-i18n="sortLabel">並び替え</label>
-      <select id="overlaySortSelect" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
+      <select id="overlaySortSelect" class="rl-filter-btn" style="width:100%;" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
         <option value="match">好みグラフに近い順</option>
         <option value="reviews_desc">レビューが多い順</option>
         <option value="reviews_asc">レビューが少ない順</option>
@@ -4021,7 +4036,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <button class="rl-filter-option" data-country="OTHER" data-i18n="countryOther">🌐 その他</button>
         </div>
       </div>
-      <select id="reviewRankFilterSelect" data-i18n-options="rankFilterAll,rankTier0,rankTier1,rankTier2,rankTier3,rankTier4,rankTier5,rankTier6,rankTier7,rankTier8" style="flex-shrink:0;height:42px;padding:0 34px 0 14px;border-radius:11px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;appearance:none;cursor:pointer;">
+      <select id="reviewRankFilterSelect" class="rl-filter-btn" data-i18n-options="rankFilterAll,rankTier0,rankTier1,rankTier2,rankTier3,rankTier4,rankTier5,rankTier6,rankTier7,rankTier8" style="flex-shrink:0;">
         <option value="all" selected>実績：全部</option>
         <option value="0">新人</option>
         <option value="1">駆け出しレビュアー</option>
@@ -4033,7 +4048,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <option value="7">マスターオブグラフ</option>
         <option value="8">殿堂入り</option>
       </select>
-      <select id="reviewSortSelect" data-i18n-options="sortNewest,sortOldest" style="flex-shrink:0;margin-left:auto;height:42px;padding:0 34px 0 14px;border-radius:11px;background:#173322;border:1px solid rgba(255,255,255,.12);color:#dfeae3;font:inherit;font-size:13px;font-weight:700;appearance:none;cursor:pointer;">
+      <select id="reviewSortSelect" class="rl-filter-btn" data-i18n-options="sortNewest,sortOldest" style="flex-shrink:0;margin-left:auto;">
         <option value="newest" data-i18n="sortNewest">新しい順</option>
         <option value="oldest" data-i18n="sortOldest">古い順</option>
       </select>
@@ -4613,7 +4628,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- ③ソート -->
     <div class="sort-row-sort" style="margin-top:.9rem;">
       <label for="srSortSelect" data-i18n="sortLabel">並び替え</label>
-      <select id="srSortSelect" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
+      <select id="srSortSelect" class="rl-filter-btn" style="width:100%;" data-i18n-options="sortMatch,sortReviewsDesc,sortReviewsAsc">
         <option value="match">好みグラフに近い順</option>
         <option value="reviews_desc">レビューが多い順</option>
         <option value="reviews_asc">レビューが少ない順</option>
@@ -4665,7 +4680,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div style="display:flex;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap;">
       <input id="myReviewsSearchInput" type="search" placeholder="タイトルで検索…" data-i18n="favSearchPlaceholder"
         style="flex:1;min-width:140px;padding:.55rem .8rem;border-radius:999px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;" />
-      <select id="myReviewsSortSelect" class="admin-select" style="width:auto;flex-shrink:0;">
+      <select id="myReviewsSortSelect" class="rl-filter-btn" style="width:auto;flex-shrink:0;">
         <option value="new" data-i18n="sortFavNew">新しい順</option>
         <option value="old" data-i18n="sortFavOld">古い順</option>
       </select>
@@ -4693,7 +4708,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div style="display:flex;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap;">
       <input id="myFavoritesSearchInput" type="search" placeholder="タイトルで検索…" data-i18n="favSearchPlaceholder"
         style="flex:1;min-width:140px;padding:.55rem .8rem;border-radius:999px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;" />
-      <select id="myFavoritesSortSelect" class="admin-select" style="width:auto;flex-shrink:0;">
+      <select id="myFavoritesSortSelect" class="rl-filter-btn" style="width:auto;flex-shrink:0;">
         <option value="new" data-i18n="sortFavNew">新しい順</option>
         <option value="old" data-i18n="sortFavOld">古い順</option>
       </select>
@@ -16766,7 +16781,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:.5rem;">
         <span style="font-size:.78rem;color:var(--muted,#9ab);">${escapeHtml(t('iconDexCountLabel'))} ${obtainedCount}/${ICON_CATALOG.length}</span>
-        <select id="myIconsSortSelect" style="height:36px;padding:0 10px;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font:inherit;font-size:.78rem;cursor:pointer;">
+        <select id="myIconsSortSelect" class="rl-filter-btn">
           <option value="no"${_myIconsSort==='no'?' selected':''}>${escapeHtml(t('iconSortNo'))}</option>
           <option value="rarity"${_myIconsSort==='rarity'?' selected':''}>${escapeHtml(t('iconSortRarity'))}</option>
         </select>
@@ -16896,16 +16911,16 @@ document.addEventListener('DOMContentLoaded', () => {
       <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;">
         <input type="search" id="myBoardsSearchInput" placeholder="${escapeHtml(t('boardSearchPlaceholder'))}" value="${escapeHtml(_myBoardsFilter.search)}"
           style="flex:1;min-width:140px;height:36px;padding:0 12px;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font:inherit;font-size:.78rem;" />
-        <select id="myBoardsLangSelect" style="height:36px;padding:0 10px;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font:inherit;font-size:.78rem;cursor:pointer;">
+        <select id="myBoardsLangSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
           <option value="current"${_myBoardsFilter.lang==='current'?' selected':''}>${escapeHtml(t('boardLangCurrentOnly'))}</option>
           <option value="all"${_myBoardsFilter.lang==='all'?' selected':''}>${escapeHtml(t('boardLangAll'))}</option>
           ${LANGS.map(l=>`<option value="${escapeHtml(l.code)}"${_myBoardsFilter.lang===l.code?' selected':''}>${escapeHtml(l.native||l.code)}</option>`).join('')}
         </select>
-        <select id="myBoardsSortSelect" style="height:36px;padding:0 10px;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font:inherit;font-size:.78rem;cursor:pointer;">
+        <select id="myBoardsSortSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
           <option value="newest"${_myBoardsFilter.sort==='newest'?' selected':''}>${escapeHtml(t('boardSortNewest'))}</option>
           <option value="title"${_myBoardsFilter.sort==='title'?' selected':''}>${escapeHtml(t('boardSortTitle'))}</option>
         </select>
-        <select id="myBoardsTypeSelect" style="height:36px;padding:0 10px;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font:inherit;font-size:.78rem;cursor:pointer;">
+        <select id="myBoardsTypeSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
           <option value="all"${_myBoardsFilter.type==='all'?' selected':''}>${escapeHtml(t('boardTypeAll'))}</option>
           <option value="general"${_myBoardsFilter.type==='general'?' selected':''}>${escapeHtml(t('boardTypeGeneral'))}</option>
           <option value="value"${_myBoardsFilter.type==='value'?' selected':''}>${escapeHtml(t('boardTypeValue'))}</option>
