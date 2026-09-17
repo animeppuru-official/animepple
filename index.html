@@ -17215,7 +17215,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasEnoughData = axisA.some(k=>profile[k]!=null) && axisB.some(k=>profile[k]!=null);
     if(!hasEnoughData) { _cachedValueProfile = null; renderValueProfileInline(); return; }
 
-    _cachedValueProfile = { labAll, valsAll, profile, signalCount: signals.length };
+    // [修正] 以前は signals.length(=シグナルが付いている「作品数」)を「行動◯件から」に
+    // 表示していたため、既に触れたことのある作品にレビュー一覧を開く/お気に入りを重ねても
+    // (=同じuser_axis_signalsの行のweightが増えるだけで行数は増えない)件数が一切動かず、
+    // 新しい作品に触れた時だけ増える不自然な挙動になっていた。行動の重み(review:3/favorite:2/
+    // view_reviews:1)を合計したtotalWeightの方が実際の行動量を反映するので、そちらを使う。
+    _cachedValueProfile = { labAll, valsAll, profile, signalCount: totalWeight };
     renderValueProfileInline();
 
     // おすすめ：12軸全部を使って、あなたの好みベクトルに近い作品を探す（コサイン類似度）
@@ -23653,11 +23658,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.addEventListener('resize', updateCookieBannerOffset);
 
-  // [2026-09追加、2026-09-17方向判定に修正] スマホ幅：下にスクロールしている間だけ
-  // ヘッダー／ボトムナビを隠し、止まったら出す。上にスクロールしている間も出したままにする
-  // （以前は方向を見ずに「動いてる間は常に隠す」仕様だったが、上スクロール中も隠れてしまい
-  // 使いにくいとの指摘を受けて、前回のscrollY との差分で方向を判定する方式に変更）。
+  // [2026-09追加、2026-09-17方向判定に修正、同日さらに停止後の表示タイミングを調整]
+  // スマホ幅：下にスクロールしている間だけヘッダー／ボトムナビを隠し、止まったら出す。
+  // 上にスクロールしている間も出したままにする（以前は方向を見ずに「動いてる間は常に隠す」
+  // 仕様だったが、上スクロール中も隠れてしまい使いにくいとの指摘を受けて、前回のscrollY との
+  // 差分で方向を判定する方式に変更）。
+  // 停止後に表示へ戻るまでの間隔は、YouTubeアプリの動画操作UIのような「止まって一呼吸置いてから
+  // 出てくる」感覚に寄せるため60ms→SCROLL_STOP_SHOW_DELAY_MSに変更(上スクロールは指摘通り
+  // 即表示のまま、変えていない)。
   // CSS側は@media(max-width:767px)で効かせているので、PC幅ではこのクラスが付いても見た目に影響しない。
+  const SCROLL_STOP_SHOW_DELAY_MS = 400;
   let _scrollHideTimer = null;
   let _lastScrollYForChromeHide = window.scrollY || document.documentElement.scrollTop || 0;
   function onScrollActivityForChromeHide(e) {
@@ -23674,7 +23684,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.add('scroll-hide-chrome');
       _scrollHideTimer = setTimeout(() => {
         document.body.classList.remove('scroll-hide-chrome');
-      }, 60);
+      }, SCROLL_STOP_SHOW_DELAY_MS);
     } else {
       // 上にスクロール中、または動いていない → 常に表示する
       document.body.classList.remove('scroll-hide-chrome');
