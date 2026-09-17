@@ -8211,14 +8211,17 @@ document.addEventListener('DOMContentLoaded', () => {
     pvLogs: {
       async insert(animeId, countryCode) {
         if(!sb) return;
-        sb.from('pv_logs').insert({
+        const { error } = await sb.from('pv_logs').insert({
           anime_id: animeId,
           country_code: countryCode,
           device_type: detectDeviceType(),
           lang: currentLang,
           referrer_type: detectReferrerType(),
           session_id: getSessionId(),
-        }).then(()=>{});
+        });
+        // supabase-jsはAPIエラー時も例外を投げずに{error}を返すだけなので、
+        // ここでチェックしないとRLS/権限エラー等が完全に無言で失敗していた。
+        if(error) console.warn('pvLogs.insert:', error);
       },
       async getAllCountryCodes() {
         if(!sb) return [];
@@ -8884,7 +8887,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Supabaseからレビューを非同期取得してLocalStorageにマージ
-  async function fetchRemoteReviews(animeId) {
+  // 同一animeIdへの同時呼び出し(詳細ページ表示と即座のお気に入り/レビュー一覧操作が重なる場合など)は
+  // 二重リクエストを避けるため同じPromiseを共有する。
+  const _fetchRemoteReviewsInFlight = new Map();
+  function fetchRemoteReviews(animeId) {
+    if(_fetchRemoteReviewsInFlight.has(animeId)) return _fetchRemoteReviewsInFlight.get(animeId);
+    const p = _fetchRemoteReviewsImpl(animeId).finally(() => _fetchRemoteReviewsInFlight.delete(animeId));
+    _fetchRemoteReviewsInFlight.set(animeId, p);
+    return p;
+  }
+  async function _fetchRemoteReviewsImpl(animeId) {
     if(DB_MODE !== 'supabase' || !sb) return;
     try {
       const data = await db.reviews.getByAnimeId(animeId);
@@ -16486,15 +16498,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!_currentUser || !sb || !animeId) return;
     const weight = VALUE_SIGNAL_WEIGHTS[actionType];
     if(!weight) return;
-    let chartA = ownChartA, chartB = ownChartB;
-    if(!chartA || !chartB) {
-      chartA = avgChart(animeId, 'chartA', axisA);
-      chartB = avgChart(animeId, 'chartB', axisB);
-    }
-    if(!chartA || !chartB) return; // マスターグラフがまだ形成されていない作品は対象外
-    db.axisSignals.accumulate(_currentUser.id, animeId, chartA, chartB, weight)
-      .then(({error})=>{ if(error) console.warn('recordValueSignal:', error); })
-      .catch(e=>console.warn('recordValueSignal:', e));
+    (async () => {
+      let chartA = ownChartA, chartB = ownChartB;
+      if(!chartA || !chartB) {
+        // レビュー一覧を開いた直後・お気に入り追加直後は、詳細ページ表示時に投げた
+        // fetchRemoteReviewsがまだ完了しておらず、そのアニメのレビューがローカルに
+        // 1件もマージされていないことがある(実際にはレビューが存在するのにavgChartが
+        // nullになり、シグナルが無言で捨てられてしまっていた)。ここで一度取得を待ってから
+        // マスターグラフ平均を計算し直す。
+        await fetchRemoteReviews(animeId);
+        chartA = avgChart(animeId, 'chartA', axisA);
+        chartB = avgChart(animeId, 'chartB', axisB);
+      }
+      if(!chartA || !chartB) return; // マスターグラフがまだ形成されていない作品は対象外
+      const { error } = await db.axisSignals.accumulate(_currentUser.id, animeId, chartA, chartB, weight);
+      if(error) console.warn('recordValueSignal:', error);
+    })().catch(e=>console.warn('recordValueSignal:', e));
   }
 
   function avgChart(id,chartKey,labels){
