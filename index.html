@@ -1512,9 +1512,10 @@
       box-shadow:0 -20px 50px -20px rgba(0,0,0,.9); padding:16px 14px 14px;
     }
     .bnav-cz-gridwrap { position:relative; }
-    /* 行の境界＝ボトムナビのスワイプページの境界。どの3つが1ページ目かを見せる */
+    /* [2026-09修正] グリッドの実際の子要素として差し込む方式に変更(理由はJS側コメント参照)。
+       grid-column:1/-1で全幅を占有＝ボトムナビのスワイプページの境界を示す */
     .bnav-cz-divider {
-      position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,.08);
+      grid-column: 1 / -1; height:1px; background:rgba(255,255,255,.08); margin:4px 0;
       display:flex; align-items:center; justify-content:center; pointer-events:none;
     }
     .bnav-cz-divider span {
@@ -3065,8 +3066,11 @@
     .legal-modal-body .legal-date { font-size:.75rem; color:var(--muted); margin-bottom:1rem; }
 
     /* クッキーバナー */
+    /* [2026-09修正] bottom:0固定だと、同じくbottom:0固定の下部ナビ(.bnav/.bnav-carousel)を
+       完全に覆い隠してしまい、初回訪問者が同意するまでナビを一切操作できなくなっていた。
+       --bnav-offset(JS側で実際のナビ高さを測って設定)分だけ持ち上げて、ナビの上に重ねて表示する。 */
     #cookieBanner {
-      position:fixed; bottom:0; left:0; right:0; z-index:200;
+      position:fixed; bottom:var(--bnav-offset,0px); left:0; right:0; z-index:200;
       background:var(--card); border-top:1px solid var(--line);
       padding:.75rem 1rem; box-shadow:0 -4px 24px rgba(0,0,0,.4);
     }
@@ -6760,7 +6764,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- スマホ専用：下部固定・3項目ずつスワイプ切り替えのナビゲーション -->
 <nav class="bnav-carousel" id="bnavCarousel">
   <div class="bnav-carousel-track" id="bnavCarouselTrack">
-    <div class="bnav-carousel-page">
+    <div class="bnav-carousel-page bnav-carousel-page-5">
       <button class="bnav-carousel-item" id="bnavc-home" onclick="nav('home')">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
         <span data-i18n="navHome">ホーム</span>
@@ -6769,44 +6773,41 @@ document.addEventListener('DOMContentLoaded', () => {
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></svg>
         <span data-i18n="navSearch">検索</span>
       </button>
-      <button class="bnav-carousel-item" id="bnavc-ranking" onclick="navPopular()">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="7" rx="1"/><rect x="10" y="8" width="4" height="11" rx="1"/><rect x="16" y="5" width="4" height="14" rx="1"/></svg>
-        <span data-i18n="navRanking">人気</span>
-      </button>
-    </div>
-    <div class="bnav-carousel-page">
       <button class="bnav-carousel-item" id="bnavc-board" onclick="nav('board')">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         <span data-i18n="navBoard">掲示板</span>
       </button>
-      <button class="bnav-carousel-item" id="bnavc-articles" onclick="nav('articles')">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
-        <span data-i18n="navArticles">記事の広場</span>
+      <button class="bnav-carousel-item" id="bnavc-notifications" onclick="nav('notifications')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span data-i18n="navNotifications">お知らせ</span>
+        <span class="bnav-badge" id="bnavcNotifBadge" style="display:none;">0</span>
       </button>
       <button class="bnav-carousel-item" id="bnavc-mypage" onclick="nav('mypage')">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg>
         <span data-i18n="navMypage">マイページ</span>
       </button>
     </div>
-    <div class="bnav-carousel-page">
-      <button class="bnav-carousel-item" id="bnavc-notifications" onclick="nav('notifications')">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-        <span data-i18n="navNotifications">お知らせ</span>
-        <span class="bnav-badge" id="bnavcNotifBadge" style="display:none;">0</span>
-      </button>
-      <button class="bnav-carousel-item" id="bnavc-settings" onclick="nav('settings')">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span data-i18n="navSettings">設定</span>
+    <div class="bnav-carousel-page bnav-carousel-page-4">
+      <button class="bnav-carousel-item" id="bnavc-ranking" onclick="navPopular()">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="7" rx="1"/><rect x="10" y="8" width="4" height="11" rx="1"/><rect x="16" y="5" width="4" height="14" rx="1"/></svg>
+        <span data-i18n="navRanking">人気</span>
       </button>
       <button class="bnav-carousel-item" id="bnavc-gacha" onclick="nav('gacha')">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
         <span data-i18n="navGacha">ガチャガチャ</span>
       </button>
+      <button class="bnav-carousel-item" id="bnavc-articles" onclick="nav('articles')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+        <span data-i18n="navArticles">記事の広場</span>
+      </button>
+      <button class="bnav-carousel-item" id="bnavc-settings" onclick="nav('settings')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span data-i18n="navSettings">設定</span>
+      </button>
     </div>
   </div>
   <div class="bnav-carousel-dots" id="bnavCarouselDots">
     <span class="bnav-carousel-dot active"></span>
-    <span class="bnav-carousel-dot"></span>
     <span class="bnav-carousel-dot"></span>
   </div>
 </nav>
@@ -13591,6 +13592,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('submitReviewBtn').onclick=async()=>{
     const quota = await checkDailyReviewQuota();
     if(!quota.allowed) return;
+    // [2026-09追加] 「作品の完成度」「感情・雰囲気」は矢印(‹›)で切り替える2画面構成のため、
+    // 片方(6項目)を埋めただけでもう片方に気づかず投稿してしまうケースがあった。
+    // グラフを一部でも触っていて、かつ12項目のうち未入力が残っている時だけ件数を伝えて確認する
+    // (グラフに一切触れず文章だけで投稿する場合は対象外＝無用な警告を出さない)。
+    const unfilledAxesCount = vA.filter(v=>v===-1).length + vB.filter(v=>v===-1).length;
+    const anyAxisSet = vA.some(v=>v!==-1) || vB.some(v=>v!==-1);
+    if(anyAxisSet && unfilledAxesCount > 0 && !confirm(tFn('reviewIncompleteAxesConfirm', unfilledAxesCount))) {
+      return; // キャンセル＝投稿を中断してスライダーに戻れるようにする
+    }
     const chartAObjPreCheck = Object.fromEntries(axisA.map((k,i)=>[k, vA[i]===-1?0:vA[i]]));
     const chartBObjPreCheck = Object.fromEntries(axisB.map((k,i)=>[k, vB[i]===-1?0:vB[i]]));
     const isFullGraphPreCheck = vA.every(v=>v!==-1) && vB.every(v=>v!==-1);
@@ -18867,9 +18877,8 @@ document.addEventListener('DOMContentLoaded', () => {
     writeGoodReviewToUnlock: { ja:'しっかりとしたレビューを書くと、特別な掲示板に入れるよ！', en:'Write a solid review to unlock a special board!', ko:'제대로 된 리뷰를 쓰면 특별한 게시판에 입장할 수 있어요!', 'zh-tw':'寫一則紮實的評論就能解鎖特別板！', 'zh-cn':'写一条扎实的评论就能解锁特别板块！', es:'¡Escribe una buena reseña para desbloquear un foro especial!', fr:'Rédigez un bon avis pour débloquer un forum spécial !', pt:'Escreva uma boa avaliação para desbloquear um fórum especial!', de:'Schreibe eine gute Rezension, um ein spezielles Board freizuschalten!', ar:'اكتب مراجعة جيدة لفتح لوحة خاصة!', th:'เขียนรีวิวดีๆ เพื่อปลดล็อกบอร์ดพิเศษ!', id:'Tulis ulasan yang bagus untuk membuka papan spesial!', ru:'Напишите хороший отзыв, чтобы открыть особую доску!', it:'Scrivi una buona recensione per sbloccare una bacheca speciale!', vi:'Viết đánh giá chỉn chu để mở khóa bảng đặc biệt!' },
     shareProfileText: { ja:'アニメップルで「{username}」のマイページを見てみて！ #アニメップル', en:'Check out {username}\'s profile on Animepple! #Animepple' },
     bnavCustomizeTitle: { ja:'ツールバーの並び替え', en:'Reorder toolbar' },
-    bnavCustomizeHint: { ja:'ドラッグして並べ替え。左上の3つがナビに出ます。', en:'Press and hold an icon to drag and reorder it. The top row becomes the left side of the toolbar.' },
+    bnavCustomizeHint: { ja:'ドラッグして並べ替え。最初の5つが1ページ目に出ます。', en:'Press and hold an icon to drag and reorder it. The first 5 appear on the first page.' },
     bnavCzPage2: { ja:'スワイプ2ページ目', en:'Swipe page 2' },
-    bnavCzPage3: { ja:'スワイプ3ページ目', en:'Swipe page 3' },
     bnavCzTapHint: { ja:'タップでも並べ替えできます（− で末尾へ）', en:'You can also tap two icons to swap (− sends to the end)' },
     bnavCzToEnd: { ja:'末尾へ送る', en:'Send to end' },
     bnavCzSaved: { ja:'ナビの並びを保存しました', en:'Saved your nav order' },
@@ -19268,6 +19277,10 @@ document.addEventListener('DOMContentLoaded', () => {
     aiOnlyGraphNote:{ ja:'AIによる予測グラフです（実際のレビューはまだありません）',en:'This is an AI-predicted graph (no real reviews yet)',ko:'AI가 예측한 그래프입니다（아직 실제 리뷰가 없습니다）','zh-tw':'這是AI預測的圖表（尚無實際評論）','zh-cn':'这是AI预测的图表（尚无实际评论）',es:'Este es un gráfico predicho por IA (aún sin reseñas reales)',fr:'Ceci est un graphique prédit par IA (pas encore d\'avis réels)',pt:'Este é um gráfico previsto por IA (ainda sem avaliações reais)',de:'Dies ist ein KI-vorhergesagtes Diagramm (noch keine echten Bewertungen)',ar:'هذا رسم بياني تنبأ به الذكاء الاصطناعي (لا توجد مراجعات حقيقية بعد)',th:'นี่คือกราฟที่ AI คาดการณ์ (ยังไม่มีรีวิวจริง)',id:'Ini grafik prediksi AI (belum ada ulasan asli)',ru:'Это график, спрогнозированный ИИ (реальных отзывов ещё нет)',it:'Grafico previsto dall\'IA (nessuna recensione reale ancora)',vi:'Đây là biểu đồ AI dự đoán (chưa có đánh giá thật)' },
     aiBlendedGraphNote:{ ja:'AIの推定も混ぜた参考グラフです',en:'This reference graph blends AI estimates with real reviews',ko:'AI 추정치를 혼합한 참고 그래프입니다','zh-tw':'此參考圖表混合了AI推測與實際評論','zh-cn':'此参考图表混合了AI推测与实际评论',es:'Este gráfico de referencia combina estimaciones de IA con reseñas reales',fr:'Ce graphique de référence combine des estimations IA et de vrais avis',pt:'Este gráfico de referência combina estimativas de IA com avaliações reais',de:'Dieses Referenzdiagramm kombiniert KI-Schätzungen mit echten Bewertungen',ar:'يجمع هذا الرسم البياني المرجعي بين تقديرات الذكاء الاصطناعي والمراجعات الحقيقية',th:'กราฟนี้ผสมค่าคาดการณ์ AI กับรีวิวจริง',id:'Grafik ini mencampur estimasi AI dan ulasan asli',ru:'Этот график сочетает оценки ИИ и реальные отзывы',it:'Questo grafico unisce stime IA e recensioni reali',vi:'Biểu đồ này pha trộn ước tính AI với đánh giá thật' },
     turnstileRequiredAlert:{ ja:'bot確認にチェックを入れてください。',en:'Please complete the verification check.',ko:'봇 확인에 체크해 주세요.','zh-tw':'請完成機器人驗證。','zh-cn':'请完成机器人验证。',es:'Por favor, complete la verificación anti-bot.',fr:'Veuillez compléter la vérification anti-robot.',pt:'Por favor, complete a verificação anti-robô.',de:'Bitte schließen Sie die Bot-Überprüfung ab.',ar:'يرجى إكمال التحقق من الروبوت.',th:'กรุณายืนยันตัวตน',id:'Selesaikan verifikasi bot.',ru:'Пройдите проверку на бота.',it:'Completa la verifica anti-bot.',vi:'Vui lòng hoàn tất xác minh.' },
+    // [2026-09追加] グラフを一部だけ入力した状態で投稿しようとした時の確認。
+    // 「作品の完成度」「感情・雰囲気」は矢印(‹›)で切り替える2画面構成になっており、
+    // 片方を埋めただけでもう片方(6項目)に気づかずそのまま投稿できてしまっていたため。
+    reviewIncompleteAxesConfirm:{ ja:(n)=>`グラフがあと${n}項目未入力です（画面上部の「‹›」でもう一方の面に切り替えられます）。このまま投稿しますか？`, en:(n)=>`${n} more chart items are still unset (use the "‹›" button above to switch to the other side). Submit anyway?` },
     profileSaveFailedAlert:{ ja:'保存に失敗しました。もう一度お試しください。',en:'Failed to save. Please try again.',ko:'저장에 실패했습니다. 다시 시도해 주세요.','zh-tw':'儲存失敗，請再試一次。','zh-cn':'保存失败，请再试一次。',es:'Error al guardar. Inténtalo de nuevo.',fr:'Échec de l\'enregistrement. Veuillez réessayer.',pt:'Falha ao salvar. Tente novamente.',de:'Speichern fehlgeschlagen. Bitte versuchen Sie es erneut.',ar:'فشل الحفظ. يرجى المحاولة مرة أخرى.',th:'บันทึกล้มเหลว กรุณาลองใหม่',id:'Gagal menyimpan. Coba lagi.',ru:'Ошибка сохранения. Повторите попытку.',it:'Salvataggio fallito. Riprova.',vi:'Lưu thất bại. Vui lòng thử lại.' },
     googleLoginFailedAlert:{ ja:'Googleログインに失敗しました',en:'Google sign-in failed',ko:'Google 로그인에 실패했습니다','zh-tw':'Google 登入失敗','zh-cn':'Google 登录失败',es:'Error al iniciar sesión con Google',fr:'Échec de la connexion Google',pt:'Falha no login do Google',de:'Google-Anmeldung fehlgeschlagen',ar:'فشل تسجيل الدخول عبر Google',th:'เข้าสู่ระบบ Google ล้มเหลว',id:'Login Google gagal',ru:'Ошибка входа через Google',it:'Accesso Google fallito',vi:'Đăng nhập Google thất bại' },
     favStatusUpdateFailedAlert:{ ja:'ステータスの更新に失敗しました。時間を置いて再度お試しください。',en:'Failed to update status. Please try again later.',ko:'상태 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요.','zh-tw':'狀態更新失敗，請稍後再試。','zh-cn':'状态更新失败，请稍后再试。',es:'Error al actualizar el estado. Inténtalo de nuevo más tarde.',fr:'Échec de la mise à jour du statut. Veuillez réessayer plus tard.',pt:'Falha ao atualizar o status. Tente novamente mais tarde.',de:'Status konnte nicht aktualisiert werden. Bitte versuchen Sie es später erneut.',ar:'فشل تحديث الحالة. يرجى المحاولة مرة أخرى لاحقًا.',th:'อัปเดตสถานะล้มเหลว ลองใหม่ภายหลัง',id:'Gagal memperbarui status. Coba lagi nanti.',ru:'Ошибка обновления статуса. Повторите позже.',it:'Aggiornamento stato fallito. Riprova più tardi.',vi:'Cập nhật trạng thái thất bại. Thử lại sau.' },
@@ -23486,12 +23499,26 @@ document.addEventListener('DOMContentLoaded', () => {
   function reopenCookieConsent() { openCookieSettings(); }
   window.reopenCookieConsent = reopenCookieConsent;
 
+  // [2026-09追加] 768px未満は.bnav-carouselが「下部固定バー」として表示され、クッキーバナーの
+  // bottom:0と完全に重なって隠してしまっていた。768px以上は.bnavが「左サイドナビ」(高さ＝画面全体)
+  // に変わるため、そちらは元々バナーと重ならず、オフセットは不要（0のまま）。
+  // ※.bnavの高さをそのまま測ると、サイドナビ化した時に画面全体の高さになってしまい
+  // バナーが画面外に押し出されるので、実際のナビ形状に合わせてモード分岐する。
+  function updateCookieBannerOffset() {
+    const isBottomBarMode = window.innerWidth < 768;
+    const bnavCarousel = document.getElementById('bnavCarousel');
+    const h = (isBottomBarMode && bnavCarousel) ? bnavCarousel.offsetHeight : 0;
+    document.documentElement.style.setProperty('--bnav-offset', h + 'px');
+  }
+  window.addEventListener('resize', updateCookieBannerOffset);
+
   // 起動時: 未同意 or バージョン違いならバナーを表示
   (function initCookieBanner() {
     const consent = getCookieConsent();
     if(!consent || consent.version !== CONSENT_VERSION) {
       // 少し遅延させてサイトが描画されてから表示
       setTimeout(() => {
+        updateCookieBannerOffset();
         document.getElementById('cookieBanner').style.display = '';
       }, 800);
     }
@@ -23706,7 +23733,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const _initAuthPromise = initAuth();
 
   // ── スマホ下部ツールバーのカスタマイズ（長押しで並び替え） ──
-  // ツールバー本体（bnavCarousel）は3個ずつのページに分かれた構造のまま、
+  // ツールバー本体（bnavCarousel）はBNAV_PAGE_SIZES（5個＋4個）のページに分かれた構造のまま、
   // 保存された並び順に応じてページを組み直す。並び順はlocalStorageに端末ごとに保存する。
   const BNAV_ORDER_KEY = 'animepple_bnav_order_v1';
   const BNAV_HINT_KEY = 'animepple_bnav_hint_v1';   // 「長押しで並べ替え」を出した回数
@@ -23727,26 +23754,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     el.textContent = t('bnavCzLongPressHint');
   }
+  // [2026-09修正] 3個×3ページ(9個)から、5個＋4個の2ページ構成に変更。
+  // 並び順もその時に「ホーム/検索/掲示板/お知らせ/マイページ」→「人気/ガチャ/記事の広場/設定」の
+  // 指定順に変更している。BNAV_ITEMSの並び＝初期状態の並びなので、ここでの並び替えがそのまま反映される。
   const BNAV_ITEMS = [
     { id:'home', label:'ホーム', onclick:"nav('home')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>' },
     { id:'search', label:'検索', onclick:"openSearch()",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></svg>' },
-    { id:'ranking', label:'人気', onclick:"navPopular()",
-      icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="7" rx="1"/><rect x="10" y="8" width="4" height="11" rx="1"/><rect x="16" y="5" width="4" height="14" rx="1"/></svg>' },
     { id:'board', label:'掲示板', onclick:"nav('board')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' },
-    { id:'articles', label:'記事の広場', onclick:"nav('articles')",
-      icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>' },
-    { id:'mypage', label:'マイページ', onclick:"nav('mypage')",
-      icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg>' },
     { id:'notifications', label:'お知らせ', onclick:"nav('notifications')", hasBadge:true,
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>' },
-    { id:'settings', label:'設定', onclick:"nav('settings')",
-      icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' },
+    { id:'mypage', label:'マイページ', onclick:"nav('mypage')",
+      icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg>' },
+    { id:'ranking', label:'人気', onclick:"navPopular()",
+      icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="7" rx="1"/><rect x="10" y="8" width="4" height="11" rx="1"/><rect x="16" y="5" width="4" height="14" rx="1"/></svg>' },
     { id:'gacha', label:'ガチャガチャ', onclick:"nav('gacha')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>' },
+    { id:'articles', label:'記事の広場', onclick:"nav('articles')",
+      icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>' },
+    { id:'settings', label:'設定', onclick:"nav('settings')",
+      icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' },
   ];
+  // ページごとの項目数（合計9個を5個＋4個に分ける）。並び替えなどで項目が増えた場合は
+  // 余った分を4個ずつのページに追加する
+  const BNAV_PAGE_SIZES = [5, 4];
   function getBnavOrder() {
     try {
       const saved = JSON.parse(localStorage.getItem(BNAV_ORDER_KEY) || 'null');
@@ -23763,14 +23796,18 @@ document.addEventListener('DOMContentLoaded', () => {
   function saveBnavOrder(orderIds) {
     localStorage.setItem(BNAV_ORDER_KEY, JSON.stringify(orderIds));
   }
-  // 保存された並び順に基づいて、実際のツールバー（3個ずつのページ構成）を組み直す
+  // 保存された並び順に基づいて、実際のツールバー（BNAV_PAGE_SIZES＝5個＋4個のページ構成）を組み直す
   function rebuildBnavCarousel() {
     const order = getBnavOrder();
     const track = document.getElementById('bnavCarouselTrack');
     const dotsWrap = document.getElementById('bnavCarouselDots');
     if(!track) return;
     const pages = [];
-    for(let i = 0; i < order.length; i += 3) pages.push(order.slice(i, i + 3));
+    for(let i = 0, pageIdx = 0; i < order.length; pageIdx++) {
+      const size = BNAV_PAGE_SIZES[pageIdx] || BNAV_PAGE_SIZES[BNAV_PAGE_SIZES.length - 1];
+      pages.push(order.slice(i, i + size));
+      i += size;
+    }
     track.innerHTML = pages.map(pageIds => `
       <div class="bnav-carousel-page">
         ${pageIds.map(id => {
@@ -23849,8 +23886,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <p style="margin:0 0 14px;font-size:11px;line-height:1.7;color:#8db5a0;">${escapeHtml(t('bnavCustomizeHint'))}</p>
         <div class="bnav-cz-gridwrap">
           <div id="bnavCustomizeGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
-          <div class="bnav-cz-divider" data-row="1"><span>${escapeHtml(t('bnavCzPage2'))}</span></div>
-          <div class="bnav-cz-divider" data-row="2"><span>${escapeHtml(t('bnavCzPage3'))}</span></div>
         </div>
         <p style="margin:13px 0 0;font-size:10.5px;color:#66786d;text-align:center;">${escapeHtml(t('bnavCzTapHint'))}</p>
       </div>`;
@@ -23872,26 +23907,32 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>`;
     }).join('');
 
-    // 行の境界線を実際の行の高さに合わせて置く（3行×等高なので1/3・2/3の位置）
+    // [2026-09修正] 5個＋4個の区切りは3列グリッドの行の切れ目と一致しない(5は3の倍数でない)ため、
+    // 絶対位置で横線を引く方式(行が等間隔である前提)ではズレて中途半端な場所に線が出てしまう。
+    // 代わりに区切り線自体をグリッドの実際の子要素として、境界の直後(BNAV_PAGE_SIZES[0]番目の後ろ)に
+    // 差し込む方式にする。grid-column:1/-1で全幅を占有させれば、行に空きがあっても自動で次の行に送られる。
+    let divider = null;
+    function ensureDivider() {
+      if(divider) return divider;
+      divider = document.createElement('div');
+      divider.className = 'bnav-cz-divider';
+      divider.innerHTML = `<span>${escapeHtml(t('bnavCzPage2'))}</span>`;
+      return divider;
+    }
     function layoutDividers() {
-      const cells = grid.querySelectorAll('.bnav-customize-cell');
-      if(cells.length < 7) return;
-      const gTop = grid.getBoundingClientRect().top;
-      overlay.querySelectorAll('.bnav-cz-divider').forEach(d => {
-        const row = Number(d.dataset.row);
-        const above = cells[row * 3 - 1].getBoundingClientRect();
-        const below = cells[row * 3].getBoundingClientRect();
-        d.style.top = Math.round((above.bottom + below.top) / 2 - gTop) + 'px';
-      });
+      const cells = Array.from(grid.querySelectorAll('.bnav-customize-cell'));
+      const boundary = BNAV_PAGE_SIZES[0];
+      if(cells.length <= boundary) { if(divider) divider.remove(); return; }
+      grid.insertBefore(ensureDivider(), cells[boundary]);
     }
 
-    // 並び順が変わるたびに番号と「ナビに出る3つ」の緑枠を振り直す
+    // 並び順が変わるたびに番号と「ナビの1ページ目に出る5つ」の緑枠を振り直す
     function renumber() {
       const cells = Array.from(grid.querySelectorAll('.bnav-customize-cell'));
       cells.forEach((c, i) => {
         const num = c.querySelector('.bnav-cz-num');
         if(num) num.textContent = i + 1;
-        c.classList.toggle('is-onbar', i < 3);
+        c.classList.toggle('is-onbar', i < BNAV_PAGE_SIZES[0]);
         // お知らせのバッジは未読があるときだけ出す（ナビ側と同じ条件）
         const slot = c.querySelector('.bnav-cz-badge-slot');
         if(slot) {
