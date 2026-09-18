@@ -2540,7 +2540,7 @@
     .admin-anime-country-row:last-child { border-bottom:none; }
     .admin-section-title { font-size:.88rem; font-weight:700; color:#dff0e6; margin:0 0 .75rem; }
     .admin-nav-bar {
-      position:sticky; top:0; z-index:20; display:flex; gap:.4rem; overflow-x:auto;
+      position:sticky; top:var(--hdr-h,60px); z-index:20; display:flex; gap:.4rem; overflow-x:auto;
       padding:.6rem 1rem; background:#0c241a; border-bottom:1px solid var(--line);
       -webkit-overflow-scrolling:touch;
     }
@@ -5574,6 +5574,18 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
+<!-- [2026-09-18追加] 利用規約はこれまでモーダル(openLegal('terms'))でしか表示できず、
+     専用URLが無かった(Paddle等の外部審査が直接リンクできるURLを要求するため必要になった)。
+     内容の二重管理を避けるため、テキスト自体はLEGAL_CONTENT.termsのまま持ち、
+     このページはJSで#termsPageBodyにその内容を流し込むだけにする -->
+<div class="page" id="page-terms">
+  <div class="privacy-content-wrap">
+    <button type="button" class="back-btn" onclick="nav('settings-about')" data-i18n-aria="ariaBack" aria-label="戻る">‹</button>
+    <h1>利用規約</h1>
+    <div id="termsPageBody"></div>
+  </div>
+</div>
+
 <div class="page" id="page-admin">
 
   <header class="hdr">
@@ -5591,7 +5603,6 @@ document.addEventListener('DOMContentLoaded', () => {
     <button class="admin-nav-pill" data-admin-page="admin-group-revenue" onclick="adminShowPage('admin-group-revenue')">💰 収益</button>
     <button class="admin-nav-pill" data-admin-page="admin-group-reviews" onclick="adminShowPage('admin-group-reviews')">📝 レビュー</button>
     <button class="admin-nav-pill" data-admin-page="admin-group-user-submissions" onclick="adminShowPage('admin-group-user-submissions')">🗂 ユーザー投稿</button>
-    <button class="admin-nav-pill" data-admin-page="admin-group-maintenance" onclick="adminShowPage('admin-group-maintenance')">🔧 メンテナンス</button>
   </div>
 
   <!-- ログインしていない場合：サイト本来のログイン方法(Googleボタン1つ)をそのまま置く -->
@@ -5621,6 +5632,23 @@ document.addEventListener('DOMContentLoaded', () => {
       <div id="adminErrorLogList"></div>
     </div>
 
+    <!-- [2026-09-18追加] サーバー側(Edge Function)監視。今までブラウザ側JSエラーしか
+         見えておらず、支払いは成立したのにコイン/プラン/投げ銭の反映に失敗したケース等が
+         console.warn/errorにしか出ておらず気づけなかった(paddle-webhook/
+         create-tip-transaction内)。事前にSupabaseで下記を実行しておくこと:
+           alter table error_logs add column if not exists source text not null default 'client';
+           alter table error_logs add column if not exists function_name text;
+         その上でsupabase functions deploy paddle-webhook / create-tip-transaction が必要 -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">💳 決済まわりのサーバーエラー</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">Paddle Webhook・投げ銭作成など、支払いは成立したのに反映に失敗したケース。0件以外は至急確認してください</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.75rem;">
+        <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiServerErrors24h">—</div><div class="admin-kpi-label">直近24時間のエラー件数</div></div>
+        <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiServerErrors7d">—</div><div class="admin-kpi-label">直近7日間のエラー件数</div></div>
+      </div>
+      <div id="adminServerErrorLogList"></div>
+    </div>
+
     <!-- KPIカード -->
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1rem;">
       <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiReviews">—</div><div class="admin-kpi-label">総レビュー数</div></div>
@@ -5637,6 +5665,30 @@ document.addEventListener('DOMContentLoaded', () => {
         <button class="admin-trend-btn" data-metric="pv">PV数</button>
       </div>
       <canvas id="adminTrendChart" width="600" height="220" style="width:100%;height:160px;"></canvas>
+    </div>
+
+    <!-- [2026-09-18追加]「お知らせを全員に配信する機能が無い」との指摘への対応。
+         多言語対応フォーム(15言語ぶんの入力欄)は作らず、サイト内の他の翻訳文言と
+         同じ{ja:'...', en:'...', ...}という形のオブジェクトをそのまま貼り付けて
+         書ける方式にした(受け取った側の表示言語に応じてresolveNoticeText()が解決する)。
+         事前にSupabaseで下記のRPCを作成しておくこと:
+           create or replace function broadcast_notice(p_title text, p_message text)
+           returns void language sql as $$
+             insert into user_notices (user_id, title, message)
+             select id, p_title, p_message from profiles;
+           $$;
+           grant execute on function broadcast_notice(text, text) to authenticated;
+         (SECURITY DEFINERではないので、既存のuser_notices INSERT用RLS(is_adminのみ許可)が
+         そのまま適用される) -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">📢 お知らせを全員に配信</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">タイトル・本文とも、普通の文字列でも良いし、他の翻訳文言と同じ<code>{"ja":"日本語","en":"English"}</code>という形のオブジェクトをそのまま貼り付けてもいい(受け取った人の表示言語に応じて出し分けられる)。送信すると全ユーザーの「お知らせ」に即時届く(取り消せないので確認してから送信すること)</p>
+      <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:.3rem;">タイトル</label>
+      <textarea id="adminBroadcastTitle" rows="2" placeholder='お知らせ本文の更新について、または {"ja":"…","en":"…"}' style="width:100%;padding:.55rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.8rem;box-sizing:border-box;margin-bottom:.6rem;resize:vertical;font-family:monospace;"></textarea>
+      <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:.3rem;">本文</label>
+      <textarea id="adminBroadcastMessage" rows="5" style="width:100%;padding:.55rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.8rem;box-sizing:border-box;margin-bottom:.6rem;resize:vertical;font-family:monospace;"></textarea>
+      <button type="button" id="adminBroadcastSendBtn" style="height:34px;padding:0 16px;border-radius:8px;border:none;background:#e8c463;color:#3a2a06;font-size:.78rem;font-weight:800;cursor:pointer;">全員に送信する</button>
+      <span id="adminBroadcastStatus" style="font-size:.75rem;margin-left:.6rem;"></span>
     </div>
     </div><!-- /admin-group-overview -->
 
@@ -5744,9 +5796,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <div id="admin-group-revenue" class="admin-page-group">
     <div class="admin-group-header">収益・エンゲージメント</div>
+
+    <!-- [2026-09-18追加]「収益タブなのにお金の情報が一切無い」との指摘への対応。
+         プラン別契約者数・MRR概算・投げ銭・コイン経済の実データを追加。
+         事前にSupabaseで下記のRPCを作成しておくこと:
+           create or replace function get_tips_revenue_summary()
+           returns table(total_all_time_jpy bigint, total_30d_jpy bigint, count_30d bigint)
+           language sql stable as $$
+             select
+               coalesce(sum(amount_jpy), 0)::bigint,
+               coalesce(sum(amount_jpy) filter (where created_at >= now() - interval '30 days'), 0)::bigint,
+               coalesce(count(*) filter (where created_at >= now() - interval '30 days'), 0)::bigint
+             from tips;
+           $$;
+           grant execute on function get_tips_revenue_summary() to authenticated;
+
+           create or replace function get_total_coin_balance()
+           returns bigint language sql stable as $$
+             select coalesce(sum(coins), 0)::bigint from profiles;
+           $$;
+           grant execute on function get_total_coin_balance() to authenticated; -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">💴 プラン契約状況・MRR概算</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">無料/＋/クリエイターズの契約者数と、月額料金だけから見た概算の月次経常収益(コインパック・投げ銭は含まない)</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.75rem;">
+        <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiPlanFree">—</div><div class="admin-kpi-label">無料プラン</div></div>
+        <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiPlanPlus">—</div><div class="admin-kpi-label">アニメップル＋（¥500/月）</div></div>
+        <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiPlanCreators">—</div><div class="admin-kpi-label">クリエイターズ（¥1,500/月）</div></div>
+        <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiMrr">—</div><div class="admin-kpi-label">概算MRR</div></div>
+      </div>
+    </div>
+
+    <!-- 投げ銭 -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">💝 投げ銭</h3>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.75rem;">
+        <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiTipsTotal">—</div><div class="admin-kpi-label">累計金額</div></div>
+        <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiTips30d">—</div><div class="admin-kpi-label">直近30日（件数）</div></div>
+      </div>
+      <div id="adminRecentTips"></div>
+    </div>
+
+    <!-- コイン経済 -->
+    <!-- [2026-09-18訂正] コインは購入(有償)だけでなくデイリークエスト報酬(無償)でも
+         入手できるため、残高合計を単独で出すと収益額と誤解されかねない(ユーザー指摘)。
+         「有償/無償の累計発行内訳」を必ず併記し、収益に含まれるのは購入分だけだと
+         分かるようにする。事前にSupabaseで下記のRPCを作成しておくこと:
+           create or replace function get_coin_issuance_by_reason()
+           returns table(reason text, total_amount bigint)
+           language sql stable as $$
+             select reason, sum(amount)::bigint
+             from coin_transactions
+             where amount > 0
+             group by reason;
+           $$;
+           grant execute on function get_coin_issuance_by_reason() to authenticated; -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🪙 コイン経済</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">コインは購入(有償)だけでなくデイリークエスト報酬(無償)でも入手できるため、下の残高合計はその両方が混ざった数値で、収益額そのものではない(収益に含まれるのは「購入」分だけ)</p>
+      <div class="admin-kpi" style="margin-bottom:.75rem;"><div class="admin-kpi-val" id="adminKpiCoinBalance">—</div><div class="admin-kpi-label">未消費コイン残高合計(有償+無償の合算)</div></div>
+      <p style="font-size:.7rem;color:#8db5a0;font-weight:700;margin:0 0 .3rem;">累計発行内訳(有償/無償の内訳)</p>
+      <div id="adminCoinIssuanceBreakdown"></div>
+    </div>
+
     <!-- 広告・アフィリンククリック -->
     <div class="admin-section">
-      <h3 class="admin-section-title">💰 広告・アフィリンククリック（直近30日）</h3>
+      <h3 class="admin-section-title">📣 広告・アフィリンククリック（直近30日）</h3>
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">どの配信・グッズ導線が実際に使われているか</p>
       <div id="adminAdClicks"></div>
     </div>
@@ -5781,6 +5896,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="suspended" onclick="adminShowUserSubTab('suspended')">🚫 凍結中</button>
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="images" onclick="adminShowUserSubTab('images')">🖼️ 画像投稿</button>
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="contact" onclick="adminShowUserSubTab('contact')">✉️ お問い合わせ</button>
+      <button type="button" class="admin-subnav-pill" data-user-sub-tab="editAnime" onclick="adminShowUserSubTab('editAnime')">✏️ 作品データ編集</button>
       <button type="button" class="admin-subnav-pill" data-user-sub-tab="archive" onclick="adminShowUserSubTab('archive')">📦 退会済みアカウント</button>
     </div>
     <!-- 通報一覧 -->
@@ -5813,26 +5929,36 @@ document.addEventListener('DOMContentLoaded', () => {
       <div id="adminContactCategoryTabs" style="display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.7rem;"></div>
       <div id="adminContactMessagesList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
     </div>
+    <!-- [2026-09-18追加]「作品データを編集する機能が無い」との指摘への対応。
+         anime_pagesはサイト全体の改ざん対策として、authenticated/anonロールに
+         description_ja・title_enの2列だけUPDATE権限がある設計(SECURITY_REVIEW.md参照。
+         title本体・image_url・年代・ジャンル等は権限が無いため、ここでは編集できない。
+         image_urlは既存の「🖼️画像投稿」承認フローで、title本体等はより大掛かりな
+         対応(service_role経由のEdge Function新設)が必要なため今回は対象外) -->
+    <div class="admin-user-submission-tab" data-user-sub-tab="editAnime">
+      <h3 class="admin-section-title">✏️ 作品データ編集</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">権限の都合上、ここで直せるのは「英語タイトル表記」と「あらすじ(日本語)」の2つだけです。タイトル本体・画像・年代・ジャンル等は別対応が必要です。</p>
+      <input id="adminEditAnimeSearchInput" class="admin-select" placeholder="作品名で検索…" style="width:100%;margin-bottom:.5rem;" />
+      <div id="adminEditAnimeSearchResults" style="max-height:160px;overflow-y:auto;margin-bottom:.5rem;"></div>
+      <div id="adminEditAnimeForm" style="display:none;border:1px solid var(--line,#2a3830);border-radius:10px;padding:12px;margin-top:.5rem;">
+        <p id="adminEditAnimeTitle" style="font-size:.85rem;font-weight:800;color:#dfeae3;margin:0 0 .8rem;"></p>
+        <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:.3rem;">英語タイトル表記(title_en)</label>
+        <input id="adminEditAnimeTitleEn" type="text" style="width:100%;padding:.55rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;margin-bottom:.8rem;" />
+        <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:.3rem;">あらすじ(日本語・description_ja)</label>
+        <textarea id="adminEditAnimeDescriptionJa" rows="5" style="width:100%;padding:.55rem;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.85rem;box-sizing:border-box;margin-bottom:.8rem;resize:vertical;"></textarea>
+        <button type="button" id="adminEditAnimeSaveBtn" style="height:34px;padding:0 16px;border-radius:8px;border:none;background:#5ec97a;color:#07200f;font-size:.78rem;font-weight:800;cursor:pointer;">保存する</button>
+        <span id="adminEditAnimeSaveStatus" style="font-size:.75rem;color:#a7ecc4;margin-left:.6rem;"></span>
+      </div>
+    </div>
     <!-- 退会済みアカウント -->
     <div class="admin-user-submission-tab" data-user-sub-tab="archive">
       <h3 class="admin-section-title">📦 退会済みアカウントのバックアップ</h3>
-      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">実際にデータを消す前に取ったバックアップ一覧。本人から「データを返してほしい」と連絡があった時に、ここから中身を確認できます。保管期間は半年で、それを過ぎたものは自動で削除されます。</p>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">実際にデータを消す前に取ったバックアップ一覧。本人から「データを返してほしい」と連絡があった時に、ここから中身を確認できます。保管期間は半年で、それを過ぎたものは自動で削除されます。通常は直近30件のみ表示されますが、メールアドレスで検索すると保管期間内の全件から探せます。</p>
+      <input id="adminArchiveSearchInput" class="admin-select" placeholder="メールアドレスで検索…" style="width:100%;margin-bottom:.5rem;" />
       <div id="adminDeletedArchiveList"><p style="font-size:.78rem;color:var(--muted);">読み込み中…</p></div>
     </div>
     </div><!-- /admin-group-user-submissions -->
 
-    <div id="admin-group-maintenance" class="admin-page-group">
-    <div class="admin-group-header">メンテナンス</div>
-    <div class="admin-section">
-      <h3 class="admin-section-title">🏷️ Kitsuジャンル一括登録</h3>
-      <p style="font-size:.78rem;color:var(--muted);margin:0 0 .75rem;">
-        Kitsuのジャンル一覧（Action/Comedy/Dramaなど）は種類が変動しないため、tag_translationsテーブルに英語形をまとめて登録しておけます。
-        既に登録済みのものはスキップされるので、何度実行しても安全です。
-      </p>
-      <button class="admin-btn" disabled style="opacity:.4;cursor:not-allowed;">Kitsuジャンル一括登録（廃止済み）</button>
-      <p id="seedKitsuGenresResult" style="font-size:.78rem;color:var(--brand);margin:.6rem 0 0;"></p>
-    </div>
-    </div><!-- /admin-group-maintenance -->
   </div>
 </div>
 
@@ -6342,6 +6468,16 @@ document.addEventListener('DOMContentLoaded', () => {
           <input id="contactCopyrightConfirm" type="checkbox" style="margin-top:3px;accent-color:#5ec97a;">
           <span style="font-size:.76rem;color:#c3d4c9;line-height:1.5;">私は、上記対象作品の著作権者本人、またはその正当な権限を有する代理人です。</span>
         </label>
+      </div>
+
+      <!-- [2026-09-18追加] 著作権以外のカテゴリでは、これまで返信先を入力する欄が無く、
+           運営側が返信したくても連絡先が分からない状態だった。任意項目として追加する
+           (著作権カテゴリは既に上のcontactCopyrightFieldsで必須として持っているので出さない) -->
+      <div id="contactGeneralReplyEmailField" style="margin-bottom:.8rem;">
+        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">返信用メールアドレス(任意)</label>
+        <p style="font-size:.7rem;color:var(--muted);margin:0 0 .3rem;">返信をご希望の場合のみご記入ください。空欄でも送信できます。</p>
+        <input id="contactGeneralReplyEmail" type="email" placeholder="reply@example.com"
+          style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;" />
       </div>
 
       <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;"><span data-i18n="contactMessageLabel">お問い合わせ内容</span><span style="color:#ff8888;">*</span></label>
@@ -6873,14 +7009,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_URL  = 'https://ofbjfiuayfhdkgertxyo.supabase.co';
 
   // ── Paddle（決済）設定 ──
-  // 今はサンドボックス（テスト環境）。本番稼働の際は下の2行を本番用に差し替える：
-  //   Paddle.Environment.set('production') に変更し、PADDLE_CLIENT_TOKENを本番用トークンに差し替える
-  const PADDLE_CLIENT_TOKEN = 'test_efd17e7481a7e43505858a3c864';
+  // [2026-09-18] 本番(Live)環境に切り替え済み。切り替え前のサンドボックス用の値は
+  // 本コミット時点のgit履歴(またはanimepple_reference.txt)を参照のこと。
+  const PADDLE_CLIENT_TOKEN = 'live_746be3ad8d5f940e1da3641fbbd';
   let _paddleReady = false;
   let _onPaddleCheckoutCompleted = null; // 直前に開いたCheckoutが完了した時に1回だけ呼ばれるコールバック
   function initPaddle() {
     if(typeof Paddle === 'undefined' || _paddleReady) return;
-    Paddle.Environment.set('sandbox');
+    Paddle.Environment.set('production');
     Paddle.Initialize({
       token: PADDLE_CLIENT_TOKEN,
       eventCallback: (ev) => {
@@ -6896,27 +7032,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // コインパック・サブスクリプション・投げ銭の Paddle 価格ID一覧
   // （Paddleダッシュボードの「カタログ」で作成した各商品の価格IDと対応させる）
+  // [2026-09-18] Live環境のカタログで作成した価格IDに差し替え済み
   const PADDLE_PRICE_IDS = {
     coin: {
-      p120:   'pri_01m233zt24z2w6pckgh6m38pps',
-      p480:   'pri_01m24tk5j1n866zw9148sx5m61',
-      p980:   'pri_01m24tq637e68thhtf68wge0h3',
-      p1800:  'pri_01m24try6fapzxxjf5mchdz57y',
-      p3000:  'pri_01m24ttgway787ypv8vqe1e8cj',
-      p4900:  'pri_01m24twhezq5cte0r88mgbbt3n',
-      p9800:  'pri_01m24ty2khxfh7ryv62202r61s',
-      p24000: 'pri_01m24tzd6pyckc28axe6zm1mkh',
+      p120:   'pri_01m2t01fvxwb3ppnk26qnjttcg',
+      p480:   'pri_01m2t041r6e8acsxz8722bwhsj',
+      p980:   'pri_01m2t05dfefwxff9trap624px2',
+      p1800:  'pri_01m2t06x677axts66n71j5xs2v',
+      p3000:  'pri_01m2t083z1h37ek841t12kakpb',
+      p4900:  'pri_01m2t09hdd30p1kdrd7w570sa7',
+      p9800:  'pri_01m2t0b585rvn34qjcj5txf2e2',
+      p24000: 'pri_01m2t0csby1ny76zrgtf80n00k',
     },
     plan: {
-      plus:     'pri_01m24v1pgwvqsbegxn2m2syekj',
-      creators: 'pri_01m24v3mwmthfa07ppwr129eaj',
+      plus:     'pri_01m2t0ewndhcwpjzw25rd270ba',
+      creators: 'pri_01m2t0gae4zd81kyzpd1spzcaq',
     },
     tip: {
-      500:   'pri_01m24v618zfh7m7c6sn7aa4w2v',
-      1000:  'pri_01m24v6swwvcm9mwbwktew7525',
-      3000:  'pri_01m24v7xapdwk9gd8v2vvswqz1',
-      5000:  'pri_01m24v8kfsa0e1ba2w8gmwvhqd',
-      10000: 'pri_01m24v94m0am2gg2p8f72dkp6n',
+      500:   'pri_01m2t0j0z20wce4by3fbwt4m7a',
+      1000:  'pri_01m2t0m7h26as4vhhhf8pw4qt8',
+      3000:  'pri_01m2t0nd5jnhxn7tkp50sf8zdc',
+      5000:  'pri_01m2t0pjw0ajhks0k9f5w1371w',
+      10000: 'pri_01m2t0qzm1fvab0x8h9kecwbay',
     },
   };
 
@@ -7161,6 +7298,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!sb) return 0;
         const { count } = await sb.from('profiles').select('*', {count:'exact',head:true});
         return count || 0;
+      },
+      // [2026-09-18追加] 「💰収益」タブに実際の収益情報が無いという指摘への対応。
+      // head:trueのCOUNT()は行数上限(PostgRESTのデフォルト1000件)の影響を受けないため、
+      // プラン別人数はこのまま安全に数えられる(SUM等の集計はRPC化が必要、tips/coinBalance参照)
+      async countByPlan(plan) {
+        if(!sb) return 0;
+        const { count } = await sb.from('profiles').select('*', {count:'exact',head:true}).eq('plan', plan);
+        return count || 0;
+      },
+      // 全ユーザーの保有コイン合計(SUM)。行数上限の影響を受けないよう、
+      // Postgres側で計算するRPC(get_total_coin_balance、要事前作成)を使う
+      // [2026-09-18注記] この数値は有償(購入)コインと無償(デイリークエスト報酬)コインが
+      // 合算された、消費されずに残っている総量。「お金の裏付けがある残高」ではないので、
+      // 収益額として扱わないこと(ユーザー指摘：コインは課金以外でも入手できる)。
+      // 有償/無償の内訳は getCoinIssuanceByReason() を使う
+      async getTotalCoinBalance() {
+        if(!sb) return 0;
+        const { data, error } = await sb.rpc('get_total_coin_balance');
+        if(error) { console.warn('getTotalCoinBalance rpc:', error.message); return 0; }
+        return Number(data) || 0;
       },
       // アバター画像をアップロードしてpublic URLを返す
     },
@@ -7438,6 +7595,16 @@ document.addEventListener('DOMContentLoaded', () => {
       async send(userId, title, message) {
         if(!sb || !userId) return { error: 'invalid' };
         const { error } = await sb.from('user_notices').insert({ user_id: userId, title, message });
+        return { error };
+      },
+      // [2026-09-18追加] 管理者用：全ユーザーへ一斉配信する。profilesが1000件を超えると
+      // クライアント側でid一覧を取得するSELECTが行数上限に引っかかるため、
+      // Postgres側でINSERT...SELECTするRPC(broadcast_notice、要事前作成)を使う。
+      // SECURITY DEFINERではないので、既存のuser_notices INSERT用RLS(is_adminのみ許可)が
+      // そのまま適用される(=このRPC自体に別途admin判定を書く必要はない)
+      async broadcastToAll(title, message) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.rpc('broadcast_notice', { p_title: title, p_message: message });
         return { error };
       },
     },
@@ -7786,6 +7953,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!sb || !userId) return [];
         const { data } = await sb.from('coin_transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(limit || 30);
         return data || [];
+      },
+      // [2026-09-18追加] コインは購入(有償)以外にデイリークエスト報酬(無償)でも入手できるため、
+      // 「発行済みコイン残高合計」だけでは有償/無償の区別がつかず収益額と誤解されかねない
+      // (ユーザー指摘)。coin_transactionsの付与記録(amount>0)をreason別に累計して、
+      // 有償/無償の内訳が分かるようにする。SUMなのでpv_logsと同じ理由でRPC化する
+      // (get_coin_issuance_by_reason、要事前作成)
+      async getIssuanceByReason() {
+        if(!sb) return [];
+        const { data, error } = await sb.rpc('get_coin_issuance_by_reason');
+        if(error) { console.warn('getIssuanceByReason rpc:', error.message); return []; }
+        return (data||[]).map(r => ({ reason: r.reason, total: Number(r.total_amount) || 0 }));
       },
     },
     quests: {
@@ -8310,6 +8488,30 @@ document.addEventListener('DOMContentLoaded', () => {
       },
     },
 
+    // ── 投げ銭（管理者ダッシュボード「💰収益」用） ──
+    // [2026-09-18追加]「収益タブに実際のお金の情報が無い」との指摘への対応。
+    // SUM()はPostgRESTの行数上限(既定1000件)の影響を受ける集計方法のクライアント実装だと
+    // pv_logsと同じ轍を踏むため、合計額はPostgres側で計算するRPC(get_tips_revenue_summary、
+    // 要事前作成)を使う。直近一覧はlimit付きの素の取得なので上限の影響を受けない。
+    tips: {
+      async getRevenueSummary() {
+        if(!sb) return { totalAllTimeJpy: 0, total30dJpy: 0, count30d: 0 };
+        const { data, error } = await sb.rpc('get_tips_revenue_summary');
+        if(error) { console.warn('getRevenueSummary rpc:', error.message); return { totalAllTimeJpy: 0, total30dJpy: 0, count30d: 0 }; }
+        const row = Array.isArray(data) ? data[0] : data;
+        return {
+          totalAllTimeJpy: Number(row?.total_all_time_jpy) || 0,
+          total30dJpy: Number(row?.total_30d_jpy) || 0,
+          count30d: Number(row?.count_30d) || 0,
+        };
+      },
+      async getRecent(limit) {
+        if(!sb) return [];
+        const { data } = await sb.from('tips').select('user_id,amount_jpy,message,created_at').order('created_at', { ascending: false }).limit(limit || 15);
+        return data || [];
+      },
+    },
+
     // ── 検索ログ(匿名・企業提供データ用) ──
     searchLogs: {
       async insert(query, countryCode, resultCount) {
@@ -8406,24 +8608,28 @@ document.addEventListener('DOMContentLoaded', () => {
     },
 
     // ── エラーログ（監視用） ──
+    // [2026-09-18追加] source('client'=ブラウザJSエラー/'server'=Edge Function内の失敗、
+    // 主にPaddle決済関連)で絞り込めるようにした。管理者ダッシュボードの「サーバー監視が
+    // 無い」という指摘への対応。事前にSupabaseで下記を実行しておくこと:
+    //   alter table error_logs add column if not exists source text not null default 'client';
+    //   alter table error_logs add column if not exists function_name text;
     errorLogs: {
       async insert(entry) {
         if(!sb) return;
         sb.from('error_logs').insert(entry).then(()=>{});
       },
-      async getRecent(limit) {
+      async getRecent(limit, source) {
         if(!sb) return [];
-        const { data } = await sb.from('error_logs')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(limit||30);
+        let q = sb.from('error_logs').select('*').order('created_at', { ascending: false }).limit(limit||30);
+        if(source) q = q.eq('source', source);
+        const { data } = await q;
         return data || [];
       },
-      async countSince(sinceIso) {
+      async countSince(sinceIso, source) {
         if(!sb) return 0;
-        const { count } = await sb.from('error_logs')
-          .select('*', { count:'exact', head:true })
-          .gte('created_at', sinceIso);
+        let q = sb.from('error_logs').select('*', { count:'exact', head:true }).gte('created_at', sinceIso);
+        if(source) q = q.eq('source', source);
+        const { count } = await q;
         return count || 0;
       },
     },
@@ -8597,17 +8803,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return row;
   }
 
-  // Kitsuのジャンル一覧（Action/Comedy/Dramaなど、種類が変動しない大分類）を取得し、
-  // DeepLで全言語（ja/ko/zh-tw/zh-cn/es/fr/pt/de/ar）に訳した上でtag_translationsに
-  // まとめて保存する（管理画面の「一括登録」ボタンから実行）。既に登録済みの英語形は
-  // スキップするので、何度実行しても安全。
-  async function seedKitsuGenres() {
-    const resultEl = document.getElementById('seedKitsuGenresResult');
-    if(resultEl) resultEl.textContent = 'この機能は廃止されました（Kitsu API依存を撤去済み）';
-  }
-  window.seedKitsuGenres = seedKitsuGenres;
-
-  // 渡された全タグ（ユーザーレビュータグ＝日本語想定）を一括で翻訳し、
+// 渡された全タグ（ユーザーレビュータグ＝日本語想定）を一括で翻訳し、
   // {原文タグ: 表示用テキスト} のマップを返す
   async function translateTagsForDisplay(tags) {
     const uniqueTags = [...new Set((tags||[]).filter(Boolean))];
@@ -9134,6 +9330,7 @@ document.addEventListener('DOMContentLoaded', () => {
     contact: '/contact',
     privacy: '/privacy-policy',
     'refund-policy': '/refund-policy',
+    terms: '/terms',
     admin: '/admin',
     partner: '/partner',
   };
@@ -9265,11 +9462,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if(overlayQInput) overlayQInput.value = '';
   }
 
-  // ヘッダー・検索窓の実際の高さを測ってCSS変数に反映する（sticky要素の隙間・重なり防止）
+  // ヘッダー・検索窓の実際の高さを測ってCSS変数に反映する（sticky要素の隙間・重なり防止）。
+  // [2026-09-18修正] 以前は#page-search .hdrを直接measureしていたが、load時点では
+  // 検索ページがactiveでない(=display:noneでoffsetHeightが常に0)ことがほとんどのため、
+  // --hdr-hが0pxに固定されてしまい、検索ページのPC幅レイアウト(サイドの絞り込みパネル等)や
+  // 今回追加した管理者ダッシュボードのタブバーがヘッダーの下に隠れる不具合があった。
+  // 常に「今表示中のページ」のヘッダーを測るようにし、nav()でのページ切り替え時にも呼ぶ
   function updateStickyOffsets() {
-    const hdr = document.querySelector('#page-search .hdr');
+    const activeHdr = document.querySelector('.page.active .hdr');
     const bar = document.querySelector('#page-search .search-bar');
-    if(hdr) document.documentElement.style.setProperty('--hdr-h', hdr.offsetHeight + 'px');
+    if(activeHdr && activeHdr.offsetHeight) document.documentElement.style.setProperty('--hdr-h', activeHdr.offsetHeight + 'px');
     if(bar) document.documentElement.style.setProperty('--search-bar-h', bar.offsetHeight + 'px');
   }
   window.addEventListener('resize', updateStickyOffsets);
@@ -9332,6 +9534,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const domPage = (page === 'user') ? 'mypage' : page;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('page-'+domPage).classList.add('active');
+    if(typeof updateStickyOffsets === 'function') updateStickyOffsets();
     if(typeof updateThemeScenery === 'function') updateThemeScenery();
     // 掲示板チャットのスマホ表示：下部ナビを消し、ヘッダー／会話／入力バーの3段固定にする。
     // 会話だけがスクロールするので、打っている間に会話が押し出されない
@@ -20157,20 +20360,20 @@ document.addEventListener('DOMContentLoaded', () => {
       body: `
         <p class="legal-date">最終更新: 2026年9月</p>
         <p style="background:rgba(255,193,7,.12);border:1px solid rgba(255,193,7,.4);border-radius:8px;padding:.7rem .9rem;font-size:.8rem;color:#ffdd88;">
-          このページは下書きです。【　】内は運営者情報に差し替えたうえで、内容を専門家（弁護士・行政書士等）に確認してもらってから公開してください。
+          このページは下書きです。屋号での表示で法的に十分か、専門家（弁護士・行政書士等）に確認してもらってから公開してください。
         </p>
 
         <h3>販売事業者</h3>
-        <p>【運営者の氏名または名称を記入】</p>
+        <p>アニメップル</p>
 
         <h3>運営統括責任者</h3>
-        <p>【責任者の氏名を記入】</p>
+        <p>アニメップル運営事務局</p>
 
         <h3>所在地</h3>
-        <p>【住所を記入。個人事業主の場合、一定の条件下で「請求があった場合に遅滞なく開示する」旨の記載に代えられることがあります。専門家にご確認ください】</p>
+        <p>請求があった場合は、遅滞なく開示いたします。お問い合わせフォームよりご連絡ください。</p>
 
         <h3>電話番号</h3>
-        <p>【電話番号を記入、または「お問い合わせはメール／お問い合わせフォームにて承ります。電話番号は請求があり次第、遅滞なく開示します」等の記載】</p>
+        <p>お問い合わせは下記フォームより承っております。電話番号については、請求をいただいた場合に遅滞なく開示いたします。</p>
 
         <h3>メールアドレス・お問い合わせ</h3>
         <p>お問い合わせフォーム（<button type="button" onclick="closeLegal();nav('contact')" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">こちら</button>）よりご連絡ください。</p>
@@ -20241,6 +20444,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('legalOverlay');
     overlay.style.display = 'flex';
   }
+  // [2026-09-18追加] 専用URL(/terms)ページ用に、モーダルと同じ内容を流し込む(単一情報源)
+  const termsPageBodyEl = document.getElementById('termsPageBody');
+  if(termsPageBodyEl) termsPageBodyEl.innerHTML = LEGAL_CONTENT.terms.body;
   function closeLegal() {
     document.getElementById('legalOverlay').style.display = 'none';
   }
@@ -20402,6 +20608,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // [追加] 作品選択欄・著作権フォーム側のリセット
     document.getElementById('contactAnimeFields').style.display = 'none';
     document.getElementById('contactReplyEmail').value = '';
+    document.getElementById('contactGeneralReplyEmail').value = '';
     document.getElementById('contactCopyrightConfirm').checked = false;
     _contactSelectedAnime = null;
     document.getElementById('contactSelectedAnimeDisplay').style.display = 'none';
@@ -20432,6 +20639,10 @@ document.addEventListener('DOMContentLoaded', () => {
           const animeFieldsEl = document.getElementById('contactAnimeFields');
           if(animeFieldsEl) animeFieldsEl.style.display = CONTACT_CATEGORIES_NEEDING_ANIME.includes(_contactSelectedCategory) ? '' : 'none';
           if(copyrightFieldsEl) copyrightFieldsEl.style.display = (_contactSelectedCategory === 'copyright') ? '' : 'none';
+          // 著作権カテゴリは専用の必須メール欄(contactCopyrightFields内)を持っているので、
+          // 任意の一般返信メール欄はそれ以外のカテゴリでだけ出す
+          const generalReplyEmailFieldEl = document.getElementById('contactGeneralReplyEmailField');
+          if(generalReplyEmailFieldEl) generalReplyEmailFieldEl.style.display = (_contactSelectedCategory === 'copyright') ? 'none' : '';
           updateContactSubmitState();
         };
       });
@@ -20470,8 +20681,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if(!replyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyEmail)) { errEl.textContent = '返信用メールアドレスを正しく入力してください。'; return; }
       if(!confirmed) { errEl.textContent = '著作権者ご本人または正当な代理人であることの確認にチェックしてください。'; return; }
       message = `著作権に関する通報\n返信用メールアドレス: ${replyEmail}\n対象作品: ${_contactSelectedAnime.title}（作品ID: ${_contactSelectedAnime.id}）\n---\n${message}`;
-    } else if(CONTACT_CATEGORIES_NEEDING_ANIME.includes(_contactSelectedCategory)) {
-      message = `対象作品: ${_contactSelectedAnime.title}（作品ID: ${_contactSelectedAnime.id}）\n---\n${message}`;
+    } else {
+      if(CONTACT_CATEGORIES_NEEDING_ANIME.includes(_contactSelectedCategory)) {
+        message = `対象作品: ${_contactSelectedAnime.title}（作品ID: ${_contactSelectedAnime.id}）\n---\n${message}`;
+      }
+      // [2026-09-18追加] 著作権以外でも、返信を希望する場合に備えて任意のメールアドレスを
+      // 受け付ける。管理画面側は「返信用メールアドレス:」というラベルで既に抽出しているため
+      // (著作権カテゴリと共通のパターン)、同じ書式でメッセージ本文の先頭に埋め込むだけで
+      // 管理画面に自動で反映される
+      const generalReplyEmail = document.getElementById('contactGeneralReplyEmail')?.value.trim() || '';
+      if(generalReplyEmail) {
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(generalReplyEmail)) { errEl.textContent = '返信用メールアドレスの形式が正しくありません。'; return; }
+        message = `返信用メールアドレス: ${generalReplyEmail}\n---\n${message}`;
+      }
     }
 
     const turnstileToken = (typeof turnstile !== 'undefined' && _contactTurnstileWidgetId !== null)
@@ -21625,22 +21847,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 退会済みアカウントのバックアップ一覧を読み込む
   const ARCHIVE_RETENTION_DAYS = 180; // 退会バックアップの保管期間＝半年
-  async function loadAdminAccountDeletionData() {
+  // [2026-09-18追加] 一覧は直近30件しか表示していないため、それより古いバックアップは
+  // 検索しないと見つけられなかった(「データを返してほしい」という問い合わせが古いものだと
+  // 対応不能になる不具合)。メールアドレスで検索した時だけ、直近30件の制限を外して
+  // 保管期間内の全件から絞り込む
+  async function loadAdminAccountDeletionData(emailQuery) {
     const archiveEl = document.getElementById('adminDeletedArchiveList');
     if(archiveEl && sb) {
       // 半年より前のバックアップは、一覧を開いたタイミングで自動的に削除する
       const cutoff = new Date(Date.now() - ARCHIVE_RETENTION_DAYS * 86400000).toISOString();
       await sb.from('deleted_account_archives').delete().lt('deleted_at', cutoff);
-      const { data } = await sb.from('deleted_account_archives').select('id,user_id,email,deleted_at').order('deleted_at', { ascending: false }).limit(30);
+      let query = sb.from('deleted_account_archives').select('id,user_id,email,deleted_at').order('deleted_at', { ascending: false });
+      const q = (emailQuery || '').trim();
+      query = q ? query.ilike('email', `%${q}%`) : query.limit(30);
+      const { data } = await query;
       const rows = data || [];
       archiveEl.innerHTML = rows.length ? rows.map(r => `
         <div class="admin-row">
           <span>${escapeHtml(r.email||r.user_id)}</span>
           <span style="color:var(--muted);font-size:.72rem;">${new Date(r.deleted_at).toLocaleDateString('ja-JP')}</span>
           <button type="button" class="mypage-btn-secondary" style="height:30px;padding:0 10px;font-size:11px;" onclick="adminViewDeletedArchive(${r.id})">中身を見る</button>
-        </div>`).join('') : '<p style="font-size:.78rem;color:var(--muted);">バックアップはまだありません</p>';
+        </div>`).join('') : `<p style="font-size:.78rem;color:var(--muted);">${q ? '一致するバックアップが見つかりません' : 'バックアップはまだありません'}</p>`;
     }
   }
+  (function setupAdminArchiveSearch() {
+    const input = document.getElementById('adminArchiveSearchInput');
+    if(!input) return;
+    let debounceTimer = null;
+    input.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => loadAdminAccountDeletionData(input.value), 300);
+    });
+  })();
   window.adminViewDeletedArchive = async function(archiveId) {
     const { data } = await sb.from('deleted_account_archives').select('*').eq('id', archiveId).maybeSingle();
     if(!data) { alert('見つかりませんでした'); return; }
@@ -21668,6 +21906,8 @@ document.addEventListener('DOMContentLoaded', () => {
       loadAdminData();
       initAdminCountryCompare();
       setupAdminAnimeSearch();
+      setupAdminEditAnimeSearch();
+      setupAdminBroadcastNotice();
       loadAdminAccountDeletionData();
     } else {
       login.style.display='';
@@ -21959,6 +22199,127 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // [2026-09-18追加]「✏️ 作品データ編集」タブ：英語タイトル表記・あらすじ(日本語)だけ編集できる
+  // (権限の都合。SECURITY_REVIEW.md参照。他の列はここでは編集不可)
+  let _adminEditAnimeSearchTimer = null;
+  let _adminEditAnimeCurrentId = null;
+  function setupAdminEditAnimeSearch() {
+    const input = document.getElementById('adminEditAnimeSearchInput');
+    if(!input || input.dataset.init) return;
+    input.dataset.init = '1';
+    input.addEventListener('input', ()=>{
+      clearTimeout(_adminEditAnimeSearchTimer);
+      _adminEditAnimeSearchTimer = setTimeout(async ()=>{
+        const q = input.value.trim();
+        const resultsEl = document.getElementById('adminEditAnimeSearchResults');
+        if(!resultsEl) return;
+        if(!q) { resultsEl.innerHTML=''; return; }
+        const allTitles = await db.animePages.getAllTitles();
+        const matched = allTitles.filter(a => (a.title||'').includes(q) || (a.title_en||'').toLowerCase().includes(q.toLowerCase())).slice(0,8);
+        resultsEl.innerHTML = matched.map(a=>`<div class="admin-search-result-item" data-id="${a.id}">${escapeHtml(a.title||a.title_en)}</div>`).join('');
+        resultsEl.querySelectorAll('.admin-search-result-item').forEach(item=>{
+          item.onclick = ()=> loadAdminEditAnimeForm(item.dataset.id, item.textContent);
+        });
+      }, 300);
+    });
+    const saveBtn = document.getElementById('adminEditAnimeSaveBtn');
+    if(saveBtn) {
+      saveBtn.onclick = async () => {
+        if(!_adminEditAnimeCurrentId) return;
+        const titleEn = document.getElementById('adminEditAnimeTitleEn').value.trim();
+        const descriptionJa = document.getElementById('adminEditAnimeDescriptionJa').value;
+        const statusEl = document.getElementById('adminEditAnimeSaveStatus');
+        saveBtn.disabled = true;
+        statusEl.style.color = '#a7ecc4';
+        statusEl.textContent = '保存中…';
+        try {
+          const [titleEnRes] = await Promise.all([
+            sb.from('anime_pages').update({ title_en: titleEn || null }).eq('id', _adminEditAnimeCurrentId),
+            db.animePages.saveDescriptionJa(_adminEditAnimeCurrentId, descriptionJa),
+          ]);
+          if(titleEnRes?.error) throw titleEnRes.error;
+          statusEl.textContent = '✅ 保存しました';
+        } catch(e) {
+          console.error('adminEditAnimeSave:', e);
+          statusEl.style.color = '#ff9999';
+          statusEl.textContent = '保存に失敗しました';
+        } finally {
+          saveBtn.disabled = false;
+        }
+      };
+    }
+  }
+  async function loadAdminEditAnimeForm(animeId, titleForDisplay) {
+    _adminEditAnimeCurrentId = animeId;
+    const formEl = document.getElementById('adminEditAnimeForm');
+    const titleEl = document.getElementById('adminEditAnimeTitle');
+    const titleEnInput = document.getElementById('adminEditAnimeTitleEn');
+    const descInput = document.getElementById('adminEditAnimeDescriptionJa');
+    const statusEl = document.getElementById('adminEditAnimeSaveStatus');
+    if(!formEl) return;
+    formEl.style.display = '';
+    if(titleEl) titleEl.textContent = `📺 ${titleForDisplay}`;
+    if(statusEl) statusEl.textContent = '';
+    if(titleEnInput) titleEnInput.value = '読み込み中…';
+    if(descInput) descInput.value = '';
+    const [pages, descriptionJa] = await Promise.all([
+      db.animePages.getByIds([animeId]),
+      db.animePages.getDescriptionJa(animeId),
+    ]);
+    const page = (pages||[])[0];
+    if(titleEnInput) titleEnInput.value = page?.title_en || '';
+    if(descInput) descInput.value = descriptionJa || '';
+  }
+
+  // [2026-09-18追加]「お知らせを全員に配信」。タイトル・本文はどちらも、普通の文字列でも、
+  // {ja:'...',en:'...'}のようなJSONオブジェクトの文字列でもよい(受け取った側は
+  // resolveNoticeText()が解決する)。JSONとして貼り付けられた場合は、事前に
+  // JSON.parseできることだけ確認してから送る(壊れたJSONをそのまま全員に送ってしまうと
+  // 表示が壊れるため)
+  function setupAdminBroadcastNotice() {
+    const btn = document.getElementById('adminBroadcastSendBtn');
+    if(!btn || btn.dataset.init) return;
+    btn.dataset.init = '1';
+    btn.onclick = async () => {
+      const titleEl = document.getElementById('adminBroadcastTitle');
+      const messageEl = document.getElementById('adminBroadcastMessage');
+      const statusEl = document.getElementById('adminBroadcastStatus');
+      const title = titleEl.value.trim();
+      const message = messageEl.value.trim();
+      if(!title || !message) {
+        statusEl.style.color = '#ff9999';
+        statusEl.textContent = 'タイトルと本文の両方を入力してください';
+        return;
+      }
+      // {で始まる場合だけ、送信前にJSONとして壊れていないか確認する(通常の文字列はチェック不要)
+      for (const [label, value] of [['タイトル', title], ['本文', message]]) {
+        if(value.startsWith('{')) {
+          try { JSON.parse(value); } catch(e) {
+            statusEl.style.color = '#ff9999';
+            statusEl.textContent = `${label}のJSONが壊れています: ${e.message}`;
+            return;
+          }
+        }
+      }
+      if(!confirm('全ユーザーに、この内容でお知らせを送信します。取り消せません。よろしいですか？')) return;
+      btn.disabled = true;
+      statusEl.style.color = '#a7ecc4';
+      statusEl.textContent = '送信中…';
+      const { error } = await db.notices.broadcastToAll(title, message);
+      btn.disabled = false;
+      if(error) {
+        console.error('broadcastToAll:', error);
+        statusEl.style.color = '#ff9999';
+        statusEl.textContent = `送信に失敗しました: ${error.message || error}`;
+        return;
+      }
+      statusEl.style.color = '#a7ecc4';
+      statusEl.textContent = '✅ 送信しました';
+      titleEl.value = '';
+      messageEl.value = '';
+    };
+  }
+
   async function loadAnimeCountryCompare(animeId, title) {
     const wrap = document.getElementById('adminAnimeCountryGraphWrap');
     const titleEl = document.getElementById('adminAnimeCountryGraphTitle');
@@ -22157,15 +22518,21 @@ document.addEventListener('DOMContentLoaded', () => {
       // 復元リクエストのメッセージから、メールアドレスと復元先ユーザーIDを自動で抜き出す
       const RESTORE_EMAIL_RE = /アカウント復元リクエスト:\s*(\S+@\S+)/;
       const RESTORE_UID_RE = /復元先\(今ログイン中\)のユーザーID:\s*([0-9a-fA-F-]{36})/;
-      // [追加] 著作権通報のメッセージから、返信用メール・対象作品を自動で抜き出す(送信時に本文へ埋め込んでいる)
-      const COPYRIGHT_EMAIL_RE = /返信用メールアドレス:\s*(\S+@\S+)/;
+      // [変更] 以前は著作権通報専用だったが、2026-09-18に他のカテゴリでも「返信用メール
+      // アドレス(任意)」を入力できるようにしたため、この抽出・返信ボタンもカテゴリを問わず
+      // 共通で使う(ラベル文字列「返信用メールアドレス:」は送信フォーム側と共通の書式)
+      const REPLY_EMAIL_RE = /返信用メールアドレス:\s*(\S+@\S+)/;
       const COPYRIGHT_ANIME_RE = /対象作品:\s*(.+?)（作品ID:\s*([^）]+)）/;
       el.innerHTML = sorted.map(m => {
         const emailMatch = m.message.match(RESTORE_EMAIL_RE);
         const uidMatch = m.message.match(RESTORE_UID_RE);
         const isRestoreRequest = !!emailMatch;
-        const copyrightEmailMatch = m.message.match(COPYRIGHT_EMAIL_RE);
+        const replyEmailMatch = m.message.match(REPLY_EMAIL_RE);
         const copyrightAnimeMatch = m.message.match(COPYRIGHT_ANIME_RE);
+        // [2026-09-18追加] Gmail等のメーラーで件名・宛先を入れた状態の下書きを開く
+        const mailtoHref = replyEmailMatch
+          ? `mailto:${encodeURIComponent(replyEmailMatch[1])}?subject=${encodeURIComponent('【アニメップル】お問い合わせへの返信')}`
+          : '';
         return `
         <div style="border:1px solid ${m.is_read?'var(--line,#2a3830)':'rgba(94,201,122,.4)'};background:${m.is_read?'transparent':'rgba(94,201,122,.06)'};border-radius:10px;padding:10px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -22173,16 +22540,18 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="font-size:.68rem;color:var(--muted);">${escapeHtml(formatRelativeTime(m.created_at))}</span>
           </div>
           <span style="display:inline-block;font-size:.66rem;font-weight:800;color:#e8c463;background:rgba(217,164,65,.14);border-radius:5px;padding:1px 6px;margin-bottom:6px;">${escapeHtml(catLabel(m.category))}</span>
-          ${copyrightEmailMatch ? `
+          ${replyEmailMatch ? `
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
-            <span style="font-size:.72rem;font-weight:700;color:#8db5a0;background:rgba(159,188,255,.06);border:1px solid rgba(159,188,255,.25);border-radius:6px;padding:2px 8px;">✉️ ${escapeHtml(copyrightEmailMatch[1])}</span>
+            <span style="font-size:.72rem;font-weight:700;color:#8db5a0;background:rgba(159,188,255,.06);border:1px solid rgba(159,188,255,.25);border-radius:6px;padding:2px 8px;">✉️ ${escapeHtml(replyEmailMatch[1])}</span>
             ${copyrightAnimeMatch ? `<a href="#" onclick="showAdminAnimeImagePreview('${escapeHtml(copyrightAnimeMatch[2])}','${escapeHtml(copyrightAnimeMatch[1]).replace(/'/g,"\\'")}');return false;" style="font-size:.72rem;font-weight:700;color:#a7ecc4;background:rgba(94,201,122,.12);border:1px solid rgba(94,201,122,.4);border-radius:6px;padding:2px 8px;text-decoration:none;">🎬 ${escapeHtml(copyrightAnimeMatch[1])}</a>` : ''}
           </div>` : ''}
           <p style="font-size:.8rem;color:#c3d4c9;white-space:pre-wrap;margin:0 0 8px;">${escapeHtml(m.message)}</p>
           ${m.is_read ? '' : `<button type="button" class="admin-contact-read-btn" data-id="${m.id}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line,#2a3830);background:transparent;color:var(--muted);font-size:.7rem;cursor:pointer;margin-right:6px;">既読にする</button>`}
-          ${(copyrightEmailMatch && copyrightAnimeMatch) ? `
-            <button type="button" class="admin-copyright-delete-btn" data-id="${m.id}" data-email="${escapeHtml(copyrightEmailMatch[1])}" data-anime-id="${escapeHtml(copyrightAnimeMatch[2])}" data-anime-title="${escapeHtml(copyrightAnimeMatch[1])}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(234,84,84,.4);background:rgba(234,84,84,.1);color:#ea5454;font-size:.7rem;cursor:pointer;margin-right:6px;">🗑️ 画像を削除する</button>
-            <button type="button" class="admin-copyright-gmail-btn" data-id="${m.id}" data-email="${escapeHtml(copyrightEmailMatch[1])}" data-anime-title="${escapeHtml(copyrightAnimeMatch[1])}" disabled style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(159,188,255,.4);background:rgba(159,188,255,.1);color:#b9c9ff;font-size:.7rem;cursor:not-allowed;opacity:.4;margin-right:6px;">✉️ Gmailで返信</button>
+          ${(replyEmailMatch && copyrightAnimeMatch) ? `
+            <button type="button" class="admin-copyright-delete-btn" data-id="${m.id}" data-email="${escapeHtml(replyEmailMatch[1])}" data-anime-id="${escapeHtml(copyrightAnimeMatch[2])}" data-anime-title="${escapeHtml(copyrightAnimeMatch[1])}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(234,84,84,.4);background:rgba(234,84,84,.1);color:#ea5454;font-size:.7rem;cursor:pointer;margin-right:6px;">🗑️ 画像を削除する</button>
+          ` : ''}
+          ${replyEmailMatch ? `
+            <a href="${mailtoHref}" style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(159,188,255,.4);background:rgba(159,188,255,.1);color:#b9c9ff;font-size:.7rem;text-decoration:none;margin-right:6px;">✉️ 返信する</a>
           ` : ''}
           ${isRestoreRequest ? `<button type="button" class="admin-contact-restore-btn" data-email="${escapeHtml(emailMatch[1])}" data-uid="${escapeHtml(uidMatch?.[1] || '')}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(159,188,255,.4);background:rgba(159,188,255,.1);color:#b9c9ff;font-size:.7rem;cursor:pointer;">🔎 この人の保管データを探して復元する</button>` : ''}
           <div class="admin-contact-restore-result" data-for="${m.id}" style="margin-top:8px;"></div>
@@ -22229,21 +22598,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.textContent = '✅ 削除済み';
             btn.style.opacity = '.6';
             btn.style.cursor = 'default';
-            const gmailBtn = btn.parentElement.querySelector(`.admin-copyright-gmail-btn[data-id="${btn.dataset.id}"]`);
-            if(gmailBtn) { gmailBtn.disabled = false; gmailBtn.style.opacity = '1'; gmailBtn.style.cursor = 'pointer'; }
             // 削除が成立した瞬間に、確認なしでそのままGmail作成画面を開く
+            // (2026-09-18: 専用のGmail返信ボタンは撤去し、汎用の「✉️ 返信する」リンクに
+            // 統合したが、削除確認テンプレート付きでの自動オープンはこのまま維持する)
             openCopyrightReplyGmail(email, animeTitle);
           } catch(e) {
             console.error('画像削除に失敗:', e);
             alert('画像の削除に失敗しました');
             btn.disabled = false;
           }
-        };
-      });
-      el.querySelectorAll('.admin-copyright-gmail-btn').forEach(btn=>{
-        btn.onclick = () => {
-          if(btn.disabled) return;
-          openCopyrightReplyGmail(btn.dataset.email, btn.dataset.animeTitle);
         };
       });
       el.querySelectorAll('.admin-contact-restore-btn').forEach(btn=>{
@@ -22548,6 +22911,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span style="font-size:.68rem;color:var(--muted);white-space:nowrap;">${new Date(e.created_at).toLocaleString('ja-JP')}</span>
               </div>
               <div style="font-size:.7rem;color:var(--muted);margin-top:.3rem;">${escapeHtml(e.page||'')} ・ ${escapeHtml((e.user_agent||'').slice(0,60))}</div>
+            </div>
+          `).join('');
+        }
+      }
+
+      // [2026-09-18追加] 決済まわりのサーバーエラー(source='server')
+      const [serverErrCount24h, serverErrCount7d, recentServerErrors] = await Promise.all([
+        db.errorLogs.countSince(since24h, 'server'),
+        db.errorLogs.countSince(since7d, 'server'),
+        db.errorLogs.getRecent(15, 'server'),
+      ]);
+      const kpiServerErr24hEl = document.getElementById('adminKpiServerErrors24h');
+      const kpiServerErr7dEl = document.getElementById('adminKpiServerErrors7d');
+      if(kpiServerErr24hEl) kpiServerErr24hEl.textContent = serverErrCount24h ?? '—';
+      if(kpiServerErr7dEl) kpiServerErr7dEl.textContent = serverErrCount7d ?? '—';
+      const serverErrListEl = document.getElementById('adminServerErrorLogList');
+      if(serverErrListEl) {
+        if(!recentServerErrors.length) {
+          serverErrListEl.innerHTML = `<p style="color:var(--muted);font-size:.82rem;">エラーは記録されていません 👍</p>`;
+        } else {
+          serverErrListEl.innerHTML = recentServerErrors.map(e => `
+            <div style="background:var(--card2);border:1px solid rgba(234,84,84,.35);border-radius:10px;padding:.6rem .75rem;margin-bottom:.5rem;">
+              <div style="display:flex;justify-content:space-between;gap:.5rem;">
+                <span style="font-size:.68rem;font-weight:800;color:#e8c463;background:rgba(217,164,65,.14);border-radius:5px;padding:1px 6px;flex-shrink:0;">${escapeHtml(e.function_name||'?')}</span>
+                <span style="font-size:.68rem;color:var(--muted);white-space:nowrap;">${new Date(e.created_at).toLocaleString('ja-JP')}</span>
+              </div>
+              <div style="font-size:.78rem;color:#ff9999;font-weight:700;word-break:break-word;margin-top:.3rem;">${escapeHtml((e.message||'').slice(0,300))}</div>
             </div>
           `).join('');
         }
@@ -22910,6 +23300,52 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAdminBarList('adminReferrerBreakdown',
           Object.entries(refCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({ label:refLabels[k]||k, value:v, color:'#f4a261' })),
           { suffix:'PV' });
+      }
+
+      // [2026-09-18追加] プラン契約状況・MRR概算・投げ銭・コイン経済
+      const [planFreeCount, planPlusCount, planCreatorsCount, tipsSummary, recentTips, totalCoinBalance, coinIssuance] = await Promise.all([
+        db.profiles.countByPlan('free'),
+        db.profiles.countByPlan('plus'),
+        db.profiles.countByPlan('creators'),
+        db.tips.getRevenueSummary(),
+        db.tips.getRecent(15),
+        db.profiles.getTotalCoinBalance(),
+        db.coins.getIssuanceByReason(),
+      ]);
+      const setText = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };
+      setText('adminKpiPlanFree', planFreeCount.toLocaleString());
+      setText('adminKpiPlanPlus', planPlusCount.toLocaleString());
+      setText('adminKpiPlanCreators', planCreatorsCount.toLocaleString());
+      const mrr = planPlusCount * 500 + planCreatorsCount * 1500;
+      setText('adminKpiMrr', `¥${mrr.toLocaleString()}`);
+      setText('adminKpiTipsTotal', `¥${tipsSummary.totalAllTimeJpy.toLocaleString()}`);
+      setText('adminKpiTips30d', `${tipsSummary.count30d.toLocaleString()}件 (¥${tipsSummary.total30dJpy.toLocaleString()})`);
+      setText('adminKpiCoinBalance', totalCoinBalance.toLocaleString());
+      // [2026-09-18追加] 有償(購入)/無償(デイリークエスト等)の累計発行内訳。
+      // COIN_REASON_LABEL_KEYに無いreasonが将来増えても、生の文字列のまま出して気づけるようにする
+      const PAID_COIN_REASONS = new Set(['paddle_purchase']);
+      renderAdminBarList('adminCoinIssuanceBreakdown',
+        coinIssuance.slice().sort((a,b)=>b.total-a.total).map(r => ({
+          label: `${PAID_COIN_REASONS.has(r.reason) ? '💰有償' : '🎁無償'} ${(COIN_REASON_LABEL_KEY[r.reason] ? t(COIN_REASON_LABEL_KEY[r.reason]) : r.reason)}`,
+          value: r.total,
+          color: PAID_COIN_REASONS.has(r.reason) ? '#e8c463' : '#5ec97a',
+        })),
+        { suffix:'枚' });
+      const recentTipsEl = document.getElementById('adminRecentTips');
+      if(recentTipsEl) {
+        if(!recentTips.length) {
+          recentTipsEl.innerHTML = `<p style="color:var(--muted);font-size:.82rem;">まだ投げ銭はありません</p>`;
+        } else {
+          recentTipsEl.innerHTML = recentTips.map(tp => `
+            <div style="display:flex;justify-content:space-between;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:.5rem .7rem;margin-bottom:.4rem;">
+              <div style="min-width:0;">
+                <span style="font-size:.82rem;font-weight:800;color:#a7ecc4;">¥${(Number(tp.amount_jpy)||0).toLocaleString()}</span>
+                ${tp.message ? `<span style="font-size:.72rem;color:var(--muted);margin-left:.5rem;">${escapeHtml(tp.message.slice(0,40))}</span>` : ''}
+              </div>
+              <span style="font-size:.68rem;color:var(--muted);white-space:nowrap;flex-shrink:0;margin-left:.5rem;">${new Date(tp.created_at).toLocaleString('ja-JP')}</span>
+            </div>
+          `).join('');
+        }
       }
 
       // 広告・アフィリンククリック（直近30日、スロット別）
@@ -25494,6 +25930,22 @@ document.addEventListener('DOMContentLoaded', () => {
   window.handleFriendBtnClick = handleFriendBtnClick;
 
   // 通知ページ：今のところ「届いている友達申請」だけを表示する
+  // [2026-09-18追加]「お知らせ」を全員配信できるようにするにあたり、運営が
+  // {ja:'...', en:'...', ko:'...'} のような、サイト内の他の翻訳文言と全く同じ形の
+  // オブジェクトをそのまま貼り付けて書けるようにした(1件ずつ多言語入力欄を用意する
+  // フォームは作らず、コード側で解釈する方式)。単なる文字列(既存のuser_notices、
+  // 例:著作権画像削除の個別通知)はそのまま表示され、後方互換性がある。
+  function resolveNoticeText(raw) {
+    if(typeof raw !== 'string') return raw;
+    const trimmed = raw.trim();
+    if(!trimmed.startsWith('{')) return raw;
+    try {
+      const obj = JSON.parse(trimmed);
+      if(obj && typeof obj === 'object') return obj[currentLang] || obj.ja || obj.en || raw;
+    } catch(_) { /* JSONとして解釈できなければ普通の文字列として扱う */ }
+    return raw;
+  }
+
   async function renderNotifications() {
     const el = document.getElementById('notificationsList');
     if(!el) return;
@@ -25527,8 +25979,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const sortedNotices = [...notices].sort((a,b)=> (a.is_read === b.is_read) ? 0 : (a.is_read ? 1 : -1));
     const noticeRowsHtml = sortedNotices.map(n => {
       const isUnsuspend = n.kind === 'unsuspend';
-      const titleText = isUnsuspend ? t('noticeUnsuspendTitle') : n.title;
-      const bodyText = isUnsuspend ? `${t('noticeUnsuspendBody')}\n${t('noticeSuspendEscalationNote')}` : n.message;
+      const titleText = isUnsuspend ? t('noticeUnsuspendTitle') : resolveNoticeText(n.title);
+      const bodyText = isUnsuspend ? `${t('noticeUnsuspendBody')}\n${t('noticeSuspendEscalationNote')}` : resolveNoticeText(n.message);
       return `
       <div class="mypage-section" data-notice-id="${n.id}" style="border:1px solid ${n.is_read?'var(--line,#2a3830)':'rgba(94,201,122,.4)'};background:${n.is_read?'transparent':'rgba(94,201,122,.06)'};border-radius:10px;padding:10px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -26019,11 +26471,16 @@ document.addEventListener('DOMContentLoaded', () => {
   window.renderCoinShopPage = renderCoinShopPage;
 
   // ── 購入・ガチャ履歴 ──
+  // [2026-09-18修正] コインパック購入時、paddle-webhook側は実際には
+  // reason: 'paddle_purchase' でcoin_transactionsにinsertしているのに、ここのキーは
+  // 'purchase'のままだったため一致せず、購入履歴の行が翻訳ラベルではなく生の
+  // "paddle_purchase"という文字列のまま表示されてしまっていた(下のrenderHistoryPage内、
+  // 「labelKey ? t(labelKey) : r.reason」というフォールバックで気づかれにくかった)。
   const COIN_REASON_LABEL_KEY = {
     daily_quest: 'historyReasonDailyQuest',
     gacha_pull: 'historyReasonGachaPull',
     gacha_pull10: 'historyReasonGachaPull10',
-    purchase: 'historyReasonPurchase',
+    paddle_purchase: 'historyReasonPurchase',
   };
   async function renderHistoryPage(tab) {
     const listEl = document.getElementById('historyList');
