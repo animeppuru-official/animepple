@@ -16727,9 +16727,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // マイページ：参加中の掲示板一覧（新着順・通知設定つき）
   const _boardGroupLabel = { general:'boardGeneralLabel', A:'boardTabA', B:'boardTabB', C:'boardTabC', D:'boardTabD' };
   const BOARD_NOTIFY_LIMIT = 10; // 通知を紐づけられる掲示板の上限（固定・調整不可）。対象は価値観掲示板のみ
-  // [2026-09-18訂正] 種類順/言語順ソートと表示言語フィルターは、掲示板の言語データを
-  // 不安定にする不具合の原因になっていた上、ユーザーからも不要と指摘されたため撤去した。
-  let _myBoardsFilter = { search: '', sort: 'newest', type: 'all' };
+  // [2026-09-18確定] 並び替えの「種類順」「言語順」は削除。表示言語フィルターは残し、
+  // その中の「今の表示言語のみ」という選択肢だけ削除してデフォルトを'all'に変更。
+  let _myBoardsFilter = { search: '', sort: 'newest', type: 'all', lang: 'all' };
 
   function sortMyBoards(list, sort) {
     const arr = [...list];
@@ -16963,6 +16963,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let visible = q ? enriched.filter(b=>b.title.toLowerCase().includes(q)) : [...enriched];
     if(_myBoardsFilter.type === 'general') visible = visible.filter(b=>!b.isValueBoard);
     else if(_myBoardsFilter.type === 'value') visible = visible.filter(b=>b.isValueBoard);
+    // 表示言語フィルター：「今の表示言語のみ」という選択肢は撤去済みなので、常に明示的に
+    // 選ばれた言語(デフォルトは'all'=すべての言語)でだけ絞り込む。currentLangを暗黙に
+    // 使わないようにしたことで、表示言語を切り替えても下の一覧の絞り込み結果は変わらない。
+    if(_myBoardsFilter.lang !== 'all') visible = visible.filter(b=>b.lang === _myBoardsFilter.lang);
     // 通知ONにした掲示板は上の「通知する掲示板」に移るので、下の一覧からは除外する
     visible = visible.filter(b=>!b.notify);
     visible = sortMyBoards(visible, _myBoardsFilter.sort);
@@ -17011,15 +17015,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── ② 参加してる掲示板（無制限・検索/並び替え・通常掲示板も含む全部） ──
     // [2026-09-18修正] ページ側に<h2>見出し(myBoardsTitle)を追加したため、ここで同じ文言を
     // もう一度<h3>で出すと重複するので削除。
-    // [2026-09-18訂正] 表示言語フィルターと、並び替えの「種類順」「言語順」は、掲示板の
-    // 言語データを不安定にする不具合の原因になった上、ユーザーからも不要と指摘されたため撤去。
-    // 並び替えの選択肢に見えるラベルを付けた点(<label>で囲む)は残している。
+    // [2026-09-18再訂正] 表示言語フィルターの「今の表示言語のみ」という選択肢**だけ**が
+    // 撤去対象で、フィルター自体(すべての言語/各言語)と、並び替えの「種類順」「言語順」は
+    // 撤去対象ではなかった(誤って全部消してしまっていたのを復元)。
     const allBoardsSectionHtml = `
       <div style="display:flex;gap:.4rem;margin-bottom:.6rem;">
         <input type="search" id="myBoardsSearchInput" placeholder="${escapeHtml(t('boardSearchPlaceholder'))}" value="${escapeHtml(_myBoardsFilter.search)}"
           style="flex:1;min-width:140px;height:36px;padding:0 12px;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font:inherit;font-size:.78rem;" />
       </div>
       <div style="display:flex;gap:.6rem;margin-bottom:.8rem;flex-wrap:wrap;">
+        <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.66rem;color:var(--muted,#9ab);">
+          ${escapeHtml(t('boardLangFilterLabel'))}
+          <select id="myBoardsLangSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
+            <option value="all"${_myBoardsFilter.lang==='all'?' selected':''}>${escapeHtml(t('boardLangAll'))}</option>
+            ${LANGS.map(l=>`<option value="${escapeHtml(l.code)}"${_myBoardsFilter.lang===l.code?' selected':''}>${escapeHtml(l.native||l.code)}</option>`).join('')}
+          </select>
+        </label>
         <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.66rem;color:var(--muted,#9ab);">
           ${escapeHtml(t('sortLabel'))}
           <select id="myBoardsSortSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
@@ -17110,6 +17121,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('myBoardsSearchInput');
     if(searchInput) {
       searchInput.oninput = () => { _myBoardsFilter.search = searchInput.value; renderMyBoards(userId); };
+    }
+    const langSelect = document.getElementById('myBoardsLangSelect');
+    if(langSelect) {
+      langSelect.onchange = () => { _myBoardsFilter.lang = langSelect.value; renderMyBoards(userId); };
     }
     const sortSelect = document.getElementById('myBoardsSortSelect');
     if(sortSelect) {
@@ -19201,6 +19216,8 @@ document.addEventListener('DOMContentLoaded', () => {
     boardSearchPlaceholder: { ja:'タイトルで検索…', en:'Search by title…' },
     boardSortNewest: { ja:'新着順', en:'Newest' },
     boardSortTitle: { ja:'タイトル順', en:'Title' },
+    boardLangAll: { ja:'すべての言語', en:'All languages' },
+    boardLangFilterLabel: { ja:'表示言語', en:'Language', ko:'표시 언어', 'zh-tw':'顯示語言', 'zh-cn':'显示语言', es:'Idioma', fr:'Langue', pt:'Idioma', de:'Sprache', ar:'اللغة', th:'ภาษา', id:'Bahasa', ru:'Язык', it:'Lingua', vi:'Ngôn ngữ' },
     boardTypeFilterLabel: { ja:'種類', en:'Type', ko:'종류', 'zh-tw':'類型', 'zh-cn':'类型', es:'Tipo', fr:'Type', pt:'Tipo', de:'Typ', ar:'النوع', th:'ประเภท', id:'Jenis', ru:'Тип', it:'Tipo', vi:'Loại' },
     boardHubNotifySettingsBtn: { ja:'通知設定', en:'Notification settings', ko:'알림 설정', 'zh-tw':'通知設定', 'zh-cn':'通知设置', es:'Ajustes de notificaciones', fr:'Paramètres de notification', pt:'Configurações de notificação', de:'Benachrichtigungseinstellungen', ar:'إعدادات الإشعارات', th:'ตั้งค่าการแจ้งเตือน', id:'Pengaturan notifikasi', ru:'Настройки уведомлений', it:'Impostazioni notifiche', vi:'Cài đặt thông báo' },
     boardTypeAll: { ja:'すべて', en:'All types' },
