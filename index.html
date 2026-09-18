@@ -16946,6 +16946,9 @@ document.addEventListener('DOMContentLoaded', () => {
     else if(_myBoardsFilter.type === 'value') visible = visible.filter(b=>b.isValueBoard);
     // 言語フィルター：デフォルト（'current'）は今のサイト表示言語のものだけ。日本語表示中ならJPの
     // 掲示板だけ、英語表示中ならENの掲示板だけが出る。'all'を選んだ時だけ全言語を表示する
+    // [2026-09-18訂正] 一度これを上の「通知する掲示板」にも適用してみたが、上の通知リストは
+    // 並び替えだけでなくページ内のどの絞り込み操作の影響も受けない固定リストにしたい、との
+    // 指摘を受けて元に戻した。言語フィルターは下の一覧にだけ効かせる。
     const langFilterValue = _myBoardsFilter.lang === 'current' ? currentLang : _myBoardsFilter.lang;
     if(langFilterValue !== 'all') visible = visible.filter(b=>b.lang === langFilterValue);
     // 通知ONにした掲示板は上の「通知する掲示板」に移るので、下の一覧からは除外する
@@ -19596,17 +19599,14 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.onclick = () => {
         currentLang = btn.dataset.lang;
         localStorage.setItem(LANG_KEY, currentLang);
-        overlay.classList.remove('open');
-        applyLang();
-        if (currentPage === 'home') { renderHome().catch(console.error); loadSeasonSection(); }
-        else if (currentPage === 'search') renderSearch().catch(console.error);
-        else if (currentPage === 'anime' && currentAnimeId) renderAnimePage(currentAnimeId).catch(console.error);
-        else if (currentPage === 'board-general' && currentAnimeId) renderBoardGeneral(currentAnimeId).catch(console.error);
-        else if (currentPage === 'board-value' && currentAnimeId) renderBoardValue(currentAnimeId).catch(console.error);
-        else if (currentPage === 'popular') {
-          const grid = document.getElementById('popGrid');
-          if (grid) grid.innerHTML = popState.items.map(a=>renderAnimeCard(a, {style:'g', showReviewCount:true})).join('');
-        }
+        // [2026-09-18修正] 以前はここでページ単位に手動でapplyLang()+個別の再描画を
+        // 呼んでいたが、その場しのぎでhome/search/anime/board-general/board-value/popularの
+        // 6ページしか対応しておらず、それ以外のページ(my-boards等)は言語を切り替えても
+        // 表示が一切更新されなかった(ユーザー報告「言語変更してもかわらないから」)。
+        // 個別対応を増やし続けるのではなく、1回リロードして全ページを新しい言語で
+        // 描き直す方式に統一する。currentLangは既にlocalStorageへ保存済みなので、
+        // リロード後の起動時にそのまま新しい言語で読み込まれる。
+        location.reload();
       };
     });
     overlay.classList.add('open');
@@ -23749,7 +23749,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.addEventListener('resize', updateCookieBannerOffset);
 
-  // [2026-09追加、2026-09-17方向判定に修正、同日さらに停止後の表示タイミングを調整]
+  // [2026-09追加、2026-09-17方向判定に修正、同日さらに停止後の表示タイミングを調整、
+  // 2026-09-18さらにページ最上部での例外を追加]
   // スマホ幅：下にスクロールしている間だけヘッダー／ボトムナビを隠し、止まったら出す。
   // 上にスクロールしている間も出したままにする（以前は方向を見ずに「動いてる間は常に隠す」
   // 仕様だったが、上スクロール中も隠れてしまい使いにくいとの指摘を受けて、前回のscrollY との
@@ -23757,8 +23758,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // 停止後に表示へ戻るまでの間隔は、YouTubeアプリの動画操作UIのような「止まって一呼吸置いてから
   // 出てくる」感覚に寄せるため60ms→SCROLL_STOP_SHOW_DELAY_MSに変更(上スクロールは指摘通り
   // 即表示のまま、変えていない)。
+  // さらに、ページ最上部付近にいる時は、指を上に引っ張って(下方向にスクロールして)最初の
+  // 一振りで即座に隠れてしまうと使いにくい、との指摘を受け、scrollYがTOP_THRESHOLD_PX以下の
+  // 間は下スクロール中でも隠さないようにした(その位置を抜けて初めて通常の判定に戻る)。
   // CSS側は@media(max-width:767px)で効かせているので、PC幅ではこのクラスが付いても見た目に影響しない。
   const SCROLL_STOP_SHOW_DELAY_MS = 400;
+  const SCROLL_HIDE_TOP_THRESHOLD_PX = 40;
   let _scrollHideTimer = null;
   let _lastScrollYForChromeHide = window.scrollY || document.documentElement.scrollTop || 0;
   function onScrollActivityForChromeHide(e) {
@@ -23771,13 +23776,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const isScrollingDown = currentY > _lastScrollYForChromeHide;
     _lastScrollYForChromeHide = currentY;
     clearTimeout(_scrollHideTimer);
-    if (isScrollingDown) {
+    if (isScrollingDown && currentY > SCROLL_HIDE_TOP_THRESHOLD_PX) {
       document.body.classList.add('scroll-hide-chrome');
       _scrollHideTimer = setTimeout(() => {
         document.body.classList.remove('scroll-hide-chrome');
       }, SCROLL_STOP_SHOW_DELAY_MS);
     } else {
-      // 上にスクロール中、または動いていない → 常に表示する
+      // 上にスクロール中、動いていない、またはまだページ最上部付近 → 常に表示する
       document.body.classList.remove('scroll-hide-chrome');
     }
   }
