@@ -9398,6 +9398,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     }
+    if (page==='settings-account') {
+      // 認証状態が確定してからレンダリング（initAuthが非同期のため）
+      if(_currentUser) {
+        renderSettingsAccountInfo().catch(console.error);
+      } else {
+        sb?.auth.getSession().then(({ data }) => {
+          if(data?.session?.user) {
+            _currentUser = data.session.user;
+          }
+          if(_currentUser) renderSettingsAccountInfo().catch(console.error);
+        });
+      }
+    }
     if (page==='my-boards') {
       // 認証状態が確定してからレンダリング（initAuthが非同期のため）
       if(_currentUser) {
@@ -16697,6 +16710,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const arr = [...list];
     if(sort === 'title') {
       arr.sort((a,b)=>a.title.localeCompare(b.title));
+    } else if(sort === 'type') {
+      // [2026-09-18追加] 種類順：通常掲示板→価値観掲示板の順にまとめ、それぞれの中はタイトル順
+      arr.sort((a,b)=> (a.isValueBoard===b.isValueBoard ? 0 : (a.isValueBoard?1:-1)) || a.title.localeCompare(b.title));
+    } else if(sort === 'lang') {
+      // [2026-09-18追加] 言語順：言語コードでまとめ、それぞれの中はタイトル順
+      arr.sort((a,b)=> String(a.lang||'').localeCompare(String(b.lang||'')) || a.title.localeCompare(b.title));
     } else {
       // 新着順：新着があるものを先頭に、その中でも最新順。既読済みも最新活動順
       arr.sort((a,b)=>{
@@ -16916,9 +16935,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const notifyOnCount = () => enriched.filter(b=>b.notify).length;
 
-    enriched = sortMyBoards(enriched, _myBoardsFilter.sort);
+    // [2026-09-18修正] 以前は並び替え(sortMyBoards)をenriched全体(=上の「通知する掲示板」＋
+    // 下の「参加してる掲示板」の両方の元になる配列)に適用してから2つに分けていたため、
+    // 並び替えのプルダウンを変えるたびに上の「通知する掲示板」の並びまで一緒に動いてしまっていた
+    // (ユーザー指摘: 通知オンにした掲示板は並び替えで動かないでほしい)。
+    // 並び替えは下の一覧にだけ適用し、上の通知リストは常にタイトル順の固定表示にする。
     const q = _myBoardsFilter.search.trim().toLowerCase();
-    let visible = q ? enriched.filter(b=>b.title.toLowerCase().includes(q)) : enriched;
+    let visible = q ? enriched.filter(b=>b.title.toLowerCase().includes(q)) : [...enriched];
     if(_myBoardsFilter.type === 'general') visible = visible.filter(b=>!b.isValueBoard);
     else if(_myBoardsFilter.type === 'value') visible = visible.filter(b=>b.isValueBoard);
     // 言語フィルター：デフォルト（'current'）は今のサイト表示言語のものだけ。日本語表示中ならJPの
@@ -16927,7 +16950,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if(langFilterValue !== 'all') visible = visible.filter(b=>b.lang === langFilterValue);
     // 通知ONにした掲示板は上の「通知する掲示板」に移るので、下の一覧からは除外する
     visible = visible.filter(b=>!b.notify);
-    const notifyList = enriched.filter(b=>b.notify);
+    visible = sortMyBoards(visible, _myBoardsFilter.sort);
+    const notifyList = sortMyBoards(enriched.filter(b=>b.notify), 'title');
     const valueBoardsEligible = enriched.filter(b=>b.isValueBoard);
 
     const hasPush = await db.pushSubscriptions.hasAny(userId);
@@ -16951,7 +16975,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <p style="font-size:.72rem;color:var(--muted,#9ab);margin:0 0 .6rem;">${escapeHtml(t('notifyListDesc'))}</p>
       ${notifyList.length ? `
-      <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem;">
+      <div id="myBoardsNotifyList" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem;">
         ${notifyList.map(b=>{
           const langInfo = LANGS.find(l=>l.code===b.lang);
           const langChip = langInfo ? `<span style="font-size:.62rem;font-weight:800;padding:.1rem .4rem;border-radius:5px;background:rgba(255,255,255,.08);color:#9fb0a5;flex-shrink:0;">${escapeHtml(langInfo.code.split('-')[0].toUpperCase())}</span>` : '';
@@ -16993,6 +17017,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <select id="myBoardsSortSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
             <option value="newest"${_myBoardsFilter.sort==='newest'?' selected':''}>${escapeHtml(t('boardSortNewest'))}</option>
             <option value="title"${_myBoardsFilter.sort==='title'?' selected':''}>${escapeHtml(t('boardSortTitle'))}</option>
+            <option value="type"${_myBoardsFilter.sort==='type'?' selected':''}>${escapeHtml(t('boardSortType'))}</option>
+            <option value="lang"${_myBoardsFilter.sort==='lang'?' selected':''}>${escapeHtml(t('boardSortLang'))}</option>
           </select>
         </label>
         <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.66rem;color:var(--muted,#9ab);">
@@ -17004,7 +17030,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </select>
         </label>
       </div>
-      <div style="display:flex;flex-direction:column;gap:.4rem;">
+      <div id="myBoardsAllList" style="display:flex;flex-direction:column;gap:.4rem;">
         ${visible.map(b=>{
           const langInfo = LANGS.find(l=>l.code===b.lang);
           const langChip = langInfo ? `<span style="font-size:.62rem;font-weight:800;padding:.1rem .4rem;border-radius:5px;background:rgba(255,255,255,.08);color:#9fb0a5;flex-shrink:0;">${escapeHtml(langInfo.code.split('-')[0].toUpperCase())}</span>` : '';
@@ -17029,15 +17055,15 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // [2026-09-18修正] 以前は「通知する掲示板」が先頭に来ており、ページを開いて最初に
-    // 見えるのが「参加中の掲示板」という遷移元の項目名と一致していなかった(通知設定は
-    // あくまで参加中の掲示板の一部機能のため)。本来のページの主役である「参加してる掲示板」
-    // 一覧を先に、「通知する掲示板」を後に表示する順番に入れ替えた。
+    // [2026-09-18訂正] 一度「参加してる掲示板」を先頭にしたが、掲示板ハブの「通知を受け取る
+    // 掲示板」セクションにある「通知設定」ボタン(#boardHubNotifySettingsBtn)からもこの
+    // ページへ遷移してくる導線があり、そちらは通知管理が目的で来ているため「通知する掲示板」を
+    // 先に見せたい、との指摘を受けて元の順番(通知する掲示板が先)に戻した。
     el.innerHTML = `
       ${pushBannerHtml}
-      ${allBoardsSectionHtml}
-      <div style="border-top:1px solid var(--line,#2a3830);margin:1.2rem 0 1rem;"></div>
       ${notifySectionHtml}
+      <div style="border-top:1px solid var(--line,#2a3830);margin:0 0 1rem;"></div>
+      ${allBoardsSectionHtml}
     `;
 
     // 行クリック → その掲示板を開く（言語もその掲示板のものに合わせる）
@@ -17185,6 +17211,25 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = newStatus === 'pending_received' ? t('friendBtnPendingReceived') : friendBtnLabel(newStatus);
       };
     });
+  }
+
+  // 設定→アカウントページのユーザー名・メールアドレス・ユーザーIDを埋める。
+  // [2026-09-18修正] 以前はこれらの値を埋める処理がrenderMypage()の中にしか無く、
+  // 自分のマイページを一度も開かずに(ボトムナビ等から)直接settings-accountへ来ると
+  // ログイン済みでも「—」のまま何も表示されなかった(nav()のディスパッチにsettings-account
+  // 用の処理が存在しなかったため)。専用の描画関数を切り出し、settings-account遷移時に
+  // 必ず呼ばれるようにした。
+  async function renderSettingsAccountInfo() {
+    if(!_currentUser) return;
+    const suEl = document.getElementById('settingsUsernameValue');
+    const seEl = document.getElementById('settingsEmailValue');
+    const uidEl = document.getElementById('settingsUserIdValue');
+    if(seEl) seEl.textContent = _currentUser.email;
+    if(uidEl) uidEl.textContent = _currentUser.id;
+    if(suEl) {
+      const profile = await db.profiles.get(_currentUser.id).catch(()=>null);
+      suEl.textContent = _currentUser._username || profile?.username || _currentUser.email.split('@')[0];
+    }
   }
 
   async function renderBlockedUsers(userId) {
@@ -19154,6 +19199,8 @@ document.addEventListener('DOMContentLoaded', () => {
     boardSearchPlaceholder: { ja:'タイトルで検索…', en:'Search by title…' },
     boardSortNewest: { ja:'新着順', en:'Newest' },
     boardSortTitle: { ja:'タイトル順', en:'Title' },
+    boardSortType: { ja:'種類順(通常→価値観)', en:'Type (general → value)' },
+    boardSortLang: { ja:'言語順', en:'Language' },
     boardLangCurrentOnly: { ja:'今の表示言語のみ', en:'Current language only' },
     boardLangAll: { ja:'すべての言語', en:'All languages' },
     boardLangFilterLabel: { ja:'表示言語', en:'Language', ko:'표시 언어', 'zh-tw':'顯示語言', 'zh-cn':'显示语言', es:'Idioma', fr:'Langue', pt:'Idioma', de:'Sprache', ar:'اللغة', th:'ภาษา', id:'Bahasa', ru:'Язык', it:'Lingua', vi:'Ngôn ngữ' },
