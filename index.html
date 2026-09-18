@@ -7234,33 +7234,42 @@ document.addEventListener('DOMContentLoaded', () => {
       // 投稿履歴＋価値観投票から「参加中の掲示板」一覧を作る（通常掲示板＋解放済みの価値観掲示板）。言語ごとに別エントリになる
       async listMyBoards(userId) {
         if(!sb || !userId) return [];
-        const [postedRes, votedRes] = await Promise.all([
+        const [postedRes, votedRes, stateRes] = await Promise.all([
           sb.from('board_posts').select('anime_id, board_type, lang').eq('user_id', userId),
           sb.from('review_values').select('anime_id, axis_group').eq('user_id', userId),
+          sb.from('user_board_state').select('anime_id, board_type, lang').eq('user_id', userId),
         ]);
         const seen = new Set();
         // [2026-09-18修正] 掲示板は「作品×種類×言語」の組み合わせごとに完全に別の掲示板であり、
-        // 一度作られた(＝実際に投稿された)掲示板の言語は、表示言語を変えても不変であるべき
-        // (ユーザー指摘)。以前はvotedRes(価値観投票のみ・未投稿)側で「現在表示中の言語」を
-        // 毎回その場で計算して仮のlangにしていたため、①表示言語を切り替えるたびに未投稿の
-        // 価値観掲示板の言語表示がドリフトする、②既に別の言語(例:DE)で実際に投稿済みの
+        // 一度作られた掲示板の言語は、表示言語を変えても不変であるべき(ユーザー指摘)。
+        // 以前はvotedRes(価値観投票のみ)側で、投稿が無い場合に「現在表示中の言語」を
+        // 毎回その場で計算して仮のlangにしていたため、①表示言語を切り替えるたびに
+        // 言語表示がドリフトする、②既に別の言語で実際に投稿済み・または既読/通知設定済みの
         // 価値観掲示板があっても、それとは別に「今の表示言語」版の幽霊エントリが重複して
-        // 出てしまう、という2つの不具合があった。投稿済みの(作品×種類)の組み合わせは
-        // hasPostedTypeで把握しておき、既に何らかの言語で投稿済みならvotedRes側の
-        // 仮エントリは作らないようにする。
-        const hasPostedType = new Set();
+        // 出てしまう(通知ONの個数が表示言語によって変わって見える不具合の原因)、という
+        // 2つの不具合があった。board_postsだけでなくuser_board_state(既読・通知設定。
+        // これも(anime_id,board_type,lang)ごとに実在する、投稿と同じくらい確かな言語情報)も
+        // 「本物の言語」の情報源として扱い、どちらかに実データがある(作品×種類)の組み合わせは
+        // hasRealTypeに記録して、votedRes側の仮エントリを作らないようにする。
+        const hasRealType = new Set();
         const boards = [];
         (postedRes.data||[]).forEach(r=>{
           const lang = r.lang || 'ja';
           const key = r.anime_id+'|'+r.board_type+'|'+lang;
-          hasPostedType.add(r.anime_id+'|'+r.board_type);
+          hasRealType.add(r.anime_id+'|'+r.board_type);
+          if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.board_type, lang }); }
+        });
+        (stateRes.data||[]).forEach(r=>{
+          const lang = r.lang || 'ja';
+          const key = r.anime_id+'|'+r.board_type+'|'+lang;
+          hasRealType.add(r.anime_id+'|'+r.board_type);
           if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.board_type, lang }); }
         });
         (votedRes.data||[]).forEach(r=>{
-          // 投票だけ(まだその価値観掲示板に一度も投稿していない)の場合、その言語での実体が
-          // まだ存在しないため、便宜上「現在表示中の言語」を仮のlangとして使う。
-          // 既に何らかの言語で投稿済みなら、そちらが本物の掲示板なのでここでは何もしない。
-          if(hasPostedType.has(r.anime_id+'|'+r.axis_group)) return;
+          // 投票だけ(まだその価値観掲示板に一度も投稿も既読/通知設定もしていない)の場合、
+          // その言語での実体がまだ存在しないため、便宜上「現在表示中の言語」を仮のlangとして使う。
+          // 既に何らかの言語で実データがあれば、そちらが本物の掲示板なのでここでは何もしない。
+          if(hasRealType.has(r.anime_id+'|'+r.axis_group)) return;
           const lang = currentLang;
           const key = r.anime_id+'|'+r.axis_group+'|'+lang;
           if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.axis_group, lang }); }
@@ -16718,18 +16727,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // マイページ：参加中の掲示板一覧（新着順・通知設定つき）
   const _boardGroupLabel = { general:'boardGeneralLabel', A:'boardTabA', B:'boardTabB', C:'boardTabC', D:'boardTabD' };
   const BOARD_NOTIFY_LIMIT = 10; // 通知を紐づけられる掲示板の上限（固定・調整不可）。対象は価値観掲示板のみ
-  let _myBoardsFilter = { search: '', sort: 'newest', type: 'all', lang: 'current' };
+  // [2026-09-18訂正] 種類順/言語順ソートと表示言語フィルターは、掲示板の言語データを
+  // 不安定にする不具合の原因になっていた上、ユーザーからも不要と指摘されたため撤去した。
+  let _myBoardsFilter = { search: '', sort: 'newest', type: 'all' };
 
   function sortMyBoards(list, sort) {
     const arr = [...list];
     if(sort === 'title') {
       arr.sort((a,b)=>a.title.localeCompare(b.title));
-    } else if(sort === 'type') {
-      // [2026-09-18追加] 種類順：通常掲示板→価値観掲示板の順にまとめ、それぞれの中はタイトル順
-      arr.sort((a,b)=> (a.isValueBoard===b.isValueBoard ? 0 : (a.isValueBoard?1:-1)) || a.title.localeCompare(b.title));
-    } else if(sort === 'lang') {
-      // [2026-09-18追加] 言語順：言語コードでまとめ、それぞれの中はタイトル順
-      arr.sort((a,b)=> String(a.lang||'').localeCompare(String(b.lang||'')) || a.title.localeCompare(b.title));
     } else {
       // 新着順：新着があるものを先頭に、その中でも最新順。既読済みも最新活動順
       arr.sort((a,b)=>{
@@ -16958,13 +16963,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let visible = q ? enriched.filter(b=>b.title.toLowerCase().includes(q)) : [...enriched];
     if(_myBoardsFilter.type === 'general') visible = visible.filter(b=>!b.isValueBoard);
     else if(_myBoardsFilter.type === 'value') visible = visible.filter(b=>b.isValueBoard);
-    // 言語フィルター：デフォルト（'current'）は今のサイト表示言語のものだけ。日本語表示中ならJPの
-    // 掲示板だけ、英語表示中ならENの掲示板だけが出る。'all'を選んだ時だけ全言語を表示する
-    // [2026-09-18訂正] 一度これを上の「通知する掲示板」にも適用してみたが、上の通知リストは
-    // 並び替えだけでなくページ内のどの絞り込み操作の影響も受けない固定リストにしたい、との
-    // 指摘を受けて元に戻した。言語フィルターは下の一覧にだけ効かせる。
-    const langFilterValue = _myBoardsFilter.lang === 'current' ? currentLang : _myBoardsFilter.lang;
-    if(langFilterValue !== 'all') visible = visible.filter(b=>b.lang === langFilterValue);
     // 通知ONにした掲示板は上の「通知する掲示板」に移るので、下の一覧からは除外する
     visible = visible.filter(b=>!b.notify);
     visible = sortMyBoards(visible, _myBoardsFilter.sort);
@@ -17012,9 +17010,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── ② 参加してる掲示板（無制限・検索/並び替え・通常掲示板も含む全部） ──
     // [2026-09-18修正] ページ側に<h2>見出し(myBoardsTitle)を追加したため、ここで同じ文言を
-    // もう一度<h3>で出すと重複するので削除。また、言語/並び替え/種類の3つのセレクトが
-    // ラベル無しで並んでいて「何を選ぶ欄か初見で分かりにくい」という指摘を受け、
-    // それぞれに見えるラベルを付けた(<label>で囲むことで意味的にも紐付ける)。
+    // もう一度<h3>で出すと重複するので削除。
+    // [2026-09-18訂正] 表示言語フィルターと、並び替えの「種類順」「言語順」は、掲示板の
+    // 言語データを不安定にする不具合の原因になった上、ユーザーからも不要と指摘されたため撤去。
+    // 並び替えの選択肢に見えるラベルを付けた点(<label>で囲む)は残している。
     const allBoardsSectionHtml = `
       <div style="display:flex;gap:.4rem;margin-bottom:.6rem;">
         <input type="search" id="myBoardsSearchInput" placeholder="${escapeHtml(t('boardSearchPlaceholder'))}" value="${escapeHtml(_myBoardsFilter.search)}"
@@ -17022,20 +17021,10 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div style="display:flex;gap:.6rem;margin-bottom:.8rem;flex-wrap:wrap;">
         <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.66rem;color:var(--muted,#9ab);">
-          ${escapeHtml(t('boardLangFilterLabel'))}
-          <select id="myBoardsLangSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
-            <option value="current"${_myBoardsFilter.lang==='current'?' selected':''}>${escapeHtml(t('boardLangCurrentOnly'))}</option>
-            <option value="all"${_myBoardsFilter.lang==='all'?' selected':''}>${escapeHtml(t('boardLangAll'))}</option>
-            ${LANGS.map(l=>`<option value="${escapeHtml(l.code)}"${_myBoardsFilter.lang===l.code?' selected':''}>${escapeHtml(l.native||l.code)}</option>`).join('')}
-          </select>
-        </label>
-        <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.66rem;color:var(--muted,#9ab);">
           ${escapeHtml(t('sortLabel'))}
           <select id="myBoardsSortSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
             <option value="newest"${_myBoardsFilter.sort==='newest'?' selected':''}>${escapeHtml(t('boardSortNewest'))}</option>
             <option value="title"${_myBoardsFilter.sort==='title'?' selected':''}>${escapeHtml(t('boardSortTitle'))}</option>
-            <option value="type"${_myBoardsFilter.sort==='type'?' selected':''}>${escapeHtml(t('boardSortType'))}</option>
-            <option value="lang"${_myBoardsFilter.sort==='lang'?' selected':''}>${escapeHtml(t('boardSortLang'))}</option>
           </select>
         </label>
         <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.66rem;color:var(--muted,#9ab);">
@@ -17121,10 +17110,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('myBoardsSearchInput');
     if(searchInput) {
       searchInput.oninput = () => { _myBoardsFilter.search = searchInput.value; renderMyBoards(userId); };
-    }
-    const langSelect = document.getElementById('myBoardsLangSelect');
-    if(langSelect) {
-      langSelect.onchange = () => { _myBoardsFilter.lang = langSelect.value; renderMyBoards(userId); };
     }
     const sortSelect = document.getElementById('myBoardsSortSelect');
     if(sortSelect) {
@@ -19216,11 +19201,6 @@ document.addEventListener('DOMContentLoaded', () => {
     boardSearchPlaceholder: { ja:'タイトルで検索…', en:'Search by title…' },
     boardSortNewest: { ja:'新着順', en:'Newest' },
     boardSortTitle: { ja:'タイトル順', en:'Title' },
-    boardSortType: { ja:'種類順(通常→価値観)', en:'Type (general → value)' },
-    boardSortLang: { ja:'言語順', en:'Language' },
-    boardLangCurrentOnly: { ja:'今の表示言語のみ', en:'Current language only' },
-    boardLangAll: { ja:'すべての言語', en:'All languages' },
-    boardLangFilterLabel: { ja:'表示言語', en:'Language', ko:'표시 언어', 'zh-tw':'顯示語言', 'zh-cn':'显示语言', es:'Idioma', fr:'Langue', pt:'Idioma', de:'Sprache', ar:'اللغة', th:'ภาษา', id:'Bahasa', ru:'Язык', it:'Lingua', vi:'Ngôn ngữ' },
     boardTypeFilterLabel: { ja:'種類', en:'Type', ko:'종류', 'zh-tw':'類型', 'zh-cn':'类型', es:'Tipo', fr:'Type', pt:'Tipo', de:'Typ', ar:'النوع', th:'ประเภท', id:'Jenis', ru:'Тип', it:'Tipo', vi:'Loại' },
     boardHubNotifySettingsBtn: { ja:'通知設定', en:'Notification settings', ko:'알림 설정', 'zh-tw':'通知設定', 'zh-cn':'通知设置', es:'Ajustes de notificaciones', fr:'Paramètres de notification', pt:'Configurações de notificação', de:'Benachrichtigungseinstellungen', ar:'إعدادات الإشعارات', th:'ตั้งค่าการแจ้งเตือน', id:'Pengaturan notifikasi', ru:'Настройки уведомлений', it:'Impostazioni notifiche', vi:'Cài đặt thông báo' },
     boardTypeAll: { ja:'すべて', en:'All types' },
