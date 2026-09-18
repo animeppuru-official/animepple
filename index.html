@@ -7239,14 +7239,28 @@ document.addEventListener('DOMContentLoaded', () => {
           sb.from('review_values').select('anime_id, axis_group').eq('user_id', userId),
         ]);
         const seen = new Set();
+        // [2026-09-18修正] 掲示板は「作品×種類×言語」の組み合わせごとに完全に別の掲示板であり、
+        // 一度作られた(＝実際に投稿された)掲示板の言語は、表示言語を変えても不変であるべき
+        // (ユーザー指摘)。以前はvotedRes(価値観投票のみ・未投稿)側で「現在表示中の言語」を
+        // 毎回その場で計算して仮のlangにしていたため、①表示言語を切り替えるたびに未投稿の
+        // 価値観掲示板の言語表示がドリフトする、②既に別の言語(例:DE)で実際に投稿済みの
+        // 価値観掲示板があっても、それとは別に「今の表示言語」版の幽霊エントリが重複して
+        // 出てしまう、という2つの不具合があった。投稿済みの(作品×種類)の組み合わせは
+        // hasPostedTypeで把握しておき、既に何らかの言語で投稿済みならvotedRes側の
+        // 仮エントリは作らないようにする。
+        const hasPostedType = new Set();
         const boards = [];
         (postedRes.data||[]).forEach(r=>{
           const lang = r.lang || 'ja';
           const key = r.anime_id+'|'+r.board_type+'|'+lang;
+          hasPostedType.add(r.anime_id+'|'+r.board_type);
           if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.board_type, lang }); }
         });
         (votedRes.data||[]).forEach(r=>{
-          // レビュー投票自体には言語の概念が無いため、現在表示中の言語の掲示板として扱う
+          // 投票だけ(まだその価値観掲示板に一度も投稿していない)の場合、その言語での実体が
+          // まだ存在しないため、便宜上「現在表示中の言語」を仮のlangとして使う。
+          // 既に何らかの言語で投稿済みなら、そちらが本物の掲示板なのでここでは何もしない。
+          if(hasPostedType.has(r.anime_id+'|'+r.axis_group)) return;
           const lang = currentLang;
           const key = r.anime_id+'|'+r.axis_group+'|'+lang;
           if(!seen.has(key)) { seen.add(key); boards.push({ anime_id:r.anime_id, board_type:r.axis_group, lang }); }
