@@ -4737,7 +4737,28 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   </header>
   <div style="padding:1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="myBoardsTitle">参加中の掲示板</h2>
     <div id="mypageBoardsSection"></div>
+  </div>
+</div>
+
+<!-- ブロック中のユーザー一覧（専用ページ。以前はsettings-privacyページ内に直接埋め込まれていた） -->
+<div class="page mypage-page-wrap" id="page-my-blocks">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <button class="back-btn" data-i18n="btnBack" onclick="navBack()">← 戻る</button>
+      <div class="hdr-right">
+        <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
+        <button class="lang-current-btn" onclick="openLang()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>
+          <span class="lang-code-label">JP</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <div style="padding:1.1rem;">
+    <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;" data-i18n="blockedUsersTitle">ブロック中のユーザー</h2>
+    <div id="myBlocksSection"></div>
   </div>
 </div>
 
@@ -5000,7 +5021,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="settings-row-arrow">›</span>
       </button>
       <button class="settings-row" onclick="nav('settings-privacy')">
-        <span class="settings-row-icon" style="background:rgba(217,164,65,.12);color:#e8c463;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+        <span class="settings-row-icon" style="background:rgba(94,158,217,.12);color:#8fbeed;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
         <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsPrivacy">プライバシーと安全</span><span class="settings-row-sub" data-i18n="settingsPrivacySub">ブロック中のユーザーなど</span></span>
         <span class="settings-row-arrow">›</span>
       </button>
@@ -5075,7 +5096,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <p style="font-size:.8rem;color:var(--muted);margin:0 0 .5rem;" data-i18n="settingsDeleteAccountDesc">アカウントを削除すると、レビュー・お気に入り・掲示板投稿など、すべてのデータが完全に削除されます。この操作は取り消せません。</p>
       <button class="mypage-btn-secondary" id="settingsDeleteAccountBtn" style="color:#ff8a8a;border-color:#7a3a3a;" data-i18n="settingsDeleteAccountBtn">アカウントを削除する</button>
     </div>
-    <div class="mypage-section mypage-owner-only" style="border-top:1px solid var(--line);padding:1rem 0;">
+    <div class="mypage-section" style="border-top:1px solid var(--line);padding:1rem 0;">
       <button class="settings-row settings-row-danger" onclick="signOut()" style="margin:0;">
         <span class="settings-row-icon" style="background:rgba(234,169,169,.1);color:#eaa9a9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
         <span class="settings-row-body"><span class="settings-row-title" style="color:#eaa9a9;" data-i18n="logoutBtn">ログアウト</span></span>
@@ -5107,8 +5128,12 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="mypage-menu-row-badge" id="menuBadgeBoards" style="display:none;"></span>
         <span class="mypage-menu-row-arrow">›</span>
       </button>
+      <button class="mypage-menu-row" onclick="nav('my-blocks')">
+        <span class="mypage-menu-row-icon">🚫</span>
+        <span class="mypage-menu-row-label" data-i18n="blockedUsersTitle">ブロック中のユーザー</span>
+        <span class="mypage-menu-row-arrow">›</span>
+      </button>
     </div>
-    <div id="settingsBlockedSection" class="mypage-section"></div>
     <div class="mypage-section" style="padding:1rem 1.1rem;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;">
         <div style="flex:1;min-width:0;">
@@ -9068,6 +9093,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'my-reviews': '/mypage/reviews',
     'my-favorites': '/mypage/favorites',
     'my-boards': '/mypage/boards',
+    'my-blocks': '/mypage/blocks',
     'my-icons': '/mypage/icons',
     'friend-requests': '/mypage/friend-requests',
     'dm-list': '/mypage/messages',
@@ -9400,7 +9426,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (page==='follow-list') {
       renderFollowList(_followListState.userId, _followListState.mode).catch(console.error);
     }
-    if (page==='settings-privacy') {
+    if (page==='my-blocks') {
       if(_currentUser) {
         renderBlockedUsers(_currentUser.id).catch(console.error);
       } else {
@@ -9409,6 +9435,8 @@ document.addEventListener('DOMContentLoaded', () => {
           if(_currentUser) renderBlockedUsers(_currentUser.id).catch(console.error);
         });
       }
+    }
+    if (page==='settings-privacy') {
       // レビュー一覧の初期表示（グラフ／コメント）設定
       const reviewInitialViewSel = document.getElementById('settingsReviewInitialView');
       if(reviewInitialViewSel) {
@@ -16942,27 +16970,39 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     // ── ② 参加してる掲示板（無制限・検索/並び替え・通常掲示板も含む全部） ──
+    // [2026-09-18修正] ページ側に<h2>見出し(myBoardsTitle)を追加したため、ここで同じ文言を
+    // もう一度<h3>で出すと重複するので削除。また、言語/並び替え/種類の3つのセレクトが
+    // ラベル無しで並んでいて「何を選ぶ欄か初見で分かりにくい」という指摘を受け、
+    // それぞれに見えるラベルを付けた(<label>で囲むことで意味的にも紐付ける)。
     const allBoardsSectionHtml = `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-        <h3 style="margin:0;font-size:.9rem;">${escapeHtml(t('myBoardsTitle'))}</h3>
-      </div>
-      <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;">
+      <div style="display:flex;gap:.4rem;margin-bottom:.6rem;">
         <input type="search" id="myBoardsSearchInput" placeholder="${escapeHtml(t('boardSearchPlaceholder'))}" value="${escapeHtml(_myBoardsFilter.search)}"
           style="flex:1;min-width:140px;height:36px;padding:0 12px;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;font:inherit;font-size:.78rem;" />
-        <select id="myBoardsLangSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
-          <option value="current"${_myBoardsFilter.lang==='current'?' selected':''}>${escapeHtml(t('boardLangCurrentOnly'))}</option>
-          <option value="all"${_myBoardsFilter.lang==='all'?' selected':''}>${escapeHtml(t('boardLangAll'))}</option>
-          ${LANGS.map(l=>`<option value="${escapeHtml(l.code)}"${_myBoardsFilter.lang===l.code?' selected':''}>${escapeHtml(l.native||l.code)}</option>`).join('')}
-        </select>
-        <select id="myBoardsSortSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
-          <option value="newest"${_myBoardsFilter.sort==='newest'?' selected':''}>${escapeHtml(t('boardSortNewest'))}</option>
-          <option value="title"${_myBoardsFilter.sort==='title'?' selected':''}>${escapeHtml(t('boardSortTitle'))}</option>
-        </select>
-        <select id="myBoardsTypeSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
-          <option value="all"${_myBoardsFilter.type==='all'?' selected':''}>${escapeHtml(t('boardTypeAll'))}</option>
-          <option value="general"${_myBoardsFilter.type==='general'?' selected':''}>${escapeHtml(t('boardTypeGeneral'))}</option>
-          <option value="value"${_myBoardsFilter.type==='value'?' selected':''}>${escapeHtml(t('boardTypeValue'))}</option>
-        </select>
+      </div>
+      <div style="display:flex;gap:.6rem;margin-bottom:.8rem;flex-wrap:wrap;">
+        <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.66rem;color:var(--muted,#9ab);">
+          ${escapeHtml(t('boardLangFilterLabel'))}
+          <select id="myBoardsLangSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
+            <option value="current"${_myBoardsFilter.lang==='current'?' selected':''}>${escapeHtml(t('boardLangCurrentOnly'))}</option>
+            <option value="all"${_myBoardsFilter.lang==='all'?' selected':''}>${escapeHtml(t('boardLangAll'))}</option>
+            ${LANGS.map(l=>`<option value="${escapeHtml(l.code)}"${_myBoardsFilter.lang===l.code?' selected':''}>${escapeHtml(l.native||l.code)}</option>`).join('')}
+          </select>
+        </label>
+        <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.66rem;color:var(--muted,#9ab);">
+          ${escapeHtml(t('sortLabel'))}
+          <select id="myBoardsSortSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
+            <option value="newest"${_myBoardsFilter.sort==='newest'?' selected':''}>${escapeHtml(t('boardSortNewest'))}</option>
+            <option value="title"${_myBoardsFilter.sort==='title'?' selected':''}>${escapeHtml(t('boardSortTitle'))}</option>
+          </select>
+        </label>
+        <label style="display:flex;flex-direction:column;gap:.25rem;font-size:.66rem;color:var(--muted,#9ab);">
+          ${escapeHtml(t('boardTypeFilterLabel'))}
+          <select id="myBoardsTypeSelect" class="rl-filter-btn" style="height:36px;font-size:.78rem;">
+            <option value="all"${_myBoardsFilter.type==='all'?' selected':''}>${escapeHtml(t('boardTypeAll'))}</option>
+            <option value="general"${_myBoardsFilter.type==='general'?' selected':''}>${escapeHtml(t('boardTypeGeneral'))}</option>
+            <option value="value"${_myBoardsFilter.type==='value'?' selected':''}>${escapeHtml(t('boardTypeValue'))}</option>
+          </select>
+        </label>
       </div>
       <div style="display:flex;flex-direction:column;gap:.4rem;">
         ${visible.map(b=>{
@@ -16989,11 +17029,15 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
+    // [2026-09-18修正] 以前は「通知する掲示板」が先頭に来ており、ページを開いて最初に
+    // 見えるのが「参加中の掲示板」という遷移元の項目名と一致していなかった(通知設定は
+    // あくまで参加中の掲示板の一部機能のため)。本来のページの主役である「参加してる掲示板」
+    // 一覧を先に、「通知する掲示板」を後に表示する順番に入れ替えた。
     el.innerHTML = `
       ${pushBannerHtml}
-      ${notifySectionHtml}
-      <div style="border-top:1px solid var(--line,#2a3830);margin:0 0 1rem;"></div>
       ${allBoardsSectionHtml}
+      <div style="border-top:1px solid var(--line,#2a3830);margin:1.2rem 0 1rem;"></div>
+      ${notifySectionHtml}
     `;
 
     // 行クリック → その掲示板を開く（言語もその掲示板のものに合わせる）
@@ -17144,13 +17188,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function renderBlockedUsers(userId) {
-    const el = document.getElementById('settingsBlockedSection');
+    const el = document.getElementById('myBlocksSection');
     if(!el || !sb) return;
     el.style.display='';
     const rows = await db.blocks.list(userId);
     if(!rows.length) {
       el.innerHTML = `
-        <h3 style="margin:0 0 .5rem;font-size:.9rem;">${escapeHtml(t('blockedUsersTitle'))}</h3>
         <p style="color:var(--muted,#9ab);font-size:.82rem;margin:0;">${escapeHtml(t('noBlockedUsers'))}</p>
       `;
       return;
@@ -17160,7 +17203,6 @@ document.addEventListener('DOMContentLoaded', () => {
       name: (await db.profiles.getUsername(r.blocked_id)) || r.blocked_id,
     })));
     el.innerHTML = `
-      <h3 style="margin:0 0 .5rem;font-size:.9rem;">${escapeHtml(t('blockedUsersTitle'))}</h3>
       <div style="display:flex;flex-direction:column;gap:.4rem;">
         ${names.map(n=>`
           <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line,#2a3830);border-radius:8px;padding:.4rem .6rem;">
@@ -18561,8 +18603,8 @@ document.addEventListener('DOMContentLoaded', () => {
     reportSentAlert:{ ja:'通報しました。ご協力ありがとうございます。', en:'Report sent. Thank you.' },
     blockConfirm:{ ja:'このユーザーをブロックしますか？以降、このユーザーの投稿・レビューが表示されなくなります。マイページからいつでも解除できます。', en:'Block this user? Their posts and reviews will be hidden from you. You can unblock anytime from your page.' },
     unblockBtn:{ ja:'解除', en:'Unblock' },
-    blockedUsersTitle:{ ja:'ブロック中のユーザー', en:'Blocked users' },
-    noBlockedUsers:{ ja:'ブロック中のユーザーはいません', en:'No blocked users' },
+    blockedUsersTitle:{ ja:'ブロック中のユーザー', en:'Blocked users', ko:'차단한 사용자', 'zh-tw':'已封鎖的使用者', 'zh-cn':'已屏蔽的用户', es:'Usuarios bloqueados', fr:'Utilisateurs bloqués', pt:'Usuários bloqueados', de:'Blockierte Nutzer', ar:'المستخدمون المحظورون', th:'ผู้ใช้ที่ถูกบล็อก', id:'Pengguna yang diblokir', ru:'Заблокированные пользователи', it:'Utenti bloccati', vi:'Người dùng đã chặn' },
+    noBlockedUsers:{ ja:'ブロック中のユーザーはいません', en:'No blocked users', ko:'차단한 사용자가 없습니다', 'zh-tw':'沒有已封鎖的使用者', 'zh-cn':'没有已屏蔽的用户', es:'No hay usuarios bloqueados', fr:'Aucun utilisateur bloqué', pt:'Nenhum usuário bloqueado', de:'Keine blockierten Nutzer', ar:'لا يوجد مستخدمون محظورون', th:'ไม่มีผู้ใช้ที่ถูกบล็อก', id:'Tidak ada pengguna yang diblokir', ru:'Нет заблокированных пользователей', it:'Nessun utente bloccato', vi:'Không có người dùng bị chặn' },
     // ── 友達（申請制） ──
     friendBtnNone:{ ja:'友達を申請する', en:'Send friend request', ko:'친구 신청하기', 'zh-tw':'發送好友申請', 'zh-cn':'发送好友申请', es:'Enviar solicitud de amistad', fr:'Envoyer une demande d\'ami', pt:'Enviar pedido de amizade', de:'Freundschaftsanfrage senden', ar:'إرسال طلب صداقة', th:'ส่งคำขอเป็นเพื่อน', id:'Kirim permintaan pertemanan', ru:'Отправить запрос в друзья', it:'Invia richiesta di amicizia', vi:'Gửi lời mời kết bạn' },
     friendBtnPendingSent:{ ja:'申請中', en:'Requested', ko:'신청 중', 'zh-tw':'申請中', 'zh-cn':'申请中', es:'Solicitado', fr:'Demande envoyée', pt:'Solicitado', de:'Angefragt', ar:'تم الإرسال', th:'ส่งคำขอแล้ว', id:'Diminta', ru:'Запрос отправлен', it:'Richiesta inviata', vi:'Đã gửi lời mời' },
@@ -19114,6 +19156,8 @@ document.addEventListener('DOMContentLoaded', () => {
     boardSortTitle: { ja:'タイトル順', en:'Title' },
     boardLangCurrentOnly: { ja:'今の表示言語のみ', en:'Current language only' },
     boardLangAll: { ja:'すべての言語', en:'All languages' },
+    boardLangFilterLabel: { ja:'表示言語', en:'Language', ko:'표시 언어', 'zh-tw':'顯示語言', 'zh-cn':'显示语言', es:'Idioma', fr:'Langue', pt:'Idioma', de:'Sprache', ar:'اللغة', th:'ภาษา', id:'Bahasa', ru:'Язык', it:'Lingua', vi:'Ngôn ngữ' },
+    boardTypeFilterLabel: { ja:'種類', en:'Type', ko:'종류', 'zh-tw':'類型', 'zh-cn':'类型', es:'Tipo', fr:'Type', pt:'Tipo', de:'Typ', ar:'النوع', th:'ประเภท', id:'Jenis', ru:'Тип', it:'Tipo', vi:'Loại' },
     boardHubNotifySettingsBtn: { ja:'通知設定', en:'Notification settings', ko:'알림 설정', 'zh-tw':'通知設定', 'zh-cn':'通知设置', es:'Ajustes de notificaciones', fr:'Paramètres de notification', pt:'Configurações de notificação', de:'Benachrichtigungseinstellungen', ar:'إعدادات الإشعارات', th:'ตั้งค่าการแจ้งเตือน', id:'Pengaturan notifikasi', ru:'Настройки уведомлений', it:'Impostazioni notifiche', vi:'Cài đặt thông báo' },
     boardTypeAll: { ja:'すべて', en:'All types' },
     boardTypeGeneral: { ja:'通常掲示板', en:'General board', ko:'일반 게시판', 'zh-tw':'一般板', 'zh-cn':'一般板块', es:'Foro general', fr:'Forum général', pt:'Fórum geral', de:'Allgemeines Board', ar:'اللوحة العامة', th:'บอร์ดทั่วไป', id:'Papan umum', ru:'Общая доска', it:'Bacheca generale', vi:'Bảng chung' },
@@ -24734,7 +24778,10 @@ document.addEventListener('DOMContentLoaded', () => {
     user.style.display = '';
 
     // 本人限定の要素（編集ボタン・メールアドレス・ログアウト等）は他人閲覧時は隠す
-    document.querySelectorAll('.mypage-owner-only').forEach(el=>{ el.style.display = isOwnPage ? '' : 'none'; });
+    // [2026-09-18修正] 以前はdocument全体からクエリしていたため、他人のマイページを見た直後に
+    // 別ページ(設定画面など)へ遷移すると、そちらの.mypage-owner-only要素まで巻き込んで
+    // display:noneのまま戻らなくなる不具合があった。#page-mypage配下だけに絞る。
+    document.querySelectorAll('#page-mypage .mypage-owner-only').forEach(el=>{ el.style.display = isOwnPage ? '' : 'none'; });
 
     const targetUserId = isOwnPage ? _currentUser.id : viewUserId;
 
