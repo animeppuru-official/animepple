@@ -17,7 +17,7 @@
       }
     })();
   </script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>アニメップル｜グラフでアニメの好みをドンピシャ検索</title>
   <meta name="description" content="アニメップルは、みんなのレビューグラフでアニメの雰囲気・特徴を可視化し、自分の好みにドンピシャな作品を見つけられるアニメコミュニティです。" />
 
@@ -40,7 +40,7 @@
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/skins.css" />
-  <link rel="apple-touch-icon" href="icons/赤リンゴ.jpe" />
+  <link rel="apple-touch-icon" href="/icons/赤リンゴ.jpe" />
   <meta name="theme-color" content="#0e1a13" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -995,11 +995,6 @@
     }
     .gacha-stage-text { font-size:12.5px; line-height:1.7; color:#cfe0d5; text-shadow:0 1px 6px rgba(0,0,0,.85); }
     /* 回転中：文字と進捗バーだけ。枠にたまったジュースを隠さないようにしている */
-    .gacha-spin-ring-unused {
-      width:96px; height:96px; border-radius:50%; border:3px solid rgba(240,201,74,.6); border-top-color:transparent;
-      display:flex; align-items:center; justify-content:center; font-size:32px;
-      animation:gachaSpin .9s linear infinite;
-    }
     .gacha-spin-bar { width:180px; height:5px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
     .gacha-spin-fill { display:block; height:100%; width:0%; background:linear-gradient(90deg,#d9a441,#f3d786); animation:gachaFill 2s ease-out forwards; }
     @keyframes gachaSpin { to { transform:rotate(360deg); } }
@@ -1742,8 +1737,7 @@
     }
     .board-reaction-chip { transition:transform .14s cubic-bezier(.34,1.56,.64,1); }
     .board-reaction-chip:hover { transform:translateY(-1px); }
-    @keyframes boardMsgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes boardPopIn { 0% { transform:scale(.7); opacity:0; } 60% { transform:scale(1.08); opacity:1; } 100% { transform:scale(1); } }
+    /* [2026-09-19削除] boardMsgIn/boardPopInの旧定義(後述の掲示板チャットUI仕様書セクション7版で常に上書きされ無効だった重複@keyframes)はここにあったが削除した */
     @keyframes boardFadeIn { from { opacity:0; } to { opacity:1; } }
 
     /* ── AD SLOTS ── */
@@ -2325,7 +2319,7 @@
     @media (max-width: 639px) {
       .search-overlay { padding:0; }
       .search-overlay-card {
-        max-width:none; margin:0; min-height:100vh;
+        max-width:none; margin:0; min-height:100vh; min-height:100dvh;
         border-radius:0; border:none; box-shadow:none;
         padding:16px 16px 26px;
       }
@@ -3754,7 +3748,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
   <footer class="footer">
     <div style="margin-bottom:.5rem;">
-      <button class="legal-link" onclick="openLegal('terms')" data-i18n="footerTerms">利用規約</button>
+      <button class="legal-link" onclick="nav('terms')" data-i18n="footerTerms">利用規約</button>
       <span style="margin:0 .4rem;">·</span>
       <button class="legal-link" onclick="nav('privacy')" data-i18n="footerPrivacy">プライバシーポリシー</button>
       <span style="margin:0 .4rem;">·</span>
@@ -4940,7 +4934,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <span class="cs-legal-label" data-i18n="coinShopLegalLabel">お支払いについて</span>
       <p class="cs-legal-body" data-i18n="coinShopLegalBody">価格は日本円の税込表示です。海外からの購入は決済時点のレートで現地通貨に自動換算されます。コインの有効期限はありません。未使用分の払い戻しはできません。</p>
       <div class="cs-legal-links">
-        <a href="#" onclick="event.preventDefault();openLegal('terms')" data-i18n="legalTerms">利用規約</a>
+        <a href="#" onclick="event.preventDefault();nav('terms')" data-i18n="legalTerms">利用規約</a>
         <a href="#" onclick="event.preventDefault();openLegal('tokushoho')" data-i18n="legalTokushoho">特定商取引法に基づく表記</a>
         <a href="#" onclick="event.preventDefault();openLegal('shikin')" data-i18n="legalShikin">資金決済法に基づく表示</a>
       </div>
@@ -5513,6 +5507,14 @@ document.addEventListener('DOMContentLoaded', () => {
       </ul>
       <p>国・地域の判定は、分析目的のクッキーに同意した場合のみ行われます。</p>
       <p>なお、個人を特定できない形に匿名化・統計化した情報（例：作品ごとの評価傾向の集計データ、タグ・検索キーワードの集計傾向、国別・言語別の利用統計など）については、個人情報に該当しないものとして、サービス改善・調査研究・提携先への提供（有償の場合を含む）に利用する場合があります。この匿名化データの提供にあたっては、コメント本文・ユーザー名・ユーザーIDは一切含まれず、サンプル数が少ない（3件未満の）データも公開しません。</p>
+      <p style="margin-top:1rem;">電気通信事業法に基づき、利用者の端末情報等を外部に送信する場合の送信先・内容・目的を以下のとおり公表します。</p>
+      <table class="pp-table">
+        <tr><th>送信先</th><th>送信される情報</th><th>送信先での利用目的</th></tr>
+        <tr><td>Cloudflare, Inc.（Webアナリティクス、bot対策 Turnstile）</td><td>アクセス状況（閲覧ページ・端末情報等）、bot判定に必要な情報</td><td>アクセス解析、不正アクセス・spam対策</td></tr>
+        <tr><td>ipapi.co / ipwho.is</td><td>IPアドレス</td><td>アクセス元の国・地域の判定（本サービスへの結果返送のみに利用、分析同意時のみ送信）</td></tr>
+        <tr><td>DeepL SE</td><td>翻訳対象のタグ・テキスト</td><td>多言語翻訳の生成</td></tr>
+      </table>
+      <p style="font-size:.75rem;color:var(--muted);">今後、広告配信サービス（Google AdSense等）を導入する場合は、本表を更新のうえ改めて公表します。</p>
     </section>
 
     <section class="pp-section">
@@ -5855,6 +5857,11 @@ document.addEventListener('DOMContentLoaded', () => {
       <h3 class="admin-section-title">🪙 コイン経済</h3>
       <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">コインは購入(有償)だけでなくデイリークエスト報酬(無償)でも入手できるため、下の残高合計はその両方が混ざった数値で、収益額そのものではない(収益に含まれるのは「購入」分だけ)</p>
       <div class="admin-kpi" style="margin-bottom:.75rem;"><div class="admin-kpi-val" id="adminKpiCoinBalance">—</div><div class="admin-kpi-label">未消費コイン残高合計(有償+無償の合算)</div></div>
+      <!-- [2026-09-19追加] 資金決済法対応: 有償(購入)分だけの未消費残高。基準日(3/31・9/30)時点で
+           1,000万円を超えると供託等の届出義務が発生する(animepple_legal_survey.md 2.2節参照)。
+           このKPIはあくまで「今この瞬間の参考値」であり、実際の届出判定は基準日時点の値・
+           税理士の確認をもって行うこと。 -->
+      <div class="admin-kpi" id="adminKpiPaidCoinBalanceCard" style="margin-bottom:.75rem;"><div class="admin-kpi-val" id="adminKpiPaidCoinBalance">—</div><div class="admin-kpi-label">うち有償(購入)分の未消費残高【資金決済法】<br>基準日(3/31・9/30)に1,000万円超で届出・供託義務</div></div>
       <p style="font-size:.7rem;color:#8db5a0;font-weight:700;margin:0 0 .3rem;">累計発行内訳(有償/無償の内訳)</p>
       <div id="adminCoinIssuanceBreakdown"></div>
     </div>
@@ -6817,6 +6824,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <label class="onboard-radio-chip"><input type="radio" name="onboardAge" value="unspecified" checked /> <span data-i18n="genderUnspecified">回答しない</span></label>
         </div>
       </div>
+      <div>
+        <label class="onboard-radio-chip" style="display:flex;align-items:flex-start;gap:.4rem;width:100%;box-sizing:border-box;">
+          <input type="checkbox" id="onboardAgeConfirm" style="margin-top:.2rem;flex:0 0 auto;" />
+          <span data-i18n="onboardAgeConfirmLabel" style="font-size:.75rem;line-height:1.4;">13歳以上であり、13〜17歳の場合は保護者の同意を得たうえで利用規約に同意します</span>
+        </label>
+      </div>
       <p class="auth-error" id="onboardError"></p>
       <button class="auth-google-btn" id="onboardSubmitBtn" onclick="submitOnboarding()" style="justify-content:center;" data-i18n="onboardStartBtn">はじめる</button>
     </div>
@@ -6972,7 +6985,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </nav>
 <div id="bnavLongpressDim"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 (function () {
   /* ════════════════════════════
      DATA & CONSTANTS
@@ -7317,6 +7330,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!sb) return 0;
         const { data, error } = await sb.rpc('get_total_coin_balance');
         if(error) { console.warn('getTotalCoinBalance rpc:', error.message); return 0; }
+        return Number(data) || 0;
+      },
+      // [2026-09-19追加] 有償(購入)分だけの未消費残高合計。資金決済法上の基準日(3/31・9/30)
+      // 未使用残高が1,000万円を超えると届出・供託義務が発生するため、その判定材料として追加
+      // (animepple_legal_survey.md 2.2節・2.6節参照)。要RPC事前作成(get_total_paid_coin_balance)
+      async getTotalPaidCoinBalance() {
+        if(!sb) return 0;
+        const { data, error } = await sb.rpc('get_total_paid_coin_balance');
+        if(error) { console.warn('getTotalPaidCoinBalance rpc:', error.message); return 0; }
         return Number(data) || 0;
       },
       // アバター画像をアップロードしてpublic URLを返す
@@ -7739,13 +7761,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // [追加] ブロックしたら友達関係も解消する。DMは友達関係のRLSだけを見て許可される作りなので、
         // 友達のままだとブロック後もDMが送受信できてしまう抜けがあったため。
         // 削除処理自体は既存のdb.friendRequests.unfriend()と同じなので、それをそのまま呼ぶ
-        if(!error) await db.friendRequests.unfriend(blockerId, blockedId).catch(()=>{});
+        if(!error) {
+          await db.friendRequests.unfriend(blockerId, blockedId).catch(()=>{});
+          // [2026-09-19追加] 友達関係と違い、フォロー関係はブロックしても解除されず、
+          // ブロックされた側がフォローし続けられる/され続ける抜けがあったため、双方向とも解除する
+          await db.follows.unfollow(blockerId, blockedId).catch(()=>{});
+          await db.follows.unfollow(blockedId, blockerId).catch(()=>{});
+        }
         return { error };
       },
       async remove(blockerId, blockedId) {
         if(!sb) return { error: 'invalid' };
         const { error } = await sb.from('blocks').delete().eq('blocker_id', blockerId).eq('blocked_id', blockedId);
         return { error };
+      },
+      // [2026-09-19追加] どちらかがどちらかをブロックしていないか(双方向)を確認する。
+      // friendRequests.sendがブロック関係を見ていなかった抜けを塞ぐために追加した
+      async isBlockedEitherWay(userIdA, userIdB) {
+        if(!sb || !userIdA || !userIdB) return false;
+        const { data } = await sb.from('blocks').select('blocker_id')
+          .or(`and(blocker_id.eq.${userIdA},blocked_id.eq.${userIdB}),and(blocker_id.eq.${userIdB},blocked_id.eq.${userIdA})`)
+          .maybeSingle();
+        return !!data;
       },
     },
     // ── DM（友達同士のみ。DB側のRLSでも友達関係を確認しているので、フロント側は表示制御だけでよい）
@@ -7897,16 +7934,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data } = await sb.from('board_chat_daily_state').select('*').eq('user_id', userId).eq('chat_date', today).maybeSingle();
         return data || { user_id: userId, chat_date: today, message_count: 0, ad_unlock_until: null };
       },
+      // [修正] 以前は`existing.message_count + 1`を無条件UPDATEしており、ほぼ同時に
+      // 複数回送信されるとカウントが正しく増えず、無料枠(1日5回)を実際より多く使える
+      // 競合状態があった。ガチャの`markAdUsed`と同じ「読み取った値そのものをWHERE条件に
+      // 加える」楽観ロック(CAS)にし、さらに`.select()`で実際に更新できた行数を確認して、
+      // 他のリクエストと競合してCASが不発だった場合は1回だけ最新値を読み直して再試行する
       async incrementCount(userId) {
         if(!sb || !userId) return { error: 'invalid' };
         const today = this.todayStr();
         const { data: existing } = await sb.from('board_chat_daily_state').select('*').eq('user_id', userId).eq('chat_date', today).maybeSingle();
         if(!existing) {
           const { error } = await sb.from('board_chat_daily_state').insert({ user_id: userId, chat_date: today, message_count: 1 });
+          if(error?.code === '23505') return this.incrementCount(userId); // 挿入が競合(同時に他リクエストが先にinsert)→読み直して通常のCAS経路へ
           return { error };
         }
-        const { error } = await sb.from('board_chat_daily_state').update({ message_count: existing.message_count + 1 }).eq('user_id', userId).eq('chat_date', today);
-        return { error };
+        const { data, error } = await sb.from('board_chat_daily_state')
+          .update({ message_count: existing.message_count + 1 })
+          .eq('user_id', userId).eq('chat_date', today).eq('message_count', existing.message_count)
+          .select();
+        if(error) return { error };
+        if(!data || !data.length) return this.incrementCount(userId); // 他のリクエストが先に更新済み→最新値で1回だけ再試行
+        return { error: null };
       },
       async unlockWithAd(userId) {
         if(!sb || !userId) return { error: 'invalid' };
@@ -7989,9 +8037,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // [変更] セキュリティレビュー対応：以前は「未受領か確認→受領済みにする」の間に
       // 競合状態(TOCTOU)があり、ほぼ同時に2回呼ぶと二重に受け取れてしまっていた。
       // claim_daily_quest RPC(UPDATE ... WHERE claimed=false 1発＋行ロック付きコイン加算)に変更。
-      async claim(userId, rewardAmount) {
+      // [2026-09-19修正] 上記の二重受給対策とは別に、報酬額をp_reward引数としてクライアントから
+      // 渡していたため、devtoolsから任意額を指定して呼び出せる不具合があった(法務調査で発見)。
+      // RPC側で報酬額(100)をハードコードする形に変更し、クライアントからは金額を渡さない。
+      async claim(userId) {
         if(!sb || !userId) return { error: 'invalid' };
-        const { data, error } = await sb.rpc('claim_daily_quest', { p_reward: rewardAmount });
+        const { data, error } = await sb.rpc('claim_daily_quest');
         if(error) {
           if(/already_claimed_or_not_complete/i.test(error.message || '')) return { error: 'already_claimed' };
           return { error };
@@ -8048,6 +8099,9 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       async send(requesterId, addresseeId) {
         if(!sb || !requesterId || !addresseeId || requesterId === addresseeId) return { error: 'invalid' };
+        // [2026-09-19追加] ブロック関係(双方向)がある場合は申請できないようにする。
+        // 以前はここを見ておらず、ブロックされた側が即座に再申請を送れてしまう抜けがあった
+        if(await db.blocks.isBlockedEitherWay(requesterId, addresseeId)) return { error: 'blocked' };
         // 相手からすでに申請が来ていた場合は、新規発行ではなくその場で相互承認扱いにする
         const { data: reverse } = await sb.from('friend_requests').select('id,status').eq('requester_id', addresseeId).eq('addressee_id', requesterId).maybeSingle();
         if(reverse) {
@@ -8327,14 +8381,6 @@ document.addEventListener('DOMContentLoaded', () => {
           .order('created_at', { ascending: false });
         if(error) return [];
         return data || [];
-      },
-      // [2026-09追加] 称号カウント専用の判定結果を一度だけ確定させる。
-      // consensus_creditがまだnull(未判定)の行だけを対象にすることを呼び出し側で保証すること
-      // (このRPC相当の処理自体はここではnullチェックしない、単純なUPDATE)。
-      async setConsensusCredit(reviewId, aligned) {
-        if(!sb || !reviewId) return { error: 'invalid' };
-        const { error } = await sb.from('reviews').update({ consensus_credit: aligned }).eq('id', reviewId);
-        return { error };
       },
       async getByUserId(userId) {
         if(!sb || !userId) return [];
@@ -12084,12 +12130,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const series = getCurrentGachaSeries();
     return series ? series.items : [];
   }
+  // [修正] レア度別の確率表示(renderGachaRarityList/renderGachaProbList)が、常に全レア度
+  // 基準(GACHA_RARITY_WEIGHT全体の合計)で%を計算していたのに対し、実際の抽選(drawGachaItem)は
+  // そのシリーズのpoolに実在するレア度だけで重みを再正規化していたため、ティア欠けのシリーズ
+  // (例: LR景品がまだ無い等)を作った瞬間に表示確率と実際の抽選確率が食い違うバグがあった。
+  // 表示側もdrawGachaItemと同じ「pool内に実在するレア度だけで正規化」に揃える
+  function getGachaTierProbabilities() {
+    const pool = getGachaPool();
+    const tiersInPool = GACHA_RARITY_ORDER.filter(tr => pool.some(it => it.tier === tr));
+    const total = tiersInPool.reduce((s, tr) => s + (GACHA_RARITY_WEIGHT[tr] || 0), 0);
+    const pctByTier = {};
+    tiersInPool.forEach(tr => { pctByTier[tr] = total ? (GACHA_RARITY_WEIGHT[tr] / total) * 100 : 0; });
+    return { tiersInPool, pctByTier };
+  }
   // 段階(N〜LR)を確率で1つ選び、SR/SSR/URならさらにアイコン/カスタムを抽選し、
   // 最後にそのシリーズの該当items内から均等に1つ選ぶ。該当items が0件ならnullを返す。
-  function drawGachaItem() {
+  // minTierIndex を指定すると、GACHA_RARITY_ORDER上でそれ以上のレア度からしか選ばない
+  // (10連の「SR以上1枚確定」保証用。通常の1回引き・10連の他9枠は指定しない=制限無し)
+  function drawGachaItem(minTierIndex) {
     const pool = getGachaPool();
     if(!pool.length) return null;
-    const tiersInPool = GACHA_RARITY_ORDER.filter(tr => pool.some(it => it.tier === tr));
+    let tiersInPool = GACHA_RARITY_ORDER.filter(tr => pool.some(it => it.tier === tr));
+    if(minTierIndex != null) tiersInPool = tiersInPool.filter(tr => GACHA_RARITY_ORDER.indexOf(tr) >= minTierIndex);
     if(!tiersInPool.length) return null;
     const weighted = tiersInPool.map(tr => ({ tr, w: GACHA_RARITY_WEIGHT[tr] || 0 }));
     const total = weighted.reduce((s, x) => s + x.w, 0);
@@ -12185,14 +12247,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // おまけ枠のレア度表：確率は重みから計算して出す
+  // おまけ枠のレア度表：確率は「そのシリーズに実在するレア度」だけで正規化して出す(実際の抽選と一致させる)
   function renderGachaRarityList() {
     const el = document.getElementById('gachaRarityList');
     if(!el) return;
-    const total = Object.values(GACHA_RARITY_WEIGHT).reduce((a, b) => a + b, 0);
-    el.innerHTML = GACHA_RARITY_ORDER.map(tier => {
+    const { tiersInPool, pctByTier } = getGachaTierProbabilities();
+    el.innerHTML = tiersInPool.map(tier => {
       const m = GACHA_RARITY_META[tier];
-      const pct = ((GACHA_RARITY_WEIGHT[tier] / total) * 100);
+      const pct = pctByTier[tier];
       const pctText = pct < 10 ? pct.toFixed(1) : Math.round(pct);
       const iconRatio = GACHA_ICON_VS_CUSTOM[tier];
       const sub = iconRatio != null
@@ -12421,9 +12483,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const pullCount = kind === 'coin10' ? 10 : 1;
     setGachaStageSpinning();
+    // [修正] 「SR以上1枚確定」と画面に表示している(gachaCoin10Tag)のに、実際には各枠が
+    // 完全に独立抽選なため、SR以上が1枚も出ない回(現在の排出率だと約13.7%の確率)が
+    // 起こりえて表示と実態が食い違っていた。10連の場合、事前に10枠分の抽選結果を
+    // 確定させ、SR以上(GACHA_RARITY_ORDER上でSRのindex=2以上)が1枚も無ければ
+    // 最後の1枠をSR以上限定で引き直して保証する
+    const SR_TIER_INDEX = GACHA_RARITY_ORDER.indexOf('SR');
+    const picks = [];
+    for(let i = 0; i < pullCount; i++) picks.push({ pick: await pickGachaAnime(), item: drawGachaItem() });
+    if(pullCount === 10) {
+      const hasSrOrAbove = picks.some(p => p.item && GACHA_RARITY_ORDER.indexOf(p.item.tier) >= SR_TIER_INDEX);
+      if(!hasSrOrAbove) {
+        const guaranteed = drawGachaItem(SR_TIER_INDEX);
+        if(guaranteed) picks[picks.length - 1].item = guaranteed;
+      }
+    }
     const results = [];
     for(let i = 0; i < pullCount; i++) {
-      const [pick, item] = [await pickGachaAnime(), drawGachaItem()];
+      const { pick, item } = picks[i];
       let isDup = false;
       if(item && sb) {
         try {
@@ -12537,10 +12614,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const listEl = document.getElementById('gachaProbList');
     if(!listEl) return;
     const pool = getGachaPool();
-    const total = Object.values(GACHA_RARITY_WEIGHT).reduce((a, b) => a + b, 0);
-    const rarityRows = GACHA_RARITY_ORDER.map(tier => {
+    const { tiersInPool, pctByTier } = getGachaTierProbabilities();
+    const rarityRows = tiersInPool.map(tier => {
       const m = GACHA_RARITY_META[tier];
-      const pct = (GACHA_RARITY_WEIGHT[tier] / total) * 100;
+      const pct = pctByTier[tier];
       const iconRatio = GACHA_ICON_VS_CUSTOM[tier];
       const sub = iconRatio != null ? (T.gachaIconVsCustomRatio[currentLang]||T.gachaIconVsCustomRatio.en)(Math.round(iconRatio*100), Math.round((1-iconRatio)*100)) : '';
       return `
@@ -13259,9 +13336,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('goReviewBtn').style.display='none';
       return;
     }
-    // PV記録（国別データも同時記録）
+    // PV記録（国別データも同時記録）。国別データはIPジオロケAPIへの外部送信を伴うため、
+    // analytics同意が無い場合は呼ばない（レビュー投稿時の同種処理と同じガード、9章参照）
     pvStore.increment(id);
-    geoStore.record(id).catch(()=>{});
+    if(canUseAnalytics()) geoStore.record(id).catch(()=>{});
 
     document.getElementById('animeTitle').textContent=getTitle(page);
     // 種別・放送年・話数・放送期間を組み合わせて表示
@@ -17755,7 +17833,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="font-size:13px;color:#dfeae3;">${escapeHtml(t(r.key))}</span>
           </label>`).join('')}
         </div>
-        <textarea id="reportDetailInput" placeholder="${escapeHtml(t('reportDetailPlaceholder'))}" rows="3" style="width:100%;resize:none;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#eaf6ee;font-size:13px;margin-bottom:14px;box-sizing:border-box;"></textarea>
+        <textarea id="reportDetailInput" placeholder="${escapeHtml(t('reportDetailPlaceholder'))}" rows="3" maxlength="500" style="width:100%;resize:none;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#eaf6ee;font-size:13px;margin-bottom:14px;box-sizing:border-box;"></textarea>
         <div style="display:flex;gap:8px;">
           <button type="button" id="reportSheetCancel" style="flex:1 1 auto;height:42px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#b6c8bd;font-weight:700;font-size:13px;cursor:pointer;">${escapeHtml(t('btnCancel'))}</button>
           <button type="button" id="reportSheetSubmit" style="flex:1 1 auto;height:42px;border-radius:11px;border:none;background:#e5484d;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">${escapeHtml(t('reportSubmitBtn'))}</button>
@@ -17767,7 +17845,7 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay.querySelector('#reportSheetSubmit').onclick = async () => {
       const checked = overlay.querySelector('input[name="reportReason"]:checked');
       if(!checked) { alert(t('reportSelectReasonAlert')); return; }
-      const detail = overlay.querySelector('#reportDetailInput').value.trim();
+      const detail = overlay.querySelector('#reportDetailInput').value.trim().slice(0, 500);
       if(checked.value === 'other' && !detail) { alert(t('reportOtherRequiredAlert')); return; }
       const targetChecks = hasCandidates ? Array.from(overlay.querySelectorAll('input[name="reportTarget"]:checked')) : [];
       const finalTargetIds = targetChecks.length ? targetChecks.map(c => c.value) : [targetId];
@@ -19076,6 +19154,8 @@ document.addEventListener('DOMContentLoaded', () => {
     age40s:{ ja:'40代', en:'40s', ko:'40대', 'zh-tw':'40多歲', 'zh-cn':'40多岁', es:'40 años', fr:'40 ans', pt:'40 anos', de:'40er', ar:'الأربعينات', th:'วัย 40', id:'40-an', ru:'40 лет', it:'Anni 40', vi:'40 tuổi' },
     age50sPlus:{ ja:'50代以上', en:'50s+', ko:'50대 이상', 'zh-tw':'50歲以上', 'zh-cn':'50岁以上', es:'50+ años', fr:'50 ans et plus', pt:'50+ anos', de:'50+', ar:'50 فأكثر', th:'50 ปีขึ้นไป', id:'50-an ke atas', ru:'50 лет и старше', it:'50+ anni', vi:'50 tuổi trở lên' },
     onboardStartBtn:{ ja:'はじめる', en:'Get started', ko:'시작하기', 'zh-tw':'開始使用', 'zh-cn':'开始使用', es:'Comenzar', fr:'Commencer', pt:'Começar', de:'Loslegen', ar:'ابدأ', th:'เริ่มต้น', id:'Mulai', ru:'Начать', it:'Inizia', vi:'Bắt đầu' },
+    onboardAgeConfirmLabel:{ ja:'13歳以上であり、13〜17歳の場合は保護者の同意を得たうえで利用規約に同意します', en:'I am 13 or older, and if I am 13-17, I have obtained parental consent and agree to the Terms of Service', ko:'만 13세 이상이며, 13~17세인 경우 보호자의 동의를 얻어 이용약관에 동의합니다', 'zh-tw':'本人年滿13歲，若為13至17歲，已取得監護人同意，並同意本服務條款', 'zh-cn':'本人年满13周岁，若为13至17周岁，已取得监护人同意，并同意本服务条款', es:'Tengo 13 años o más y, si tengo entre 13 y 17 años, cuento con el consentimiento de mis padres o tutores, y acepto los Términos de Servicio', fr:"J'ai 13 ans ou plus et, si j'ai entre 13 et 17 ans, j'ai obtenu le consentement de mes parents, et j'accepte les Conditions d'utilisation", pt:'Tenho 13 anos ou mais e, se tiver entre 13 e 17 anos, obtive o consentimento dos meus responsáveis, e concordo com os Termos de Serviço', de:'Ich bin mindestens 13 Jahre alt und habe, falls ich 13-17 Jahre alt bin, die Zustimmung meiner Erziehungsberechtigten eingeholt, und stimme den Nutzungsbedingungen zu', ar:'عمري 13 عامًا أو أكثر، وإذا كان عمري بين 13 و17 عامًا، فقد حصلت على موافقة ولي الأمر، وأوافق على شروط الخدمة', th:'ข้าพเจ้าอายุ 13 ปีขึ้นไป และหากอายุ 13-17 ปี ได้รับความยินยอมจากผู้ปกครองแล้ว และยอมรับข้อกำหนดในการให้บริการ', id:'Saya berusia 13 tahun atau lebih, dan jika saya berusia 13-17 tahun, saya telah mendapatkan persetujuan orang tua, serta menyetujui Ketentuan Layanan', ru:'Мне исполнилось 13 лет, и если мне от 13 до 17 лет, я получил(а) согласие родителей, и я принимаю Условия использования', it:'Ho almeno 13 anni e, se ho tra 13 e 17 anni, ho ottenuto il consenso dei genitori, e accetto i Termini di servizio', vi:'Tôi từ 13 tuổi trở lên, và nếu tôi từ 13-17 tuổi, tôi đã được sự đồng ý của phụ huynh, và tôi đồng ý với Điều khoản dịch vụ' },
+    onboardAgeConfirmRequired:{ ja:'ご利用にはチェックボックスへの同意が必要です', en:'Please check the box to agree before continuing', ko:'계속하려면 체크박스에 동의해 주세요', 'zh-tw':'請勾選同意方框後再繼續', 'zh-cn':'请勾选同意方框后再继续', es:'Marca la casilla para continuar', fr:"Veuillez cocher la case pour continuer", pt:'Marque a caixa para continuar', de:'Bitte aktiviere das Kästchen, um fortzufahren', ar:'يرجى تحديد المربع للمتابعة', th:'กรุณาทำเครื่องหมายในช่องเพื่อดำเนินการต่อ', id:'Silakan centang kotak untuk melanjutkan', ru:'Отметьте флажок, чтобы продолжить', it:'Seleziona la casella per continuare', vi:'Vui lòng đánh dấu vào ô để tiếp tục' },
     contactPageTitle:{ ja:'📮 お問い合わせ', en:'📮 Contact us', ko:'📮 문의하기', 'zh-tw':'📮 聯絡我們', 'zh-cn':'📮 联系我们', es:'📮 Contáctanos', fr:'📮 Nous contacter', pt:'📮 Fale conosco', de:'📮 Kontakt', ar:'📮 اتصل بنا', th:'📮 ติดต่อเรา', id:'📮 Hubungi kami', ru:'📮 Связаться с нами', it:'📮 Contattaci', vi:'📮 Liên hệ' },
     contactPageDesc:{ ja:'ご意見・不具合報告・提携のご相談などは、こちらからお送りください。', en:'Please send us your feedback, bug reports, or partnership inquiries here.', ko:'의견, 버그 신고, 제휴 문의 등은 이곳으로 보내주세요.', 'zh-tw':'意見、錯誤回報、合作洽詢等請由此傳送。', 'zh-cn':'意见、错误反馈、合作咨询等请由此发送。', es:'Envíanos tus comentarios, informes de errores o consultas de colaboración aquí.', fr:'Envoyez-nous vos commentaires, rapports de bugs ou demandes de partenariat ici.', pt:'Envie seus comentários, relatos de bugs ou consultas de parceria aqui.', de:'Sende uns hier dein Feedback, Fehlerberichte oder Partnerschaftsanfragen.', ar:'يرجى إرسال ملاحظاتك أو تقارير الأخطاء أو استفسارات الشراكة هنا.', th:'ส่งความคิดเห็น รายงานปัญหา หรือข้อเสนอความร่วมมือได้ที่นี่', id:'Kirimkan masukan, laporan bug, atau pertanyaan kerja sama di sini.', ru:'Отправьте нам отзывы, сообщения об ошибках или предложения о сотрудничестве здесь.', it:'Inviaci qui i tuoi commenti, segnalazioni di bug o richieste di collaborazione.', vi:'Vui lòng gửi phản hồi, báo lỗi hoặc đề nghị hợp tác tại đây.' },
     contactTypeLabel:{ ja:'お問い合わせの種類', en:'Inquiry type', ko:'문의 유형', 'zh-tw':'諮詢類型', 'zh-cn':'咨询类型', es:'Tipo de consulta', fr:'Type de demande', pt:'Tipo de consulta', de:'Anfragetyp', ar:'نوع الاستفسار', th:'ประเภทการติดต่อ', id:'Jenis pertanyaan', ru:'Тип обращения', it:'Tipo di richiesta', vi:'Loại yêu cầu' },
@@ -19340,7 +19420,10 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaSoldOutTitle: { ja:'今日はここまで', en:"That's all for today", ko:'오늘은 여기까지예요', 'zh-tw':'今天就到這裡', 'zh-cn':'今天就到这里', es:'Eso es todo por hoy', fr:'C\'est tout pour aujourd\'hui', pt:'Isso é tudo por hoje', de:'Das war\'s für heute', ar:'هذا كل شيء لهذا اليوم', th:'วันนี้หมดแค่นี้', id:'Itu saja untuk hari ini', ru:'На сегодня всё', it:'Tutto per oggi', vi:'Hôm nay đến đây thôi' },
     gachaSoldOutSub: { ja:'次に引けるのは', en:'Next draw:', ko:'다음에 뽑을 수 있는 시간', 'zh-tw':'下次可抽的時間', 'zh-cn':'下次可抽的时间', es:'Próxima tirada:', fr:'Prochain tirage :', pt:'Próximo sorteio:', de:'Nächste Ziehung:', ar:'السحب التالي:', th:'ครั้งต่อไปที่สุ่มได้', id:'Tarikan berikutnya:', ru:'Следующая попытка:', it:'Prossima estrazione:', vi:'Lượt quay tiếp theo:' },
     gachaResetAt: { ja:'明日 0:00', en:'tomorrow 0:00', ko:'내일 0시', 'zh-tw':'明天0:00', 'zh-cn':'明天0:00', es:'mañana 0:00', fr:'demain 0h00', pt:'amanhã 0:00', de:'morgen 0:00 Uhr', ar:'غدًا الساعة 0:00', th:'พรุ่งนี้ 0:00 น.', id:'besok 0:00', ru:'завтра в 0:00', it:'domani ore 0:00', vi:'ngày mai 0:00' },
-    gachaSoldOutPlus: { ja:'アニメップル＋なら毎日3回（広告なし）', en:'Animepple+ gives 3 draws a day, ad-free', ko:'애니메플+라면 매일 3회 (광고 없이)', 'zh-tw':'Animepple+每天可抽3次（無廣告）', 'zh-cn':'Animepple+每天可抽3次（无广告）', es:'Animepple+ te da 3 tiradas al día, sin anuncios', fr:'Animepple+ offre 3 tirages par jour, sans pub', pt:'Animepple+ dá 3 sorteios por dia, sem anúncios', de:'Animepple+ gibt dir 3 werbefreie Ziehungen täglich', ar:'يمنحك Animepple+ 3 سحوبات يوميًا بدون إعلانات', th:'Animepple+ ให้สุ่มได้วันละ 3 ครั้ง (ไม่มีโฆษณา)', id:'Animepple+ memberi 3 tarikan sehari, tanpa iklan', ru:'Animepple+ даёт 3 попытки в день без рекламы', it:'Animepple+ offre 3 estrazioni al giorno, senza pubblicità', vi:'Animepple+ cho 3 lượt quay mỗi ngày, không quảng cáo' },
+    // [修正] 実際の仕様(GACHA_AD_LIMIT=1)は全プラン共通で1日2回まで(無料プランは2回目に
+    // 広告視聴が必要、＋/クリエイターズは広告なしで2回目も引ける)。以前は存在しない
+    // "3回"を訴求していたため、実態に合わせて「2回目も広告無し」という表現に修正
+    gachaSoldOutPlus: { ja:'アニメップル＋なら2回目も広告なしで引けます', en:'With Animepple+, your 2nd draw skips the ad too', ko:'애니메플+라면 두 번째도 광고 없이 뽑을 수 있어요', 'zh-tw':'升級Animepple+，第2次抽獎也不用看廣告', 'zh-cn':'升级Animepple+，第2次抽奖也不用看广告', es:'Con Animepple+, tu 2ª tirada tampoco necesita anuncio', fr:'Avec Animepple+, votre 2e tirage se fait aussi sans pub', pt:'Com o Animepple+, seu 2º sorteio também não precisa de anúncio', de:'Mit Animepple+ ist auch deine 2. Ziehung werbefrei', ar:'مع Animepple+، سحبتك الثانية أيضًا بدون إعلان', th:'มี Animepple+ ครั้งที่ 2 ก็สุ่มได้โดยไม่ต้องดูโฆษณา', id:'Dengan Animepple+, tarikan ke-2 juga tanpa iklan', ru:'С Animepple+ вторая попытка тоже без рекламы', it:'Con Animepple+, anche la 2ª estrazione è senza pubblicità', vi:'Với Animepple+, lượt quay thứ 2 cũng không cần xem quảng cáo' },
     gachaProbBtn: { ja:'確率と景品一覧', en:'Odds & prize list', ko:'확률 및 아이템 목록', 'zh-tw':'機率與獎品清單', 'zh-cn':'概率与奖品清单', es:'Probabilidades y premios', fr:'Probabilités et lots', pt:'Probabilidades e prêmios', de:'Chancen & Preisliste', ar:'الاحتمالات وقائمة الجوائز', th:'อัตราความน่าจะเป็นและรายการรางวัล', id:'Peluang & daftar hadiah', ru:'Шансы и список призов', it:'Probabilità e lista premi', vi:'Tỷ lệ & danh sách phần thưởng' },
     gachaCoinOnce: { ja:'1回引く', en:'Single draw', ko:'1회 뽑기', 'zh-tw':'抽1次', 'zh-cn':'抽1次', es:'Tirada única', fr:'Tirage unique', pt:'Sorteio único', de:'Einzelziehung', ar:'سحبة واحدة', th:'สุ่ม 1 ครั้ง', id:'Tarik 1x', ru:'Одна попытка', it:'Estrazione singola', vi:'Quay 1 lần' },
     gachaCoin10Note: { ja:'10連で引く', en:'10-pull' },
@@ -20424,11 +20507,20 @@ document.addEventListener('DOMContentLoaded', () => {
         <h3>利用可能な範囲</h3>
         <p>本サービス（アニメップル）内でのガチャ利用等にのみご利用いただけます。他サービスでの利用、現金・預金への払い戻し、他アカウントへの譲渡はできません。</p>
 
+        <h3>利用可能金額</h3>
+        <p>コインパックは120円〜24,000円の8種類でご購入いただけます（購入画面に一覧表示）。1回のご購入における上限額は設けておりませんが、未成年の方は保護者の同意を得たうえで、ご家庭で無理のない範囲でご利用ください。</p>
+
         <h3>有効期限</h3>
         <p>コインに有効期限はありません。</p>
 
         <h3>未使用残高の確認方法</h3>
         <p>マイページのコインショップ画面にて、いつでも現在の残高をご確認いただけます。</p>
+
+        <h3>ご利用上の注意</h3>
+        <p>コインは本サービス内でのみ利用可能な仮想的なポイントであり、預金・電子マネーではありません。運営者の判断により、事前の告知のうえコインの仕様・利用可能範囲を変更し、または本機能自体を終了することがあります（詳細は利用規約第9条・第10条をご覧ください）。</p>
+
+        <h3>約款について</h3>
+        <p>コインの購入・利用に関する詳細な条件は、本表示に加え<button type="button" onclick="closeLegal();openLegal('terms')" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">利用規約</button>（第9条）が適用されます。</p>
 
         <h3>苦情・相談窓口</h3>
         <p>お問い合わせフォーム（<button type="button" onclick="closeLegal();nav('contact')" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">こちら</button>）よりご連絡ください。</p>
@@ -22843,21 +22935,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!el || !sb) return;
     try {
       const { data, error } = await sb.from('profiles')
-        .select('id,username,suspended_until,suspension_reason')
+        .select('id,username,suspended_until,suspension_reason_code')
         .eq('is_suspended', true)
         .order('suspended_until', { ascending: true, nullsFirst: true });
       if(error) throw error;
       const rows = data || [];
-      el.innerHTML = rows.length ? rows.map(r => `
+      el.innerHTML = rows.length ? rows.map(r => {
+        const reasonEntry = REPORT_REASONS.find(rr => rr.id === r.suspension_reason_code);
+        return `
         <div class="admin-row" style="flex-direction:column;align-items:flex-start;gap:.2rem;" data-suspended-uid="${r.id}">
           <div style="display:flex;justify-content:space-between;width:100%;">
             <span style="font-weight:700;color:#dff0e6;">${escapeHtml(r.username || '(ユーザー名未設定)')}</span>
             <span style="color:var(--muted);font-size:.72rem;">${r.suspended_until ? new Date(r.suspended_until).toLocaleString('ja-JP') + 'まで' : '無期限'}</span>
           </div>
-          ${r.suspension_reason ? `<span style="font-size:.78rem;color:#eaa9a9;">理由: ${escapeHtml(r.suspension_reason)}</span>` : ''}
+          ${reasonEntry ? `<span style="font-size:.78rem;color:#eaa9a9;">理由: ${escapeHtml(t(reasonEntry.key))}</span>` : ''}
           <button type="button" class="admin-unsuspend-btn" data-uid="${r.id}" style="margin-top:.3rem;font-size:.75rem;padding:.3rem .7rem;border-radius:8px;background:var(--card2,#141c19);border:1px solid var(--line,#2a3830);color:#dff0e6;cursor:pointer;">解除</button>
         </div>
-      `).join('') : '<p style="font-size:.78rem;color:var(--muted);">現在凍結中のユーザーはいません</p>';
+      `; }).join('') : '<p style="font-size:.78rem;color:var(--muted);">現在凍結中のユーザーはいません</p>';
       el.querySelectorAll('.admin-unsuspend-btn').forEach(btn => {
         btn.onclick = async () => {
           if(!confirm('凍結を解除しますか？')) return;
@@ -23303,13 +23397,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // [2026-09-18追加] プラン契約状況・MRR概算・投げ銭・コイン経済
-      const [planFreeCount, planPlusCount, planCreatorsCount, tipsSummary, recentTips, totalCoinBalance, coinIssuance] = await Promise.all([
+      const [planFreeCount, planPlusCount, planCreatorsCount, tipsSummary, recentTips, totalCoinBalance, totalPaidCoinBalance, coinIssuance] = await Promise.all([
         db.profiles.countByPlan('free'),
         db.profiles.countByPlan('plus'),
         db.profiles.countByPlan('creators'),
         db.tips.getRevenueSummary(),
         db.tips.getRecent(15),
         db.profiles.getTotalCoinBalance(),
+        db.profiles.getTotalPaidCoinBalance(),
         db.coins.getIssuanceByReason(),
       ]);
       const setText = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };
@@ -23321,6 +23416,13 @@ document.addEventListener('DOMContentLoaded', () => {
       setText('adminKpiTipsTotal', `¥${tipsSummary.totalAllTimeJpy.toLocaleString()}`);
       setText('adminKpiTips30d', `${tipsSummary.count30d.toLocaleString()}件 (¥${tipsSummary.total30dJpy.toLocaleString()})`);
       setText('adminKpiCoinBalance', totalCoinBalance.toLocaleString());
+      // [2026-09-19追加] 資金決済法の届出基準額(1,000万円)に対する現在値。
+      // 8割(800万円)を超えたら早期警戒として黄色、超過したら赤で表示する
+      const paidBalanceEl = document.getElementById('adminKpiPaidCoinBalance');
+      if(paidBalanceEl) {
+        paidBalanceEl.textContent = `¥${totalPaidCoinBalance.toLocaleString()}`;
+        paidBalanceEl.style.color = totalPaidCoinBalance >= 10000000 ? '#e84a4a' : totalPaidCoinBalance >= 8000000 ? '#e8b84a' : '';
+      }
       // [2026-09-18追加] 有償(購入)/無償(デイリークエスト等)の累計発行内訳。
       // COIN_REASON_LABEL_KEYに無いreasonが将来増えても、生の文字列のまま出して気づけるようにする
       const PAID_COIN_REASONS = new Set(['paddle_purchase']);
@@ -25060,12 +25162,13 @@ document.addEventListener('DOMContentLoaded', () => {
     errEl.textContent = '';
     const username = document.getElementById('onboardUsername').value.trim();
     if(!username) { errEl.textContent = 'ユーザー名を入力してください'; return; }
+    if(!document.getElementById('onboardAgeConfirm')?.checked) { errEl.textContent = t('onboardAgeConfirmRequired'); return; }
     const gender = document.querySelector('input[name="onboardGender"]:checked')?.value || 'unspecified';
     const ageGroup = document.querySelector('input[name="onboardAge"]:checked')?.value || 'unspecified';
     const btn = document.getElementById('onboardSubmitBtn');
     if(btn) btn.disabled = true;
     try {
-      await db.profiles.upsert(_currentUser.id, { username, gender, age_group: ageGroup });
+      await db.profiles.upsert(_currentUser.id, { username, gender, age_group: ageGroup, terms_agreed_at: new Date().toISOString() });
       document.getElementById('onboardOverlay').style.display = 'none';
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage();
@@ -25895,12 +25998,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if(error) { alert(t('profileSaveFailedAlert')); return status; }
     } else if(status === 'pending_sent') {
       if(!confirm(t('friendCancelConfirm'))) return status;
-      await db.friendRequests.cancel(_currentUser.id, targetId);
+      const { error } = await db.friendRequests.cancel(_currentUser.id, targetId);
+      if(error) { alert(t('profileSaveFailedAlert')); return status; }
     } else if(status === 'pending_received') {
-      await db.friendRequests.accept(targetId, _currentUser.id);
+      const { error } = await db.friendRequests.accept(targetId, _currentUser.id);
+      if(error) { alert(t('profileSaveFailedAlert')); return status; }
     } else if(status === 'friends') {
       if(!confirm(t('friendUnfriendConfirm'))) return status;
-      await db.friendRequests.unfriend(_currentUser.id, targetId);
+      const { error } = await db.friendRequests.unfriend(_currentUser.id, targetId);
+      if(error) { alert(t('profileSaveFailedAlert')); return status; }
     }
     checkFriendRequestBadge();
     return await db.friendRequests.getStatus(_currentUser.id, targetId);
@@ -26139,14 +26245,16 @@ document.addEventListener('DOMContentLoaded', () => {
       composer.innerHTML = `
       <div style="display:flex;gap:8px;align-items:flex-end;">
         <div class="board-compose-field" style="border-radius:12px;">
-          <textarea id="dmComposeInput" rows="1" placeholder="${escapeHtml(t('dmComposePlaceholder'))}" style="border-radius:12px;max-height:120px;"></textarea>
+          <textarea id="dmComposeInput" rows="1" maxlength="${BOARD_MAX_LEN}" placeholder="${escapeHtml(t('dmComposePlaceholder'))}" style="border-radius:12px;max-height:120px;"></textarea>
         </div>
         <button type="button" id="dmSendBtn" style="flex:0 0 auto;height:40px;padding:0 16px;border-radius:12px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:13px;cursor:pointer;">${escapeHtml(t('dmSendBtn'))}</button>
       </div>`;
       const input = composer.querySelector('#dmComposeInput');
       const sendBtn = composer.querySelector('#dmSendBtn');
       const send = async () => {
-        const body = input.value.trim();
+        // [修正] DMだけ文字数制限が一切無かった(掲示板はBOARD_MAX_LENでmaxlength+slice済み)。
+        // textareaにmaxlengthを付けたのに加え、直接値を書き換えられた場合の保険としてslice
+        const body = input.value.trim().slice(0, BOARD_MAX_LEN);
         if(!body) return;
         sendBtn.disabled = true;
         const { error } = await db.dm.post(meId, otherId, body);
@@ -26359,7 +26467,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(claimBtn && completed && !claimed) {
       claimBtn.onclick = async () => {
         claimBtn.disabled = true;
-        const { error } = await db.quests.claim(_currentUser.id, GACHA_COIN_REWARD);
+        const { error } = await db.quests.claim(_currentUser.id);
         if(error) { alert(t('profileSaveFailedAlert')); claimBtn.disabled = false; return; }
         updateCoinBadge();
         renderDailyQuestPage();
