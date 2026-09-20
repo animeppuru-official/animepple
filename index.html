@@ -4228,6 +4228,12 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="gacha-head-copy">
           <h2 class="gacha-title" data-i18n="gachaTitle">ガチャガチャ</h2>
           <p class="gacha-lead" data-i18n="gachaLead">1日1回無料。広告を見るとあと3回引けます。</p>
+          <p class="gacha-coin-breakdown" id="gachaCoinBreakdown" style="display:none;margin:6px 0 0;font-size:11.5px;color:#c8a94a;">
+            <i class="coin-dot" style="width:11px;height:11px;"></i>
+            <span data-i18n="gachaCoinFreeLabel">無償</span> <b id="gachaCoinFreeVal">0</b>
+            <span style="color:#5a7263;">・</span>
+            <span data-i18n="gachaCoinPaidLabel">有償</span> <b id="gachaCoinPaidVal">0</b>
+          </p>
         </div>
         <!-- 確率と景品：見出しの右。残り回数は各ボタンのラベル側で示すのでここには置かない -->
         <button type="button" id="gachaProbBtn" class="gacha-prob-entry">
@@ -5864,6 +5870,40 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="admin-kpi" id="adminKpiPaidCoinBalanceCard" style="margin-bottom:.75rem;"><div class="admin-kpi-val" id="adminKpiPaidCoinBalance">—</div><div class="admin-kpi-label">うち有償(購入)分の未消費残高【資金決済法】<br>基準日(3/31・9/30)に1,000万円超で届出・供託義務</div></div>
       <p style="font-size:.7rem;color:#8db5a0;font-weight:700;margin:0 0 .3rem;">累計発行内訳(有償/無償の内訳)</p>
       <div id="adminCoinIssuanceBreakdown"></div>
+    </div>
+
+    <!-- [2026-09-20追加] 消費税の内外判定集計。事前にSupabaseで以下のテーブル・RPCを作成しておくこと
+         (詳細はanimepple_improvements.mdの該当項目、判定ルール自体はanimepple_tax_survey.md参照):
+           create table if not exists public.paddle_tax_log ( ... ) -- paddle-webhook側のコメント参照
+           create table if not exists public.external_revenue_log ( ... )
+           create or replace function get_paddle_tax_summary_by_year() ... -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🧾 消費税(内外判定)集計</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">
+        電気通信利用役務の提供は「購入者・取引先の所在地」で内外判定する(animepple_tax_survey.md参照)。
+        Paddle経由の売上は自動集計、Amazon各国版・AdSense等は下のフォームで毎月手入力する。
+        <strong>免税事業者の判定に使うのは「2年前(基準期間)」の国内課税売上高</strong>である点に注意
+        (例:2026年の判定材料は2024年分)。ここでの表示はあくまで参考値で、実際の判定・申告は税理士に確認すること。
+      </p>
+      <div id="taxSummaryTable" style="margin-bottom:1rem;"></div>
+
+      <p style="font-size:.7rem;color:#8db5a0;font-weight:700;margin:0 0 .4rem;">Amazon各国版・AdSense等の月次収益を手入力</p>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem;">
+        <select id="extRevSource" style="flex:1 1 140px;">
+          <option value="amazon_jp" data-domestic="1">Amazon.co.jp(国内)</option>
+          <option value="amazon_us">Amazon.com(US)</option>
+          <option value="amazon_uk">Amazon.co.uk</option>
+          <option value="amazon_eu">Amazon.de/fr等(EU)</option>
+          <option value="amazon_ca">Amazon.ca</option>
+          <option value="adsense">Google AdSense</option>
+          <option value="other_domestic" data-domestic="1">その他(国内取引)</option>
+          <option value="other_foreign">その他(国外取引)</option>
+        </select>
+        <input type="month" id="extRevYearMonth" style="flex:1 1 130px;" />
+        <input type="number" id="extRevAmount" placeholder="金額(円)" style="flex:1 1 110px;" />
+        <button type="button" onclick="submitExternalRevenue()" style="padding:.55rem .85rem;border-radius:10px;background:var(--brand);border:none;color:#07200f;font-weight:800;font-size:.78rem;cursor:pointer;">追加</button>
+      </div>
+      <div id="externalRevenueList"></div>
     </div>
 
     <!-- 広告・アフィリンククリック -->
@@ -7983,6 +8023,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data } = await sb.from('profiles').select('coins').eq('id', userId).maybeSingle();
         return data?.coins || 0;
       },
+      // [2026-09-20追加] ガチャページの無償/有償内訳表示用。coins_paid(有償分)と、
+      // coins-coins_paid(無償分、負にならないようクランプ)を返す
+      async getBreakdown(userId) {
+        if(!sb || !userId) return { free: 0, paid: 0, total: 0 };
+        const { data } = await sb.from('profiles').select('coins, coins_paid').eq('id', userId).maybeSingle();
+        const total = data?.coins || 0;
+        const paid = data?.coins_paid || 0;
+        return { free: Math.max(total - paid, 0), paid, total };
+      },
       // [変更] セキュリティレビュー対応：以前はここでprofiles.coinsを直接UPDATEしていたため、
       // ログイン済みの誰でも自分のcoinsを好きな値に書き換えられてしまっていた。
       // adjust_coins RPC(SECURITY DEFINER、残高不足チェック・行ロック付き)経由に変更した。
@@ -8012,6 +8061,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, error } = await sb.rpc('get_coin_issuance_by_reason');
         if(error) { console.warn('getIssuanceByReason rpc:', error.message); return []; }
         return (data||[]).map(r => ({ reason: r.reason, total: Number(r.total_amount) || 0 }));
+      },
+    },
+    // [2026-09-20追加] 消費税の内外判定集計(管理画面「🧾消費税」セクション用)。
+    // Paddle経由の売上はpaddle_tax_log(paddle-webhookが自動記録)から集計、
+    // Amazon各国版・AdSense等はexternal_revenue_logに手入力する。
+    // 判定ルールの詳細はanimepple_tax_survey.md参照
+    taxLog: {
+      // 年ごとの{domestic, foreign, unknown}円合計(Paddle分のみ)。要RPC事前作成
+      async getPaddleSummaryByYear() {
+        if(!sb) return [];
+        const { data, error } = await sb.rpc('get_paddle_tax_summary_by_year');
+        if(error) { console.warn('getPaddleSummaryByYear rpc:', error.message); return []; }
+        return (data||[]).map(r => ({ year: Number(r.year), bucket: r.bucket, total: Number(r.total_jpy) || 0 }));
+      },
+      async listExternalRevenue() {
+        if(!sb) return [];
+        const { data, error } = await sb.from('external_revenue_log').select('*').order('year_month', { ascending: false });
+        if(error) { console.warn('listExternalRevenue:', error.message); return []; }
+        return data || [];
+      },
+      async upsertExternalRevenue(source, isDomestic, yearMonth, amountJpy) {
+        if(!sb) return { error: 'no db' };
+        const { error } = await sb.from('external_revenue_log').upsert(
+          { source, is_domestic: isDomestic, year_month: yearMonth, amount_jpy: amountJpy },
+          { onConflict: 'source,year_month' }
+        );
+        return { error };
+      },
+      async deleteExternalRevenue(id) {
+        if(!sb) return { error: 'no db' };
+        const { error } = await sb.from('external_revenue_log').delete().eq('id', id);
+        return { error };
       },
     },
     quests: {
@@ -12300,6 +12381,19 @@ document.addEventListener('DOMContentLoaded', () => {
     grid.innerHTML = cells.join('');
   }
 
+  // [2026-09-20追加] ヘッダーのコイン残高バッジ(合計だけで有償/無償が分からない)を廃止し、
+  // 代わりにガチャページで無償/有償の内訳を表示するようにした(モバイル・PC共通のDOMなので両方に出る)
+  async function updateGachaCoinBreakdown() {
+    const el = document.getElementById('gachaCoinBreakdown');
+    if(!el) return;
+    if(!_currentUser) { el.style.display = 'none'; return; }
+    const { free, paid } = await db.coins.getBreakdown(_currentUser.id).catch(() => ({ free: 0, paid: 0 }));
+    const freeEl = document.getElementById('gachaCoinFreeVal');
+    const paidEl = document.getElementById('gachaCoinPaidVal');
+    if(freeEl) freeEl.textContent = free.toLocaleString();
+    if(paidEl) paidEl.textContent = paid.toLocaleString();
+    el.style.display = 'block';
+  }
   async function updateGachaButtons() {
     const freeBtn = document.getElementById('gachaFreeBtn');
     const coinBtn = document.getElementById('gachaCoinBtn');
@@ -12314,8 +12408,11 @@ document.addEventListener('DOMContentLoaded', () => {
       freeBtn.disabled = true;
       if(coinBtn) coinBtn.disabled = true;
       if(coin10Btn) coin10Btn.disabled = true;
+      const breakdownEl = document.getElementById('gachaCoinBreakdown');
+      if(breakdownEl) breakdownEl.style.display = 'none';
       return;
     }
+    updateGachaCoinBreakdown();
     const state = await getGachaState(_currentUser.id);
     const remaining = Math.max(0, GACHA_AD_LIMIT - state.adUsedCount);
     const label = freeBtn.querySelector('.gacha-hold-body span:last-child');
@@ -12479,7 +12576,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const cost = kind === 'coin' ? GACHA_COIN_COST : GACHA_COIN10_COST;
       const { error } = await db.coins.spend(_currentUser.id, cost, kind === 'coin' ? 'gacha_pull' : 'gacha_pull10');
       if(error) { alert(t('gachaCoinInsufficientAlert')); updateGachaButtons(); return; }
-      updateCoinBadge();
     }
     const pullCount = kind === 'coin10' ? 10 : 1;
     setGachaStageSpinning();
@@ -19468,6 +19564,8 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaStageFilling: { ja:'リンゴジュースがたまっていきます…', en:'Filling with apple juice…', ko:'사과주스가 채워지고 있어요…', 'zh-tw':'蘋果汁正在注入中…', 'zh-cn':'苹果汁正在注入中…', es:'Llenando con jugo de manzana…', fr:'Remplissage de jus de pomme…', pt:'Enchendo com suco de maçã…', de:'Wird mit Apfelsaft gefüllt…', ar:'جارٍ التعبئة بعصير التفاح…', th:'กำลังเติมน้ำแอปเปิ้ล…', id:'Mengisi dengan jus apel…', ru:'Наполняется яблочным соком…', it:'Riempimento con succo di mela…', vi:'Đang rót nước táo…' },
     gachaShopSubFrom: { ja:'から', en:'+', ko:'부터', 'zh-tw':'起', 'zh-cn':'起', es:'desde', fr:'à partir de', pt:'a partir de', de:'ab', ar:'من', th:'เริ่มต้น', id:'mulai dari', ru:'от', it:'da', vi:'từ' },
     gachaShopSubBonus: { ja:'ボーナス最大{n}%', en:'up to +{n}% bonus', ko:'최대 보너스 {n}%', 'zh-tw':'最高獎勵{n}%', 'zh-cn':'最高奖励{n}%', es:'bono de hasta +{n}%', fr:'bonus jusqu\'à +{n}%', pt:'bônus de até +{n}%', de:'bis zu +{n}% Bonus', ar:'مكافأة تصل إلى +{n}٪', th:'โบนัสสูงสุด +{n}%', id:'bonus hingga +{n}%', ru:'бонус до +{n}%', it:'bonus fino a +{n}%', vi:'thưởng lên đến +{n}%' },
+    gachaCoinFreeLabel: { ja:'無償', en:'Free', ko:'무료', 'zh-tw':'免費', 'zh-cn':'免费', es:'Gratis', fr:'Gratuit', pt:'Grátis', de:'Kostenlos', ar:'مجاني', th:'ฟรี', id:'Gratis', ru:'Бесплатно', it:'Gratis', vi:'Miễn phí' },
+    gachaCoinPaidLabel: { ja:'有償', en:'Paid', ko:'유료', 'zh-tw':'付費', 'zh-cn':'付费', es:'De pago', fr:'Payant', pt:'Pago', de:'Bezahlt', ar:'مدفوع', th:'ซื้อ', id:'Berbayar', ru:'Платно', it:'A pagamento', vi:'Trả phí' },
     gachaQuestSubReady: { ja:'達成 ・ 受け取れます', en:'Done ・ ready to claim', ko:'달성 ・ 수령 가능', 'zh-tw':'已達成 ・ 可領取', 'zh-cn':'已达成 ・ 可领取', es:'Completado ・ listo para reclamar', fr:'Terminé ・ prêt à réclamer', pt:'Concluído ・ pronto para resgatar', de:'Erledigt ・ bereit zum Abholen', ar:'مكتمل ・ جاهز للاستلام', th:'สำเร็จ ・ รับได้เลย', id:'Selesai ・ siap diklaim', ru:'Выполнено ・ можно забрать', it:'Completato ・ pronto per il ritiro', vi:'Hoàn thành ・ sẵn sàng nhận' },
     gachaQuestSubOpen: { ja:'0 / 1 達成', en:'0 / 1 done', ko:'0 / 1 달성', 'zh-tw':'0 / 1 已達成', 'zh-cn':'0 / 1 已达成', es:'0 / 1 completado', fr:'0 / 1 terminé', pt:'0 / 1 concluído', de:'0 / 1 erledigt', ar:'0 / 1 مكتمل', th:'0 / 1 สำเร็จ', id:'0 / 1 selesai', ru:'0 / 1 выполнено', it:'0 / 1 completato', vi:'0 / 1 hoàn thành' },
     gachaProbTitle: { ja:'確率と景品一覧', en:'Odds & prize list', ko:'확률 및 아이템 목록', 'zh-tw':'機率與獎品清單', 'zh-cn':'概率与奖品清单', es:'Probabilidades y premios', fr:'Probabilités et lots', pt:'Probabilidades e prêmios', de:'Chancen & Preisliste', ar:'الاحتمالات وقائمة الجوائز', th:'อัตราความน่าจะเป็นและรายการรางวัล', id:'Peluang & daftar hadiah', ru:'Шансы и список призов', it:'Probabilità e lista premi', vi:'Tỷ lệ & danh sách phần thưởng' },
@@ -22057,6 +22155,102 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
+  // [2026-09-20追加] 消費税の内外判定集計(「🧾消費税」セクション)。
+  // Paddle分(自動記録)とAmazon各国版/AdSense等(手入力)を年ごとに合算して表示する。
+  // 免税事業者の判定は「2年前(基準期間)」の国内課税売上高を見るものなので、
+  // 「今年の数字」をそのまま判定に使わないよう表側に明記する。
+  const EXT_REV_SOURCE_LABEL = {
+    amazon_jp: 'Amazon.co.jp', amazon_us: 'Amazon.com(US)', amazon_uk: 'Amazon.co.uk',
+    amazon_eu: 'Amazon.de/fr等(EU)', amazon_ca: 'Amazon.ca', adsense: 'Google AdSense',
+    other_domestic: 'その他(国内)', other_foreign: 'その他(国外)',
+  };
+  async function renderAdminTaxSummary() {
+    const tableEl = document.getElementById('taxSummaryTable');
+    const listEl = document.getElementById('externalRevenueList');
+    if(!tableEl && !listEl) return;
+    const [paddleSummary, externalRows] = await Promise.all([
+      db.taxLog.getPaddleSummaryByYear(),
+      db.taxLog.listExternalRevenue(),
+    ]);
+
+    // 年ごとに { domestic, foreign, unknown } を積み上げる
+    const byYear = {};
+    const ensureYear = (y) => { if(!byYear[y]) byYear[y] = { domestic:0, foreign:0, unknown:0 }; return byYear[y]; };
+    paddleSummary.forEach(r => { ensureYear(r.year)[r.bucket] = (ensureYear(r.year)[r.bucket]||0) + r.total; });
+    externalRows.forEach(r => {
+      const y = Number(String(r.year_month).slice(0,4));
+      if(!y) return;
+      const bucket = r.is_domestic ? 'domestic' : 'foreign';
+      ensureYear(y)[bucket] += r.amount_jpy;
+    });
+
+    if(tableEl) {
+      const years = Object.keys(byYear).map(Number).sort((a,b)=>b-a);
+      const currentYear = new Date().getFullYear();
+      if(!years.length) {
+        tableEl.innerHTML = `<p style="color:var(--muted);font-size:.82rem;">まだ集計データがありません</p>`;
+      } else {
+        tableEl.innerHTML = `
+          <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
+            <tr style="text-align:left;color:#8db5a0;">
+              <th style="padding:4px 6px;">年</th><th style="padding:4px 6px;">国内課税売上</th><th style="padding:4px 6px;">国外(不課税)</th><th style="padding:4px 6px;">不明</th><th style="padding:4px 6px;"></th>
+            </tr>
+            ${years.map(y => {
+              const v = byYear[y];
+              const isBasisYearFor = y + 2; // この年の国内課税売上が、y+2年の免税判定に使われる
+              const warn = v.domestic >= 10000000 ? 'color:#e84a4a;font-weight:800;' : v.domestic >= 8000000 ? 'color:#e8b84a;font-weight:800;' : '';
+              return `<tr style="border-top:1px solid var(--line,#2a3830);">
+                <td style="padding:4px 6px;font-weight:800;">${y}年${y===currentYear?'(進行中)':''}</td>
+                <td style="padding:4px 6px;${warn}">¥${v.domestic.toLocaleString()}</td>
+                <td style="padding:4px 6px;color:var(--muted);">¥${v.foreign.toLocaleString()}</td>
+                <td style="padding:4px 6px;color:var(--muted);">${v.unknown?('¥'+v.unknown.toLocaleString()):'—'}</td>
+                <td style="padding:4px 6px;font-size:.7rem;color:#8db5a0;">→${isBasisYearFor}年の免税判定材料</td>
+              </tr>`;
+            }).join('')}
+          </table>`;
+      }
+    }
+
+    if(listEl) {
+      if(!externalRows.length) {
+        listEl.innerHTML = `<p style="color:var(--muted);font-size:.82rem;">まだ手入力データがありません</p>`;
+      } else {
+        listEl.innerHTML = externalRows.map(r => `
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line,#2a3830);font-size:.78rem;">
+            <span style="flex:0 0 90px;color:var(--muted);">${escapeHtml(r.year_month)}</span>
+            <span style="flex:1 1 auto;">${escapeHtml(EXT_REV_SOURCE_LABEL[r.source] || r.source)}${r.is_domestic ? ' <span style="color:#e8c463;">(国内)</span>' : ' <span style="color:var(--muted);">(国外)</span>'}</span>
+            <span style="flex:0 0 auto;font-weight:700;">¥${Number(r.amount_jpy).toLocaleString()}</span>
+            <button type="button" onclick="deleteExternalRevenue(${r.id})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:.8rem;">削除</button>
+          </div>`).join('');
+      }
+    }
+  }
+  window.renderAdminTaxSummary = renderAdminTaxSummary;
+
+  async function submitExternalRevenue() {
+    const sourceEl = document.getElementById('extRevSource');
+    const ymEl = document.getElementById('extRevYearMonth');
+    const amountEl = document.getElementById('extRevAmount');
+    const source = sourceEl.value;
+    const isDomestic = sourceEl.selectedOptions[0]?.dataset.domestic === '1';
+    const yearMonth = ymEl.value;
+    const amount = Math.round(Number(amountEl.value));
+    if(!yearMonth || !amount) { alert('年月と金額を入力してください'); return; }
+    const { error } = await db.taxLog.upsertExternalRevenue(source, isDomestic, yearMonth, amount);
+    if(error) { alert('保存に失敗しました: ' + error.message); return; }
+    amountEl.value = '';
+    renderAdminTaxSummary();
+  }
+  window.submitExternalRevenue = submitExternalRevenue;
+
+  async function deleteExternalRevenue(id) {
+    if(!confirm('この記録を削除しますか？')) return;
+    const { error } = await db.taxLog.deleteExternalRevenue(id);
+    if(error) { alert('削除に失敗しました: ' + error.message); return; }
+    renderAdminTaxSummary();
+  }
+  window.deleteExternalRevenue = deleteExternalRevenue;
+
   // 日付ごとの件数を集計（直近N日間）
   let _adminTrendData = { reviews:[], pv:[] };
   let _adminTrendMetric = 'reviews';
@@ -23433,6 +23627,7 @@ document.addEventListener('DOMContentLoaded', () => {
           color: PAID_COIN_REASONS.has(r.reason) ? '#e8c463' : '#5ec97a',
         })),
         { suffix:'枚' });
+      renderAdminTaxSummary();
       const recentTipsEl = document.getElementById('adminRecentTips');
       if(recentTipsEl) {
         if(!recentTips.length) {
@@ -24516,7 +24711,6 @@ document.addEventListener('DOMContentLoaded', () => {
           startGlobalBoardNotifyWatch();
           checkFriendRequestBadge();
           startFriendRequestWatch();
-          updateCoinBadge();
         }
       } catch(e) { console.warn('OAuth hash handling:', e); }
     }
@@ -24533,7 +24727,6 @@ document.addEventListener('DOMContentLoaded', () => {
       startGlobalBoardNotifyWatch();
       checkFriendRequestBadge();
       startFriendRequestWatch();
-      updateCoinBadge();
       await applyMyEquippedCustomization();
       loadMyPlan();
     }
@@ -24542,7 +24735,7 @@ document.addEventListener('DOMContentLoaded', () => {
     db.auth.onAuthChange(async (session) => {
       _currentUser = session?.user || null;
       if(_currentUser && await checkSuspensionGate()) return;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); updateCoinBadge(); applyMyEquippedCustomization(); loadMyPlan(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; _unreadNoticeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); updateCoinBadge(); _currentPlan = 'free'; updateBoardSidebarAd(); }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); applyMyEquippedCustomization(); loadMyPlan(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; _unreadNoticeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); _currentPlan = 'free'; updateBoardSidebarAd(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -26469,7 +26662,6 @@ document.addEventListener('DOMContentLoaded', () => {
         claimBtn.disabled = true;
         const { error } = await db.quests.claim(_currentUser.id);
         if(error) { alert(t('profileSaveFailedAlert')); claimBtn.disabled = false; return; }
-        updateCoinBadge();
         renderDailyQuestPage();
       };
     }
@@ -26762,31 +26954,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.applyMyEquippedCustomization = applyMyEquippedCustomization;
 
-  // ── コイン残高バッジ：全ページのヘッダー(.hdr-right)に共通で出す ──
-  // ページごとに個別にHTMLを書いていない（35箇所あるため）ので、JSで一括挿入して使い回す
-  function ensureCoinBadges() {
-    document.querySelectorAll('.hdr-right').forEach(hr => {
-      if(hr.querySelector('.hdr-coin-badge')) return;
-      const badge = document.createElement('span');
-      badge.className = 'hdr-coin-badge';
-      badge.style.cssText = 'display:none;align-items:center;gap:4px;font-size:12px;font-weight:800;color:#f0c94a;background:rgba(240,201,74,.12);border:1px solid rgba(240,201,74,.3);border-radius:20px;padding:4px 10px;margin-right:8px;white-space:nowrap;cursor:pointer;';
-      badge.innerHTML = '<span class="coin-dot"></span><span class="hdr-coin-count">0</span>';
-      badge.onclick = () => nav('coin-shop');
-      hr.insertBefore(badge, hr.firstChild);
-    });
-  }
-  async function updateCoinBadge() {
-    ensureCoinBadges();
-    const badges = document.querySelectorAll('.hdr-coin-badge');
-    if(!_currentUser) { badges.forEach(b => { b.style.display = 'none'; }); return; }
-    const coins = await db.coins.get(_currentUser.id).catch(() => 0);
-    badges.forEach(b => {
-      b.style.display = 'inline-flex';
-      const c = b.querySelector('.hdr-coin-count');
-      if(c) c.textContent = coins;
-    });
-  }
-  window.updateCoinBadge = updateCoinBadge;
+  // [2026-09-20削除] ヘッダーのコイン残高バッジ(全ページ共通、合計だけで有償/無償の区別が
+  // つかなかった)は廃止。コイン残高はガチャページの無償/有償内訳表示(updateGachaCoinBreakdown)
+  // とコインショップ画面(#coinShopBalance)で確認できる。
 
   window.showAuthModal = showAuthModal;
   window.closeAuthModal = closeAuthModal;
