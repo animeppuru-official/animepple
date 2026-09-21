@@ -1097,8 +1097,12 @@
     }
     .gacha-confirm-title { margin:0 0 10px; font-size:16px; font-weight:800; color:#e8f0ea; }
     .gacha-confirm-body { margin:0 0 16px; font-size:12.5px; line-height:1.7; color:#c3d4c9; white-space:pre-line; }
-    .gacha-confirm-draw-btn { width:100%; }
-    .gacha-confirm-hint { margin:8px 0 0; font-size:10.5px; color:#66786d; }
+    .gacha-confirm-draw-btn {
+      width:100%; height:46px; border-radius:11px; border:none;
+      background:linear-gradient(135deg,#f3d786,#d9a441); color:#2a2006;
+      font:inherit; font-size:14px; font-weight:800; cursor:pointer;
+    }
+    .gacha-confirm-draw-btn:disabled { opacity:.6; cursor:default; }
     .gacha-confirm-cancel-btn {
       width:100%; height:38px; margin-top:12px; border-radius:10px; border:1px solid rgba(255,255,255,.12);
       background:transparent; color:#dfeae3; font:inherit; font-size:12.5px; font-weight:700; cursor:pointer;
@@ -4480,18 +4484,15 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<!-- [追加] ガチャを引く前の確認ポップ。ボタンを押した瞬間に長押しへ入るのではなく、
-     まずここで「引く？」と確認し、種別ごとの説明(無料/広告/コイン消費額と残り枚数)を見せる。
-     ここの「引く」はタップで通常演出つきの抽選、3秒長押しで演出を飛ばして結果を即表示する -->
+<!-- [追加] ガチャを引く前の確認ポップ。ここは「引く了承」と「結果の確定」だけを行う場所で、
+     演出(長押し)はここでは行わない。「引く」を1回タップした瞬間に消費・抽選・付与・ログ記録が
+     完了する(結果が確定する)。ポップを閉じてガチャ画面に戻ると、元のボタンが
+     「長押しで結果を見る」状態になり、そこで3秒長押しすると(演出込みで)結果が表示される -->
 <div id="gachaConfirmOverlay" class="gacha-confirm-overlay" style="display:none;">
   <div class="gacha-confirm-box">
     <p class="gacha-confirm-title" id="gachaConfirmTitle" data-i18n="gachaConfirmTitle">ガチャを引く？</p>
     <p class="gacha-confirm-body" id="gachaConfirmBody"></p>
-    <button type="button" id="gachaConfirmDrawBtn" class="gacha-hold-btn gacha-confirm-draw-btn">
-      <span class="gacha-hold-fill"></span>
-      <span class="gacha-hold-body"><span data-i18n="gachaConfirmDrawBtn">引く</span></span>
-    </button>
-    <p class="gacha-confirm-hint" data-i18n="gachaConfirmHoldHint">長押しすると演出を飛ばしてすぐ結果が出ます</p>
+    <button type="button" id="gachaConfirmDrawBtn" class="gacha-confirm-draw-btn" data-i18n="gachaConfirmDrawBtn">引く</button>
     <button type="button" id="gachaConfirmCancelBtn" class="gacha-confirm-cancel-btn" data-i18n="gachaConfirmCancelBtn">やめる</button>
   </div>
 </div>
@@ -12803,7 +12804,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const remaining = _currentUser ? Math.max(0, GACHA_AD_LIMIT - (await getGachaState(_currentUser.id)).adUsedCount) : 0;
       againBtn.style.display = remaining > 0 ? '' : 'none';
       againBtn.innerHTML = '<span class="gacha-btn-icon">▶</span><span>' + escapeHtml(t('gachaAgainBtn').replace('{n}', remaining)) + '</span>';
-      againBtn.onclick = () => { overlay.style.display = 'none'; runGacha('ad'); };
+      // [2026-09-21修正] 結果画面から続けて引く場合は、確認ポップ・長押し演出を挟まない
+      // 最短ルートとして、確定と演出をその場でまとめて行う(既に「もう1回」と明示的に
+      // 押しているため、確認ポップの二重確認は不要と判断)
+      againBtn.onclick = async () => {
+        overlay.style.display = 'none';
+        const results = await commitGachaDraw('ad');
+        if(results) await revealGachaResult(results);
+      };
     }
 
     const openBtn = document.getElementById('gachaPickOpenBtn');
@@ -12824,35 +12832,44 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay.style.display = 'flex';
   }
 
-  async function runGacha(kind, opts) {
-    opts = opts || {};
-    if(!_currentUser) { alert(t('loginRequiredAlert')); return; }
+  // ── ガチャの「確定」と「演出(長押しで結果を見る)」を分離する ──
+  // [2026-09-21再修正] ユーザーから「ポップはあくまでガチャを引く了承と結果の確定だけ。
+  // 引くを押した時点で結果は確定し、アイテム獲得・コイン減少等はその場で行われる
+  // (長押しして演出を見る前にサイトを閉じても結果は決まっている)。長押しの演出自体は
+  // 元通り、ポップを閉じてガチャ画面に戻った後にさせること」という訂正指示を受けた。
+  // 以前の実装はポップの「引く」ボタン自体をタップ/長押しの2択にしていたが、これは誤りだった。
+  // 正しい流れ：①ポップで「引く」を1回タップ→即座に消費・抽選・付与・ログ記録(=確定)。
+  // ②ポップを閉じてガチャ画面に戻り、元のページボタンが「長押しで結果を見る」状態になる。
+  // ③そのボタンを3秒間長押しすると(演出込みで)確定済みの結果を表示する。
+  // 消費・抽選・付与は①の時点で完了しているため、③を最後までやらずに離しても
+  // (あるいはページを閉じても)、確定した内容がそのまま反映され続ける。
+
+  // ①確定：資源を消費し、抽選・付与・ログ記録までを直ちに行う。演出は一切見せない
+  async function commitGachaDraw(kind) {
+    if(!_currentUser) { alert(t('loginRequiredAlert')); return null; }
     const state = await getGachaState(_currentUser.id);
     if(kind === 'free') {
-      if(state.freeUsed) return;
+      if(state.freeUsed) return null;
       const { error } = await db.gacha.markFreeUsed(_currentUser.id);
-      if(error) { alert(t('gachaLimitReachedAlert')); updateGachaButtons(); return; } // 既に他端末等で使用済み
+      if(error) { alert(t('gachaLimitReachedAlert')); updateGachaButtons(); return null; } // 既に他端末等で使用済み
     } else if(kind === 'ad') {
-      if(state.adUsedCount >= GACHA_AD_LIMIT) return;
-      // [修正] どのプランも1日2回まで無料。無料プランだけ2回目に広告視聴が必要で、
-      // ＋・クリエイターズは2回目も広告なしでそのまま引ける(確認・待機演出をスキップするだけ)。
-      // [2026-09-21修正] 対価の確認は#gachaConfirmOverlay(openGachaConfirm)側で先に
-      // 出すようになったため、ここにあった二重のnative confirm()は削除した
+      if(state.adUsedCount >= GACHA_AD_LIMIT) return null;
+      // どのプランも1日2回まで無料。無料プランだけ2回目に広告視聴が必要で、
+      // ＋・クリエイターズは2回目も広告なしでそのまま引ける
       if(isFeatureRestricted()) {
-        // 実際の広告SDKは未接続。広告再生中を模したウェイトだけ入れる
-        const freeBtn = document.getElementById('gachaFreeBtn');
-        if(freeBtn) { const lb = freeBtn.querySelector('span:last-child'); if(lb) lb.textContent = t('gachaAdPlaying'); }
+        // 実際の広告SDKは未接続。ポップを開いたまま、広告再生を模したウェイトだけ入れる
+        const body = document.getElementById('gachaConfirmBody');
+        if(body) body.textContent = t('gachaAdPlaying');
         await new Promise(r => setTimeout(r, 1200));
       }
       const { error } = await db.gacha.markAdUsed(_currentUser.id, GACHA_AD_LIMIT);
-      if(error) { alert(t('gachaLimitReachedAlert')); updateGachaButtons(); return; } // 既に上限到達済み（多重タップ対策）
+      if(error) { alert(t('gachaLimitReachedAlert')); updateGachaButtons(); return null; } // 既に上限到達済み（多重タップ対策）
     } else if(kind === 'coin' || kind === 'coin10') {
       const cost = kind === 'coin' ? GACHA_COIN_COST : GACHA_COIN10_COST;
       const { error } = await db.coins.spend(_currentUser.id, cost, kind === 'coin' ? 'gacha_pull' : 'gacha_pull10');
-      if(error) { alert(t('gachaCoinInsufficientAlert')); updateGachaButtons(); return; }
+      if(error) { alert(t('gachaCoinInsufficientAlert')); updateGachaButtons(); return null; }
     }
     const pullCount = kind === 'coin10' ? 10 : 1;
-    if(!opts.instant) setGachaStageSpinning();
     // [修正] 「SR以上1枚確定」と画面に表示している(gachaCoin10Tag)のに、実際には各枠が
     // 完全に独立抽選なため、SR以上が1枚も出ない回(現在の排出率だと約13.7%の確率)が
     // 起こりえて表示と実態が食い違っていた。10連の場合、事前に10枠分の抽選結果を
@@ -12880,8 +12897,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const label = item.kind === 'custom'
             ? ((GACHA_CUSTOM_META[item.category]||{}).labelKey ? t(GACHA_CUSTOM_META[item.category].labelKey) : item.category)
             : `${t('gachaLabelIcon')} ★${item.starRarity||''}`;
-          // [2026-09-21修正] 出た作品(確定枠のアニメカード)をガチャページの履歴に載せるため、
-          // pick(アニメ)の情報もこのログに一緒に記録するようにした(以前はitemの情報のみ)
+          // 出た作品(確定枠のアニメカード)をガチャページの履歴に載せるため、
+          // pick(アニメ)の情報もこのログに一緒に記録する(以前はitemの情報のみ)
           db.gacha.logPull(_currentUser.id, {
             seriesId: getCurrentGachaSeries()?.id, tier: item.tier, kind: item.kind, label,
             animeId: pick ? (pick.kitsuId ? 'kitsu-' + pick.kitsuId : pick.id) : null,
@@ -12891,23 +12908,83 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       results.push({ pick, item, isDup });
     }
-    if(!opts.instant) await new Promise(r => setTimeout(r, 1400));
+    // 付与・ログ記録は既に完了しているので、コレクション・履歴・コイン内訳はこの時点で更新する
+    renderGachaCollection();
+    renderGachaAnimeHistory();
+    updateGachaCoinBreakdown();
+    return results;
+  }
+
+  // ③演出：長押し完了後に呼ばれる。確定済みのresultsを使って回転演出→結果表示のみ行う
+  // (抽選・付与・消費はcommitGachaDraw側で既に完了済みなので、ここでは絶対にやり直さない)
+  async function revealGachaResult(results) {
+    setGachaStageSpinning();
+    await new Promise(r => setTimeout(r, 1400));
     setGachaStageIdle();
-    if(pullCount === 1) {
+    if(results.length === 1) {
       showGachaResult(results[0].pick, results[0].item, results[0].isDup);
     } else {
       showGachaResultBatch(results);
     }
     updateGachaButtons();
-    renderGachaCollection();
-    renderGachaAnimeHistory();
+  }
+
+  // ②確定後、元のページボタンを「長押しで結果を見る」状態に切り替える。
+  // 中身はbindGachaHold()と全く同じ長押し演出(3秒でジュースが満ちる)を再利用し、
+  // 長押し完了時にrevealGachaResult()を呼ぶだけの違い
+  let _gachaRevealHoldTimer = null;
+  function gachaBtnLabelEl(btn) {
+    return btn.querySelector('.gacha-coin-note') || btn.querySelector('.gacha-hold-body span:last-child');
+  }
+  function armGachaRevealButton(kind, results) {
+    const btnId = (kind === 'free' || kind === 'ad') ? 'gachaFreeBtn' : (kind === 'coin' ? 'gachaCoinBtn' : 'gachaCoin10Btn');
+    const btn = document.getElementById(btnId);
+    if(!btn) return;
+    const label = gachaBtnLabelEl(btn);
+    if(label) label.textContent = t('gachaRevealHoldLabel');
+    btn.disabled = false;
+    const fill = btn.querySelector('.gacha-hold-fill');
+    const stage = document.getElementById('gachaStage');
+    const ledLabel = document.getElementById('gachaStageLedLabel');
+    const stop = () => {
+      if(_gachaRevealHoldTimer) { clearTimeout(_gachaRevealHoldTimer); _gachaRevealHoldTimer = null; }
+      if(fill) { fill.style.transition = 'width .2s ease'; fill.style.width = '0%'; }
+      if(stage) stage.classList.remove('is-filling');
+      if(ledLabel) ledLabel.textContent = t('gachaLedIdle');
+      setGachaStageIdle();
+    };
+    btn.onpointerdown = (e) => {
+      e.preventDefault();
+      if(btn.disabled) return;
+      if(stage) {
+        stage.style.setProperty('--gacha-hold', GACHA_HOLD_MS + 'ms');
+        stage.classList.remove('is-filling');
+        void stage.offsetWidth;
+        stage.classList.add('is-filling');
+      }
+      if(ledLabel) ledLabel.textContent = t('gachaLedFilling');
+      const idle = document.getElementById('gachaStagePlaceholder');
+      if(idle) idle.innerHTML = `<span class="gacha-stage-text">${escapeHtml(t('gachaStageFilling'))}</span>`;
+      if(fill) {
+        fill.style.transition = `width ${GACHA_HOLD_MS}ms linear`;
+        requestAnimationFrame(() => { fill.style.width = '100%'; });
+      }
+      _gachaRevealHoldTimer = setTimeout(() => {
+        _gachaRevealHoldTimer = null;
+        stop();
+        revealGachaResult(results);
+      }, GACHA_HOLD_MS);
+    };
+    btn.onpointerup = stop;
+    btn.onpointerleave = stop;
+    btn.onpointercancel = stop;
+    btn.oncontextmenu = (e) => e.preventDefault();
   }
 
   // ── ガチャを引く前の確認ポップ ──
-  // [2026-09-21修正] 以前はページのボタン自体を3秒長押しして直接引く方式だったが、
-  // ユーザー指示で「ボタンを押したらまず『ガチャを引く？』の確認ポップを出す」方式に変更した。
-  // ポップ内の「引く」ボタンをタップすると通常の演出(スロットの回転待ち)つきで抽選し、
-  // 3秒長押しすると演出を飛ばしてすぐ結果を表示する(runGachaのopts.instant)
+  // ボタンをタップすると、まず「ガチャを引く？」の確認ポップ(#gachaConfirmOverlay)を出す。
+  // ポップ内の「引く」は1回タップするだけで①commitGachaDraw()を実行して確定させる
+  // (長押しはしない)。確定が終わったらポップを閉じ、②元のボタンを長押し演出待ちにする
   let _gachaConfirmKind = null;
   function openGachaConfirm(kind) {
     if(!_currentUser) { alert(t('loginRequiredAlert')); return; }
@@ -12937,47 +13014,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('gachaConfirmOverlay');
     if(overlay) overlay.style.display = 'none';
   }
-  let _gachaConfirmHoldTimer = null;
   function bindGachaConfirmDrawBtn() {
     const btn = document.getElementById('gachaConfirmDrawBtn');
     const cancelBtn = document.getElementById('gachaConfirmCancelBtn');
     const overlay = document.getElementById('gachaConfirmOverlay');
     if(!btn || btn.dataset.bound) return;
     btn.dataset.bound = '1';
-    const fill = btn.querySelector('.gacha-hold-fill');
-    let longPressed = false;
-    const resetFill = () => { if(fill) { fill.style.transition = 'width .2s ease'; fill.style.width = '0%'; } };
-    const clearHoldTimer = () => { if(_gachaConfirmHoldTimer) { clearTimeout(_gachaConfirmHoldTimer); _gachaConfirmHoldTimer = null; } };
-    btn.onpointerdown = (e) => {
-      e.preventDefault();
-      longPressed = false;
-      if(fill) {
-        fill.style.transition = `width ${GACHA_HOLD_MS}ms linear`;
-        requestAnimationFrame(() => { fill.style.width = '100%'; });
-      }
-      _gachaConfirmHoldTimer = setTimeout(() => {
-        longPressed = true;
-        _gachaConfirmHoldTimer = null;
-        resetFill();
-        const kind = _gachaConfirmKind;
+    // ポップの「引く」は長押しではなく普通のタップ1回。押した瞬間に確定処理を実行する
+    btn.onclick = async () => {
+      const kind = _gachaConfirmKind;
+      btn.disabled = true;
+      try {
+        const results = await commitGachaDraw(kind);
         closeGachaConfirm();
-        runGacha(kind, { instant: true });
-      }, GACHA_HOLD_MS);
-    };
-    // タップ(3秒未満で指を離す)は「通常演出つきで確定」、指がボタンの外に出たらキャンセル
-    btn.onpointerup = () => {
-      if(!_gachaConfirmHoldTimer) return; // 既に長押し発火済み
-      clearHoldTimer();
-      resetFill();
-      if(!longPressed) {
-        const kind = _gachaConfirmKind;
-        closeGachaConfirm();
-        runGacha(kind, { instant: false });
+        if(results) armGachaRevealButton(kind, results);
+      } finally {
+        btn.disabled = false;
       }
     };
-    btn.onpointerleave = () => { clearHoldTimer(); resetFill(); };
-    btn.onpointercancel = () => { clearHoldTimer(); resetFill(); };
-    btn.oncontextmenu = (e) => e.preventDefault();
     if(cancelBtn) cancelBtn.onclick = closeGachaConfirm;
     if(overlay) overlay.onclick = (e) => { if(e.target === overlay) closeGachaConfirm(); };
   }
@@ -19815,8 +19869,8 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaAdBtnUsed: { ja:'広告分は今日の上限です', en:'Ad draws used up', ko:'광고 횟수를 오늘 다 썼어요', 'zh-tw':'廣告次數今天已達上限', 'zh-cn':'广告次数今天已达上限', es:'Tiradas por anuncio agotadas', fr:'Tirages via pub épuisés', pt:'Sorteios por anúncio esgotados', de:'Werbe-Ziehungen aufgebraucht', ar:'استُنفدت سحوبات الإعلانات', th:'ใช้โควตาโฆษณาหมดแล้ว', id:'Tarikan iklan sudah habis', ru:'Попытки за рекламу исчерпаны', it:'Estrazioni via annuncio esaurite', vi:'Đã hết lượt quay từ quảng cáo' },
     gachaConfirmTitle: { ja:'ガチャを引く？', en:'Draw the gacha?' },
     gachaConfirmDrawBtn: { ja:'引く', en:'Draw' },
-    gachaConfirmHoldHint: { ja:'長押しすると演出を飛ばしてすぐ結果が出ます', en:'Hold to skip the animation and see the result instantly' },
     gachaConfirmCancelBtn: { ja:'やめる', en:'Cancel' },
+    gachaRevealHoldLabel: { ja:'長押しで結果を見る', en:'Hold to see the result' },
     gachaConfirmFreeBody: { ja:'無料で1日1回引けます。', en:'One free draw per day.' },
     gachaConfirmAdBody: { ja:'広告を見て引きます。30秒の広告を見ると1回引けます。', en:'Watch a 30s ad for one draw.' },
     gachaConfirmCoinBody: { ja:'{cost}枚を消費して引きます\n所持: {balance}枚 → 消費後: {after}枚', en:'Spend {cost} coins to draw\nBalance: {balance} → After: {after}' },
