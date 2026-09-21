@@ -673,6 +673,10 @@
     .gacha-hold-btn .gacha-hold-body { position:relative; display:flex; align-items:center; justify-content:center; gap:9px; }
     .gacha-hold-btn-free { height:56px; background:linear-gradient(135deg,#6fd48f,#3fa96f); color:#07200f;
       font-size:15px; font-weight:900; box-shadow:0 14px 30px -16px rgba(92,201,142,.7); }
+    /* [追加] 専用の抽選画面(gacha-draw-mode)だけで使う長押しボタン。ガチャを引くボタンとは
+       見た目も分け、「結果を確認する」ための操作であることが一目で分かるようにする */
+    .gacha-reveal-btn { width:100%; height:60px; background:linear-gradient(135deg,#f3d786,#d9a441); color:#2a2006;
+      font-size:15px; font-weight:900; box-shadow:0 14px 30px -16px rgba(217,164,65,.7); }
     .gacha-coin-row { display:flex; gap:9px; margin-top:5px; }
     .gacha-hold-btn-coin, .gacha-hold-btn-coin10 { height:62px; border-radius:13px; width:100%; }
     .gacha-hold-btn-coin { flex:1 1 0; min-width:0; border:1px solid rgba(240,201,74,.35); background:rgba(240,201,74,.08); color:#f0c94a;
@@ -1044,14 +1048,24 @@
     .gacha-soldout-sub b { color:#dfeae3; }
     .gacha-soldout-plus { width:100%; height:40px; border-radius:10px; border:1px solid rgba(92,201,142,.35); background:rgba(92,201,142,.1); color:#a7ecc4; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
     .gacha-col-side { display:flex; flex-direction:column; gap:14px; }
-    /* [追加] 「ガチャ引かせるページ」：確定後、報酬確認が終わるまで筐体と長押しボタンだけに絞る */
+    /* [追加] 「ガチャ引かせるページ」：確定後、報酬確認が終わるまで筐体と長押しボタンだけに絞る。
+       通常の引くボタン(.gacha-actions、無料/広告/コイン)も隠し、#gachaRevealBtn(専用の
+       長押しボタン)だけを見せることで、抽選中の画面で別の抽選を誤って始められないようにする */
     #page-gacha.gacha-draw-mode .gacha-series-block,
     #page-gacha.gacha-draw-mode .gacha-head,
     #page-gacha.gacha-draw-mode .gacha-quest-shop-row,
     #page-gacha.gacha-draw-mode .gacha-col-side,
+    #page-gacha.gacha-draw-mode .gacha-actions,
     #page-gacha.gacha-draw-mode #gachaSoldOut { display:none !important; }
     #page-gacha.gacha-draw-mode .gacha-layout { justify-content:center; }
     #page-gacha.gacha-draw-mode .gacha-col-main { margin:0 auto; }
+    /* [追加] 抽選中(gacha-draw-lock)は、ヘッダーの戻る・ロゴと全体ナビ(サイドバー/ボトムナビ)を
+       操作不可にし、結果確認を終えるまで他のページへ離脱できないようにする(ユーザー指示：
+       「引かせるの優先」)。掲示板チャット全画面モード(board-chat-mobile)と同じ仕組みを流用 */
+    body.gacha-draw-lock .bnav,
+    body.gacha-draw-lock .bnav-carousel { display:none !important; }
+    body.gacha-draw-lock #page-gacha .back-btn { visibility:hidden; pointer-events:none; }
+    body.gacha-draw-lock #page-gacha .logo { pointer-events:none; opacity:.5; }
     .gacha-card { border-radius:15px; border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.02); padding:15px 16px; }
     .gacha-card-head { display:flex; align-items:center; gap:9px; margin-bottom:12px; }
     .gacha-card-title { font-size:13px; font-weight:800; color:#eaf6ee; }
@@ -4418,6 +4432,14 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
 
+      <!-- [追加] 専用の抽選画面(gacha-draw-mode)でだけ使う、長押しで結果を見るボタン。
+           通常のガチャを引くボタン(無料/広告/コイン)とは別物の新規ボタンにすることで、
+           抽選中の画面で誤って別の抽選を始められてしまう問題を防ぐ -->
+      <button type="button" id="gachaRevealBtn" class="gacha-hold-btn gacha-reveal-btn" style="display:none;">
+        <span class="gacha-hold-fill"></span>
+        <span class="gacha-hold-body"><span data-i18n="gachaRevealHoldLabel">長押しで結果を見る</span></span>
+      </button>
+
       <!-- 打ち止め：次に引ける時刻とアニメップル＋への導線 -->
       <div id="gachaSoldOut" class="gacha-soldout" style="display:none;">
         <p class="gacha-soldout-title" data-i18n="gachaSoldOutTitle">今日はここまで</p>
@@ -4439,10 +4461,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="gacha-fixed-slot">
           <span class="gacha-fixed-row">
             <span class="gacha-fixed-badge" data-i18n="gachaFixedBadge">確定</span>
-            <span class="gacha-fixed-name" data-i18n="gachaFixedName">本日のおすすめアニメ</span>
+            <span class="gacha-fixed-name" data-i18n="gachaFixedName">ランダムなアニメ</span>
             <span class="gacha-fixed-pct">100%</span>
           </span>
-          <span class="gacha-fixed-desc" data-i18n="gachaFixedDesc">あなたの12軸グラフに近い作品を1本ピック。必ず1枚出ます。</span>
+          <span class="gacha-fixed-desc" data-i18n="gachaFixedDesc">全作品から完全ランダムで1本ピック。必ず1枚出ます。</span>
         </div>
         <p class="gacha-side-label" data-i18n="gachaBonusLabel">おまけ枠（レア度で排出）</p>
         <div id="gachaRarityList" class="gacha-rarity-list"></div>
@@ -12961,29 +12983,34 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // [追加] ①確定が終わったら、専用の「ガチャ引かせるページ」(gacha-draw-mode)に切り替える。
-  // シリーズ帯・見出し・クエスト/ショップ導線・右カラム(出るもの/集めたもの/履歴)を隠し、
-  // ガチャ筐体(#gachaStage)と長押しボタンだけの画面にする。報酬を確認して結果画面を
-  // 閉じるまでこの状態を維持し、閉じたタイミングで通常のガチャページに戻す(exitGachaDrawMode)
+  // シリーズ帯・見出し・クエスト/ショップ導線・右カラム(出るもの/集めたもの/履歴)・通常の
+  // 引くボタン(.gacha-actions)を隠し、ガチャ筐体(#gachaStage)と専用の長押しボタン
+  // (#gachaRevealBtn)だけの画面にする。あわせてヘッダーの戻る・ロゴ・全体ナビ(サイドバー/
+  // ボトムナビ)を操作不可にし(gacha-draw-lock)、報酬を確認するまで他ページへ離脱できない
+  // ようにする(ユーザー指示：「引かせるの優先」)。結果画面を閉じたタイミングで
+  // 通常のガチャページに戻す(exitGachaDrawMode)
   function enterGachaDrawMode() {
     document.getElementById('page-gacha')?.classList.add('gacha-draw-mode');
+    document.body.classList.add('gacha-draw-lock');
   }
   function exitGachaDrawMode() {
     document.getElementById('page-gacha')?.classList.remove('gacha-draw-mode');
+    document.body.classList.remove('gacha-draw-lock');
+    const revealBtn = document.getElementById('gachaRevealBtn');
+    if(revealBtn) revealBtn.style.display = 'none';
   }
 
-  // ②確定後、元のページボタンを「長押しで結果を見る」状態に切り替える。
-  // 中身はbindGachaHold()と全く同じ長押し演出(3秒でジュースが満ちる)を再利用し、
-  // 長押し完了時にrevealGachaResult()を呼ぶだけの違い
+  // ②確定後、専用ボタン(#gachaRevealBtn)を「長押しで結果を見る」状態にする。
+  // [2026-09-21修正] 以前は通常のガチャを引くボタン(#gachaFreeBtn等)をそのまま流用していたが、
+  // 専用の抽選画面(gacha-draw-mode)で「他の枠のガチャボタンまで押せてしまう」不具合になって
+  // いた(ユーザー報告)。専用画面では.gacha-actions自体を丸ごと隠し、常にこの新規ボタン
+  // だけを使うようにした。中身はbindGachaHold()と全く同じ長押し演出(3秒でジュースが満ちる)を
+  // 再利用し、長押し完了時にrevealGachaResult()を呼ぶだけの違い
   let _gachaRevealHoldTimer = null;
-  function gachaBtnLabelEl(btn) {
-    return btn.querySelector('.gacha-coin-note') || btn.querySelector('.gacha-hold-body span:last-child');
-  }
-  function armGachaRevealButton(kind, results) {
-    const btnId = (kind === 'free' || kind === 'ad') ? 'gachaFreeBtn' : (kind === 'coin' ? 'gachaCoinBtn' : 'gachaCoin10Btn');
-    const btn = document.getElementById(btnId);
+  function armGachaRevealButton(results) {
+    const btn = document.getElementById('gachaRevealBtn');
     if(!btn) return;
-    const label = gachaBtnLabelEl(btn);
-    if(label) label.textContent = t('gachaRevealHoldLabel');
+    btn.style.display = '';
     btn.disabled = false;
     const fill = btn.querySelector('.gacha-hold-fill');
     const stage = document.getElementById('gachaStage');
@@ -13069,7 +13096,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const results = await commitGachaDraw(kind);
         closeGachaConfirm();
-        if(results) { enterGachaDrawMode(); armGachaRevealButton(kind, results); }
+        if(results) { enterGachaDrawMode(); armGachaRevealButton(results); }
       } finally {
         btn.disabled = false;
       }
@@ -19926,9 +19953,9 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaPoolTitle: { ja:'出るもの', en:'What you can get', ko:'나올 수 있는 것', 'zh-tw':'可能獲得', 'zh-cn':'可能获得', es:'Lo que puedes obtener', fr:'Ce que vous pouvez obtenir', pt:'O que você pode ganhar', de:'Was du bekommen kannst', ar:'ما يمكنك الحصول عليه', th:'สิ่งที่จะได้รับ', id:'Yang bisa Anda dapatkan', ru:'Что можно получить', it:'Cosa puoi ottenere', vi:'Những gì bạn có thể nhận' },
     gachaPoolNote: { ja:'1回で2枠', en:'2 slots per draw', ko:'1회에 2개', 'zh-tw':'每次2個名額', 'zh-cn':'每次2个名额', es:'2 espacios por tirada', fr:'2 emplacements par tirage', pt:'2 vagas por sorteio', de:'2 Plätze pro Ziehung', ar:'مكانان لكل سحب', th:'2 ช่องต่อการสุ่ม 1 ครั้ง', id:'2 slot per tarikan', ru:'2 слота за попытку', it:'2 slot per estrazione', vi:'2 ô mỗi lượt quay' },
     gachaFixedBadge: { ja:'確定', en:'Guaranteed', ko:'확정', 'zh-tw':'必得', 'zh-cn':'必得', es:'Garantizado', fr:'Garanti', pt:'Garantido', de:'Garantiert', ar:'مضمون', th:'รับประกัน', id:'Dijamin', ru:'Гарантировано', it:'Garantito', vi:'Đảm bảo' },
-    gachaFixedBadge2: { ja:'本日のおすすめ', en:"Today's pick" },
-    gachaFixedName: { ja:'本日のおすすめアニメ', en:"Today's anime pick", ko:'오늘의 추천 애니메', 'zh-tw':'今日推薦動畫', 'zh-cn':'今日推荐动画', es:'Anime recomendado de hoy', fr:'Anime recommandé du jour', pt:'Anime recomendado de hoje', de:'Heutiger Anime-Tipp', ar:'أنمي اليوم المقترح', th:'อนิเมะแนะนำวันนี้', id:'Rekomendasi anime hari ini', ru:'Аниме дня', it:'Anime consigliato di oggi', vi:'Anime gợi ý hôm nay' },
-    gachaFixedDesc: { ja:'あなたの12軸グラフに近い作品を1本ピック。必ず1枚出ます。', en:'One title close to your 12-axis graph. Always included.', ko:'당신의 12축 그래프와 가까운 작품 1편을 선정. 반드시 1장 나와요.', 'zh-tw':'挑選1部接近你12軸圖表的作品。必定會出現。', 'zh-cn':'挑选1部接近你12轴图表的作品。必定会出现。', es:'Un título cercano a tu gráfico de 12 ejes. Siempre incluido.', fr:'Un titre proche de votre graphique à 12 axes. Toujours inclus.', pt:'Um título próximo ao seu gráfico de 12 eixos. Sempre incluído.', de:'Ein Titel nahe deinem 12-Achsen-Diagramm. Immer enthalten.', ar:'عمل واحد قريب من رسمك البياني ذي 12 محورًا. مضمّن دائمًا.', th:'ผลงาน 1 เรื่องที่ใกล้เคียงกราฟ 12 แกนของคุณ ได้รับเสมอ', id:'Satu judul dekat dengan grafik 12 sumbu Anda. Selalu disertakan.', ru:'Один тайтл, близкий к вашему 12-осевому графику. Всегда включён.', it:'Un titolo vicino al tuo grafico a 12 assi. Sempre incluso.', vi:'Một tựa phim gần với biểu đồ 12 trục của bạn. Luôn có trong lượt quay.' },
+    gachaFixedBadge2: { ja:'ランダムなアニメ', en:'Random anime' },
+    gachaFixedName: { ja:'ランダムなアニメ', en:'Random anime' },
+    gachaFixedDesc: { ja:'全作品から完全ランダムで1本ピック。必ず1枚出ます。', en:'One title picked completely at random from all titles. Always included.' },
     gachaBonusLabel: { ja:'おまけ枠（レア度で排出）', en:'Bonus slot (by rarity)', ko:'보너스 슬롯 (희귀도별 배출)', 'zh-tw':'額外名額（依稀有度）', 'zh-cn':'额外名额（按稀有度）', es:'Espacio extra (por rareza)', fr:'Emplacement bonus (par rareté)', pt:'Vaga bônus (por raridade)', de:'Bonusplatz (nach Seltenheit)', ar:'مكان إضافي (حسب الندرة)', th:'ช่องโบนัส (ตามระดับความหายาก)', id:'Slot bonus (berdasarkan rarity)', ru:'Бонусный слот (по редкости)', it:'Slot bonus (per rarità)', vi:'Ô thưởng (theo độ hiếm)' },
     gachaBonusDesc: { ja:'マイページのアイコン図鑑から使えます。', en:'Use it from your icon collection.', ko:'마이페이지의 아이콘 도감에서 사용할 수 있어요.', 'zh-tw':'可從我的頁面的頭像圖鑑使用。', 'zh-cn':'可从我的页面的头像图鉴使用。', es:'Úsalo desde tu colección de íconos.', fr:'Utilisez-le depuis votre collection d\'icônes.', pt:'Use a partir da sua coleção de ícones.', de:'Nutze es aus deiner Symbolsammlung.', ar:'استخدمه من مجموعة الأيقونات الخاصة بك.', th:'ใช้งานได้จากคลังไอคอนในมายเพจ', id:'Gunakan dari koleksi ikon Anda.', ru:'Используйте из вашей коллекции иконок.', it:'Usalo dalla tua collezione di icone.', vi:'Dùng từ bộ sưu tập biểu tượng của bạn.' },
     gachaBonusUse: { ja:'図鑑で見る', en:'Open collection', ko:'도감에서 보기', 'zh-tw':'在圖鑑中查看', 'zh-cn':'在图鉴中查看', es:'Ver en la colección', fr:'Voir dans la collection', pt:'Ver na coleção', de:'In der Sammlung ansehen', ar:'عرض في المجموعة', th:'ดูในคลัง', id:'Lihat di koleksi', ru:'Смотреть в коллекции', it:'Vedi nella collezione', vi:'Xem trong bộ sưu tập' },
@@ -19938,7 +19965,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaCollectBtn: { ja:'図鑑を開く', en:'Open collection', ko:'도감 열기', 'zh-tw':'開啟圖鑑', 'zh-cn':'打开图鉴', es:'Abrir colección', fr:'Ouvrir la collection', pt:'Abrir coleção', de:'Sammlung öffnen', ar:'فتح المجموعة', th:'เปิดคลัง', id:'Buka koleksi', ru:'Открыть коллекцию', it:'Apri collezione', vi:'Mở bộ sưu tập' },
     gachaResultTitle1: { ja:'手に入れました', en:'You got it' },
     gachaResultTitle2: { ja:'2つ手に入れました', en:'You got 2 things' },
-    gachaPickMeta: { ja:'あなたのグラフに近い作品です', en:'Close to your graph', ko:'당신의 그래프와 가까운 작품이에요', 'zh-tw':'接近你圖表的作品', 'zh-cn':'接近你图表的作品', es:'Un título cercano a tu gráfico', fr:'Proche de votre graphique', pt:'Próximo ao seu gráfico', de:'Nahe deinem Diagramm', ar:'قريب من رسمك البياني', th:'ผลงานที่ใกล้เคียงกราฟของคุณ', id:'Dekat dengan grafik Anda', ru:'Близко к вашему графику', it:'Vicino al tuo grafico', vi:'Gần với biểu đồ của bạn' },
+    gachaPickMeta: { ja:'完全ランダムで選ばれた作品です', en:'Chosen completely at random' },
     gachaPickOpen: { ja:'作品を見る', en:'View title', ko:'작품 보기', 'zh-tw':'查看作品', 'zh-cn':'查看作品', es:'Ver título', fr:'Voir le titre', pt:'Ver título', de:'Titel ansehen', ar:'عرض العمل', th:'ดูผลงาน', id:'Lihat judul', ru:'Смотреть тайтл', it:'Vedi titolo', vi:'Xem tựa phim' },
     gachaPickFav: { ja:'お気に入り', en:'Favorite', ko:'즐겨찾기', 'zh-tw':'收藏', 'zh-cn':'收藏', es:'Favorito', fr:'Favori', pt:'Favorito', de:'Favorit', ar:'المفضلة', th:'รายการโปรด', id:'Favorit', ru:'Избранное', it:'Preferito', vi:'Yêu thích' },
     gachaPickFavDone: { ja:'追加しました', en:'Added', ko:'추가했어요', 'zh-tw':'已加入', 'zh-cn':'已加入', es:'Añadido', fr:'Ajouté', pt:'Adicionado', de:'Hinzugefügt', ar:'تمت الإضافة', th:'เพิ่มแล้ว', id:'Ditambahkan', ru:'Добавлено', it:'Aggiunto', vi:'Đã thêm' },
