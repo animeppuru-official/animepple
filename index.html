@@ -1018,11 +1018,6 @@
       .gacha-stage.is-filling .gacha-stage-zoom, .gacha-stage.is-filling .gacha-stage-vignette { animation:none; }
     }
     .gacha-stage-text { font-size:12.5px; line-height:1.7; color:#cfe0d5; text-shadow:0 1px 6px rgba(0,0,0,.85); }
-    /* 回転中：文字と進捗バーだけ。枠にたまったジュースを隠さないようにしている */
-    .gacha-spin-bar { width:180px; height:5px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
-    .gacha-spin-fill { display:block; height:100%; width:0%; background:linear-gradient(90deg,#d9a441,#f3d786); animation:gachaFill 2s ease-out forwards; }
-    @keyframes gachaSpin { to { transform:rotate(360deg); } }
-    @keyframes gachaFill { to { width:100%; } }
     @keyframes gachaPop { 0% { transform:scale(.7); opacity:0; } 60% { transform:scale(1.06); opacity:1; } 100% { transform:scale(1); } }
     .gacha-actions { width:100%; max-width:420px; display:flex; flex-direction:column; gap:9px; }
     .gacha-btn {
@@ -1049,6 +1044,14 @@
     .gacha-soldout-sub b { color:#dfeae3; }
     .gacha-soldout-plus { width:100%; height:40px; border-radius:10px; border:1px solid rgba(92,201,142,.35); background:rgba(92,201,142,.1); color:#a7ecc4; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
     .gacha-col-side { display:flex; flex-direction:column; gap:14px; }
+    /* [追加] 「ガチャ引かせるページ」：確定後、報酬確認が終わるまで筐体と長押しボタンだけに絞る */
+    #page-gacha.gacha-draw-mode .gacha-series-block,
+    #page-gacha.gacha-draw-mode .gacha-head,
+    #page-gacha.gacha-draw-mode .gacha-quest-shop-row,
+    #page-gacha.gacha-draw-mode .gacha-col-side,
+    #page-gacha.gacha-draw-mode #gachaSoldOut { display:none !important; }
+    #page-gacha.gacha-draw-mode .gacha-layout { justify-content:center; }
+    #page-gacha.gacha-draw-mode .gacha-col-main { margin:0 auto; }
     .gacha-card { border-radius:15px; border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.02); padding:15px 16px; }
     .gacha-card-head { display:flex; align-items:center; gap:9px; margin-bottom:12px; }
     .gacha-card-title { font-size:13px; font-weight:800; color:#eaf6ee; }
@@ -1141,6 +1144,7 @@
 
     @media (min-width:1000px) {
       .gacha-layout { max-width:none; padding:22px 28px 40px; display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:18px 24px; align-items:start; }
+      #page-gacha.gacha-draw-mode .gacha-layout { grid-template-columns:1fr; max-width:520px; margin:0 auto; }
       .gacha-col-main { min-width:0; }
       /* 演出枠は広い列いっぱいだと大きすぎるので上限を設ける */
       .gacha-stage { max-width:520px; }
@@ -8539,6 +8543,20 @@ document.addEventListener('DOMContentLoaded', () => {
           .limit(limit||1000);
         return { items: data||[], count: count||0 };
       },
+      // [2026-09-21追加] ガチャの確定枠(pickGachaAnime)用：anime_pages全体(8000件超)から
+      // 完全に均等ランダムな1件を取得する。id昇順の先頭何件かに限定する(=人気ページで
+      // 見つかった500件キャップと同じ偏り)方式は避け、まず件数を数えてから、その範囲内の
+      // ランダムなoffsetを1件だけ.range()で取得する(全件取得より軽量)
+      async getRandom() {
+        if(!sb) return null;
+        const { count } = await sb.from('anime_pages').select('id', { count: 'exact', head: true });
+        if(!count) return null;
+        const offset = Math.floor(Math.random() * count);
+        const { data } = await sb.from('anime_pages')
+          .select('id,title,title_en,image_url,meta,year')
+          .range(offset, offset);
+        return (data && data[0]) || null;
+      },
       // [2026-09-21追加] 指定したid群だけのメタデータ(タイトル・画像等)を軽量selectで取得する。
       // 人気ページの候補選定(getPopularCandidates)用。id件数が多くなりうるので、PostgRESTの
       // URL長制限を避けるためチャンクに分けて呼ぶ
@@ -12715,28 +12733,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }).catch(()=>{});
   }
 
-  // 確定枠：好みのグラフに近い作品を1本ピック（100%）
+  // 確定枠：作品を1本、完全ランダムでピック（100%確定）。
+  // [2026-09-21修正] `db.pages`という存在しないオブジェクトを参照しており(db.pagesはどこにも
+  // 定義されていない)、呼び出すたびに例外→catchでnullを返す状態だった。そのためガチャ結果に
+  // アニメカードが一切表示されない重大バグになっていた(ユーザー報告)。
+  // また「好みグラフに近い作品を優先」という当初の仕様も、ユーザーの意図とは異なっていた
+  // (「アニメは100%だけど、作品は完全ランダム」)。以前あった価値観プロフィールでの重み付けは
+  // 実際には_cachedValueProfileにitemsプロパティが無く常に不発だったが、コード上の記載も
+  // 削除し、anime_pages全体(8000件超)から均等にランダムな1件を取得するdb.animePages.getRandom()
+  // を使うように修正した(人気ページの500件キャップと同種の偏りを避けるため、id昇順の
+  // 先頭何件かに限定する方式は使わない)
   async function pickGachaAnime() {
     try {
-      const pages = await db.pages.list();
-      const cands = (pages || []).filter(p => p && p.title);
+      if(DB_MODE === 'supabase' && sb) {
+        const p = await db.animePages.getRandom();
+        if(p) {
+          return {
+            id: p.id,
+            kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-', '') : null,
+            title: p.title || p.title_en || '',
+            titleEn: p.title_en || p.title || '',
+            image: p.image_url || '',
+            meta: p.meta || '',
+            year: p.year || '',
+          };
+        }
+      }
+      // フォールバック：Supabase未接続時はローカルの静的データからランダムに1本
+      const cands = getAll().filter(p => p && p.title);
       if(!cands.length) return null;
-      // 価値観プロフィールがあれば近い作品を優先、なければランダム
-      const items = (_cachedValueProfile && _cachedValueProfile.items && _cachedValueProfile.items.length)
-        ? _cachedValueProfile.items : cands;
-      return items[Math.floor(Math.random() * items.length)] || null;
+      return cands[Math.floor(Math.random() * cands.length)] || null;
     } catch(e) { return null; }
   }
 
-  // 演出：待機 → 回転（2秒／タップでスキップ）→ 結果
-  function setGachaStageSpinning() {
-    const stage = document.getElementById('gachaStage');
-    if(!stage) return;
-    const idle = document.getElementById('gachaStagePlaceholder');
-    if(idle) idle.innerHTML = `
-      <span class="gacha-stage-text">${escapeHtml(t('gachaSpinning'))}</span>
-      <span class="gacha-spin-bar"><span class="gacha-spin-fill"></span></span>`;
-  }
   function setGachaStageIdle() {
     const idle = document.getElementById('gachaStagePlaceholder');
     if(idle) idle.innerHTML = `<span class="gacha-stage-text">${escapeHtml(t('gachaStageIdle'))}</span>`;
@@ -12915,11 +12944,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return results;
   }
 
-  // ③演出：長押し完了後に呼ばれる。確定済みのresultsを使って回転演出→結果表示のみ行う
-  // (抽選・付与・消費はcommitGachaDraw側で既に完了済みなので、ここでは絶対にやり直さない)
+  // ③演出：長押し完了後に呼ばれる。確定済みのresultsを使って結果表示のみ行う
+  // (抽選・付与・消費はcommitGachaDraw側で既に完了済みなので、ここでは絶対にやり直さない)。
+  // [2026-09-21修正] 長押し(3秒)が完了した直後に、さらに演出用の待ち時間(1.4秒の
+  // 「回転中」ウェイト)を挟んでいたため「長押しした後にロードを挟むのはテンポが悪い」と
+  // 指摘を受けた。長押し自体が既に十分な「溜め」の演出になっているので、
+  // 長押し完了後は追加の待ち時間なしで即座に結果を表示するようにした
   async function revealGachaResult(results) {
-    setGachaStageSpinning();
-    await new Promise(r => setTimeout(r, 1400));
     setGachaStageIdle();
     if(results.length === 1) {
       showGachaResult(results[0].pick, results[0].item, results[0].isDup);
@@ -12927,6 +12958,17 @@ document.addEventListener('DOMContentLoaded', () => {
       showGachaResultBatch(results);
     }
     updateGachaButtons();
+  }
+
+  // [追加] ①確定が終わったら、専用の「ガチャ引かせるページ」(gacha-draw-mode)に切り替える。
+  // シリーズ帯・見出し・クエスト/ショップ導線・右カラム(出るもの/集めたもの/履歴)を隠し、
+  // ガチャ筐体(#gachaStage)と長押しボタンだけの画面にする。報酬を確認して結果画面を
+  // 閉じるまでこの状態を維持し、閉じたタイミングで通常のガチャページに戻す(exitGachaDrawMode)
+  function enterGachaDrawMode() {
+    document.getElementById('page-gacha')?.classList.add('gacha-draw-mode');
+  }
+  function exitGachaDrawMode() {
+    document.getElementById('page-gacha')?.classList.remove('gacha-draw-mode');
   }
 
   // ②確定後、元のページボタンを「長押しで結果を見る」状態に切り替える。
@@ -13027,7 +13069,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const results = await commitGachaDraw(kind);
         closeGachaConfirm();
-        if(results) armGachaRevealButton(kind, results);
+        if(results) { enterGachaDrawMode(); armGachaRevealButton(kind, results); }
       } finally {
         btn.disabled = false;
       }
@@ -13145,8 +13187,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if(probCloseBtn) probCloseBtn.onclick = () => { if(probOverlay) probOverlay.style.display = 'none'; };
     if(probOverlay) probOverlay.onclick = (e) => { if(e.target === probOverlay) probOverlay.style.display = 'none'; };
     if(resOverlay) {
-      resOverlay.onclick = (e) => { if(e.target === resOverlay) resOverlay.style.display = 'none'; };
-      const close = () => { resOverlay.style.display = 'none'; };
+      // [2026-09-21修正] 結果(報酬)を確認して閉じたタイミングで、専用の抽選画面
+      // (gacha-draw-mode、筐体と長押しボタンだけの画面)から通常のガチャページに戻す
+      const close = () => {
+        resOverlay.style.display = 'none';
+        exitGachaDrawMode();
+      };
+      resOverlay.onclick = (e) => { if(e.target === resOverlay) close(); };
       const c1 = document.getElementById('gachaResultClose');
       const c2 = document.getElementById('gachaResultCloseBtn');
       if(c1) c1.onclick = close;
@@ -19876,7 +19923,6 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaConfirmCoinBody: { ja:'{cost}枚を消費して引きます\n所持: {balance}枚 → 消費後: {after}枚', en:'Spend {cost} coins to draw\nBalance: {balance} → After: {after}' },
     gachaConfirmCoinBodyLoading: { ja:'{cost}枚を消費して引きます', en:'Spend {cost} coins to draw' },
     gachaAnimeHistoryTitle: { ja:'出た作品の履歴', en:'History of anime drawn' },
-    gachaSpinning: { ja:'回しています…', en:'Spinning…', ko:'돌리는 중…', 'zh-tw':'轉動中…', 'zh-cn':'转动中…', es:'Girando…', fr:'En rotation…', pt:'Girando…', de:'Dreht sich…', ar:'جارٍ التدوير…', th:'กำลังหมุน…', id:'Memutar…', ru:'Крутится…', it:'In rotazione…', vi:'Đang quay…' },
     gachaPoolTitle: { ja:'出るもの', en:'What you can get', ko:'나올 수 있는 것', 'zh-tw':'可能獲得', 'zh-cn':'可能获得', es:'Lo que puedes obtener', fr:'Ce que vous pouvez obtenir', pt:'O que você pode ganhar', de:'Was du bekommen kannst', ar:'ما يمكنك الحصول عليه', th:'สิ่งที่จะได้รับ', id:'Yang bisa Anda dapatkan', ru:'Что можно получить', it:'Cosa puoi ottenere', vi:'Những gì bạn có thể nhận' },
     gachaPoolNote: { ja:'1回で2枠', en:'2 slots per draw', ko:'1회에 2개', 'zh-tw':'每次2個名額', 'zh-cn':'每次2个名额', es:'2 espacios por tirada', fr:'2 emplacements par tirage', pt:'2 vagas por sorteio', de:'2 Plätze pro Ziehung', ar:'مكانان لكل سحب', th:'2 ช่องต่อการสุ่ม 1 ครั้ง', id:'2 slot per tarikan', ru:'2 слота за попытку', it:'2 slot per estrazione', vi:'2 ô mỗi lượt quay' },
     gachaFixedBadge: { ja:'確定', en:'Guaranteed', ko:'확정', 'zh-tw':'必得', 'zh-cn':'必得', es:'Garantizado', fr:'Garanti', pt:'Garantido', de:'Garantiert', ar:'مضمون', th:'รับประกัน', id:'Dijamin', ru:'Гарантировано', it:'Garantito', vi:'Đảm bảo' },
