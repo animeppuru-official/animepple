@@ -1059,13 +1059,33 @@
     #page-gacha.gacha-draw-mode #gachaSoldOut { display:none !important; }
     #page-gacha.gacha-draw-mode .gacha-layout { justify-content:center; }
     #page-gacha.gacha-draw-mode .gacha-col-main { margin:0 auto; }
-    /* [追加] 抽選中(gacha-draw-lock)は、ヘッダーの戻る・ロゴと全体ナビ(サイドバー/ボトムナビ)を
-       操作不可にし、結果確認を終えるまで他のページへ離脱できないようにする(ユーザー指示：
-       「引かせるの優先」)。掲示板チャット全画面モード(board-chat-mobile)と同じ仕組みを流用 */
+    /* [追加] 抽選中(gacha-draw-lock)は、ヘッダー全体(戻る・ロゴ)と全体ナビ(サイドバー/
+       ボトムナビ)を消し、結果確認を終えるまで他のページへ離脱できないようにする(ユーザー指示：
+       「引かせるの優先」「ガチャ画面の時はヘッダーのアイコンも消して」)。
+       掲示板チャット全画面モード(board-chat-mobile)と同じ仕組みを流用 */
     body.gacha-draw-lock .bnav,
     body.gacha-draw-lock .bnav-carousel { display:none !important; }
-    body.gacha-draw-lock #page-gacha .back-btn { visibility:hidden; pointer-events:none; }
-    body.gacha-draw-lock #page-gacha .logo { pointer-events:none; opacity:.5; }
+    body.gacha-draw-lock #page-gacha > .hdr { display:none !important; }
+    /* [追加] 「質素すぎる」との指摘を受け、専用の抽選画面に雰囲気を足す。
+       上部にタイトル、背景にほのかな金色の光暈(こううん)を2つ、ゆっくり浮遊させる */
+    .gacha-draw-title { display:none; align-items:center; justify-content:center; gap:8px;
+      margin:26px 0 2px; font-size:16px; font-weight:900; color:#f0e4c8; letter-spacing:.04em;
+      text-shadow:0 2px 14px rgba(240,201,74,.5); }
+    .gacha-draw-title-icon { font-size:21px; filter:drop-shadow(0 0 6px rgba(240,201,74,.65)); }
+    #page-gacha.gacha-draw-mode { position:relative; min-height:100dvh; overflow:hidden;
+      background:radial-gradient(70% 55% at 50% 14%, rgba(240,201,74,.14) 0%, rgba(240,201,74,0) 72%); }
+    #page-gacha.gacha-draw-mode #gachaDrawTitle { display:flex; }
+    #page-gacha.gacha-draw-mode::before,
+    #page-gacha.gacha-draw-mode::after { content:''; position:absolute; width:300px; height:300px;
+      border-radius:50%; background:radial-gradient(circle, rgba(240,201,74,.12), transparent 70%);
+      pointer-events:none; z-index:0; animation:gachaDrawGlowFloat 7s ease-in-out infinite; }
+    #page-gacha.gacha-draw-mode::before { top:-90px; left:-90px; }
+    #page-gacha.gacha-draw-mode::after { bottom:-90px; right:-90px; animation-delay:-3.5s; }
+    #page-gacha.gacha-draw-mode .gacha-layout { position:relative; z-index:1; }
+    @keyframes gachaDrawGlowFloat { 0%,100% { transform:translateY(0) scale(1); } 50% { transform:translateY(-22px) scale(1.06); } }
+    @media (prefers-reduced-motion:reduce) {
+      #page-gacha.gacha-draw-mode::before, #page-gacha.gacha-draw-mode::after { animation:none; }
+    }
     .gacha-card { border-radius:15px; border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.02); padding:15px 16px; }
     .gacha-card-head { display:flex; align-items:center; gap:9px; margin-bottom:12px; }
     .gacha-card-title { font-size:13px; font-weight:800; color:#eaf6ee; }
@@ -4355,6 +4375,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="gacha-entry-sub" id="gachaShopSub" style="color:#c8a94a;">—</span>
           </span>
         </button>
+      </div>
+
+      <!-- [追加] 専用の抽選画面(gacha-draw-mode)でだけ出す簡易タイトル。ヘッダーを丸ごと
+           消した分、最低限「今なにをしている画面か」が分かるように残す -->
+      <div class="gacha-draw-title" id="gachaDrawTitle">
+        <span class="gacha-draw-title-icon">🎰</span>
+        <span data-i18n="gachaTitle">ガチャガチャ</span>
       </div>
 
       <!-- 演出枠：ガチャ動画／GIFの再生場所。待機＝揺れる／回転＝本編／結果＝開く -->
@@ -13102,7 +13129,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
     if(cancelBtn) cancelBtn.onclick = closeGachaConfirm;
-    if(overlay) overlay.onclick = (e) => { if(e.target === overlay) closeGachaConfirm(); };
+    // [2026-09-21修正] 以前は背景(ポップ以外の暗い部分)をタップしても閉じられたが、
+    // ユーザー指示で「ポップ以外の画面を押しても反応しないように」変更。閉じるには
+    // 「やめる」ボタンを明示的に押す必要がある
   }
 
   // 10連の結果を一覧で見せる（1件ずつの派手な演出はしない。確定枠は最初の1件だけ代表表示）
