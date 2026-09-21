@@ -7729,11 +7729,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const { error: updateAnimeError } = await sb.from('anime_pages').update({ image_url: pub.publicUrl }).eq('id', row.anime_id);
         if(updateAnimeError) return { error: updateAnimeError };
         const { error } = await sb.from('image_submissions').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', submissionId);
+        // [2026-09-20修正] 公開バケットへコピーした後、非公開バケット側の元ファイルが
+        // 消されずに残り続けていた(コピー元は不要になった後もストレージに残留する不具合)。
+        // 承認処理自体の成否には影響しない後始末なので、失敗してもcatchして無視する
+        await sb.storage.from('anime-image-submissions').remove([row.image_path]).catch(()=>{});
         return { error };
       },
       async reject(submissionId, note) {
         if(!sb) return { error: 'invalid' };
+        // [2026-09-20修正] 却下時にも非公開バケットの画像ファイル自体が削除されず、
+        // ステータスだけ'rejected'になって実ファイルが残り続けていた不具合を修正
+        const { data: row } = await sb.from('image_submissions').select('image_path').eq('id', submissionId).single();
         const { error } = await sb.from('image_submissions').update({ status: 'rejected', reviewer_note: note || null, reviewed_at: new Date().toISOString() }).eq('id', submissionId);
+        if(row?.image_path) await sb.storage.from('anime-image-submissions').remove([row.image_path]).catch(()=>{});
         return { error };
       },
       // [追加] 著作権対応：ある作品に直近で「承認された」画像を投稿したユーザーを探す
@@ -7745,8 +7753,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return data || null;
       },
       // [追加] 著作権対応：作品のポスター画像を削除する(プレースホルダー表示に戻す)
+      // [2026-09-20修正] これまでanime_pages.image_urlをnullにするだけで、Storage上の
+      // 実ファイル自体は削除されず公開バケットに残り続けていた(直リンクすれば見え続ける状態)。
+      // 著作権侵害の指摘を受けて「削除した」つもりが実際には削除できていない、という
+      // このセッションで指摘された不具合の修正。DB更新の前に実ファイルの削除を試み、
+      // ファイル削除に失敗してもDB側の非表示化(image_url=null)は必ず実行する(表示上の
+      // 即時対応を優先し、ファイル削除の失敗はログに残すだけにする)
       async removeAnimeImage(animeId) {
         if(!sb) return { error: 'invalid' };
+        const { data: page } = await sb.from('anime_pages').select('image_url').eq('id', animeId).single();
+        const url = page?.image_url || '';
+        const marker = '/public/anime-images/';
+        const idx = url.indexOf(marker);
+        if(idx !== -1) {
+          const storagePath = url.slice(idx + marker.length);
+          const { error: removeError } = await sb.storage.from('anime-images').remove([storagePath]);
+          if(removeError) console.warn('removeAnimeImage: Storageの実ファイル削除に失敗:', removeError.message);
+        }
         const { error } = await sb.from('anime_pages').update({ image_url: null }).eq('id', animeId);
         return { error };
       },
@@ -20494,6 +20517,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p>・複数アカウントの作成、または他者との共謀による組織的な評価操作（いわゆる組織票）行為</p>
         <p>・本サービスへの不正アクセス・過度な負荷をかける行為</p>
         <p>・著作権等の知的財産権を侵害する行為</p>
+        <p>・コイン、ガチャで入手したアイテム、またはアカウント自体を、金銭・他のサービスのポイントその他の経済的利益と交換・売買・譲渡すること（いわゆるRMT）、およびこれを勧誘する行為</p>
         <p>・その他、法令または公序良俗に反する行為</p>
 
         <h3>第6条（投稿コンテンツについて）</h3>
@@ -20504,7 +20528,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <h3>第7条（免責事項）</h3>
         <p>本サービスは現状有姿で提供されます。サービスの継続性・正確性・完全性について保証しません。本サービスの利用に起因する損害について、運営者は一切の責任を負いません。</p>
-        <p>本サービスに掲載されているアニメ情報（あらすじ・話数・制作会社等）は、運営者が各種公開情報をもとに収集・整理したものであり、内容の正確性を完全に保証するものではありません。誤りに気づいた場合はお問い合わせフォームよりご連絡ください。</p>
+        <p>本サービスに掲載されているアニメ情報（あらすじ・話数・制作会社等）は、運営者がWikipedia等の各種公開情報をもとに収集・整理したものであり、内容の正確性を完全に保証するものではありません。誤りに気づいた場合はお問い合わせフォームよりご連絡ください。</p>
 
         <h3>第8条（アフィリエイトについて）</h3>
         <p>本サービスは、各種アフィリエイトプログラムに参加しています。本サービス内のリンクを経由してサービスに登録・購入された場合、運営者に報酬が発生することがあります。</p>
@@ -20541,14 +20565,14 @@ document.addEventListener('DOMContentLoaded', () => {
       body: `
         <p class="legal-date">最終更新: 2026年9月</p>
         <p style="background:rgba(255,193,7,.12);border:1px solid rgba(255,193,7,.4);border-radius:8px;padding:.7rem .9rem;font-size:.8rem;color:#ffdd88;">
-          このページは下書きです。屋号での表示で法的に十分か、専門家（弁護士・行政書士等）に確認してもらってから公開してください。
+          このページは下書きです。公開前に専門家（弁護士・行政書士等）に最終確認を依頼してください。
         </p>
 
         <h3>販売事業者</h3>
-        <p>アニメップル</p>
+        <p>松井和真（屋号：アニメップル）</p>
 
         <h3>運営統括責任者</h3>
-        <p>アニメップル運営事務局</p>
+        <p>松井和真</p>
 
         <h3>所在地</h3>
         <p>請求があった場合は、遅滞なく開示いたします。お問い合わせフォームよりご連絡ください。</p>
