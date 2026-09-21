@@ -1575,13 +1575,6 @@
       border-radius:8px; background:#e5484d; color:#fff;
       font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;
     }
-    /* 「−」は消すのではなく末尾（9番）へ送る。9個は常に保持する */
-    .bnav-cz-minus {
-      position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:50%;
-      background:#e5484d; border:2px solid #0e2116; color:#fff; padding:0;
-      font-size:12px; font-weight:800; line-height:1; cursor:pointer;
-      display:flex; align-items:center; justify-content:center; z-index:2;
-    }
     /* ドラッグが苦手な人向けの2タップ入れ替え：1つ目を選ぶと実線の緑枠になる */
     .bnav-customize-cell.is-picked { outline:2px solid #5cc98e; outline-offset:2px; animation:none; }
     @media (prefers-reduced-motion:reduce) {
@@ -5314,8 +5307,8 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
 
-    <!-- 準備中：各カードから外して画面に1回だけ告知する -->
-    <div class="plan-soon-banner">
+    <!-- 準備中告知：ベータ版の間だけ表示し、正式版移行後は非表示にする(isBetaStageで判定、renderPlanPage側でdisplay切替) -->
+    <div class="plan-soon-banner" id="planSoonBanner">
       <span class="plan-soon-icon">🛠</span>
       <span class="plan-soon-copy">
         <span class="plan-soon-title" data-i18n="planSoonTitle">サブスクは近日公開予定です</span>
@@ -5406,7 +5399,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="tip-summary-amount" id="tipSummaryAmount">—</p>
         <p class="tip-summary-once" data-i18n="tipOnceNote">1回のみのお支払いです。継続課金にはなりません。</p>
         <button type="button" id="tipConfirmBtn" class="tip-confirm-btn" data-i18n="tipConfirmBtn">この金額で応援する</button>
-        <div class="tip-soon-note">
+        <!-- 準備中告知：ベータ版の間だけ表示し、正式版移行後は非表示にする(isBetaStageで判定、renderTipPage側でdisplay切替) -->
+        <div class="tip-soon-note" id="tipSoonNote">
           <span class="tip-soon-icon">🛠</span>
           <span data-i18n="tipComingSoonNote">決済機能は準備中です。もうしばらくお待ちください。</span>
         </div>
@@ -8454,6 +8448,23 @@ document.addEventListener('DOMContentLoaded', () => {
           .limit(limit||1000);
         return { items: data||[], count: count||0 };
       },
+      // [2026-09-21追加] 指定したid群だけのメタデータ(タイトル・画像等)を軽量selectで取得する。
+      // 人気ページの候補選定(getPopularCandidates)用。id件数が多くなりうるので、PostgRESTの
+      // URL長制限を避けるためチャンクに分けて呼ぶ
+      async getByIdsLight(ids) {
+        if(!sb || !ids || !ids.length) return [];
+        const CHUNK = 150;
+        const all = [];
+        for(let i=0; i<ids.length; i+=CHUNK) {
+          const chunk = ids.slice(i, i+CHUNK);
+          const { data, error } = await sb.from('anime_pages')
+            .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year')
+            .in('id', chunk);
+          if(error) { console.warn('getByIdsLight error:', error); continue; }
+          all.push(...(data||[]));
+        }
+        return all;
+      },
       // 年代フィルタ用：指定した年をSupabase側のWHERE句で絞り込んでから取得する。
       // 全件を取得してからJS側で絞るより通信量・処理量が大幅に少ない。
       async getByYear(year, limit) {
@@ -8473,8 +8484,11 @@ document.addEventListener('DOMContentLoaded', () => {
           .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year', { count: 'exact' });
         if(yearFrom) q = q.gte('year', String(yearFrom));
         if(yearTo) q = q.lte('year', String(yearTo));
-        // [修正] order()が無いと行の順序が呼ぶたびに変わりうるため、idの昇順で固定する
-        const { data, count } = await q.order('id', { ascending: true }).limit(limit||2000);
+        // [修正] order()が無いと行の順序が呼ぶたびに変わりうるため、idの昇順で固定する。
+        // [2026-09-21修正] 以前はデフォルト2000件の上限があり、年代の絞り込み幅が広いと
+        // (anime_pages全体は8000件超)対象がその上限を超えて一部の作品が漏れる可能性が
+        // あったため、テーブル全体を確実に上回る件数に引き上げた
+        const { data, count } = await q.order('id', { ascending: true }).limit(limit||20000);
         return { items: data||[], count: count||0 };
       },
       // 放送開始日が指定した年月（'YYYY-MM'）に該当する作品を取得する（今期アニメ用）
@@ -10382,23 +10396,29 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 人気ページ用の候補作品一覧（ローカルキャッシュ＋Supabase anime_pages をマージ）
-  async function getPopularCandidates() {
+  // [2026-09-21修正] 以前はgetAllWithLimit(500)でid昇順の先頭500件だけを候補にしていたため、
+  // anime_pages全体(8000件超)のうちidの文字列順で500番以内に入らない作品は、実際のPV数・
+  // レビュー数に関わらず人気ページに一切表示されないバグになっていた(ユーザー報告：
+  // 「進撃の巨人 第1期」はid順で6607番目相当のため対象外になっていた)。
+  // 呼び出し側(getPopularByPv/getPopularByReviews)で「実際にPV・レビューの実績がある
+  // 作品のid一覧」を先に確定させ、そのidだけをここで引数として渡してもらう方式に変更した
+  // (実績が無い＝0件の作品は元々ランキング上位に来ないので候補から外れても結果は変わらない)。
+  async function getPopularCandidates(neededIds) {
     let list = getAll();
-    if(DB_MODE === 'supabase' && sb) {
+    if(DB_MODE === 'supabase' && sb && neededIds && neededIds.length) {
       try {
-        const { items: dbPages } = await db.animePages.getAllWithLimit(500);
         const existingIds = new Set(list.map(a=>a.id));
-        const dbItems = (dbPages||[])
-          .filter(p => !existingIds.has(p.id))
-          .map(p => ({
-            id: p.id,
-            kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
-            title: p.title || p.title_en || '',
-            titleEn: p.title_en || p.title || '',
-            meta: p.meta || '',
-            image: p.image_url || '',
-            year: p.year || '',
-          }));
+        const missingIds = neededIds.filter(id => !existingIds.has(id));
+        const dbPages = await db.animePages.getByIdsLight(missingIds);
+        const dbItems = (dbPages||[]).map(p => ({
+          id: p.id,
+          kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
+          title: p.title || p.title_en || '',
+          titleEn: p.title_en || p.title || '',
+          meta: p.meta || '',
+          image: p.image_url || '',
+          year: p.year || '',
+        }));
         list = [...list, ...dbItems];
       } catch(e) { console.warn('popular candidates fetch:', e); }
     }
@@ -10410,6 +10430,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // 全件取得してJS側で絞るより通信量が少なく、500件上限の外にある作品も逃さない。
   // 人気順（PV数ベース）：pv_logsを期間・年代で絞って集計し、多い順に並べる
   async function getPopularByPv(period, yearFrom, yearTo, page) {
+    // [2026-09-21修正] 候補の確定に使うため、PV数(pvCounts)を先に取得する。
+    // 期間で絞ってもpvCounts自体はその期間にPVがあった全作品ぶんを返す(JS側の追加の
+    // 上限は無い)ため、そのidをそのまま候補として使える
+    const bound = periodBoundMs(period);
+    const sinceIso = bound ? new Date(bound).toISOString() : null;
+    const pvCounts = await db.pvLogs.getCountsByAnime(sinceIso);
     let all;
     if((yearFrom || yearTo) && DB_MODE === 'supabase' && sb) {
       try {
@@ -10425,7 +10451,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
       } catch(e) {
         console.warn('getByYearRange fetch:', e);
-        all = await getPopularCandidates();
+        all = await getPopularCandidates(Object.keys(pvCounts));
         all = all.filter(a => {
           const y = parseInt(a.year, 10);
           if(!y) return false;
@@ -10435,11 +10461,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     } else {
-      all = await getPopularCandidates();
+      all = await getPopularCandidates(Object.keys(pvCounts));
     }
-    const bound = periodBoundMs(period);
-    const sinceIso = bound ? new Date(bound).toISOString() : null;
-    const pvCounts = await db.pvLogs.getCountsByAnime(sinceIso);
     const withCount = all.map(a=>({...a, _pvCount: pvCounts[a.id] || 0}));
     // [修正] PV数が同数(特に0件)のitem同士は、idを安定した2次キーにして常に同じ順序にする
     withCount.sort((a,b)=> b._pvCount-a._pvCount || String(a.id).localeCompare(String(b.id)));
@@ -10461,6 +10484,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function getPopularByReviews(period, yearFrom, yearTo, page) {
+    // [修正] 以前はブラウザにキャッシュ済みの(訪問済みの)作品のレビューしか見ておらず、
+    // 未訪問の作品が実際の件数によらず0件扱いになりランキングが不正確だった。
+    // 全作品ぶんの生レビューを1回で取得する仕組み(検索用マスターグラフと共通)に差し替える
+    const rawReviews = await ensureAllReviewsRawCache();
+    const byAnime = {};
+    rawReviews.forEach(r => { (byAnime[r.animeId] ||= []).push(r); });
+    // [2026-09-21修正] 上のbyAnime(全期間でレビューが1件でもある作品のid一覧)を候補選定に使う。
+    // 期間で絞った件数が0になる作品は元々ランキング上位に来ないので、候補の時点では
+    // 「全期間で実績がある」ことだけを基準にしてよい
     let all;
     if((yearFrom || yearTo) && DB_MODE === 'supabase' && sb) {
       try {
@@ -10476,7 +10508,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
       } catch(e) {
         console.warn('getByYearRange fetch:', e);
-        all = await getPopularCandidates();
+        all = await getPopularCandidates(Object.keys(byAnime));
         all = all.filter(a => {
           const y = parseInt(a.year, 10);
           if(!y) return false;
@@ -10486,14 +10518,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     } else {
-      all = await getPopularCandidates();
+      all = await getPopularCandidates(Object.keys(byAnime));
     }
-    // [修正] 以前はブラウザにキャッシュ済みの(訪問済みの)作品のレビューしか見ておらず、
-    // 未訪問の作品が実際の件数によらず0件扱いになりランキングが不正確だった。
-    // 全作品ぶんの生レビューを1回で取得する仕組み(検索用マスターグラフと共通)に差し替える
-    const rawReviews = await ensureAllReviewsRawCache();
-    const byAnime = {};
-    rawReviews.forEach(r => { (byAnime[r.animeId] ||= []).push(r); });
     const bound = periodBoundMs(period);
     const withCount = all.map(a => {
       const scoped = byAnime[a.id] || [];
@@ -15508,6 +15534,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function renderPlanPage() {
     const root = document.getElementById('page-settings-plan');
     if(!root) return;
+    // [2026-09-21] 「サブスクは近日公開予定です」の告知はベータ版の間だけ出し、正式版移行後は
+    // 出さない(ユーザー指示)。applyBetaLockによる早期returnより前に判定する
+    const planSoonBanner = document.getElementById('planSoonBanner');
+    if(planSoonBanner) planSoonBanner.style.display = isBetaStage() ? 'flex' : 'none';
     if(applyBetaLock('page-settings-plan', 'ベータ版ではプランのご購入は準備中です。今は全員が＋プラン相当の機能を無料でお使いいただけます。')) return;
     const paymentsReady = true; // サンドボックス経由でのPaddle決済に対応
 
@@ -15807,6 +15837,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const customError = document.getElementById('tipCustomError');
     const confirmBtn = document.getElementById('tipConfirmBtn');
     const notifyBtn = document.getElementById('tipNotifyBtn');
+    // [2026-09-21] 「決済機能は準備中です」の告知はベータ版の間だけ出し、正式版移行後は出さない(ユーザー指示)
+    const soonNote = document.getElementById('tipSoonNote');
+    if(soonNote) soonNote.style.display = isBetaStage() ? 'flex' : 'none';
+    if(notifyBtn) notifyBtn.style.display = isBetaStage() ? '' : 'none';
     const summaryEl = document.getElementById('tipSummaryAmount');
     const msgEl = document.getElementById('tipMessage');
     if(msgEl) msgEl.value = '';
@@ -19519,8 +19553,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bnavCustomizeTitle: { ja:'ツールバーの並び替え', en:'Reorder toolbar' },
     bnavCustomizeHint: { ja:'ドラッグして並べ替え。最初の5つが1ページ目に出ます。', en:'Press and hold an icon to drag and reorder it. The first 5 appear on the first page.' },
     bnavCzPage2: { ja:'スワイプ2ページ目', en:'Swipe page 2' },
-    bnavCzTapHint: { ja:'タップでも並べ替えできます（− で末尾へ）', en:'You can also tap two icons to swap (− sends to the end)' },
-    bnavCzToEnd: { ja:'末尾へ送る', en:'Send to end' },
+    bnavCzTapHint: { ja:'タップでも並べ替えできます', en:'You can also tap two icons to swap' },
     bnavCzSaved: { ja:'ナビの並びを保存しました', en:'Saved your nav order' },
     bnavCzUndo: { ja:'元に戻す', en:'Undo' },
     bnavCzLongPressHint: { ja:'長押しで並べ替え', en:'Hold to rearrange' },
@@ -25056,7 +25089,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="bnav-customize-cell" data-id="${item.id}" style="display:flex;flex-direction:column;align-items:center;gap:7px;padding:13px 5px 10px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#c3d4c9;animation-delay:${(i % 3) * .12 + Math.floor(i / 3) * .03}s;">
           <span class="bnav-cz-num">${i + 1}</span>
           ${item.hasBadge ? '<span class="bnav-cz-badge bnav-cz-badge-slot" style="display:none;">0</span>' : ''}
-          <button type="button" class="bnav-cz-minus" aria-label="${escapeHtml(t('bnavCzToEnd'))}">−</button>
           <span style="pointer-events:none;display:flex;">${item.icon}</span>
           <span style="pointer-events:none;font-size:9.5px;font-weight:700;line-height:1.2;text-align:center;">${escapeHtml(item.label)}</span>
         </div>`;
@@ -25139,30 +25171,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // 末尾へ送る（「−」）：消さずに9番へ回すので迷子にならない
-    function sendToEnd(cell) {
-      const cells = Array.from(grid.querySelectorAll('.bnav-customize-cell'));
-      const firstRects = {};
-      cells.forEach(c => { firstRects[c.dataset.id] = c.getBoundingClientRect(); });
-      grid.appendChild(cell);
-      syncOrderFromDom();
-      renumber();
-      cells.forEach(c => {
-        const first = firstRects[c.dataset.id];
-        const last = c.getBoundingClientRect();
-        const dx = first.left - last.left, dy = first.top - last.top;
-        if(dx === 0 && dy === 0) return;
-        c.style.animation = 'none';
-        c.style.transition = 'none';
-        c.style.transform = `translate(${dx}px, ${dy}px)`;
-        requestAnimationFrame(() => {
-          c.style.transition = 'transform .24s cubic-bezier(.22,1,.36,1)';
-          c.style.transform = '';
-          setTimeout(() => { c.style.transition = ''; c.style.transform = ''; c.style.animation = ''; }, 260);
-        });
-      });
-    }
-
     let pickedCell = null; // 2タップ入れ替えの1つ目
     // renderGrid()（＝wireDrag()）は1回のドラッグ中の入れ替えのたびに何度も呼ばれるため、
     // 呼ばれるたびに毎回セルの数だけwindowにリスナーを追加すると、消されずにどんどん積み重なってしまう。
@@ -25238,10 +25246,6 @@ document.addEventListener('DOMContentLoaded', () => {
       _bnavCzWindowListeners.push({ type:'mousemove', fn:onWindowMouseMove });
       window.addEventListener('mouseup', endDrag);
       _bnavCzWindowListeners.push({ type:'mouseup', fn:endDrag });
-
-      // 「−」で末尾へ
-      const minus = cell.querySelector('.bnav-cz-minus');
-      if(minus) minus.addEventListener('click', (ev) => { ev.stopPropagation(); sendToEnd(cell); });
 
       // タップ2回で入れ替え（ドラッグが苦手な人向け）
       cell.addEventListener('click', (ev) => {
