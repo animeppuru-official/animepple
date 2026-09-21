@@ -674,16 +674,40 @@
     .gacha-hold-btn-free { height:56px; background:linear-gradient(135deg,#6fd48f,#3fa96f); color:#07200f;
       font-size:15px; font-weight:900; box-shadow:0 14px 30px -16px rgba(92,201,142,.7); }
     .gacha-coin-row { display:flex; gap:9px; margin-top:5px; }
-    .gacha-hold-btn-coin, .gacha-hold-btn-coin10 { height:58px; border-radius:13px; }
-    .gacha-hold-btn-coin { flex:1 1 0; min-width:0; border:1px solid rgba(240,201,74,.35); background:rgba(240,201,74,.08); color:#f0c94a; }
-    .gacha-hold-btn-coin10 { flex:1.25 1 0; min-width:0; border:1px solid rgba(240,201,74,.55);
-      background:linear-gradient(135deg,rgba(240,201,74,.22),rgba(240,201,74,.08)); color:#ffe9a8; }
-    .gacha-hold-btn-coin .gacha-hold-fill, .gacha-hold-btn-coin10 .gacha-hold-fill { background:rgba(240,201,74,.28); }
-    .gacha-hold-btn-coin .gacha-hold-body, .gacha-hold-btn-coin10 .gacha-hold-body { flex-direction:column; gap:2px; }
-    .gacha-coin-amount { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:900; }
-    .gacha-coin-dot { width:13px; height:13px; border-radius:50%; background:linear-gradient(135deg,#f3d786,#c9982c); }
+    .gacha-hold-btn-coin, .gacha-hold-btn-coin10 { height:62px; border-radius:13px; width:100%; }
+    .gacha-hold-btn-coin { flex:1 1 0; min-width:0; border:1px solid rgba(240,201,74,.35); background:rgba(240,201,74,.08); color:#f0c94a;
+      box-shadow:0 10px 22px -14px rgba(240,201,74,.55); }
+    /* [2026-09-21強化] コイン購入導線の「特別感」が薄いという指摘への対応。
+       10連ボタンだけ一段強いゴールドのグラデーション・光彩(box-shadow)・上を這うシャインの
+       アニメーションを付け、有償の目玉メニューだと一目で伝わるようにした。 */
+    .gacha-hold-btn-coin10 { border:1px solid rgba(240,201,74,.7);
+      background:linear-gradient(135deg,rgba(240,201,74,.32),rgba(240,201,74,.1) 60%,rgba(240,201,74,.32));
+      color:#ffe9a8; box-shadow:0 12px 26px -12px rgba(240,201,74,.7), inset 0 0 0 1px rgba(255,233,168,.12); }
+    .gacha-coin10-shine { position:absolute; inset:0; overflow:hidden; pointer-events:none; border-radius:inherit; }
+    .gacha-coin10-shine::after { content:''; position:absolute; top:-60%; left:-30%; width:40%; height:220%;
+      background:linear-gradient(120deg, transparent, rgba(255,255,255,.35), transparent);
+      transform:rotate(20deg); animation:gachaCoin10Shine 3.2s ease-in-out infinite; }
+    @keyframes gachaCoin10Shine { 0%,60% { left:-30%; } 100% { left:130%; } }
+    .gacha-hold-btn-coin .gacha-hold-body, .gacha-hold-btn-coin10 .gacha-hold-body { gap:8px; }
+    .gacha-coin-text { display:flex; flex-direction:column; align-items:flex-start; gap:1px; }
+    .gacha-coin-amount { font-size:15px; font-weight:900; line-height:1.1; }
+    .gacha-hold-btn-coin10 .gacha-coin-amount { font-size:17px; }
+    .gacha-coin10-dot { width:22px; height:22px; filter:drop-shadow(0 0 4px rgba(240,201,74,.6)); }
     .gacha-coin-note { font-size:10.5px; font-weight:700; color:#c8a94a; }
     .gacha-hold-btn-coin10 .gacha-coin-note { color:#e0c576; }
+    .gacha-coin10-wrap { position:relative; flex:1.25 1 0; min-width:0; }
+    /* [2026-09-21新設] ガチャページ見出し下の「無償/有償」残高カード */
+    .gacha-coin-breakdown { display:none; align-items:stretch; gap:0; margin:10px 0 0;
+      border:1px solid rgba(240,201,74,.3); background:rgba(240,201,74,.06); border-radius:12px; padding:10px 14px; }
+    .gacha-coin-breakdown-stat { flex:1 1 0; min-width:0; display:flex; align-items:center; gap:9px; }
+    .gacha-coin-breakdown-stat .coin-dot { flex:0 0 auto; }
+    .gacha-coin-breakdown-stat.is-paid .coin-dot { filter:drop-shadow(0 0 4px rgba(240,201,74,.55)); }
+    .gacha-coin-breakdown-divider { width:1px; align-self:stretch; background:rgba(240,201,74,.25); margin:1px 14px; }
+    .gacha-coin-breakdown-text { display:flex; flex-direction:column; gap:1px; min-width:0; }
+    .gacha-coin-breakdown-label { font-size:10.5px; font-weight:700; color:#8db5a0; }
+    .gacha-coin-breakdown-val { font-size:17px; font-weight:900; color:#dfeae3; line-height:1.15;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .gacha-coin-breakdown-stat.is-paid .gacha-coin-breakdown-val { color:#ffe08a; }
     .gacha-coin-tag { position:absolute; top:-8px; left:50%; transform:translateX(-50%); z-index:2; font-size:9.5px;
       font-weight:900; padding:2px 8px; border-radius:8px; background:#f0c94a; color:#0e2416; white-space:nowrap; }
 
@@ -4228,12 +4252,26 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="gacha-head-copy">
           <h2 class="gacha-title" data-i18n="gachaTitle">ガチャガチャ</h2>
           <p class="gacha-lead" data-i18n="gachaLead">1日1回無料。広告を見るとあと3回引けます。</p>
-          <p class="gacha-coin-breakdown" id="gachaCoinBreakdown" style="display:none;margin:6px 0 0;font-size:11.5px;color:#c8a94a;">
-            <i class="coin-dot" style="width:11px;height:11px;"></i>
-            <span data-i18n="gachaCoinFreeLabel">無償</span> <b id="gachaCoinFreeVal">0</b>
-            <span style="color:#5a7263;">・</span>
-            <span data-i18n="gachaCoinPaidLabel">有償</span> <b id="gachaCoinPaidVal">0</b>
-          </p>
+          <!-- [2026-09-21再デザイン] 以前は小さい1行テキストだけで存在感が薄かった(ユーザー指摘：
+               「小さくポツンと書かれてるだけ」)。枠付きのカードにし、無償/有償それぞれに
+               大きめのコインアイコン・数字を持たせて見やすくした -->
+          <div class="gacha-coin-breakdown" id="gachaCoinBreakdown">
+            <div class="gacha-coin-breakdown-stat">
+              <i class="coin-dot coin-dot-lg"></i>
+              <div class="gacha-coin-breakdown-text">
+                <span class="gacha-coin-breakdown-label" data-i18n="gachaCoinFreeLabel">無償</span>
+                <b id="gachaCoinFreeVal" class="gacha-coin-breakdown-val">0</b>
+              </div>
+            </div>
+            <div class="gacha-coin-breakdown-divider"></div>
+            <div class="gacha-coin-breakdown-stat is-paid">
+              <i class="coin-dot coin-dot-lg"></i>
+              <div class="gacha-coin-breakdown-text">
+                <span class="gacha-coin-breakdown-label" data-i18n="gachaCoinPaidLabel">有償</span>
+                <b id="gachaCoinPaidVal" class="gacha-coin-breakdown-val">0</b>
+              </div>
+            </div>
+          </div>
         </div>
         <!-- 確率と景品：見出しの右。残り回数は各ボタンのラベル側で示すのでここには置かない -->
         <button type="button" id="gachaProbBtn" class="gacha-prob-entry">
@@ -4311,18 +4349,31 @@ document.addEventListener('DOMContentLoaded', () => {
           <button type="button" id="gachaCoinBtn" class="gacha-hold-btn gacha-hold-btn-coin">
             <span class="gacha-hold-fill"></span>
             <span class="gacha-hold-body">
-              <span class="gacha-coin-amount"><i class="gacha-coin-dot"></i><span id="gachaCoinBtnLabel">100</span></span>
-              <span class="gacha-coin-note" data-i18n="gachaCoinOnce">1回引く</span>
+              <i class="coin-dot coin-dot-lg"></i>
+              <span class="gacha-coin-text">
+                <span class="gacha-coin-amount"><span id="gachaCoinBtnLabel">100</span></span>
+                <span class="gacha-coin-note" data-i18n="gachaCoinOnce">1回引く</span>
+              </span>
             </span>
           </button>
-          <button type="button" id="gachaCoin10Btn" class="gacha-hold-btn gacha-hold-btn-coin10">
-            <span class="gacha-hold-fill"></span>
+          <!-- [2026-09-21修正] SR以上確定バッジ(.gacha-coin-tag)は上に飛び出す形で
+               position:absolute; top:-8px を使っているが、以前はボタン自身の内側に置いていたため
+               ボタンのoverflow:hiddenでバッジの上半分が切れて見えなくなっていた(ユーザー報告)。
+               バッジをボタンの外側(overflow:hiddenが掛かっていないこのラッパー)に出すことで解消。 -->
+          <div class="gacha-coin10-wrap">
             <span class="gacha-coin-tag" data-i18n="gachaCoin10Tag">SR以上1枚確定</span>
-            <span class="gacha-hold-body">
-              <span class="gacha-coin-amount"><i class="gacha-coin-dot"></i><span id="gachaCoin10BtnLabel">1000</span></span>
-              <span class="gacha-coin-note" data-i18n="gachaCoin10Note">10連で引く</span>
-            </span>
-          </button>
+            <button type="button" id="gachaCoin10Btn" class="gacha-hold-btn gacha-hold-btn-coin10">
+              <span class="gacha-hold-fill"></span>
+              <span class="gacha-coin10-shine"></span>
+              <span class="gacha-hold-body">
+                <i class="coin-dot coin-dot-lg gacha-coin10-dot"></i>
+                <span class="gacha-coin-text">
+                  <span class="gacha-coin-amount"><span id="gachaCoin10BtnLabel">1000</span></span>
+                  <span class="gacha-coin-note" data-i18n="gachaCoin10Note">10連で引く</span>
+                </span>
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -12278,6 +12329,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return candidates[Math.floor(Math.random() * candidates.length)] || null;
   }
+  // [2026-09-21追加] 10連の「SR以上1枚確定」保証ロジックを、runGacha()から独立した
+  // 純粋関数として切り出した。以前はrunGacha()内にインライン実装されており、コイン消費・
+  // DB書き込み等の副作用と混ざっていて自動テストで検証しづらかったため(ユーザーから
+  // 「実際に作れているか」の確認を求められたことがきっかけ)。ロジック自体は変更していない:
+  // picksがちょうど10件の時だけ、SR以上(GACHA_RARITY_ORDER上でSR以降)が1枚も無ければ
+  // 最後の1枠をSR以上限定(drawGachaItem(SR_TIER_INDEX))で引き直す。
+  // 10件以外(1回引き等)はそのまま返す＝何もしない。
+  function applyGachaTenPullGuarantee(picks) {
+    if(picks.length !== 10) return picks;
+    const SR_TIER_INDEX = GACHA_RARITY_ORDER.indexOf('SR');
+    const hasSrOrAbove = picks.some(p => p.item && GACHA_RARITY_ORDER.indexOf(p.item.tier) >= SR_TIER_INDEX);
+    if(!hasSrOrAbove) {
+      const guaranteed = drawGachaItem(SR_TIER_INDEX);
+      if(guaranteed) picks[picks.length - 1].item = guaranteed;
+    }
+    return picks;
+  }
   // [修正] 無料プランは「無料1回＋広告視聴で1回」の合計2回まで。＋・クリエイターズは
   // 無制限(runGacha/updateGachaButtons側でisFeatureRestricted()を見て、この上限自体を適用しない)
   const GACHA_AD_LIMIT = 1;
@@ -12422,7 +12490,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const paidEl = document.getElementById('gachaCoinPaidVal');
     if(freeEl) freeEl.textContent = free.toLocaleString();
     if(paidEl) paidEl.textContent = paid.toLocaleString();
-    el.style.display = 'block';
+    el.style.display = 'flex';
   }
   async function updateGachaButtons() {
     const freeBtn = document.getElementById('gachaFreeBtn');
@@ -12613,17 +12681,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 完全に独立抽選なため、SR以上が1枚も出ない回(現在の排出率だと約13.7%の確率)が
     // 起こりえて表示と実態が食い違っていた。10連の場合、事前に10枠分の抽選結果を
     // 確定させ、SR以上(GACHA_RARITY_ORDER上でSRのindex=2以上)が1枚も無ければ
-    // 最後の1枠をSR以上限定で引き直して保証する
-    const SR_TIER_INDEX = GACHA_RARITY_ORDER.indexOf('SR');
+    // 最後の1枠をSR以上限定で引き直して保証する(実際の保証処理はapplyGachaTenPullGuarantee参照)
     const picks = [];
     for(let i = 0; i < pullCount; i++) picks.push({ pick: await pickGachaAnime(), item: drawGachaItem() });
-    if(pullCount === 10) {
-      const hasSrOrAbove = picks.some(p => p.item && GACHA_RARITY_ORDER.indexOf(p.item.tier) >= SR_TIER_INDEX);
-      if(!hasSrOrAbove) {
-        const guaranteed = drawGachaItem(SR_TIER_INDEX);
-        if(guaranteed) picks[picks.length - 1].item = guaranteed;
-      }
-    }
+    applyGachaTenPullGuarantee(picks);
     const results = [];
     for(let i = 0; i < pullCount; i++) {
       const { pick, item } = picks[i];
@@ -19574,7 +19635,7 @@ document.addEventListener('DOMContentLoaded', () => {
     questClaimLocked: { ja:'あと{n}ステップで受け取れます', en:'{n} step(s) left to claim' },
     questStepsLabel: { ja:'達成のしかた', en:'How to complete' },
     questStep1Title: { ja:'レビューを書く', en:'Write a review' },
-    questStep1Body: { ja:'作品ページから、下の条件を満たすレビューを投稿します。', en:'Post a review from a title page that meets the criteria below.' },
+    questStep1Body: { ja:'作品ページから、上質なレビューを投稿します。', en:'Post a high-quality review from a title page.' },
     questStep1Action: { ja:'レビューを書く', en:'Write' },
     questStep2Title: { ja:'SNSでシェアする', en:'Share on social media' },
     questStep2Body: { ja:'書いたレビューの共有カードを作って、外部に投稿します。', en:'Create the share card for your review and post it externally.' },
