@@ -1072,6 +1072,37 @@
     .gacha-collect-cell.is-locked { border:1px dashed rgba(255,255,255,.1); background:transparent; color:#3f4f46; font-size:12px; }
     .gacha-collect-cell img { width:100%; height:100%; object-fit:cover; }
     .gacha-collect-btn { width:100%; height:34px; margin-top:11px; border-radius:9px; border:1px solid rgba(255,255,255,.1); background:transparent; color:#dfeae3; font:inherit; font-size:11.5px; font-weight:700; cursor:pointer; }
+    /* [追加] 出た作品の履歴 */
+    .gacha-anime-history-list { display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; }
+    .gacha-anime-history-empty { margin:6px 0; font-size:11.5px; color:#66786d; text-align:center; }
+    .gacha-anime-history-row {
+      display:flex; align-items:center; gap:10px; padding:7px; border-radius:10px;
+      background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); cursor:pointer;
+    }
+    .gacha-anime-history-row:hover { background:rgba(255,255,255,.05); }
+    .gacha-anime-history-thumb { flex:0 0 auto; width:36px; height:36px; border-radius:8px; overflow:hidden; background:rgba(255,255,255,.04); display:flex; align-items:center; justify-content:center; font-size:14px; }
+    .gacha-anime-history-thumb img { width:100%; height:100%; object-fit:cover; }
+    .gacha-anime-history-text { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:1px; }
+    .gacha-anime-history-name { font-size:12px; font-weight:700; color:#dfeae3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gacha-anime-history-time { font-size:10px; color:#66786d; }
+    /* [追加] ガチャを引く前の確認ポップ */
+    .gacha-confirm-overlay {
+      position:fixed; inset:0; z-index:10003;
+      background:rgba(4,10,7,.78); display:flex; align-items:center; justify-content:center; padding:20px;
+      animation:gachaFade .18s ease both;
+    }
+    .gacha-confirm-box {
+      width:100%; max-width:360px; background:#152a1e; border:1px solid rgba(240,201,74,.35);
+      border-radius:20px; padding:22px; text-align:center; box-shadow:0 30px 70px -20px rgba(0,0,0,.8);
+    }
+    .gacha-confirm-title { margin:0 0 10px; font-size:16px; font-weight:800; color:#e8f0ea; }
+    .gacha-confirm-body { margin:0 0 16px; font-size:12.5px; line-height:1.7; color:#c3d4c9; white-space:pre-line; }
+    .gacha-confirm-draw-btn { width:100%; }
+    .gacha-confirm-hint { margin:8px 0 0; font-size:10.5px; color:#66786d; }
+    .gacha-confirm-cancel-btn {
+      width:100%; height:38px; margin-top:12px; border-radius:10px; border:1px solid rgba(255,255,255,.12);
+      background:transparent; color:#dfeae3; font:inherit; font-size:12.5px; font-weight:700; cursor:pointer;
+    }
     /* 結果 */
     .gacha-result-overlay { position:fixed; inset:0; z-index:10004; background:rgba(4,10,7,.8); display:flex; align-items:center; justify-content:center; padding:16px; animation:gachaFade .18s ease both; }
     @keyframes gachaFade { from { opacity:0; } to { opacity:1; } }
@@ -4320,7 +4351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="gacha-stage-vignette"></span>
         <div class="gacha-stage-zoom">
           <div id="gachaStagePlaceholder" class="gacha-stage-idle">
-            <span class="gacha-stage-text" data-i18n="gachaStageIdle">ボタンを3秒長押し</span>
+            <span class="gacha-stage-text" data-i18n="gachaStageIdle">上のボタンでガチャを引く</span>
           </div>
         </div>
         <!-- 筐体の刻印プレート -->
@@ -4339,8 +4370,9 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <!-- 無料→広告は同じ枠に出し分け。その下にコイン消費の1回引き・10連。
-           どのボタンも「押した瞬間に引く」のではなく、そのボタン自体を3秒長押しして引く。
-           押している間はボタンが左から満ちるバーになり、同時に枠にジュースがたまる。 -->
+           [2026-09-21修正] どのボタンもタップした瞬間には引かず、まず#gachaConfirmOverlayで
+           「ガチャを引く？」の確認ポップを開く(openGachaConfirm)。ポップ内の「引く」ボタンを
+           タップすると通常演出つきで抽選、3秒長押しすると演出を飛ばして即結果を出す -->
       <div class="gacha-actions">
         <button type="button" id="gachaFreeBtn" class="gacha-hold-btn gacha-hold-btn-free">
           <span class="gacha-hold-fill"></span>
@@ -4418,6 +4450,16 @@ document.addEventListener('DOMContentLoaded', () => {
         <div id="gachaCollectGrid" class="gacha-collect-grid"></div>
         <button type="button" class="gacha-collect-btn" onclick="nav('my-icons')" data-i18n="gachaCollectBtn">図鑑を開く</button>
       </div>
+
+      <!-- [追加] 出た作品(確定枠のアニメカード)の履歴。ユーザー指示で新設 -->
+      <div class="gacha-card">
+        <div class="gacha-card-head">
+          <span class="gacha-card-title" data-i18n="gachaAnimeHistoryTitle">出た作品の履歴</span>
+        </div>
+        <div id="gachaAnimeHistoryList" class="gacha-anime-history-list">
+          <p class="gacha-anime-history-empty" data-i18n="historyEmpty">まだ履歴がありません</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -4435,6 +4477,22 @@ document.addEventListener('DOMContentLoaded', () => {
       <button type="button" id="gachaResultAgainBtn" class="gacha-btn gacha-btn-ad"></button>
       <button type="button" id="gachaResultCloseBtn" class="gacha-btn gacha-btn-prob" data-i18n="gachaCloseBtn">閉じる</button>
     </div>
+  </div>
+</div>
+
+<!-- [追加] ガチャを引く前の確認ポップ。ボタンを押した瞬間に長押しへ入るのではなく、
+     まずここで「引く？」と確認し、種別ごとの説明(無料/広告/コイン消費額と残り枚数)を見せる。
+     ここの「引く」はタップで通常演出つきの抽選、3秒長押しで演出を飛ばして結果を即表示する -->
+<div id="gachaConfirmOverlay" class="gacha-confirm-overlay" style="display:none;">
+  <div class="gacha-confirm-box">
+    <p class="gacha-confirm-title" id="gachaConfirmTitle" data-i18n="gachaConfirmTitle">ガチャを引く？</p>
+    <p class="gacha-confirm-body" id="gachaConfirmBody"></p>
+    <button type="button" id="gachaConfirmDrawBtn" class="gacha-hold-btn gacha-confirm-draw-btn">
+      <span class="gacha-hold-fill"></span>
+      <span class="gacha-hold-body"><span data-i18n="gachaConfirmDrawBtn">引く</span></span>
+    </button>
+    <p class="gacha-confirm-hint" data-i18n="gachaConfirmHoldHint">長押しすると演出を飛ばしてすぐ結果が出ます</p>
+    <button type="button" id="gachaConfirmCancelBtn" class="gacha-confirm-cancel-btn" data-i18n="gachaConfirmCancelBtn">やめる</button>
   </div>
 </div>
 
@@ -8038,13 +8096,26 @@ document.addEventListener('DOMContentLoaded', () => {
       //     series_id text, tier text not null, kind text not null, label text not null,
       //     created_at timestamptz not null default now()
       //   );
+      // 【2026-09-21追加・要SQL実行】出た作品(確定枠のアニメカード)をガチャページの履歴に
+      // 出すため、anime_id/anime_titleの2列を追加した:
+      //   alter table gacha_pull_log add column if not exists anime_id text;
+      //   alter table gacha_pull_log add column if not exists anime_title text;
       async logPull(userId, entry) {
         if(!sb || !userId) return;
-        await sb.from('gacha_pull_log').insert({ user_id: userId, series_id: entry.seriesId || null, tier: entry.tier, kind: entry.kind, label: entry.label }).catch(()=>{});
+        await sb.from('gacha_pull_log').insert({
+          user_id: userId, series_id: entry.seriesId || null, tier: entry.tier, kind: entry.kind, label: entry.label,
+          anime_id: entry.animeId || null, anime_title: entry.animeTitle || null,
+        }).catch(()=>{});
       },
       async listPullLog(userId, limit) {
         if(!sb || !userId) return [];
         const { data } = await sb.from('gacha_pull_log').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(limit || 30);
+        return data || [];
+      },
+      // [追加] ガチャページの「出た作品の履歴」用：anime_titleが入っている行だけを絞って返す
+      async listAnimeHistory(userId, limit) {
+        if(!sb || !userId) return [];
+        const { data } = await sb.from('gacha_pull_log').select('anime_id, anime_title, created_at').eq('user_id', userId).not('anime_title', 'is', null).order('created_at', { ascending: false }).limit(limit || 20);
         return data || [];
       },
     },
@@ -12553,6 +12624,33 @@ document.addEventListener('DOMContentLoaded', () => {
     grid.innerHTML = cells.join('');
   }
 
+  // [追加] 出た作品(確定枠のアニメカード)の履歴。gacha_pull_logのanime_title列を使う
+  async function renderGachaAnimeHistory() {
+    const listEl = document.getElementById('gachaAnimeHistoryList');
+    if(!listEl) return;
+    if(!_currentUser || !sb) { listEl.innerHTML = `<p class="gacha-anime-history-empty">${escapeHtml(t('historyEmpty'))}</p>`; return; }
+    let rows = [];
+    try { rows = await db.gacha.listAnimeHistory(_currentUser.id, 20); } catch(e) {}
+    if(!rows.length) { listEl.innerHTML = `<p class="gacha-anime-history-empty">${escapeHtml(t('historyEmpty'))}</p>`; return; }
+    // サムネイル用に、id→画像のマップをまとめて解決する(1件ずつ問い合わせない)
+    const idMap = await resolveAnimeTitleMap(rows.map(r => r.anime_id).filter(Boolean));
+    listEl.innerHTML = rows.map(r => {
+      const page = r.anime_id ? idMap[r.anime_id] : null;
+      const img = page && page.image ? `<img src="${escapeHtml(page.image)}" loading="lazy" alt="">` : '📺';
+      const navTarget = r.anime_id
+        ? (String(r.anime_id).startsWith('kitsu-') ? `navAnime('${escapeHtml(String(r.anime_id).replace('kitsu-',''))}')` : `nav('anime','${escapeHtml(r.anime_id)}')`)
+        : '';
+      return `
+        <div class="gacha-anime-history-row" ${navTarget ? `onclick="${navTarget}"` : ''}>
+          <span class="gacha-anime-history-thumb">${img}</span>
+          <div class="gacha-anime-history-text">
+            <span class="gacha-anime-history-name">${escapeHtml(r.anime_title || '')}</span>
+            <span class="gacha-anime-history-time">${escapeHtml(formatRelativeTime(r.created_at))}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
   // [2026-09-20追加] ヘッダーのコイン残高バッジ(合計だけで有償/無償が分からない)を廃止し、
   // 代わりにガチャページで無償/有償の内訳を表示するようにした(モバイル・PC共通のDOMなので両方に出る)
   async function updateGachaCoinBreakdown() {
@@ -12726,7 +12824,8 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay.style.display = 'flex';
   }
 
-  async function runGacha(kind) {
+  async function runGacha(kind, opts) {
+    opts = opts || {};
     if(!_currentUser) { alert(t('loginRequiredAlert')); return; }
     const state = await getGachaState(_currentUser.id);
     if(kind === 'free') {
@@ -12736,10 +12835,11 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if(kind === 'ad') {
       if(state.adUsedCount >= GACHA_AD_LIMIT) return;
       // [修正] どのプランも1日2回まで無料。無料プランだけ2回目に広告視聴が必要で、
-      // ＋・クリエイターズは2回目も広告なしでそのまま引ける(確認・待機演出をスキップするだけ)
+      // ＋・クリエイターズは2回目も広告なしでそのまま引ける(確認・待機演出をスキップするだけ)。
+      // [2026-09-21修正] 対価の確認は#gachaConfirmOverlay(openGachaConfirm)側で先に
+      // 出すようになったため、ここにあった二重のnative confirm()は削除した
       if(isFeatureRestricted()) {
-        // 実際の広告SDKは未接続。押す前に対価が分かるよう確認だけ出す
-        if(!confirm(t('gachaAdConfirm'))) return;
+        // 実際の広告SDKは未接続。広告再生中を模したウェイトだけ入れる
         const freeBtn = document.getElementById('gachaFreeBtn');
         if(freeBtn) { const lb = freeBtn.querySelector('span:last-child'); if(lb) lb.textContent = t('gachaAdPlaying'); }
         await new Promise(r => setTimeout(r, 1200));
@@ -12752,7 +12852,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(error) { alert(t('gachaCoinInsufficientAlert')); updateGachaButtons(); return; }
     }
     const pullCount = kind === 'coin10' ? 10 : 1;
-    setGachaStageSpinning();
+    if(!opts.instant) setGachaStageSpinning();
     // [修正] 「SR以上1枚確定」と画面に表示している(gachaCoin10Tag)のに、実際には各枠が
     // 完全に独立抽選なため、SR以上が1枚も出ない回(現在の排出率だと約13.7%の確率)が
     // 起こりえて表示と実態が食い違っていた。10連の場合、事前に10枠分の抽選結果を
@@ -12780,12 +12880,18 @@ document.addEventListener('DOMContentLoaded', () => {
           const label = item.kind === 'custom'
             ? ((GACHA_CUSTOM_META[item.category]||{}).labelKey ? t(GACHA_CUSTOM_META[item.category].labelKey) : item.category)
             : `${t('gachaLabelIcon')} ★${item.starRarity||''}`;
-          db.gacha.logPull(_currentUser.id, { seriesId: getCurrentGachaSeries()?.id, tier: item.tier, kind: item.kind, label });
+          // [2026-09-21修正] 出た作品(確定枠のアニメカード)をガチャページの履歴に載せるため、
+          // pick(アニメ)の情報もこのログに一緒に記録するようにした(以前はitemの情報のみ)
+          db.gacha.logPull(_currentUser.id, {
+            seriesId: getCurrentGachaSeries()?.id, tier: item.tier, kind: item.kind, label,
+            animeId: pick ? (pick.kitsuId ? 'kitsu-' + pick.kitsuId : pick.id) : null,
+            animeTitle: pick ? (getTitle(pick) || pick.title || '') : null,
+          });
         } catch(e) {}
       }
       results.push({ pick, item, isDup });
     }
-    await new Promise(r => setTimeout(r, 1400));
+    if(!opts.instant) await new Promise(r => setTimeout(r, 1400));
     setGachaStageIdle();
     if(pullCount === 1) {
       showGachaResult(results[0].pick, results[0].item, results[0].isDup);
@@ -12794,50 +12900,86 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateGachaButtons();
     renderGachaCollection();
+    renderGachaAnimeHistory();
   }
 
-  // ── ガチャの実引き：クリックですぐ引かず、5秒長押しに切り替えて誤タップを防ぐ ──
-  // 長押しで引く。押したボタン自身が左から満ちるバーになり、
-  // 同時に演出枠へリンゴジュースがたまる。指を離した時点で中止（誤タップ防止）。
-  let _gachaHoldTimer = null;
-  function bindGachaHold(btn, getKind) {
-    if(!btn) return;
+  // ── ガチャを引く前の確認ポップ ──
+  // [2026-09-21修正] 以前はページのボタン自体を3秒長押しして直接引く方式だったが、
+  // ユーザー指示で「ボタンを押したらまず『ガチャを引く？』の確認ポップを出す」方式に変更した。
+  // ポップ内の「引く」ボタンをタップすると通常の演出(スロットの回転待ち)つきで抽選し、
+  // 3秒長押しすると演出を飛ばしてすぐ結果を表示する(runGachaのopts.instant)
+  let _gachaConfirmKind = null;
+  function openGachaConfirm(kind) {
+    if(!_currentUser) { alert(t('loginRequiredAlert')); return; }
+    _gachaConfirmKind = kind;
+    const overlay = document.getElementById('gachaConfirmOverlay');
+    const body = document.getElementById('gachaConfirmBody');
+    if(!overlay || !body) return;
+    if(kind === 'ad') {
+      body.textContent = t('gachaConfirmAdBody');
+    } else if(kind === 'coin' || kind === 'coin10') {
+      const cost = kind === 'coin10' ? GACHA_COIN10_COST : GACHA_COIN_COST;
+      body.textContent = t('gachaConfirmCoinBodyLoading').replace('{cost}', cost.toLocaleString());
+      db.coins.get(_currentUser.id).then(balance => {
+        if(_gachaConfirmKind !== kind) return; // 待っている間に別の枠を開き直していたら無視
+        const after = Math.max(0, balance - cost);
+        body.textContent = t('gachaConfirmCoinBody')
+          .replace('{cost}', cost.toLocaleString())
+          .replace('{balance}', balance.toLocaleString())
+          .replace('{after}', after.toLocaleString());
+      }).catch(() => {});
+    } else {
+      body.textContent = t('gachaConfirmFreeBody');
+    }
+    overlay.style.display = 'flex';
+  }
+  function closeGachaConfirm() {
+    const overlay = document.getElementById('gachaConfirmOverlay');
+    if(overlay) overlay.style.display = 'none';
+  }
+  let _gachaConfirmHoldTimer = null;
+  function bindGachaConfirmDrawBtn() {
+    const btn = document.getElementById('gachaConfirmDrawBtn');
+    const cancelBtn = document.getElementById('gachaConfirmCancelBtn');
+    const overlay = document.getElementById('gachaConfirmOverlay');
+    if(!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
     const fill = btn.querySelector('.gacha-hold-fill');
-    const stage = document.getElementById('gachaStage');
-    const ledLabel = document.getElementById('gachaStageLedLabel');
-    const stop = () => {
-      if(_gachaHoldTimer) { clearTimeout(_gachaHoldTimer); _gachaHoldTimer = null; }
-      if(fill) { fill.style.transition = 'width .2s ease'; fill.style.width = '0%'; }
-      if(stage) stage.classList.remove('is-filling');
-      if(ledLabel) ledLabel.textContent = t('gachaLedIdle');
-      setGachaStageIdle();
-    };
+    let longPressed = false;
+    const resetFill = () => { if(fill) { fill.style.transition = 'width .2s ease'; fill.style.width = '0%'; } };
+    const clearHoldTimer = () => { if(_gachaConfirmHoldTimer) { clearTimeout(_gachaConfirmHoldTimer); _gachaConfirmHoldTimer = null; } };
     btn.onpointerdown = (e) => {
       e.preventDefault();
-      if(btn.disabled) return;
-      if(stage) {
-        stage.style.setProperty('--gacha-hold', GACHA_HOLD_MS + 'ms');
-        stage.classList.remove('is-filling');
-        void stage.offsetWidth;
-        stage.classList.add('is-filling');
-      }
-      if(ledLabel) ledLabel.textContent = t('gachaLedFilling');
-      const idle = document.getElementById('gachaStagePlaceholder');
-      if(idle) idle.innerHTML = `<span class="gacha-stage-text">${escapeHtml(t('gachaStageFilling'))}</span>`;
+      longPressed = false;
       if(fill) {
         fill.style.transition = `width ${GACHA_HOLD_MS}ms linear`;
         requestAnimationFrame(() => { fill.style.width = '100%'; });
       }
-      _gachaHoldTimer = setTimeout(() => {
-        _gachaHoldTimer = null;
-        stop();
-        runGacha(getKind());
+      _gachaConfirmHoldTimer = setTimeout(() => {
+        longPressed = true;
+        _gachaConfirmHoldTimer = null;
+        resetFill();
+        const kind = _gachaConfirmKind;
+        closeGachaConfirm();
+        runGacha(kind, { instant: true });
       }, GACHA_HOLD_MS);
     };
-    btn.onpointerup = stop;
-    btn.onpointerleave = stop;
-    btn.onpointercancel = stop;
+    // タップ(3秒未満で指を離す)は「通常演出つきで確定」、指がボタンの外に出たらキャンセル
+    btn.onpointerup = () => {
+      if(!_gachaConfirmHoldTimer) return; // 既に長押し発火済み
+      clearHoldTimer();
+      resetFill();
+      if(!longPressed) {
+        const kind = _gachaConfirmKind;
+        closeGachaConfirm();
+        runGacha(kind, { instant: false });
+      }
+    };
+    btn.onpointerleave = () => { clearHoldTimer(); resetFill(); };
+    btn.onpointercancel = () => { clearHoldTimer(); resetFill(); };
     btn.oncontextmenu = (e) => e.preventDefault();
+    if(cancelBtn) cancelBtn.onclick = closeGachaConfirm;
+    if(overlay) overlay.onclick = (e) => { if(e.target === overlay) closeGachaConfirm(); };
   }
 
   // 10連の結果を一覧で見せる（1件ずつの派手な演出はしない。確定枠は最初の1件だけ代表表示）
@@ -12937,10 +13079,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const probOverlay = document.getElementById('gachaProbOverlay');
     const probCloseBtn = document.getElementById('gachaProbCloseBtn');
     const resOverlay = document.getElementById('gachaResultOverlay');
-    // どのボタンも押した瞬間には引かない。そのボタンを3秒長押しして引く（誤タップ防止）
-    bindGachaHold(freeBtn, () => freeBtn.dataset.kind || 'free');
-    bindGachaHold(coinBtn, () => 'coin');
-    bindGachaHold(coin10Btn, () => 'coin10');
+    // [2026-09-21修正] 以前はどのボタンも「そのボタン自体を3秒長押し」で直接引いていたが、
+    // ユーザー指示で「まずガチャを引く？というポップを出す」方式に変更した。ボタンは
+    // タップで確認ポップを開くだけにし、実際の抽選は#gachaConfirmOverlay側で行う
+    if(freeBtn) freeBtn.onclick = () => openGachaConfirm(freeBtn.dataset.kind || 'free');
+    if(coinBtn) coinBtn.onclick = () => openGachaConfirm('coin');
+    if(coin10Btn) coin10Btn.onclick = () => openGachaConfirm('coin10');
+    bindGachaConfirmDrawBtn();
+    renderGachaAnimeHistory();
     if(probBtn) probBtn.onclick = () => { renderGachaProbList(); if(probOverlay) probOverlay.style.display = 'flex'; };
     if(probCloseBtn) probCloseBtn.onclick = () => { if(probOverlay) probOverlay.style.display = 'none'; };
     if(probOverlay) probOverlay.onclick = (e) => { if(e.target === probOverlay) probOverlay.style.display = 'none'; };
@@ -19659,7 +19805,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loginRequiredAlert: { ja:'ログインが必要です。', en:'Please log in first.' },
     loginRequired: { ja:'ログインが必要です', en:'Please log in', ko:'로그인이 필요합니다', 'zh-tw':'需要登入', 'zh-cn':'需要登录', es:'Inicia sesión para continuar', fr:'Veuillez vous connecter', pt:'Faça login para continuar', de:'Bitte melde dich an', ar:'يرجى تسجيل الدخول', th:'กรุณาเข้าสู่ระบบ', id:'Silakan masuk', ru:'Пожалуйста, войдите', it:'Effettua l\'accesso', vi:'Vui lòng đăng nhập' },
     gachaTitle: { ja:'ガチャガチャ', en:'Gacha', ko:'가챠', 'zh-tw':'扭蛋', 'zh-cn':'扭蛋', es:'Gacha', fr:'Gacha', pt:'Gacha', de:'Gacha', ar:'جاتشا', th:'กาชา', id:'Gacha', ru:'Гача', it:'Gacha', vi:'Gacha' },
-    gachaStageIdle: { ja:'ボタンを3秒長押し', en:'Hold a button for 3 seconds', ko:'버튼을 3초간 길게 누르세요', 'zh-tw':'長按按鈕3秒', 'zh-cn':'长按按钮3秒', es:'Mantén pulsado un botón 3 segundos', fr:'Maintenez un bouton pendant 3 secondes', pt:'Segure um botão por 3 segundos', de:'Halte eine Taste 3 Sekunden gedrückt', ar:'اضغط مطولًا على زر لمدة 3 ثوانٍ', th:'กดปุ่มค้างไว้ 3 วินาที', id:'Tahan tombol selama 3 detik', ru:'Удерживайте кнопку 3 секунды', it:'Tieni premuto un pulsante per 3 secondi', vi:'Giữ nút trong 3 giây' },
+    gachaStageIdle: { ja:'上のボタンでガチャを引く', en:'Tap a button above to draw' },
     gachaFreeBtn: { ja:'無料で引く', en:'Free draw', ko:'무료로 뽑기', 'zh-tw':'免費抽', 'zh-cn':'免费抽', es:'Tirada gratis', fr:'Tirage gratuit', pt:'Sorteio grátis', de:'Kostenlose Ziehung', ar:'سحب مجاني', th:'สุ่มฟรี', id:'Tarikan gratis', ru:'Бесплатная попытка', it:'Estrazione gratuita', vi:'Quay miễn phí' },
     gachaFreeBtnUsed: { ja:'本日は引き終わりました', en:'Already used today', ko:'오늘은 이미 뽑았어요', 'zh-tw':'今天已經抽過了', 'zh-cn':'今天已经抽过了', es:'Ya usado hoy', fr:'Déjà utilisé aujourd\'hui', pt:'Já usado hoje', de:'Heute bereits verwendet', ar:'تم الاستخدام اليوم بالفعل', th:'ใช้วันนี้ไปแล้ว', id:'Sudah digunakan hari ini', ru:'Уже использовано сегодня', it:'Già utilizzato oggi', vi:'Đã dùng hôm nay' },
     gachaAdBtn: { ja:'広告を見て引く（残り{n}回・30秒）', en:'Watch a 30s ad to draw ({n} left)', ko:'광고를 보고 뽑기 (남은 {n}회・30초)', 'zh-tw':'看廣告抽獎（剩{n}次・30秒）', 'zh-cn':'看广告抽奖（剩{n}次・30秒）', es:'Mira un anuncio de 30s para tirar (quedan {n})', fr:'Regardez une pub de 30s pour tirer ({n} restants)', pt:'Assista a um anúncio de 30s para sortear ({n} restantes)', de:'Schau eine 30-Sek-Werbung für eine Ziehung (noch {n})', ar:'شاهد إعلانًا لمدة 30 ثانية للسحب (المتبقي {n})', th:'ดูโฆษณา 30 วินาทีเพื่อสุ่ม (เหลือ {n} ครั้ง)', id:'Tonton iklan 30 detik untuk menarik (sisa {n})', ru:'Смотрите рекламу 30 сек для попытки (осталось {n})', it:'Guarda un annuncio di 30s per estrarre ({n} rimasti)', vi:'Xem quảng cáo 30s để quay (còn {n} lượt)' },
@@ -19667,7 +19813,15 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaLead: { ja:'1日1回無料。広告を見るとあと3回引けます。', en:'One free draw a day. Watch an ad for 3 more.', ko:'하루 1회 무료. 광고를 보면 3회 더 뽑을 수 있어요.', 'zh-tw':'每天1次免費。看廣告可再抽3次。', 'zh-cn':'每天1次免费。看广告可再抽3次。', es:'Una tirada gratis al día. Mira anuncios para 3 más.', fr:'Un tirage gratuit par jour. Regardez des pubs pour 3 de plus.', pt:'Um sorteio grátis por dia. Assista anúncios para mais 3.', de:'Eine kostenlose Ziehung pro Tag. Für 3 weitere Werbung ansehen.', ar:'سحب مجاني واحد يوميًا. شاهد إعلانًا لثلاث محاولات إضافية.', th:'ฟรีวันละ 1 ครั้ง ดูโฆษณาเพื่อรับเพิ่มอีก 3 ครั้ง', id:'Satu tarikan gratis sehari. Tonton iklan untuk 3 lagi.', ru:'Одна бесплатная попытка в день. Смотрите рекламу для ещё 3.', it:'Un\'estrazione gratuita al giorno. Guarda annunci per altre 3.', vi:'Miễn phí 1 lượt mỗi ngày. Xem quảng cáo để có thêm 3 lượt.' },
     gachaRemainLabel: { ja:'今日の残り', en:'Left today', ko:'오늘 남은 횟수', 'zh-tw':'今日剩餘', 'zh-cn':'今日剩余', es:'Restantes hoy', fr:'Restants aujourd\'hui', pt:'Restantes hoje', de:'Heute übrig', ar:'المتبقي اليوم', th:'เหลือวันนี้', id:'Sisa hari ini', ru:'Осталось сегодня', it:'Rimasti oggi', vi:'Còn lại hôm nay' },
     gachaAdBtnUsed: { ja:'広告分は今日の上限です', en:'Ad draws used up', ko:'광고 횟수를 오늘 다 썼어요', 'zh-tw':'廣告次數今天已達上限', 'zh-cn':'广告次数今天已达上限', es:'Tiradas por anuncio agotadas', fr:'Tirages via pub épuisés', pt:'Sorteios por anúncio esgotados', de:'Werbe-Ziehungen aufgebraucht', ar:'استُنفدت سحوبات الإعلانات', th:'ใช้โควตาโฆษณาหมดแล้ว', id:'Tarikan iklan sudah habis', ru:'Попытки за рекламу исчерпаны', it:'Estrazioni via annuncio esaurite', vi:'Đã hết lượt quay từ quảng cáo' },
-    gachaAdConfirm: { ja:'30秒の広告を見ると1回引けます。途中でやめると回数は消費されません。', en:'Watch a 30s ad for one draw. Quitting early does not use a draw.', ko:'30초 광고를 보면 1회 뽑을 수 있어요. 도중에 그만두면 횟수는 차감되지 않아요.', 'zh-tw':'看30秒廣告即可抽1次。中途取消不會消耗次數。', 'zh-cn':'看30秒广告即可抽1次。中途取消不会消耗次数。', es:'Mira un anuncio de 30s para una tirada. Salir antes no consume intento.', fr:'Regardez une pub de 30s pour un tirage. Quitter tôt ne consomme pas de tirage.', pt:'Assista a um anúncio de 30s para um sorteio. Sair antes não consome o sorteio.', de:'Schau eine 30-Sek-Werbung für eine Ziehung. Vorzeitiges Beenden verbraucht keine Ziehung.', ar:'شاهد إعلانًا لمدة 30 ثانية لسحبة واحدة. الخروج مبكرًا لا يستهلك محاولة.', th:'ดูโฆษณา 30 วินาทีเพื่อสุ่ม 1 ครั้ง หากออกกลางคันจะไม่เสียโควตา', id:'Tonton iklan 30 detik untuk satu tarikan. Keluar lebih awal tidak menggunakan tarikan.', ru:'Смотрите рекламу 30 сек для одной попытки. Досрочный выход не расходует попытку.', it:'Guarda un annuncio di 30s per un\'estrazione. Uscire prima non consuma l\'estrazione.', vi:'Xem quảng cáo 30s để có 1 lượt quay. Thoát giữa chừng sẽ không mất lượt.' },
+    gachaConfirmTitle: { ja:'ガチャを引く？', en:'Draw the gacha?' },
+    gachaConfirmDrawBtn: { ja:'引く', en:'Draw' },
+    gachaConfirmHoldHint: { ja:'長押しすると演出を飛ばしてすぐ結果が出ます', en:'Hold to skip the animation and see the result instantly' },
+    gachaConfirmCancelBtn: { ja:'やめる', en:'Cancel' },
+    gachaConfirmFreeBody: { ja:'無料で1日1回引けます。', en:'One free draw per day.' },
+    gachaConfirmAdBody: { ja:'広告を見て引きます。30秒の広告を見ると1回引けます。', en:'Watch a 30s ad for one draw.' },
+    gachaConfirmCoinBody: { ja:'{cost}枚を消費して引きます\n所持: {balance}枚 → 消費後: {after}枚', en:'Spend {cost} coins to draw\nBalance: {balance} → After: {after}' },
+    gachaConfirmCoinBodyLoading: { ja:'{cost}枚を消費して引きます', en:'Spend {cost} coins to draw' },
+    gachaAnimeHistoryTitle: { ja:'出た作品の履歴', en:'History of anime drawn' },
     gachaSpinning: { ja:'回しています…', en:'Spinning…', ko:'돌리는 중…', 'zh-tw':'轉動中…', 'zh-cn':'转动中…', es:'Girando…', fr:'En rotation…', pt:'Girando…', de:'Dreht sich…', ar:'جارٍ التدوير…', th:'กำลังหมุน…', id:'Memutar…', ru:'Крутится…', it:'In rotazione…', vi:'Đang quay…' },
     gachaPoolTitle: { ja:'出るもの', en:'What you can get', ko:'나올 수 있는 것', 'zh-tw':'可能獲得', 'zh-cn':'可能获得', es:'Lo que puedes obtener', fr:'Ce que vous pouvez obtenir', pt:'O que você pode ganhar', de:'Was du bekommen kannst', ar:'ما يمكنك الحصول عليه', th:'สิ่งที่จะได้รับ', id:'Yang bisa Anda dapatkan', ru:'Что можно получить', it:'Cosa puoi ottenere', vi:'Những gì bạn có thể nhận' },
     gachaPoolNote: { ja:'1回で2枠', en:'2 slots per draw', ko:'1회에 2개', 'zh-tw':'每次2個名額', 'zh-cn':'每次2个名额', es:'2 espacios por tirada', fr:'2 emplacements par tirage', pt:'2 vagas por sorteio', de:'2 Plätze pro Ziehung', ar:'مكانان لكل سحب', th:'2 ช่องต่อการสุ่ม 1 ครั้ง', id:'2 slot per tarikan', ru:'2 слота за попытку', it:'2 slot per estrazione', vi:'2 ô mỗi lượt quay' },
