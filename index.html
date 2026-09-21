@@ -1580,11 +1580,19 @@
     @media (prefers-reduced-motion:reduce) {
       .bnav-customize-cell { animation:none; border-style:dashed !important; }
     }
+    /* [2026-09-21修正] 以前は画面下部(ボトムナビの真上)に固定していたが、端末によっては
+       画面に収まりきらず見えなくなるとの報告があったため、常に画面中央に出す方式に変更 */
     .bnav-cz-toast {
-      position:fixed; left:14px; right:14px; z-index:10003;
-      bottom:calc(76px + env(safe-area-inset-bottom));
-      padding:11px 14px; border-radius:12px; background:#153524; border:1px solid rgba(92,201,142,.4);
-      display:flex; align-items:center; gap:10px; animation:boardPillIn .22s cubic-bezier(.22,1,.36,1) both;
+      position:fixed; left:50%; top:50%; z-index:10003;
+      transform:translate(-50%,-50%);
+      width:calc(100% - 32px); max-width:360px;
+      padding:14px 16px; border-radius:14px; background:#153524; border:1px solid rgba(92,201,142,.4);
+      box-shadow:0 24px 60px -20px rgba(0,0,0,.75);
+      display:flex; align-items:center; gap:10px; animation:bnavCzToastIn .22s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes bnavCzToastIn {
+      from { opacity:0; transform:translate(-50%,-50%) scale(.92); }
+      to { opacity:1; transform:translate(-50%,-50%) scale(1); }
     }
     .bnav-cz-hint { margin:6px 0 0; text-align:center; font-size:10px; color:#66786d; }
 
@@ -4375,6 +4383,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="gacha-soldout-title" data-i18n="gachaSoldOutTitle">今日はここまで</p>
         <p class="gacha-soldout-sub"><span data-i18n="gachaSoldOutSub">次に引けるのは</span> <b id="gachaResetAt">明日 0:00</b></p>
         <button type="button" class="gacha-soldout-plus" onclick="nav('settings-plan')" data-i18n="gachaSoldOutPlus">アニメップル＋なら毎日3回（広告なし）</button>
+        <!-- [追加] 管理者専用：動作検証のため、本日分を即座に補充できるボタン(is_adminのみ表示) -->
+        <button type="button" id="gachaAdminRefillBtn" class="admin-plan-switch-btn" style="display:none;margin-top:10px;">🛠 管理者用：本日分を補充（検証用）</button>
       </div>
     </div>
 
@@ -4565,7 +4575,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <button class="search-go" id="srSearchBtn" data-i18n="btnSearchGo">検索</button>
     </div>
   </div>
-  <button type="button" class="filter-toggle-bar" id="srFilterToggle" style="width:100%;text-align:center;justify-content:center;background:#f0c94a;color:#3a2a06;border:none;font-weight:700;font-family:inherit;">
+  <button type="button" class="filter-toggle-bar" id="srFilterToggle" style="width:100%;text-align:center;justify-content:center;background:var(--card2);color:#dfeae3;border:none;border-bottom:1px solid var(--line);font-weight:700;font-family:inherit;">
     <span data-i18n="filterTitle">🎛 条件を変えて再検索</span>
   </button>
   <div class="filter-panel" id="srFilterPanel">
@@ -8010,6 +8020,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if(existing.ad_used_count >= limit) return { error: 'limit_reached' };
         const { error } = await sb.from('gacha_daily_state').update({ ad_used_count: existing.ad_used_count + 1 }).eq('user_id', userId).eq('gacha_date', today).eq('ad_used_count', existing.ad_used_count);
+        return { error };
+      },
+      // [追加] 管理者専用：動作検証のため、本日分の無料/広告ガチャ回数を自分の分だけ即座に
+      // 補充する。RLSは自分の行にしか作用しないので、呼び出し元(UI)のis_admin表示制御と
+      // 合わせても、他人の回数を操作することはできない
+      async resetTodayForAdmin(userId) {
+        if(!sb || !userId) return { error: 'invalid' };
+        const today = this.todayStr();
+        const { error } = await sb.from('gacha_daily_state').update({ free_used: false, ad_used_count: 0 }).eq('user_id', userId).eq('gacha_date', today);
         return { error };
       },
       // 必要テーブル（Supabase側で作成）：
@@ -12452,6 +12471,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // [追加] 管理者専用：ガチャの動作検証用に、本日分(無料+広告)を即座に補充できるボタン。
+  // is_adminのユーザーにだけ表示する(表示制御はUI側のみ。実際の操作はresetTodayForAdmin側が
+  // 常に「自分の行」しか触らないため、他人の回数を操作することはできない)
+  async function setupGachaAdminRefillBtn() {
+    const btn = document.getElementById('gachaAdminRefillBtn');
+    if(!btn) return;
+    if(!_currentUser) { btn.style.display = 'none'; return; }
+    let isAdmin = false;
+    try {
+      const profile = await db.profiles.get(_currentUser.id);
+      isAdmin = !!(profile && profile.is_admin);
+    } catch(e) { isAdmin = false; }
+    btn.style.display = isAdmin ? '' : 'none';
+    if(!isAdmin) return;
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        const { error } = await db.gacha.resetTodayForAdmin(_currentUser.id);
+        if(error) throw error;
+        await updateGachaButtons();
+      } catch(e) {
+        console.error('管理者用ガチャ補充に失敗:', e);
+        alert('補充に失敗しました');
+      } finally {
+        btn.disabled = false;
+      }
+    };
+  }
+
   // おまけ枠のレア度表：確率は「そのシリーズに実在するレア度」だけで正規化して出す(実際の抽選と一致させる)
   function renderGachaRarityList() {
     const el = document.getElementById('gachaRarityList');
@@ -12552,7 +12600,9 @@ document.addEventListener('DOMContentLoaded', () => {
       freeBtn.disabled = remaining <= 0;
       if(label) {
         if(remaining <= 0) {
-          label.textContent = t('gachaAdBtnUsed');
+          // [修正] ＋・クリエイターズは2回目も広告を見ていない(無料でそのまま引ける)ため、
+          // 「広告分は今日の上限です」という広告前提の文言は誤り。プラン別に文言を分ける
+          label.textContent = isFeatureRestricted() ? t('gachaAdBtnUsed') : t('gachaFreeBtnUsed');
         } else if(isFeatureRestricted()) {
           label.textContent = t('gachaAdBtn').replace('{n}', remaining);
         } else {
@@ -12879,6 +12929,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateGachaButtons();
     renderGachaRarityList();
     renderGachaCollection();
+    setupGachaAdminRefillBtn();
     const freeBtn = document.getElementById('gachaFreeBtn');
     const coinBtn = document.getElementById('gachaCoinBtn');
     const coin10Btn = document.getElementById('gachaCoin10Btn');
