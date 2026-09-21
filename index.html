@@ -8156,20 +8156,28 @@ document.addEventListener('DOMContentLoaded', () => {
       //   alter table gacha_pull_log add column if not exists anime_title text;
       async logPull(userId, entry) {
         if(!sb || !userId) return;
-        await sb.from('gacha_pull_log').insert({
+        // [2026-09-21修正] 以前は.catch(()=>{})で失敗を完全に握りつぶしており、本番で
+        // gacha_pull_logへのINSERTがGRANT不足のため一度も成功していなかったにもかかわらず
+        // 誰も気づけなかった(ユーザー報告「ガチャのアニメ履歴が機能してない」で発覚。
+        // 実際にDBを直接確認したところ、複数回の実プレイ実績があるにもかかわらず
+        // gacha_pull_logの行数は0件だった)。エラーは握りつぶさずconsole.warnで見えるようにする
+        const { error } = await sb.from('gacha_pull_log').insert({
           user_id: userId, series_id: entry.seriesId || null, tier: entry.tier, kind: entry.kind, label: entry.label,
           anime_id: entry.animeId || null, anime_title: entry.animeTitle || null,
-        }).catch(()=>{});
+        });
+        if(error) console.warn('gacha_pull_logへの記録に失敗:', error.message);
       },
       async listPullLog(userId, limit) {
         if(!sb || !userId) return [];
-        const { data } = await sb.from('gacha_pull_log').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(limit || 30);
+        const { data, error } = await sb.from('gacha_pull_log').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(limit || 30);
+        if(error) console.warn('gacha_pull_logの取得に失敗:', error.message);
         return data || [];
       },
       // [追加] ガチャページの「出た作品の履歴」用：anime_titleが入っている行だけを絞って返す
       async listAnimeHistory(userId, limit) {
         if(!sb || !userId) return [];
-        const { data } = await sb.from('gacha_pull_log').select('anime_id, anime_title, created_at').eq('user_id', userId).not('anime_title', 'is', null).order('created_at', { ascending: false }).limit(limit || 20);
+        const { data, error } = await sb.from('gacha_pull_log').select('anime_id, anime_title, created_at').eq('user_id', userId).not('anime_title', 'is', null).order('created_at', { ascending: false }).limit(limit || 20);
+        if(error) console.warn('出た作品の履歴の取得に失敗:', error.message);
         return data || [];
       },
     },
@@ -13089,7 +13097,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = document.getElementById('gachaConfirmBody');
     if(!overlay || !body) return;
     if(kind === 'ad') {
-      body.textContent = t('gachaConfirmAdBody');
+      // [2026-09-21修正] freeBtn.dataset.kindは2回目の枠を表すため、＋・クリエイターズプラン
+      // (広告なしで2回目も無料)でも常に'ad'のままになる。ここでプラン判定をせず一律で
+      // 「広告を見て引きます」と表示していたため、＋プラン加入者にも広告が必要であるかのような
+      // 誤った文言が出ていた(ユーザー報告)。isFeatureRestricted()で無料プランかどうかを見て
+      // 文言を出し分ける
+      body.textContent = isFeatureRestricted() ? t('gachaConfirmAdBody') : t('gachaConfirmFreeAgainBody');
     } else if(kind === 'coin' || kind === 'coin10') {
       const cost = kind === 'coin10' ? GACHA_COIN10_COST : GACHA_COIN_COST;
       body.textContent = t('gachaConfirmCoinBodyLoading').replace('{cost}', cost.toLocaleString());
@@ -19976,6 +19989,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaRevealHoldLabel: { ja:'長押しで結果を見る', en:'Hold to see the result' },
     gachaConfirmFreeBody: { ja:'無料で1日1回引けます。', en:'One free draw per day.' },
     gachaConfirmAdBody: { ja:'広告を見て引きます。30秒の広告を見ると1回引けます。', en:'Watch a 30s ad for one draw.' },
+    gachaConfirmFreeAgainBody: { ja:'＋プラン以上は広告なしで、そのまま無料で引けます。', en:'Animepple+ and above can draw again for free, no ad needed.' },
     gachaConfirmCoinBody: { ja:'{cost}枚を消費して引きます\n所持: {balance}枚 → 消費後: {after}枚', en:'Spend {cost} coins to draw\nBalance: {balance} → After: {after}' },
     gachaConfirmCoinBodyLoading: { ja:'{cost}枚を消費して引きます', en:'Spend {cost} coins to draw' },
     gachaAnimeHistoryTitle: { ja:'出た作品の履歴', en:'History of anime drawn' },
