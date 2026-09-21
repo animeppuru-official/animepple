@@ -17411,8 +17411,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <div style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${langChip}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(b.title)} ・ ${escapeHtml(t(_boardGroupLabel[b.board_type]||b.board_type))}</span></div>
             </div>
             <button type="button" class="my-board-notify-remove" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" data-lang="${escapeHtml(b.lang)}" title="${escapeHtml(t('notifyRemoveBtn'))}"
-              style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid rgba(94,201,122,.4);background:rgba(94,201,122,.14);color:#8fe5ab;cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation();">
-              ${bellIcon(true)}
+              style="display:flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 10px;border-radius:8px;border:1px solid rgba(94,201,122,.4);background:rgba(94,201,122,.14);color:#8fe5ab;cursor:pointer;flex-shrink:0;white-space:nowrap;" onclick="event.stopPropagation();">
+              ${bellIcon(true)}<span style="font-size:.68rem;font-weight:700;">${escapeHtml(t('notifyOffLabel'))}</span>
             </button>
           </div>
         `;}).join('')}
@@ -17462,9 +17462,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const notifyBtnHtml = b.isValueBoard ? `
             <button type="button" class="my-board-notify-add${b.notify?' is-active':''}" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" data-lang="${escapeHtml(b.lang)}"
               title="${escapeHtml(b.notify ? t('notifyRemoveBtn') : t('notifyAddBtn'))}"
-              style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;flex-shrink:0;cursor:pointer;
+              style="display:flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 10px;border-radius:8px;flex-shrink:0;cursor:pointer;white-space:nowrap;
                 ${b.notify ? 'border:1px solid rgba(94,201,122,.4);background:rgba(94,201,122,.14);color:#8fe5ab;' : 'border:1px solid var(--line,#2a3830);background:transparent;color:#9fb0a5;'}"
-              onclick="event.stopPropagation();">${bellIcon(b.notify)}</button>
+              onclick="event.stopPropagation();">${bellIcon(b.notify)}<span style="font-size:.68rem;font-weight:700;">${escapeHtml(b.notify ? t('notifyOffLabel') : t('notifyOnLabel'))}</span></button>
           ` : '';
           return `
           <div style="display:flex;align-items:center;gap:.5rem;border:1px solid var(--line,#2a3830);border-radius:8px;padding:.5rem .7rem;cursor:pointer;" class="my-board-row" data-anime-id="${escapeHtml(b.anime_id)}" data-board-type="${escapeHtml(b.board_type)}" data-lang="${escapeHtml(b.lang)}">
@@ -19627,6 +19627,8 @@ document.addEventListener('DOMContentLoaded', () => {
     notifyListEmpty: { ja:'通知する掲示板がまだありません。下の一覧からベルのアイコンを押して追加してください。', en:'No boards are notified yet. Tap the bell icon on a board below to add it.' },
     notifyAddBtn: { ja:'通知に追加', en:'Add to notifications' },
     notifyRemoveBtn: { ja:'通知から外す', en:'Remove from notifications' },
+    notifyOnLabel: { ja:'通知をONにする', en:'Turn notification ON', ko:'알림 켜기', 'zh-tw':'開啟通知', 'zh-cn':'开启通知', es:'Activar notificación', fr:'Activer la notification', pt:'Ativar notificação', de:'Benachrichtigung einschalten', ar:'تشغيل الإشعار', th:'เปิดการแจ้งเตือน', id:'Aktifkan notifikasi', ru:'Включить уведомление', it:'Attiva notifica', vi:'Bật thông báo' },
+    notifyOffLabel: { ja:'通知をOFFにする', en:'Turn notification OFF', ko:'알림 끄기', 'zh-tw':'關閉通知', 'zh-cn':'关闭通知', es:'Desactivar notificación', fr:'Désactiver la notification', pt:'Desativar notificação', de:'Benachrichtigung ausschalten', ar:'إيقاف الإشعار', th:'ปิดการแจ้งเตือน', id:'Matikan notifikasi', ru:'Выключить уведомление', it:'Disattiva notifica', vi:'Tắt thông báo' },
     notifyLimitReachedAlert: { ja:'通知は最大10個までです。他の掲示板の通知を外してから、こちらを追加してください。', en:'You can be notified about up to 10 boards. Remove one first to add this one.' },
     boardSearchPlaceholder: { ja:'タイトルで検索…', en:'Search by title…' },
     boardSortNewest: { ja:'新着順', en:'Newest' },
