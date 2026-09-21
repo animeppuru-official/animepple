@@ -7682,6 +7682,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const { error } = await sb.from('contact_messages').update({ is_read: true }).eq('id', id);
         return { error };
       },
+      // [2026-09-21追加] お問い合わせは既読にする以外に消す手段が無く、対応済みのものも
+      // 一覧に溜まり続けていた(ユーザー報告)。対応完了後に管理者が手動で削除できるようにする
+      async delete(id) {
+        if(!sb) return { error: 'invalid' };
+        const { error } = await sb.from('contact_messages').delete().eq('id', id);
+        return { error };
+      },
     },
     // ── 画像投稿（アニメページのポスター画像。管理者承認制） ──
     imageSubmissions: {
@@ -19289,7 +19296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     contactCatFeatureRequest:{ ja:'機能のご要望', en:'Feature request', ko:'기능 요청', 'zh-tw':'功能建議', 'zh-cn':'功能建议', es:'Solicitud de función', fr:'Demande de fonctionnalité', pt:'Solicitação de recurso', de:'Funktionswunsch', ar:'طلب ميزة', th:'ขอฟีเจอร์ใหม่', id:'Permintaan fitur', ru:'Запрос функции', it:'Richiesta funzione', vi:'Đề xuất tính năng' },
     contactCatAccount:{ ja:'アカウントについて', en:'Account issue', ko:'계정 관련', 'zh-tw':'關於帳號', 'zh-cn':'关于账户', es:'Problema de cuenta', fr:'Problème de compte', pt:'Problema de conta', de:'Kontoproblem', ar:'مشكلة في الحساب', th:'เกี่ยวกับบัญชี', id:'Masalah akun', ru:'Проблема с аккаунтом', it:'Problema account', vi:'Vấn đề tài khoản' },
     contactCatOther:{ ja:'その他', en:'Other', ko:'기타', 'zh-tw':'其他', 'zh-cn':'其他', es:'Otro', fr:'Autre', pt:'Outro', de:'Sonstiges', ar:'أخرى', th:'อื่นๆ', id:'Lainnya', ru:'Другое', it:'Altro', vi:'Khác' },
-    contactCatTokushoho:{ ja:'住所・電話番号の開示請求', en:'Request business address/phone', ko:'주소·전화번호 공개 요청', 'zh-tw':'請求公開地址・電話號碼', 'zh-cn':'请求公开地址・电话号码', es:'Solicitud de dirección/teléfono', fr:'Demande d\'adresse/téléphone', pt:'Solicitação de endereço/telefone', de:'Anfrage Adresse/Telefonnummer', ar:'طلب العنوان/رقم الهاتف', th:'ขอที่อยู่/เบอร์โทรศัพท์', id:'Permintaan alamat/telepon', ru:'Запрос адреса/телефона', it:'Richiesta indirizzo/telefono', vi:'Yêu cầu địa chỉ/số điện thoại' },
+    contactCatTokushoho:{ ja:'特定商取引法に関するお問い合わせ', en:'Specified Commercial Transactions Act inquiry', ko:'특정상거래법 관련 문의', 'zh-tw':'關於特定商業交易法之詢問', 'zh-cn':'关于特定商业交易法之咨询', es:'Consulta sobre la Ley de Transacciones Comerciales', fr:'Question sur la loi sur les transactions commerciales', pt:'Consulta sobre a Lei de Transações Comerciais', de:'Anfrage zum Gesetz über besondere Handelsgeschäfte', ar:'استفسار حول قانون المعاملات التجارية', th:'สอบถามเกี่ยวกับกฎหมายธุรกรรมทางการค้า', id:'Pertanyaan Undang-Undang Transaksi Komersial', ru:'Вопрос по закону о коммерческих сделках', it:'Richiesta sulla legge sulle transazioni commerciali', vi:'Câu hỏi về Luật Giao dịch Thương mại' },
     valueGraphNotYetTitle:{ ja:'グラフはまだ作られていません', en:'No graph yet', ko:'아직 그래프가 없습니다', 'zh-tw':'尚未建立圖表', 'zh-cn':'尚未建立图表', es:'Aún no hay gráfico', fr:'Pas encore de graphique', pt:'Ainda não há gráfico', de:'Noch kein Diagramm', ar:'لا يوجد رسم بياني بعد', th:'ยังไม่มีกราฟ', id:'Belum ada grafik', ru:'Графика ещё нет', it:'Nessun grafico ancora', vi:'Chưa có biểu đồ' },
     valueGraphNotYetDesc:{ ja:'レビューを1件書くとカードにグラフが入り、シェアできるようになります。', en:'Write one review to get a graph on your card that you can share.', ko:'리뷰를 1건 작성하면 카드에 그래프가 생기고 공유할 수 있어요.', 'zh-tw':'寫一則評論後，卡片就會出現圖表並可以分享。', 'zh-cn':'写一条评论后，卡片就会出现图表并可以分享。', es:'Escribe una reseña para tener un gráfico en tu tarjeta y compartirlo.', fr:'Rédigez un avis pour obtenir un graphique partageable sur votre carte.', pt:'Escreva uma avaliação para ter um gráfico no seu cartão e compartilhar.', de:'Schreibe eine Rezension, um ein teilbares Diagramm auf deiner Karte zu erhalten.', ar:'اكتب مراجعة واحدة للحصول على رسم بياني في بطاقتك يمكنك مشاركته.', th:'เขียนรีวิว 1 รายการเพื่อให้การ์ดมีกราฟและแชร์ได้', id:'Tulis satu ulasan agar kartu Anda memiliki grafik yang bisa dibagikan.', ru:'Напишите один отзыв, чтобы на карточке появился график для публикации.', it:'Scrivi una recensione per avere un grafico condivisibile sulla tua card.', vi:'Viết một đánh giá để có biểu đồ trên thẻ và chia sẻ được.' },
     writeReviewBtn:{ ja:'レビューを書く', en:'Write a review', ko:'리뷰 작성하기', 'zh-tw':'撰寫評論', 'zh-cn':'撰写评论', es:'Escribir reseña', fr:'Rédiger un avis', pt:'Escrever avaliação', de:'Rezension schreiben', ar:'كتابة مراجعة', th:'เขียนรีวิว', id:'Tulis ulasan', ru:'Написать отзыв', it:'Scrivi una recensione', vi:'Viết đánh giá' },
@@ -20576,7 +20583,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p>松井和真</p>
 
         <h3>所在地</h3>
-        <p>請求があった場合は、遅滞なく開示いたします。お問い合わせフォームの「<button type="button" onclick="closeLegal();openTokushohoDisclosureRequest();" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">住所・電話番号の開示請求</button>」よりご連絡ください。</p>
+        <p>請求があった場合は、遅滞なく開示いたします。お問い合わせフォームの「<button type="button" onclick="closeLegal();openTokushohoDisclosureRequest();" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">特定商取引法に関するお問い合わせ</button>」よりご連絡ください。</p>
 
         <h3>電話番号</h3>
         <p>お問い合わせは下記フォームより承っております。電話番号については、請求をいただいた場合に遅滞なく開示いたします。</p>
@@ -22806,7 +22813,7 @@ document.addEventListener('DOMContentLoaded', () => {
     { id:'tagError', label:'あらすじ・タグの誤り' },
     { id:'featureRequest', label:'機能のご要望' },
     { id:'account', label:'アカウントについて' },
-    { id:'tokushoho', label:'住所・電話番号の開示請求' },
+    { id:'tokushoho', label:'特定商取引法に関するお問い合わせ' },
     { id:'other', label:'その他' },
   ];
   // 管理者向け：お問い合わせ一覧（未読を上・新しい順。カテゴリタブで絞り込み）
@@ -22897,6 +22904,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <a href="${mailtoHref}" style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(159,188,255,.4);background:rgba(159,188,255,.1);color:#b9c9ff;font-size:.7rem;text-decoration:none;margin-right:6px;">✉️ 返信する</a>
           ` : ''}
           ${isRestoreRequest ? `<button type="button" class="admin-contact-restore-btn" data-email="${escapeHtml(emailMatch[1])}" data-uid="${escapeHtml(uidMatch?.[1] || '')}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(159,188,255,.4);background:rgba(159,188,255,.1);color:#b9c9ff;font-size:.7rem;cursor:pointer;">🔎 この人の保管データを探して復元する</button>` : ''}
+          <button type="button" class="admin-contact-delete-btn" data-id="${m.id}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(234,84,84,.3);background:transparent;color:#c98080;font-size:.7rem;cursor:pointer;">🗑️ 削除</button>
           <div class="admin-contact-restore-result" data-for="${m.id}" style="margin-top:8px;"></div>
         </div>
       `;
@@ -22905,6 +22913,15 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.onclick = async () => {
           btn.disabled = true;
           await db.contactMessages.markRead(btn.dataset.id);
+          renderAdminContactMessages();
+        };
+      });
+      el.querySelectorAll('.admin-contact-delete-btn').forEach(btn=>{
+        btn.onclick = async () => {
+          if(!confirm('このお問い合わせを削除します。元に戻せません。よろしいですか？')) return;
+          btn.disabled = true;
+          const { error } = await db.contactMessages.delete(btn.dataset.id);
+          if(error) { alert('削除に失敗しました: ' + error.message); btn.disabled = false; return; }
           renderAdminContactMessages();
         };
       });
