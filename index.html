@@ -2273,6 +2273,12 @@
       /* 情報量削減：スマホ幅では掲示板を1ボタン化し、従来の2ボタンカードは隠す */
       #page-anime #boardEntrySection { display:none; }
       #page-anime .board-entry-mobile-btn { display:flex; }
+      /* [追加] レビューする／レビューを見る／掲示板は、スマホ幅ではアニメページ専用ボトムナビ
+         (#animeMobileBnav)に移動したため、あらすじ下の元ボタンは非表示にする。
+         お気に入りボタンはボトムナビの4項目に含めていないので、ここには残す */
+      #page-anime #goReviewBtn,
+      #page-anime #goReviewListBtn,
+      #page-anime #boardEntryMobileBtn { display:none !important; }
       /* スマホ幅では下にマスターグラフ本体が常に表示されるようになったので、
          ボタン下の小さいプレビューグラフ（重複表示）は隠す */
       /* タブに移動済みの元セクション・スワイプUIはスマホ幅では隠す（中身はJSでタブ側に移動済み） */
@@ -4516,8 +4522,19 @@ document.addEventListener('DOMContentLoaded', () => {
         <div id="gachaAnimeHistoryList" class="gacha-anime-history-list">
           <p class="gacha-anime-history-empty" data-i18n="historyEmpty">まだ履歴がありません</p>
         </div>
+        <!-- [追加] 押すと全件を一覧表示するポップアップを開く -->
+        <button type="button" id="gachaAnimeHistoryMoreBtn" class="gacha-collect-btn" style="display:none;" data-i18n="gachaAnimeHistorySeeAll">すべて見る</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- [追加] 出た作品の履歴：全件一覧ポップアップ -->
+<div id="gachaAnimeHistoryOverlay" style="display:none;position:fixed;inset:0;background:rgba(4,10,7,.78);z-index:10003;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:440px;max-height:80vh;overflow-y:auto;background:#152a1e;border:1px solid rgba(217,164,65,.3);border-radius:20px;padding:22px;">
+    <h3 style="margin:0 0 14px;font-size:15px;font-weight:700;color:#e8f0ea;text-align:center;" data-i18n="gachaAnimeHistoryTitle">出た作品の履歴</h3>
+    <div id="gachaAnimeHistoryFullList" class="gacha-anime-history-list" style="max-height:none;"></div>
+    <button type="button" id="gachaAnimeHistoryCloseBtn" style="width:100%;height:44px;margin-top:14px;border-radius:11px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:14px;cursor:pointer;" data-i18n="gachaCloseBtn">閉じる</button>
   </div>
 </div>
 
@@ -7188,6 +7205,30 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="bnav-carousel-dots" id="bnavCarouselDots">
     <span class="bnav-carousel-dot active"></span>
     <span class="bnav-carousel-dot"></span>
+  </div>
+</nav>
+
+<!-- アニメページ専用（スマホのみ）：あらすじ下にあった「レビューする／レビューを見る／掲示板」を
+     通常のボトムナビの代わりに「ホーム／レビューをする／レビューを見る／掲示板」の4項目で表示する。
+     nav()内で#page-animeの時だけ表示を切り替える（通常の#bnavCarouselと排他） -->
+<nav class="bnav-carousel bnav-anime-mobile" id="animeMobileBnav" style="display:none;">
+  <div class="bnav-carousel-page" style="display:flex;justify-content:space-around;">
+    <button class="bnav-carousel-item" id="abnav-home" onclick="nav('home')">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>
+      <span data-i18n="navHome">ホーム</span>
+    </button>
+    <button class="bnav-carousel-item" id="abnav-review" onclick="document.getElementById('goReviewBtn')?.click();">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      <span data-i18n="btnReview">レビューする</span>
+    </button>
+    <button class="bnav-carousel-item" id="abnav-review-list" onclick="document.getElementById('goReviewListBtn')?.click();">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="4" cy="6" r="1"/><line x1="9" y1="6" x2="20" y2="6"/><circle cx="4" cy="12" r="1"/><line x1="9" y1="12" x2="20" y2="12"/><circle cx="4" cy="18" r="1"/><line x1="9" y1="18" x2="20" y2="18"/></svg>
+      <span data-i18n="navReviewList">レビューを見る</span>
+    </button>
+    <button class="bnav-carousel-item" id="abnav-board" onclick="document.getElementById('boardEntryMobileBtn')?.click();">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span data-i18n="navBoard">掲示板</span>
+    </button>
   </div>
 </nav>
 <div id="bnavLongpressDim"></div>
@@ -9949,7 +9990,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const globalNav = document.getElementById('globalBnav');
     if (globalNav) globalNav.style.display = (page === 'admin' || page === 'partner') ? 'none' : '';
     const globalNavCarousel = document.getElementById('bnavCarousel');
-    if (globalNavCarousel) globalNavCarousel.style.display = (page === 'admin' || page === 'partner') ? 'none' : '';
+    if (globalNavCarousel) globalNavCarousel.style.display = (page === 'admin' || page === 'partner' || page === 'anime') ? 'none' : '';
+    // アニメページ限定（スマホのみ）：通常のボトムナビの代わりに
+    // 「ホーム／レビューをする／レビューを見る／掲示板」の専用4項目ナビを出す
+    const animeMobileBnav = document.getElementById('animeMobileBnav');
+    if (animeMobileBnav) animeMobileBnav.style.display = (page === 'anime') ? '' : 'none';
     document.body.classList.toggle('admin-fullpage', page === 'admin' || page === 'partner');
     document.body.classList.toggle('page-anime-active', page === 'anime');
     currentPage = page;
@@ -12700,31 +12745,66 @@ document.addEventListener('DOMContentLoaded', () => {
     grid.innerHTML = cells.join('');
   }
 
-  // [追加] 出た作品(確定枠のアニメカード)の履歴。gacha_pull_logのanime_title列を使う
+  // [追加] 出た作品(確定枠のアニメカード)の履歴。gacha_pull_logのanime_title列を使う。
+  // [2026-09-21修正] ユーザー指示で「押すと一覧見えるように」「日にちと時間の表記も」を追加。
+  // カード内は直近20件のプレビューのみとし、「すべて見る」ボタンでポップアップから
+  // 最大100件の全件一覧を見られるようにした。時刻表示も相対時間(「3分前」)から
+  // 絶対日時(「2026/09/21 14:30」)に変更した
+  function formatGachaHistoryDateTime(dateStr) {
+    const d = new Date(dateStr);
+    if(isNaN(d.getTime())) return '';
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  function gachaAnimeHistoryRowHtml(r, idMap) {
+    const page = r.anime_id ? idMap[r.anime_id] : null;
+    const img = page && page.image ? `<img src="${escapeHtml(page.image)}" loading="lazy" alt="">` : '📺';
+    const navTarget = r.anime_id
+      ? (String(r.anime_id).startsWith('kitsu-') ? `navAnime('${escapeHtml(String(r.anime_id).replace('kitsu-',''))}')` : `nav('anime','${escapeHtml(r.anime_id)}')`)
+      : '';
+    return `
+      <div class="gacha-anime-history-row" ${navTarget ? `onclick="${navTarget}"` : ''}>
+        <span class="gacha-anime-history-thumb">${img}</span>
+        <div class="gacha-anime-history-text">
+          <span class="gacha-anime-history-name">${escapeHtml(r.anime_title || '')}</span>
+          <span class="gacha-anime-history-time">${escapeHtml(formatGachaHistoryDateTime(r.created_at))}</span>
+        </div>
+      </div>`;
+  }
   async function renderGachaAnimeHistory() {
     const listEl = document.getElementById('gachaAnimeHistoryList');
+    const moreBtn = document.getElementById('gachaAnimeHistoryMoreBtn');
     if(!listEl) return;
-    if(!_currentUser || !sb) { listEl.innerHTML = `<p class="gacha-anime-history-empty">${escapeHtml(t('historyEmpty'))}</p>`; return; }
+    if(!_currentUser || !sb) {
+      listEl.innerHTML = `<p class="gacha-anime-history-empty">${escapeHtml(t('historyEmpty'))}</p>`;
+      if(moreBtn) moreBtn.style.display = 'none';
+      return;
+    }
     let rows = [];
     try { rows = await db.gacha.listAnimeHistory(_currentUser.id, 20); } catch(e) {}
-    if(!rows.length) { listEl.innerHTML = `<p class="gacha-anime-history-empty">${escapeHtml(t('historyEmpty'))}</p>`; return; }
+    if(!rows.length) {
+      listEl.innerHTML = `<p class="gacha-anime-history-empty">${escapeHtml(t('historyEmpty'))}</p>`;
+      if(moreBtn) moreBtn.style.display = 'none';
+      return;
+    }
     // サムネイル用に、id→画像のマップをまとめて解決する(1件ずつ問い合わせない)
     const idMap = await resolveAnimeTitleMap(rows.map(r => r.anime_id).filter(Boolean));
-    listEl.innerHTML = rows.map(r => {
-      const page = r.anime_id ? idMap[r.anime_id] : null;
-      const img = page && page.image ? `<img src="${escapeHtml(page.image)}" loading="lazy" alt="">` : '📺';
-      const navTarget = r.anime_id
-        ? (String(r.anime_id).startsWith('kitsu-') ? `navAnime('${escapeHtml(String(r.anime_id).replace('kitsu-',''))}')` : `nav('anime','${escapeHtml(r.anime_id)}')`)
-        : '';
-      return `
-        <div class="gacha-anime-history-row" ${navTarget ? `onclick="${navTarget}"` : ''}>
-          <span class="gacha-anime-history-thumb">${img}</span>
-          <div class="gacha-anime-history-text">
-            <span class="gacha-anime-history-name">${escapeHtml(r.anime_title || '')}</span>
-            <span class="gacha-anime-history-time">${escapeHtml(formatRelativeTime(r.created_at))}</span>
-          </div>
-        </div>`;
-    }).join('');
+    listEl.innerHTML = rows.map(r => gachaAnimeHistoryRowHtml(r, idMap)).join('');
+    if(moreBtn) moreBtn.style.display = '';
+  }
+  // [追加] カード下の「すべて見る」ボタンから開く、全件(最大100件)一覧ポップアップ
+  async function openGachaAnimeHistoryOverlay() {
+    if(!_currentUser || !sb) return;
+    const overlay = document.getElementById('gachaAnimeHistoryOverlay');
+    const listEl = document.getElementById('gachaAnimeHistoryFullList');
+    if(!overlay || !listEl) return;
+    overlay.style.display = 'flex';
+    listEl.innerHTML = `<p class="gacha-anime-history-empty">${escapeHtml(t('loadingLabel'))}</p>`;
+    let rows = [];
+    try { rows = await db.gacha.listAnimeHistory(_currentUser.id, 100); } catch(e) {}
+    if(!rows.length) { listEl.innerHTML = `<p class="gacha-anime-history-empty">${escapeHtml(t('historyEmpty'))}</p>`; return; }
+    const idMap = await resolveAnimeTitleMap(rows.map(r => r.anime_id).filter(Boolean));
+    listEl.innerHTML = rows.map(r => gachaAnimeHistoryRowHtml(r, idMap)).join('');
   }
 
   // [2026-09-20追加] ヘッダーのコイン残高バッジ(合計だけで有償/無償が分からない)を廃止し、
@@ -12980,17 +13060,26 @@ document.addEventListener('DOMContentLoaded', () => {
             isDup = obtained.some(o => o.icon_id === item.key);
             await db.icons.obtain(_currentUser.id, item.key).catch(()=>{});
           }
-          const label = item.kind === 'custom'
-            ? ((GACHA_CUSTOM_META[item.category]||{}).labelKey ? t(GACHA_CUSTOM_META[item.category].labelKey) : item.category)
-            : `${t('gachaLabelIcon')} ★${item.starRarity||''}`;
-          // 出た作品(確定枠のアニメカード)をガチャページの履歴に載せるため、
-          // pick(アニメ)の情報もこのログに一緒に記録する(以前はitemの情報のみ)
-          db.gacha.logPull(_currentUser.id, {
-            seriesId: getCurrentGachaSeries()?.id, tier: item.tier, kind: item.kind, label,
-            animeId: pick ? (pick.kitsuId ? 'kitsu-' + pick.kitsuId : pick.id) : null,
-            animeTitle: pick ? (getTitle(pick) || pick.title || '') : null,
-          });
         } catch(e) {}
+      }
+      // [2026-09-21修正] 以前はこのログ記録が`if(item && sb)`の中にあり、おまけ枠(item)が
+      // 万一空だった回は確定枠のアニメ(pick、必ず1本出る)まで記録が丸ごと欠落するバグが
+      // あった。確定枠は必ず記録されるべきなので、item(おまけ枠)の有無に関わらずsbさえ
+      // あれば毎回記録するように分離した。あわせて、以前はawaitせずに直後の
+      // renderGachaAnimeHistory()を呼んでいたため、このINSERTが完了する前に履歴を読みに
+      // 行ってしまい「今引いたばかりの1件」が表示に反映されない競合状態もあったため、
+      // 必ずawaitしてから次に進むようにした
+      if(sb) {
+        const label = item
+          ? (item.kind === 'custom'
+              ? ((GACHA_CUSTOM_META[item.category]||{}).labelKey ? t(GACHA_CUSTOM_META[item.category].labelKey) : item.category)
+              : `${t('gachaLabelIcon')} ★${item.starRarity||''}`)
+          : '';
+        await db.gacha.logPull(_currentUser.id, {
+          seriesId: getCurrentGachaSeries()?.id, tier: item ? item.tier : 'none', kind: item ? item.kind : 'none', label,
+          animeId: pick ? (pick.kitsuId ? 'kitsu-' + pick.kitsuId : pick.id) : null,
+          animeTitle: pick ? (getTitle(pick) || pick.title || '') : null,
+        });
       }
       results.push({ pick, item, isDup });
     }
@@ -13252,6 +13341,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if(coin10Btn) coin10Btn.onclick = () => openGachaConfirm('coin10');
     bindGachaConfirmDrawBtn();
     renderGachaAnimeHistory();
+    // [追加] 「出た作品の履歴」カードの「すべて見る」ボタン→全件一覧ポップアップ
+    const historyMoreBtn = document.getElementById('gachaAnimeHistoryMoreBtn');
+    const historyOverlay = document.getElementById('gachaAnimeHistoryOverlay');
+    const historyCloseBtn = document.getElementById('gachaAnimeHistoryCloseBtn');
+    if(historyMoreBtn) historyMoreBtn.onclick = openGachaAnimeHistoryOverlay;
+    if(historyCloseBtn) historyCloseBtn.onclick = () => { if(historyOverlay) historyOverlay.style.display = 'none'; };
+    if(historyOverlay) historyOverlay.onclick = (e) => { if(e.target === historyOverlay) historyOverlay.style.display = 'none'; };
     if(probBtn) probBtn.onclick = () => { renderGachaProbList(); if(probOverlay) probOverlay.style.display = 'flex'; };
     if(probCloseBtn) probCloseBtn.onclick = () => { if(probOverlay) probOverlay.style.display = 'none'; };
     if(probOverlay) probOverlay.onclick = (e) => { if(e.target === probOverlay) probOverlay.style.display = 'none'; };
@@ -19446,6 +19542,8 @@ document.addEventListener('DOMContentLoaded', () => {
     secAll:     { ja:'すべての作品',en:'All Anime',   ko:'모든 작품',  'zh-tw':'全部作品','zh-cn':'全部作品',es:'Todos',      fr:'Tout',       pt:'Todos',      de:'Alle',   ar:'الكل',th:'อนิเมะทั้งหมด',id:'Semua anime',ru:'Все аниме',it:'Tutti gli anime',vi:'Tất cả anime'    },
     // 作品ページ
     btnReview:  { ja:'レビューする',en:'Write Review',ko:'리뷰하기','zh-tw':'撰寫評論','zh-cn':'写评论',es:'Reseñar',fr:'Évaluer',pt:'Avaliar',de:'Bewerten',ar:'مراجعة',th:'เขียนรีวิว',id:'Tulis Ulasan',ru:'Написать отзыв',it:'Scrivi recensione',vi:'Viết đánh giá' },
+    // [追加] アニメページ専用モバイルボトムナビの「レビューを見る」タブ用ラベル
+    navReviewList: { ja:'レビューを見る', en:'View Reviews', ko:'리뷰 보기', 'zh-tw':'查看評論', 'zh-cn':'查看评论', es:'Ver reseñas', fr:'Voir les avis', pt:'Ver avaliações', de:'Bewertungen ansehen', ar:'عرض المراجعات', th:'ดูรีวิว', id:'Lihat Ulasan', ru:'Смотреть отзывы', it:'Vedi recensioni', vi:'Xem đánh giá' },
     btnDelete:  { ja:'🗑 ページ削除',en:'🗑 Delete',  ko:'🗑 삭제',   'zh-tw':'🗑 刪除',  'zh-cn':'🗑 删除',  es:'🗑 Eliminar',fr:'🗑 Supprimer',pt:'🗑 Excluir',de:'🗑 Löschen',ar:'🗑 حذف',th:'🗑 ลบหน้า',id:'🗑 Hapus',ru:'🗑 Удалить',it:'🗑 Elimina',vi:'🗑 Xóa'  },
     watchOn:    { ja:'このアニメを観る',en:'Watch this anime',ko:'이 애니 보기','zh-tw':'觀看此動畫','zh-cn':'观看此动漫',es:'Ver este anime',fr:'Voir cet anime',pt:'Assistir anime',de:'Anime ansehen',ar:'شاهد هذا الأنمي',th:'ดูอนิเมะเรื่องนี้',id:'Tonton anime ini',ru:'Смотреть аниме',it:'Guarda questo anime',vi:'Xem anime này' },
     reviews:    { ja:'みんなのレビュー',en:'Reviews',    ko:'리뷰',      'zh-tw':'評論',   'zh-cn':'评论',   es:'Reseñas',   fr:'Avis',       pt:'Avaliações', de:'Bewertungen',ar:'المراجعات',th:'รีวิว',id:'Ulasan',ru:'Отзывы',it:'Recensioni',vi:'Đánh giá' },
@@ -19993,6 +20091,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaConfirmCoinBody: { ja:'{cost}枚を消費して引きます\n所持: {balance}枚 → 消費後: {after}枚', en:'Spend {cost} coins to draw\nBalance: {balance} → After: {after}' },
     gachaConfirmCoinBodyLoading: { ja:'{cost}枚を消費して引きます', en:'Spend {cost} coins to draw' },
     gachaAnimeHistoryTitle: { ja:'出た作品の履歴', en:'History of anime drawn' },
+    gachaAnimeHistorySeeAll: { ja:'すべて見る', en:'See all' },
     gachaPoolTitle: { ja:'出るもの', en:'What you can get', ko:'나올 수 있는 것', 'zh-tw':'可能獲得', 'zh-cn':'可能获得', es:'Lo que puedes obtener', fr:'Ce que vous pouvez obtenir', pt:'O que você pode ganhar', de:'Was du bekommen kannst', ar:'ما يمكنك الحصول عليه', th:'สิ่งที่จะได้รับ', id:'Yang bisa Anda dapatkan', ru:'Что можно получить', it:'Cosa puoi ottenere', vi:'Những gì bạn có thể nhận' },
     gachaPoolNote: { ja:'1回で2枠', en:'2 slots per draw', ko:'1회에 2개', 'zh-tw':'每次2個名額', 'zh-cn':'每次2个名额', es:'2 espacios por tirada', fr:'2 emplacements par tirage', pt:'2 vagas por sorteio', de:'2 Plätze pro Ziehung', ar:'مكانان لكل سحب', th:'2 ช่องต่อการสุ่ม 1 ครั้ง', id:'2 slot per tarikan', ru:'2 слота за попытку', it:'2 slot per estrazione', vi:'2 ô mỗi lượt quay' },
     gachaFixedBadge: { ja:'確定', en:'Guaranteed', ko:'확정', 'zh-tw':'必得', 'zh-cn':'必得', es:'Garantizado', fr:'Garanti', pt:'Garantido', de:'Garantiert', ar:'مضمون', th:'รับประกัน', id:'Dijamin', ru:'Гарантировано', it:'Garantito', vi:'Đảm bảo' },
