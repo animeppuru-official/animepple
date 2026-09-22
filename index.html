@@ -1987,6 +1987,16 @@
     .master-tag-mood { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(240,138,138,.13); color:#eaa9a9; font-size:13px; font-weight:700; flex-shrink:0; white-space:nowrap; }
     .master-tag-strength.is-top, .master-tag-mood.is-top { background:rgba(255,209,102,.22); color:#ffd166; box-shadow:0 0 0 1px rgba(255,209,102,.5) inset; }
     .master-tag-strength.is-worst, .master-tag-mood.is-worst { background:rgba(130,150,138,.16); color:#82968a; box-shadow:0 0 0 1px rgba(130,150,138,.3) inset; }
+    /* [追加] スマホ版限定：完成度／感情・雰囲気を1枚ずつ切り替えるタブ。PCでは非表示のまま従来通り2枚並び表示 */
+    .master-chart-tab-bar { display:none; }
+    .master-chart-tab-btn { flex:1 1 0; height:38px; border-radius:9px; border:1px solid transparent; background:transparent; color:var(--muted); font-size:13.5px; font-weight:600; cursor:pointer; }
+    .master-chart-tab-btn.active[data-tab="a"] { background:rgba(92,201,142,.16); color:#9be3bd; font-weight:700; }
+    .master-chart-tab-btn.active[data-tab="b"] { background:rgba(240,138,138,.13); color:#eaa9a9; font-weight:700; }
+    /* [追加] アニメページ専用モバイルナビ：元のあらすじ下ボタンと同じ色をアイコン・文字に付ける
+       (レビューする=赤`.review-btn`、レビューを見る=緑`.review-btn-list`、掲示板=金`.board-entry-mobile-btn`) */
+    #animeMobileBnav #abnav-review { color:#e5484d; }
+    #animeMobileBnav #abnav-review-list { color:#5ec97a; }
+    #animeMobileBnav #abnav-board { color:#d9a441; }
     .review-card { border:1px solid rgba(255,255,255,.1); border-radius:16px; overflow:hidden; box-shadow:0 12px 30px -20px rgba(0,0,0,.8); position:relative; }
     /* レビューカードのフリップ（回転してコメント面を表示） */
     .review-card-flip-wrap { perspective:1400px; -webkit-perspective:1400px; }
@@ -2267,9 +2277,13 @@
       #page-anime #mobileInfoPaneSimilar { display:block !important; }
       /* グラフの枠を大きく：2列のまま、セクション左右余白・隙間・内側余白を詰めて実寸を拡大する */
       #page-anime #masterGraphSection { padding:0; }
-      #page-anime .master-chart-grid { gap:6px !important; }
+      #page-anime .master-chart-grid { gap:6px !important; grid-template-columns:1fr !important; }
       #page-anime .master-chart-grid > div { padding:8px 6px 12px !important; }
       #page-anime .master-chart-grid canvas { aspect-ratio:340/360; }
+      /* [追加] タブ切り替え：非アクティブ側は隠し、アクティブ側だけ全幅で表示する */
+      #page-anime .master-chart-tab-bar { display:flex; gap:6px; margin-bottom:10px; }
+      #page-anime .master-chart-col { display:none; }
+      #page-anime .master-chart-col.active { display:block; }
       /* 情報量削減：スマホ幅では掲示板を1ボタン化し、従来の2ボタンカードは隠す */
       #page-anime #boardEntrySection { display:none; }
       #page-anime .board-entry-mobile-btn { display:flex; }
@@ -3960,13 +3974,18 @@ document.addEventListener('DOMContentLoaded', () => {
               <div id="masterHighlightBox" class="master-highlight-box">
                 <div class="master-tag-row" id="masterAllTags"></div>
               </div>
+              <!-- [追加] スマホ版限定：完成度／感情・雰囲気を1枚ずつ切り替えるタブ(PCでは非表示のまま従来通り2枚並び) -->
+              <div class="master-chart-tab-bar" id="masterChartTabBar">
+                <button type="button" class="master-chart-tab-btn active" data-tab="a" data-i18n="chartATitle">作品の完成度</button>
+                <button type="button" class="master-chart-tab-btn" data-tab="b" data-i18n="chartBTitle">感情・雰囲気</button>
+              </div>
               <!-- グラフ -->
               <div class="master-chart-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
-                <div style="min-width:0;background:linear-gradient(180deg,#173026,#0f2117);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 18px;box-shadow:0 10px 26px -18px rgba(0,0,0,.7);">
+                <div class="master-chart-col active" data-tab="a" style="min-width:0;background:linear-gradient(180deg,#173026,#0f2117);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 18px;box-shadow:0 10px 26px -18px rgba(0,0,0,.7);">
                   <p id="masterChartALabel" data-i18n="chartATitle" style="font-size:13px;font-weight:700;color:#9be3bd;margin:0 0 4px;text-align:center;">作品の完成度</p>
                   <canvas id="masterChartA" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
                 </div>
-                <div style="min-width:0;background:linear-gradient(180deg,#2a1c20,#170f11);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 18px;box-shadow:0 10px 26px -18px rgba(0,0,0,.7);">
+                <div class="master-chart-col" data-tab="b" style="min-width:0;background:linear-gradient(180deg,#2a1c20,#170f11);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 18px;box-shadow:0 10px 26px -18px rgba(0,0,0,.7);">
                   <p id="masterChartBLabel" data-i18n="chartBTitle" style="font-size:13px;font-weight:700;color:#eaa9a9;margin:0 0 4px;text-align:center;">感情・雰囲気</p>
                   <canvas id="masterChartB" style="width:100%;aspect-ratio:340/320;display:block;"></canvas>
                 </div>
@@ -13732,6 +13751,39 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'stable';
   }
 
+  // [追加] スマホ版のマスターグラフ：完成度(A)／感情・雰囲気(B)をタブで1枚ずつ切り替える機能。
+  // PC幅は従来通り2枚並びのまま(タブバー自体がCSSで非表示になる)。
+  let _masterChartActiveTab = 'a';
+  let _lastMasterGraphDraw = null; // 直近にdrawRadar()へ渡したデータ。タブ切替時の再描画に使う
+  function applyMasterChartTab() {
+    const bar = document.getElementById('masterChartTabBar');
+    if (!bar) return;
+    bar.querySelectorAll('.master-chart-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === _masterChartActiveTab));
+    document.querySelectorAll('#masterGraphSection .master-chart-col').forEach(c => c.classList.toggle('active', c.dataset.tab === _masterChartActiveTab));
+    // 直前まで非表示(display:none)だった側はdrawRadar()時にcanvasの実寸が0で描画されてしまっているため、
+    // 表示側に切り替わった今のタイミングで、キャッシュしておいた同じデータを使って描き直す
+    if (!_lastMasterGraphDraw) return;
+    const isMobile = window.innerWidth < 768;
+    const d = _lastMasterGraphDraw;
+    if (_masterChartActiveTab === 'a') {
+      const caA = document.getElementById('masterChartA');
+      if (caA) drawRadar(caA, d.labA, d.avgA, d.fillA, d.strokeA, isMobile);
+    } else {
+      const caB = document.getElementById('masterChartB');
+      if (caB) drawRadar(caB, d.labB, d.avgB, d.fillB, d.strokeB, isMobile);
+    }
+  }
+  function setupMasterChartTabs() {
+    const bar = document.getElementById('masterChartTabBar');
+    if (!bar) return;
+    bar.querySelectorAll('.master-chart-tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        _masterChartActiveTab = btn.dataset.tab;
+        applyMasterChartTab();
+      };
+    });
+  }
+
   function renderMasterGraph(id) {
     const reviews = validReviews(id);
     const labA = getAxisA(), labB = getAxisB();
@@ -13753,6 +13805,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if(miniSection0) miniSection0.style.display='none';
       const allTagsEl0 = document.getElementById('masterAllTags');
       if(allTagsEl0) allTagsEl0.innerHTML = '';
+      _lastMasterGraphDraw = { labA:labA0, avgA:labA0.map(()=>0), fillA:'rgba(255,255,255,0.03)', strokeA:'rgba(255,255,255,0.15)', labB:labB0, avgB:labB0.map(()=>0), fillB:'rgba(255,255,255,0.03)', strokeB:'rgba(255,255,255,0.15)' };
+      applyMasterChartTab();
       return;
     }
 
@@ -13776,6 +13830,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if(miniSection0) miniSection0.style.display='none';
       const allTagsEl1 = document.getElementById('masterAllTags');
       if(allTagsEl1) allTagsEl1.innerHTML = '';
+      _lastMasterGraphDraw = null; // 数値不足で未描画のため、タブ切替時に再描画すべきデータが無い
+      applyMasterChartTab();
       return;
     }
 
@@ -13826,8 +13882,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const caA = document.getElementById('masterChartA');
     const caB = document.getElementById('masterChartB');
-    if (caA) drawRadar(caA, labA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a', false);
-    if (caB) drawRadar(caB, labB, avgB, 'rgba(255,153,153,0.38)', '#ff8888', false);
+    // [追加] スマホ幅ではタブで1枚ずつ表示するため、幅に余裕ができた分だけ数値も表示する
+    // (PCは従来通り2枚並びで手狭なため数値は出さない)
+    const isMasterGraphMobile = window.innerWidth < 768;
+    const fillA = 'rgba(88,201,132,0.4)', strokeA = '#5ec97a', fillB = 'rgba(255,153,153,0.38)', strokeB = '#ff8888';
+    if (caA) drawRadar(caA, labA, avgA, fillA, strokeA, isMasterGraphMobile);
+    if (caB) drawRadar(caB, labB, avgB, fillB, strokeB, isMasterGraphMobile);
+    _lastMasterGraphDraw = { labA, avgA, fillA, strokeA, labB, avgB, fillB, strokeB };
+    applyMasterChartTab();
 
     // ミニグラフ（ボタン下）
     const miniSection = document.getElementById('miniGraphSection');
@@ -13858,6 +13920,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const c = document.getElementById(cid);
       if(c) { const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
     });
+    _lastMasterGraphDraw = null; // 前のアニメのグラフデータを次の描画まで持ち越さない
     const mini = document.getElementById('miniGraphSection');
     if(mini) mini.style.display='none';
     const master = document.getElementById('masterGraphSection');
@@ -14103,6 +14166,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBoardEntry(id).catch(e=>console.warn('renderBoardEntry:', e));
     renderBoardMascotTeaser(id).catch(e=>console.warn('renderBoardMascotTeaser:', e));
     setupGraphWorldSwiper();
+    // 新しいアニメページに来るたびに、完成度／感情・雰囲気タブは「完成度」に戻す
+    _masterChartActiveTab = 'a';
+    setupMasterChartTabs();
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
       if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら反映しない
