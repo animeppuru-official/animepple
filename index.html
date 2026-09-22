@@ -608,7 +608,7 @@
     .badge { display:inline-block; margin-top:.3rem; padding:.15rem .5rem; border-radius:999px; background:rgba(94,201,122,.12); border:1px solid #3d8a56; font-size:.7rem; color:#b8efc8; }
     .match-badge { background:rgba(255,153,60,.12); border-color:#8a5a3d; color:#ffd0a0; }
     /* [追加] アニメページ・スマホ版：ジャンル/タグ/ユーザー上位タグを1本にまとめた横スクロール行 */
-    .anime-tag-scroll-row { display:flex; flex-wrap:nowrap; gap:.35rem; overflow-x:auto; scrollbar-width:none; margin:0; }
+    .anime-tag-scroll-row { display:flex; flex-wrap:nowrap; gap:.35rem; overflow-x:auto; scrollbar-width:none; margin:0; min-width:0; max-width:100%; }
     .anime-tag-scroll-row::-webkit-scrollbar { display:none; }
     .anime-tag-scroll-row .badge, .anime-tag-scroll-row .tag-chip-user { flex-shrink:0; white-space:nowrap; margin-top:0; }
 
@@ -2211,13 +2211,13 @@
          HTML構造（JS参照）はそのままに、gridの配置だけで実現する
          （aside/anime-infoをdisplay:contentsにして中身をanime-hero-wrap直下のgridアイテム化）。 */
       #page-anime .anime-hero-wrap {
-        display:grid; grid-template-columns:132px 1fr; column-gap:14px; row-gap:2px;
-        padding:1.6rem .9rem 0;
+        display:grid; grid-template-columns:clamp(140px, 40vw, 200px) minmax(0,1fr); column-gap:14px; row-gap:2px;
+        padding:1.1rem .9rem 0;
       }
       #page-anime .anime-side-col { display:contents; }
       #page-anime .anime-info { display:contents; }
       #page-anime h1#animeTitle {
-        grid-column:1 / -1; grid-row:1; margin:0 0 .8rem; font-size:1.15rem; line-height:1.4;
+        grid-column:1 / -1; grid-row:1; margin:0 0 .6rem; font-size:1.15rem; line-height:1.4;
         background:linear-gradient(180deg,#20402f,#152719);
         border:1px solid rgba(255,255,255,.14); border-top-color:rgba(255,255,255,.28);
         border-radius:14px;
@@ -2232,7 +2232,7 @@
       #page-anime .anime-thumb-hero img { object-fit:cover; border-radius:10px; }
       #page-anime #animeMeta { grid-column:2; grid-row:2; margin:0; align-self:start; }
       /* [追加] 余白を詰める：HTML側の inline margin-bottom:.7rem を上書きする(ユーザー指示「余白を意識して」) */
-      #page-anime #animeExtraInfo { grid-column:2; grid-row:3; margin:.3rem 0 .35rem !important; align-self:start; }
+      #page-anime #animeExtraInfo { grid-column:2; grid-row:3; margin:.3rem 0 .35rem !important; align-self:start; min-width:0; }
       /* あらすじボタンは画像の右余白に収め、あらすじ以降（本文以外）は全幅に戻る。
          auto placementの曖昧さを避けるため、順序をgrid-rowで明示指定する
          （あらすじボタン→ボタン群→掲示板/マスコット→グラフ…の順）。 */
@@ -2257,7 +2257,7 @@
       /* あらすじボタン・お気に入りへ内容を移動したため、元の縦積みボタン群は空になり不要 */
       #page-anime .anime-side-actions { display:none; }
       #page-anime #boardEntrySection { grid-row:6; }
-      #page-anime #boardMascotTeaser { grid-row:7; }
+      #page-anime #boardMascotTeaser { grid-row:7; margin:.2rem 0 .5rem !important; }
       #page-anime #boardMascotTeaser .mascot-balloon::after { display:none; }
       #page-anime #miniGraphSection { grid-row:8; }
       #page-anime #mobileInfoPaneGraph { grid-row:9; }
@@ -8685,6 +8685,33 @@ document.addEventListener('DOMContentLoaded', () => {
           .range(offset, offset);
         return (data && data[0]) || null;
       },
+      // [2026-09-22追加] ホーム「今日のセレクション」用：指定したmeta(例:'TV'/'movie')に絞った
+      // 上で、日付(slot)ベースの決定的な擬似ランダムoffsetをn個生成し、それぞれ.range()で
+      // 1件ずつ取得する。getAllWithLimit()のようなid昇順の先頭N件に頼る方式は、
+      // id命名規則(例:"movie0032"のようなmovie系IDが辞書順で先に来る)によって
+      // 特定のmeta種別がほぼ候補に入らなくなる偏りが起きるため(人気ページで見つかった
+      // 500件キャップと同種の不具合)、これを避けるために件数を数えてから直接range()する
+      async getSeededPicksByMeta(metaValue, slot, n) {
+        if(!sb) return [];
+        const { count } = await sb.from('anime_pages')
+          .select('id', { count: 'exact', head: true })
+          .ilike('meta', metaValue);
+        if(!count) return [];
+        const take = Math.min(n, count);
+        const offsets = new Set();
+        for(let salt = 0; offsets.size < take && salt < take * 20; salt++) {
+          const h = Math.sin(slot * 9301 + hashStr(metaValue) * 12345 + salt * 49297) * 233280;
+          offsets.add(Math.floor((h - Math.floor(h)) * count));
+        }
+        const rows = await Promise.all([...offsets].map(offset =>
+          sb.from('anime_pages')
+            .select('id,title,title_en,image_url,meta,year')
+            .ilike('meta', metaValue)
+            .range(offset, offset)
+            .then(({ data }) => (data && data[0]) || null)
+        ));
+        return rows.filter(Boolean);
+      },
       // [2026-09-21追加] 指定したid群だけのメタデータ(タイトル・画像等)を軽量selectで取得する。
       // 人気ページの候補選定(getPopularCandidates)用。id件数が多くなりうるので、PostgRESTの
       // URL長制限を避けるためチャンクに分けて呼ぶ
@@ -12045,34 +12072,33 @@ document.addEventListener('DOMContentLoaded', () => {
       pickedAnime = _randomPickCache.anime;
       pickedMovie = _randomPickCache.movie;
     } else {
-      const all = getAll();
-      let pool = [...all];
+      pickedAnime = [];
+      pickedMovie = [];
+      // [2026-09-22修正] 以前はdb.animePages.getAllWithLimit(300)(id昇順の先頭300件)を候補に
+      // していたため、"movie0032"のようなmovie系IDが辞書順で先に来て300件をほぼ独占し、
+      // "wiki-xxxx"形式のTVアニメIDがほとんど候補に入らなかった(「今日のセレクション」の
+      // 「アニメ」枠が実質1件しか出ない不具合の原因、人気ページの500件キャップと同種)。
+      // meta別に件数を数えてから直接ランダムoffsetで取得するgetSeededPicksByMeta()に差し替える
       if (DB_MODE === 'supabase' && sb) {
         try {
-          const { items: dbPages } = await db.animePages.getAllWithLimit(300);
-          const existingIds = new Set(pool.map(a => a.id));
-          const dbItems = (dbPages || [])
-            .filter(p => !existingIds.has(p.id))
-            .map(p => ({
-              id: p.id,
-              kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-', '') : null,
-              title: p.title || p.title_en || '',
-              titleEn: p.title_en || p.title || '',
-              meta: p.meta || '',
-              image: p.image_url || '',
-              year: p.year || '',
-            }));
-          pool = [...pool, ...dbItems];
+          [pickedAnime, pickedMovie] = await Promise.all([
+            db.animePages.getSeededPicksByMeta('TV', slot, selCount),
+            db.animePages.getSeededPicksByMeta('movie', slot, selCount),
+          ]);
         } catch (e) { console.warn('randomPick Supabase fetch:', e); }
       }
-      const anime = [], movie = [];
-      pool.forEach(item => {
-        const meta = (item.meta || '').toLowerCase();
-        if (meta === 'movie') movie.push(item);
-        else if (meta === 'tv') anime.push(item);
-      });
-      pickedAnime = seededShuffle(anime, slot).slice(0, selCount);
-      pickedMovie = seededShuffle(movie, slot).slice(0, selCount);
+      // Supabase未使用、または取得に失敗した場合だけ、ローカルの簡易データセットにフォールバックする
+      if (!pickedAnime.length || !pickedMovie.length) {
+        const all = getAll();
+        const localAnime = [], localMovie = [];
+        all.forEach(item => {
+          const meta = (item.meta || '').toLowerCase();
+          if (meta === 'movie') localMovie.push(item);
+          else if (meta === 'tv') localAnime.push(item);
+        });
+        if (!pickedAnime.length) pickedAnime = seededShuffle(localAnime, slot).slice(0, selCount);
+        if (!pickedMovie.length) pickedMovie = seededShuffle(localMovie, slot).slice(0, selCount);
+      }
       _randomPickCache = { anime: pickedAnime, movie: pickedMovie, ts: now, slot, selCount };
     }
     const gridAnime = document.getElementById('randomPickGridAnime');
