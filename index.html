@@ -607,6 +607,10 @@
     .gcard-body p { margin:0; font-size:12px; color:#82968a; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
     .badge { display:inline-block; margin-top:.3rem; padding:.15rem .5rem; border-radius:999px; background:rgba(94,201,122,.12); border:1px solid #3d8a56; font-size:.7rem; color:#b8efc8; }
     .match-badge { background:rgba(255,153,60,.12); border-color:#8a5a3d; color:#ffd0a0; }
+    /* [追加] アニメページ・スマホ版：ジャンル/タグ/ユーザー上位タグを1本にまとめた横スクロール行 */
+    .anime-tag-scroll-row { display:flex; flex-wrap:nowrap; gap:.35rem; overflow-x:auto; scrollbar-width:none; margin:0; }
+    .anime-tag-scroll-row::-webkit-scrollbar { display:none; }
+    .anime-tag-scroll-row .badge, .anime-tag-scroll-row .tag-chip-user { flex-shrink:0; white-space:nowrap; margin-top:0; }
 
     /* ── GACHA ── */
     #page-gacha { background:radial-gradient(120% 80% at 50% 0%, #10301f 0%, #08170e 55%, #061109 100%); }
@@ -1893,10 +1897,13 @@
     .anime-meta-text { color:#82968a; font-size:13.5px; margin:0 0 .6rem; }
     .anime-desc-text { color:#b6c8bd; font-size:15px; margin:0 0 .9rem; line-height:1.9; }
     .anime-desc-btn-mobile {
-      display:none; width:100%; align-items:center; justify-content:center; gap:.4rem;
-      height:42px; margin:0 0 .9rem; border-radius:11px; border:1px solid rgba(255,255,255,.12);
+      display:none; width:auto; flex:0 0 auto; align-items:center; justify-content:center; gap:.35rem;
+      height:42px; padding:0 16px; margin:0; border-radius:11px; border:1px solid rgba(255,255,255,.12);
       background:rgba(255,255,255,.04); color:#dfeae3; font-weight:700; font-size:13.5px; cursor:pointer;
     }
+    /* [追加] スマホ版：「あらすじ」ボタンとお気に入りボタンを横並びにする行。
+       JS(setupAnimeDescFavRowMobile())で#favToggleBtnをこの行に移動して使う */
+    .anime-desc-fav-row { display:none; align-items:center; gap:.5rem; }
     .review-btn { display:flex; width:100%; align-items:center; justify-content:center; gap:.35rem; padding:.75rem 1.1rem; border-radius:12px; background:#e5484d; color:#fff; font-weight:700; font-size:15px; border:none; cursor:pointer; box-shadow:0 8px 20px -12px rgba(229,72,77,.6); }
     .review-btn-list { width:auto; flex:1 1 auto; height:44px; padding:0 15px; border-radius:11px; background:#5ec97a; color:#07200f; font-weight:700; font-size:13.5px; box-shadow:0 8px 20px -12px rgba(94,201,122,.6); }
     /* スマホ版：情報量削減のため「通常掲示板」「価値観掲示板」を1個の「掲示板」ボタンに統合。
@@ -2224,12 +2231,12 @@
       }
       #page-anime .anime-thumb-hero img { object-fit:cover; border-radius:10px; }
       #page-anime #animeMeta { grid-column:2; grid-row:2; margin:0; align-self:start; }
-      #page-anime #animeExtraInfo { grid-column:2; grid-row:3; margin:.3rem 0 0; align-self:start; }
+      /* [追加] 余白を詰める：HTML側の inline margin-bottom:.7rem を上書きする(ユーザー指示「余白を意識して」) */
+      #page-anime #animeExtraInfo { grid-column:2; grid-row:3; margin:.3rem 0 .35rem !important; align-self:start; }
       /* あらすじボタンは画像の右余白に収め、あらすじ以降（本文以外）は全幅に戻る。
          auto placementの曖昧さを避けるため、順序をgrid-rowで明示指定する
          （あらすじボタン→ボタン群→掲示板/マスコット→グラフ…の順）。 */
       #page-anime #animeDesc,
-      #page-anime .anime-side-actions,
       #page-anime #boardEntrySection,
       #page-anime #boardMascotTeaser,
       #page-anime #miniGraphSection,
@@ -2243,8 +2250,12 @@
         grid-column:1 / -1;
       }
       #page-anime #animeDesc { grid-row:4; margin-top:.7rem; display:none; }
-      #page-anime .anime-desc-btn-mobile { grid-column:2; grid-row:4; margin:.3rem 0 0; display:flex; }
-      #page-anime .anime-side-actions { grid-row:5; display:flex; flex-direction:column; gap:10px; margin-top:.3rem; }
+      /* [追加] 「あらすじ」ボタンとお気に入りを横並びにした行(setupAnimeDescFavRowMobile()で生成)。
+         元の.anime-desc-btn-mobile単体の枠をそのまま流用する */
+      #page-anime #animeDescFavRow { grid-column:2; grid-row:4; margin:.3rem 0 0; display:flex; }
+      #page-anime .anime-desc-btn-mobile { display:flex; }
+      /* あらすじボタン・お気に入りへ内容を移動したため、元の縦積みボタン群は空になり不要 */
+      #page-anime .anime-side-actions { display:none; }
       #page-anime #boardEntrySection { grid-row:6; }
       #page-anime #boardMascotTeaser { grid-row:7; }
       #page-anime #boardMascotTeaser .mascot-balloon::after { display:none; }
@@ -3940,7 +3951,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <p class="anime-meta-text" id="animeMeta"></p>
       <div id="animeExtraInfo" style="margin-bottom:.7rem;"></div>
       <p class="anime-desc-text" id="animeDesc"></p>
-      <button type="button" class="anime-desc-btn-mobile" id="animeDescBtnMobile">📖 あらすじを見る</button>
+      <button type="button" class="anime-desc-btn-mobile" id="animeDescBtnMobile">📖 あらすじ</button>
 
       <!-- 評価グラフは常時表示。世界の反応・似ている作品だけをタブで切り替え（Design案通り：概要文のすぐ下） -->
       <div id="mobileInfoPaneGraph"></div>
@@ -13755,11 +13766,39 @@ document.addEventListener('DOMContentLoaded', () => {
   // PC幅は従来通り2枚並びのまま(タブバー自体がCSSで非表示になる)。
   let _masterChartActiveTab = 'a';
   let _lastMasterGraphDraw = null; // 直近にdrawRadar()へ渡したデータ。タブ切替時の再描画に使う
+  // 「際立つ強み／印象的な雰囲気」ボックス(#masterAllTags)：
+  // スマホでは選択中タブの6項目だけに絞る。PCは2枚とも常に見えているので、従来通り12項目
+  // (完成度6＋感情・雰囲気6)をまとめて表示する(タブの影響を受けない)。
+  function renderMasterAllTags() {
+    const allTagsEl = document.getElementById('masterAllTags');
+    if (!allTagsEl) return;
+    const d = _lastMasterGraphDraw;
+    if (!d || !d.hasData) { allTagsEl.innerHTML = ''; return; }
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      const labels = _masterChartActiveTab === 'a' ? d.labA : d.labB;
+      const vals = _masterChartActiveTab === 'a' ? d.avgA : d.avgB;
+      const tagCls = _masterChartActiveTab === 'a' ? 'master-tag-strength' : 'master-tag-mood';
+      const maxVal = vals.length ? Math.max(...vals) : null;
+      const minVal = vals.length ? Math.min(...vals) : null;
+      const tagClass = (v) => (v===maxVal && maxVal!==minVal) ? ' is-top' : (v===minVal && maxVal!==minVal) ? ' is-worst' : '';
+      allTagsEl.innerHTML = labels.map((k,i)=>`<span class="${tagCls}${tagClass(vals[i])}">${k} ${vals[i]}</span>`).join('');
+    } else {
+      const allVals = [...d.avgA, ...d.avgB];
+      const maxVal = allVals.length ? Math.max(...allVals) : null;
+      const minVal = allVals.length ? Math.min(...allVals) : null;
+      const tagClass = (v) => (v===maxVal && maxVal!==minVal) ? ' is-top' : (v===minVal && maxVal!==minVal) ? ' is-worst' : '';
+      const strengthHtml = d.labA.map((k,i)=>`<span class="master-tag-strength${tagClass(d.avgA[i])}">${k} ${d.avgA[i]}</span>`).join('');
+      const moodHtml = d.labB.map((k,i)=>`<span class="master-tag-mood${tagClass(d.avgB[i])}">${k} ${d.avgB[i]}</span>`).join('');
+      allTagsEl.innerHTML = strengthHtml + moodHtml;
+    }
+  }
   function applyMasterChartTab() {
     const bar = document.getElementById('masterChartTabBar');
     if (!bar) return;
     bar.querySelectorAll('.master-chart-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === _masterChartActiveTab));
     document.querySelectorAll('#masterGraphSection .master-chart-col').forEach(c => c.classList.toggle('active', c.dataset.tab === _masterChartActiveTab));
+    renderMasterAllTags();
     // 直前まで非表示(display:none)だった側はdrawRadar()時にcanvasの実寸が0で描画されてしまっているため、
     // 表示側に切り替わった今のタイミングで、キャッシュしておいた同じデータを使って描き直す
     if (!_lastMasterGraphDraw) return;
@@ -13784,6 +13823,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // [追加] スマホ版：「あらすじ」ボタンとお気に入りボタンを横並びの1行にまとめる
+  // (ユーザー指示：「あらすじを見るを本の絵文字とあらすじにする。ボタンも長くしない
+  // その隣にお気に入りの♡マーク」)。#favToggleBtnは元々レビュー系ボタンの並びの中に
+  // あるDOMを、初回だけ#animeDescBtnMobileの隣に物理的に移動して使い回す
+  // (PC幅ではこの関数は何もしない＝#favToggleBtnは元の位置のまま、レビューを見るボタンの隣に残る)。
+  function setupAnimeDescFavRowMobile() {
+    if (window.innerWidth >= 768) return; // PCは元の配置のまま(何もしない)
+    if (document.getElementById('animeDescFavRow')) return; // 初回のみ
+    const descBtn = document.getElementById('animeDescBtnMobile');
+    const favBtn = document.getElementById('favToggleBtn');
+    if (!descBtn || !favBtn) return;
+    const row = document.createElement('div');
+    row.id = 'animeDescFavRow';
+    row.className = 'anime-desc-fav-row';
+    descBtn.insertAdjacentElement('beforebegin', row);
+    row.appendChild(descBtn);
+    row.appendChild(favBtn);
+  }
+
   function renderMasterGraph(id) {
     const reviews = validReviews(id);
     const labA = getAxisA(), labB = getAxisB();
@@ -13805,7 +13863,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(miniSection0) miniSection0.style.display='none';
       const allTagsEl0 = document.getElementById('masterAllTags');
       if(allTagsEl0) allTagsEl0.innerHTML = '';
-      _lastMasterGraphDraw = { labA:labA0, avgA:labA0.map(()=>0), fillA:'rgba(255,255,255,0.03)', strokeA:'rgba(255,255,255,0.15)', labB:labB0, avgB:labB0.map(()=>0), fillB:'rgba(255,255,255,0.03)', strokeB:'rgba(255,255,255,0.15)' };
+      _lastMasterGraphDraw = { labA:labA0, avgA:labA0.map(()=>0), fillA:'rgba(255,255,255,0.03)', strokeA:'rgba(255,255,255,0.15)', labB:labB0, avgB:labB0.map(()=>0), fillB:'rgba(255,255,255,0.03)', strokeB:'rgba(255,255,255,0.15)', hasData:false };
       applyMasterChartTab();
       return;
     }
@@ -13888,7 +13946,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const fillA = 'rgba(88,201,132,0.4)', strokeA = '#5ec97a', fillB = 'rgba(255,153,153,0.38)', strokeB = '#ff8888';
     if (caA) drawRadar(caA, labA, avgA, fillA, strokeA, isMasterGraphMobile);
     if (caB) drawRadar(caB, labB, avgB, fillB, strokeB, isMasterGraphMobile);
-    _lastMasterGraphDraw = { labA, avgA, fillA, strokeA, labB, avgB, fillB, strokeB };
+    _lastMasterGraphDraw = { labA, avgA, fillA, strokeA, labB, avgB, fillB, strokeB, hasData:true };
+    // タブの選択状態の反映・グラフの再描画・「際立つ強み／印象的な雰囲気」ボックスの更新をまとめて行う
+    // (renderMasterAllTags()内でスマホ幅かPC幅かを判定し、6項目/12項目を出し分ける)
     applyMasterChartTab();
 
     // ミニグラフ（ボタン下）
@@ -13900,18 +13960,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if(miniMeta) miniMeta.textContent=metaText;
     if(miA) drawRadar(miA, labA, avgA, 'rgba(88,201,132,0.4)', '#5ec97a', false);
     if(miB) drawRadar(miB, labB, avgB, 'rgba(255,153,153,0.38)', '#ff8888', false);
-
-    // 際立つ強み／印象的な雰囲気（12軸全体からトップ・ワーストを判定し色分けする。1行に緑→赤の順で並べる）
-    const allTagsEl = document.getElementById('masterAllTags');
-    if(allTagsEl) {
-      const allVals = [...avgA, ...avgB];
-      const maxVal = allVals.length ? Math.max(...allVals) : null;
-      const minVal = allVals.length ? Math.min(...allVals) : null;
-      const tagClass = (v) => (v===maxVal && maxVal!==minVal) ? ' is-top' : (v===minVal && maxVal!==minVal) ? ' is-worst' : '';
-      const strengthHtml = labA.map((k,i)=>`<span class="master-tag-strength${tagClass(avgA[i])}">${k} ${avgA[i]}</span>`).join('');
-      const moodHtml = labB.map((k,i)=>`<span class="master-tag-mood${tagClass(avgB[i])}">${k} ${avgB[i]}</span>`).join('');
-      allTagsEl.innerHTML = strengthHtml + moodHtml;
-    }
   }
 
   async function renderAnimePage(id) {
@@ -14090,9 +14138,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const broadcastRange = page.broadcastStart
       ? `${formatBroadcastDate(page.broadcastStart)}${page.broadcastEnd && page.broadcastEnd!==page.broadcastStart ? ' - '+formatBroadcastDate(page.broadcastEnd) : ''}`
       : '';
+    // [2026-09-22修正] 放送期間(broadcastRange、例「1999/3/6」)が既に年を含むため、
+    // その場合は「1999年」を重ねて出さない(ユーザー指摘：「放送年数が2013.2013/4/6
+    // みたいになってて一個年が無意味」)。放送期間が無い時だけ年単独表記を出す。
     const metaParts = [
       page.meta || '',
-      page.year ? page.year+'年' : '',
+      (page.year && !broadcastRange) ? page.year+'年' : '',
       page.episodes ? page.episodes+'話' : '',
       broadcastRange
     ].filter(Boolean);
@@ -14101,17 +14152,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // ジャンル・スタジオ・配信情報
     const extraEl = document.getElementById('animeExtraInfo');
     if(extraEl){
+      // [2026-09-22追加] スマホではジャンル・タグ・ユーザー上位タグを1本の横スクロール行に
+      // まとめる(ユーザー指示：「タグは横一列にし横スクロールで全体を見せる感じ。緑色のタグが
+      // 最初で、青色タグが緑の次」)。PC幅は従来通り「ジャンル」「タグ」をラベル付きで分けて
+      // 折り返し表示する(変更なし)。
+      const isMobileExtra = window.innerWidth < 768;
       let extra = '';
       // ジャンル・カテゴリは1回のAPI呼び出しでまとめて翻訳する（往復回数を減らして表示を速くする）
       const combinedGenreCategoryMap = await translateGenresForDisplay([...(page.genres||[]), ...(page.categories||[])]);
       if(currentAnimeId !== id) return; // 翻訳待ち中に別のページへ移動していたら、古い内容で上書きしない
-      // ジャンル（+ ユーザータグ上位3件・現在言語・翻訳なし。タグ部分は最新レビュー取得後に再計算するので専用枠にする）
+      // ジャンル（現在言語、翻訳済み）
       const displayGenres = (page.genres||[]).map(g=>combinedGenreCategoryMap[g]||g);
-      extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
-        ${displayGenres.length ? `<span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelGenre')}</span>
-        ${displayGenres.map(g=>`<span class="badge">${escapeHtml(g)}</span>`).join('')}` : ''}
-        <span id="animeUserTopTagsBox" style="display:contents;"></span>
-      </div>`;
 
       // カテゴリ（タグ）：category_ids優先、無ければ従来のcategoriesテキストにフォールバック
       await ensureTagMaster();
@@ -14119,13 +14170,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const displayCategories = (page.categoryIds && page.categoryIds.length)
         ? categoryIdsToLabels(page.categoryIds, currentLang)
         : (page.categories||[]).map(c=>combinedGenreCategoryMap[c]||c);
-      if(displayCategories.length){
+
+      if(isMobileExtra){
+        // 緑(ジャンル+タグ) → 青(ユーザー上位タグ)の順で1行にまとめる
+        const greenBadges = [...displayGenres, ...displayCategories].map(g=>`<span class="badge">${escapeHtml(g)}</span>`).join('');
+        extra += `<div class="anime-tag-scroll-row" id="animeTagScrollRow">${greenBadges}<span id="animeUserTopTagsBox" style="display:contents;"></span></div>`;
+      } else {
         extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
-          <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelTag')}</span>
-          ${displayCategories.map(c=>`<span class="badge" style="background:rgba(94,201,122,.08);border-color:#2d6040;">${escapeHtml(c)}</span>`).join('')}
+          ${displayGenres.length ? `<span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelGenre')}</span>
+          ${displayGenres.map(g=>`<span class="badge">${escapeHtml(g)}</span>`).join('')}` : ''}
+          <span id="animeUserTopTagsBox" style="display:contents;"></span>
         </div>`;
+        if(displayCategories.length){
+          extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
+            <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelTag')}</span>
+            ${displayCategories.map(c=>`<span class="badge" style="background:rgba(94,201,122,.08);border-color:#2d6040;">${escapeHtml(c)}</span>`).join('')}
+          </div>`;
+        }
       }
-      // スタジオ
+      // スタジオ（PC・スマホ共通）
       if(page.studios&&page.studios.length){
         extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
           <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelStudio')}</span>
@@ -14169,6 +14232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 新しいアニメページに来るたびに、完成度／感情・雰囲気タブは「完成度」に戻す
     _masterChartActiveTab = 'a';
     setupMasterChartTabs();
+    setupAnimeDescFavRowMobile();
     // Supabaseからレビューを取得してからグラフを描画
     fetchRemoteReviews(id).then(()=>{
       if(currentAnimeId !== id) return; // 取得中に別のページへ移動していたら反映しない
