@@ -1692,8 +1692,11 @@
         height:var(--board-vh, 100vh); max-height:var(--board-vh, 100vh);
         min-height:0 !important; padding-bottom:0 !important; overflow:hidden;
       }
+      /* [2026-09-22修正] 通常/価値観掲示板は、サイト共通ヘッダー(アニメップルロゴ・言語ボタン)を
+         完全に消し、代わりに.board-chat-head(作品タイトル行)自体をヘッダーとして使う
+         (ユーザー指示：「通常、価値観どっちもヘッダーを消す」)。DMは対象外(従来通り) */
       body.board-chat-mobile #page-board-value.active .hdr,
-      body.board-chat-mobile #page-board-general.active .hdr,
+      body.board-chat-mobile #page-board-general.active .hdr { display:none !important; }
       body.board-chat-mobile #page-dm.active .hdr { flex:0 0 auto; position:static !important; }
       /* 中間ラッパー：ここにも flex を通さないと会話部が縮まず3段にならない */
       body.board-chat-mobile #page-board-value.active .board-page-wrap,
@@ -1718,9 +1721,22 @@
       body.board-chat-mobile #boardGeneralPageThumb { width:32px !important; height:32px !important; flex:0 0 32px !important; }
       body.board-chat-mobile #boardValuePageTitle,
       body.board-chat-mobile #boardGeneralPageTitle { font-size:13.5px !important; }
-      body.board-chat-mobile #boardValueTabsRow { padding-bottom:9px !important; }
-      /* 打っている間はタブ段とヒントを畳んで会話をさらに広げる */
-      body.board-chat-mobile.board-kb-open #boardValueTabsRow { display:none !important; }
+      /* [2026-09-22修正] ビジュアル/ストーリー/キャラ/トーンタイプの切り替えタブ行は、
+         スマホでは常に非表示にする(ユーザー指示：「価値観掲示板のビジュアルとかストーリーとか
+         ある行を消す」)。現在のタイプ名自体は#boardValuePageSub側にバッジとして出す */
+      body.board-chat-mobile #boardValueTabsRow { display:none !important; }
+      body.board-chat-mobile .board-value-type-badge-mobile { display:inline !important; }
+      /* [2026-09-22追加] .board-chat-head自体がヘッダー代わりになったため、戻るボタンをその中に表示する
+         (通常のサイトヘッダーの.back-btnとは別の、この画面専用の戻るボタン) */
+      .board-chat-head-back-btn { display:none; }
+      body.board-chat-mobile .board-chat-head-back-btn {
+        display:flex; align-items:center; justify-content:center; flex:0 0 30px;
+        width:30px; height:30px; border-radius:50%; border:none; background:transparent;
+        color:#dfeae3; font-size:18px; cursor:pointer; margin-right:2px;
+      }
+      /* 打っている間は、ヘッダー化した.board-chat-head自体とヒントを畳んで会話をさらに広げる
+         (ユーザー指示：「キーボードが出てる間ヘッダーは非表示。きーぼどが消えたらヘッダー表示」) */
+      body.board-chat-mobile.board-kb-open .board-chat-head { display:none !important; }
       body.board-chat-mobile.board-kb-open .board-enter-hint { display:none !important; }
       .board-msg-row .board-time { display:inline !important; }
     }
@@ -4076,6 +4092,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="board-page-wrap" style="padding:0;">
     <div class="board-chat-head" style="position:sticky;top:52px;z-index:20;background:var(--board-panel-bg,var(--bg));border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem .6rem;">
       <div style="display:flex;align-items:center;gap:10px;">
+        <button type="button" class="board-chat-head-back-btn" onclick="navBack()" aria-label="戻る" data-i18n-aria="ariaBack">←</button>
         <img id="boardGeneralPageThumb" src="" style="width:34px;height:34px;border-radius:8px;object-fit:cover;flex:0 0 34px;background:#1d3225;">
         <div style="flex:1 1 auto;min-width:0;">
           <h2 id="boardGeneralPageTitle" style="margin:0 0 2px;font-size:1rem;color:#eaf6ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></h2>
@@ -4104,6 +4121,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="board-page-wrap" style="padding:0;">
     <div class="board-chat-head" style="position:sticky;top:52px;z-index:20;background:var(--board-panel-bg,var(--bg));border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem 0;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <button type="button" class="board-chat-head-back-btn" onclick="navBack()" aria-label="戻る" data-i18n-aria="ariaBack">←</button>
         <img id="boardValuePageThumb" src="" style="width:34px;height:34px;border-radius:8px;object-fit:cover;flex:0 0 34px;background:#1d3225;">
         <div style="flex:1 1 auto;min-width:0;">
           <h2 id="boardValuePageTitle" style="margin:0 0 2px;font-size:1rem;color:#eaf6ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></h2>
@@ -16856,7 +16874,16 @@ document.addEventListener('DOMContentLoaded', () => {
     db.boardState.getBoardStats(animeId, shardedType, currentLang).then(stats => {
       const subEl = document.getElementById('boardValuePageSub');
       // 「今アクティブ」は緑の点を付ける（同じ灰色の文字に埋もれていた）。リアルタイムのPresence人数で更新する
-      if(subEl) subEl.innerHTML = escapeHtml(t('boardStatsParticipants').replace('{n}', stats.participantCount))
+      // [2026-09-22追加] スマホではビジュアル/ストーリー/キャラ/トーンの切り替えタブ行自体を
+      // 非表示にしたため(#boardValueTabsRow)、代わりに現在のタイプ名をこのサブ行の先頭に
+      // バッジとして出す(ユーザー指示：「何タイプ化もそのヘッダーの中に表示」)。
+      // .board-value-type-badge-mobileクラスでスマホ幅だけ表示する(PCは従来通りタブ行で分かるため非表示)
+      const activeTabLabel = tabs.find(tb => tb.id === _boardActiveTab)?.label || '';
+      const typeBadgeHtml = activeTabLabel
+        ? `<span class="board-value-type-badge-mobile" style="display:none;color:#a7ecc4;font-weight:800;">💎${escapeHtml(activeTabLabel)}</span> · `
+        : '';
+      if(subEl) subEl.innerHTML = typeBadgeHtml
+        + escapeHtml(t('boardStatsParticipants').replace('{n}', stats.participantCount))
         + ' · <span style="color:#5cc98e;">●</span> '
         + t('boardStatsActive').replace('{n}', '<span id="boardValueLiveCount">…</span>')
         + (shard > 1 ? escapeHtml(` · ${t('boardServerLabel')} ${shard}`) : '')
@@ -19971,6 +19998,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ariaPrev:{ ja:'前へ', en:'Previous', ko:'이전', 'zh-tw':'上一個', 'zh-cn':'上一个', es:'Anterior', fr:'Précédent', pt:'Anterior', de:'Zurück', ar:'السابق', th:'ก่อนหน้า', id:'Sebelumnya', ru:'Назад', it:'Precedente', vi:'Trước' },
     ariaMoreActions:{ ja:'その他の操作', en:'More actions', ko:'추가 작업', 'zh-tw':'更多操作', 'zh-cn':'更多操作', es:'Más acciones', fr:'Autres actions', pt:'Mais ações', de:'Weitere Aktionen', ar:'إجراءات أخرى', th:'การดำเนินการอื่น', id:'Tindakan lainnya', ru:'Другие действия', it:'Altre azioni', vi:'Thao tác khác' },
     ariaFavorite:{ ja:'お気に入り', en:'Favorite', ko:'즐겨찾기', 'zh-tw':'收藏', 'zh-cn':'收藏', es:'Favorito', fr:'Favori', pt:'Favorito', de:'Favorit', ar:'المفضلة', th:'รายการโปรด', id:'Favorit', ru:'Избранное', it:'Preferito', vi:'Yêu thích' },
+    ariaBack:{ ja:'戻る', en:'Back', ko:'뒤로', 'zh-tw':'返回', 'zh-cn':'返回', es:'Volver', fr:'Retour', pt:'Voltar', de:'Zurück', ar:'رجوع', th:'กลับ', id:'Kembali', ru:'Назад', it:'Indietro', vi:'Quay lại' },
     ariaPriorityAxis:{ ja:'優先軸について', en:'About priority axes', ko:'우선 축에 대해', 'zh-tw':'關於優先軸', 'zh-cn':'关于优先轴', es:'Sobre los ejes prioritarios', fr:'À propos des axes prioritaires', pt:'Sobre os eixos prioritários', de:'Über Prioritätsachsen', ar:'حول المحاور ذات الأولوية', th:'เกี่ยวกับแกนที่ให้ความสำคัญ', id:'Tentang sumbu prioritas', ru:'О приоритетных осях', it:'Sugli assi prioritari', vi:'Về trục ưu tiên' },
     ariaSettings:{ ja:'設定', en:'Settings', ko:'설정', 'zh-tw':'設定', 'zh-cn':'设置', es:'Configuración', fr:'Paramètres', pt:'Configurações', de:'Einstellungen', ar:'الإعدادات', th:'ตั้งค่า', id:'Pengaturan', ru:'Настройки', it:'Impostazioni', vi:'Cài đặt' },
     ariaChangeIcon:{ ja:'アイコンを変更', en:'Change icon', ko:'아이콘 변경', 'zh-tw':'變更圖示', 'zh-cn':'更改图标', es:'Cambiar ícono', fr:"Changer l'icône", pt:'Alterar ícone', de:'Symbol ändern', ar:'تغيير الأيقونة', th:'เปลี่ยนไอคอน', id:'Ubah ikon', ru:'Изменить иконку', it:'Cambia icona', vi:'Đổi biểu tượng' },
