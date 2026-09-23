@@ -14841,9 +14841,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return { allowed: true };
   }
 
+  // [2026-09-23修正] 投稿ボタンの連打(特にネットワークが遅い時の二度押し)で、
+  // 「投票して確定すると、すぐにまた投票画面が現れる」不具合が発生していた。実際には投票
+  // ポップアップが2回分(連打の1回目と2回目)重なって開いており、1つ目を選んで閉じても
+  // 2つ目が同じ見た目のまま残っていたため「また出てきた」ように見えていた。
+  // ボタン自体に処理中フラグを持たせ、処理中の再クリックを無視するようにする
+  let _reviewSubmitInFlight = false;
   document.getElementById('submitReviewBtn').onclick=async()=>{
-    const quota = await checkDailyReviewQuota();
-    if(!quota.allowed) return;
+    if(_reviewSubmitInFlight) return;
+    _reviewSubmitInFlight = true;
+    const submitBtnEl = document.getElementById('submitReviewBtn');
+    if(submitBtnEl) submitBtnEl.disabled = true;
+    // 価値観投票ポップアップ(またはそれをスキップして直接投稿)が開始された時点で、
+    // それ以降は画面全体を覆うオーバーレイが同じ役割(連打防止)を果たすため、
+    // ここでフラグとボタンを元に戻してよい
+    const releaseGuard = () => { _reviewSubmitInFlight = false; if(submitBtnEl) submitBtnEl.disabled = false; };
+    let quota;
+    try {
+      quota = await checkDailyReviewQuota();
+    } catch(e) { releaseGuard(); throw e; }
+    if(!quota.allowed) { releaseGuard(); return; }
     // [2026-09追加] 「作品の完成度」「感情・雰囲気」は矢印(‹›)で切り替える2画面構成のため、
     // 片方(6項目)を埋めただけでもう片方に気づかず投稿してしまうケースがあった。
     // グラフを一部でも触っていて、かつ12項目のうち未入力が残っている時だけ件数を伝えて確認する
@@ -14851,6 +14868,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const unfilledAxesCount = vA.filter(v=>v===-1).length + vB.filter(v=>v===-1).length;
     const anyAxisSet = vA.some(v=>v!==-1) || vB.some(v=>v!==-1);
     if(anyAxisSet && unfilledAxesCount > 0 && !confirm(tFn('reviewIncompleteAxesConfirm', unfilledAxesCount))) {
+      releaseGuard();
       return; // キャンセル＝投稿を中断してスライダーに戻れるようにする
     }
     const chartAObjPreCheck = Object.fromEntries(axisA.map((k,i)=>[k, vA[i]===-1?0:vA[i]]));
@@ -14867,6 +14885,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if(isValidMasterGraph && _currentUser) {
       (async () => {
         const existing = await db.reviewValues.getMyGroup(currentAnimeId, _currentUser.id);
+        // ここでポップアップ(オーバーレイ)が同期的に開く直前でガードを解除する。
+        // 以降は画面全体を覆うオーバーレイ自体が連打防止の役割を果たす
+        releaseGuard();
         showValuePollModal((axisKey, axisGroup) => {
           if(existing && existing.axis_key && existing.axis_key !== axisKey) {
             showValueChangeConfirm(existing, axisKey, axisGroup,
@@ -14879,6 +14900,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, existing);
       })();
     } else {
+      releaseGuard();
       proceedReviewSubmit(null, null);
     }
   };
@@ -14926,17 +14948,17 @@ document.addEventListener('DOMContentLoaded', () => {
     { key:'x', label:'X', color:'#000000', url:(u,t)=>`https://twitter.com/intent/tweet?text=${encodeURIComponent(t)}&url=${encodeURIComponent(u)}`,
       icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.9 2H22l-7.6 8.7L23.3 22H16.7l-5.2-6.8L5.5 22H2.4l8.1-9.3L1.7 2h6.8l4.7 6.2L18.9 2zm-1.2 18h1.7L7.4 4H5.6l12.1 16z"/></svg>' },
     { key:'reddit', label:'Reddit', color:'#FF4500', url:(u,t)=>`https://www.reddit.com/submit?url=${encodeURIComponent(u)}&title=${encodeURIComponent(t)}`,
-      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><circle cx="12" cy="12" r="10"/></svg>' },
+      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286C.775 23.225 1.097 24 1.738 24H12c6.627 0 12-5.373 12-12S18.627 0 12 0Zm4.388 3.199c1.104 0 1.999.895 1.999 1.999 0 1.105-.895 2-1.999 2-.946 0-1.739-.657-1.947-1.539v.002c-1.147.162-2.032 1.15-2.032 2.341v.007c1.776.067 3.4.567 4.686 1.363.473-.363 1.064-.58 1.707-.58 1.547 0 2.802 1.254 2.802 2.802 0 1.117-.655 2.081-1.601 2.531-.088 3.256-3.637 5.876-7.997 5.876-4.361 0-7.905-2.617-7.998-5.87-.954-.447-1.614-1.415-1.614-2.538 0-1.548 1.255-2.802 2.803-2.802.645 0 1.239.218 1.712.585 1.275-.79 2.881-1.291 4.64-1.365v-.01c0-1.663 1.263-3.034 2.88-3.207.188-.911.993-1.595 1.959-1.595Zm-8.085 8.376c-.784 0-1.459.78-1.506 1.797-.047 1.016.64 1.429 1.426 1.429.786 0 1.371-.369 1.418-1.385.047-1.017-.553-1.841-1.338-1.841Zm7.406 0c-.786 0-1.385.824-1.338 1.841.047 1.017.634 1.385 1.418 1.385.785 0 1.473-.413 1.426-1.429-.046-1.017-.721-1.797-1.506-1.797Zm-3.703 4.013c-.974 0-1.907.048-2.77.135-.147.015-.241.168-.183.305.483 1.154 1.622 1.964 2.953 1.964 1.33 0 2.47-.81 2.953-1.964.057-.137-.037-.29-.184-.305-.863-.087-1.795-.135-2.769-.135Z"/></svg>' },
     { key:'line', label:'LINE', color:'#06C755', url:(u,t)=>`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(u)}&text=${encodeURIComponent(t)}`,
-      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><rect x="2" y="2" width="20" height="20" rx="6"/></svg>' },
+      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>' },
     { key:'whatsapp', label:'WhatsApp', color:'#25D366', url:(u,t)=>`https://wa.me/?text=${encodeURIComponent(t+' '+u)}`,
-      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2z"/></svg>' },
+      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>' },
     { key:'tumblr', label:'Tumblr', color:'#36465D', url:(u,t)=>`https://www.tumblr.com/widgets/share/tool?canonicalUrl=${encodeURIComponent(u)}&caption=${encodeURIComponent(t)}`,
-      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M14 2v5h4v4h-4v6c0 1.5.7 2 2 2h2v4h-3c-3 0-5-2-5-5v-7H8V7c2 0 3.5-1.5 4-4h2z"/></svg>' },
+      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M14.563 24c-5.093 0-7.031-3.756-7.031-6.411V9.747H5.116V6.648c3.63-1.313 4.512-4.596 4.71-6.469C9.84.051 9.941 0 9.999 0h3.517v6.114h4.801v3.633h-4.82v7.47c.016 1.001.375 2.371 2.207 2.371h.09c.631-.02 1.486-.205 1.936-.419l1.156 3.425c-.436.636-2.4 1.374-4.156 1.404h-.178l.011.002z"/></svg>' },
     { key:'vk', label:'VK', color:'#0077FF', url:(u,t)=>`https://vk.com/share.php?url=${encodeURIComponent(u)}&title=${encodeURIComponent(t)}`,
-      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><rect x="2" y="2" width="20" height="20" rx="6"/></svg>' },
+      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="m9.489.004.729-.003h3.564l.73.003.914.01.433.007.418.011.403.014.388.016.374.021.36.025.345.03.333.033c1.74.196 2.933.616 3.833 1.516.9.9 1.32 2.092 1.516 3.833l.034.333.029.346.025.36.02.373.025.588.012.41.013.644.009.915.004.98-.001 3.313-.003.73-.01.914-.007.433-.011.418-.014.403-.016.388-.021.374-.025.36-.03.345-.033.333c-.196 1.74-.616 2.933-1.516 3.833-.9.9-2.092 1.32-3.833 1.516l-.333.034-.346.029-.36.025-.373.02-.588.025-.41.012-.644.013-.915.009-.98.004-3.313-.001-.73-.003-.914-.01-.433-.007-.418-.011-.403-.014-.388-.016-.374-.021-.36-.025-.345-.03-.333-.033c-1.74-.196-2.933-.616-3.833-1.516-.9-.9-1.32-2.092-1.516-3.833l-.034-.333-.029-.346-.025-.36-.02-.373-.025-.588-.012-.41-.013-.644-.009-.915-.004-.98.001-3.313.003-.73.01-.914.007-.433.011-.418.014-.403.016-.388.021-.374.025-.36.03-.345.033-.333c.196-1.74.616-2.933 1.516-3.833.9-.9 2.092-1.32 3.833-1.516l.333-.034.346-.029.36-.025.373-.02.588-.025.41-.012.644-.013.915-.009ZM6.79 7.3H4.05c.13 6.24 3.25 9.99 8.72 9.99h.31v-3.57c2.01.2 3.53 1.67 4.14 3.57h2.84c-.78-2.84-2.83-4.41-4.11-5.01 1.28-.74 3.08-2.54 3.51-4.98h-2.58c-.56 1.98-2.22 3.78-3.8 3.95V7.3H10.5v6.92c-1.6-.4-3.62-2.34-3.71-6.92Z"/></svg>' },
     { key:'weibo', label:'Weibo', color:'#E6162D', url:(u,t)=>`http://service.weibo.com/share/share.php?url=${encodeURIComponent(u)}&title=${encodeURIComponent(t)}`,
-      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><circle cx="12" cy="14" r="8"/><circle cx="18" cy="6" r="2.4"/></svg>' },
+      icon:'<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M10.098 20.323c-3.977.391-7.414-1.406-7.672-4.02-.259-2.609 2.759-5.047 6.74-5.441 3.979-.394 7.413 1.404 7.671 4.018.259 2.6-2.759 5.049-6.737 5.439l-.002.004zM9.05 17.219c-.384.616-1.208.884-1.829.602-.612-.279-.793-.991-.406-1.593.379-.595 1.176-.861 1.793-.601.622.263.82.972.442 1.592zm1.27-1.627c-.141.237-.449.353-.689.253-.236-.09-.313-.361-.177-.586.138-.227.436-.346.672-.24.239.09.315.36.18.601l.014-.028zm.176-2.719c-1.893-.493-4.033.45-4.857 2.118-.836 1.704-.026 3.591 1.886 4.21 1.983.64 4.318-.341 5.132-2.179.8-1.793-.201-3.642-2.161-4.149zm7.563-1.224c-.346-.105-.57-.18-.405-.615.375-.977.42-1.804 0-2.404-.781-1.112-2.915-1.053-5.364-.03 0 0-.766.331-.571-.271.376-1.217.315-2.224-.27-2.809-1.338-1.337-4.869.045-7.888 3.08C1.309 10.87 0 13.273 0 15.348c0 3.981 5.099 6.395 10.086 6.395 6.536 0 10.888-3.801 10.888-6.82 0-1.822-1.547-2.854-2.915-3.284v.01zm1.908-5.092c-.766-.856-1.908-1.187-2.96-.962-.436.09-.706.511-.616.932.09.42.511.691.932.602.511-.105 1.067.044 1.442.465.376.421.466.977.316 1.473-.136.406.089.856.51.992.405.119.857-.105.992-.512.33-1.021.12-2.178-.646-3.035l.03.045zm2.418-2.195c-1.576-1.757-3.905-2.419-6.054-1.968-.496.104-.812.587-.706 1.081.104.496.586.813 1.082.707 1.532-.331 3.185.15 4.296 1.383 1.112 1.246 1.429 2.943.947 4.416-.165.48.106 1.007.586 1.157.479.165.991-.104 1.157-.586.675-2.088.241-4.478-1.338-6.235l.03.045z"/></svg>' },
   ];
   // レビューカード画像を生成する（canvas上に描画してBlobを返す）。
   // これをWeb Share API（navigator.share）に渡すと、スマホでは各SNSアプリのネイティブな
@@ -19546,13 +19568,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const titleJa = page.title || page.titleEn || '';
     const titleEn = page.titleEn || page.title || '';
 
-    // ※ここはPA-API導入前の見た目確認用モック。実際の商品名・価格・画像URL・星評価は入っていない。
+    // [2026-09-23修正] PA-API未導入のため、実際の商品名・価格・画像URL・星評価は取得できない。
+    // 以前はここに架空の固定価格(¥5,478等)を表示していたが、実データではない数値を
+    // 本物の値のように見せるのはユーザーに誤解を与えるため廃止した(ユーザー指示)。
+    // 価格の代わりに、実データ連携済みの楽天リンク(renderRakutenBluray、「楽天市場で見る →」)
+    // と同じ「◯◯で見る →」という誠実な検索導線の文言に統一した。
     // PA-API導入後は、この4カテゴリを実際の検索結果1件目（商品名・価格・画像URL・星評価）に差し替える。
     const categories = [
-      { icon:'💿', key:'bluray', labelJa:'DVD・ブルーレイ',   labelEn:'DVD & Blu-ray',    qJa:'DVD ブルーレイ',   qEn:'DVD Blu-ray',       mockPrice:'¥5,478' },
-      { icon:'🛍', key:'goods',  labelJa:'グッズ',            labelEn:'Merch',            qJa:'グッズ',           qEn:'merchandise',        mockPrice:'¥3,980' },
-      { icon:'🧸', key:'figure', labelJa:'フィギュア',        labelEn:'Figure',           qJa:'フィギュア',       qEn:'figure',             mockPrice:'¥6,980' },
-      { icon:'📖', key:'manga',  labelJa:'漫画・小説',        labelEn:'Manga & Novel',    qJa:'漫画 小説',        qEn:'manga novel',        mockPrice:'¥528' },
+      { icon:'💿', key:'bluray', labelJa:'DVD・ブルーレイ',   labelEn:'DVD & Blu-ray',    qJa:'DVD ブルーレイ',   qEn:'DVD Blu-ray' },
+      { icon:'🛍', key:'goods',  labelJa:'グッズ',            labelEn:'Merch',            qJa:'グッズ',           qEn:'merchandise' },
+      { icon:'🧸', key:'figure', labelJa:'フィギュア',        labelEn:'Figure',           qJa:'フィギュア',       qEn:'figure' },
+      { icon:'📖', key:'manga',  labelJa:'漫画・小説',        labelEn:'Manga & Novel',    qJa:'漫画 小説',        qEn:'manga novel' },
     ];
 
     return categories.map(cat => {
@@ -19565,7 +19591,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="af-goods-card-thumb">${cat.icon}</span>
           <div class="af-goods-card-body">
             <h3 class="af-goods-card-name">${escapeHtml(titleJa || titleEn)} ${escapeHtml(label)}</h3>
-            <p class="af-goods-card-price">${cat.mockPrice}</p>
+            <p class="af-goods-card-price">${escapeHtml(t('goodsAmazonCta'))}</p>
           </div>
         </a>
       `;
@@ -20631,6 +20657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     outOfTotalSuffix:{ ja:'（全{total}件中・組織票対策で少数派を除外）',en:' (out of {total} total; minority outliers excluded)',ko:' (전체 {total}건 중 · 소수 의견 제외)','zh-tw':'（共{total}則中・已排除少數異常值）','zh-cn':'（共{total}条中・已排除少数异常值）',es:' (de {total} en total; minoría excluida)',fr:' (sur {total} au total ; minorité exclue)',pt:' (de {total} no total; minoria excluída)',de:' (von {total} insgesamt; Minderheit ausgeschlossen)',ar:' (من إجمالي {total}؛ تم استثناء الأقلية)',th:'(จากทั้งหมด {total} รายการ ตัดกลุ่มน้อยออก)',id:'(dari total {total}; minoritas dikecualikan)',ru:'(из {total} всего; меньшинство исключено)',it:'(su {total} totali; minoranza esclusa)',vi:'(trong tổng {total}; loại nhóm thiểu số)' },
     aiPredictedBadge:{ ja:'🤖 AI予測',en:'🤖 AI predicted',ko:'🤖 AI 예측','zh-tw':'🤖 AI預測','zh-cn':'🤖 AI预测',es:'🤖 Predicción IA',fr:'🤖 Prédiction IA',pt:'🤖 Previsão IA',de:'🤖 KI-Vorhersage',ar:'🤖 تنبؤ الذكاء الاصطناعي',th:'🤖 คาดการณ์โดย AI',id:'🤖 Prediksi AI',ru:'🤖 Прогноз ИИ',it:'🤖 Previsione IA',vi:'🤖 Dự đoán AI' },
     goodsSection: { ja:'🛍 グッズ・関連商品',en:'🛍 Merchandise',ko:'🛍 굿즈・관련 상품','zh-tw':'🛍 周邊商品','zh-cn':'🛍 周边商品',es:'🛍 Merchandising',fr:'🛍 Produits dérivés',pt:'🛍 Mercadoria',de:'🛍 Merchandise',ar:'🛍 البضائع',th:'🛍 สินค้า',id:'🛍 Merchandise',ru:'🛍 Товары',it:'🛍 Merchandise',vi:'🛍 Hàng hóa' },
+    goodsAmazonCta: { ja:'Amazonで見る →', en:'View on Amazon →', ko:'Amazon에서 보기 →', 'zh-tw':'在 Amazon 上查看 →', 'zh-cn':'在 Amazon 上查看 →', es:'Ver en Amazon →', fr:'Voir sur Amazon →', pt:'Ver na Amazon →', de:'Auf Amazon ansehen →', ar:'عرض على Amazon ←', th:'ดูบน Amazon →', id:'Lihat di Amazon →', ru:'Смотреть на Amazon →', it:'Vedi su Amazon →', vi:'Xem trên Amazon →' },
     goodsSeeItem: { ja:'商品を見る',en:'View items',ko:'상품 보기','zh-tw':'查看商品','zh-cn':'查看商品',es:'Ver productos',fr:'Voir les produits',pt:'Ver produtos',de:'Produkte ansehen',ar:'عرض المنتجات',th:'ดูสินค้า',id:'Lihat item',ru:'Смотреть товары',it:'Vedi articoli',vi:'Xem sản phẩm' },
     goodsMockBadge: { ja:'プレビュー(仮)',en:'Preview (mock)',ko:'미리보기(임시)','zh-tw':'預覽(暫定)','zh-cn':'预览(暂定)',es:'Vista previa',fr:'Aperçu',pt:'Pré-visualização',de:'Vorschau',ar:'معاينة',th:'ตัวอย่าง(ชั่วคราว)',id:'Pratinjau (sementara)',ru:'Превью (черновик)',it:'Anteprima (bozza)',vi:'Xem trước (tạm)' },
     totalPV:      { ja:'総PV',en:'Total PV',ko:'총 PV','zh-tw':'總PV','zh-cn':'总PV',es:'PV total',fr:'PV total',pt:'PV total',de:'Gesamt-PV',ar:'إجمالي PV',th:'PV รวม',id:'Total PV',ru:'Всего просмотров',it:'PV totali',vi:'Tổng PV' },
