@@ -486,19 +486,26 @@
     .hero-eyebrow-dash { width:16px; height:2px; border-radius:2px; background:#8fe5ab; }
     .hero-mascot-wrap { flex-shrink:0; display:flex; flex-direction:column; align-items:center; padding-bottom:.2rem; }
     .mascot-img { width:80px; height:80px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.05) drop-shadow(0 2px 6px rgba(0,0,0,.3)); }
+    /* [2026-09-23修正] 白背景の吹き出しに、価値観タイプ用のパステル文字色(VALUE_TYPE_COLORS、
+       元々ダークな背景を前提に設計された色)を乗せると、白同士でコントラストがほぼ無く
+       読めなくなっていた(ユーザー指摘：「アニメページマスコットが喋る価値観の色が白い吹き出し
+       で見ずらい」)。吹き出し自体をサイト共通のダークパネル色(--card2)にし、文字色も
+       ダーク背景用の--textに変更。これによりVALUE_TYPE_COLORSのパステルはそのまま
+       (本来の想定通り)くっきり見えるようになる */
     .mascot-balloon {
-      background:#e8f0ea; color:#12241a; font-size:.68rem; font-weight:700;
+      background:var(--card2); color:var(--text); font-size:.68rem; font-weight:700;
       border-radius:16px 16px 16px 4px; padding:.35rem .55rem;
       line-height:1.5; text-align:center; white-space:normal; word-break:break-word; max-width:100%;
       box-shadow:0 12px 30px -14px rgba(0,0,0,.6);
       margin-bottom:.3rem; position:relative;
+      border:1px solid rgba(255,255,255,.08);
     }
     .mascot-balloon::after {
       content:''; position:absolute; bottom:-6px; left:12px;
       width:0; height:0;
       border-left:6px solid transparent;
       border-right:0px solid transparent;
-      border-top:6px solid #fff;
+      border-top:6px solid var(--card2);
     }
 
     /* ── HERO ── */
@@ -2501,8 +2508,8 @@
     .af-stream-cta  { display:none; }
     /* グッズ */
     /* PA-API実装後グッズカード */
-    .af-goods-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
-    @media(min-width:640px){ .af-goods-grid { grid-template-columns:repeat(4,1fr); } }
+    .af-goods-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    @media(min-width:640px){ .af-goods-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
     /* スマホ幅：グッズは1カード1画面のカルーセルにする（5秒ごとに自動送り、JS側で制御） */
     @media(max-width:767px){
       .af-goods-grid {
@@ -2516,7 +2523,18 @@
     .af-goods-card:hover { border-color:#f0a050; }
     .af-goods-card-thumb { width:46px; height:46px; flex:0 0 46px; border-radius:9px; background:#0f2117; border:1px solid rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
     .af-goods-card-body { min-width:0; }
-    .af-goods-card-name { margin:0 0 3px; font-size:11.5px; font-weight:700; line-height:1.35; color:#e8f0ea; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    /* [2026-09-23修正] タイトルが長い作品(特にレビュー投稿完了ポップ内、幅の狭いスマホ)で、
+       1行のみ+省略記号のはずが実際には省略されずカード外・ポップ外まで横にはみ出す不具合が
+       あった。原因はgrid-template-columnsが素の1fr(auto最小幅)で、white-space:nowrapの
+       長いタイトルがグリッド列自体を押し広げていたこと(タグ行で見つかったのと同じCSS Grid
+       の既定挙動、min-content分の最小幅を割り込めない)。列側をminmax(0,1fr)に修正した上で、
+       ユーザー指示「改行してもいいしポップも大きくしていい」に従い、1行省略ではなく
+       2行までの折り返し表示に変更した(3行目以降は…で省略) */
+    .af-goods-card-name {
+      margin:0 0 3px; font-size:11.5px; font-weight:700; line-height:1.35; color:#e8f0ea;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+      overflow:hidden; word-break:break-word;
+    }
     .af-goods-card-price { margin:0; font-size:13px; font-weight:700; color:#e8a06b; }
 
     /* レビュー投稿完了ポップアップ内のグッズ欄：
@@ -2524,7 +2542,7 @@
        モーダルの箱幅は460px固定なのでそのまま流用すると4列がぎゅう詰めになる。
        ここではモーダルの箱幅を基準に、常に2列で組む専用クラスにする。
        （モバイル用の横スクロールカルーセルCSSも意図せず引き継がないよう独立させている） */
-    .review-posted-goods-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    .review-posted-goods-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
     .review-posted-goods-grid .af-goods-card { padding:9px; gap:9px; }
     .review-posted-goods-grid .af-goods-card-thumb { width:38px; height:38px; flex:0 0 38px; font-size:1.1rem; }
     .review-posted-goods-grid .af-goods-card-name { font-size:10.5px; }
@@ -15631,7 +15649,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,10,7,.72);backdrop-filter:blur(3px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto;';
     const box = document.createElement('div');
-    box.style.cssText = 'width:100%;max-width:460px;background:#22412f;border:1px solid rgba(217,164,65,.35);border-radius:20px;box-shadow:0 40px 100px -30px rgba(0,0,0,.85);padding:26px 26px 22px;max-height:90vh;overflow-y:auto;';
+    box.style.cssText = 'width:100%;max-width:460px;min-width:0;background:#22412f;border:1px solid rgba(217,164,65,.35);border-radius:20px;box-shadow:0 40px 100px -30px rgba(0,0,0,.85);padding:26px 26px 22px;max-height:90vh;overflow-y:auto;overflow-x:hidden;';
     const titleText = isVoted ? t('reviewPostedVoted') : t('reviewPosted');
     const goodsHtml = page ? buildGoodsCardsHtml(page) : '';
     const shareIconsHtml = page ? buildShareIconsHtml(page) : '';
