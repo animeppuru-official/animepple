@@ -2017,6 +2017,22 @@
     .master-tag-mood { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:8px; background:rgba(240,138,138,.13); color:#eaa9a9; font-size:13px; font-weight:700; flex-shrink:0; white-space:nowrap; }
     .master-tag-strength.is-top, .master-tag-mood.is-top { background:rgba(255,209,102,.22); color:#ffd166; box-shadow:0 0 0 1px rgba(255,209,102,.5) inset; }
     .master-tag-strength.is-worst, .master-tag-mood.is-worst { background:rgba(130,150,138,.16); color:#82968a; box-shadow:0 0 0 1px rgba(130,150,138,.3) inset; }
+    /* [追加] PC幅では「際立つ強み」の横スクロール行(.master-tag-row)がマウスだと操作しづらい
+       ため、左右の矢印ボタンでスクロールできるようにする(ユーザー指示：「PCだと横スクロール
+       しづらいから、方法考えて矢印ボタンとか」)。スマホ幅はタッチスワイプで十分なため矢印は
+       出さない。中身が幅に収まっている時(スクロール不要な時)は、両方の矢印をJS側で隠す */
+    .master-tag-row-wrap { display:flex; align-items:center; gap:6px; }
+    .master-tag-row-wrap .master-tag-row { flex:1 1 auto; min-width:0; scroll-behavior:smooth; }
+    .master-tag-nav-btn {
+      display:none; flex:0 0 28px; width:28px; height:28px; border-radius:50%;
+      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#dfeae3;
+      cursor:pointer; align-items:center; justify-content:center; padding:0;
+    }
+    .master-tag-nav-btn:hover { background:rgba(255,255,255,.09); }
+    .master-tag-nav-btn svg { width:14px; height:14px; }
+    @media (min-width:768px) {
+      .master-tag-nav-btn.is-visible { display:flex; }
+    }
     /* [追加] スマホ版限定：完成度／感情・雰囲気を1枚ずつ切り替えるタブ。PCでは非表示のまま従来通り2枚並び表示 */
     .master-chart-tab-bar { display:none; }
     .master-chart-tab-btn { flex:1 1 0; height:38px; border-radius:9px; border:1px solid transparent; background:transparent; color:var(--muted); font-size:13.5px; font-weight:600; cursor:pointer; }
@@ -3492,7 +3508,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div style="background:#1a1d1f;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:24px 20px;max-width:320px;width:100%;text-align:center;">
     <p style="font-size:13px;color:#ddd;margin:0 0 14px;">連投防止のため、bot確認にご協力ください。</p>
     <div id="chatTurnstileWidget" style="display:flex;justify-content:center;"></div>
-    <button type="button" onclick="closeChatTurnstileModal()" style="margin-top:14px;background:none;border:none;color:#8db5a0;font-size:12px;cursor:pointer;text-decoration:underline;">キャンセル</button>
+    <button type="button" onclick="closeChatTurnstileModal()" style="margin-top:14px;background:none;border:none;color:#8db5a0;font-size:12px;cursor:pointer;text-decoration:underline;" data-i18n="chatTurnstileCancel">キャンセル</button>
   </div>
 </div>
 
@@ -3725,7 +3741,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- スマホ版：「あらすじを見る」ボタンから開くポップアップ（グローバル配置） -->
 <div class="priority-popover-overlay" id="animeDescPopoverOverlay" style="display:none;">
   <div class="priority-popover-box" style="max-width:380px;text-align:left;">
-    <p style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:#dfeae3;">📖 あらすじ</p>
+    <p style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:#dfeae3;" data-i18n="animeDescLabel">📖 あらすじ</p>
     <p id="animeDescPopoverText" style="margin:0 0 16px;font-size:13px;line-height:1.8;color:#dccaa0;max-height:55vh;overflow-y:auto;"></p>
     <button type="button" id="animeDescPopoverClose" data-i18n="gachaCloseBtn">閉じる</button>
   </div>
@@ -3915,7 +3931,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <span style="margin:0 .4rem;">·</span>
       <button class="legal-link" onclick="nav('privacy')" data-i18n="footerPrivacy">プライバシーポリシー</button>
       <span style="margin:0 .4rem;">·</span>
-      <button class="legal-link" onclick="nav('refund-policy')">返金ポリシー</button>
+      <button class="legal-link" onclick="nav('refund-policy')" data-i18n="footerRefundPolicy">返金ポリシー</button>
       <span style="margin:0 .4rem;">·</span>
       <button class="legal-link" onclick="openLegal('tokushoho')" data-i18n="legalTokushoho">特定商取引法に基づく表記</button>
       <span style="margin:0 .4rem;">·</span>
@@ -3964,7 +3980,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span data-i18n="btnReview">レビューする</span>
         </button>
         <div style="display:flex;gap:10px;">
-          <button class="review-btn review-btn-list" id="goReviewListBtn">📋 レビューを見る<span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
+          <button class="review-btn review-btn-list" id="goReviewListBtn"><span data-i18n="btnReviewList">📋 レビューを見る</span><span id="animeReviewCount" style="margin-left:.3rem;font-size:.75rem;opacity:.7;"></span></button>
           <button type="button" class="review-btn board-entry-mobile-btn" id="boardEntryMobileBtn" data-i18n="boardEntryMobileBtn">💬 掲示板</button>
           <button class="fav-toggle-btn" id="favToggleBtn" onclick="toggleFavorite()" aria-pressed="false" aria-label="お気に入り" data-i18n-aria="ariaFavorite">♡︎</button>
         </div>
@@ -3985,7 +4001,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <p class="anime-meta-text" id="animeMeta"></p>
       <div id="animeExtraInfo" style="margin-bottom:.7rem;"></div>
       <p class="anime-desc-text" id="animeDesc"></p>
-      <button type="button" class="anime-desc-btn-mobile" id="animeDescBtnMobile">📖 あらすじ</button>
+      <button type="button" class="anime-desc-btn-mobile" id="animeDescBtnMobile" data-i18n="animeDescLabel">📖 あらすじ</button>
 
       <!-- 評価グラフは常時表示。世界の反応・似ている作品だけをタブで切り替え（Design案通り：概要文のすぐ下） -->
       <div id="mobileInfoPaneGraph"></div>
@@ -4017,7 +4033,11 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <!-- 際立つ強み／印象的な雰囲気 -->
               <div id="masterHighlightBox" class="master-highlight-box">
-                <div class="master-tag-row" id="masterAllTags"></div>
+                <div class="master-tag-row-wrap">
+                  <button type="button" class="master-tag-nav-btn" id="masterTagPrevBtn" aria-label="前へ" data-i18n-aria="ariaPrev" onclick="scrollMasterTags(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button>
+                  <div class="master-tag-row" id="masterAllTags"></div>
+                  <button type="button" class="master-tag-nav-btn" id="masterTagNextBtn" aria-label="次へ" data-i18n-aria="ariaNext" onclick="scrollMasterTags(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button>
+                </div>
               </div>
               <!-- [追加] スマホ版限定：完成度／感情・雰囲気を1枚ずつ切り替えるタブ(PCでは非表示のまま従来通り2枚並び) -->
               <div class="master-chart-tab-bar" id="masterChartTabBar">
@@ -6717,7 +6737,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="page" id="page-contact">
   <header class="hdr">
     <div class="hdr-inner">
-      <button class="back-btn" onclick="navBack()">← 戻る</button>
+      <button class="back-btn" onclick="navBack()" data-i18n="btnBack">← 戻る</button>
       <div class="hdr-right">
         <span class="logo" onclick="nav('home')">アニメ<em>ップル</em></span>
         <button class="lang-current-btn" onclick="openLang()">
@@ -6743,27 +6763,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
       <!-- [追加] 作品を特定する必要があるカテゴリ(著作権/作品情報の誤り/あらすじ・タグの誤り)で出す共通の作品選択欄 -->
       <div id="contactAnimeFields" style="display:none;margin-bottom:.8rem;">
-        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">対象の作品<span style="color:#ff8888;">*</span></label>
-        <input id="contactAnimeSearchInput" type="text" placeholder="作品名で検索"
+        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;"><span data-i18n="contactAnimeFieldLabel">対象の作品</span><span style="color:#ff8888;">*</span></label>
+        <input id="contactAnimeSearchInput" type="text" placeholder="作品名で検索" data-i18n="phContactAnimeSearch"
           style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;" />
         <div id="contactAnimeSuggestions" style="display:none;max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;margin-top:.3rem;background:var(--card2);"></div>
         <div id="contactSelectedAnimeDisplay" style="display:none;align-items:center;gap:.5rem;margin-top:.5rem;padding:.5rem;border-radius:9px;background:rgba(94,201,122,.1);border:1px solid rgba(94,201,122,.35);">
           <span style="font-size:.82rem;color:#a7ecc4;font-weight:700;flex:1;" id="contactSelectedAnimeTitle"></span>
-          <button type="button" id="contactSelectedAnimeClear" style="background:none;border:none;color:#8db5a0;font-size:.75rem;cursor:pointer;text-decoration:underline;">変更</button>
+          <button type="button" id="contactSelectedAnimeClear" style="background:none;border:none;color:#8db5a0;font-size:.75rem;cursor:pointer;text-decoration:underline;" data-i18n="contactAnimeClearBtn">変更</button>
         </div>
       </div>
 
       <!-- [追加] 著作権についての通報を選んだ時だけ出す専用項目(返信先の確認まわり) -->
       <div id="contactCopyrightFields" style="display:none;border:1px solid rgba(217,164,65,.35);background:rgba(217,164,65,.06);border-radius:12px;padding:.9rem;margin-bottom:.8rem;">
-        <p style="font-size:.74rem;color:#e8c463;font-weight:800;margin:0 0 .7rem;">著作権に関するご連絡は、著作権者ご本人またはその正当な代理人からのみ受け付けています。</p>
+        <p style="font-size:.74rem;color:#e8c463;font-weight:800;margin:0 0 .7rem;" data-i18n="contactCopyrightNotice">著作権に関するご連絡は、著作権者ご本人またはその正当な代理人からのみ受け付けています。</p>
 
-        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">返信用メールアドレス<span style="color:#ff8888;">*</span></label>
+        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;"><span data-i18n="contactCopyrightReplyEmailLabel">返信用メールアドレス</span><span style="color:#ff8888;">*</span></label>
         <input id="contactReplyEmail" type="email" placeholder="reply@example.com"
           style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;margin-bottom:.8rem;" />
 
         <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
           <input id="contactCopyrightConfirm" type="checkbox" style="margin-top:3px;accent-color:#5ec97a;">
-          <span style="font-size:.76rem;color:#c3d4c9;line-height:1.5;">私は、上記対象作品の著作権者本人、またはその正当な権限を有する代理人です。</span>
+          <span style="font-size:.76rem;color:#c3d4c9;line-height:1.5;" data-i18n="contactCopyrightConfirmLabel">私は、上記対象作品の著作権者本人、またはその正当な権限を有する代理人です。</span>
         </label>
       </div>
 
@@ -6771,8 +6791,8 @@ document.addEventListener('DOMContentLoaded', () => {
            運営側が返信したくても連絡先が分からない状態だった。任意項目として追加する
            (著作権カテゴリは既に上のcontactCopyrightFieldsで必須として持っているので出さない) -->
       <div id="contactGeneralReplyEmailField" style="margin-bottom:.8rem;">
-        <label id="contactGeneralReplyEmailLabel" style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;">返信用メールアドレス(任意)</label>
-        <p id="contactGeneralReplyEmailHint" style="font-size:.7rem;color:var(--muted);margin:0 0 .3rem;">返信をご希望の場合のみご記入ください。空欄でも送信できます。</p>
+        <label id="contactGeneralReplyEmailLabel" style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem;" data-i18n="contactGeneralReplyEmailLabel">返信用メールアドレス(任意)</label>
+        <p id="contactGeneralReplyEmailHint" style="font-size:.7rem;color:var(--muted);margin:0 0 .3rem;" data-i18n="contactGeneralReplyEmailHint">返信をご希望の場合のみご記入ください。空欄でも送信できます。</p>
         <input id="contactGeneralReplyEmail" type="email" placeholder="reply@example.com"
           style="width:100%;padding:.65rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:#dff0e6;font-size:.9rem;box-sizing:border-box;" />
       </div>
@@ -13835,7 +13855,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const allTagsEl = document.getElementById('masterAllTags');
     if (!allTagsEl) return;
     const d = _lastMasterGraphDraw;
-    if (!d || !d.hasData) { allTagsEl.innerHTML = ''; return; }
+    if (!d || !d.hasData) { allTagsEl.innerHTML = ''; updateMasterTagNavBtns(); return; }
     const isMobile = window.innerWidth < 768;
     if (isMobile) {
       const labels = _masterChartActiveTab === 'a' ? d.labA : d.labB;
@@ -13854,7 +13874,34 @@ document.addEventListener('DOMContentLoaded', () => {
       const moodHtml = d.labB.map((k,i)=>`<span class="master-tag-mood${tagClass(d.avgB[i])}">${k} ${d.avgB[i]}</span>`).join('');
       allTagsEl.innerHTML = strengthHtml + moodHtml;
     }
+    // 描画・タブ切替のたびに矢印ボタンの表示状態(スクロール不要なら非表示、端まで着いたら片側だけ隠す)を更新する
+    updateMasterTagNavBtns();
   }
+  // [追加] PC幅で「際立つ強み」の横スクロール行(#masterAllTags)をマウスでも操作できるようにする
+  // 矢印ボタン(ユーザー指示：「PCだと横スクロールしづらいから、方法考えて矢印ボタンとか」)
+  let _masterTagNavBound = false;
+  function updateMasterTagNavBtns() {
+    const row = document.getElementById('masterAllTags');
+    const prevBtn = document.getElementById('masterTagPrevBtn');
+    const nextBtn = document.getElementById('masterTagNextBtn');
+    if (!row || !prevBtn || !nextBtn) return;
+    if (!_masterTagNavBound) {
+      _masterTagNavBound = true;
+      row.addEventListener('scroll', updateMasterTagNavBtns, { passive: true });
+    }
+    const hasOverflow = row.scrollWidth - row.clientWidth > 4;
+    const atStart = row.scrollLeft <= 4;
+    const atEnd = row.scrollLeft >= row.scrollWidth - row.clientWidth - 4;
+    prevBtn.classList.toggle('is-visible', hasOverflow && !atStart);
+    nextBtn.classList.toggle('is-visible', hasOverflow && !atEnd);
+  }
+  function scrollMasterTags(dir) {
+    const row = document.getElementById('masterAllTags');
+    if (!row) return;
+    row.scrollBy({ left: dir * 240, behavior: 'smooth' });
+    setTimeout(updateMasterTagNavBtns, 350); // スムーススクロール完了後にボタン表示を更新
+  }
+  window.scrollMasterTags = scrollMasterTags;
   function applyMasterChartTab() {
     const bar = document.getElementById('masterChartTabBar');
     if (!bar) return;
@@ -20048,6 +20095,7 @@ document.addEventListener('DOMContentLoaded', () => {
     phContactMessage:{ ja:'内容をご記入ください', en:'Please enter your message', ko:'내용을 입력해 주세요', 'zh-tw':'請輸入內容', 'zh-cn':'请输入内容', es:'Escribe tu mensaje', fr:'Veuillez saisir votre message', pt:'Digite sua mensagem', de:'Bitte gib deine Nachricht ein', ar:'يرجى كتابة رسالتك', th:'กรุณากรอกข้อความ', id:'Silakan masukkan pesan Anda', ru:'Введите ваше сообщение', it:'Inserisci il tuo messaggio', vi:'Vui lòng nhập nội dung' },
     phUsername:{ ja:'ユーザー名', en:'Username', ko:'사용자 이름', 'zh-tw':'使用者名稱', 'zh-cn':'用户名', es:'Nombre de usuario', fr:"Nom d'utilisateur", pt:'Nome de usuário', de:'Benutzername', ar:'اسم المستخدم', th:'ชื่อผู้ใช้', id:'Nama pengguna', ru:'Имя пользователя', it:'Nome utente', vi:'Tên người dùng' },
     ariaPrev:{ ja:'前へ', en:'Previous', ko:'이전', 'zh-tw':'上一個', 'zh-cn':'上一个', es:'Anterior', fr:'Précédent', pt:'Anterior', de:'Zurück', ar:'السابق', th:'ก่อนหน้า', id:'Sebelumnya', ru:'Назад', it:'Precedente', vi:'Trước' },
+    ariaNext:{ ja:'次へ', en:'Next', ko:'다음', 'zh-tw':'下一個', 'zh-cn':'下一个', es:'Siguiente', fr:'Suivant', pt:'Próximo', de:'Weiter', ar:'التالي', th:'ถัดไป', id:'Berikutnya', ru:'Далее', it:'Successivo', vi:'Tiếp theo' },
     ariaMoreActions:{ ja:'その他の操作', en:'More actions', ko:'추가 작업', 'zh-tw':'更多操作', 'zh-cn':'更多操作', es:'Más acciones', fr:'Autres actions', pt:'Mais ações', de:'Weitere Aktionen', ar:'إجراءات أخرى', th:'การดำเนินการอื่น', id:'Tindakan lainnya', ru:'Другие действия', it:'Altre azioni', vi:'Thao tác khác' },
     ariaFavorite:{ ja:'お気に入り', en:'Favorite', ko:'즐겨찾기', 'zh-tw':'收藏', 'zh-cn':'收藏', es:'Favorito', fr:'Favori', pt:'Favorito', de:'Favorit', ar:'المفضلة', th:'รายการโปรด', id:'Favorit', ru:'Избранное', it:'Preferito', vi:'Yêu thích' },
     ariaBack:{ ja:'戻る', en:'Back', ko:'뒤로', 'zh-tw':'返回', 'zh-cn':'返回', es:'Volver', fr:'Retour', pt:'Voltar', de:'Zurück', ar:'رجوع', th:'กลับ', id:'Kembali', ru:'Назад', it:'Indietro', vi:'Quay lại' },
@@ -20093,6 +20141,19 @@ document.addEventListener('DOMContentLoaded', () => {
     contactCatAccount:{ ja:'アカウントについて', en:'Account issue', ko:'계정 관련', 'zh-tw':'關於帳號', 'zh-cn':'关于账户', es:'Problema de cuenta', fr:'Problème de compte', pt:'Problema de conta', de:'Kontoproblem', ar:'مشكلة في الحساب', th:'เกี่ยวกับบัญชี', id:'Masalah akun', ru:'Проблема с аккаунтом', it:'Problema account', vi:'Vấn đề tài khoản' },
     contactCatOther:{ ja:'その他', en:'Other', ko:'기타', 'zh-tw':'其他', 'zh-cn':'其他', es:'Otro', fr:'Autre', pt:'Outro', de:'Sonstiges', ar:'أخرى', th:'อื่นๆ', id:'Lainnya', ru:'Другое', it:'Altro', vi:'Khác' },
     contactCatTokushoho:{ ja:'特定商取引法に関するお問い合わせ', en:'Specified Commercial Transactions Act inquiry', ko:'특정상거래법 관련 문의', 'zh-tw':'關於特定商業交易法之詢問', 'zh-cn':'关于特定商业交易法之咨询', es:'Consulta sobre la Ley de Transacciones Comerciales', fr:'Question sur la loi sur les transactions commerciales', pt:'Consulta sobre a Lei de Transações Comerciais', de:'Anfrage zum Gesetz über besondere Handelsgeschäfte', ar:'استفسار حول قانون المعاملات التجارية', th:'สอบถามเกี่ยวกับกฎหมายธุรกรรมทางการค้า', id:'Pertanyaan Undang-Undang Transaksi Komersial', ru:'Вопрос по закону о коммерческих сделках', it:'Richiesta sulla legge sulle transazioni commerciali', vi:'Câu hỏi về Luật Giao dịch Thương mại' },
+    animeDescLabel:{ ja:'📖 あらすじ', en:'📖 Synopsis', ko:'📖 줄거리', 'zh-tw':'📖 劇情簡介', 'zh-cn':'📖 剧情简介', es:'📖 Sinopsis', fr:'📖 Synopsis', pt:'📖 Sinopse', de:'📖 Inhaltsangabe', ar:'📖 الملخص', th:'📖 เรื่องย่อ', id:'📖 Sinopsis', ru:'📖 Описание', it:'📖 Trama', vi:'📖 Tóm tắt' },
+    chatTurnstileCancel:{ ja:'キャンセル', en:'Cancel', ko:'취소', 'zh-tw':'取消', 'zh-cn':'取消', es:'Cancelar', fr:'Annuler', pt:'Cancelar', de:'Abbrechen', ar:'إلغاء', th:'ยกเลิก', id:'Batal', ru:'Отмена', it:'Annulla', vi:'Hủy' },
+    footerRefundPolicy:{ ja:'返金ポリシー', en:'Refund Policy', ko:'환불 정책', 'zh-tw':'退款政策', 'zh-cn':'退款政策', es:'Política de reembolso', fr:'Politique de remboursement', pt:'Política de reembolso', de:'Rückerstattungsrichtlinie', ar:'سياسة الاسترداد', th:'นโยบายการคืนเงิน', id:'Kebijakan Pengembalian Dana', ru:'Политика возврата средств', it:'Politica di rimborso', vi:'Chính sách hoàn tiền' },
+    btnReviewList:{ ja:'📋 レビューを見る', en:'📋 View reviews', ko:'📋 리뷰 보기', 'zh-tw':'📋 查看評論', 'zh-cn':'📋 查看评论', es:'📋 Ver reseñas', fr:'📋 Voir les avis', pt:'📋 Ver avaliações', de:'📋 Rezensionen ansehen', ar:'📋 عرض المراجعات', th:'📋 ดูรีวิว', id:'📋 Lihat ulasan', ru:'📋 Смотреть отзывы', it:'📋 Vedi recensioni', vi:'📋 Xem đánh giá' },
+    contactAnimeFieldLabel:{ ja:'対象の作品', en:'Related title', ko:'대상 작품', 'zh-tw':'相關作品', 'zh-cn':'相关作品', es:'Título relacionado', fr:'Titre concerné', pt:'Título relacionado', de:'Betroffener Titel', ar:'العمل المعني', th:'ผลงานที่เกี่ยวข้อง', id:'Judul terkait', ru:'Связанный тайтл', it:'Titolo interessato', vi:'Tựa phim liên quan' },
+    phContactAnimeSearch:{ ja:'作品名で検索', en:'Search by title', ko:'작품명으로 검색', 'zh-tw':'以作品名稱搜尋', 'zh-cn':'以作品名称搜索', es:'Buscar por título', fr:'Rechercher par titre', pt:'Pesquisar por título', de:'Nach Titel suchen', ar:'البحث بالعنوان', th:'ค้นหาด้วยชื่อผลงาน', id:'Cari berdasarkan judul', ru:'Поиск по названию', it:'Cerca per titolo', vi:'Tìm theo tên phim' },
+    contactAnimeClearBtn:{ ja:'変更', en:'Change', ko:'변경', 'zh-tw':'變更', 'zh-cn':'变更', es:'Cambiar', fr:'Modifier', pt:'Alterar', de:'Ändern', ar:'تغيير', th:'เปลี่ยน', id:'Ubah', ru:'Изменить', it:'Cambia', vi:'Thay đổi' },
+    contactCopyrightNotice:{ ja:'著作権に関するご連絡は、著作権者ご本人またはその正当な代理人からのみ受け付けています。', en:'We only accept copyright-related inquiries from the copyright holder themselves or their authorized representative.', ko:'저작권 관련 문의는 저작권자 본인 또는 정당한 대리인만 접수할 수 있습니다.', 'zh-tw':'著作權相關的聯絡，僅受理著作權人本人或其正當代理人提出的申請。', 'zh-cn':'版权相关的联系，仅受理版权人本人或其正当代理人提出的申请。', es:'Solo aceptamos consultas relacionadas con derechos de autor del propio titular de los derechos o de su representante autorizado.', fr:'Nous n\'acceptons les demandes liées aux droits d\'auteur que de la part du titulaire des droits lui-même ou de son représentant autorisé.', pt:'Só aceitamos consultas sobre direitos autorais do próprio titular dos direitos ou de seu representante autorizado.', de:'Anfragen zum Urheberrecht nehmen wir nur vom Rechteinhaber selbst oder dessen bevollmächtigtem Vertreter entgegen.', ar:'نقبل الاستفسارات المتعلقة بحقوق النشر فقط من صاحب الحقوق نفسه أو ممثله المخول.', th:'เราจะรับเรื่องติดต่อเกี่ยวกับลิขสิทธิ์จากเจ้าของลิขสิทธิ์ตัวจริงหรือตัวแทนที่ได้รับมอบอำนาจเท่านั้น', id:'Kami hanya menerima pertanyaan terkait hak cipta dari pemegang hak cipta sendiri atau perwakilan resminya.', ru:'Мы принимаем обращения по вопросам авторских прав только от самого правообладателя или его уполномоченного представителя.', it:'Accettiamo richieste relative al copyright solo dal titolare dei diritti stesso o dal suo rappresentante autorizzato.', vi:'Chúng tôi chỉ tiếp nhận liên hệ về bản quyền từ chính chủ sở hữu bản quyền hoặc đại diện hợp pháp của họ.' },
+    contactCopyrightReplyEmailLabel:{ ja:'返信用メールアドレス', en:'Reply email address', ko:'회신용 이메일 주소', 'zh-tw':'回覆用電子郵件地址', 'zh-cn':'回复用电子邮件地址', es:'Correo electrónico de respuesta', fr:'Adresse e-mail de réponse', pt:'E-mail para resposta', de:'E-Mail-Adresse für Antwort', ar:'عنوان البريد الإلكتروني للرد', th:'อีเมลสำหรับตอบกลับ', id:'Alamat email balasan', ru:'Email для ответа', it:'E-mail per la risposta', vi:'Email để phản hồi' },
+    contactCopyrightConfirmLabel:{ ja:'私は、上記対象作品の著作権者本人、またはその正当な権限を有する代理人です。', en:'I am the copyright holder of the above title, or their duly authorized representative.', ko:'저는 위 대상 작품의 저작권자 본인이거나, 정당한 권한을 가진 대리인입니다.', 'zh-tw':'本人為上述作品之著作權人本人，或具有正當權限之代理人。', 'zh-cn':'本人为上述作品之版权人本人，或具有正当权限之代理人。', es:'Soy el titular de los derechos de autor del título indicado, o su representante debidamente autorizado.', fr:'Je suis le titulaire des droits d\'auteur du titre ci-dessus, ou son représentant dûment autorisé.', pt:'Sou o titular dos direitos autorais do título acima, ou seu representante devidamente autorizado.', de:'Ich bin der Rechteinhaber des oben genannten Titels oder dessen ordnungsgemäß bevollmächtigter Vertreter.', ar:'أنا صاحب حقوق النشر للعمل المذكور أعلاه، أو ممثله المخول رسميًا.', th:'ข้าพเจ้าเป็นเจ้าของลิขสิทธิ์ของผลงานข้างต้น หรือเป็นตัวแทนที่ได้รับมอบอำนาจโดยชอบธรรม', id:'Saya adalah pemegang hak cipta judul di atas, atau perwakilan resminya yang sah.', ru:'Я являюсь правообладателем указанного выше тайтла или его уполномоченным представителем.', it:'Sono il titolare dei diritti d\'autore del titolo sopra indicato, o il suo rappresentante debitamente autorizzato.', vi:'Tôi là chủ sở hữu bản quyền của tựa phim nêu trên, hoặc là đại diện hợp pháp được ủy quyền.' },
+    contactGeneralReplyEmailLabel:{ ja:'返信用メールアドレス(任意)', en:'Reply email address (optional)', ko:'회신용 이메일 주소(선택)', 'zh-tw':'回覆用電子郵件地址(選填)', 'zh-cn':'回复用电子邮件地址(选填)', es:'Correo electrónico de respuesta (opcional)', fr:'Adresse e-mail de réponse (facultatif)', pt:'E-mail para resposta (opcional)', de:'E-Mail-Adresse für Antwort (optional)', ar:'عنوان البريد الإلكتروني للرد (اختياري)', th:'อีเมลสำหรับตอบกลับ (ไม่บังคับ)', id:'Alamat email balasan (opsional)', ru:'Email для ответа (необязательно)', it:'E-mail per la risposta (facoltativo)', vi:'Email để phản hồi (không bắt buộc)' },
+    contactGeneralReplyEmailHint:{ ja:'返信をご希望の場合のみご記入ください。空欄でも送信できます。', en:'Only fill this in if you\'d like a reply. You can submit without it.', ko:'회신을 원하시는 경우에만 입력해 주세요. 비워두고 제출하셔도 됩니다.', 'zh-tw':'僅在希望收到回覆時填寫即可，留空亦可送出。', 'zh-cn':'仅在希望收到回复时填写即可，留空也可提交。', es:'Complétalo solo si deseas recibir respuesta. Puedes enviarlo en blanco.', fr:'Ne remplissez ce champ que si vous souhaitez une réponse. Vous pouvez l\'envoyer vide.', pt:'Preencha apenas se desejar uma resposta. Você pode enviar em branco.', de:'Fülle dies nur aus, wenn du eine Antwort wünschst. Du kannst das Feld auch leer lassen.', ar:'املأ هذا الحقل فقط إذا كنت ترغب في الرد. يمكنك الإرسال دون تعبئته.', th:'กรอกเฉพาะกรณีที่ต้องการรับการตอบกลับ สามารถส่งได้แม้เว้นว่างไว้', id:'Isi hanya jika Anda ingin menerima balasan. Anda tetap bisa mengirim meski dikosongkan.', ru:'Заполняйте только если хотите получить ответ. Можно отправить и пустым.', it:'Compila solo se desideri una risposta. Puoi inviare anche lasciandolo vuoto.', vi:'Chỉ điền nếu bạn muốn nhận phản hồi. Bạn vẫn có thể gửi mà không cần điền.' },
+    contactGeneralReplyEmailHintTokushoho:{ ja:'住所・電話番号をこちらのメールアドレス宛にお送りします。', en:'We will send the address and phone number to this email address.', ko:'주소·전화번호를 이 이메일 주소로 보내드립니다.', 'zh-tw':'我們將把地址・電話號碼寄送至此電子郵件地址。', 'zh-cn':'我们将把地址・电话号码发送至此电子邮件地址。', es:'Enviaremos la dirección y el número de teléfono a esta dirección de correo.', fr:'Nous enverrons l\'adresse et le numéro de téléphone à cette adresse e-mail.', pt:'Enviaremos o endereço e o número de telefone para este e-mail.', de:'Wir senden die Adresse und Telefonnummer an diese E-Mail-Adresse.', ar:'سنرسل العنوان ورقم الهاتف إلى عنوان البريد الإلكتروني هذا.', th:'เราจะส่งที่อยู่และหมายเลขโทรศัพท์ไปยังอีเมลนี้', id:'Kami akan mengirim alamat dan nomor telepon ke alamat email ini.', ru:'Мы отправим адрес и номер телефона на этот email.', it:'Invieremo l\'indirizzo e il numero di telefono a questa e-mail.', vi:'Chúng tôi sẽ gửi địa chỉ và số điện thoại đến email này.' },
     valueGraphNotYetTitle:{ ja:'グラフはまだ作られていません', en:'No graph yet', ko:'아직 그래프가 없습니다', 'zh-tw':'尚未建立圖表', 'zh-cn':'尚未建立图表', es:'Aún no hay gráfico', fr:'Pas encore de graphique', pt:'Ainda não há gráfico', de:'Noch kein Diagramm', ar:'لا يوجد رسم بياني بعد', th:'ยังไม่มีกราฟ', id:'Belum ada grafik', ru:'Графика ещё нет', it:'Nessun grafico ancora', vi:'Chưa có biểu đồ' },
     valueGraphNotYetDesc:{ ja:'レビューを1件書くとカードにグラフが入り、シェアできるようになります。', en:'Write one review to get a graph on your card that you can share.', ko:'리뷰를 1건 작성하면 카드에 그래프가 생기고 공유할 수 있어요.', 'zh-tw':'寫一則評論後，卡片就會出現圖表並可以分享。', 'zh-cn':'写一条评论后，卡片就会出现图表并可以分享。', es:'Escribe una reseña para tener un gráfico en tu tarjeta y compartirlo.', fr:'Rédigez un avis pour obtenir un graphique partageable sur votre carte.', pt:'Escreva uma avaliação para ter um gráfico no seu cartão e compartilhar.', de:'Schreibe eine Rezension, um ein teilbares Diagramm auf deiner Karte zu erhalten.', ar:'اكتب مراجعة واحدة للحصول على رسم بياني في بطاقتك يمكنك مشاركته.', th:'เขียนรีวิว 1 รายการเพื่อให้การ์ดมีกราฟและแชร์ได้', id:'Tulis satu ulasan agar kartu Anda memiliki grafik yang bisa dibagikan.', ru:'Напишите один отзыв, чтобы на карточке появился график для публикации.', it:'Scrivi una recensione per avere un grafico condivisibile sulla tua card.', vi:'Viết một đánh giá để có biểu đồ trên thẻ và chia sẻ được.' },
     writeReviewBtn:{ ja:'レビューを書く', en:'Write a review', ko:'리뷰 작성하기', 'zh-tw':'撰寫評論', 'zh-cn':'撰写评论', es:'Escribir reseña', fr:'Rédiger un avis', pt:'Escrever avaliação', de:'Rezension schreiben', ar:'كتابة مراجعة', th:'เขียนรีวิว', id:'Tulis ulasan', ru:'Написать отзыв', it:'Scrivi una recensione', vi:'Viết đánh giá' },
@@ -21692,11 +21753,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const generalReplyEmailHintEl = document.getElementById('contactGeneralReplyEmailHint');
           const isTokushoho = _contactSelectedCategory === 'tokushoho';
           if(generalReplyEmailLabelEl) generalReplyEmailLabelEl.innerHTML = isTokushoho
-            ? '返信用メールアドレス<span style="color:#ff8888;">*</span>'
-            : '返信用メールアドレス(任意)';
+            ? `${escapeHtml(t('contactCopyrightReplyEmailLabel'))}<span style="color:#ff8888;">*</span>`
+            : escapeHtml(t('contactGeneralReplyEmailLabel'));
           if(generalReplyEmailHintEl) generalReplyEmailHintEl.textContent = isTokushoho
-            ? '住所・電話番号をこちらのメールアドレス宛にお送りします。'
-            : '返信をご希望の場合のみご記入ください。空欄でも送信できます。';
+            ? t('contactGeneralReplyEmailHintTokushoho')
+            : t('contactGeneralReplyEmailHint');
           updateContactSubmitState();
         };
       });
@@ -25657,23 +25718,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // 並び順もその時に「ホーム/検索/掲示板/お知らせ/マイページ」→「人気/ガチャ/記事の広場/設定」の
   // 指定順に変更している。BNAV_ITEMSの並び＝初期状態の並びなので、ここでの並び替えがそのまま反映される。
   const BNAV_ITEMS = [
-    { id:'home', label:'ホーム', onclick:"nav('home')",
+    { id:'home', label:t('navHome'), onclick:"nav('home')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>' },
-    { id:'search', label:'検索', onclick:"openSearch()",
+    { id:'search', label:t('navSearch'), onclick:"openSearch()",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></svg>' },
-    { id:'board', label:'掲示板', onclick:"nav('board')",
+    { id:'board', label:t('navBoard'), onclick:"nav('board')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' },
-    { id:'notifications', label:'お知らせ', onclick:"nav('notifications')", hasBadge:true,
+    { id:'notifications', label:t('navNotifications'), onclick:"nav('notifications')", hasBadge:true,
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>' },
-    { id:'mypage', label:'マイページ', onclick:"nav('mypage')",
+    { id:'mypage', label:t('navMypage'), onclick:"nav('mypage')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg>' },
-    { id:'ranking', label:'人気', onclick:"navPopular()",
+    { id:'ranking', label:t('navRanking'), onclick:"navPopular()",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="7" rx="1"/><rect x="10" y="8" width="4" height="11" rx="1"/><rect x="16" y="5" width="4" height="14" rx="1"/></svg>' },
-    { id:'gacha', label:'ガチャガチャ', onclick:"nav('gacha')",
+    { id:'gacha', label:t('navGacha'), onclick:"nav('gacha')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>' },
-    { id:'articles', label:'記事の広場', onclick:"nav('articles')",
+    { id:'articles', label:t('navArticles'), onclick:"nav('articles')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>' },
-    { id:'settings', label:'設定', onclick:"nav('settings')",
+    { id:'settings', label:t('navSettings'), onclick:"nav('settings')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' },
   ];
   // ページごとの項目数（合計9個を5個＋4個に分ける）。並び替えなどで項目が増えた場合は
