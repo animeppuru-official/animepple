@@ -17551,6 +17551,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // まだ新しい投稿がDOMに反映される前の高さでスクロールしてしまい、特にPCで
         // 最下部に届かないことがあった。await してから、かつ描画完了を待つ
         // requestAnimationFrameでスクロールする。
+        // [2026-09-23修正] 投稿ボタンでの送信は、直後にrerenderFn()が入力欄ごと
+        // composer.innerHTMLを作り直すため、古い入力欄が「キーボードにフォーカスされたまま
+        // DOMから消える」形になり、focusoutイベントが発火しないことがあった(ユーザー報告：
+        // 「チャット投稿ボタンおしてキーボード消すとヘッダーが表示されない」)。
+        // 自然にinputからフォーカスが外れる操作(タップで他をさわる等)ならfocusoutで
+        // board-kb-openは外れるが、送信ボタン経由の場合はそれに頼らず、ここで明示的に外す
+        document.body.classList.remove('board-kb-open');
+        if(window._boardSyncVh) window._boardSyncVh();
         await rerenderFn(animeId);
         requestAnimationFrame(() => {
           const sc = document.querySelector('.page.active .board-chat-scroll');
