@@ -726,10 +726,14 @@
     .gacha-coin-tag { position:absolute; top:-8px; left:50%; transform:translateX(-50%); z-index:2; font-size:9.5px;
       font-weight:900; padding:2px 8px; border-radius:8px; background:#f0c94a; color:#0e2416; white-space:nowrap; }
 
-    /* コインの表現。絵文字は使わず、金貨の質感をCSSで作る */
+    /* [2026-09-24変更] コインの表現。以前は絵文字を使わずCSSだけで金貨の質感を作っていたが、
+       マスコット付きのブランドアイコン(animeppurucoin.jpe)に差し替えた。画像自体に立体感・
+       縁のギザギザが描き込まれているため、以前付けていたinsetのbox-shadow(金貨の質感を
+       CSSで出すためのもの)は不要になり削除した。border-radius:50%で正方形画像の四隅
+       (グレーの背景部分)を円形にクリップしている */
     .coin-dot { display:inline-block; width:14px; height:14px; border-radius:50%; flex:0 0 auto;
-      background:linear-gradient(135deg,#f7e6ab,#f0c94a 45%,#b9852b);
-      box-shadow:inset 0 -1px 0 rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.55); }
+      background-image:url('https://animepple.com/icons/animeppurucoin.jpe');
+      background-size:cover; background-position:center; }
     .coin-dot-lg { width:26px; height:26px; }
     .coin-balance { display:flex; align-items:center; gap:7px; margin:0 0 1rem;
       font-size:.95rem; font-weight:900; color:#f0c94a; font-variant-numeric:tabular-nums; }
@@ -910,7 +914,7 @@
     .cs-legal-body { margin:0; font-size:10.5px; line-height:1.9; color:#7e9689; }
     .cs-legal-links { display:flex; gap:14px; flex-wrap:wrap; padding-top:2px; }
     .cs-legal-links a { font-size:10.5px; font-weight:700; }
-    .coin-dot-xl { width:28px; height:28px; box-shadow:inset 0 -1px 0 rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.55); }
+    .coin-dot-xl { width:28px; height:28px; }
 
     /* 課金ページ：残高カードとパック一覧 */
     .coin-balance-card { border:1px solid rgba(240,201,74,.28); border-radius:16px;
@@ -2407,6 +2411,19 @@
     .form-note { font-size:.75rem; color:var(--muted); margin-top:.55rem; text-align:center; }
     .form-hint { font-size:.74rem; color:var(--muted); margin:.3rem 0 0; }
     .req { color:var(--red); }
+
+    /* [2026-09-24追加] スライダーを操作している間は、タグ・コメント・投稿ボタンを触れなくし、
+       「確定」ボタンを押すまでスライダーの入力に集中させる(がばがば対策)。
+       ユーザー指示：「スライダー動かしたら他の項目は触れなくなる」「確定ボタンでほかの項目もできるようになる」 */
+    .form-section.review-form-locked { opacity:.4; pointer-events:none; filter:grayscale(.4); transition:opacity .2s ease; }
+    .slider-confirm-wrap { display:none; margin:0 0 1rem; text-align:center; }
+    .slider-confirm-wrap.is-visible { display:block; }
+    .slider-confirm-hint { font-size:.78rem; color:var(--muted); margin:0 0 .6rem; }
+    .slider-confirm-btn {
+      width:100%; height:48px; border-radius:12px; border:none;
+      background:linear-gradient(120deg,var(--brand),var(--brand2)); color:#0c2015;
+      font-weight:800; font-size:14px; cursor:pointer;
+    }
 
     /* ── SEARCH RESULTS ── */
     .search-bar { border-bottom:1px solid var(--line); }
@@ -4357,7 +4374,11 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="review-slider-page" id="slidersB"></div>
       </div>
     </div>
-    <div class="form-section">
+    <div class="slider-confirm-wrap" id="sliderConfirmWrap">
+      <p class="slider-confirm-hint" data-i18n="sliderConfirmHint">スライダーの入力中は他の項目を編集できません。入力が終わったら確定してください。</p>
+      <button type="button" class="slider-confirm-btn" id="sliderConfirmBtn" data-i18n="sliderConfirmBtn">スライダーの入力を確定する</button>
+    </div>
+    <div class="form-section" id="reviewFormSection">
       <h2 data-i18n="postInfo">投稿情報</h2>
       <div id="reviewUserNameLoggedIn" style="display:none;">
         <div id="reviewUserNameDisplay" style="padding:.5rem 0;font-weight:700;color:#dff0e6;font-size:.95rem;"></div>
@@ -8910,7 +8931,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       async getMyMasterGraphCandidates(userId) {
         if(!sb || !userId) return [];
-        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,elapsed_ms,quality').eq('user_id', userId).eq('chart_moved', true);
+        const { data } = await sb.from('reviews').select('anime_id,chart_a,chart_b,chart_moved,elapsed_ms,slider_elapsed_ms,quality').eq('user_id', userId).eq('chart_moved', true);
         return data || [];
       },
       async insert(review) {
@@ -8929,7 +8950,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageSize = 1000;
         while (true) {
           const { data, error } = await sb.from('reviews')
-            .select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated,username,quality,elapsed_ms,tags,created_at')
+            .select('anime_id,chart_a,chart_b,chart_moved,is_ai_generated,username,quality,elapsed_ms,slider_elapsed_ms,tags,created_at')
             .range(from, from + pageSize - 1);
           if (error) { console.warn('getAllForCluster error:', error); break; }
           if (!data || !data.length) break;
@@ -9713,6 +9734,7 @@ document.addEventListener('DOMContentLoaded', () => {
         quality: !!r.quality,
         qualityScore: r.quality_score || 0,
         elapsedMs: r.elapsed_ms,
+        sliderElapsedMs: r.slider_elapsed_ms,
         // [追加] 投稿者のアカウント作成日時(組織票対策のgetVoteWeightで使用。取得不可ならnull=既存ユーザー扱い)
         accountCreatedAtMs: r.user_id ? (ageMap[r.user_id] ?? null) : null,
         // [2026-09追加] 称号カウント専用の判定結果(null=まだ未判定、true/false=確定済み・以後永久に固定)。
@@ -9773,7 +9795,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 金カードの条件は「質スコア3点以上（quality＝アプリ全体で使う上質レビューの基準）」かつ
       // 荒らしパターンでないこと（isGraphValidReview）。質スコアだけを条件にしていたバグを修正。
       const validIds = rows.filter(r => r.quality && isGraphValidReview({
-        chartA: r.chart_a, chartB: r.chart_b, chartMoved: r.chart_moved, elapsedMs: r.elapsed_ms,
+        chartA: r.chart_a, chartB: r.chart_b, chartMoved: r.chart_moved, elapsedMs: r.elapsed_ms, sliderElapsedMs: r.slider_elapsed_ms,
       })).map(r => r.anime_id);
       _myGoldAnimeIds = new Set(validIds);
     } catch(e) { console.warn('loadMyGoldAnimeIds:', e); }
@@ -14597,6 +14619,63 @@ document.addEventListener('DOMContentLoaded', () => {
   let chartMoved = false;
   let _reviewStartTime = 0;
   let _reviewSessionId = null;
+  // [2026-09-24追加] ユーザー指摘「スライダー適当・コメント適当で投票できたから、がばがば」を受けて。
+  // 従来のelapsed(フォーム全体を開いてから投稿までの時間)は、コメントをじっくり書く間に
+  // スライダーだけ一瞬で全部埋める、という抜け道を防げなかった(合計時間は稼げてしまうため)。
+  // 対策として、スライダーを操作している間はタグ・コメント・投稿ボタンを触れなくし
+  // (「確定」ボタンを押すまで他の項目に逃げられない)、実際にロックされていた時間だけを
+  // 累積する(確定してコメントを書いている間や、しばらく放置している間は時間が進まない＝保留)。
+  // [2026-09-24修正] 当初は「最初にスライダーへ触れてから12軸揃うまでの経過時間」を単純に
+  // 使っていたが、これだと「1項目だけ触ってすぐ確定→しばらく放置→急いで残りを埋める」でも
+  // 合計の壁時計時間は稼げてしまい、実質的な操作時間の短さをすり抜けられる抜け道があった
+  // (ユーザー指摘で発覚)。ロック中(＝実際にスライダーを操作できる状態)の時間だけを
+  // 積み上げる方式に変更し、確定ボタンを押してから次にスライダーへ触れるまでの間(コメントを
+  // 書いている間や放置している間)は一切カウントしないようにした。
+  let _sliderLocked = false;
+  let _sliderSessionStartTime = 0; // 現在進行中のロックセッションの開始時刻(ロック中でなければ0)
+  let _sliderActiveAccumulatedMs = 0; // それより前の(確定済みの)ロックセッションで積み上がった時間の合計
+  let _sliderElapsedAtFullCompletion = null; // 12項目が初めて埋まった瞬間の累積操作時間(1回だけ記録、以後不変)
+  function currentSliderActiveMs() {
+    return _sliderActiveAccumulatedMs + (_sliderSessionStartTime ? (Date.now() - _sliderSessionStartTime) : 0);
+  }
+  function lockReviewFormExceptSliders() {
+    if(_sliderLocked) return;
+    _sliderLocked = true;
+    _sliderSessionStartTime = Date.now(); // 新しいロックセッションの開始(ここから時間が進み始める)
+    const formSection = document.getElementById('reviewFormSection');
+    if(formSection) formSection.classList.add('review-form-locked');
+    const confirmWrap = document.getElementById('sliderConfirmWrap');
+    if(confirmWrap) confirmWrap.classList.add('is-visible');
+  }
+  function unlockReviewFormAfterSliderConfirm() {
+    _sliderLocked = false;
+    if(_sliderSessionStartTime) {
+      // このロックセッション中に実際に経過した時間を積み上げて確定させ、
+      // 確定ボタンを押した後(コメント執筆中・放置中)は時間が進まないようにする(＝保留)
+      _sliderActiveAccumulatedMs += Date.now() - _sliderSessionStartTime;
+      _sliderSessionStartTime = 0;
+    }
+    const formSection = document.getElementById('reviewFormSection');
+    if(formSection) formSection.classList.remove('review-form-locked');
+    const confirmWrap = document.getElementById('sliderConfirmWrap');
+    if(confirmWrap) confirmWrap.classList.remove('is-visible');
+  }
+  function onReviewSliderTouched() {
+    lockReviewFormExceptSliders(); // 既にロック中なら何もしない(セッション開始時刻は変わらない)
+    // 12項目すべて埋まった瞬間(初回のみ)の累積操作時間を記録する
+    if(_sliderElapsedAtFullCompletion === null) {
+      const isFullGraphNow = vA.every(v=>v!==-1) && vB.every(v=>v!==-1);
+      if(isFullGraphNow) _sliderElapsedAtFullCompletion = currentSliderActiveMs();
+    }
+  }
+  // マスターグラフ判定に使う最終的なスライダー操作時間(ロック中だった時間だけの累積)。
+  // 12項目が一度でも揃っていれば、その瞬間の記録(以後不変)を使う。
+  // まだ揃っていない(部分投稿)場合は、現時点までの累積操作時間を使う
+  // (この場合はisFullGraph自体がfalseなので、どのみちマスターグラフ集計対象にはならない)。
+  function getSliderElapsedMs() {
+    if(_sliderElapsedAtFullCompletion !== null) return _sliderElapsedAtFullCompletion;
+    return currentSliderActiveMs();
+  }
   let _turnstileWidgetId = null;
   // Turnstileスクリプトは async defer で読み込んでるため、レビューページ表示時に
   // まだ window.turnstile が準備できてない可能性がある → 準備できるまで軽くリトライする
@@ -14724,6 +14803,10 @@ document.addEventListener('DOMContentLoaded', () => {
     axisB.forEach((_,i)=>{vB[i]=-1;});
     chartMoved = false;
     _reviewStartTime = Date.now();
+    _sliderSessionStartTime = 0;
+    _sliderActiveAccumulatedMs = 0;
+    _sliderElapsedAtFullCompletion = null;
+    unlockReviewFormAfterSliderConfirm(); // 前回の投稿画面がロックされたまま残らないようにリセット(累積時間は上で既に0にしてある)
     _reviewSessionId = null;
     // サーバー側で投稿時間を検証するため、開始時刻をサーバーに記録してもらう
     // （elapsed_msをクライアントの申告値だけに頼らないための対策）
@@ -14741,9 +14824,11 @@ document.addEventListener('DOMContentLoaded', () => {
         .finally(()=>{ if(_submitBtnForSession) { _submitBtnForSession.disabled = false; _submitBtnForSession.style.opacity = ''; } });
     }
     renderReviewTurnstile();
-    buildReviewSliders('slidersA', getAxisA(), vA, ()=>{ chartMoved=true; redrawReview(); });
-    buildReviewSliders('slidersB', getAxisB(), vB, ()=>{ chartMoved=true; redrawReview(); });
+    buildReviewSliders('slidersA', getAxisA(), vA, ()=>{ chartMoved=true; onReviewSliderTouched(); redrawReview(); });
+    buildReviewSliders('slidersB', getAxisB(), vB, ()=>{ chartMoved=true; onReviewSliderTouched(); redrawReview(); });
     setupSliderPageSwiper('reviewSliderSwiper','sliderPagePrev','sliderPageNext','sliderPageLabel');
+    const sliderConfirmBtn = document.getElementById('sliderConfirmBtn');
+    if(sliderConfirmBtn) sliderConfirmBtn.onclick = () => unlockReviewFormAfterSliderConfirm();
     // reset tags
     reviewTags.length=0;
     setupTagInput('reviewTagInput','reviewTagAddBtn','reviewTagList',reviewTags,3);
@@ -14878,9 +14963,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // ここでも必須条件にする。「文章はしっかり書いたが、グラフは適当」という汚染を防ぐのが狙い。
   // (投票重みの元になる称号カウントは、これとは別のconsensus_credit列で
   //  「みんなの意見と実際に近かったか」を見て判定するので、こちらは複雑にしない)
-  function calcQualityScore({isFullGraph, elapsed, tags, comment, chartA, chartB, chartMoved}) {
+  function calcQualityScore({isFullGraph, elapsed, tags, comment, chartA, chartB, chartMoved, sliderElapsedMs}) {
     if (!isFullGraph) return 0; // グラフ未完成なら質スコア0
-    if (!isGraphValidReview({ chartA, chartB, chartMoved, elapsedMs: elapsed })) return 0; // グラフ自体が適当なら質スコア0
+    if (!isGraphValidReview({ chartA, chartB, chartMoved, elapsedMs: elapsed, sliderElapsedMs })) return 0; // グラフ自体が適当なら質スコア0
     const commentIsGarbage = isGarbageComment(comment);
     if (comment.length < 15 || commentIsGarbage) return 0; // コメント必須の前提条件
     let score = 1; // 実際にコメントを書いた基礎点
@@ -14944,12 +15029,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const chartBObjPreCheck = Object.fromEntries(axisB.map((k,i)=>[k, vB[i]===-1?0:vB[i]]));
     const isFullGraphPreCheck = vA.every(v=>v!==-1) && vB.every(v=>v!==-1);
     const elapsedPreCheck = Date.now() - _reviewStartTime;
+    const sliderElapsedPreCheck = getSliderElapsedMs();
     // 価値観投票（マスターグラフ反映）は「上質レビュー」＝質スコア3点以上の時だけ出す。
     // 以前はisGraphValidReview（荒らし検知）だけで判定していて、質スコア条件が抜けていたバグを修正。
     const commentPreCheck = document.getElementById('reviewComment').value.trim();
-    const qualityScorePreCheck = calcQualityScore({ isFullGraph: isFullGraphPreCheck, elapsed: elapsedPreCheck, tags: reviewTags, comment: commentPreCheck, chartA: chartAObjPreCheck, chartB: chartBObjPreCheck, chartMoved: true });
+    const qualityScorePreCheck = calcQualityScore({ isFullGraph: isFullGraphPreCheck, elapsed: elapsedPreCheck, tags: reviewTags, comment: commentPreCheck, chartA: chartAObjPreCheck, chartB: chartBObjPreCheck, chartMoved: true, sliderElapsedMs: sliderElapsedPreCheck });
     const isValidMasterGraph = qualityScorePreCheck >= 3 && isGraphValidReview({
-      chartA: chartAObjPreCheck, chartB: chartBObjPreCheck, chartMoved: true, elapsedMs: elapsedPreCheck,
+      chartA: chartAObjPreCheck, chartB: chartBObjPreCheck, chartMoved: true, elapsedMs: elapsedPreCheck, sliderElapsedMs: sliderElapsedPreCheck,
     });
     if(isValidMasterGraph && _currentUser) {
       (async () => {
@@ -15795,7 +15881,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 質スコア計算（0〜5点）。3点以上を「上質レビュー」とする
     const elapsed = Date.now() - _reviewStartTime;
-    const qualityScore = calcQualityScore({isFullGraph, elapsed, tags, comment, chartA: chartAObj, chartB: chartBObj, chartMoved: isFullGraph});
+    const sliderElapsedMs = getSliderElapsedMs();
+    const qualityScore = calcQualityScore({isFullGraph, elapsed, tags, comment, chartA: chartAObj, chartB: chartBObj, chartMoved: isFullGraph, sliderElapsedMs});
     const isQuality = qualityScore >= 3;
 
     const review={
@@ -15811,6 +15898,7 @@ document.addEventListener('DOMContentLoaded', () => {
       createdAt:new Date().toISOString(),
       chartMoved: isFullGraph,   // 全軸操作済みフラグ（マスターグラフ集計対象）
       quality: isQuality, // 高品質フラグ
+      sliderElapsedMs, // スライダーに実際に触れていた時間（最初〜最後の操作）
     };
     if(DB_MODE === 'supabase' && sb) {
       // Supabaseモード: Edge Function経由で投稿（Turnstile検証＋service_roleでの書き込み）
@@ -15860,6 +15948,7 @@ document.addEventListener('DOMContentLoaded', () => {
               quality: isQuality,
               quality_score: qualityScore,
               elapsed_ms: elapsed,
+              slider_elapsed_ms: sliderElapsedMs,
             },
           }),
         });
@@ -17725,8 +17814,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. chartMoved=false(スライダーを動かしていない)
   // 4. 全12軸の標準偏差が1.0以下(低分散=全部同じような値で適当入力)
   // 5. axisAとaxisB両方が完全に同じ値の並び(2つのグラフが偶然でも全軸一致するのは不自然)
-  // ※elapsedMsはクライアント申告値なので厳密な防止策ではなく簡易フィルタ
+  // 6. スライダーに実際に触れていた時間(sliderElapsedMs)が短すぎる(コメントをじっくり書く間に
+  //    スライダーだけ一瞬で全部埋める、というelapsedMs(フォーム全体の時間)だけでは防げない
+  //    抜け道への対策。ユーザー報告「スライダー適当・コメント適当で投票できたから、がばがば」)
+  // ※elapsedMs/sliderElapsedMsはクライアント申告値なので厳密な防止策ではなく簡易フィルタ
   const MIN_ELAPSED_MS_FOR_VALID_GRAPH = 13000;
+  const MIN_SLIDER_ELAPSED_MS_FOR_VALID_GRAPH = 13000;
   const MIN_STD_DEV_FOR_VALID_GRAPH = 1.0;
   function isLowVarianceReview(r) {
     const all = [...axisA.map(k=>Number(r.chartA&&r.chartA[k]||0)), ...axisB.map(k=>Number(r.chartB&&r.chartB[k]||0))];
@@ -17742,6 +17835,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function isGraphValidReview(r) {
     if (isUniformReview(r)) return false;
     if (typeof r.elapsedMs === 'number' && r.elapsedMs > 0 && r.elapsedMs < MIN_ELAPSED_MS_FOR_VALID_GRAPH) return false;
+    if (typeof r.sliderElapsedMs === 'number' && r.sliderElapsedMs > 0 && r.sliderElapsedMs < MIN_SLIDER_ELAPSED_MS_FOR_VALID_GRAPH) return false;
     if (typeof r.chartMoved !== 'undefined' && !r.chartMoved) return false;
     if (isLowVarianceReview(r)) return false;
     if (isMirroredGraph(r)) return false;
@@ -17903,6 +17997,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userName: r.username,
         quality: r.quality,
         elapsedMs: r.elapsed_ms,
+        sliderElapsedMs: r.slider_elapsed_ms,
         createdAt: r.created_at,
       }));
       const byAnime = {};
@@ -19847,6 +19942,8 @@ document.addEventListener('DOMContentLoaded', () => {
     labelComment: { ja:'コメント',en:'Comment',ko:'댓글','zh-tw':'留言','zh-cn':'评论',es:'Comentario',fr:'Commentaire',pt:'Comentário',de:'Kommentar',ar:'تعليق',th:'ความคิดเห็น',id:'Komentar',ru:'Комментарий',it:'Commento',vi:'Bình luận' },
     btnSubmit:    { ja:'投稿する',en:'Submit',ko:'투고하기','zh-tw':'發佈','zh-cn':'发布',es:'Publicar',fr:'Publier',pt:'Publicar',de:'Veröffentlichen',ar:'نشر',th:'โพสต์',id:'Kirim',ru:'Отправить',it:'Pubblica',vi:'Đăng' },
     formNote:     { ja:'※ やさしい言葉での投稿をお願いします。',en:'※ Please be kind in your reviews.',ko:'※ 친절한 말로 투고해 주세요.','zh-tw':'※ 請以友善的語言發佈。','zh-cn':'※ 请以友善的语言发布。',es:'※ Por favor, sé amable.',fr:'※ Merci d\'être bienveillant.',pt:'※ Por favor, seja gentil.',de:'※ Bitte freundlich formulieren.',ar:'※ يُرجى استخدام لغة لطيفة.',th:'※ กรุณาใช้ถ้อยคำสุภาพ',id:'※ Mohon gunakan kata-kata yang baik.',ru:'※ Пожалуйста, будьте вежливы.',it:'※ Ti preghiamo di essere gentile.',vi:'※ Vui lòng dùng lời lẽ nhẹ nhàng.' },
+    sliderConfirmHint:{ ja:'スライダーの入力中は他の項目を編集できません。入力が終わったら確定してください。', en:'You can\'t edit other fields while adjusting the sliders. Tap confirm when you\'re done.', ko:'슬라이더를 조작하는 동안에는 다른 항목을 편집할 수 없습니다. 입력이 끝나면 확정해 주세요.', 'zh-tw':'調整滑桿時無法編輯其他項目，輸入完成後請按下確定。', 'zh-cn':'调整滑块时无法编辑其他项目，输入完成后请点击确定。', es:'No puedes editar otros campos mientras ajustas los controles. Confirma cuando termines.', fr:'Vous ne pouvez pas modifier les autres champs pendant le réglage des curseurs. Confirmez une fois terminé.', pt:'Você não pode editar outros campos enquanto ajusta os controles deslizantes. Confirme quando terminar.', de:'Während du die Schieberegler einstellst, kannst du keine anderen Felder bearbeiten. Bestätige, wenn du fertig bist.', ar:'لا يمكنك تعديل الحقول الأخرى أثناء ضبط المنزلقات. اضغط تأكيد عند الانتهاء.', th:'ไม่สามารถแก้ไขช่องอื่นได้ขณะปรับแถบเลื่อน กรุณากดยืนยันเมื่อเสร็จแล้ว', id:'Anda tidak dapat mengedit kolom lain saat menyesuaikan slider. Konfirmasi setelah selesai.', ru:'Пока вы настраиваете ползунки, другие поля недоступны для редактирования. Подтвердите, когда закончите.', it:'Non puoi modificare gli altri campi mentre regoli i cursori. Conferma quando hai finito.', vi:'Bạn không thể chỉnh sửa các mục khác trong khi điều chỉnh thanh trượt. Hãy xác nhận khi xong.' },
+    sliderConfirmBtn:{ ja:'スライダーの入力を確定する', en:'Confirm slider input', ko:'슬라이더 입력 확정', 'zh-tw':'確定滑桿輸入', 'zh-cn':'确定滑块输入', es:'Confirmar los controles', fr:'Confirmer les curseurs', pt:'Confirmar os controles', de:'Schieberegler bestätigen', ar:'تأكيد إدخال المنزلقات', th:'ยืนยันการปรับแถบเลื่อน', id:'Konfirmasi input slider', ru:'Подтвердить ползунки', it:'Conferma i cursori', vi:'Xác nhận thanh trượt' },
     tagPlaceholder:{ ja:'例: 泣ける、鬱、神作画',en:'e.g. emotional, dark, stunning animation',ko:'예: 눈물, 우울, 신작화','zh-tw':'例：感人、黑暗、神作畫','zh-cn':'例：感人、黑暗、神作画',es:'ej: emotivo, oscuro, animación impresionante',fr:'ex: émouvant, sombre, animation époustouflante',pt:'ex: emocional, sombrio, animação incrível',de:'z.B. emotional, dunkel, atemberaubende Animation',ar:'مثل: مؤثر، مظلم، رسوم متحركة مذهلة',th:'เช่น อินจัด, มืดหม่น, ภาพสวย',id:'cth: mengharukan, gelap, animasi memukau',ru:'напр.: трогательно, мрачно, красивая анимация',it:'es. emozionante, cupo, animazione stupenda',vi:'vd: cảm động, u tối, hình ảnh đẹp' },
     btnTagAdd:    { ja:'追加',en:'Add',ko:'추가','zh-tw':'新增','zh-cn':'添加',es:'Añadir',fr:'Ajouter',pt:'Adicionar',de:'Hinzufügen',ar:'إضافة',th:'เพิ่ม',id:'Tambah',ru:'Добавить',it:'Aggiungi',vi:'Thêm' },
     commentExpandLabel: { ja:'コメントを見る',en:'Read comment',ko:'댓글 보기','zh-tw':'查看留言','zh-cn':'查看评论',es:'Ver comentario',fr:'Voir commentaire',pt:'Ver comentário',de:'Kommentar lesen',ar:'اقرأ التعليق',th:'ดูความคิดเห็น',id:'Lihat komentar',ru:'Читать комментарий',it:'Leggi commento',vi:'Xem bình luận' },
@@ -24470,7 +24567,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const byAnime = {};
           fullReviews.forEach(r=>{
             if(!byAnime[r.anime_id]) byAnime[r.anime_id]=[];
-            byAnime[r.anime_id].push({ chartA:r.chart_a, chartB:r.chart_b, chartMoved:r.chart_moved, isAiGenerated:!!r.is_ai_generated, elapsedMs:r.elapsed_ms });
+            byAnime[r.anime_id].push({ chartA:r.chart_a, chartB:r.chart_b, chartMoved:r.chart_moved, isAiGenerated:!!r.is_ai_generated, elapsedMs:r.elapsed_ms, sliderElapsedMs:r.slider_elapsed_ms });
           });
           const splitResults = [];
           Object.entries(byAnime).forEach(([animeId, revsRaw])=>{
@@ -27669,7 +27766,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(bestEl) bestEl.innerHTML = `
       <button type="button" class="cs-pack-best coin-pack-card" data-pack-id="${best.id}">
         <span class="cs-pack-best-sheen"></span>
-        <span class="coin-dot" style="position:relative;width:44px;height:44px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.28),inset 0 2px 0 rgba(255,255,255,.5);"></span>
+        <span class="coin-dot" style="position:relative;width:44px;height:44px;"></span>
         <span class="cs-pack-best-copy">
           <span class="cs-pack-best-tag">${escapeHtml(t('coinShopTagBest'))}</span>
           <span class="cs-pack-best-amount">
