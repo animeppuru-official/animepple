@@ -1127,6 +1127,19 @@
     .gacha-reveal-anim-overlay .gacha-reveal-batch-caps { display:none; }
     .gacha-reveal-anim-overlay.is-batch10 .gacha-reveal-single-caps { display:none; }
     .gacha-reveal-anim-overlay.is-batch10 .gacha-reveal-batch-caps { display:inline; }
+    /* [2026-09-25追加] UR以上が出た回は、赤い筐体の代わりに金色筐体(ringo_gacha_assets付属の
+       04_guaranteed_gold.htmlの配色)に切り替える。抽選確率(GACHA_RARITY_WEIGHT)は一切変えず、
+       既に決まった結果の見た目だけを変えるので、表示確率と実際の確率がズレる心配は無い。
+       属性セレクタで、色を直接指定しているfill/stroke値をピンポイントで金色用グラデーションに
+       差し替えている(対象パーツにclassを追加する必要が無く、単発・10連で共有している筐体本体
+       (ジュース・つまみ・メーター・フタ)のマークアップを一切変更せずに済む) */
+    .gacha-reveal-anim-overlay.is-golden [fill="#C0262C"] { fill:url(#gm_goldBody); }
+    .gacha-reveal-anim-overlay.is-golden [fill="url(#gm_juice)"] { fill:url(#gm_goldJuice); }
+    .gacha-reveal-anim-overlay.is-golden [fill="url(#gm_glow)"] { fill:url(#gm_glowGold); }
+    .gacha-reveal-anim-overlay.is-golden [fill="url(#gm_leaf)"] { fill:url(#gm_goldLeaf); }
+    .gacha-reveal-anim-overlay.is-golden [fill="url(#gm_rayG)"] { fill:url(#gm_rayGGold); }
+    .gacha-reveal-anim-overlay.is-golden [stroke="#C9A544"] { stroke:#E5B23A; }
+    .gacha-reveal-anim-overlay.is-golden [stroke="#C9A544"][stroke-width="3"] { stroke-width:5; }
     .gacha-reveal-anim-overlay.is-playing .spin, .gacha-reveal-anim-overlay.is-playing .dot {
       transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealKnob 7s 1;
     }
@@ -4935,6 +4948,11 @@ document.addEventListener('DOMContentLoaded', () => {
 <linearGradient id="gm_stem" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8A5A36"></stop><stop offset="1" stop-color="#4E2F18"></stop></linearGradient>
 <linearGradient id="gm_leaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8CC45C"></stop><stop offset="1" stop-color="#3F7A2E"></stop></linearGradient>
 <linearGradient id="gm_foot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A4A4E"></stop><stop offset="1" stop-color="#1F1F22"></stop></linearGradient>
+<linearGradient id="gm_goldBody" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B8841A"></stop><stop offset="0.12" stop-color="#FFE9A0"></stop><stop offset="0.3" stop-color="#E9B83C"></stop><stop offset="0.65" stop-color="#D19A22"></stop><stop offset="0.88" stop-color="#F6D374"></stop><stop offset="1" stop-color="#9A6A0E"></stop></linearGradient>
+<linearGradient id="gm_goldJuice" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6C8"></stop><stop offset="0.2" stop-color="#F7D35C"></stop><stop offset="0.6" stop-color="#E0A92A"></stop><stop offset="1" stop-color="#A8740E"></stop></linearGradient>
+<linearGradient id="gm_goldLeaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF1B8"></stop><stop offset="1" stop-color="#B07A12"></stop></linearGradient>
+<radialGradient id="gm_glowGold" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#F5C84E" stop-opacity="0.30"></stop><stop offset="0.6" stop-color="#F5C84E" stop-opacity="0.08"></stop><stop offset="1" stop-color="#F5C84E" stop-opacity="0"></stop></radialGradient>
+<radialGradient id="gm_rayGGold" gradientUnits="userSpaceOnUse" cx="500" cy="686" r="260"><stop offset="0.3" stop-color="#FFE38A" stop-opacity="0.95"></stop><stop offset="1" stop-color="#FFF1BF" stop-opacity="0"></stop></radialGradient>
 </defs>
 
 <rect x="20" y="20" width="960" height="960" rx="40" fill="url(#gm_popBg)"></rect>
@@ -13488,6 +13506,43 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 結果：確定枠（アニメカード）＋おまけ枠（レア度で枠色と光彩が変わる）
+  // [2026-09-25追加] 確定枠(アニメカード)のHTMLと、そのカード内ボタンの配線は単発
+  // (showGachaResult)・10連(showGachaResultBatch)の両方で共通のため関数化した。
+  // 以前はshowGachaResultBatch側がこのカードを描画せず`pickEl.innerHTML = ''`で
+  // 空にしたままになっており、10連の結果表示にアニメが一切乗らないバグがあった
+  // (ユーザー報告「10連結果表示時にアニメがのってないぞ」)
+  function gachaPickCardHtml(pick) {
+    return pick ? `
+      <div class="gacha-pick">
+        ${pick.image ? `<img class="gacha-pick-thumb" src="${escapeHtml(pick.image)}" alt="">` : '<span class="gacha-pick-thumb"></span>'}
+        <div class="gacha-pick-body">
+          <span class="gacha-pick-badge">${escapeHtml(t('gachaFixedBadge2'))}</span>
+          <p class="gacha-pick-name">${escapeHtml(getTitle(pick) || pick.title || '')}</p>
+          <p class="gacha-pick-meta">${escapeHtml(t('gachaPickMeta'))}</p>
+          <div class="gacha-pick-actions">
+            <button type="button" class="gacha-pick-btn" id="gachaPickOpenBtn">${escapeHtml(t('gachaPickOpen'))}</button>
+            <button type="button" class="gacha-pick-btn is-ghost" id="gachaPickFavBtn">☆ ${escapeHtml(t('gachaPickFav'))}</button>
+          </div>
+        </div>
+      </div>` : '';
+  }
+  function bindGachaPickCardButtons(overlay) {
+    const openBtn = document.getElementById('gachaPickOpenBtn');
+    if(openBtn) openBtn.onclick = () => {
+      overlay.style.display = 'none';
+      if(!_gachaLastPick) return;
+      if(_gachaLastPick.kitsuId) navAnime(String(_gachaLastPick.kitsuId));
+      else nav('anime', _gachaLastPick.id);
+    };
+    const favBtn = document.getElementById('gachaPickFavBtn');
+    if(favBtn) favBtn.onclick = async () => {
+      if(!_currentUser || !_gachaLastPick) return;
+      favBtn.disabled = true;
+      favBtn.textContent = '★ ' + t('gachaPickFavDone');
+      await db.favorites.add(_currentUser.id, _gachaLastPick.id).catch(()=>{});
+    };
+  }
+
   async function showGachaResult(pick, item, isDup) {
     const overlay = document.getElementById('gachaResultOverlay');
     const pickEl = document.getElementById('gachaResultPick');
@@ -13499,21 +13554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if(titleEl) titleEl.textContent = t(item ? 'gachaResultTitle2' : 'gachaResultTitle1');
 
-    if(pickEl) {
-      pickEl.innerHTML = pick ? `
-        <div class="gacha-pick">
-          ${pick.image ? `<img class="gacha-pick-thumb" src="${escapeHtml(pick.image)}" alt="">` : '<span class="gacha-pick-thumb"></span>'}
-          <div class="gacha-pick-body">
-            <span class="gacha-pick-badge">${escapeHtml(t('gachaFixedBadge2'))}</span>
-            <p class="gacha-pick-name">${escapeHtml(getTitle(pick) || pick.title || '')}</p>
-            <p class="gacha-pick-meta">${escapeHtml(t('gachaPickMeta'))}</p>
-            <div class="gacha-pick-actions">
-              <button type="button" class="gacha-pick-btn" id="gachaPickOpenBtn">${escapeHtml(t('gachaPickOpen'))}</button>
-              <button type="button" class="gacha-pick-btn is-ghost" id="gachaPickFavBtn">☆ ${escapeHtml(t('gachaPickFav'))}</button>
-            </div>
-          </div>
-        </div>` : '';
-    }
+    if(pickEl) pickEl.innerHTML = gachaPickCardHtml(pick);
 
     // 景品1件ぶんの見た目（アイコン＝画像、カスタム＝カテゴリ名のプレースホルダー）
     function gachaItemArtHtml(it, m) {
@@ -13559,20 +13600,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
 
-    const openBtn = document.getElementById('gachaPickOpenBtn');
-    if(openBtn) openBtn.onclick = () => {
-      overlay.style.display = 'none';
-      if(!_gachaLastPick) return;
-      if(_gachaLastPick.kitsuId) navAnime(String(_gachaLastPick.kitsuId));
-      else nav('anime', _gachaLastPick.id);
-    };
-    const favBtn = document.getElementById('gachaPickFavBtn');
-    if(favBtn) favBtn.onclick = async () => {
-      if(!_currentUser || !_gachaLastPick) return;
-      favBtn.disabled = true;
-      favBtn.textContent = '★ ' + t('gachaPickFavDone');
-      await db.favorites.add(_currentUser.id, _gachaLastPick.id).catch(()=>{});
-    };
+    bindGachaPickCardButtons(overlay);
 
     overlay.style.display = 'flex';
   }
@@ -13701,11 +13729,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // 10個目のカプセル(cm9)が69.44%≒6.25秒で着地し、91.11%≒8.2秒まで10個とも静止表示される。
   // ループ用フェードアウトは98.33%≒8.85秒から始まるため、その手前(7.8秒)で結果ポップへ引き継ぐ
   const GACHA_REVEAL_ANIM_MS_BATCH10 = 7800;
+  // [2026-09-25追加] UR以上が1つでも出た回は、赤い筐体の代わりに金色筐体(is-golden)を使う。
+  // 「ソシャゲでよくある5★確定演出」と似た見た目にはなるが、別枠の当選抽選を新たに作った
+  // わけではない。あくまで既存のGACHA_RARITY_WEIGHT通りに抽選した結果、たまたまUR以上が
+  // 出た回だけ演出の色を変えているだけで、抽選確率自体は一切変更していない。表示中の
+  // 確率(確率と景品一覧)ともズレないため、景品表示法上の懸念は生じない
+  function gachaResultsHaveGuaranteedTier(results) {
+    return results.some(r => r.item && (r.item.tier === 'UR' || r.item.tier === 'LR'));
+  }
   function playGachaRevealAnimation(results) {
     return new Promise(resolve => {
       const overlay = document.getElementById('gachaRevealAnimOverlay');
       if(!overlay) { resolve(); return; }
       const isBatch = results.length > 1;
+      const isGolden = gachaResultsHaveGuaranteedTier(results);
       if(isBatch) {
         // 10連：飛び出す10個のカプセルは、それぞれの回で実際に出たレア度のものにする
         results.slice(0, 10).forEach((r, i) => {
@@ -13720,14 +13757,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const mount = document.getElementById('gachaCapsuleMount');
         if(mount) mount.innerHTML = GACHA_CAPSULE_DEFS + (GACHA_CAPSULE_BODY[item && item.tier] || GACHA_CAPSULE_BODY.N);
       }
-      overlay.classList.remove('is-playing', 'is-batch10');
+      overlay.classList.remove('is-playing', 'is-batch10', 'is-golden');
       void overlay.offsetWidth; // アニメーションを最初から再生させるための強制リフロー
       overlay.style.display = 'flex';
       overlay.classList.toggle('is-batch10', isBatch);
+      overlay.classList.toggle('is-golden', isGolden);
       overlay.classList.add('is-playing');
       setTimeout(() => {
         overlay.style.display = 'none';
-        overlay.classList.remove('is-playing', 'is-batch10');
+        overlay.classList.remove('is-playing', 'is-batch10', 'is-golden');
         resolve();
       }, isBatch ? GACHA_REVEAL_ANIM_MS_BATCH10 : GACHA_REVEAL_ANIM_MS);
     });
@@ -13805,7 +13843,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!overlay) return;
     _gachaLastPick = results[0]?.pick || null;
     if(titleEl) titleEl.textContent = t('gachaResultTitleBatch').replace('{n}', results.length);
-    if(pickEl) pickEl.innerHTML = '';
+    if(pickEl) pickEl.innerHTML = gachaPickCardHtml(_gachaLastPick);
     if(bonusEl) {
       bonusEl.innerHTML = `<div class="gacha-batch-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
         ${results.map(r => {
@@ -13824,6 +13862,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <button type="button" class="gacha-pick-btn" style="margin-top:10px;width:100%;" onclick="nav('my-icons')">${escapeHtml(t('gachaBonusUse'))}</button>`;
     }
     if(againBtn) againBtn.style.display = 'none';
+    bindGachaPickCardButtons(overlay);
     overlay.style.display = 'flex';
   }
 
