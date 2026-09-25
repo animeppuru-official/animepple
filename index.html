@@ -144,6 +144,14 @@
       color:var(--muted); background:none; border:none; cursor:pointer; position:relative;
     }
     .bnav-carousel-item.active { color:var(--brand); }
+    /* [2026-09-25修正] 以前はこのルールが@media(min-width:768px)の中(PC版サイドナビ.bnav用)
+       にしか定義されておらず、768px未満(スマホ)ではこのクラスに一切スタイルが当たらず、
+       装備しているバッジ配色(var(--badge-color))も反映されない無地のspanになっていた
+       (ユーザー報告「スマホサイズに通知アイコンのカスタムが適用されてない独自のバッジに
+       なってる」)。#bnavNotifBadge(PC版.bnav内)と#bnavcNotifBadge(スマホ版.bnav-carousel内)
+       は同じ.bnav-badgeクラスを共有しており、renderNotifBadges()も両方を同じロジックで
+       更新しているため、CSSを両方の親ナビで効くようメディアクエリの外に出した */
+    .bnav-badge { min-width:18px; height:18px; padding:0 5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#07160d; background:var(--badge-color,#e5595d); border-radius:9px; flex-shrink:0; }
     .bnav-carousel-dots { display:flex; justify-content:center; gap:6px; margin-top:.3rem; }
     .bnav-carousel-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.2); transition:background .2s; }
     .bnav-carousel-dot.active { background:var(--brand); }
@@ -1919,7 +1927,7 @@
     .bnav-customize-cell.is-onbar .bnav-cz-num { background:#5cc98e; color:#07200f; }
     .bnav-cz-badge {
       position:absolute; top:5px; right:6px; min-width:16px; height:16px; padding:0 4px;
-      border-radius:8px; background:#e5484d; color:#fff;
+      border-radius:8px; background:var(--badge-color,#e5484d); color:#fff;
       font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;
     }
     /* ドラッグが苦手な人向けの2タップ入れ替え：1つ目を選ぶと実線の緑枠になる */
@@ -3027,7 +3035,7 @@
     #mypageGuest .mypage-hero { margin-top:28px; }
     .mypage-avatar {
       width:144px; height:144px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-      flex-shrink:0; box-shadow:0 12px 28px -12px rgba(0,0,0,.8); overflow:hidden;
+      flex-shrink:0; overflow:hidden;
     }
     /* スマホは標準サイズ(48px)の2倍=96pxに縮小（PCは3倍=144pxのまま） */
     @media(max-width:767px){
@@ -3037,7 +3045,14 @@
     .guest-avatar { background:linear-gradient(150deg,#2c4436,#1d3225); border:3px solid #0e2015; }
     .user-avatar { background:linear-gradient(150deg,#2c4436,#1d3225); border:3px solid #0e2015; color:#9be3bd; font-size:1.5rem; font-weight:800; overflow:hidden; }
     .user-avatar img { width:100%; height:100%; min-width:0; min-height:0; object-fit:cover; display:block; border-radius:50%; }
-    .mypage-avatar-wrap { position:relative; flex-shrink:0; }
+    /* [2026-09-25修正] 以前は.mypage-avatar自身にbox-shadowで影を付けていたが、装備フレーム
+       (.avatar-frame-*、skins.cssでbox-shadowの多重リングとして実装)も同じ要素・同じ
+       box-shadowプロパティを使っており、詳細度が同じ(単一クラスセレクタ同士)場合は
+       後から読み込まれる側が丸ごと勝ってしまうため、フレームの見た目が完全に消えていた
+       (ユーザー報告「マイページの大きいアイコンにスキンのフレームが適用されてない」)。
+       影をbox-shadowではなくfilter:drop-shadowとして、フレームの付かない外側のラッパー
+       (.mypage-avatar-wrap)側に移すことで、プロパティの奪い合いを避けた */
+    .mypage-avatar-wrap { position:relative; flex-shrink:0; filter:drop-shadow(0 12px 20px rgba(0,0,0,.6)); }
     .mypage-avatar-edit-btn {
       position:absolute; bottom:-4px; right:-4px; width:26px; height:26px; border-radius:50%;
       background:var(--card); border:2px solid #0e2015; font-size:.75rem; cursor:pointer;
@@ -3376,7 +3391,8 @@
       .bnav-tip-title { margin:0 0 4px; font-size:12.5px; font-weight:700; color:#f0e6cf; }
       .bnav-tip-sub { margin:0; font-size:11.5px; line-height:1.6; color:#82968a; }
       .bnav-divider { height:1px; background:rgba(255,255,255,.07); margin:8px 6px; }
-      .bnav-badge { min-width:18px; height:18px; padding:0 5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#07160d; background:var(--badge-color,#e5595d); border-radius:9px; flex-shrink:0; }
+      /* .bnav-badgeは元々ここ(PC専用メディアクエリ内)だけにあったが、スマホの.bnav-carousel側
+         (#bnavcNotifBadge)にも同じスタイルが必要なため、メディアクエリの外(line ~154)へ移設した */
       /* サイドナビのロゴ */
       .bnav::before {
         content:'アニメップル'; display:block;
@@ -13648,47 +13664,62 @@ document.addEventListener('DOMContentLoaded', () => {
     // 起こりえて表示と実態が食い違っていた。10連の場合、事前に10枠分の抽選結果を
     // 確定させ、SR以上(GACHA_RARITY_ORDER上でSRのindex=2以上)が1枚も無ければ
     // 最後の1枠をSR以上限定で引き直して保証する(実際の保証処理はapplyGachaTenPullGuarantee参照)
-    const picks = [];
-    for(let i = 0; i < pullCount; i++) picks.push({ pick: await pickGachaAnime(), item: drawGachaItem() });
+    // [2026-09-25修正・要デプロイ] 以前はpickGachaAnime()(ネットワーク往復あり)をforループ内で
+    // 1件ずつawaitしており、10連だと10回分の通信が直列に発生していた(ユーザー報告
+    // 「アニメーション移行がラグい感じする」の原因。「引く」タップ後、実際に確定処理
+    // (commitGachaDraw)が終わってポップが自動表示されるまでの間、画面上は何も変化せず
+    // 待たされていた)。各回の抽選は互いに依存しないため、Promise.allで並列化した
+    const picks = await Promise.all(
+      Array.from({ length: pullCount }, async () => ({ pick: await pickGachaAnime(), item: drawGachaItem() }))
+    );
     applyGachaTenPullGuarantee(picks);
-    const results = [];
-    for(let i = 0; i < pullCount; i++) {
-      const { pick, item } = picks[i];
+
+    // [2026-09-25修正・要デプロイ] 付与・ログ記録(customization.grant/icons.listObtained+obtain/
+    // gacha.logPull)も同様に、以前は1件ごとにforループ内で直列awaitしており、10連だと
+    // 最大30回近い通信が直列に発生する最大のラグ要因だった。
+    // 「持っているかどうか」(isDup)の判定は、以前は1件処理するたびにlistObtained()を
+    // 取り直していた(＝直前の1件の書き込みが終わっているおかげで、同じ10連内で同じ
+    // アイコンが2回出た場合も2回目を正しくdup判定できていた)。ここでは、既存の所持一覧を
+    // 最初に1回だけ取得し、以降はpicks配列の順番通りに同期的な集合(obtainedKeys)へ
+    // 追加しながら判定することで、通信は減らしつつ同じ挙動(同一10連内の重複も2回目から
+    // dup扱い)を保っている。実際の書き込み(grant/obtain/logPull)はisDup確定後にまとめて
+    // Promise.allで並列に投げる(書き込み同士に依存関係が無いため安全)
+    const obtained = sb ? await db.icons.listObtained(_currentUser.id) : [];
+    const obtainedKeys = new Set(obtained.map(o => o.icon_id));
+    const results = picks.map(({ pick, item }) => {
       let isDup = false;
-      if(item && sb) {
-        try {
-          if(item.kind === 'custom') {
-            await db.customization.grant(_currentUser.id, item.category, item.skinId).catch(()=>{});
-          } else {
-            // TODO: 現状は item.key(文字列)をそのまま icon_id として保存している。
-            // シリーズのアイコンに実際の絵とICON_CATALOG上の数値idを割り当てたら、
-            // そのidをここで使うように差し替えること。
-            const obtained = await db.icons.listObtained(_currentUser.id);
-            isDup = obtained.some(o => o.icon_id === item.key);
-            await db.icons.obtain(_currentUser.id, item.key).catch(()=>{});
-          }
-        } catch(e) {}
+      if(item && sb && item.kind !== 'custom') {
+        // TODO: 現状は item.key(文字列)をそのまま icon_id として保存している。
+        // シリーズのアイコンに実際の絵とICON_CATALOG上の数値idを割り当てたら、
+        // そのidをここで使うように差し替えること。
+        isDup = obtainedKeys.has(item.key);
+        obtainedKeys.add(item.key);
       }
-      // [2026-09-21修正] 以前はこのログ記録が`if(item && sb)`の中にあり、おまけ枠(item)が
-      // 万一空だった回は確定枠のアニメ(pick、必ず1本出る)まで記録が丸ごと欠落するバグが
-      // あった。確定枠は必ず記録されるべきなので、item(おまけ枠)の有無に関わらずsbさえ
-      // あれば毎回記録するように分離した。あわせて、以前はawaitせずに直後の
-      // renderGachaAnimeHistory()を呼んでいたため、このINSERTが完了する前に履歴を読みに
-      // 行ってしまい「今引いたばかりの1件」が表示に反映されない競合状態もあったため、
-      // 必ずawaitしてから次に進むようにした
-      if(sb) {
+      return { pick, item, isDup };
+    });
+
+    if(sb) {
+      await Promise.all(results.map(({ pick, item }) => {
+        const tasks = [];
+        if(item) {
+          tasks.push(item.kind === 'custom'
+            ? db.customization.grant(_currentUser.id, item.category, item.skinId).catch(()=>{})
+            : db.icons.obtain(_currentUser.id, item.key).catch(()=>{}));
+        }
         const label = item
           ? (item.kind === 'custom'
               ? ((GACHA_CUSTOM_META[item.category]||{}).labelKey ? t(GACHA_CUSTOM_META[item.category].labelKey) : item.category)
               : `${t('gachaLabelIcon')} ★${item.starRarity||''}`)
           : '';
-        await db.gacha.logPull(_currentUser.id, {
+        // [2026-09-21修正] このログ記録は、おまけ枠(item)の有無に関わらず必ず行う。
+        // 確定枠のアニメ(pick)は毎回必ず1本出るため、item側が空でも記録は欠落させない
+        tasks.push(db.gacha.logPull(_currentUser.id, {
           seriesId: getCurrentGachaSeries()?.id, tier: item ? item.tier : 'none', kind: item ? item.kind : 'none', label,
           animeId: pick ? (pick.kitsuId ? 'kitsu-' + pick.kitsuId : pick.id) : null,
           animeTitle: pick ? (getTitle(pick) || pick.title || '') : null,
-        });
-      }
-      results.push({ pick, item, isDup });
+        }));
+        return Promise.all(tasks);
+      }));
     }
     // 付与・ログ記録は既に完了しているので、コレクション・履歴・コイン内訳はこの時点で更新する
     renderGachaCollection();
