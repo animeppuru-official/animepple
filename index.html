@@ -2876,6 +2876,18 @@
     .rl-filter-option { display:block; width:100%; text-align:left; padding:10px 12px; border-radius:9px; border:none; background:transparent; color:#dfeae3; font-size:13.5px; font-weight:600; cursor:pointer; }
     .rl-filter-option:hover { background:rgba(255,255,255,.06); }
     .rl-filter-option.active { background:rgba(92,201,142,.16); color:#9be3bd; font-weight:700; }
+    /* [2026-09-25追加] スマホ版「絞り込み」モーダルは、以前は無関係な別機能(優先軸ポップオーバー)用の
+       .priority-popover-boxを使い回していた。そのクラスには`.priority-popover-box button { ...;
+       background:rgba(217,164,65,.18); color:#e8c463; }`という、そちらの金色ボタン用の広いbutton
+       セレクタが定義されており、このモーダルに移動してくる期間・国ボタン(#rlPeriodBtn/#rlCountryBtn、
+       どちらも<button>要素)の見た目を意図せず金色に上書きしていた。一方、実績フィルターは<select>
+       要素のため対象外で緑のままになり、同じモーダル内で「期間・国だけ金色、実績だけ緑」という
+       ちぐはぐな見た目になっていた(ユーザー報告「絞り込み機能がごちゃごちゃになってる」)。
+       専用クラスに分離し、フィルター機能の基調色である緑(.rl-filter-panelと同じ配色)に統一した */
+    .rl-filter-modal-box {
+      max-width:340px; width:100%; background:#2a4c38; border:1px solid rgba(255,255,255,.13);
+      border-radius:16px; box-shadow:0 30px 70px -20px rgba(0,0,0,.8); padding:22px 20px 18px;
+    }
 
     /* ══ ADMIN PAGE ══ */
     .admin-kpi { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:1rem; text-align:center; }
@@ -4540,7 +4552,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   <!-- スマホ版：「絞り込み」ボタンから開くモーダル（期間/国/実績を中に格納する。実体はJSで移動） -->
   <div class="priority-popover-overlay" id="rlFilterModalOverlay" style="display:none;">
-    <div class="priority-popover-box" style="max-width:360px;text-align:left;">
+    <div class="rl-filter-modal-box" style="max-width:360px;text-align:left;">
       <p style="margin:0 0 14px;font-size:.9rem;font-weight:700;color:#dfeae3;" data-i18n="filterToggleLabel">絞り込み</p>
       <div id="rlFilterModalBody" style="display:flex;flex-direction:column;gap:14px;"></div>
       <button type="button" id="rlFilterModalCloseBtn" data-i18n="gachaCloseBtn" style="width:100%;margin-top:18px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#dfeae3;font-weight:700;font-size:13px;cursor:pointer;">閉じる</button>
@@ -12931,6 +12943,11 @@ document.addEventListener('DOMContentLoaded', () => {
     { id:30, rarity:5, image:null },
   ];
 
+  // [2026-09-25追加] レビュー一覧(review-card)の枠色は、以前は投稿者の実績ランク色
+  // (RANK_TIERS[n].color)で塗り分けていたが、ユーザー指示により固定の緑に戻した。
+  // 「このレビューが上質か」は枠の色ではなく、実績バッジの隣のタグ(quality-thumb-badge)で示す
+  const REVIEW_CARD_BORDER_COLOR = '#5ec97a';
+  const REVIEW_CARD_BORDER_COLOR_SOFT = 'rgba(94,201,122,.16)';
   const RANK_TIERS = [
     { name:'新人', nameKey:'rankTier0',           min:0,  max:2,        weight:1.0,  tier:'green',    color:'#5ec97a', colorSoft:'rgba(94,201,122,.16)',
       badgeIcon:'circle', badgeIconColor:'#8fe0a8', badgeTextColor:'#eafdf1', badgeBg:'rgba(94,201,122,.30)', badgeBorder:'rgba(139,224,168,.5)', badgeSparkle:false },
@@ -25317,7 +25334,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // renderReviewListをフィルター対応版で上書き的に呼び出す
     const el = document.getElementById('reviewList');
     if(!el) return;
-    if(!filtered.length) { el.innerHTML=`<p class="empty-msg">${t('noReviewFilter')}</p>`; return; }
+    if(!filtered.length) {
+      el.innerHTML=`<p class="empty-msg">${t('noReviewFilter')}</p>`;
+      // [2026-09-25修正] 該当レビューが0件の時、コメント一括表示ボタン(#rlBulkViewToggleBtn)は
+      // ラベルを設定する処理(このあと)まで到達せず、静的HTML通りの空文字のまま表示され、
+      // 中身の無い四角いボタンが残っていた(ユーザー報告「絞り込み機能がごちゃごちゃになってる」の
+      // 原因の一つ)。切り替える対象のカードが無い時はボタン自体を隠す
+      const bulkBtn = document.getElementById('rlBulkViewToggleBtn');
+      if(bulkBtn) bulkBtn.style.display = 'none';
+      return;
+    }
     const sortSel = document.getElementById('reviewSortSelect');
     const sortVal = sortSel ? sortSel.value : 'newest';
     let sortedAll = [...filtered].sort((a,b)=>{
@@ -25405,14 +25431,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const backHtml = rev.isAiGenerated
         ? `<p class="review-card-back-text" style="color:var(--muted);">${t('aiGeneratedDisclaimer')}</p>`
         : `<p class="review-card-back-text">${commentTextEscaped || `<span style="color:var(--muted);">${escapeHtml(t('reviewCommentEmpty'))}</span>`}</p>`;
+      // [2026-09-25変更] 以前はカード枠の色を投稿者の実績ランク(cardRank.color、新人=緑〜
+      // 殿堂入り=金等)で塗り分けていたが、ユーザー指示「色は緑に戻していいよ、その代わり
+      // 上質なレビューは上質なレビュータグを実績の隣に書いて」により、枠の色は常に固定の緑に戻し、
+      // 「このレビュー自体が上質か(rev.quality)」は実績バッジの隣に専用タグ(quality-thumb-badge、
+      // renderAnimeCardのサムネイルバッジと同じ意匠を流用)で示す方式に変更した
+      const qualityTagHtml = rev.quality ? `<span class="quality-thumb-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="#2a2006"><path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>${escapeHtml(t('qualityReviewBadge'))}</span>` : '';
       return `<div class="review-card-flip-wrap">
       <div class="review-card-flip-inner" id="rc-flip-${i}">
-        <article class="review-card review-card-face review-card-front card-skin-default${rev.quality?' is-quality':''}" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
+        <article class="review-card review-card-face review-card-front card-skin-default${rev.quality?' is-quality':''}" style="border-color:${REVIEW_CARD_BORDER_COLOR};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${REVIEW_CARD_BORDER_COLOR_SOFT};">
         <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="コメントを見る" data-i18n-aria="ariaViewComment">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
         </button>
         <span class="rc-comment-label${hasComment?' has-comment':''}">${hasComment?escapeHtml(t('hasCommentLabel')):escapeHtml(t('noCommentLabel'))}</span>
-        <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank, cardBadgeSkinId)}</div>
+        <div style="position:absolute;top:10px;left:10px;z-index:5;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rankTagHtml(cardRank, cardBadgeSkinId)}${qualityTagHtml}</div>
         <div class="rc-head" style="padding-top:50px;">
           <div style="display:flex;align-items:flex-start;gap:.6rem;flex:1;min-width:0;">
             <div${userOnclick} class="user-avatar-circle avatar-frame-${cardFrameId}" style="border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
@@ -25429,11 +25461,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-fbi="${i}" width="280" height="200"></canvas></div>
         </div>
         </article>
-        <article class="review-card review-card-face review-card-back card-skin-default${rev.quality?' is-quality':''}" style="border-color:${cardRank.color};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${cardRank.colorSoft};">
+        <article class="review-card review-card-face review-card-back card-skin-default${rev.quality?' is-quality':''}" style="border-color:${REVIEW_CARD_BORDER_COLOR};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${REVIEW_CARD_BORDER_COLOR_SOFT};">
           <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="戻る" data-i18n-aria="ariaBack">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
           </button>
-          <div style="position:absolute;top:10px;left:10px;z-index:5;">${rankTagHtml(cardRank, cardBadgeSkinId)}</div>
+          <div style="position:absolute;top:10px;left:10px;z-index:5;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rankTagHtml(cardRank, cardBadgeSkinId)}${qualityTagHtml}</div>
           <div class="rc-head" style="padding-top:50px;">
             <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;">
               <div${userOnclick} class="user-avatar-circle avatar-frame-${cardFrameId}" style="border-radius:50%;overflow:hidden;background:${iconBg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#0c2015;flex-shrink:0;">${iconContent}</div>
@@ -25547,6 +25579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 現在どちらの面が見えているかに関わらず「押すと切り替わる先」のラベルを常に表示する（表裏一体）
     const bulkToggleBtn = document.getElementById('rlBulkViewToggleBtn');
     if(bulkToggleBtn) {
+      bulkToggleBtn.style.display = ''; // 0件時に隠した状態が残らないよう、カードがある時は必ず戻す
       // 初期状態は設定「レビュー一覧の初期表示」に連動（未設定は必ずグラフ）
       let _bulkCurrentView = getReviewInitialView(); // 'graph' | 'comment'
       const updateBulkToggleLabel = () => {
