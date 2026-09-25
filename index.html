@@ -662,17 +662,10 @@
       padding:4px 9px; border-radius:999px; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.12); }
     .gacha-stage-led i { width:6px; height:6px; border-radius:50%; background:#5cc98e; box-shadow:0 0 7px #5cc98e; }
     .gacha-stage-led b { font-size:8.5px; font-weight:900; letter-spacing:.12em; color:#a9bcb0; }
-    .gacha-stage.is-filling .gacha-stage-led i { background:#f0c94a; box-shadow:0 0 7px #f0c94a; animation:gachaLed .5s ease-in-out infinite; }
-    @keyframes gachaLed { 0%,100% { opacity:.35 } 50% { opacity:1 } }
     .gacha-stage-gauge { position:absolute; left:14px; top:32%; bottom:22%; z-index:5; width:12px; border-radius:7px;
       background:rgba(0,0,0,.42); border:1px solid rgba(255,255,255,.1); display:flex; flex-direction:column-reverse;
       gap:3px; padding:4px 2.5px; pointer-events:none; }
     .gacha-stage-gauge i { flex:1 1 0; min-height:0; border-radius:3px; background:rgba(255,255,255,.09); }
-    .gacha-stage.is-filling .gacha-stage-gauge i:nth-child(1) { background:#d97510; }
-    .gacha-stage.is-filling .gacha-stage-gauge i:nth-child(2) { background:#e08417; }
-    .gacha-stage.is-filling .gacha-stage-gauge i:nth-child(3) { background:#eb9420; }
-    .gacha-stage.is-filling .gacha-stage-gauge i:nth-child(4) { background:#f2a52c; }
-    .gacha-stage.is-filling .gacha-stage-gauge i:nth-child(5) { background:#f6b93b; }
 
     /* 長押しボタン：押している間、ボタン自身が左から満ちる */
     .gacha-actions { display:flex; flex-direction:column; gap:9px; }
@@ -684,10 +677,6 @@
     .gacha-hold-btn .gacha-hold-body { position:relative; display:flex; align-items:center; justify-content:center; gap:9px; }
     .gacha-hold-btn-free { height:56px; background:linear-gradient(135deg,#6fd48f,#3fa96f); color:#07200f;
       font-size:15px; font-weight:900; box-shadow:0 14px 30px -16px rgba(92,201,142,.7); }
-    /* [追加] 専用の抽選画面(gacha-draw-mode)だけで使う長押しボタン。ガチャを引くボタンとは
-       見た目も分け、「結果を確認する」ための操作であることが一目で分かるようにする */
-    .gacha-reveal-btn { width:100%; height:60px; background:linear-gradient(135deg,#f3d786,#d9a441); color:#2a2006;
-      font-size:15px; font-weight:900; box-shadow:0 14px 30px -16px rgba(217,164,65,.7); }
     .gacha-coin-row { display:flex; gap:9px; margin-top:5px; }
     .gacha-hold-btn-coin, .gacha-hold-btn-coin10 { height:62px; border-radius:13px; width:100%; }
     .gacha-hold-btn-coin { flex:1 1 0; min-width:0; border:1px solid rgba(240,201,74,.35); background:rgba(240,201,74,.08); color:#f0c94a;
@@ -1016,26 +1005,6 @@
     .gacha-stage-zoom { position:absolute; inset:0; z-index:4; display:flex; align-items:center; justify-content:center;
       transform-origin:50% 50%; }
 
-    /* 長押し中だけ動かす */
-    .gacha-stage.is-filling .gacha-juice { animation:gachaJuiceFill var(--gacha-hold,3000ms) linear forwards; }
-    .gacha-stage.is-filling .gacha-juice-surface { opacity:1; animation:gachaSurface 1.15s ease-in-out infinite; }
-    .gacha-stage.is-filling .gacha-juice-bubbles { opacity:1; }
-    .gacha-stage.is-filling .gacha-juice-bubbles i { animation:gachaBubble 2.4s linear infinite; }
-    .gacha-stage.is-filling .gacha-juice-bubbles i:nth-child(2) { animation-duration:2.9s; animation-delay:.5s; }
-    .gacha-stage.is-filling .gacha-juice-bubbles i:nth-child(3) { animation-duration:2.6s; animation-delay:1s; }
-    .gacha-stage.is-filling .gacha-juice-bubbles i:nth-child(4) { animation-duration:3.1s; animation-delay:1.5s; }
-    .gacha-stage.is-filling .gacha-stage-vignette { animation:gachaVignette var(--gacha-hold,3000ms) ease-in forwards; }
-    .gacha-stage.is-filling .gacha-stage-zoom { animation:gachaZoom var(--gacha-hold,3000ms) cubic-bezier(.4,0,.5,1) forwards; }
-    /* 離した時は素早く戻す */
-    .gacha-juice, .gacha-stage-vignette, .gacha-stage-zoom { transition:height .4s ease-out, opacity .4s ease-out, transform .4s ease-out; }
-    @keyframes gachaJuiceFill { from { height:0% } to { height:100% } }
-    @keyframes gachaSurface { 0%,100% { transform:translateX(-7px) scaleY(1) } 50% { transform:translateX(7px) scaleY(1.7) } }
-    @keyframes gachaBubble { 0% { transform:translateY(0) scale(.5); opacity:0 } 18% { opacity:.85 } 100% { transform:translateY(-190px) scale(1.2); opacity:0 } }
-    @keyframes gachaVignette { from { opacity:0 } to { opacity:.5 } }
-    @keyframes gachaZoom { 0% { transform:scale(1) } 70% { transform:scale(1.14) } 100% { transform:scale(1.26) } }
-    @media (prefers-reduced-motion: reduce) {
-      .gacha-stage.is-filling .gacha-stage-zoom, .gacha-stage.is-filling .gacha-stage-vignette { animation:none; }
-    }
     .gacha-stage-text { font-size:12.5px; line-height:1.7; color:#cfe0d5; text-shadow:0 1px 6px rgba(0,0,0,.85); }
     @keyframes gachaPop { 0% { transform:scale(.7); opacity:0; } 60% { transform:scale(1.06); opacity:1; } 100% { transform:scale(1); } }
     .gacha-actions { width:100%; max-width:420px; display:flex; flex-direction:column; gap:9px; }
@@ -1063,44 +1032,6 @@
     .gacha-soldout-sub b { color:#dfeae3; }
     .gacha-soldout-plus { width:100%; height:40px; border-radius:10px; border:1px solid rgba(92,201,142,.35); background:rgba(92,201,142,.1); color:#a7ecc4; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
     .gacha-col-side { display:flex; flex-direction:column; gap:14px; }
-    /* [追加] 「ガチャ引かせるページ」：確定後、報酬確認が終わるまで筐体と長押しボタンだけに絞る。
-       通常の引くボタン(.gacha-actions、無料/広告/コイン)も隠し、#gachaRevealBtn(専用の
-       長押しボタン)だけを見せることで、抽選中の画面で別の抽選を誤って始められないようにする */
-    #page-gacha.gacha-draw-mode .gacha-series-block,
-    #page-gacha.gacha-draw-mode .gacha-head,
-    #page-gacha.gacha-draw-mode .gacha-quest-shop-row,
-    #page-gacha.gacha-draw-mode .gacha-col-side,
-    #page-gacha.gacha-draw-mode .gacha-actions,
-    #page-gacha.gacha-draw-mode #gachaSoldOut { display:none !important; }
-    #page-gacha.gacha-draw-mode .gacha-layout { justify-content:center; }
-    #page-gacha.gacha-draw-mode .gacha-col-main { margin:0 auto; }
-    /* [追加] 抽選中(gacha-draw-lock)は、ヘッダー全体(戻る・ロゴ)と全体ナビ(サイドバー/
-       ボトムナビ)を消し、結果確認を終えるまで他のページへ離脱できないようにする(ユーザー指示：
-       「引かせるの優先」「ガチャ画面の時はヘッダーのアイコンも消して」)。
-       掲示板チャット全画面モード(board-chat-mobile)と同じ仕組みを流用 */
-    body.gacha-draw-lock .bnav,
-    body.gacha-draw-lock .bnav-carousel { display:none !important; }
-    body.gacha-draw-lock #page-gacha > .hdr { display:none !important; }
-    /* [追加] 「質素すぎる」との指摘を受け、専用の抽選画面に雰囲気を足す。
-       上部にタイトル、背景にほのかな金色の光暈(こううん)を2つ、ゆっくり浮遊させる */
-    .gacha-draw-title { display:none; align-items:center; justify-content:center; gap:8px;
-      margin:26px 0 2px; font-size:16px; font-weight:900; color:#f0e4c8; letter-spacing:.04em;
-      text-shadow:0 2px 14px rgba(240,201,74,.5); }
-    .gacha-draw-title-icon { font-size:21px; filter:drop-shadow(0 0 6px rgba(240,201,74,.65)); }
-    #page-gacha.gacha-draw-mode { position:relative; min-height:100dvh; overflow:hidden;
-      background:radial-gradient(70% 55% at 50% 14%, rgba(240,201,74,.14) 0%, rgba(240,201,74,0) 72%); }
-    #page-gacha.gacha-draw-mode #gachaDrawTitle { display:flex; }
-    #page-gacha.gacha-draw-mode::before,
-    #page-gacha.gacha-draw-mode::after { content:''; position:absolute; width:300px; height:300px;
-      border-radius:50%; background:radial-gradient(circle, rgba(240,201,74,.12), transparent 70%);
-      pointer-events:none; z-index:0; animation:gachaDrawGlowFloat 7s ease-in-out infinite; }
-    #page-gacha.gacha-draw-mode::before { top:-90px; left:-90px; }
-    #page-gacha.gacha-draw-mode::after { bottom:-90px; right:-90px; animation-delay:-3.5s; }
-    #page-gacha.gacha-draw-mode .gacha-layout { position:relative; z-index:1; }
-    @keyframes gachaDrawGlowFloat { 0%,100% { transform:translateY(0) scale(1); } 50% { transform:translateY(-22px) scale(1.06); } }
-    @media (prefers-reduced-motion:reduce) {
-      #page-gacha.gacha-draw-mode::before, #page-gacha.gacha-draw-mode::after { animation:none; }
-    }
     .gacha-card { border-radius:15px; border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.02); padding:15px 16px; }
     .gacha-card-head { display:flex; align-items:center; gap:9px; margin-bottom:12px; }
     .gacha-card-title { font-size:13px; font-weight:800; color:#eaf6ee; }
@@ -1162,6 +1093,114 @@
     /* 結果 */
     .gacha-result-overlay { position:fixed; inset:0; z-index:10004; background:rgba(4,10,7,.8); display:flex; align-items:center; justify-content:center; padding:16px; animation:gachaFade .18s ease both; }
     @keyframes gachaFade { from { opacity:0; } to { opacity:1; } }
+
+    /* [2026-09-24新設・2026-09-25全面差し替え] ガチャの演出：以前は「引く」確定後に専用画面へ
+       切り替わり、ボタンを3秒間長押しすると結果が出る方式だったが、ユーザー指示に沿って
+       「引く」を押した瞬間に正方形ポップが自動表示され、自動再生のアニメーションを見せる
+       方式に作り直した。当初は自前でガチャ筐体をCSS/SVGで手描きしたが、ユーザーから提示された
+       ガチャ筐体一式(ringo_gacha_assets、赤いガチャガチャ本体・アップルの軸と葉・ジュース窓・
+       アーチ状メーター付きのつまみ・受け取り口・カプセルがレア度別に用意された、作り込まれた
+       SVG+CSSアニメーション素材)に差し替えた。元素材はループ再生のデモ(7秒周期でinfinite)
+       だったため、`.gacha-reveal-anim-overlay.is-playing`配下でのみ発火する単発再生に変換し、
+       SVGのid類は元素材のもの(box・bodyClip・floor・meter等)がページ内の他IDと衝突しないよう
+       `gm_`接頭辞を付けている。カプセル本体は`GACHA_CAPSULE_ART`(レア度別、capsules/*.svg由来)
+       を`#gachaCapsuleMount`へ実行時に差し込む方式(README記載の
+       `translate(500 796) scale(0.41) translate(-200 -200)`変換をそのまま採用)。
+       カプセル側の`.rays`(オーラの回転)は筐体側が既に`.rays`(受け取り口の光線バースト)を
+       使っておりクラス名が衝突するため、カプセル側は`.gcap-rays`に変更して衝突を回避している。 */
+    .gacha-reveal-anim-overlay { position:fixed; inset:0; z-index:10005; background:rgba(4,10,7,.82); display:flex; align-items:center; justify-content:center; padding:16px; animation:gachaFade .18s ease both; }
+    .gacha-reveal-anim-overlay .stage { max-width:420px; width:100%; margin:0 auto; }
+    .gacha-reveal-anim-overlay .stage svg { display:block; width:100%; height:auto; }
+    .gacha-reveal-anim-overlay .halo, .gacha-reveal-anim-overlay .rays, .gacha-reveal-anim-overlay .burst,
+    .gacha-reveal-anim-overlay .capMove, .gacha-reveal-anim-overlay .glowPulse { opacity:0; }
+    .gacha-reveal-anim-overlay .rise { transform:translateY(330px); }
+    .gacha-reveal-anim-overlay .fill { stroke-dasharray:157.08; stroke-dashoffset:157.08; }
+    .gacha-reveal-anim-overlay.is-playing .spin, .gacha-reveal-anim-overlay.is-playing .dot {
+      transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealKnob 7s 1;
+    }
+    @keyframes gachaRevealKnob {
+      0% { transform:rotate(0deg); animation-timing-function:cubic-bezier(.4,0,.6,1); }
+      3.57% { transform:rotate(-4deg); animation-timing-function:cubic-bezier(.7,0,.35,1); }
+      40.71% { transform:rotate(94deg); animation-timing-function:cubic-bezier(.3,0,.3,1); }
+      42.86% { transform:rotate(90deg); }
+      100% { transform:rotate(90deg); }
+    }
+    .gacha-reveal-anim-overlay.is-playing .fill { animation:gachaRevealMeter 7s 1; }
+    @keyframes gachaRevealMeter {
+      0% { stroke-dashoffset:157.08; }
+      3.57% { stroke-dashoffset:157.08; animation-timing-function:cubic-bezier(.7,0,.35,1); }
+      40.71% { stroke-dashoffset:0; }
+      100% { stroke-dashoffset:0; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .rise { animation:gachaRevealRise 7s 1; }
+    @keyframes gachaRevealRise {
+      0% { transform:translateY(330px); opacity:1; animation-timing-function:cubic-bezier(.55,0,.35,1); }
+      42.86% { transform:translateY(0); opacity:1; }
+      100% { transform:translateY(0); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .wave { animation:gachaRevealWave 1.2s linear infinite; }
+    @keyframes gachaRevealWave { from { transform:translateX(0); } to { transform:translateX(-80px); } }
+    .gacha-reveal-anim-overlay.is-playing .wave2 { animation:gachaRevealWave 1.9s linear infinite reverse; }
+    .gacha-reveal-anim-overlay.is-playing .bub { transform-box:fill-box; animation:gachaRevealBub 1.6s ease-in infinite; }
+    @keyframes gachaRevealBub { 0% { transform:translateY(0); opacity:0; } 15% { opacity:.8; } 100% { transform:translateY(-150px); opacity:0; } }
+    .gacha-reveal-anim-overlay.is-playing .thud { animation:gachaRevealThud 7s 1; }
+    @keyframes gachaRevealThud {
+      0%, 41.43% { transform:translateY(0); }
+      42.86% { transform:translateY(4px); }
+      44.29% { transform:translateY(-1px); }
+      45.71%, 56.43% { transform:translateY(0); }
+      57.57% { transform:translateY(3px); }
+      59.29%, 100% { transform:translateY(0); }
+    }
+    .gacha-reveal-anim-overlay.is-playing .glowPulse { animation:gachaRevealGp 7s 1; }
+    @keyframes gachaRevealGp { 0%, 39.29% { opacity:0; } 45.71% { opacity:1; } 100% { opacity:1; } }
+    .gacha-reveal-anim-overlay.is-playing .flap { transform-box:fill-box; transform-origin:50% 0; animation:gachaRevealFlap 7s 1; }
+    @keyframes gachaRevealFlap {
+      0%, 56.43% { transform:scaleY(1); }
+      57.86% { transform:scaleY(-0.6); }
+      62.14% { transform:scaleY(-0.6); }
+      65.71% { transform:scaleY(1.08); }
+      67.86%, 100% { transform:scaleY(1); }
+    }
+    .gacha-reveal-anim-overlay.is-playing .capMove { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCapMove 7s 1; }
+    @keyframes gachaRevealCapMove {
+      0%, 56.43% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      57.43% { transform:translate(0px,0px) scale(.55); opacity:1; animation-timing-function:cubic-bezier(.15,.8,.3,1); }
+      62.86% { transform:translate(0px,-130px) scale(3.9); animation-timing-function:cubic-bezier(.4,0,.4,1); }
+      66.00% { transform:translate(0px,-104px) scale(3.3); animation-timing-function:cubic-bezier(.4,0,.4,1); }
+      68.57% { transform:translate(0px,-112px) scale(3.45); animation-timing-function:ease-in-out; }
+      100% { transform:translate(0px,-112px) scale(3.45); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .capSpin { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCapSpin 7s 1; }
+    @keyframes gachaRevealCapSpin {
+      0%, 57.14% { transform:rotate(-30deg); }
+      62.86% { transform:rotate(345deg); animation-timing-function:cubic-bezier(.3,0,.3,1); }
+      67.14% { transform:rotate(360deg); }
+      100% { transform:rotate(360deg); }
+    }
+    .gacha-reveal-anim-overlay.is-playing .halo { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealHalo 7s 1; }
+    @keyframes gachaRevealHalo {
+      0%, 57.86% { opacity:0; transform:scale(.2); }
+      63.57% { opacity:1; transform:scale(1.1); }
+      68.57% { opacity:.85; transform:scale(1); }
+      100% { opacity:.85; transform:scale(1); }
+    }
+    .gacha-reveal-anim-overlay.is-playing .rays { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealRays 7s linear 1; }
+    @keyframes gachaRevealRays {
+      0%, 58.57% { opacity:0; transform:rotate(0deg) scale(.3); }
+      64.29% { opacity:.55; transform:rotate(20deg) scale(1); }
+      100% { opacity:.55; transform:rotate(90deg) scale(1); }
+    }
+    .gacha-reveal-anim-overlay.is-playing .burst { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealBurst 7s 1; }
+    @keyframes gachaRevealBurst {
+      0%, 56.86% { opacity:0; transform:scale(.3); }
+      58.29% { opacity:1; transform:scale(1); }
+      62.86%, 100% { opacity:0; transform:scale(1.5); }
+    }
+    .gcap-rays { transform-box:fill-box; transform-origin:50% 50%; animation:gcapRayRot 18s linear infinite; }
+    @keyframes gcapRayRot { to { transform:rotate(360deg); } }
+    .gacha-reveal-anim-overlay .tw { transform-box:fill-box; transform-origin:50% 50%; animation:gcapTwinkle 2.2s ease-in-out infinite; }
+    @keyframes gcapTwinkle { 0%, 100% { opacity:.15; transform:scale(.5); } 50% { opacity:1; transform:scale(1.1); } }
     .gacha-result-sheet {
       width:100%; max-width:540px; max-height:92vh; overflow-y:auto; box-sizing:border-box;
       border-radius:20px; border:1px solid rgba(240,201,74,.3);
@@ -1193,7 +1232,6 @@
 
     @media (min-width:1000px) {
       .gacha-layout { max-width:none; padding:22px 28px 40px; display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:18px 24px; align-items:start; }
-      #page-gacha.gacha-draw-mode .gacha-layout { grid-template-columns:1fr; max-width:520px; margin:0 auto; }
       .gacha-col-main { min-width:0; }
       /* 演出枠は広い列いっぱいだと大きすぎるので上限を設ける */
       .gacha-stage { max-width:520px; }
@@ -4494,12 +4532,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
       </div>
 
-      <!-- [追加] 専用の抽選画面(gacha-draw-mode)でだけ出す簡易タイトル。ヘッダーを丸ごと
-           消した分、最低限「今なにをしている画面か」が分かるように残す -->
-      <div class="gacha-draw-title" id="gachaDrawTitle">
-        <span class="gacha-draw-title-icon">🎰</span>
-        <span data-i18n="gachaTitle">ガチャガチャ</span>
-      </div>
 
       <!-- 演出枠：ガチャ動画／GIFの再生場所。待機＝揺れる／回転＝本編／結果＝開く -->
       <div id="gachaStage" class="gacha-stage">
@@ -4576,14 +4608,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
 
-      <!-- [追加] 専用の抽選画面(gacha-draw-mode)でだけ使う、長押しで結果を見るボタン。
-           通常のガチャを引くボタン(無料/広告/コイン)とは別物の新規ボタンにすることで、
-           抽選中の画面で誤って別の抽選を始められてしまう問題を防ぐ -->
-      <button type="button" id="gachaRevealBtn" class="gacha-hold-btn gacha-reveal-btn" style="display:none;">
-        <span class="gacha-hold-fill"></span>
-        <span class="gacha-hold-body"><span data-i18n="gachaRevealHoldLabel">長押しで結果を見る</span></span>
-      </button>
-
       <!-- 打ち止め：次に引ける時刻とアニメップル＋への導線 -->
       <div id="gachaSoldOut" class="gacha-soldout" style="display:none;">
         <p class="gacha-soldout-title" data-i18n="gachaSoldOutTitle">今日はここまで</p>
@@ -4647,6 +4671,160 @@ document.addEventListener('DOMContentLoaded', () => {
     <div id="gachaAnimeHistoryFullList" class="gacha-anime-history-list" style="max-height:none;"></div>
     <button type="button" id="gachaAnimeHistoryCloseBtn" style="width:100%;height:44px;margin-top:14px;border-radius:11px;border:none;background:#5ec97a;color:#07200f;font-weight:800;font-size:14px;cursor:pointer;" data-i18n="gachaCloseBtn">閉じる</button>
   </div>
+</div>
+
+<!-- [2026-09-24新設] ガチャ演出：確定ボタンを押した瞬間に自動再生される正方形ポップ。
+     筐体のミニチュア(カプセルの部屋にジュースが溜まる／つまみが重く回る／アーチ状メーターが
+     満ちる)を3秒間自動再生し、満タンになったらカプセルがスプラッシュして結果ポップへ引き継ぐ -->
+<div id="gachaRevealAnimOverlay" class="gacha-reveal-anim-overlay" style="display:none;">
+<div class="stage">
+<svg viewBox="0 0 1000 1000" role="img" aria-label="ガチャガチャの筐体ポップ">
+<defs>
+<clipPath id="gm_box"><rect x="322" y="184" width="356" height="318"></rect></clipPath>
+<clipPath id="gm_bodyClip"><path d="M300 520 Q300 502 318 502 L682 502 Q700 502 700 520 L700 842 Q700 868 674 868 L326 868 Q300 868 300 842 Z"></path></clipPath>
+<radialGradient id="gm_floor" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#000000" stop-opacity="0.6"></stop><stop offset="1" stop-color="#000000" stop-opacity="0"></stop></radialGradient>
+<linearGradient id="gm_meter" gradientUnits="userSpaceOnUse" x1="429" y1="0" x2="571" y2="0"><stop offset="0" stop-color="#FFF1BF"></stop><stop offset="1" stop-color="#E0A92E"></stop></linearGradient>
+<linearGradient id="gm_juice" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD36B"></stop><stop offset="0.25" stop-color="#F4AE33"></stop><stop offset="1" stop-color="#C9761A"></stop></linearGradient>
+<linearGradient id="gm_juiceSide" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"></stop><stop offset="0.3" stop-color="#FFFFFF" stop-opacity="0"></stop><stop offset="0.85" stop-color="#6B2F05" stop-opacity="0"></stop><stop offset="1" stop-color="#6B2F05" stop-opacity="0.35"></stop></linearGradient>
+<radialGradient id="gm_haloG" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFE7A3" stop-opacity="0.75"></stop><stop offset="0.5" stop-color="#F4AE33" stop-opacity="0.25"></stop><stop offset="1" stop-color="#F4AE33" stop-opacity="0"></stop></radialGradient>
+<radialGradient id="gm_rayG" gradientUnits="userSpaceOnUse" cx="500" cy="686" r="260"><stop offset="0.3" stop-color="#FFF1BF" stop-opacity="0.9"></stop><stop offset="1" stop-color="#FFF1BF" stop-opacity="0"></stop></radialGradient>
+<linearGradient id="gm_popBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14291E"></stop><stop offset="1" stop-color="#0A1611"></stop></linearGradient>
+<radialGradient id="gm_glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#3FD38A" stop-opacity="0.20"></stop><stop offset="0.6" stop-color="#3FD38A" stop-opacity="0.06"></stop><stop offset="1" stop-color="#3FD38A" stop-opacity="0"></stop></radialGradient>
+<linearGradient id="gm_stage" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1D3A2B"></stop><stop offset="1" stop-color="#0E1E16"></stop></linearGradient>
+<linearGradient id="gm_frameSheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.06"></stop><stop offset="0.4" stop-color="#FFFFFF" stop-opacity="0"></stop></linearGradient>
+<linearGradient id="gm_shadeH" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0" stop-color="#000000" stop-opacity="0.10"></stop>
+<stop offset="0.08" stop-color="#FFFFFF" stop-opacity="0.22"></stop>
+<stop offset="0.22" stop-color="#FFFFFF" stop-opacity="0.04"></stop>
+<stop offset="0.75" stop-color="#000000" stop-opacity="0.04"></stop>
+<stop offset="0.95" stop-color="#000000" stop-opacity="0.22"></stop>
+<stop offset="1" stop-color="#000000" stop-opacity="0.32"></stop>
+</linearGradient>
+<linearGradient id="gm_shadeV" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"></stop>
+<stop offset="0.15" stop-color="#FFFFFF" stop-opacity="0"></stop>
+<stop offset="0.85" stop-color="#000000" stop-opacity="0"></stop>
+<stop offset="1" stop-color="#000000" stop-opacity="0.22"></stop>
+</linearGradient>
+<linearGradient id="gm_lidV" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FFFFFF" stop-opacity="0.40"></stop>
+<stop offset="0.35" stop-color="#FFFFFF" stop-opacity="0.06"></stop>
+<stop offset="1" stop-color="#000000" stop-opacity="0.28"></stop>
+</linearGradient>
+<linearGradient id="gm_glassBack" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#1E3D30"></stop>
+<stop offset="1" stop-color="#0E2018"></stop>
+</linearGradient>
+<linearGradient id="gm_glassFront" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"></stop>
+<stop offset="0.12" stop-color="#FFFFFF" stop-opacity="0.10"></stop>
+<stop offset="0.8" stop-color="#FFFFFF" stop-opacity="0.02"></stop>
+<stop offset="1" stop-color="#8FD6B0" stop-opacity="0.22"></stop>
+</linearGradient>
+<linearGradient id="gm_sheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55"></stop><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"></stop></linearGradient>
+<radialGradient id="gm_plate" cx="0.4" cy="0.35" r="0.75"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.7" stop-color="#EDEAE5"></stop><stop offset="1" stop-color="#BDB6AD"></stop></radialGradient>
+<linearGradient id="gm_dish" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9C3BA"></stop><stop offset="1" stop-color="#F7F4EF"></stop></linearGradient>
+<linearGradient id="gm_handle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5A5A5E"></stop><stop offset="0.35" stop-color="#3A3A3E"></stop><stop offset="1" stop-color="#1E1E21"></stop></linearGradient>
+<linearGradient id="gm_slotFrame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="1" stop-color="#DCD6CE"></stop></linearGradient>
+<linearGradient id="gm_slotHole" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0E0E10"></stop><stop offset="1" stop-color="#3A3A3F"></stop></linearGradient>
+<linearGradient id="gm_flap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.38"></stop><stop offset="1" stop-color="#FFFFFF" stop-opacity="0.10"></stop></linearGradient>
+<linearGradient id="gm_stem" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8A5A36"></stop><stop offset="1" stop-color="#4E2F18"></stop></linearGradient>
+<linearGradient id="gm_leaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8CC45C"></stop><stop offset="1" stop-color="#3F7A2E"></stop></linearGradient>
+<linearGradient id="gm_foot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A4A4E"></stop><stop offset="1" stop-color="#1F1F22"></stop></linearGradient>
+</defs>
+
+<rect x="20" y="20" width="960" height="960" rx="40" fill="url(#gm_popBg)"></rect>
+<rect x="20" y="20" width="960" height="960" rx="40" fill="url(#gm_frameSheen)"></rect>
+<rect x="20" y="20" width="960" height="960" rx="40" fill="none" stroke="#C9A544" stroke-opacity="0.75" stroke-width="3"></rect>
+<rect x="36" y="36" width="928" height="928" rx="28" fill="none" stroke="#C9A544" stroke-opacity="0.18" stroke-width="1.5"></rect>
+<circle cx="500" cy="520" r="420" fill="url(#gm_glow)"></circle>
+<ellipse cx="500" cy="884" rx="330" ry="44" fill="url(#gm_stage)"></ellipse>
+<ellipse cx="500" cy="880" rx="330" ry="42" fill="none" stroke="#C9A544" stroke-opacity="0.25" stroke-width="2"></ellipse>
+
+<g class="thud">
+<ellipse cx="500" cy="884" rx="250" ry="26" fill="url(#gm_floor)"></ellipse>
+<rect x="318" y="860" width="64" height="22" rx="7" fill="url(#gm_foot)"></rect>
+<rect x="618" y="860" width="64" height="22" rx="7" fill="url(#gm_foot)"></rect>
+<g clip-path="url(#gm_bodyClip)">
+<rect x="300" y="502" width="400" height="366" fill="#C0262C"></rect>
+<rect x="300" y="502" width="400" height="366" fill="url(#gm_shadeH)"></rect>
+<rect x="300" y="502" width="400" height="366" fill="url(#gm_shadeV)"></rect>
+<rect x="300" y="502" width="400" height="22" fill="#FFFFFF" fill-opacity="0.16"></rect>
+<rect x="300" y="524" width="400" height="3" fill="#000000" fill-opacity="0.14"></rect>
+<rect x="316" y="540" width="10" height="300" rx="5" fill="#FFFFFF" fill-opacity="0.28"></rect>
+</g>
+<rect x="336" y="548" width="328" height="296" rx="16" fill="none" stroke="#000000" stroke-opacity="0.16" stroke-width="3"></rect>
+<rect x="337" y="550" width="326" height="294" rx="15" fill="none" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="2" transform="translate(0 2)"></rect>
+
+<path d="M429.3 593.3 A100 100 0 0 1 570.7 593.3" fill="none" stroke="#000000" stroke-opacity="0.35" stroke-width="16" stroke-linecap="round"></path>
+<path d="M429.3 593.3 A100 100 0 0 1 570.7 593.3" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="8" stroke-linecap="round"></path>
+<path class="fill" d="M429.3 593.3 A100 100 0 0 1 570.7 593.3" fill="none" stroke="url(#gm_meter)" stroke-width="8" stroke-linecap="round"></path>
+<circle cx="429.3" cy="593.3" r="10" fill="#FFF6D6"></circle>
+<circle cx="429.3" cy="593.3" r="10" fill="none" stroke="#000000" stroke-opacity="0.25" stroke-width="2"></circle>
+<circle cx="570.7" cy="593.3" r="7" fill="#E0B23C"></circle>
+<circle class="glowPulse" cx="570.7" cy="593.3" r="16" fill="#FFD36B" fill-opacity="0.35"></circle>
+
+<circle cx="500" cy="664" r="74" fill="#000000" fill-opacity="0.18" transform="translate(3 6)"></circle>
+<circle cx="500" cy="664" r="74" fill="url(#gm_plate)"></circle>
+<circle cx="500" cy="664" r="73" fill="none" stroke="#FFFFFF" stroke-opacity="0.8" stroke-width="2"></circle>
+<circle cx="500" cy="664" r="56" fill="url(#gm_dish)"></circle>
+<circle cx="500" cy="664" r="56" fill="none" stroke="#000000" stroke-opacity="0.12" stroke-width="2"></circle>
+<g transform="translate(4 6)"><g class="spin"><rect x="485" y="614" width="30" height="100" rx="15" fill="#000000" fill-opacity="0.22" transform="rotate(-45 500 664)"></rect></g></g>
+<g class="spin"><g transform="rotate(-45 500 664)">
+<rect x="485" y="614" width="30" height="100" rx="15" fill="url(#gm_handle)"></rect>
+<rect x="491" y="622" width="6" height="84" rx="3" fill="#FFFFFF" fill-opacity="0.22"></rect>
+<circle cx="500" cy="626" r="5" fill="#FFF6D6"></circle>
+</g></g>
+<circle cx="500" cy="664" r="10" fill="#9A958E"></circle>
+<circle cx="498" cy="662" r="4" fill="#FFFFFF" fill-opacity="0.7"></circle>
+
+<rect x="418" y="756" width="164" height="80" rx="20" fill="#000000" fill-opacity="0.14" transform="translate(2 4)"></rect>
+<rect x="418" y="756" width="164" height="80" rx="20" fill="url(#gm_slotFrame)"></rect>
+<rect x="432" y="770" width="136" height="52" rx="12" fill="url(#gm_slotHole)"></rect>
+<g class="flap"><path d="M432 782 Q432 770 444 770 L556 770 Q568 770 568 782 L568 800 Q500 808 432 800 Z" fill="url(#gm_flap)"></path>
+<path d="M440 776 L560 776" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="2" stroke-linecap="round"></path></g>
+
+<g clip-path="url(#gm_box)">
+<rect x="322" y="184" width="356" height="318" fill="url(#gm_glassBack)"></rect>
+<g class="rise">
+<g class="wave2"><path d="M160 172 q20.0 -7 40.0 0 q20.0 7 40.0 0 q20.0 -7 40.0 0 q20.0 7 40.0 0 q20.0 -7 40.0 0 q20.0 7 40.0 0 q20.0 -7 40.0 0 q20.0 7 40.0 0 q20.0 -7 40.0 0 q20.0 7 40.0 0 q20.0 -7 40.0 0 q20.0 7 40.0 0 q20.0 -7 40.0 0 q20.0 7 40.0 0 q20.0 -7 40.0 0 q20.0 7 40.0 0 q20.0 -7 40.0 0 q20.0 7 40.0 0 q20.0 -7 40.0 0 L920.0 520 L160 520 Z" fill="#E39A2A" fill-opacity="0.75"></path></g>
+<g class="wave"><path d="M160 178 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 L920.0 520 L160 520 Z" fill="url(#gm_juice)"></path>
+<path d="M160 178 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0 q20.0 6 40.0 0 q20.0 -6 40.0 0" fill="none" stroke="#FFE7A3" stroke-width="3" stroke-opacity="0.9"></path></g>
+<rect x="322" y="170" width="356" height="350" fill="url(#gm_juiceSide)"></rect>
+<circle class="bub" cx="372" cy="480" r="4" fill="#FFF3C8" fill-opacity="0.8" style="animation-delay:0s"></circle><circle class="bub" cx="430" cy="470" r="3" fill="#FFF3C8" fill-opacity="0.8" style="animation-delay:0.5s"></circle><circle class="bub" cx="512" cy="485" r="5" fill="#FFF3C8" fill-opacity="0.8" style="animation-delay:0.9s"></circle><circle class="bub" cx="588" cy="475" r="3" fill="#FFF3C8" fill-opacity="0.8" style="animation-delay:0.3s"></circle><circle class="bub" cx="640" cy="482" r="4" fill="#FFF3C8" fill-opacity="0.8" style="animation-delay:1.2s"></circle><circle class="bub" cx="468" cy="490" r="3" fill="#FFF3C8" fill-opacity="0.8" style="animation-delay:1.4s"></circle>
+</g>
+<rect x="322" y="184" width="356" height="318" fill="url(#gm_glassFront)"></rect>
+<path d="M322 184 L470 184 L322 330 Z" fill="url(#gm_sheen)" fill-opacity="0.55"></path>
+<rect x="338" y="196" width="18" height="296" rx="9" fill="#FFFFFF" fill-opacity="0.75"></rect>
+<rect x="364" y="196" width="6" height="296" rx="3" fill="#FFFFFF" fill-opacity="0.45"></rect>
+<rect x="656" y="200" width="6" height="280" rx="3" fill="#FFFFFF" fill-opacity="0.5"></rect>
+</g>
+<rect x="322" y="184" width="356" height="318" fill="none" stroke="#6E9C86" stroke-width="4"></rect>
+<rect x="326" y="188" width="348" height="310" fill="none" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="2"></rect>
+
+<rect x="302" y="180" width="396" height="10" rx="4" fill="#000000" fill-opacity="0.18"></rect>
+<path d="M300 184 L300 162 Q300 138 326 138 L674 138 Q700 138 700 162 L700 184 Z" fill="#C0262C"></path>
+<path d="M300 184 L300 162 Q300 138 326 138 L674 138 Q700 138 700 162 L700 184 Z" fill="url(#gm_lidV)"></path>
+<path d="M300 184 L300 162 Q300 138 326 138 L674 138 Q700 138 700 162 L700 184 Z" fill="url(#gm_shadeH)"></path>
+<path d="M330 148 L670 148" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="4" stroke-linecap="round"></path>
+<rect x="300" y="178" width="400" height="6" fill="#000000" fill-opacity="0.12"></rect>
+
+<ellipse cx="500" cy="139" rx="16" ry="5" fill="#000000" fill-opacity="0.18"></ellipse>
+<path d="M494 140 C492 122 496 106 508 92 L516 98 C506 112 504 126 506 140 Z" fill="url(#gm_stem)"></path>
+<path d="M512 116 C530 90 572 86 596 104 C576 128 536 134 512 116 Z" fill="url(#gm_leaf)"></path>
+<path d="M516 115 C540 108 566 104 588 104" fill="none" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="2.5" stroke-linecap="round"></path>
+</g>
+
+<circle class="halo" cx="500" cy="686" r="190" fill="url(#gm_haloG)"></circle>
+<g class="rays"><path d="M500 686 L759.4 667.9 L759.4 704.1 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L733.7 800.0 L715.5 831.4 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L645.4 901.5 L614.0 919.7 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L518.1 945.4 L481.9 945.4 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L386.0 919.7 L354.6 901.5 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L284.5 831.4 L266.3 800.0 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L240.6 704.1 L240.6 667.9 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L266.3 572.0 L284.5 540.6 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L354.6 470.5 L386.0 452.3 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L481.9 426.6 L518.1 426.6 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L614.0 452.3 L645.4 470.5 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L715.5 540.6 L733.7 572.0 Z" fill="url(#gm_rayG)"></path></g>
+<g class="burst">
+<path d="M500 740 L500 718 M462 750 L448 734 M538 750 L552 734 M440 772 L420 766 M560 772 L580 766" stroke="#FFE7A3" stroke-width="5" stroke-linecap="round"></path>
+</g>
+<g class="capMove"><g class="capSpin">
+<g id="gachaCapsuleMount" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g>
+</g></g>
+</svg>
+</div>
 </div>
 
 <!-- ガチャ結果：確定枠（アニメカード）＋おまけ枠（レア度で見た目が変わる） -->
@@ -12621,6 +12799,48 @@ document.addEventListener('DOMContentLoaded', () => {
     board:       { labelKey:'customizeTabBoard' },
   };
 
+  // [2026-09-25追加] ガチャ演出用カプセル素材(レア度別)。ユーザー提供のringo_gacha_assets
+  // (capsules/capsule_{レア}.svg)のdefs+本体をそのまま埋め込んでいる。#gachaCapsuleMount へ
+  // innerHTMLとして差し込む想定(mount側は translate(500 796) scale(0.41) translate(-200 -200)
+  // で筐体内のカプセル位置(中心500,796・半径32)に合わせて縮小配置する)。
+  // 元svgのオーラ回転クラス`.rays`は、筐体側が受け取り口の光線バースト演出に同名の`.rays`を
+  // 使っているため衝突する。ここでは埋め込み時点で`.gcap-rays`にリネーム済み(index.html側の
+  // CSSも`.gcap-rays`用のkeyframeを別途用意している)。
+  const GACHA_CAPSULE_DEFS = '<defs>'
+    + '<radialGradient id="t_N" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#D9F0A8"></stop><stop offset="0.55" stop-color="#98C953"></stop><stop offset="1" stop-color="#5B8E2E"></stop></radialGradient>'
+    + '<radialGradient id="t_R" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#FF8A7E"></stop><stop offset="0.55" stop-color="#E4473F"></stop><stop offset="1" stop-color="#A82622"></stop></radialGradient>'
+    + '<radialGradient id="t_SR" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.45" stop-color="#D5DEE7"></stop><stop offset="0.8" stop-color="#94A2B0"></stop><stop offset="1" stop-color="#5E6B78"></stop></radialGradient>'
+    + '<radialGradient id="t_SSR" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#FFF6CC"></stop><stop offset="0.45" stop-color="#F5C84E"></stop><stop offset="0.8" stop-color="#C98A1C"></stop><stop offset="1" stop-color="#8A5608"></stop></radialGradient>'
+    + '<linearGradient id="t_UR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6B8B"></stop><stop offset="0.2" stop-color="#FFB84D"></stop><stop offset="0.4" stop-color="#FFE66D"></stop><stop offset="0.6" stop-color="#7DE38F"></stop><stop offset="0.8" stop-color="#5CC8FF"></stop><stop offset="1" stop-color="#A78BFA"></stop></linearGradient>'
+    + '<radialGradient id="t_LR" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#5A5566"></stop><stop offset="0.4" stop-color="#221F2B"></stop><stop offset="1" stop-color="#050407"></stop></radialGradient>'
+    + '<radialGradient id="b_N" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.7" stop-color="#F1EEE8"></stop><stop offset="1" stop-color="#CFC8BF"></stop></radialGradient>'
+    + '<radialGradient id="b_SR" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.6" stop-color="#E8EEF4"></stop><stop offset="1" stop-color="#AEB9C5"></stop></radialGradient>'
+    + '<radialGradient id="b_SSR" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stop-color="#FFFDF2"></stop><stop offset="0.6" stop-color="#F5E8C0"></stop><stop offset="1" stop-color="#C9A45A"></stop></radialGradient>'
+    + '<radialGradient id="b_UR" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.6" stop-color="#F4F0FF"></stop><stop offset="1" stop-color="#C7BCE8"></stop></radialGradient>'
+    + '<radialGradient id="b_LR" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stop-color="#FFF3C4"></stop><stop offset="0.45" stop-color="#EDC04E"></stop><stop offset="0.85" stop-color="#B07A12"></stop><stop offset="1" stop-color="#6E4706"></stop></radialGradient>'
+    + '<linearGradient id="iri" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF9EC4" stop-opacity="0.35"></stop><stop offset="0.5" stop-color="#9EE7FF" stop-opacity="0.35"></stop><stop offset="1" stop-color="#C9A8FF" stop-opacity="0.35"></stop></linearGradient>'
+    + '<radialGradient id="shade" cx="0.4" cy="0.35" r="0.75"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0"></stop><stop offset="0.7" stop-color="#000000" stop-opacity="0"></stop><stop offset="1" stop-color="#000000" stop-opacity="0.28"></stop></radialGradient>'
+    + '<linearGradient id="band_SR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7E8A96"></stop><stop offset="0.3" stop-color="#FFFFFF"></stop><stop offset="0.6" stop-color="#B7C3CF"></stop><stop offset="1" stop-color="#6B7885"></stop></linearGradient>'
+    + '<linearGradient id="band_SSR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#A8700F"></stop><stop offset="0.3" stop-color="#FFF1B8"></stop><stop offset="0.6" stop-color="#E5B23A"></stop><stop offset="1" stop-color="#94600B"></stop></linearGradient>'
+    + '<linearGradient id="band_UR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF6B8B"></stop><stop offset="0.2" stop-color="#FFB84D"></stop><stop offset="0.4" stop-color="#FFE66D"></stop><stop offset="0.6" stop-color="#7DE38F"></stop><stop offset="0.8" stop-color="#5CC8FF"></stop><stop offset="1" stop-color="#A78BFA"></stop></linearGradient>'
+    + '<linearGradient id="band_LR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8A5A08"></stop><stop offset="0.25" stop-color="#FFF1B8"></stop><stop offset="0.5" stop-color="#E5B23A"></stop><stop offset="0.75" stop-color="#FFE38A"></stop><stop offset="1" stop-color="#8A5A08"></stop></linearGradient>'
+    + '<linearGradient id="leafGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF1B8"></stop><stop offset="1" stop-color="#B07A12"></stop></linearGradient>'
+    + '<linearGradient id="leafSilver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="1" stop-color="#8C99A6"></stop></linearGradient>'
+    + '<linearGradient id="leafGreen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8CC45C"></stop><stop offset="1" stop-color="#3F7A2E"></stop></linearGradient>'
+    + '<radialGradient id="aura_SR" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#DCEBFF" stop-opacity="0.55"></stop><stop offset="0.5" stop-color="#9CC3FF" stop-opacity="0.15"></stop><stop offset="1" stop-color="#9CC3FF" stop-opacity="0"></stop></radialGradient>'
+    + '<radialGradient id="aura_SSR" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFE38A" stop-opacity="0.7"></stop><stop offset="0.5" stop-color="#F5B83A" stop-opacity="0.2"></stop><stop offset="1" stop-color="#F5B83A" stop-opacity="0"></stop></radialGradient>'
+    + '<radialGradient id="aura_UR" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.7"></stop><stop offset="0.35" stop-color="#FFC8F0" stop-opacity="0.3"></stop><stop offset="0.7" stop-color="#9EE7FF" stop-opacity="0.1"></stop><stop offset="1" stop-color="#9EE7FF" stop-opacity="0"></stop></radialGradient>'
+    + '<radialGradient id="aura_LR" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFE38A" stop-opacity="0.6"></stop><stop offset="0.35" stop-color="#9B5CFF" stop-opacity="0.35"></stop><stop offset="0.75" stop-color="#4B1E9E" stop-opacity="0.12"></stop><stop offset="1" stop-color="#4B1E9E" stop-opacity="0"></stop></radialGradient>'
+    + '</defs>';
+  const GACHA_CAPSULE_BODY = {
+    N: '<ellipse cx="200" cy="300" rx="62" ry="9" fill="#000000" fill-opacity="0.35"></ellipse><circle cx="200" cy="200" r="78" fill="url(#b_N)"></circle><path d="M122 200 A78 78 0 0 1 278 200 Z" fill="url(#t_N)"></path><circle cx="200" cy="200" r="78" fill="url(#shade)"></circle><path d="M122 200 L278 200" stroke="#000000" stroke-opacity="0.2" stroke-width="3"></path><path d="M127 203.5 L273 203.5" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="2"></path><circle cx="200" cy="200" r="76.5" fill="none" stroke="#000000" stroke-opacity="0.15" stroke-width="3"></circle><path d="M200 122 C200 107.4 204.9 97.6 214.6 90.3" fill="none" stroke="#5A3A20" stroke-width="7.3" stroke-linecap="round"></path><path d="M212.2 102.5 C229.2 83.0 258.5 83.0 273.1 95.2 C258.5 112.2 229.2 114.7 212.2 102.5 Z" fill="url(#leafGreen)"></path><ellipse cx="170.4" cy="161.0" rx="20.3" ry="10.1" fill="#FFFFFF" fill-opacity="0.55" transform="rotate(-35 170.4 161.0)"></ellipse><circle cx="235.1" cy="182.8" r="4.7" fill="#FFFFFF" fill-opacity="0.39"></circle>',
+    R: '<ellipse cx="200" cy="300" rx="62" ry="9" fill="#000000" fill-opacity="0.35"></ellipse><circle cx="200" cy="200" r="78" fill="url(#b_N)"></circle><path d="M122 200 A78 78 0 0 1 278 200 Z" fill="url(#t_R)"></path><circle cx="200" cy="200" r="78" fill="url(#shade)"></circle><path d="M122 200 L278 200" stroke="#000000" stroke-opacity="0.2" stroke-width="3"></path><path d="M127 203.5 L273 203.5" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="2"></path><circle cx="200" cy="200" r="76.5" fill="none" stroke="#000000" stroke-opacity="0.15" stroke-width="3"></circle><path d="M200 122 C200 107.4 204.9 97.6 214.6 90.3" fill="none" stroke="#5A3A20" stroke-width="7.3" stroke-linecap="round"></path><path d="M212.2 102.5 C229.2 83.0 258.5 83.0 273.1 95.2 C258.5 112.2 229.2 114.7 212.2 102.5 Z" fill="url(#leafGreen)"></path><ellipse cx="170.4" cy="161.0" rx="20.3" ry="10.1" fill="#FFFFFF" fill-opacity="0.85" transform="rotate(-35 170.4 161.0)"></ellipse><circle cx="235.1" cy="182.8" r="4.7" fill="#FFFFFF" fill-opacity="0.59"></circle>',
+    SR: '<circle cx="200" cy="200" r="164" fill="url(#aura_SR)"></circle><ellipse cx="200" cy="300" rx="62" ry="9" fill="#000000" fill-opacity="0.35"></ellipse><circle cx="200" cy="200" r="78" fill="url(#b_SR)"></circle><path d="M122 200 A78 78 0 0 1 278 200 Z" fill="url(#t_SR)"></path><circle cx="200" cy="200" r="78" fill="url(#shade)"></circle><rect x="123" y="195.0" width="154" height="10" rx="5.0" fill="url(#band_SR)"></rect><circle cx="200" cy="200" r="76.5" fill="none" stroke="#000000" stroke-opacity="0.15" stroke-width="3"></circle><path d="M200 122 C200 107.4 204.9 97.6 214.6 90.3" fill="none" stroke="#6B7885" stroke-width="7.3" stroke-linecap="round"></path><path d="M212.2 102.5 C229.2 83.0 258.5 83.0 273.1 95.2 C258.5 112.2 229.2 114.7 212.2 102.5 Z" fill="url(#leafSilver)"></path><ellipse cx="170.4" cy="161.0" rx="20.3" ry="10.1" fill="#FFFFFF" fill-opacity="0.95" transform="rotate(-35 170.4 161.0)"></ellipse><circle cx="235.1" cy="182.8" r="4.7" fill="#FFFFFF" fill-opacity="0.66"></circle><path class="tw" style="animation-delay:0.0s" d="M102.5 115.8 Q102.5 129.8 116.5 129.8 Q102.5 129.8 102.5 143.8 Q102.5 129.8 88.5 129.8 Q102.5 129.8 102.5 115.8 Z" fill="#FFFFFF"></path><path class="tw" style="animation-delay:0.37s" d="M301.4 142.2 Q301.4 153.2 312.4 153.2 Q301.4 153.2 301.4 164.2 Q301.4 153.2 290.4 153.2 Q301.4 153.2 301.4 142.2 Z" fill="#FFFFFF"></path><path class="tw" style="animation-delay:0.74s" d="M285.8 265.1 Q285.8 274.1 294.8 274.1 Q285.8 274.1 285.8 283.1 Q285.8 274.1 276.8 274.1 Q285.8 274.1 285.8 265.1 Z" fill="#FFFFFF"></path>',
+    SSR: '<circle cx="200" cy="200" r="164" fill="url(#aura_SSR)"></circle><g class="gcap-rays"><path d="M200 200 L359.6 190.2 L359.6 209.8 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L343.1 271.3 L333.3 288.3 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L288.3 333.3 L271.3 343.1 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L209.8 359.6 L190.2 359.6 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L128.7 343.1 L111.7 333.3 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L66.7 288.3 L56.9 271.3 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L40.4 209.8 L40.4 190.2 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L56.9 128.7 L66.7 111.7 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L111.7 66.7 L128.7 56.9 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L190.2 40.4 L209.8 40.4 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L271.3 56.9 L288.3 66.7 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L333.3 111.7 L343.1 128.7 Z" fill="#FFE38A" fill-opacity="0.35"></path></g><ellipse cx="200" cy="300" rx="62" ry="9" fill="#000000" fill-opacity="0.35"></ellipse><circle cx="200" cy="200" r="78" fill="url(#b_SSR)"></circle><path d="M122 200 A78 78 0 0 1 278 200 Z" fill="url(#t_SSR)"></path><circle cx="200" cy="200" r="78" fill="url(#shade)"></circle><rect x="123" y="195.0" width="154" height="10" rx="5.0" fill="url(#band_SSR)"></rect><circle cx="200" cy="200" r="76.5" fill="none" stroke="#000000" stroke-opacity="0.15" stroke-width="3"></circle><path d="M200 122 C200 107.4 204.9 97.6 214.6 90.3" fill="none" stroke="#8A5A08" stroke-width="7.3" stroke-linecap="round"></path><path d="M212.2 102.5 C229.2 83.0 258.5 83.0 273.1 95.2 C258.5 112.2 229.2 114.7 212.2 102.5 Z" fill="url(#leafGold)"></path><ellipse cx="170.4" cy="161.0" rx="20.3" ry="10.1" fill="#FFFFFF" fill-opacity="0.95" transform="rotate(-35 170.4 161.0)"></ellipse><circle cx="235.1" cy="182.8" r="4.7" fill="#FFFFFF" fill-opacity="0.66"></circle><path class="tw" style="animation-delay:0.0s" d="M102.5 115.8 Q102.5 129.8 116.5 129.8 Q102.5 129.8 102.5 143.8 Q102.5 129.8 88.5 129.8 Q102.5 129.8 102.5 115.8 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:0.37s" d="M301.4 142.2 Q301.4 153.2 312.4 153.2 Q301.4 153.2 301.4 164.2 Q301.4 153.2 290.4 153.2 Q301.4 153.2 301.4 142.2 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:0.74s" d="M285.8 265.1 Q285.8 274.1 294.8 274.1 Q285.8 274.1 285.8 283.1 Q285.8 274.1 276.8 274.1 Q285.8 274.1 285.8 265.1 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:1.11s" d="M106.4 244.6 Q106.4 254.6 116.4 254.6 Q106.4 254.6 106.4 264.6 Q106.4 254.6 96.4 254.6 Q106.4 254.6 106.4 244.6 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:1.48s" d="M215.6 71.1 Q215.6 79.1 223.6 79.1 Q215.6 79.1 215.6 87.1 Q215.6 79.1 207.6 79.1 Q215.6 79.1 215.6 71.1 Z" fill="#FFF1B8"></path>',
+    UR: '<circle cx="200" cy="200" r="164" fill="url(#aura_UR)"></circle><g class="gcap-rays"><path d="M200 200 L359.6 190.2 L359.6 209.8 Z" fill="#FF9EC4" fill-opacity="0.35"></path><path d="M200 200 L353.3 245.4 L346.6 263.8 Z" fill="#FFE66D" fill-opacity="0.35"></path><path d="M200 200 L328.5 295.1 L316.0 310.1 Z" fill="#9EE7FF" fill-opacity="0.35"></path><path d="M200 200 L288.3 333.3 L271.3 343.1 Z" fill="#C9A8FF" fill-opacity="0.35"></path><path d="M200 200 L237.3 355.5 L218.1 358.9 Z" fill="#FF9EC4" fill-opacity="0.35"></path><path d="M200 200 L181.9 358.9 L162.7 355.5 Z" fill="#FFE66D" fill-opacity="0.35"></path><path d="M200 200 L128.7 343.1 L111.7 333.3 Z" fill="#9EE7FF" fill-opacity="0.35"></path><path d="M200 200 L84.0 310.1 L71.5 295.1 Z" fill="#C9A8FF" fill-opacity="0.35"></path><path d="M200 200 L53.4 263.8 L46.7 245.4 Z" fill="#FF9EC4" fill-opacity="0.35"></path><path d="M200 200 L40.4 209.8 L40.4 190.2 Z" fill="#FFE66D" fill-opacity="0.35"></path><path d="M200 200 L46.7 154.6 L53.4 136.2 Z" fill="#9EE7FF" fill-opacity="0.35"></path><path d="M200 200 L71.5 104.9 L84.0 89.9 Z" fill="#C9A8FF" fill-opacity="0.35"></path><path d="M200 200 L111.7 66.7 L128.7 56.9 Z" fill="#FF9EC4" fill-opacity="0.35"></path><path d="M200 200 L162.7 44.5 L181.9 41.1 Z" fill="#FFE66D" fill-opacity="0.35"></path><path d="M200 200 L218.1 41.1 L237.3 44.5 Z" fill="#9EE7FF" fill-opacity="0.35"></path><path d="M200 200 L271.3 56.9 L288.3 66.7 Z" fill="#C9A8FF" fill-opacity="0.35"></path><path d="M200 200 L316.0 89.9 L328.5 104.9 Z" fill="#FF9EC4" fill-opacity="0.35"></path><path d="M200 200 L346.6 136.2 L353.3 154.6 Z" fill="#FFE66D" fill-opacity="0.35"></path></g><ellipse cx="200" cy="300" rx="62" ry="9" fill="#000000" fill-opacity="0.35"></ellipse><circle cx="200" cy="200" r="78" fill="url(#b_UR)"></circle><circle cx="200" cy="200" r="78" fill="url(#iri)"></circle><path d="M122 200 A78 78 0 0 1 278 200 Z" fill="url(#t_UR)"></path><circle cx="200" cy="200" r="78" fill="url(#shade)"></circle><rect x="123" y="195.0" width="154" height="10" rx="5.0" fill="url(#band_UR)"></rect><circle cx="200" cy="200" r="76.5" fill="none" stroke="#000000" stroke-opacity="0.15" stroke-width="3"></circle><path d="M200 122 C200 107.4 204.9 97.6 214.6 90.3" fill="none" stroke="#5A3A20" stroke-width="7.3" stroke-linecap="round"></path><path d="M212.2 102.5 C229.2 83.0 258.5 83.0 273.1 95.2 C258.5 112.2 229.2 114.7 212.2 102.5 Z" fill="url(#leafGreen)"></path><ellipse cx="170.4" cy="161.0" rx="20.3" ry="10.1" fill="#FFFFFF" fill-opacity="1" transform="rotate(-35 170.4 161.0)"></ellipse><circle cx="235.1" cy="182.8" r="4.7" fill="#FFFFFF" fill-opacity="0.70"></circle><path class="tw" style="animation-delay:0.0s" d="M102.5 115.8 Q102.5 129.8 116.5 129.8 Q102.5 129.8 102.5 143.8 Q102.5 129.8 88.5 129.8 Q102.5 129.8 102.5 115.8 Z" fill="#FFFFFF"></path><path class="tw" style="animation-delay:0.37s" d="M301.4 142.2 Q301.4 153.2 312.4 153.2 Q301.4 153.2 301.4 164.2 Q301.4 153.2 290.4 153.2 Q301.4 153.2 301.4 142.2 Z" fill="#FFFFFF"></path><path class="tw" style="animation-delay:0.74s" d="M285.8 265.1 Q285.8 274.1 294.8 274.1 Q285.8 274.1 285.8 283.1 Q285.8 274.1 276.8 274.1 Q285.8 274.1 285.8 265.1 Z" fill="#FFFFFF"></path><path class="tw" style="animation-delay:1.11s" d="M106.4 244.6 Q106.4 254.6 116.4 254.6 Q106.4 254.6 106.4 264.6 Q106.4 254.6 96.4 254.6 Q106.4 254.6 106.4 244.6 Z" fill="#FFFFFF"></path><path class="tw" style="animation-delay:1.48s" d="M215.6 71.1 Q215.6 79.1 223.6 79.1 Q215.6 79.1 215.6 87.1 Q215.6 79.1 207.6 79.1 Q215.6 79.1 215.6 71.1 Z" fill="#FFFFFF"></path><path class="tw" style="animation-delay:1.85s" d="M153.2 298.3 Q153.2 305.3 160.2 305.3 Q153.2 305.3 153.2 312.3 Q153.2 305.3 146.2 305.3 Q153.2 305.3 153.2 298.3 Z" fill="#FFFFFF"></path>',
+    LR: '<circle cx="200" cy="200" r="164" fill="url(#aura_LR)"></circle><g class="gcap-rays"><path d="M200 200 L359.6 190.2 L359.6 209.8 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L353.3 245.4 L346.6 263.8 Z" fill="#B98CFF" fill-opacity="0.35"></path><path d="M200 200 L328.5 295.1 L316.0 310.1 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L288.3 333.3 L271.3 343.1 Z" fill="#B98CFF" fill-opacity="0.35"></path><path d="M200 200 L237.3 355.5 L218.1 358.9 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L181.9 358.9 L162.7 355.5 Z" fill="#B98CFF" fill-opacity="0.35"></path><path d="M200 200 L128.7 343.1 L111.7 333.3 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L84.0 310.1 L71.5 295.1 Z" fill="#B98CFF" fill-opacity="0.35"></path><path d="M200 200 L53.4 263.8 L46.7 245.4 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L40.4 209.8 L40.4 190.2 Z" fill="#B98CFF" fill-opacity="0.35"></path><path d="M200 200 L46.7 154.6 L53.4 136.2 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L71.5 104.9 L84.0 89.9 Z" fill="#B98CFF" fill-opacity="0.35"></path><path d="M200 200 L111.7 66.7 L128.7 56.9 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L162.7 44.5 L181.9 41.1 Z" fill="#B98CFF" fill-opacity="0.35"></path><path d="M200 200 L218.1 41.1 L237.3 44.5 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L271.3 56.9 L288.3 66.7 Z" fill="#B98CFF" fill-opacity="0.35"></path><path d="M200 200 L316.0 89.9 L328.5 104.9 Z" fill="#FFE38A" fill-opacity="0.35"></path><path d="M200 200 L346.6 136.2 L353.3 154.6 Z" fill="#B98CFF" fill-opacity="0.35"></path></g><circle class="gcap-rays" cx="200" cy="200" r="113" fill="none" stroke="#E5B23A" stroke-opacity="0.55" stroke-width="2" stroke-dasharray="2 10"></circle><ellipse cx="200" cy="300" rx="62" ry="9" fill="#000000" fill-opacity="0.35"></ellipse><circle cx="200" cy="200" r="78" fill="url(#b_LR)"></circle><path d="M122 200 A78 78 0 0 1 278 200 Z" fill="url(#t_LR)"></path><circle cx="200" cy="200" r="78" fill="url(#shade)"></circle><rect x="123" y="193.5" width="154" height="13" rx="6.5" fill="url(#band_LR)"></rect><path d="M160 191 L168 200 L160 209 L152 200 Z" fill="#E4473F" stroke="#FFF1B8" stroke-width="1.5"></path><path d="M200 191 L208 200 L200 209 L192 200 Z" fill="#9B5CFF" stroke="#FFF1B8" stroke-width="1.5"></path><path d="M240 191 L248 200 L240 209 L232 200 Z" fill="#5CC8FF" stroke="#FFF1B8" stroke-width="1.5"></path><circle cx="200" cy="200" r="76.5" fill="none" stroke="#000000" stroke-opacity="0.15" stroke-width="3"></circle><path d="M200 122 C200 107.4 204.9 97.6 214.6 90.3" fill="none" stroke="#E5B23A" stroke-width="7.3" stroke-linecap="round"></path><path d="M212.2 102.5 C229.2 83.0 258.5 83.0 273.1 95.2 C258.5 112.2 229.2 114.7 212.2 102.5 Z" fill="url(#leafGold)"></path><ellipse cx="170.4" cy="161.0" rx="20.3" ry="10.1" fill="#FFFFFF" fill-opacity="0.9" transform="rotate(-35 170.4 161.0)"></ellipse><circle cx="235.1" cy="182.8" r="4.7" fill="#FFFFFF" fill-opacity="0.63"></circle><path class="tw" style="animation-delay:0.0s" d="M102.5 113.0 Q102.5 129.8 119.3 129.8 Q102.5 129.8 102.5 146.6 Q102.5 129.8 85.7 129.8 Q102.5 129.8 102.5 113.0 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:0.37s" d="M301.4 140.0 Q301.4 153.2 314.6 153.2 Q301.4 153.2 301.4 166.4 Q301.4 153.2 288.2 153.2 Q301.4 153.2 301.4 140.0 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:0.74s" d="M285.8 263.3 Q285.8 274.1 296.6 274.1 Q285.8 274.1 285.8 284.9 Q285.8 274.1 275.0 274.1 Q285.8 274.1 285.8 263.3 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:1.11s" d="M106.4 242.6 Q106.4 254.6 118.4 254.6 Q106.4 254.6 106.4 266.6 Q106.4 254.6 94.4 254.6 Q106.4 254.6 106.4 242.6 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:1.48s" d="M215.6 69.5 Q215.6 79.1 225.2 79.1 Q215.6 79.1 215.6 88.7 Q215.6 79.1 206.0 79.1 Q215.6 79.1 215.6 69.5 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:1.85s" d="M153.2 296.9 Q153.2 305.3 161.6 305.3 Q153.2 305.3 153.2 313.7 Q153.2 305.3 144.8 305.3 Q153.2 305.3 153.2 296.9 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:2.22s" d="M320.9 207.2 Q320.9 215.6 329.3 215.6 Q320.9 215.6 320.9 224.0 Q320.9 215.6 312.5 215.6 Q320.9 215.6 320.9 207.2 Z" fill="#FFF1B8"></path><path class="tw" style="animation-delay:2.59s" d="M79.1 185.0 Q79.1 192.2 86.3 192.2 Q79.1 192.2 79.1 199.4 Q79.1 192.2 71.9 192.2 Q79.1 192.2 79.1 185.0 Z" fill="#FFF1B8"></path>',
+  };
+
   /* ══════════════════════════════════════════════════════════════════
      GACHA_SERIES：バナーで選ぶガチャのシリーズ一覧。
      ・items は「N7・R6・SR4+カスタム3・SSR2+カスタム1・UR1+カスタム1・LR カスタム1」の
@@ -12727,7 +12947,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const GACHA_COIN_REWARD = 100; // デイリークエスト達成報酬＝ガチャ1回分のコイン
   const GACHA_COIN_COST = 100; // コインでガチャを1回引く時の消費量
   const GACHA_COIN10_COST = 1000; // コインで10連を引く時の消費量
-  const GACHA_HOLD_MS = 3000; // 長押し時間。この間ずっとリンゴジュースが枠にたまる演出が走る
   // 無料/広告枠の残数はdb.gacha（Supabaseのgacha_daily_stateテーブル）で管理する。
   // ローカルストレージだとキャッシュ削除・シークレットモードで無限に引けてしまうため。
   async function getGachaState(userId) {
@@ -13244,72 +13463,40 @@ document.addEventListener('DOMContentLoaded', () => {
     updateGachaButtons();
   }
 
-  // [追加] ①確定が終わったら、専用の「ガチャ引かせるページ」(gacha-draw-mode)に切り替える。
-  // シリーズ帯・見出し・クエスト/ショップ導線・右カラム(出るもの/集めたもの/履歴)・通常の
-  // 引くボタン(.gacha-actions)を隠し、ガチャ筐体(#gachaStage)と専用の長押しボタン
-  // (#gachaRevealBtn)だけの画面にする。あわせてヘッダーの戻る・ロゴ・全体ナビ(サイドバー/
-  // ボトムナビ)を操作不可にし(gacha-draw-lock)、報酬を確認するまで他ページへ離脱できない
-  // ようにする(ユーザー指示：「引かせるの優先」)。結果画面を閉じたタイミングで
-  // 通常のガチャページに戻す(exitGachaDrawMode)
-  function enterGachaDrawMode() {
-    document.getElementById('page-gacha')?.classList.add('gacha-draw-mode');
-    document.body.classList.add('gacha-draw-lock');
-  }
-  function exitGachaDrawMode() {
-    document.getElementById('page-gacha')?.classList.remove('gacha-draw-mode');
-    document.body.classList.remove('gacha-draw-lock');
-    const revealBtn = document.getElementById('gachaRevealBtn');
-    if(revealBtn) revealBtn.style.display = 'none';
-  }
-
-  // ②確定後、専用ボタン(#gachaRevealBtn)を「長押しで結果を見る」状態にする。
-  // [2026-09-21修正] 以前は通常のガチャを引くボタン(#gachaFreeBtn等)をそのまま流用していたが、
-  // 専用の抽選画面(gacha-draw-mode)で「他の枠のガチャボタンまで押せてしまう」不具合になって
-  // いた(ユーザー報告)。専用画面では.gacha-actions自体を丸ごと隠し、常にこの新規ボタン
-  // だけを使うようにした。中身はbindGachaHold()と全く同じ長押し演出(3秒でジュースが満ちる)を
-  // 再利用し、長押し完了時にrevealGachaResult()を呼ぶだけの違い
-  let _gachaRevealHoldTimer = null;
-  function armGachaRevealButton(results) {
-    const btn = document.getElementById('gachaRevealBtn');
-    if(!btn) return;
-    btn.style.display = '';
-    btn.disabled = false;
-    const fill = btn.querySelector('.gacha-hold-fill');
-    const stage = document.getElementById('gachaStage');
-    const ledLabel = document.getElementById('gachaStageLedLabel');
-    const stop = () => {
-      if(_gachaRevealHoldTimer) { clearTimeout(_gachaRevealHoldTimer); _gachaRevealHoldTimer = null; }
-      if(fill) { fill.style.transition = 'width .2s ease'; fill.style.width = '0%'; }
-      if(stage) stage.classList.remove('is-filling');
-      if(ledLabel) ledLabel.textContent = t('gachaLedIdle');
-      setGachaStageIdle();
-    };
-    btn.onpointerdown = (e) => {
-      e.preventDefault();
-      if(btn.disabled) return;
-      if(stage) {
-        stage.style.setProperty('--gacha-hold', GACHA_HOLD_MS + 'ms');
-        stage.classList.remove('is-filling');
-        void stage.offsetWidth;
-        stage.classList.add('is-filling');
-      }
-      if(ledLabel) ledLabel.textContent = t('gachaLedFilling');
-      const idle = document.getElementById('gachaStagePlaceholder');
-      if(idle) idle.innerHTML = `<span class="gacha-stage-text">${escapeHtml(t('gachaStageFilling'))}</span>`;
-      if(fill) {
-        fill.style.transition = `width ${GACHA_HOLD_MS}ms linear`;
-        requestAnimationFrame(() => { fill.style.width = '100%'; });
-      }
-      _gachaRevealHoldTimer = setTimeout(() => {
-        _gachaRevealHoldTimer = null;
-        stop();
-        revealGachaResult(results);
-      }, GACHA_HOLD_MS);
-    };
-    btn.onpointerup = stop;
-    btn.onpointerleave = stop;
-    btn.onpointercancel = stop;
-    btn.oncontextmenu = (e) => e.preventDefault();
+  // [2026-09-24作り直し] 以前は確定後に専用の「引かせる画面」(gacha-draw-mode)へ切り替わり、
+  // 専用ボタンを3秒間長押しすると結果が出る方式だったが、ユーザー指示「三秒長押しのやつやめて、
+  // 引くを押したら正方形のポップが出て、ガチャのアニメーションを流す」に沿って全面的に
+  // 作り直した。確定直後に#gachaRevealAnimOverlay(正方形ポップ)を自動表示し、筐体ミニチュア
+  // (ジュースが3秒かけて満ちる／つまみが重く回る／アーチ状メーターが満ちる)を自動再生する。
+  // ユーザー操作は不要(長押し・タップ待ちが無い)。満タンになった瞬間にCSS側でカプセルが
+  // スプラッシュして拡大するアニメーションへ自動的に移り、JS側はその演出時間が終わるのを
+  // 待ってからこのポップを閉じ、結果ポップ(revealGachaResult)へ引き継ぐだけでよい
+  // [2026-09-25変更] 演出時間は筐体アニメーションのタイムライン(7秒周期、カプセルは
+  // 4.0〜4.8秒で飛び出し4.8〜6.5秒は静止表示)に合わせている。6.5秒以降はループ用の
+  // フェードアウトなので、カプセルが静止して見えている間(5.4秒)で結果ポップへ引き継ぐ
+  const GACHA_REVEAL_ANIM_MS = 5400;
+  function playGachaRevealAnimation(results) {
+    return new Promise(resolve => {
+      const overlay = document.getElementById('gachaRevealAnimOverlay');
+      const mount = document.getElementById('gachaCapsuleMount');
+      if(!overlay) { resolve(); return; }
+      // 飛び出すカプセルは、その回で出た中で一番レアな景品のもの(無ければN扱い)
+      let bestTier = null;
+      results.forEach(r => {
+        if(!r.item) return;
+        if(!bestTier || GACHA_RARITY_ORDER.indexOf(r.item.tier) > GACHA_RARITY_ORDER.indexOf(bestTier)) bestTier = r.item.tier;
+      });
+      if(mount) mount.innerHTML = GACHA_CAPSULE_DEFS + (GACHA_CAPSULE_BODY[bestTier] || GACHA_CAPSULE_BODY.N);
+      overlay.classList.remove('is-playing');
+      void overlay.offsetWidth; // アニメーションを最初から再生させるための強制リフロー
+      overlay.style.display = 'flex';
+      overlay.classList.add('is-playing');
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        overlay.classList.remove('is-playing');
+        resolve();
+      }, GACHA_REVEAL_ANIM_MS);
+    });
   }
 
   // ── ガチャを引く前の確認ポップ ──
@@ -13363,7 +13550,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const results = await commitGachaDraw(kind);
         closeGachaConfirm();
-        if(results) { enterGachaDrawMode(); armGachaRevealButton(results); }
+        if(results) { await playGachaRevealAnimation(results); revealGachaResult(results); }
       } finally {
         btn.disabled = false;
       }
@@ -13490,11 +13677,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if(probCloseBtn) probCloseBtn.onclick = () => { if(probOverlay) probOverlay.style.display = 'none'; };
     if(probOverlay) probOverlay.onclick = (e) => { if(e.target === probOverlay) probOverlay.style.display = 'none'; };
     if(resOverlay) {
-      // [2026-09-21修正] 結果(報酬)を確認して閉じたタイミングで、専用の抽選画面
-      // (gacha-draw-mode、筐体と長押しボタンだけの画面)から通常のガチャページに戻す
       const close = () => {
         resOverlay.style.display = 'none';
-        exitGachaDrawMode();
       };
       resOverlay.onclick = (e) => { if(e.target === resOverlay) close(); };
       const c1 = document.getElementById('gachaResultClose');
@@ -20497,7 +20681,6 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaConfirmTitle: { ja:'ガチャを引く？', en:'Draw the gacha?', ko:'가챠를 뽑을까요?', 'zh-tw':'要抽扭蛋嗎？', 'zh-cn':'要抽扭蛋吗？', es:'¿Tirar del gacha?', fr:'Tirer le gacha ?', pt:'Sortear o gacha?', de:'Gacha ziehen?', ar:'هل تريد سحب الجاتشا؟', th:'สุ่มกาชาเลยไหม?', id:'Tarik gacha?', ru:'Сделать попытку в гаче?', it:'Estrarre dal gacha?', vi:'Quay gacha?' },
     gachaConfirmDrawBtn: { ja:'引く', en:'Draw', ko:'뽑기', 'zh-tw':'抽獎', 'zh-cn':'抽奖', es:'Tirar', fr:'Tirer', pt:'Sortear', de:'Ziehen', ar:'سحب', th:'สุ่ม', id:'Tarik', ru:'Тянуть', it:'Estrai', vi:'Quay' },
     gachaConfirmCancelBtn: { ja:'やめる', en:'Cancel', ko:'취소', 'zh-tw':'取消', 'zh-cn':'取消', es:'Cancelar', fr:'Annuler', pt:'Cancelar', de:'Abbrechen', ar:'إلغاء', th:'ยกเลิก', id:'Batal', ru:'Отмена', it:'Annulla', vi:'Hủy' },
-    gachaRevealHoldLabel: { ja:'長押しで結果を見る', en:'Hold to see the result', ko:'길게 눌러 결과 보기', 'zh-tw':'長按查看結果', 'zh-cn':'长按查看结果', es:'Mantén pulsado para ver el resultado', fr:'Maintenez pour voir le résultat', pt:'Segure para ver o resultado', de:'Halten, um das Ergebnis zu sehen', ar:'اضغط مطولًا لرؤية النتيجة', th:'กดค้างเพื่อดูผลลัพธ์', id:'Tahan untuk melihat hasil', ru:'Удерживайте, чтобы увидеть результат', it:'Tieni premuto per vedere il risultato', vi:'Nhấn giữ để xem kết quả' },
     gachaConfirmFreeBody: { ja:'無料で1日1回引けます。', en:'One free draw per day.', ko:'무료로 하루에 한 번 뽑을 수 있습니다.', 'zh-tw':'每天可免費抽1次。', 'zh-cn':'每天可免费抽1次。', es:'Una tirada gratis al día.', fr:'Un tirage gratuit par jour.', pt:'Um sorteio grátis por dia.', de:'Eine kostenlose Ziehung pro Tag.', ar:'سحب مجاني واحد يوميًا.', th:'สุ่มฟรีวันละ 1 ครั้ง', id:'Satu tarikan gratis per hari.', ru:'Одна бесплатная попытка в день.', it:'Un\'estrazione gratuita al giorno.', vi:'Miễn phí 1 lượt mỗi ngày.' },
     gachaConfirmAdBody: { ja:'広告を見て引きます。30秒の広告を見ると1回引けます。', en:'Watch a 30s ad for one draw.', ko:'광고를 보고 뽑습니다. 30초 광고를 보면 1회 뽑을 수 있습니다.', 'zh-tw':'看廣告抽獎。觀看30秒廣告即可抽1次。', 'zh-cn':'看广告抽奖。观看30秒广告即可抽1次。', es:'Mira un anuncio de 30 segundos para tirar una vez.', fr:'Regardez une pub de 30 s pour tirer une fois.', pt:'Assista a um anúncio de 30s para um sorteio.', de:'Schau eine 30-Sekunden-Werbung für eine Ziehung.', ar:'شاهد إعلانًا لمدة 30 ثانية للحصول على سحب واحد.', th:'ดูโฆษณาเพื่อสุ่ม ดูโฆษณา 30 วินาทีเพื่อรับสิทธิ์สุ่ม 1 ครั้ง', id:'Tonton iklan untuk menarik. Tonton iklan 30 detik untuk 1 tarikan.', ru:'Посмотрите рекламу для попытки. 30-секундная реклама даёт 1 попытку.', it:'Guarda un annuncio per estrarre. Un annuncio di 30s ti dà un\'estrazione.', vi:'Xem quảng cáo để quay. Xem quảng cáo 30 giây để được quay 1 lượt.' },
     gachaConfirmFreeAgainBody: { ja:'＋プラン以上は広告なしで、そのまま無料で引けます。', en:'Animepple+ and above can draw again for free, no ad needed.', ko:'+플랜 이상은 광고 없이 그대로 무료로 뽑을 수 있습니다.', 'zh-tw':'＋方案以上無需看廣告，可直接免費再抽。', 'zh-cn':'＋方案以上无需看广告，可直接免费再抽。', es:'Con Animepple+ o superior puedes volver a tirar gratis sin anuncio.', fr:'Avec Animepple+ ou plus, vous pouvez retirer gratuitement, sans pub.', pt:'Com Animepple+ ou superior, você pode sortear novamente de graça, sem anúncio.', de:'Mit Animepple+ oder höher kannst du ohne Werbung erneut kostenlos ziehen.', ar:'مع Animepple+ فما فوق، يمكنك السحب مجددًا مجانًا دون إعلان.', th:'หากมีแผน+ ขึ้นไป สามารถสุ่มฟรีได้เลยโดยไม่ต้องดูโฆษณา', id:'Dengan Animepple+ ke atas, Anda bisa menarik lagi secara gratis tanpa iklan.', ru:'С Animepple+ и выше можно тянуть снова бесплатно, без рекламы.', it:'Con Animepple+ e superiori puoi estrarre di nuovo gratis, senza pubblicità.', vi:'Với gói + trở lên, bạn có thể quay tiếp miễn phí mà không cần xem quảng cáo.' },
@@ -20572,8 +20755,6 @@ document.addEventListener('DOMContentLoaded', () => {
     coinShopTagPopular: { ja:'人気', en:'Popular', ko:'인기', 'zh-tw':'人氣', 'zh-cn':'人气', es:'Popular', fr:'Populaire', pt:'Popular', de:'Beliebt', ar:'شائع', th:'ยอดนิยม', id:'Populer', ru:'Популярное', it:'Popolare', vi:'Phổ biến' },
     coinShopTagBest: { ja:'最もお得', en:'Best value', ko:'최고 혜택', 'zh-tw':'最划算', 'zh-cn':'最划算', es:'Mejor precio', fr:'Meilleure offre', pt:'Melhor custo-benefício', de:'Bestes Angebot', ar:'أفضل قيمة', th:'คุ้มค่าที่สุด', id:'Nilai terbaik', ru:'Самое выгодное', it:'Miglior valore', vi:'Giá trị nhất' },
     gachaSeriesHint: { ja:'横スクロールで追加分が並びます', en:'Scroll sideways for more', ko:'옆으로 스크롤하면 더 볼 수 있어요', 'zh-tw':'左右滑動查看更多', 'zh-cn':'左右滑动查看更多', es:'Desliza hacia los lados para ver más', fr:'Faites défiler latéralement pour en voir plus', pt:'Deslize lateralmente para ver mais', de:'Seitlich scrollen für mehr', ar:'مرر أفقيًا لمزيد', th:'เลื่อนด้านข้างเพื่อดูเพิ่มเติม', id:'Geser ke samping untuk lebih banyak', ru:'Прокрутите вбок, чтобы увидеть больше', it:'Scorri lateralmente per altro', vi:'Vuốt ngang để xem thêm' },
-    gachaLedFilling: { ja:'注入中', en:'Pouring', ko:'채우는 중', 'zh-tw':'注入中', 'zh-cn':'注入中', es:'Vertiendo', fr:'Remplissage', pt:'Enchendo', de:'Einfüllen', ar:'جارٍ الصب', th:'กำลังเติม', id:'Mengisi', ru:'Наливается', it:'Versamento', vi:'Đang rót' },
-    gachaStageFilling: { ja:'リンゴジュースがたまっていきます…', en:'Filling with apple juice…', ko:'사과주스가 채워지고 있어요…', 'zh-tw':'蘋果汁正在注入中…', 'zh-cn':'苹果汁正在注入中…', es:'Llenando con jugo de manzana…', fr:'Remplissage de jus de pomme…', pt:'Enchendo com suco de maçã…', de:'Wird mit Apfelsaft gefüllt…', ar:'جارٍ التعبئة بعصير التفاح…', th:'กำลังเติมน้ำแอปเปิ้ล…', id:'Mengisi dengan jus apel…', ru:'Наполняется яблочным соком…', it:'Riempimento con succo di mela…', vi:'Đang rót nước táo…' },
     gachaShopSubFrom: { ja:'から', en:'+', ko:'부터', 'zh-tw':'起', 'zh-cn':'起', es:'desde', fr:'à partir de', pt:'a partir de', de:'ab', ar:'من', th:'เริ่มต้น', id:'mulai dari', ru:'от', it:'da', vi:'từ' },
     gachaShopSubBonus: { ja:'ボーナス最大{n}%', en:'up to +{n}% bonus', ko:'최대 보너스 {n}%', 'zh-tw':'最高獎勵{n}%', 'zh-cn':'最高奖励{n}%', es:'bono de hasta +{n}%', fr:'bonus jusqu\'à +{n}%', pt:'bônus de até +{n}%', de:'bis zu +{n}% Bonus', ar:'مكافأة تصل إلى +{n}٪', th:'โบนัสสูงสุด +{n}%', id:'bonus hingga +{n}%', ru:'бонус до +{n}%', it:'bonus fino a +{n}%', vi:'thưởng lên đến +{n}%' },
     gachaCoinFreeLabel: { ja:'無償', en:'Free', ko:'무료', 'zh-tw':'免費', 'zh-cn':'免费', es:'Gratis', fr:'Gratuit', pt:'Grátis', de:'Kostenlos', ar:'مجاني', th:'ฟรี', id:'Gratis', ru:'Бесплатно', it:'Gratis', vi:'Miễn phí' },
