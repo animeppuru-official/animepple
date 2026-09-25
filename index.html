@@ -13761,6 +13761,97 @@ document.addEventListener('DOMContentLoaded', () => {
     updateGachaButtons();
   }
 
+  // [2026-09-25追加] ガチャ演出のSE(効果音)。音声ファイルは一切使わず、Web Audio APIで
+  // その場で波形を合成している(ユーザー「SEって君作れるの／効果音」「ジュースがたまる音と、
+  // カプセルが表示された時のぽん！みたいな音だけほしい」)。
+  // ブラウザの自動再生ポリシー対策として、AudioContextの生成・resumeは必ずユーザー操作
+  // (「引く」ボタンのクリックハンドラ)の中で最初に行い、以後はそれを使い回す
+  let _gachaAudioCtx = null;
+  function getGachaAudioCtx() {
+    if(!_gachaAudioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return null;
+      _gachaAudioCtx = new Ctx();
+    }
+    if(_gachaAudioCtx.state === 'suspended') _gachaAudioCtx.resume().catch(()=>{});
+    return _gachaAudioCtx;
+  }
+  // ジュースが溜まる音：フィルターを通したノイズ(水が注がれる質感)を、音程を少しずつ
+  // 上げながら鳴らして「水位が上がっていく」感覚を出す。加えて、ランダムなタイミングで
+  // 短い「ぷくっ」という泡の音を数回重ねる(画面内の気泡アニメーションに合わせたイメージ)
+  function playGachaJuiceFillSound(durationMs) {
+    const ctx = getGachaAudioCtx();
+    if(!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const dur = durationMs / 1000;
+      const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * dur));
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for(let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = noiseBuffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.Q.value = 1.1;
+      filter.frequency.setValueAtTime(220, now);
+      filter.frequency.linearRampToValueAtTime(520, now + dur);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.13, now + 0.15);
+      gain.gain.setValueAtTime(0.13, Math.max(now, now + dur - 0.2));
+      gain.gain.linearRampToValueAtTime(0, now + dur);
+      noise.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+      noise.start(now); noise.stop(now + dur);
+
+      const bubbleCount = Math.max(3, Math.round(dur * 2.5));
+      for(let i = 0; i < bubbleCount; i++) {
+        const t = now + Math.random() * dur * 0.9;
+        const osc = ctx.createOscillator();
+        const bGain = ctx.createGain();
+        const freq = 500 + Math.random() * 700;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.6, t + 0.08);
+        bGain.gain.setValueAtTime(0.0001, t);
+        bGain.gain.linearRampToValueAtTime(0.05, t + 0.01);
+        bGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        osc.connect(bGain); bGain.connect(ctx.destination);
+        osc.start(t); osc.stop(t + 0.12);
+      }
+    } catch(e) { console.warn('gacha juice sound:', e); }
+  }
+  // カプセル出現の「ぽん！」音：高い音から低い音へ一瞬で下がるサイン波(古典的なポップ音の作り方)
+  // ＋ごく短いクリックノイズでアタック感(弾ける瞬間の芯)を足している
+  function playGachaCapsulePonSound() {
+    const ctx = getGachaAudioCtx();
+    if(!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(900, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.14);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.45, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now); osc.stop(now + 0.2);
+
+      const clickLen = Math.max(1, Math.floor(ctx.sampleRate * 0.02));
+      const clickBuffer = ctx.createBuffer(1, clickLen, ctx.sampleRate);
+      const clickData = clickBuffer.getChannelData(0);
+      for(let i = 0; i < clickLen; i++) clickData[i] = (Math.random() * 2 - 1) * (1 - i / clickLen);
+      const click = ctx.createBufferSource();
+      click.buffer = clickBuffer;
+      const clickGain = ctx.createGain();
+      clickGain.gain.setValueAtTime(0.25, now);
+      click.connect(clickGain); clickGain.connect(ctx.destination);
+      click.start(now);
+    } catch(e) { console.warn('gacha capsule pon sound:', e); }
+  }
+
   // [2026-09-24作り直し] 以前は確定後に専用の「引かせる画面」(gacha-draw-mode)へ切り替わり、
   // 専用ボタンを3秒間長押しすると結果が出る方式だったが、ユーザー指示「三秒長押しのやつやめて、
   // 引くを押したら正方形のポップが出て、ガチャのアニメーションを流す」に沿って全面的に
@@ -13811,6 +13902,17 @@ document.addEventListener('DOMContentLoaded', () => {
       overlay.classList.toggle('is-batch10', isBatch);
       overlay.classList.toggle('is-golden', isGolden);
       overlay.classList.add('is-playing');
+      // [2026-09-25追加] SE：ジュースが溜まる音(単発・10連とも、満タンになる3秒間に合わせる)と、
+      // カプセルが弾ける「ぽん」音(単発は筐体タイムラインのバーストが光る瞬間=7000ms×58.29%
+      // ≒4080ms、10連は1個目が着地する9000ms×44.44%≒4000msから0.2秒おきに1個ずつ)
+      playGachaJuiceFillSound(3000);
+      if(isBatch) {
+        results.slice(0, 10).forEach((r, i) => {
+          setTimeout(() => playGachaCapsulePonSound(), 4000 + i * 200);
+        });
+      } else {
+        setTimeout(() => playGachaCapsulePonSound(), 4080);
+      }
       setTimeout(() => {
         overlay.style.display = 'none';
         overlay.classList.remove('is-playing', 'is-batch10', 'is-golden');
@@ -13867,6 +13969,10 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.onclick = async () => {
       const kind = _gachaConfirmKind;
       btn.disabled = true;
+      // [2026-09-25追加] SE用のAudioContextは、ブラウザの自動再生ポリシー上、必ずユーザー操作の
+      // 中で(await等を挟まず同期的に)生成・resumeしておく必要がある。ここで先に用意しておき、
+      // 実際の再生(playGachaJuiceFillSound等)はplayGachaRevealAnimation側で後から行う
+      getGachaAudioCtx();
       try {
         const results = await commitGachaDraw(kind);
         closeGachaConfirm();
@@ -16362,7 +16468,23 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
   }
+  // [2026-09-25修正] ユーザー報告「上質レビュー後、投票を終えてもまた投票ポップ出るから直して」。
+  // これは以前(2026-09-23)一度発生・修正した「連打で投票ポップアップが2重に開く」不具合の
+  // 再発ではなく、別の抜け穴だった。submitReviewBtnの処理中フラグ(_reviewSubmitInFlight)は
+  // 「価値観投票ポップアップが開く直前」で解除される設計(オーバーレイ自体が以後の連打防止を
+  // 担う想定)だが、ポップアップでレビュアーが軸を選んで投票ポップが閉じた後、
+  // proceedReviewSubmit()自身がTurnstile検証・位置情報取得・投稿API呼び出しという時間のかかる
+  // 非同期処理を行っている間、投稿フォーム自体(と再度クリック可能な投稿ボタン)がそのまま
+  // 画面に残っていた。この間にユーザーがもう一度「投稿する」を押すと、丸ごと別の投稿フローが
+  // 走り出し、2つ目の価値観投票ポップアップが開いてしまう——「投票を終えてもまた投票ポップが
+  // 出る」ように見えるのはこのため。proceedReviewSubmit自身の実行中もガードを掛け直し、
+  // 投稿完了(成功・失敗のどちらでも)まで再クリックを防ぐようにした
   function proceedReviewSubmit(selectedAxisKey, selectedAxisGroup) {
+    const submitBtnEl2 = document.getElementById('submitReviewBtn');
+    const releaseSubmitGuard = () => { _reviewSubmitInFlight = false; if(submitBtnEl2) submitBtnEl2.disabled = false; };
+    _reviewSubmitInFlight = true;
+    if(submitBtnEl2) submitBtnEl2.disabled = true;
+
     const comment = document.getElementById('reviewComment').value.trim();
     // タグに現在の表示言語コードをプレフィックスとして付けて保存する。
     // 例: 日本語モードで「泣ける」→ "ja:泣ける"、韓国語モードで "눈물나는" → "ko:눈물나는"
@@ -16377,6 +16499,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 何も入力なし（グラフ無操作・タグなし・コメントなし）→ 投稿不可
     if(!anySet && tags.length===0 && !comment){
       alert(currentLang==='ja'?'スライダー・タグ・コメントのいずれかを入力してください。':'Please adjust sliders, add tags, or write a comment.');
+      releaseSubmitGuard();
       return;
     }
 
@@ -16415,6 +16538,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(_) {}
         if(!turnstileToken) {
           alert(t('turnstileRequiredAlert'));
+          releaseSubmitGuard();
           return;
         }
 
@@ -16470,17 +16594,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // 全体価値観プロフィール：レビュー投稿は最も強いシグナル。全軸を操作した本人の入力値をそのまま使う
         if(isFullGraph) recordValueSignal(review.animeId, 'review', review.chartA, review.chartB);
+        releaseSubmitGuard();
         showReviewPostedPopup(page, !!(selectedAxisKey && selectedAxisGroup), review);
       })().catch(e=>{
         console.warn('review submit:', e);
         alert(t('profileSaveFailedAlert'));
         try { if(typeof turnstile !== 'undefined' && _turnstileWidgetId !== null) turnstile.reset(_turnstileWidgetId); } catch(_) {}
+        releaseSubmitGuard();
       });
     } else {
       // ローカルモード: LocalStorageに保存
       const ex=getReviews(); ex.unshift(review); sj(REVIEW_KEY,ex);
       invalidateReviewsCache();
       const localPage = getAll().find(p=>p.id===review.animeId);
+      releaseSubmitGuard();
       showReviewPostedPopup(localPage, !!(selectedAxisKey && selectedAxisGroup), review);
     }
   }
@@ -25435,11 +25562,18 @@ document.addEventListener('DOMContentLoaded', () => {
       // 殿堂入り=金等)で塗り分けていたが、ユーザー指示「色は緑に戻していいよ、その代わり
       // 上質なレビューは上質なレビュータグを実績の隣に書いて」により、枠の色は常に固定の緑に戻し、
       // 「このレビュー自体が上質か(rev.quality)」は実績バッジの隣に専用タグ(quality-thumb-badge、
-      // renderAnimeCardのサムネイルバッジと同じ意匠を流用)で示す方式に変更した
+      // renderAnimeCardのサムネイルバッジと同じ意匠を流用)で示す方式に変更した。
+      // [2026-09-25追加修正] border-colorを緑固定にしただけでは不十分だった。クラス名に
+      // is-qualityを付けたままにしていたため、app/skins.css側の
+      // `.card-skin-default.is-quality { background:linear-gradient(...#3a2f10...) }`
+      // (index.html内の検索だけでは見つからない、別ファイルのルール)がカード背景を金色の
+      // グラデーションに差し替え続けており、枠は緑でも背景だけ金色のままになっていた
+      // (ユーザー再指摘「だからレビューカードは上質でも緑だってば」)。is-qualityクラス自体を
+      // 付けるのをやめ、上質かどうかで見た目が変わる要素をタグ表示だけに一本化した
       const qualityTagHtml = rev.quality ? `<span class="quality-thumb-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="#2a2006"><path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>${escapeHtml(t('qualityReviewBadge'))}</span>` : '';
       return `<div class="review-card-flip-wrap">
       <div class="review-card-flip-inner" id="rc-flip-${i}">
-        <article class="review-card review-card-face review-card-front card-skin-default${rev.quality?' is-quality':''}" style="border-color:${REVIEW_CARD_BORDER_COLOR};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${REVIEW_CARD_BORDER_COLOR_SOFT};">
+        <article class="review-card review-card-face review-card-front card-skin-default" style="border-color:${REVIEW_CARD_BORDER_COLOR};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${REVIEW_CARD_BORDER_COLOR_SOFT};">
         <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="コメントを見る" data-i18n-aria="ariaViewComment">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
         </button>
@@ -25461,7 +25595,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div><p class="rc-chart-label">${t('chartBTitle')}</p><canvas class="rc-canvas" data-fbi="${i}" width="280" height="200"></canvas></div>
         </div>
         </article>
-        <article class="review-card review-card-face review-card-back card-skin-default${rev.quality?' is-quality':''}" style="border-color:${REVIEW_CARD_BORDER_COLOR};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${REVIEW_CARD_BORDER_COLOR_SOFT};">
+        <article class="review-card review-card-face review-card-back card-skin-default" style="border-color:${REVIEW_CARD_BORDER_COLOR};box-shadow:0 12px 30px -20px rgba(0,0,0,.8), inset 0 0 0 1px ${REVIEW_CARD_BORDER_COLOR_SOFT};">
           <button type="button" class="rc-flip-btn" data-flip-target="rc-flip-${i}" aria-label="戻る" data-i18n-aria="ariaBack">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
           </button>
