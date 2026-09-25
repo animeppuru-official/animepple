@@ -1112,9 +1112,21 @@
     .gacha-reveal-anim-overlay .stage { max-width:420px; width:100%; margin:0 auto; }
     .gacha-reveal-anim-overlay .stage svg { display:block; width:100%; height:auto; }
     .gacha-reveal-anim-overlay .halo, .gacha-reveal-anim-overlay .rays, .gacha-reveal-anim-overlay .burst,
-    .gacha-reveal-anim-overlay .capMove, .gacha-reveal-anim-overlay .glowPulse { opacity:0; }
+    .gacha-reveal-anim-overlay .capMove, .gacha-reveal-anim-overlay .glowPulse,
+    .gacha-reveal-anim-overlay .halo10, .gacha-reveal-anim-overlay .burst10,
+    .gacha-reveal-anim-overlay .cm0, .gacha-reveal-anim-overlay .cm1, .gacha-reveal-anim-overlay .cm2,
+    .gacha-reveal-anim-overlay .cm3, .gacha-reveal-anim-overlay .cm4, .gacha-reveal-anim-overlay .cm5,
+    .gacha-reveal-anim-overlay .cm6, .gacha-reveal-anim-overlay .cm7, .gacha-reveal-anim-overlay .cm8,
+    .gacha-reveal-anim-overlay .cm9 { opacity:0; }
     .gacha-reveal-anim-overlay .rise { transform:translateY(330px); }
     .gacha-reveal-anim-overlay .fill { stroke-dasharray:157.08; stroke-dashoffset:157.08; }
+    /* [2026-09-25追加] 10連ガチャは1個引き分と同じ筐体を使い回すが、飛び出すカプセルが10個に
+       増える(README記載の03_ten_pull.htmlの構成)。単発用の演出(halo/rays/burst/capMove)と
+       10連用の演出(halo10/burst10/cm0〜9)を同じSVG内に両方仕込んでおき、オーバーレイに
+       `is-batch10`クラスが付いているかどうかで表示側をdisplay切替する */
+    .gacha-reveal-anim-overlay .gacha-reveal-batch-caps { display:none; }
+    .gacha-reveal-anim-overlay.is-batch10 .gacha-reveal-single-caps { display:none; }
+    .gacha-reveal-anim-overlay.is-batch10 .gacha-reveal-batch-caps { display:inline; }
     .gacha-reveal-anim-overlay.is-playing .spin, .gacha-reveal-anim-overlay.is-playing .dot {
       transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealKnob 7s 1;
     }
@@ -1197,6 +1209,198 @@
       58.29% { opacity:1; transform:scale(1); }
       62.86%, 100% { opacity:0; transform:scale(1.5); }
     }
+    /* [2026-09-25追加] 10連ガチャ用(9秒周期)。元素材(03_ten_pull.html)の.spin/.fill/.rise/
+       .glowPulse/.flap/.thudは単発用と同じクラス名を共有しているため、`.is-batch10`修飾クラスを
+       重ねた分セレクタの詳細度を上げることで、単発用(7秒)のルールより優先させている */
+    .gacha-reveal-anim-overlay.is-playing.is-batch10 .spin, .gacha-reveal-anim-overlay.is-playing.is-batch10 .dot {
+      animation:gachaRevealKnob10 9s 1;
+    }
+    @keyframes gachaRevealKnob10 {
+      0% { transform:rotate(0deg); animation-timing-function:cubic-bezier(.4,0,.6,1); }
+      2.78% { transform:rotate(-4deg); animation-timing-function:cubic-bezier(.7,0,.35,1); }
+      31.67% { transform:rotate(94deg); animation-timing-function:cubic-bezier(.3,0,.3,1); }
+      33.33% { transform:rotate(90deg); }
+      100% { transform:rotate(90deg); }
+    }
+    .gacha-reveal-anim-overlay.is-playing.is-batch10 .fill { animation:gachaRevealMeter10 9s 1; }
+    @keyframes gachaRevealMeter10 {
+      0% { stroke-dashoffset:157.08; }
+      2.78% { stroke-dashoffset:157.08; animation-timing-function:cubic-bezier(.7,0,.35,1); }
+      31.67% { stroke-dashoffset:0; }
+      100% { stroke-dashoffset:0; }
+    }
+    .gacha-reveal-anim-overlay.is-playing.is-batch10 .rise { animation:gachaRevealRise10 9s 1; }
+    @keyframes gachaRevealRise10 {
+      0% { transform:translateY(330px); opacity:1; animation-timing-function:cubic-bezier(.55,0,.35,1); }
+      33.33% { transform:translateY(0); opacity:1; }
+      100% { transform:translateY(0); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing.is-batch10 .glowPulse { animation:gachaRevealGp10 9s 1; }
+    @keyframes gachaRevealGp10 { 0%, 30.56% { opacity:0; } 35.56% { opacity:1; } 100% { opacity:1; } }
+    .gacha-reveal-anim-overlay.is-playing.is-batch10 .flap { animation:gachaRevealFlap10 9s 1; }
+    @keyframes gachaRevealFlap10 {
+      0%, 43.89% { transform:scaleY(1); }
+      45.00% { transform:scaleY(-0.6); }
+      67.78% { transform:scaleY(-0.6); }
+      70.56% { transform:scaleY(1.08); }
+      72.22%, 100% { transform:scaleY(1); }
+    }
+    .gacha-reveal-anim-overlay.is-playing.is-batch10 .thud { animation:gachaRevealThud10 9s 1; }
+    @keyframes gachaRevealThud10 {
+      0%, 32.22% { transform:translateY(0); } 33.33% { transform:translateY(4px); } 34.44% { transform:translateY(-1px); }
+      35.56% { transform:translateY(0); } 44.11% { transform:translateY(0); } 44.78% { transform:translateY(2.5px); }
+      45.56% { transform:translateY(0); } 46.33% { transform:translateY(0); } 47.00% { transform:translateY(2.5px); }
+      47.78% { transform:translateY(0); } 48.56% { transform:translateY(0); } 49.22% { transform:translateY(2.5px); }
+      50.00% { transform:translateY(0); } 50.78% { transform:translateY(0); } 51.44% { transform:translateY(2.5px); }
+      52.22% { transform:translateY(0); } 53.00% { transform:translateY(0); } 53.67% { transform:translateY(2.5px); }
+      54.44% { transform:translateY(0); } 55.22% { transform:translateY(0); } 55.89% { transform:translateY(2.5px); }
+      56.67% { transform:translateY(0); } 57.44% { transform:translateY(0); } 58.11% { transform:translateY(2.5px); }
+      58.89% { transform:translateY(0); } 59.67% { transform:translateY(0); } 60.33% { transform:translateY(2.5px); }
+      61.11% { transform:translateY(0); } 61.89% { transform:translateY(0); } 62.56% { transform:translateY(2.5px); }
+      63.33% { transform:translateY(0); } 64.11% { transform:translateY(0); } 64.78% { transform:translateY(2.5px); }
+      65.56% { transform:translateY(0); } 100% { transform:translateY(0); }
+    }
+    .gacha-reveal-anim-overlay.is-playing .halo10 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealHalo10 9s 1; }
+    @keyframes gachaRevealHalo10 {
+      0%, 44.44% { opacity:0; transform:scale(.3); }
+      51.11% { opacity:.9; transform:scale(1); }
+      91.11% { opacity:.9; transform:scale(1); }
+      98.33%, 100% { opacity:0; transform:scale(1.05); }
+    }
+    .gacha-reveal-anim-overlay.is-playing .burst10 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealBurst10 9s 1; }
+    @keyframes gachaRevealBurst10 {
+      0% { opacity:0; transform:scale(.3); } 44.22% { opacity:0; transform:scale(.3); } 45.00% { opacity:1; transform:scale(1); }
+      46.44% { opacity:0; transform:scale(1.4); } 46.44% { opacity:0; transform:scale(.3); } 47.22% { opacity:1; transform:scale(1); }
+      48.67% { opacity:0; transform:scale(1.4); } 48.67% { opacity:0; transform:scale(.3); } 49.44% { opacity:1; transform:scale(1); }
+      50.89% { opacity:0; transform:scale(1.4); } 50.89% { opacity:0; transform:scale(.3); } 51.67% { opacity:1; transform:scale(1); }
+      53.11% { opacity:0; transform:scale(1.4); } 53.11% { opacity:0; transform:scale(.3); } 53.89% { opacity:1; transform:scale(1); }
+      55.33% { opacity:0; transform:scale(1.4); } 55.33% { opacity:0; transform:scale(.3); } 56.11% { opacity:1; transform:scale(1); }
+      57.56% { opacity:0; transform:scale(1.4); } 57.56% { opacity:0; transform:scale(.3); } 58.33% { opacity:1; transform:scale(1); }
+      59.78% { opacity:0; transform:scale(1.4); } 59.78% { opacity:0; transform:scale(.3); } 60.56% { opacity:1; transform:scale(1); }
+      62.00% { opacity:0; transform:scale(1.4); } 62.00% { opacity:0; transform:scale(.3); } 62.78% { opacity:1; transform:scale(1); }
+      64.22% { opacity:0; transform:scale(1.4); } 64.22% { opacity:0; transform:scale(.3); } 65.00% { opacity:1; transform:scale(1); }
+      66.44% { opacity:0; transform:scale(1.4); } 100% { opacity:0; transform:scale(1.4); }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cm0 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCm0 9s 1; }
+    @keyframes gachaRevealCm0 {
+      0%, 44.22% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      44.44% { transform:translate(0px,0px) scale(.6); opacity:1; animation-timing-function:cubic-bezier(.2,.7,.4,1); }
+      46.89% { transform:translate(-174px,-266px) scale(2.08); animation-timing-function:cubic-bezier(.5,0,.8,.6); }
+      49.11% { transform:translate(-232px,-156px) scale(1.44); animation-timing-function:ease-out; }
+      50.56% { transform:translate(-232px,-156px) scale(1.68); }
+      51.67% { transform:translate(-232px,-156px) scale(1.6); }
+      100% { transform:translate(-232px,-156px) scale(1.6); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cs0 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCs0 9s 1; }
+    @keyframes gachaRevealCs0 { 0%, 44.44% { transform:rotate(300deg); } 49.44% { transform:rotate(0deg); animation-timing-function:ease-out; } 100% { transform:rotate(0deg); } }
+    .gacha-reveal-anim-overlay.is-playing .cm1 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCm1 9s 1; }
+    @keyframes gachaRevealCm1 {
+      0%, 46.44% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      46.67% { transform:translate(0px,0px) scale(.6); opacity:1; animation-timing-function:cubic-bezier(.2,.7,.4,1); }
+      49.11% { transform:translate(-87px,-266px) scale(2.08); animation-timing-function:cubic-bezier(.5,0,.8,.6); }
+      51.33% { transform:translate(-116px,-156px) scale(1.44); animation-timing-function:ease-out; }
+      52.78% { transform:translate(-116px,-156px) scale(1.68); }
+      53.89% { transform:translate(-116px,-156px) scale(1.6); }
+      100% { transform:translate(-116px,-156px) scale(1.6); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cs1 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCs1 9s 1; }
+    @keyframes gachaRevealCs1 { 0%, 46.67% { transform:rotate(-300deg); } 51.67% { transform:rotate(0deg); animation-timing-function:ease-out; } 100% { transform:rotate(0deg); } }
+    .gacha-reveal-anim-overlay.is-playing .cm2 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCm2 9s 1; }
+    @keyframes gachaRevealCm2 {
+      0%, 48.67% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      48.89% { transform:translate(0px,0px) scale(.6); opacity:1; animation-timing-function:cubic-bezier(.2,.7,.4,1); }
+      51.33% { transform:translate(0px,-266px) scale(2.08); animation-timing-function:cubic-bezier(.5,0,.8,.6); }
+      53.56% { transform:translate(0px,-156px) scale(1.44); animation-timing-function:ease-out; }
+      55.00% { transform:translate(0px,-156px) scale(1.68); }
+      56.11% { transform:translate(0px,-156px) scale(1.6); }
+      100% { transform:translate(0px,-156px) scale(1.6); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cs2 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCs2 9s 1; }
+    @keyframes gachaRevealCs2 { 0%, 48.89% { transform:rotate(300deg); } 53.89% { transform:rotate(0deg); animation-timing-function:ease-out; } 100% { transform:rotate(0deg); } }
+    .gacha-reveal-anim-overlay.is-playing .cm3 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCm3 9s 1; }
+    @keyframes gachaRevealCm3 {
+      0%, 50.89% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      51.11% { transform:translate(0px,0px) scale(.6); opacity:1; animation-timing-function:cubic-bezier(.2,.7,.4,1); }
+      53.56% { transform:translate(87px,-266px) scale(2.08); animation-timing-function:cubic-bezier(.5,0,.8,.6); }
+      55.78% { transform:translate(116px,-156px) scale(1.44); animation-timing-function:ease-out; }
+      57.22% { transform:translate(116px,-156px) scale(1.68); }
+      58.33% { transform:translate(116px,-156px) scale(1.6); }
+      100% { transform:translate(116px,-156px) scale(1.6); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cs3 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCs3 9s 1; }
+    @keyframes gachaRevealCs3 { 0%, 51.11% { transform:rotate(-300deg); } 56.11% { transform:rotate(0deg); animation-timing-function:ease-out; } 100% { transform:rotate(0deg); } }
+    .gacha-reveal-anim-overlay.is-playing .cm4 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCm4 9s 1; }
+    @keyframes gachaRevealCm4 {
+      0%, 53.11% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      53.33% { transform:translate(0px,0px) scale(.6); opacity:1; animation-timing-function:cubic-bezier(.2,.7,.4,1); }
+      55.78% { transform:translate(174px,-266px) scale(2.08); animation-timing-function:cubic-bezier(.5,0,.8,.6); }
+      58.00% { transform:translate(232px,-156px) scale(1.44); animation-timing-function:ease-out; }
+      59.44% { transform:translate(232px,-156px) scale(1.68); }
+      60.56% { transform:translate(232px,-156px) scale(1.6); }
+      100% { transform:translate(232px,-156px) scale(1.6); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cs4 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCs4 9s 1; }
+    @keyframes gachaRevealCs4 { 0%, 53.33% { transform:rotate(300deg); } 58.33% { transform:rotate(0deg); animation-timing-function:ease-out; } 100% { transform:rotate(0deg); } }
+    .gacha-reveal-anim-overlay.is-playing .cm5 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCm5 9s 1; }
+    @keyframes gachaRevealCm5 {
+      0%, 55.33% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      55.56% { transform:translate(0px,0px) scale(.6); opacity:1; animation-timing-function:cubic-bezier(.2,.7,.4,1); }
+      58.00% { transform:translate(-174px,-150px) scale(2.08); animation-timing-function:cubic-bezier(.5,0,.8,.6); }
+      60.22% { transform:translate(-232px,-6px) scale(1.44); animation-timing-function:ease-out; }
+      61.67% { transform:translate(-232px,-6px) scale(1.68); }
+      62.78% { transform:translate(-232px,-6px) scale(1.6); }
+      100% { transform:translate(-232px,-6px) scale(1.6); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cs5 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCs5 9s 1; }
+    @keyframes gachaRevealCs5 { 0%, 55.56% { transform:rotate(-300deg); } 60.56% { transform:rotate(0deg); animation-timing-function:ease-out; } 100% { transform:rotate(0deg); } }
+    .gacha-reveal-anim-overlay.is-playing .cm6 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCm6 9s 1; }
+    @keyframes gachaRevealCm6 {
+      0%, 57.56% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      57.78% { transform:translate(0px,0px) scale(.6); opacity:1; animation-timing-function:cubic-bezier(.2,.7,.4,1); }
+      60.22% { transform:translate(-87px,-150px) scale(2.08); animation-timing-function:cubic-bezier(.5,0,.8,.6); }
+      62.44% { transform:translate(-116px,-6px) scale(1.44); animation-timing-function:ease-out; }
+      63.89% { transform:translate(-116px,-6px) scale(1.68); }
+      65.00% { transform:translate(-116px,-6px) scale(1.6); }
+      100% { transform:translate(-116px,-6px) scale(1.6); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cs6 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCs6 9s 1; }
+    @keyframes gachaRevealCs6 { 0%, 57.78% { transform:rotate(300deg); } 62.78% { transform:rotate(0deg); animation-timing-function:ease-out; } 100% { transform:rotate(0deg); } }
+    .gacha-reveal-anim-overlay.is-playing .cm7 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCm7 9s 1; }
+    @keyframes gachaRevealCm7 {
+      0%, 59.78% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      60.00% { transform:translate(0px,0px) scale(.6); opacity:1; animation-timing-function:cubic-bezier(.2,.7,.4,1); }
+      62.44% { transform:translate(0px,-150px) scale(2.08); animation-timing-function:cubic-bezier(.5,0,.8,.6); }
+      64.67% { transform:translate(0px,-6px) scale(1.44); animation-timing-function:ease-out; }
+      66.11% { transform:translate(0px,-6px) scale(1.68); }
+      67.22% { transform:translate(0px,-6px) scale(1.6); }
+      100% { transform:translate(0px,-6px) scale(1.6); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cs7 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCs7 9s 1; }
+    @keyframes gachaRevealCs7 { 0%, 60.00% { transform:rotate(-300deg); } 65.00% { transform:rotate(0deg); animation-timing-function:ease-out; } 100% { transform:rotate(0deg); } }
+    .gacha-reveal-anim-overlay.is-playing .cm8 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCm8 9s 1; }
+    @keyframes gachaRevealCm8 {
+      0%, 62.00% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      62.22% { transform:translate(0px,0px) scale(.6); opacity:1; animation-timing-function:cubic-bezier(.2,.7,.4,1); }
+      64.67% { transform:translate(87px,-150px) scale(2.08); animation-timing-function:cubic-bezier(.5,0,.8,.6); }
+      66.89% { transform:translate(116px,-6px) scale(1.44); animation-timing-function:ease-out; }
+      68.33% { transform:translate(116px,-6px) scale(1.68); }
+      69.44% { transform:translate(116px,-6px) scale(1.6); }
+      100% { transform:translate(116px,-6px) scale(1.6); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cs8 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCs8 9s 1; }
+    @keyframes gachaRevealCs8 { 0%, 62.22% { transform:rotate(300deg); } 67.22% { transform:rotate(0deg); animation-timing-function:ease-out; } 100% { transform:rotate(0deg); } }
+    .gacha-reveal-anim-overlay.is-playing .cm9 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCm9 9s 1; }
+    @keyframes gachaRevealCm9 {
+      0%, 64.22% { transform:translate(0px,6px) scale(.4); opacity:0; }
+      64.44% { transform:translate(0px,0px) scale(.6); opacity:1; animation-timing-function:cubic-bezier(.2,.7,.4,1); }
+      66.89% { transform:translate(174px,-150px) scale(2.08); animation-timing-function:cubic-bezier(.5,0,.8,.6); }
+      69.11% { transform:translate(232px,-6px) scale(1.44); animation-timing-function:ease-out; }
+      70.56% { transform:translate(232px,-6px) scale(1.68); }
+      71.67% { transform:translate(232px,-6px) scale(1.6); }
+      100% { transform:translate(232px,-6px) scale(1.6); opacity:1; }
+    }
+    .gacha-reveal-anim-overlay.is-playing .cs9 { transform-box:fill-box; transform-origin:50% 50%; animation:gachaRevealCs9 9s 1; }
+    @keyframes gachaRevealCs9 { 0%, 64.44% { transform:rotate(-300deg); } 69.44% { transform:rotate(0deg); animation-timing-function:ease-out; } 100% { transform:rotate(0deg); } }
     .gcap-rays { transform-box:fill-box; transform-origin:50% 50%; animation:gcapRayRot 18s linear infinite; }
     @keyframes gcapRayRot { to { transform:rotate(360deg); } }
     .gacha-reveal-anim-overlay .tw { transform-box:fill-box; transform-origin:50% 50%; animation:gcapTwinkle 2.2s ease-in-out infinite; }
@@ -4815,6 +5019,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <path d="M516 115 C540 108 566 104 588 104" fill="none" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="2.5" stroke-linecap="round"></path>
 </g>
 
+<g class="gacha-reveal-single-caps">
 <circle class="halo" cx="500" cy="686" r="190" fill="url(#gm_haloG)"></circle>
 <g class="rays"><path d="M500 686 L759.4 667.9 L759.4 704.1 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L733.7 800.0 L715.5 831.4 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L645.4 901.5 L614.0 919.7 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L518.1 945.4 L481.9 945.4 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L386.0 919.7 L354.6 901.5 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L284.5 831.4 L266.3 800.0 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L240.6 704.1 L240.6 667.9 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L266.3 572.0 L284.5 540.6 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L354.6 470.5 L386.0 452.3 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L481.9 426.6 L518.1 426.6 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L614.0 452.3 L645.4 470.5 Z" fill="url(#gm_rayG)"></path><path d="M500 686 L715.5 540.6 L733.7 572.0 Z" fill="url(#gm_rayG)"></path></g>
 <g class="burst">
@@ -4823,6 +5028,23 @@ document.addEventListener('DOMContentLoaded', () => {
 <g class="capMove"><g class="capSpin">
 <g id="gachaCapsuleMount" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g>
 </g></g>
+</g>
+<g class="gacha-reveal-batch-caps">
+<ellipse class="halo10" cx="500" cy="715" rx="400" ry="230" fill="url(#gm_haloG)"></ellipse>
+<g class="burst10">
+<path d="M500 740 L500 718 M462 750 L448 734 M538 750 L552 734 M440 772 L420 766 M560 772 L580 766" stroke="#FFE7A3" stroke-width="5" stroke-linecap="round"></path>
+</g>
+<g class="cm0"><g class="cs0"><g id="gachaCapsuleMount0" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g></g></g>
+<g class="cm1"><g class="cs1"><g id="gachaCapsuleMount1" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g></g></g>
+<g class="cm2"><g class="cs2"><g id="gachaCapsuleMount2" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g></g></g>
+<g class="cm3"><g class="cs3"><g id="gachaCapsuleMount3" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g></g></g>
+<g class="cm4"><g class="cs4"><g id="gachaCapsuleMount4" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g></g></g>
+<g class="cm5"><g class="cs5"><g id="gachaCapsuleMount5" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g></g></g>
+<g class="cm6"><g class="cs6"><g id="gachaCapsuleMount6" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g></g></g>
+<g class="cm7"><g class="cs7"><g id="gachaCapsuleMount7" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g></g></g>
+<g class="cm8"><g class="cs8"><g id="gachaCapsuleMount8" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g></g></g>
+<g class="cm9"><g class="cs9"><g id="gachaCapsuleMount9" transform="translate(500 796) scale(0.41) translate(-200 -200)"></g></g></g>
+</g>
 </svg>
 </div>
 </div>
@@ -13471,31 +13693,43 @@ document.addEventListener('DOMContentLoaded', () => {
   // ユーザー操作は不要(長押し・タップ待ちが無い)。満タンになった瞬間にCSS側でカプセルが
   // スプラッシュして拡大するアニメーションへ自動的に移り、JS側はその演出時間が終わるのを
   // 待ってからこのポップを閉じ、結果ポップ(revealGachaResult)へ引き継ぐだけでよい
-  // [2026-09-25変更] 演出時間は筐体アニメーションのタイムライン(7秒周期、カプセルは
+  // [2026-09-25変更] 演出時間は筐体アニメーションのタイムライン(単発は7秒周期、カプセルは
   // 4.0〜4.8秒で飛び出し4.8〜6.5秒は静止表示)に合わせている。6.5秒以降はループ用の
   // フェードアウトなので、カプセルが静止して見えている間(5.4秒)で結果ポップへ引き継ぐ
   const GACHA_REVEAL_ANIM_MS = 5400;
+  // [2026-09-25追加] 10連は筐体アニメーションのタイムラインが9秒周期(03_ten_pull.html)。
+  // 10個目のカプセル(cm9)が69.44%≒6.25秒で着地し、91.11%≒8.2秒まで10個とも静止表示される。
+  // ループ用フェードアウトは98.33%≒8.85秒から始まるため、その手前(7.8秒)で結果ポップへ引き継ぐ
+  const GACHA_REVEAL_ANIM_MS_BATCH10 = 7800;
   function playGachaRevealAnimation(results) {
     return new Promise(resolve => {
       const overlay = document.getElementById('gachaRevealAnimOverlay');
-      const mount = document.getElementById('gachaCapsuleMount');
       if(!overlay) { resolve(); return; }
-      // 飛び出すカプセルは、その回で出た中で一番レアな景品のもの(無ければN扱い)
-      let bestTier = null;
-      results.forEach(r => {
-        if(!r.item) return;
-        if(!bestTier || GACHA_RARITY_ORDER.indexOf(r.item.tier) > GACHA_RARITY_ORDER.indexOf(bestTier)) bestTier = r.item.tier;
-      });
-      if(mount) mount.innerHTML = GACHA_CAPSULE_DEFS + (GACHA_CAPSULE_BODY[bestTier] || GACHA_CAPSULE_BODY.N);
-      overlay.classList.remove('is-playing');
+      const isBatch = results.length > 1;
+      if(isBatch) {
+        // 10連：飛び出す10個のカプセルは、それぞれの回で実際に出たレア度のものにする
+        results.slice(0, 10).forEach((r, i) => {
+          const mount = document.getElementById('gachaCapsuleMount' + i);
+          if(!mount) return;
+          const tier = r.item ? r.item.tier : null;
+          mount.innerHTML = GACHA_CAPSULE_DEFS + (GACHA_CAPSULE_BODY[tier] || GACHA_CAPSULE_BODY.N);
+        });
+      } else {
+        // 単発：出た景品のレア度のカプセル1個だけを飛び出させる
+        const item = results[0] && results[0].item;
+        const mount = document.getElementById('gachaCapsuleMount');
+        if(mount) mount.innerHTML = GACHA_CAPSULE_DEFS + (GACHA_CAPSULE_BODY[item && item.tier] || GACHA_CAPSULE_BODY.N);
+      }
+      overlay.classList.remove('is-playing', 'is-batch10');
       void overlay.offsetWidth; // アニメーションを最初から再生させるための強制リフロー
       overlay.style.display = 'flex';
+      overlay.classList.toggle('is-batch10', isBatch);
       overlay.classList.add('is-playing');
       setTimeout(() => {
         overlay.style.display = 'none';
-        overlay.classList.remove('is-playing');
+        overlay.classList.remove('is-playing', 'is-batch10');
         resolve();
-      }, GACHA_REVEAL_ANIM_MS);
+      }, isBatch ? GACHA_REVEAL_ANIM_MS_BATCH10 : GACHA_REVEAL_ANIM_MS);
     });
   }
 
