@@ -727,9 +727,12 @@
        マスコット付きのブランドアイコン(animeppurucoin.jpe)に差し替えた。画像自体に立体感・
        縁のギザギザが描き込まれているため、以前付けていたinsetのbox-shadow(金貨の質感を
        CSSで出すためのもの)は不要になり削除した。border-radius:50%で正方形画像の四隅
-       (グレーの背景部分)を円形にクリップしている */
+       (グレーの背景部分)を円形にクリップしている
+       [2026-09-27変更] animeppurucoin.jpeは1008x1043pxの1枚絵を14〜44pxまで縮小表示していた
+       ため、縁のギザギザ模様がモアレを起こして「がびがび」に見える不具合があった。
+       表示サイズに合わせて作り直したapple_coin_128.png(128px角PNG)に差し替えた */
     .coin-dot { display:inline-block; width:14px; height:14px; border-radius:50%; flex:0 0 auto;
-      background-image:url('https://animepple.com/icons/animeppurucoin.jpe');
+      background-image:url('https://animepple.com/icons/apple_coin_128.png');
       background-size:cover; background-position:center; }
     .coin-dot-lg { width:26px; height:26px; }
     .coin-balance { display:flex; align-items:center; gap:7px; margin:0 0 1rem;
