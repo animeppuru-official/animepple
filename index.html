@@ -17865,8 +17865,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const avatarBg = isMine ? 'linear-gradient(150deg,#4a2f6d,#241a2c)' : 'linear-gradient(150deg,#2c4436,#1d3225)';
     const avatarText = isMine ? '#d9c2ef' : '#9be3bd';
     const avatarUrl = avatarMap[item.user_id];
-    // 連投2件目以降は同幅のスペーサーだけ残して列を揃える
-    const avatar = grouped
+    // 連投2件目以降は同幅のスペーサーだけ残して列を揃える（掲示板の挙動）。
+    // ただしDMは opts.alwaysShowAvatar で連投中でも毎回本物のアイコンを出す
+    const avatar = (grouped && !opts.alwaysShowAvatar)
       ? `<span class="user-avatar-circle"></span>`
       : (avatarUrl
         ? `<img src="${escapeHtml(avatarUrl)}" onclick="event.stopPropagation();nav('user','${escapeHtml(item.user_id)}')" class="user-avatar-circle ${avatarFrameClass}" style="border-radius:50%;object-fit:cover;cursor:pointer;">`
@@ -28126,7 +28127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         && chatDayKey(prev.created_at) === chatDayKey(p.created_at)
         && (new Date(p.created_at) - new Date(prev.created_at)) < 5*60*1000;
       out += `<div class="board-msg-row" style="display:flex;flex-direction:column;align-items:${isMine?'flex-end':'flex-start'};gap:4px;${grouped?'margin-top:-9px;':''}animation:boardMsgIn .26s cubic-bezier(.22,1,.36,1) both;">
-        ${renderChatBubbleHtml(p, { grouped, avatarMap, skinMap, frameMap, showMoreBtn: false })}
+        ${renderChatBubbleHtml(p, { grouped, avatarMap, skinMap, frameMap, showMoreBtn: false, alwaysShowAvatar: true })}
       </div>`;
       prev = p;
     });
