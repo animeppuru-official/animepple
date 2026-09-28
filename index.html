@@ -6065,20 +6065,11 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- 左：説明と金額選択 -->
     <div class="tip-col-main">
       <h2 class="tip-title" data-i18n="tipTitle">開発を応援する</h2>
-      <p class="tip-desc" data-i18n="tipDesc">アニメップルの開発・運営を応援していただける方は、こちらから投げ銭ができます。金額はいくらでも、いつでも大丈夫です。</p>
+      <p class="tip-desc" data-i18n="tipDesc">アニメップルの開発・運営を応援していただける方に、支援者バッジをご用意しています。お選びいただいた金額に応じたバッジが、購入後すぐにプロフィールに表示されます。</p>
 
-      <p class="tip-field-label" data-i18n="tipPickLabel">金額を選ぶ</p>
-      <!-- 6枠目に「自由に入力」を置いて3列を埋める（1段目3・2段目2で行がずれるのを解消） -->
+      <p class="tip-field-label" data-i18n="tipPickLabel">支援者バッジを選ぶ</p>
+      <!-- [2026-09-28変更] 自由入力欄(旧tipCustomWrap)は廃止。固定価格の支援者バッジ5種のみ -->
       <div id="tipAmountGrid" class="tip-amount-grid"></div>
-
-      <div id="tipCustomWrap" class="tip-custom-wrap">
-        <p class="tip-field-label" data-i18n="tipCustomLabel">金額を自分で決める</p>
-        <div class="tip-custom-field" id="tipCustomField">
-          <span class="tip-custom-yen">¥</span>
-          <input id="tipCustomAmount" type="number" min="500" step="100" placeholder="500以上で自由に入力" data-i18n="phTipCustomAmount" class="tip-custom-input">
-        </div>
-        <p id="tipCustomError" class="tip-custom-error" style="display:none;" data-i18n="tipCustomError">¥500以上で入力してください</p>
-      </div>
 
       <div class="tip-msg-wrap">
         <p class="tip-field-label tip-field-label-row">
@@ -6404,7 +6395,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <section class="pp-section">
       <h2>1. 対象となる購入</h2>
-      <p>本ポリシーは、アニメップル＋（サブスクリプション）、ガチャチケット（ガチャ1回分の利用権の購入）、投げ銭（サポーター向けの任意の支払い）に適用されます。決済は、当社の決済代行事業者（Merchant of Record）であるPaddle.com Market Limitedを通じて処理されます。</p>
+      <p>本ポリシーは、アニメップル＋（サブスクリプション）、ガチャチケット（ガチャ1回分の利用権の購入）、支援者バッジ（固定価格でプロフィールバッジを購入いただく応援機能）に適用されます。決済は、当社の決済代行事業者（Merchant of Record）であるPaddle.com Market Limitedを通じて処理されます。</p>
     </section>
 
     <section class="pp-section">
@@ -6418,8 +6409,8 @@ document.addEventListener('DOMContentLoaded', () => {
     </section>
 
     <section class="pp-section">
-      <h2>4. 投げ銭について</h2>
-      <p>投げ銭は、運営者の活動を支援する目的の任意の支払いであり、性質上返金の対象とはなりません。</p>
+      <h2>4. 支援者バッジについて</h2>
+      <p>支援者バッジは、購入完了と同時にプロフィールへ表示される、使用が完了したデジタルコンテンツであるため、原則として返金には応じられません。</p>
     </section>
 
     <section class="pp-section">
@@ -6433,7 +6424,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <section class="pp-section">
       <h2>1. Purchases Covered</h2>
-      <p>This Policy applies to Animepple+ (subscription), Gacha Tickets (direct purchase of the right to one gacha draw), and Tips (optional payments to support the operator). Payments are processed through our payment processor (Merchant of Record), Paddle.com Market Limited.</p>
+      <p>This Policy applies to Animepple+ (subscription), Gacha Tickets (direct purchase of the right to one gacha draw), and Supporter Badges (a fixed-price profile badge you can purchase to support the operator). Payments are processed through our payment processor (Merchant of Record), Paddle.com Market Limited.</p>
     </section>
 
     <section class="pp-section">
@@ -6447,8 +6438,8 @@ document.addEventListener('DOMContentLoaded', () => {
     </section>
 
     <section class="pp-section">
-      <h2>4. Tips</h2>
-      <p>Tips are optional payments intended to support the operator's activities and are, by their nature, not eligible for a refund.</p>
+      <h2>4. Supporter Badges</h2>
+      <p>A Supporter Badge is digital content that is applied to your profile immediately upon purchase, and its purchase and use are therefore complete upon delivery; it is, in principle, non-refundable.</p>
     </section>
 
     <section class="pp-section">
@@ -7473,7 +7464,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </button>
         </div>
         <div class="mypage-info">
-          <p class="mypage-name" id="mypageUsername" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span id="mypageUsernameText" data-i18n="labelUsername2">ユーザー名</span><span id="mypageCountryBadge"></span></p>
+          <p class="mypage-name" id="mypageUsername" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span id="mypageUsernameText" data-i18n="labelUsername2">ユーザー名</span><span id="mypageCountryBadge"></span><span id="mypageSupportBadge"></span></p>
           <p class="mypage-sub" id="mypageEmail" style="display:none;">email</p>
         </div>
         <div class="mypage-actions mypage-owner-only" id="mypageEditRow">
@@ -8024,43 +8015,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 投げ銭の自由金額用：事前登録が無い金額は、その場限りの非カタログ価格として作る
-  // 注意: Paddle.js（ブラウザ側）の Checkout.open() は priceId か transactionId しか受け付けず、
-  // price:{...} オブジェクトを直接渡すことはできない（サーバー側Transactions API専用の機能）。
-  // そのため、先にEdge Function(create-tip-transaction)でPaddle上にtransactionを作成し、
-  // 返ってきたtransactionIdをCheckoutに渡す2段階の流れにする。
-  async function openPaddleCheckoutCustomAmount(amountJpy, extraCustomData) {
-    if(!_currentUser) { showAuthModal('login'); return; }
-    initPaddle();
-    if(typeof Paddle === 'undefined') { alert(t('paymentComingSoonAlert')); return; }
-    try {
-      const { data: sessionData } = await sb.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if(!accessToken) { showAuthModal('login'); return; }
-
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/create-tip-transaction`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          amount_jpy: Math.round(amountJpy),
-          message: (extraCustomData && extraCustomData.message) || '',
-        }),
-      });
-      const json = await res.json();
-      if(!res.ok || !json.transaction_id) {
-        console.error('投げ銭取引の作成に失敗:', json);
-        alert(t('paymentComingSoonAlert'));
-        return;
-      }
-      Paddle.Checkout.open({ transactionId: json.transaction_id });
-    } catch(e) {
-      console.error('投げ銭チェックアウトの起動に失敗:', e);
-      alert(t('paymentComingSoonAlert'));
-    }
-  }
+  // [2026-09-28削除] 投げ銭の自由金額入力(openPaddleCheckoutCustomAmount)を廃止したため、
+  // これを使っていたcreate-tip-transaction Edge Functionも呼び出し元が無くなった。
+  // 関数ファイル自体(supabase-functions/create-tip-transaction/)は削除していないので、
+  // 不要であれば`supabase functions delete create-tip-transaction`で手動削除すること。
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYmpmaXVheWZoZGtnZXJ0eHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzAxOTIsImV4cCI6MjA5ODIwNjE5Mn0.atbMSoL6d_-F-RRomwfjWeKe1YOMZi-48tnPx--Etco';
   // Turnstile サイトキーは公開情報（秘密鍵ではない）なので直書きで問題ない。
   const TURNSTILE_SITE_KEY = '0x4AAAAAADt8IYSLv7u6jj7S';
@@ -8223,10 +8181,13 @@ document.addEventListener('DOMContentLoaded', () => {
       async get(userId) {
         if(!sb) return null;
         if(_currentUser && userId === _currentUser.id) {
-          const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,plan_paddle_subscription_id,plan_renews_at,plan_cancel_scheduled,pending_plan,pending_plan_effective_at').eq('id', userId).single();
+          const { data } = await sb.from('profiles').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,plan_paddle_subscription_id,plan_renews_at,plan_cancel_scheduled,pending_plan,pending_plan_effective_at,support_tier').eq('id', userId).single();
           return data;
         }
-        const { data } = await sb.from('profiles_public').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan').eq('id', userId).single();
+        // [2026-09-28追加] 支援者バッジ(support_tier)は他人のプロフィールでも見える(プロフィールに
+        // 表示するのが目的の景品のため)。要SQL実行: profiles_publicビューにsupport_tier列を追加
+        // (alter view/再作成が必要。詳細は下のprofiles_publicビュー定義コメント参照)
+        const { data } = await sb.from('profiles_public').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,support_tier').eq('id', userId).single();
         return data;
       },
       async getByIds(userIds) {
@@ -10235,9 +10196,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // [追加] 組織票対策(投票権へのアカウント年齢反映)のため、レビュー投稿者のアカウント作成日時を
   // まとめて取得する。profiles_publicビューにcreated_atを追加してから使うこと(下記コメント参照)。
   //   alter view/再作成が必要: profiles_publicビューにcreated_atを追加する
+  //   [2026-09-28追加] support_tier(支援者バッジ、投げ銭→固定価格バッジ購入の景品)も
+  //   他人のプロフィールから見える必要があるため、このビューに追加する。事前にprofiles本体へ
+  //   列を追加しておくこと: alter table profiles add column if not exists support_tier text;
   //   create or replace view public.profiles_public as
   //     select id, username, bio, favorite_genres, avatar_url, gender, age_group,
-  //            country_code, show_friends_count, is_admin, plan, created_at
+  //            country_code, show_friends_count, is_admin, plan, created_at, support_tier
   //     from public.profiles;
   async function fetchAccountCreatedAtMap(userIds) {
     const uncached = [...new Set(userIds)].filter(uid => uid && !_accountCreatedAtCache.has(uid));
@@ -17124,10 +17088,29 @@ document.addEventListener('DOMContentLoaded', () => {
     return pageMap;
   }
   let _boardHubNewOnes = []; // 「全部消去」ボタンから参照するため、直近の描画結果を保持しておく
-  // ── 投げ銭（開発を応援する）：金額選択UIのみ先行実装。実際の決済（Paddle連携）は
-  // アカウント審査完了後に接続する。押した時の見た目・選択状態までは今のうちに作っておく ──
-  const TIP_AMOUNTS = [500, 1000, 3000, 5000, 10000];
+  // ── 投げ銭（開発を応援する）→ 支援者バッジの直接購入 ──
+  // [2026-09-28変更] Paddle審査で却下され、利用規約(Acceptable Use Policy)に「Where there is
+  // no bona fide software or service sold, including but not limited to donations」という
+  // 禁止条項があることが判明した。「いくらでも任意の金額を送れる」寄付形式をやめ、
+  // 固定価格ごとに実体のある景品(支援者バッジ、プロフィールに表示される)が届く
+  // 「商品の購入」に変更した(Twitch Bits・YouTubeスーパーチャット/メンバーシップと同じ考え方)。
+  // 自由入力欄(旧tipCustomAmount)は廃止し、5段階の固定価格のみにした。
+  const SUPPORT_TIERS = [
+    { amount: 500,   id: 'bronze',   nameKey: 'supportTierBronze',   color: '#cd7f32', bg: 'rgba(205,127,50,.16)' },
+    { amount: 1000,  id: 'silver',   nameKey: 'supportTierSilver',   color: '#c0c8d0', bg: 'rgba(192,200,208,.18)' },
+    { amount: 3000,  id: 'gold',     nameKey: 'supportTierGold',     color: '#d9a441', bg: 'rgba(217,164,65,.18)' },
+    { amount: 5000,  id: 'platinum', nameKey: 'supportTierPlatinum', color: '#7fd8d0', bg: 'rgba(127,216,208,.18)' },
+    { amount: 10000, id: 'diamond',  nameKey: 'supportTierDiamond',  color: '#b18cf2', bg: 'rgba(177,140,242,.2)' },
+  ];
+  const TIP_AMOUNTS = SUPPORT_TIERS.map(s => s.amount);
   const TIP_HIGHLIGHT = [1000, 3000]; // 目立たせる金額
+  function getSupportTierByAmount(amount) { return SUPPORT_TIERS.find(s => s.amount === amount) || null; }
+  // 支援者バッジHTML(マイページの名前の隣に出す)。tierIdはprofiles.support_tier(null可)
+  function supportBadgeHtml(tierId) {
+    const tier = SUPPORT_TIERS.find(s => s.id === tierId);
+    if(!tier) return '';
+    return `<span style="padding:1px 6px;border-radius:4px;background:${tier.bg};font-size:9.5px;font-weight:800;color:${tier.color};white-space:nowrap;">🎖️ ${escapeHtml(t(tier.nameKey))}</span>`;
+  }
   let _tipSelectedAmount = null;
   // ── プラン（サブスク）：実際のprofiles.planを見て、状態に応じてボタンを切り替える。
   // 状態は3つ：①未契約→購読ボタン ②契約中(解約予約なし)→解約するボタン
@@ -17440,10 +17423,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('tipAmountGrid');
     if(!grid) return;
     _tipSelectedAmount = null;
-    const customWrap = document.getElementById('tipCustomWrap');
-    const customField = document.getElementById('tipCustomField');
-    const customInput = document.getElementById('tipCustomAmount');
-    const customError = document.getElementById('tipCustomError');
     const confirmBtn = document.getElementById('tipConfirmBtn');
     const notifyBtn = document.getElementById('tipNotifyBtn');
     // [2026-09-21] 「決済機能は準備中です」の告知はベータ版の間だけ出し、正式版移行後は出さない(ユーザー指示)
@@ -17454,24 +17433,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const msgEl = document.getElementById('tipMessage');
     if(msgEl) msgEl.value = '';
 
-    // 定額5つ ＋ 6枠目「自由に入力」で3列を埋める
-    grid.innerHTML = TIP_AMOUNTS.map(amount => {
-      const isHighlight = TIP_HIGHLIGHT.includes(amount);
+    // [2026-09-28変更] 固定価格の支援者バッジ5種のみ(自由入力は廃止)。各ボタンにバッジ名を表示する
+    grid.innerHTML = SUPPORT_TIERS.map(tier => {
+      const isHighlight = TIP_HIGHLIGHT.includes(tier.amount);
       return `
-        <button type="button" class="tip-amount-btn${isHighlight?' is-popular':''}" data-amount="${amount}">
+        <button type="button" class="tip-amount-btn${isHighlight?' is-popular':''}" data-amount="${tier.amount}">
           ${isHighlight ? `<span class="tip-amount-ribbon">${escapeHtml(t('tipPopularLabel'))}</span>` : ''}
-          ¥${amount.toLocaleString()}
+          <span style="display:block;font-size:10.5px;font-weight:800;color:${tier.color};margin-bottom:2px;">${escapeHtml(t(tier.nameKey))}</span>
+          ¥${tier.amount.toLocaleString()}
         </button>`;
-    }).join('') + `
-      <button type="button" class="tip-amount-btn tip-amount-custom" data-amount="custom">
-        <span>${escapeHtml(t('tipCustomBtn'))}</span>
-        <span class="tip-amount-custom-sub">${escapeHtml(t('tipCustomMin'))}</span>
-      </button>`;
+    }).join('');
 
     const buttons = [...grid.querySelectorAll('.tip-amount-btn')];
     const setSummary = () => {
       if(!summaryEl) return;
-      summaryEl.textContent = _tipSelectedAmount ? ('¥' + _tipSelectedAmount.toLocaleString()) : '—';
+      const tier = getSupportTierByAmount(_tipSelectedAmount);
+      summaryEl.textContent = tier ? `${t(tier.nameKey)}（¥${tier.amount.toLocaleString()}）` : '—';
     };
     const clearMarks = () => buttons.forEach(b=>{
       b.classList.remove('is-selected');
@@ -17480,50 +17457,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const mark = btnEl => {
       btnEl.classList.add('is-selected');
-      if(!btnEl.querySelector('.tip-amount-check') && !btnEl.classList.contains('tip-amount-custom')) {
+      if(!btnEl.querySelector('.tip-amount-check')) {
         const chk = document.createElement('span');
         chk.className = 'tip-amount-check';
         chk.textContent = '✓';
         btnEl.appendChild(chk);
       }
     };
-    const showCustomError = show => {
-      if(customField) customField.classList.toggle('is-error', !!show);
-      if(customError) customError.style.display = show ? '' : 'none';
-    };
 
     buttons.forEach(btn => {
       btn.onclick = () => {
         clearMarks();
         mark(btn);
-        if(btn.dataset.amount === 'custom') {
-          // 自由入力を選んだときだけ入力欄を開く
-          if(customWrap) customWrap.classList.add('is-open');
-          if(customInput) customInput.focus();
-          const v = Number(customInput && customInput.value);
-          _tipSelectedAmount = v >= 500 ? v : null;
-        } else {
-          if(customWrap) customWrap.classList.remove('is-open');
-          if(customInput) customInput.value = '';
-          showCustomError(false);
-          _tipSelectedAmount = Number(btn.dataset.amount);
-        }
+        _tipSelectedAmount = Number(btn.dataset.amount);
         setSummary();
       };
     });
-
-    if(customInput) {
-      customInput.oninput = () => {
-        const raw = customInput.value;
-        const v = Number(raw);
-        _tipSelectedAmount = v >= 500 ? v : null;
-        showCustomError(!!raw && v < 500);
-        clearMarks();
-        const customBtn = buttons.find(b=>b.dataset.amount === 'custom');
-        if(customBtn) mark(customBtn);
-        setSummary();
-      };
-    }
     setSummary();
 
     if(confirmBtn) {
@@ -17532,17 +17481,15 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmBtn.textContent = paymentsReady ? t('tipConfirmBtn') : t('tipSoonBtn');
       confirmBtn.onclick = () => {
         if(!paymentsReady) return;
-        if(!_tipSelectedAmount || _tipSelectedAmount < 500) {
+        const tier = getSupportTierByAmount(_tipSelectedAmount);
+        if(!tier) {
           alert(t('tipAmountRequiredAlert'));
           return;
         }
         const message = msgEl ? msgEl.value.slice(0, 200) : '';
         const priceId = PADDLE_PRICE_IDS.tip[_tipSelectedAmount];
-        if(priceId) {
-          openPaddleCheckout(priceId, { kind: 'tip', amount: _tipSelectedAmount, message });
-        } else {
-          openPaddleCheckoutCustomAmount(_tipSelectedAmount, { message });
-        }
+        if(!priceId) { alert(t('paymentComingSoonAlert')); return; }
+        openPaddleCheckout(priceId, { kind: 'tip', amount: _tipSelectedAmount, message });
       };
     }
     if(notifyBtn) {
@@ -21186,18 +21133,21 @@ document.addEventListener('DOMContentLoaded', () => {
     planPlusDesc: { ja:'準備中', en:'Coming soon', ko:'준비 중', 'zh-tw':'準備中', 'zh-cn':'准备中', es:'Próximamente', fr:'Bientôt disponible', pt:'Em breve', de:'Demnächst', ar:'قريبًا', th:'เร็วๆ นี้', id:'Segera hadir', ru:'Скоро', it:'Prossimamente', vi:'Sắp ra mắt' },
     planCreatorDesc: { ja:'準備中', en:'Coming soon', ko:'준비 중', 'zh-tw':'準備中', 'zh-cn':'准备中', es:'Próximamente', fr:'Bientôt disponible', pt:'Em breve', de:'Demnächst', ar:'قريبًا', th:'เร็วๆ นี้', id:'Segera hadir', ru:'Скоро', it:'Prossimamente', vi:'Sắp ra mắt' },
     tipTitle: { ja:'開発を応援する', en:'Support development', ko:'개발 응원하기', 'zh-tw':'支持開發', 'zh-cn':'支持开发', es:'Apoyar el desarrollo', fr:'Soutenir le développement', pt:'Apoiar o desenvolvimento', de:'Entwicklung unterstützen', ar:'دعم التطوير', th:'สนับสนุนการพัฒนา', id:'Dukung pengembangan', ru:'Поддержать разработку', it:'Sostieni lo sviluppo', vi:'Ủng hộ phát triển' },
-    tipDesc: { ja:'アニメップルの開発・運営を応援していただける方は、こちらから投げ銭ができます。金額はいくらでも、いつでも大丈夫です。', en:'Support Animepple\'s development with a one-time tip of any amount, any time.', ko:'애니메플의 개발・운영을 응원하고 싶으신 분은 여기서 후원할 수 있습니다. 금액은 얼마든, 언제든 괜찮습니다.', 'zh-tw':'如果您想支持Animepple的開發・營運，可以在這裡贊助。金額不拘，隨時都可以。', 'zh-cn':'如果您想支持Animepple的开发・运营，可以在这里打赏。金额不限，随时都可以。', es:'Si quieres apoyar el desarrollo y la operación de Animepple, puedes dar una propina aquí. Cualquier cantidad, en cualquier momento.', fr:'Si vous souhaitez soutenir le développement et la gestion d\'Animepple, vous pouvez laisser un pourboire ici. Montant libre, à tout moment.', pt:'Se você quiser apoiar o desenvolvimento e a operação do Animepple, pode dar uma gorjeta por aqui. Qualquer valor, a qualquer momento.', de:'Wenn du die Entwicklung und den Betrieb von Animepple unterstützen möchtest, kannst du hier ein Trinkgeld geben. Jeder Betrag, jederzeit.', ar:'إذا كنت ترغب في دعم تطوير وتشغيل Animepple، يمكنك تقديم إكرامية من هنا. أي مبلغ، في أي وقت.', th:'หากอยากสนับสนุนการพัฒนาและดำเนินงานของ Animepple สามารถให้ทิปได้ที่นี่ จำนวนเท่าไหร่ก็ได้ เมื่อไหร่ก็ได้', id:'Jika Anda ingin mendukung pengembangan dan operasional Animepple, Anda bisa memberi tip di sini. Berapa pun jumlahnya, kapan saja boleh.', ru:'Если хотите поддержать разработку и работу Animepple, вы можете оставить чаевые здесь. Любая сумма, в любое время.', it:'Se vuoi sostenere lo sviluppo e la gestione di Animepple, puoi lasciare una mancia qui. Qualsiasi importo, in qualsiasi momento.', vi:'Nếu bạn muốn ủng hộ việc phát triển và vận hành Animepple, bạn có thể tip tại đây. Số tiền bao nhiêu cũng được, lúc nào cũng được.' },
+    tipDesc: { ja:'アニメップルの開発・運営を応援していただける方に、支援者バッジをご用意しています。お選びいただいた金額に応じたバッジが、購入後すぐにプロフィールに表示されます。', en:'Support Animepple\'s development and get a Supporter Badge in return — displayed on your profile as soon as your purchase completes.', ko:'애니메플의 개발・운영을 응원하고 싶으신 분은 여기서 후원할 수 있습니다. 금액은 얼마든, 언제든 괜찮습니다.', 'zh-tw':'如果您想支持Animepple的開發・營運，可以在這裡贊助。金額不拘，隨時都可以。', 'zh-cn':'如果您想支持Animepple的开发・运营，可以在这里打赏。金额不限，随时都可以。', es:'Si quieres apoyar el desarrollo y la operación de Animepple, puedes dar una propina aquí. Cualquier cantidad, en cualquier momento.', fr:'Si vous souhaitez soutenir le développement et la gestion d\'Animepple, vous pouvez laisser un pourboire ici. Montant libre, à tout moment.', pt:'Se você quiser apoiar o desenvolvimento e a operação do Animepple, pode dar uma gorjeta por aqui. Qualquer valor, a qualquer momento.', de:'Wenn du die Entwicklung und den Betrieb von Animepple unterstützen möchtest, kannst du hier ein Trinkgeld geben. Jeder Betrag, jederzeit.', ar:'إذا كنت ترغب في دعم تطوير وتشغيل Animepple، يمكنك تقديم إكرامية من هنا. أي مبلغ، في أي وقت.', th:'หากอยากสนับสนุนการพัฒนาและดำเนินงานของ Animepple สามารถให้ทิปได้ที่นี่ จำนวนเท่าไหร่ก็ได้ เมื่อไหร่ก็ได้', id:'Jika Anda ingin mendukung pengembangan dan operasional Animepple, Anda bisa memberi tip di sini. Berapa pun jumlahnya, kapan saja boleh.', ru:'Если хотите поддержать разработку и работу Animepple, вы можете оставить чаевые здесь. Любая сумма, в любое время.', it:'Se vuoi sostenere lo sviluppo e la gestione di Animepple, puoi lasciare una mancia qui. Qualsiasi importo, in qualsiasi momento.', vi:'Nếu bạn muốn ủng hộ việc phát triển và vận hành Animepple, bạn có thể tip tại đây. Số tiền bao nhiêu cũng được, lúc nào cũng được.' },
     tipPopularLabel: { ja:'人気', en:'Popular', ko:'인기', 'zh-tw':'熱門', 'zh-cn':'热门', es:'Popular', fr:'Populaire', pt:'Popular', de:'Beliebt', ar:'الأكثر شيوعًا', th:'ยอดนิยม', id:'Populer', ru:'Популярно', it:'Popolare', vi:'Phổ biến' },
-    tipConfirmBtn: { ja:'この金額で応援する', en:'Support with this amount', ko:'이 금액으로 응원하기', 'zh-tw':'以此金額贊助', 'zh-cn':'以此金额打赏', es:'Apoyar con esta cantidad', fr:'Soutenir avec ce montant', pt:'Apoiar com esse valor', de:'Mit diesem Betrag unterstützen', ar:'الدعم بهذا المبلغ', th:'สนับสนุนด้วยจำนวนนี้', id:'Dukung dengan jumlah ini', ru:'Поддержать этой суммой', it:'Sostieni con questo importo', vi:'Ủng hộ với số tiền này' },
+    tipConfirmBtn: { ja:'このバッジを購入する', en:'Buy this badge', ko:'이 금액으로 응원하기', 'zh-tw':'以此金額贊助', 'zh-cn':'以此金额打赏', es:'Apoyar con esta cantidad', fr:'Soutenir avec ce montant', pt:'Apoiar com esse valor', de:'Mit diesem Betrag unterstützen', ar:'الدعم بهذا المبلغ', th:'สนับสนุนด้วยจำนวนนี้', id:'Dukung dengan jumlah ini', ru:'Поддержать этой суммой', it:'Sostieni con questo importo', vi:'Ủng hộ với số tiền này' },
     tipComingSoonNote: { ja:'決済機能は準備中です。もうしばらくお待ちください。', en:'Payments are coming soon. Please check back later.', ko:'결제 기능은 준비 중입니다. 조금만 더 기다려 주세요.', 'zh-tw':'付款功能準備中，請稍後再來查看。', 'zh-cn':'付款功能准备中，请稍后再来查看。', es:'Los pagos estarán disponibles pronto. Vuelve a comprobarlo más adelante.', fr:'Les paiements arrivent bientôt. Revenez un peu plus tard.', pt:'Os pagamentos estarão disponíveis em breve. Volte a conferir mais tarde.', de:'Zahlungen sind bald verfügbar. Bitte schau später noch einmal vorbei.', ar:'المدفوعات قادمة قريبًا. يرجى المراجعة لاحقًا.', th:'ระบบชำระเงินกำลังเตรียมพร้อม กรุณากลับมาตรวจสอบอีกครั้งภายหลัง', id:'Pembayaran akan segera hadir. Silakan cek kembali nanti.', ru:'Платежи скоро появятся. Пожалуйста, загляните позже.', it:'I pagamenti arriveranno presto. Ricontrolla più tardi.', vi:'Tính năng thanh toán sắp ra mắt. Vui lòng quay lại sau.' },
-    tipPickLabel: { ja:'金額を選ぶ', en:'Choose an amount', ko:'금액 선택', 'zh-tw':'選擇金額', 'zh-cn':'选择金额', es:'Elige una cantidad', fr:'Choisir un montant', pt:'Escolha um valor', de:'Betrag wählen', ar:'اختر مبلغًا', th:'เลือกจำนวนเงิน', id:'Pilih jumlah', ru:'Выберите сумму', it:'Scegli un importo', vi:'Chọn số tiền' },
-    tipCustomLabel: { ja:'金額を自分で決める', en:'Enter your own amount', ko:'금액 직접 입력하기', 'zh-tw':'自行輸入金額', 'zh-cn':'自行输入金额', es:'Ingresa tu propia cantidad', fr:'Saisir votre propre montant', pt:'Digite seu próprio valor', de:'Eigenen Betrag eingeben', ar:'أدخل المبلغ الذي تريده', th:'กำหนดจำนวนเงินเอง', id:'Masukkan jumlah Anda sendiri', ru:'Введите свою сумму', it:'Inserisci un importo personalizzato', vi:'Tự nhập số tiền' },
-    tipCustomBtn: { ja:'自由に入力', en:'Custom', ko:'직접 입력', 'zh-tw':'自訂', 'zh-cn':'自定义', es:'Personalizado', fr:'Personnalisé', pt:'Personalizado', de:'Benutzerdefiniert', ar:'مخصص', th:'กำหนดเอง', id:'Kustom', ru:'Свой вариант', it:'Personalizzato', vi:'Tùy chỉnh' },
-    tipCustomMin: { ja:'¥500以上', en:'¥500+', ko:'¥500 이상', 'zh-tw':'¥500以上', 'zh-cn':'¥500以上', es:'A partir de ¥500', fr:'À partir de 500 ¥', pt:'A partir de ¥500', de:'Ab ¥500', ar:'¥500 فأكثر', th:'¥500 ขึ้นไป', id:'¥500 ke atas', ru:'От ¥500', it:'A partire da ¥500', vi:'Từ ¥500 trở lên' },
-    tipCustomError: { ja:'¥500以上で入力してください', en:'Please enter ¥500 or more', ko:'¥500 이상으로 입력해 주세요', 'zh-tw':'請輸入¥500以上的金額', 'zh-cn':'请输入¥500以上的金额', es:'Introduce ¥500 o más', fr:'Veuillez saisir au moins 500 ¥', pt:'Digite ¥500 ou mais', de:'Bitte gib mindestens ¥500 ein', ar:'يرجى إدخال ¥500 أو أكثر', th:'กรุณาระบุจำนวน ¥500 ขึ้นไป', id:'Silakan masukkan ¥500 atau lebih', ru:'Пожалуйста, введите сумму от ¥500', it:'Inserisci almeno ¥500', vi:'Vui lòng nhập từ ¥500 trở lên' },
+    tipPickLabel: { ja:'支援者バッジを選ぶ', en:'Choose a Supporter Badge', ko:'금액 선택', 'zh-tw':'選擇金額', 'zh-cn':'选择金额', es:'Elige una cantidad', fr:'Choisir un montant', pt:'Escolha um valor', de:'Betrag wählen', ar:'اختر مبلغًا', th:'เลือกจำนวนเงิน', id:'Pilih jumlah', ru:'Выберите сумму', it:'Scegli un importo', vi:'Chọn số tiền' },
+    // [2026-09-28削除] 自由入力金額(tipCustomLabel/tipCustomBtn/tipCustomMin/tipCustomError)は
+    // 廃止。投げ銭を固定価格の支援者バッジ購入に変更した経緯はSUPPORT_TIERS定義のコメント参照
+    supportTierBronze: { ja:'ブロンズ支援者', en:'Bronze Supporter', ko:'브론즈 후원자', 'zh-tw':'青銅支持者', 'zh-cn':'青铜支持者', es:'Patrocinador Bronce', fr:'Supporter Bronze', pt:'Apoiador Bronze', de:'Bronze-Unterstützer', ar:'داعم برونزي', th:'ผู้สนับสนุนระดับบรอนซ์', id:'Pendukung Perunggu', ru:'Бронзовый спонсор', it:'Sostenitore Bronzo', vi:'Người ủng hộ Đồng' },
+    supportTierSilver: { ja:'シルバー支援者', en:'Silver Supporter', ko:'실버 후원자', 'zh-tw':'白銀支持者', 'zh-cn':'白银支持者', es:'Patrocinador Plata', fr:'Supporter Argent', pt:'Apoiador Prata', de:'Silber-Unterstützer', ar:'داعم فضي', th:'ผู้สนับสนุนระดับซิลเวอร์', id:'Pendukung Perak', ru:'Серебряный спонсор', it:'Sostenitore Argento', vi:'Người ủng hộ Bạc' },
+    supportTierGold: { ja:'ゴールド支援者', en:'Gold Supporter', ko:'골드 후원자', 'zh-tw':'黃金支持者', 'zh-cn':'黄金支持者', es:'Patrocinador Oro', fr:'Supporter Or', pt:'Apoiador Ouro', de:'Gold-Unterstützer', ar:'داعم ذهبي', th:'ผู้สนับสนุนระดับโกลด์', id:'Pendukung Emas', ru:'Золотой спонсор', it:'Sostenitore Oro', vi:'Người ủng hộ Vàng' },
+    supportTierPlatinum: { ja:'プラチナ支援者', en:'Platinum Supporter', ko:'플래티넘 후원자', 'zh-tw':'白金支持者', 'zh-cn':'白金支持者', es:'Patrocinador Platino', fr:'Supporter Platine', pt:'Apoiador Platina', de:'Platin-Unterstützer', ar:'داعم بلاتيني', th:'ผู้สนับสนุนระดับแพลทินัม', id:'Pendukung Platinum', ru:'Платиновый спонсор', it:'Sostenitore Platino', vi:'Người ủng hộ Bạch kim' },
+    supportTierDiamond: { ja:'ダイヤモンド支援者', en:'Diamond Supporter', ko:'다이아몬드 후원자', 'zh-tw':'鑽石支持者', 'zh-cn':'钻石支持者', es:'Patrocinador Diamante', fr:'Supporter Diamant', pt:'Apoiador Diamante', de:'Diamant-Unterstützer', ar:'داعم ماسي', th:'ผู้สนับสนุนระดับไดมอนด์', id:'Pendukung Berlian', ru:'Бриллиантовый спонсор', it:'Sostenitore Diamante', vi:'Người ủng hộ Kim cương' },
     tipMessageLabel: { ja:'ひとことメッセージ', en:'Message', ko:'한마디 메시지', 'zh-tw':'留言', 'zh-cn':'留言', es:'Mensaje', fr:'Petit message', pt:'Mensagem', de:'Nachricht', ar:'رسالة', th:'ข้อความสั้นๆ', id:'Pesan singkat', ru:'Сообщение', it:'Messaggio', vi:'Lời nhắn' },
     tipMessageNote: { ja:'任意 · 開発者にだけ届きます', en:'Optional · only the developer sees this', ko:'선택 사항 · 개발자에게만 전달됩니다', 'zh-tw':'選填・僅開發者可見', 'zh-cn':'选填・仅开发者可见', es:'Opcional · solo lo verá el desarrollador', fr:'Facultatif · visible uniquement par le développeur', pt:'Opcional · só o desenvolvedor verá', de:'Optional · nur der Entwickler sieht das', ar:'اختياري · يظهر للمطور فقط', th:'ไม่บังคับ · ผู้พัฒนาจะเห็นเท่านั้น', id:'Opsional · hanya terlihat oleh pengembang', ru:'Необязательно · увидит только разработчик', it:'Facoltativo · lo vedrà solo lo sviluppatore', vi:'Không bắt buộc · chỉ nhà phát triển nhìn thấy' },
-    tipSummaryLabel: { ja:'応援する金額', en:'Your support', ko:'응원 금액', 'zh-tw':'贊助金額', 'zh-cn':'打赏金额', es:'Tu aporte', fr:'Votre soutien', pt:'Sua contribuição', de:'Dein Unterstützungsbetrag', ar:'مبلغ الدعم', th:'จำนวนเงินสนับสนุน', id:'Jumlah dukungan Anda', ru:'Сумма вашей поддержки', it:'Il tuo contributo', vi:'Số tiền ủng hộ' },
+    tipSummaryLabel: { ja:'選んだバッジ', en:'Selected badge', ko:'응원 금액', 'zh-tw':'贊助金額', 'zh-cn':'打赏金额', es:'Tu aporte', fr:'Votre soutien', pt:'Sua contribuição', de:'Dein Unterstützungsbetrag', ar:'مبلغ الدعم', th:'จำนวนเงินสนับสนุน', id:'Jumlah dukungan Anda', ru:'Сумма вашей поддержки', it:'Il tuo contributo', vi:'Số tiền ủng hộ' },
     tipOnceNote: { ja:'1回のみのお支払いです。継続課金にはなりません。', en:'One-time payment. This is not a subscription.', ko:'1회성 결제입니다. 정기 결제가 아닙니다.', 'zh-tw':'僅為單次付款，不會產生訂閱扣款。', 'zh-cn':'仅为单次付款，不会产生订阅扣款。', es:'Pago único. No es una suscripción.', fr:'Paiement unique. Ce n\'est pas un abonnement.', pt:'Pagamento único. Não é uma assinatura.', de:'Einmalige Zahlung. Kein Abo.', ar:'دفعة واحدة فقط. ليست اشتراكًا متكررًا.', th:'เป็นการชำระเงินครั้งเดียวเท่านั้น ไม่ใช่การสมัครสมาชิกแบบต่อเนื่อง', id:'Pembayaran satu kali. Ini bukan langganan.', ru:'Единоразовый платёж. Это не подписка.', it:'Pagamento unico. Non è un abbonamento.', vi:'Chỉ thanh toán một lần. Đây không phải là đăng ký định kỳ.' },
     tipSoonBtn: { ja:'準備中', en:'Coming soon', ko:'준비 중', 'zh-tw':'準備中', 'zh-cn':'准备中', es:'Próximamente', fr:'Bientôt disponible', pt:'Em breve', de:'Demnächst', ar:'قريبًا', th:'เร็วๆ นี้', id:'Segera hadir', ru:'Скоро', it:'Prossimamente', vi:'Sắp ra mắt' },
     tipNotifyBtn: { ja:'開始したら通知する', en:'Notify me when it opens', ko:'시작되면 알림 받기', 'zh-tw':'開始後通知我', 'zh-cn':'开始后通知我', es:'Avísame cuando esté disponible', fr:'Me prévenir au lancement', pt:'Avise-me quando abrir', de:'Benachrichtige mich, wenn es startet', ar:'أعلمني عند البدء', th:'แจ้งเตือนเมื่อเปิดให้ใช้งาน', id:'Beri tahu saya saat dibuka', ru:'Уведомить о запуске', it:'Avvisami quando sarà disponibile', vi:'Báo cho tôi khi ra mắt' },
@@ -21208,7 +21158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tipUse3: { ja:'新機能の開発', en:'Building new features', ko:'신규 기능 개발', 'zh-tw':'開發新功能', 'zh-cn':'开发新功能', es:'Desarrollo de nuevas funciones', fr:'Développement de nouvelles fonctionnalités', pt:'Desenvolvimento de novos recursos', de:'Entwicklung neuer Funktionen', ar:'تطوير ميزات جديدة', th:'พัฒนาฟีเจอร์ใหม่', id:'Pengembangan fitur baru', ru:'Разработка новых функций', it:'Sviluppo di nuove funzionalità', vi:'Phát triển tính năng mới' },
     tipAltText: { ja:'お金をかけずに応援したい方は、レビューを書く・掲示板で話す・友達に教える、でも十分に助かります。', en:'You can also help for free: write a review, join a board, or tell a friend.', ko:'돈을 들이지 않고 응원하고 싶으신 분은, 리뷰를 쓰거나・게시판에서 이야기하거나・친구에게 알려주는 것만으로도 충분히 도움이 됩니다.', 'zh-tw':'如果想在不花錢的情況下支持我們，寫評論・在討論板上發言・介紹給朋友，都會是很大的幫助。', 'zh-cn':'如果想在不花钱的情况下支持我们，写评论・在讨论板上发言・介绍给朋友，都会是很大的帮助。', es:'Si prefieres apoyarnos sin gastar dinero, escribir una reseña, participar en un foro o recomendarnos a un amigo ya es de gran ayuda.', fr:'Si vous préférez nous soutenir gratuitement, rédiger un avis, participer à un forum ou nous recommander à un ami nous aide déjà énormément.', pt:'Se preferir apoiar sem gastar dinheiro, escrever uma avaliação, participar de um fórum ou indicar para um amigo já ajuda muito.', de:'Wenn du uns kostenlos unterstützen möchtest, hilft es schon sehr, eine Rezension zu schreiben, in einem Board mitzureden oder uns Freunden zu empfehlen.', ar:'إذا كنت ترغب في الدعم دون إنفاق المال، فإن كتابة مراجعة أو المشاركة في لوحة أو إخبار صديق يساعدنا كثيرًا.', th:'สำหรับผู้ที่อยากสนับสนุนโดยไม่ต้องเสียเงิน การเขียนรีวิว・พูดคุยในกระดานสนทนา・บอกต่อเพื่อน ก็ช่วยได้มากแล้ว', id:'Jika ingin mendukung tanpa mengeluarkan uang, menulis ulasan, ikut berdiskusi di papan, atau memberi tahu teman juga sangat membantu.', ru:'Если хотите поддержать нас бесплатно, написать отзыв, пообщаться на доске или рассказать другу — уже большая помощь.', it:'Se preferisci sostenerci senza spendere, scrivere una recensione, partecipare a una bacheca o parlarne a un amico è già di grande aiuto.', vi:'Nếu muốn ủng hộ mà không cần bỏ tiền, viết đánh giá, trò chuyện trên bảng thảo luận, hoặc giới thiệu cho bạn bè cũng đã rất hữu ích rồi.' },
     tipAltBtn: { ja:'レビューを書く', en:'Write a review', ko:'리뷰 쓰기', 'zh-tw':'撰寫評論', 'zh-cn':'撰写评论', es:'Escribir una reseña', fr:'Rédiger un avis', pt:'Escrever uma avaliação', de:'Rezension schreiben', ar:'كتابة مراجعة', th:'เขียนรีวิว', id:'Tulis ulasan', ru:'Написать отзыв', it:'Scrivi una recensione', vi:'Viết đánh giá' },
-    tipAmountRequiredAlert: { ja:'金額を選択するか、¥500以上を入力してください。', en:'Please select or enter an amount of ¥500 or more.', ko:'금액을 선택하거나, ¥500 이상을 입력해 주세요.', 'zh-tw':'請選擇金額，或輸入¥500以上的金額。', 'zh-cn':'请选择金额，或输入¥500以上的金额。', es:'Selecciona o introduce una cantidad de ¥500 o más.', fr:'Veuillez sélectionner ou saisir un montant d\'au moins 500 ¥.', pt:'Selecione ou digite um valor de ¥500 ou mais.', de:'Bitte wähle einen Betrag aus oder gib mindestens ¥500 ein.', ar:'يرجى اختيار مبلغ أو إدخال ¥500 أو أكثر.', th:'กรุณาเลือกจำนวนเงิน หรือระบุจำนวน ¥500 ขึ้นไป', id:'Silakan pilih atau masukkan jumlah ¥500 atau lebih.', ru:'Пожалуйста, выберите или введите сумму от ¥500.', it:'Seleziona o inserisci un importo di almeno ¥500.', vi:'Vui lòng chọn hoặc nhập số tiền từ ¥500 trở lên.' },
+    tipAmountRequiredAlert: { ja:'支援者バッジを選択してください。', en:'Please select a Supporter Badge.', ko:'금액을 선택하거나, ¥500 이상을 입력해 주세요.', 'zh-tw':'請選擇金額，或輸入¥500以上的金額。', 'zh-cn':'请选择金额，或输入¥500以上的金额。', es:'Selecciona o introduce una cantidad de ¥500 o más.', fr:'Veuillez sélectionner ou saisir un montant d\'au moins 500 ¥.', pt:'Selecione ou digite um valor de ¥500 ou mais.', de:'Bitte wähle einen Betrag aus oder gib mindestens ¥500 ein.', ar:'يرجى اختيار مبلغ أو إدخال ¥500 أو أكثر.', th:'กรุณาเลือกจำนวนเงิน หรือระบุจำนวน ¥500 ขึ้นไป', id:'Silakan pilih atau masukkan jumlah ¥500 atau lebih.', ru:'Пожалуйста, выберите или введите сумму от ¥500.', it:'Seleziona o inserisci un importo di almeno ¥500.', vi:'Vui lòng chọn hoặc nhập số tiền từ ¥500 trở lên.' },
     shareSectionTitle: { ja:'共有する', en:'Share', ko:'공유하기', 'zh-tw':'分享', 'zh-cn':'分享', es:'Compartir', fr:'Partager', pt:'Compartilhar', de:'Teilen', ar:'مشاركة', th:'แชร์', id:'Bagikan', ru:'Поделиться', it:'Condividi', vi:'Chia sẻ' },
     shareHint: { ja:'今回のレビューを画像カードにして共有できます。', en:'Share this review as an image card.', ko:'이번 리뷰를 이미지 카드로 만들어 공유할 수 있어요.', 'zh-tw':'可以將這次的評論做成圖片卡片分享。', 'zh-cn':'可以将这次的评论做成图片卡片分享。', es:'Puedes compartir esta reseña como una tarjeta de imagen.', fr:'Vous pouvez partager cet avis sous forme de carte image.', pt:'Você pode compartilhar esta avaliação como um cartão de imagem.', de:'Du kannst diese Rezension als Bildkarte teilen.', ar:'يمكنك مشاركة هذه المراجعة كبطاقة صورة.', th:'คุณสามารถแชร์รีวิวนี้เป็นการ์ดภาพได้', id:'Anda dapat membagikan ulasan ini sebagai kartu gambar.', ru:'Вы можете поделиться этим отзывом в виде карточки-изображения.', it:'Puoi condividere questa recensione come card immagine.', vi:'Bạn có thể chia sẻ đánh giá này dưới dạng thẻ hình ảnh.' },
     shareCardBtnHint: { ja:'スマホ：タップするとアプリを選ぶ画面が開き、画像添付済みの投稿画面になります', en:'Mobile: opens your device\'s share menu with the image already attached.', ko:'모바일: 탭하면 앱 선택 화면이 열리고 이미지가 첨부된 게시 화면이 돼요', 'zh-tw':'手機：點擊後會開啟分享選單，圖片已自動附加', 'zh-cn':'手机：点击后会打开分享菜单，图片已自动附加', es:'Móvil: abre el menú para compartir con la imagen ya adjunta.', fr:'Mobile : ouvre le menu de partage avec l\'image déjà jointe.', pt:'Celular: abre o menu de compartilhamento com a imagem já anexada.', de:'Mobil: Öffnet das Freigabemenü mit bereits angehängtem Bild.', ar:'الجوال: يفتح قائمة المشاركة مع إرفاق الصورة تلقائيًا.', th:'มือถือ: แตะเพื่อเปิดเมนูแชร์พร้อมแนบรูปภาพให้แล้ว', id:'Ponsel: membuka menu berbagi dengan gambar sudah terlampir.', ru:'Мобильные: откроет меню share с уже прикреплённым изображением.', it:'Cellulare: apre il menu di condivisione con l\'immagine già allegata.', vi:'Di động: mở menu chia sẻ với ảnh đã đính kèm sẵn.' },
@@ -22445,7 +22395,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p>各商品ページに表示の金額（消費税込み）です。</p>
         <p>・アニメップル＋：月額500円　・アニメップルクリエイターズ：月額1,500円</p>
         <p>・ガチャチケット：120円〜24,000円（ガチャ1回分〜300回分、8種類、購入画面に一覧表示）</p>
-        <p>・投げ銭：500円以上、任意の金額</p>
+        <p>・支援者バッジ：500円〜10,000円（5種類、購入画面に一覧表示）</p>
 
         <h3>商品代金以外に必要な料金</h3>
         <p>インターネット接続料金・通信料金はお客様のご負担となります。海外からご購入の場合、決済時点のレートでの通貨換算手数料が発生することがあります。</p>
@@ -22457,7 +22407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p>ご注文（決済）確定時にお支払いいただきます。</p>
 
         <h3>商品の引き渡し時期</h3>
-        <p>決済完了後、即時にサービス上でご利用いただけます（ガチャチケットの付与・プランの反映・投げ銭の送信は、決済完了の確認と同時に自動的に行われます）。</p>
+        <p>決済完了後、即時にサービス上でご利用いただけます（ガチャチケットの付与・プランの反映・支援者バッジの表示は、決済完了の確認と同時に自動的に行われます）。</p>
 
         <h3>返品・キャンセルについて</h3>
         <p>デジタルコンテンツの性質上、原則として返品・返金には応じられません。詳細は<button type="button" onclick="closeLegal();nav('refund-policy')" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">返金ポリシー</button>をご確認ください。</p>
@@ -22493,7 +22443,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p>The amount shown on each product page (tax included).</p>
         <p>・Animepple+: ¥500/month　・Animepple Creators: ¥1,500/month</p>
         <p>・Gacha Tickets: ¥120–¥24,000 (1–300 draws, 8 pack sizes, listed on the purchase screen)</p>
-        <p>・Tips: ¥500 or more, any amount</p>
+        <p>・Supporter Badges: ¥500–¥10,000 (5 tiers, listed on the purchase screen)</p>
 
         <h3>Fees Other Than the Product Price</h3>
         <p>Internet connection and communication fees are borne by the customer. If purchasing from overseas, a currency conversion fee based on the exchange rate at the time of payment may apply.</p>
@@ -22505,7 +22455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p>Payment is due at the time your order (payment) is confirmed.</p>
 
         <h3>Timing of Delivery</h3>
-        <p>Available immediately on the Service upon completion of payment (Gacha Ticket grants, plan changes, and tips are all processed automatically as soon as payment is confirmed).</p>
+        <p>Available immediately on the Service upon completion of payment (Gacha Ticket grants, plan changes, and Supporter Badge display are all processed automatically as soon as payment is confirmed).</p>
 
         <h3>Returns &amp; Cancellations</h3>
         <p>Due to the nature of digital content, returns and refunds are not accepted in principle. See our <button type="button" onclick="closeLegal();nav('refund-policy')" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">Refund Policy</button> for details.</p>
@@ -27808,6 +27758,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('mypageUsernameText').textContent = username;
+    // [2026-09-28追加] 支援者バッジ(投げ銭→固定価格の支援者バッジ購入の景品)の表示
+    const supportBadgeEl = document.getElementById('mypageSupportBadge');
+    if(supportBadgeEl) supportBadgeEl.innerHTML = supportBadgeHtml(profileData?.support_tier);
     if(isOwnPage) document.getElementById('mypageEmail').textContent = _currentUser.email;
 
     // 自己紹介表示
