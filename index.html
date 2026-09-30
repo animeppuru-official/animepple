@@ -976,6 +976,17 @@
     .gacha-stage-tray { position:absolute; left:0; right:0; bottom:0; height:66px; background:linear-gradient(180deg,transparent,rgba(0,0,0,.45)); display:flex; align-items:flex-end; justify-content:center; padding-bottom:12px; pointer-events:none; }
     .gacha-stage-tray-bar { width:150px; height:8px; border-radius:4px; background:rgba(240,201,74,.35); }
     .gacha-stage-idle { position:relative; z-index:5; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; padding:0 24px; }
+    /* [2026-09-30追加] 待機中の枠内に、そのシリーズのSSR以上アイコンを数秒おきに
+       スライド表示する(ユーザー指示「枠内はガチャのアイコン表示する場所にしたい」)。
+       画像を並べて重ね、.is-active が付いたものだけopacity:1にすることでフェード切替する */
+    .gacha-stage-icon-slide { position:relative; width:96px; height:96px; border-radius:20px; overflow:hidden;
+      border:2px solid rgba(240,201,74,.5); box-shadow:0 0 24px rgba(240,201,74,.35), inset 0 0 0 1px rgba(255,255,255,.08);
+      background:rgba(0,0,0,.2); }
+    .gacha-stage-icon-slide img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+      opacity:0; transition:opacity .6s ease; }
+    .gacha-stage-icon-slide img.is-active { opacity:1; }
+    .gacha-stage-icon-slide-label { font-size:9.5px; font-weight:900; letter-spacing:.05em; color:#f0c94a;
+      text-transform:uppercase; }
 
     /* ── 長押し中の演出：枠そのものがコップになり、下からリンゴジュースが満ちる。
        同時にカメラ(=中身)が寄ってヴィネットで周囲が落ちる。動かすのはtransformとopacityだけ ── */
@@ -13648,9 +13659,36 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) { return null; }
   }
 
+  // [2026-09-30追加] 待機中の枠内に、現在のシリーズのSSR以上アイコンを数秒おきにスライド表示する
+  // (ユーザー指示「枠内はガチャのアイコン表示する場所にしたい、SSR以上のアイコンを表示して、
+  // 何秒かでスライドみたいな」)。景品の魅力を見せる目的なので、実際にガチャの抽選プールに
+  // 存在する(kind:'icon'かつimageがある)SSR/UR/LRのアイテムだけを対象にする
+  let _gachaIdleSlideTimer = null;
   function setGachaStageIdle() {
+    if(_gachaIdleSlideTimer) { clearInterval(_gachaIdleSlideTimer); _gachaIdleSlideTimer = null; }
     const idle = document.getElementById('gachaStagePlaceholder');
-    if(idle) idle.innerHTML = `<span class="gacha-stage-text">${escapeHtml(t('gachaStageIdle'))}</span>`;
+    if(!idle) return;
+    const ssrIndex = GACHA_RARITY_ORDER.indexOf('SSR');
+    const highTierIcons = getGachaPool().filter(it => it.kind === 'icon' && it.image && GACHA_RARITY_ORDER.indexOf(it.tier) >= ssrIndex);
+    if(!highTierIcons.length) {
+      idle.innerHTML = `<span class="gacha-stage-text">${escapeHtml(t('gachaStageIdle'))}</span>`;
+      return;
+    }
+    idle.innerHTML = `
+      <div class="gacha-stage-icon-slide" id="gachaStageIconSlide">
+        ${highTierIcons.map((it, i) => `<img src="${escapeHtml(it.image)}" alt="" class="${i===0?'is-active':''}">`).join('')}
+      </div>
+      <span class="gacha-stage-icon-slide-label">${escapeHtml(t('gachaStageIconSlideLabel'))}</span>
+      <span class="gacha-stage-text">${escapeHtml(t('gachaStageIdle'))}</span>`;
+    if(highTierIcons.length > 1) {
+      let i = 0;
+      const imgs = idle.querySelectorAll('#gachaStageIconSlide img');
+      _gachaIdleSlideTimer = setInterval(() => {
+        imgs[i].classList.remove('is-active');
+        i = (i + 1) % imgs.length;
+        imgs[i].classList.add('is-active');
+      }, 2200);
+    }
   }
 
   // 結果：確定枠（アニメカード）＋おまけ枠（レア度で枠色と光彩が変わる）
@@ -21227,6 +21265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loginRequiredAlert: { ja:'ログインが必要です。', en:'Please log in first.', ko:'로그인이 필요합니다.', 'zh-tw':'需要登入。', 'zh-cn':'需要登录。', es:'Inicia sesión primero.', fr:'Veuillez vous connecter d\'abord.', pt:'Faça login primeiro.', de:'Bitte melde dich zuerst an.', ar:'يرجى تسجيل الدخول أولاً.', th:'กรุณาเข้าสู่ระบบก่อน', id:'Silakan masuk terlebih dahulu.', ru:'Пожалуйста, сначала войдите в аккаунт.', it:'Effettua prima l\'accesso.', vi:'Vui lòng đăng nhập trước.' },
     loginRequired: { ja:'ログインが必要です', en:'Please log in', ko:'로그인이 필요합니다', 'zh-tw':'需要登入', 'zh-cn':'需要登录', es:'Inicia sesión para continuar', fr:'Veuillez vous connecter', pt:'Faça login para continuar', de:'Bitte melde dich an', ar:'يرجى تسجيل الدخول', th:'กรุณาเข้าสู่ระบบ', id:'Silakan masuk', ru:'Пожалуйста, войдите', it:'Effettua l\'accesso', vi:'Vui lòng đăng nhập' },
     gachaTitle: { ja:'ガチャガチャ', en:'Gacha', ko:'가챠', 'zh-tw':'扭蛋', 'zh-cn':'扭蛋', es:'Gacha', fr:'Gacha', pt:'Gacha', de:'Gacha', ar:'جاتشا', th:'กาชา', id:'Gacha', ru:'Гача', it:'Gacha', vi:'Gacha' },
+    gachaStageIconSlideLabel: { ja:'SSR以上で手に入る', en:'Available at SSR and above', ko:'SSR 이상으로 획득 가능', 'zh-tw':'SSR以上可獲得', 'zh-cn':'SSR以上可获得', es:'Disponible en SSR o superior', fr:'Disponible dès SSR', pt:'Disponível em SSR ou superior', de:'Ab SSR erhältlich', ar:'متوفر من SSR فأعلى', th:'ได้รับตั้งแต่ SSR ขึ้นไป', id:'Tersedia mulai SSR ke atas', ru:'Доступно от SSR и выше', it:'Disponibile da SSR in su', vi:'Có từ SSR trở lên' },
     gachaStageIdle: { ja:'上のボタンでガチャを引く', en:'Tap a button above to draw', ko:'위 버튼으로 가챠 뽑기', 'zh-tw':'點擊上方按鈕抽扭蛋', 'zh-cn':'点击上方按钮抽扭蛋', es:'Toca un botón de arriba para tirar', fr:'Appuyez sur un bouton ci-dessus pour tirer', pt:'Toque em um botão acima para sortear', de:'Tippe oben auf eine Schaltfläche zum Ziehen', ar:'اضغط على زر أعلاه لسحب الجاتشا', th:'แตะปุ่มด้านบนเพื่อสุ่มกาชา', id:'Ketuk tombol di atas untuk menarik gacha', ru:'Нажмите кнопку выше, чтобы сделать попытку', it:'Tocca un pulsante sopra per estrarre', vi:'Chạm nút phía trên để quay gacha' },
     gachaFreeBtn: { ja:'無料で引く', en:'Free draw', ko:'무료로 뽑기', 'zh-tw':'免費抽', 'zh-cn':'免费抽', es:'Tirada gratis', fr:'Tirage gratuit', pt:'Sorteio grátis', de:'Kostenlose Ziehung', ar:'سحب مجاني', th:'สุ่มฟรี', id:'Tarikan gratis', ru:'Бесплатная попытка', it:'Estrazione gratuita', vi:'Quay miễn phí' },
     gachaFreeBtnUsed: { ja:'本日は引き終わりました', en:'Already used today', ko:'오늘은 이미 뽑았어요', 'zh-tw':'今天已經抽過了', 'zh-cn':'今天已经抽过了', es:'Ya usado hoy', fr:'Déjà utilisé aujourd\'hui', pt:'Já usado hoje', de:'Heute bereits verwendet', ar:'تم الاستخدام اليوم بالفعل', th:'ใช้วันนี้ไปแล้ว', id:'Sudah digunakan hari ini', ru:'Уже использовано сегодня', it:'Già utilizzato oggi', vi:'Đã dùng hôm nay' },
@@ -28318,6 +28357,10 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.onclick = async () => {
         btn.disabled = true;
         await db.notices.markRead(btn.dataset.id);
+        // [2026-09-30修正] 友達申請の承認・拒否ボタンはcheckFriendRequestBadge()でバッジを
+        // 更新しているのに、お知らせの既読ボタンだけ抜けていて、既読にしてもボトムナビの
+        // バッジ(件数・●)が消えなかった(ユーザー報告)
+        checkFriendRequestBadge();
         renderNotifications();
       };
     });
