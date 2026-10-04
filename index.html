@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -2799,6 +2799,8 @@
     /* ══ AFFILIATE ══ */
     .af-section { padding:.9rem 1rem; border-bottom:1px solid var(--line); }
     .af-section-label { font-size:15px; color:#dfeae3; font-weight:700; font-family:"Zen Kaku Gothic New",sans-serif; letter-spacing:normal; margin-bottom:.6rem; }
+    .af-pr-note { display:flex; align-items:center; gap:6px; margin:0 0 8px; font-size:11.5px; color:var(--muted); }
+    .af-pr-badge { display:inline-block; padding:0 7px; border:1px solid var(--muted); border-radius:6px; font-size:10.5px; font-weight:800; line-height:1.6; }
     .af-stream-list { display:flex; flex-wrap:wrap; gap:10px; }
     .af-stream-item {
       display:inline-flex; align-items:center; gap:6px;
@@ -6253,6 +6255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr><td>マーケティング</td><td>広告配信・アフィリエイトクリック計測・リターゲティング</td><td>任意</td></tr>
       </table>
       <p>クッキー設定はいつでも変更できます。<button onclick="reopenCookieConsent()" style="background:none;border:none;color:var(--brand);text-decoration:underline;cursor:pointer;font:inherit;">クッキー設定を変更する</button></p>
+      <p>本サービスは、A8.net（株式会社ファンコミュニケーションズ）およびSovrn Commerce（Sovrn, Inc.、米国）などのアフィリエイトサービスを利用して、動画配信サービス等の広告（「PR」と表示）を掲載しています。広告の表示時・広告リンクのクリック時、および広告先での申込み時には、成果の計測のためにクッキー等が利用され、広告配信事業者へ利用者のアクセス情報（広告の識別情報・IPアドレス・アクセス日時・ブラウザ等の端末情報）が送信されます。Sovrn Commerceでは、これらの情報が同社の提携先に提供される場合があります。氏名・メールアドレスなど、本サービスが保有する個人情報が広告配信事業者へ送信されることはありません。</p>
     </section>
 
     <section class="pp-section">
@@ -6270,6 +6273,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr><th>送信先</th><th>送信される情報</th><th>送信先での利用目的</th></tr>
         <tr><td>Cloudflare, Inc.（Webアナリティクス、bot対策 Turnstile）</td><td>アクセス状況（閲覧ページ・端末情報等）、bot判定に必要な情報</td><td>アクセス解析、不正アクセス・spam対策</td></tr>
         <tr><td>ipapi.co / ipwho.is</td><td>IPアドレス</td><td>アクセス元の国・地域の判定（本サービスへの結果返送のみに利用、分析同意時のみ送信）</td></tr>
+        <tr><td>Sovrn, Inc.（Sovrn Commerce、米国）および各広告主</td><td>広告リンクの識別情報、IPアドレス、アクセス日時、ブラウザ等の端末情報、広告クリックの有無</td><td>海外向けアフィリエイト広告の計測（クリック・申込み）</td></tr>
+        <tr><td>株式会社ファンコミュニケーションズ（A8.net）および各広告主</td><td>広告の識別情報、アクセス日時、ブラウザ等の端末情報、広告クリックの有無</td><td>アフィリエイト広告の表示および成果（申込み）の計測</td></tr>
         <tr><td>DeepL SE</td><td>翻訳対象のタグ・テキスト</td><td>多言語翻訳の生成</td></tr>
       </table>
       <p style="font-size:.75rem;color:var(--muted);">今後、広告配信サービス（Google AdSense等）を導入する場合は、本表を更新のうえ改めて公表します。</p>
@@ -6351,6 +6356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr><td>Marketing</td><td>Ad delivery, affiliate click tracking, and retargeting</td><td>Optional</td></tr>
       </table>
       <p>You can change your cookie settings at any time. <button onclick="reopenCookieConsent()" style="background:none;border:none;color:var(--brand);text-decoration:underline;cursor:pointer;font:inherit;">Change cookie settings</button></p>
+      <p>This Service displays advertisements for video streaming services and similar (labeled "PR") through affiliate services such as A8.net (FanCommunications, Inc.) and Sovrn Commerce (Sovrn, Inc., USA). When an advertisement is displayed, when an ad link is clicked, and when an application is made on the advertiser's site, cookies and similar technologies are used to measure results, and access information (an ad identifier, IP address, access date/time, and device information such as the browser) is sent to the ad delivery provider. With Sovrn Commerce, this information may be shared with Sovrn's partners. Personal information held by this Service, such as your name or email address, is never sent to ad delivery providers.</p>
     </section>
 
     <section class="pp-section">
@@ -6368,6 +6374,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr><th>Recipient</th><th>Information Sent</th><th>Purpose at Recipient</th></tr>
         <tr><td>Cloudflare, Inc. (web analytics, bot protection Turnstile)</td><td>Access status (pages viewed, device information, etc.), information needed for bot detection</td><td>Access analytics, fraud and spam prevention</td></tr>
         <tr><td>ipapi.co / ipwho.is</td><td>IP address</td><td>Determining the country/region of origin (used only to return a result to this Service; sent only with analytics consent)</td></tr>
+        <tr><td>Sovrn, Inc. (Sovrn Commerce, USA) and each advertiser</td><td>Affiliate link identifier, IP address, access date/time, device information such as the browser, whether a link was clicked</td><td>Measuring overseas affiliate results (clicks, applications)</td></tr>
+        <tr><td>FanCommunications, Inc. (A8.net) and each advertiser</td><td>Ad identifier, access date/time, device information such as the browser, whether an ad was clicked</td><td>Displaying affiliate ads and measuring results (applications)</td></tr>
         <tr><td>DeepL SE</td><td>Tags and text to be translated</td><td>Generating multilingual translations</td></tr>
       </table>
       <p style="font-size:.75rem;color:var(--muted);">Should we introduce an advertising delivery service (such as Google AdSense) in the future, we will update this table and disclose it again.</p>
@@ -20265,6 +20273,10 @@ document.addEventListener('DOMContentLoaded', () => {
      ── 審査通過後にURLをASPアフィリエイトURLに差し替え ──
      ── Amazon PA-API実装後はafGoods()内を差し替え ──
   ════════════════════════════ */
+  // [2026-10-04] Sovrn Commerce(海外向けアフィリエイト)で発行したCrunchyrollのアフィリエイトリンク。
+  // 作品ごとの検索URLは作れない(リンクは1件ずつ手作業で発行する)ため、affUrlを持つサービスは
+  // 作品検索URLではなくこのリンクをそのまま使う(renderStreamLinks)。AFFILIATEより前で宣言すること(TDZ回避)。
+  const AFF_CRUNCHYROLL_URL = 'https://sovrn.co/pupk6su';
   const AFFILIATE = {
     // 国別デフォルト配信サービス（Kitsuから取れない場合のフォールバック）
     // url: 審査通過後にASPアフィリエイトURLに変更
@@ -20281,7 +20293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id:'niconico',  icon:'🎴', name:'ニコニコ動画',    sub:'月550円〜',      cta:'無料で試す', url:'https://www.nicovideo.jp/' },
       ],
       US: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library', cta:'Try Free', url:'https://www.crunchyroll.com/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library', cta:'Try Free', url:'https://www.crunchyroll.com/', affUrl:AFF_CRUNCHYROLL_URL },
         { id:'funimation',  icon:'🎌', name:'Funimation',    sub:'Sub & Dub',       cta:'Try Free', url:'https://www.funimation.com/' },
         { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originals',       cta:'Join Now', url:'https://www.netflix.com/' },
         { id:'hidive',      icon:'▶',  name:'HIDIVE',        sub:'Simulcasts',      cta:'Try Free', url:'https://www.hidive.com/' },
@@ -20296,44 +20308,44 @@ document.addEventListener('DOMContentLoaded', () => {
         { id:'netflix',     icon:'🎥', name:'Netflix',        sub:'오리지널',        cta:'가입하기', url:'https://www.netflix.com/kr/' },
         { id:'amazon',      icon:'📦', name:'Prime Video',    sub:'월정액',          cta:'가입하기', url:'https://www.amazon.com/gp/video/' },
         { id:'disney',      icon:'🏰', name:'Disney+',        sub:'월정액',          cta:'가입하기', url:'https://www.disneyplus.com/ko-kr/' },
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',    sub:'애니 전문',       cta:'무료체험', url:'https://www.crunchyroll.com/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',    sub:'애니 전문',       cta:'무료체험', url:'https://www.crunchyroll.com/', affUrl:AFF_CRUNCHYROLL_URL },
       ],
       GB: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library', cta:'Try Free',  url:'https://www.crunchyroll.com/gb/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library', cta:'Try Free',  url:'https://www.crunchyroll.com/gb/', affUrl:AFF_CRUNCHYROLL_URL },
         { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originals',       cta:'Join Now',  url:'https://www.netflix.com/gb/' },
         { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Incl. w/ Prime',  cta:'Try Prime', url:'https://www.amazon.co.uk/gp/video/' },
         { id:'disney',      icon:'🏰', name:'Disney+',       sub:'£4.99/mo',        cta:'Join Now',  url:'https://www.disneyplus.com/en-gb/' },
         { id:'hidive',      icon:'▶',  name:'HIDIVE',        sub:'Simulcasts',      cta:'Try Free',  url:'https://www.hidive.com/' },
       ],
       FR: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Le plus grand',   cta:'Essai gratuit', url:'https://www.crunchyroll.com/fr/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Le plus grand',   cta:'Essai gratuit', url:'https://www.crunchyroll.com/fr/', affUrl:AFF_CRUNCHYROLL_URL },
         { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originaux',       cta:"S'abonner",     url:'https://www.netflix.com/fr/' },
         { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Inclus Prime',    cta:"S'abonner",     url:'https://www.amazon.fr/gp/video/' },
         { id:'disney',      icon:'🏰', name:'Disney+',       sub:'€5.99/mois',      cta:"S'abonner",     url:'https://www.disneyplus.com/fr-fr/' },
         { id:'wakanim',     icon:'▶',  name:'Wakanim',       sub:'VOSTFR',          cta:'Essai gratuit', url:'https://www.wakanim.tv/' },
       ],
       DE: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Größte Bibliothek', cta:'Gratis testen', url:'https://www.crunchyroll.com/de/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Größte Bibliothek', cta:'Gratis testen', url:'https://www.crunchyroll.com/de/', affUrl:AFF_CRUNCHYROLL_URL },
         { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originale',          cta:'Jetzt starten', url:'https://www.netflix.com/de/' },
         { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'In Prime enthalten', cta:'Prime testen',  url:'https://www.amazon.de/gp/video/' },
         { id:'disney',      icon:'🏰', name:'Disney+',       sub:'€5.99/Monat',        cta:'Jetzt starten', url:'https://www.disneyplus.com/de-de/' },
         { id:'wakanim',     icon:'▶',  name:'Wakanim',       sub:'Auf Deutsch',        cta:'Gratis testen', url:'https://www.wakanim.tv/de/' },
       ],
       BR: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Maior biblioteca', cta:'Teste grátis', url:'https://www.crunchyroll.com/pt-br/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Maior biblioteca', cta:'Teste grátis', url:'https://www.crunchyroll.com/pt-br/', affUrl:AFF_CRUNCHYROLL_URL },
         { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originais',         cta:'Assinar',      url:'https://www.netflix.com/br/' },
         { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Incluso no Prime',  cta:'Teste grátis', url:'https://www.amazon.com.br/gp/video/' },
         { id:'disney',      icon:'🏰', name:'Disney+',       sub:'R$27,90/mês',       cta:'Assinar',      url:'https://www.disneyplus.com/pt-br/' },
       ],
       AU: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library',  cta:'Try Free',  url:'https://www.crunchyroll.com/au/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library',  cta:'Try Free',  url:'https://www.crunchyroll.com/au/', affUrl:AFF_CRUNCHYROLL_URL },
         { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Originals',         cta:'Join Now',  url:'https://www.netflix.com/au/' },
         { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Incl. w/ Prime',   cta:'Try Prime', url:'https://www.amazon.com.au/gp/video/' },
         { id:'disney',      icon:'🏰', name:'Disney+',       sub:'$13.99/mo',         cta:'Join Now',  url:'https://www.disneyplus.com/en-au/' },
         { id:'hidive',      icon:'▶',  name:'HIDIVE',        sub:'Simulcasts',        cta:'Try Free',  url:'https://www.hidive.com/' },
       ],
       DEFAULT: [
-        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library',  cta:'Try Free', url:'https://www.crunchyroll.com/' },
+        { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library',  cta:'Try Free', url:'https://www.crunchyroll.com/', affUrl:AFF_CRUNCHYROLL_URL },
         { id:'netflix',     icon:'🎥', name:'Netflix',       sub:'Anime & originals', cta:'Join Now', url:'https://www.netflix.com/' },
         { id:'amazon',      icon:'📦', name:'Prime Video',   sub:'Incl. w/ Prime',   cta:'Try Prime', url:'https://www.amazon.com/gp/video/' },
         { id:'disney',      icon:'🏰', name:'Disney+',       sub:'$7.99/mo',          cta:'Join Now', url:'https://www.disneyplus.com/' },
@@ -20499,9 +20511,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const labelEl = section.querySelector('.af-section-label');
     if(labelEl) labelEl.textContent = t('streamSectionFallback');
 
-    el.innerHTML = `<div class="af-stream-list">${services.map(s=>{
+    // アフィリエイトリンクを含む場合は、広告であることを「PR」で明示する(ステマ規制・各ASPの規約)
+    const hasAff = services.some(s => s.affUrl);
+    el.innerHTML = `${hasAff ? '<div class="af-pr-note"><span class="af-pr-badge">PR</span> <span class="af-pr-text">Includes affiliate links / アフィリエイト広告を含みます</span></div>' : ''}<div class="af-stream-list">${services.map(s=>{
       // ホームページURLではなくアニメ名で検索した状態のURLを生成
-      const searchUrl = (titleJa || titleEn)
+      // アフィリエイトリンク(affUrl)があるサービスは、そのリンクをそのまま使う(改変しない)
+      const searchUrl = s.affUrl ? s.affUrl : (titleJa || titleEn)
         ? buildStreamSearchUrl(s.id, s.url.replace(/^https?:\/\//, '').split('/')[0], titleJa, titleEn, country)
         : s.url;
       return `
