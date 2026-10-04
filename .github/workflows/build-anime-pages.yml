@@ -1,9 +1,13 @@
 name: Build anime pages
 
+# 作品ページ(/anime/<id>/<タイトル>)の検索エンジン向けファイルを、Supabaseの作品データから自動生成して
+# mainへコミットする(GitHub Pagesはmainブランチから配信)。生成ロジックは scripts/build-anime-pages.js。
+# 人が開いた時は、いつものアプリの作品ページがそのURLのまま表示される(見た目は変わらない)。
+# 手動実行: Actionsタブ → Build anime pages → Run workflow
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 19 * * 0'
+    - cron: '17 19 * * 0'   # 毎週月曜 04:17 JST (作品データの追加・修正を反映)
   push:
     paths:
       - 'scripts/build-anime-pages.js'
@@ -26,12 +30,15 @@ jobs:
         with:
           node-version: 20
       - name: Generate pages
-        run: node scripts/build-anime-pages.js
+        run: |
+          # 古い生成物(以前の簡易ページ・一覧ページ、削除された作品)を残さないよう、作り直す
+          rm -rf anime titles
+          node scripts/build-anime-pages.js
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add anime titles sitemap-anime.xml
+          git add -A
           if git diff --cached --quiet; then
             echo "変更なし"
           else
