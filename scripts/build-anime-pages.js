@@ -62,6 +62,27 @@ function buildRelations(rows) {
   });
 }
 
+// ── アフィリエイト(A8.net)の共通枠 ──
+// 広告コード(html)はA8の管理画面で発行されたものをそのまま入れる。A8の規約で改変は禁止(rel属性の追加も含む)。
+// 承認済みのプログラムだけをここに追加する。提携を解除された・終了したものは、すぐこの配列から外すこと。
+// 作品ごとに「この作品が配信されている」と断定してはいけない(配信状況は調べられないため)。あくまで
+// 「アニメを見られるサービスの紹介」としてサイト共通の枠にし、「PR」を枠の見出しに明記する。
+const AFFILIATES = [
+  {
+    name: 'ABEMA',
+    html: '<a href="https://px.a8.net/svt/ejp?a8mat=4BE8KT+AL1FXU+4EKC+5YJRM" rel="nofollow">ABEMA</a>\n<img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4BE8KT+AL1FXU+4EKC+5YJRM" alt="">',
+  },
+];
+
+function renderAffiliateBox() {
+  if (!AFFILIATES.length) return '';
+  return `<aside class="affiliate" aria-label="広告">
+<p class="affiliate-title"><span class="pr">PR</span> アニメを見られる動画配信サービス</p>
+<ul>${AFFILIATES.map(a => `<li>${a.html}</li>`).join('')}</ul>
+<p class="affiliate-note">上記は広告です。作品の配信状況・料金・無料期間は、各サービスの公式サイトでご確認ください。</p>
+</aside>`;
+}
+
 const CSS = `
 :root{--bg:#0a1c12;--card:#10301f;--line:#2a3830;--text:#dfeae3;--muted:#8db5a0;--brand:#5ec97a}
 *{box-sizing:border-box}
@@ -79,6 +100,11 @@ dl.facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:
 dl.facts dt{color:var(--muted);font-size:13px}
 dl.facts dd{margin:0}
 a.cta{display:inline-block;margin:1.2rem 0;padding:11px 20px;border-radius:10px;background:var(--brand);color:#07200f;font-weight:800;text-decoration:none}
+aside.affiliate{margin:1.4rem 0;padding:12px 16px;border:1px dashed var(--line);border-radius:12px;font-size:13.5px}
+aside.affiliate .pr{display:inline-block;padding:0 7px;margin-right:6px;border:1px solid var(--muted);border-radius:6px;font-size:11px;font-weight:800;color:var(--muted)}
+aside.affiliate .affiliate-title{margin:0 0 .4rem;color:var(--text);font-weight:700}
+aside.affiliate ul{margin:.3rem 0;padding-left:1.2rem}
+aside.affiliate .affiliate-note{margin:.5rem 0 0;font-size:12px;color:var(--muted)}
 ul.rel{padding-left:1.2rem;margin:.4rem 0}
 ul.rel li{margin:.15rem 0}
 .lang-section{border-top:1px solid var(--line);margin-top:2.5rem;padding-top:1.2rem}
@@ -141,6 +167,7 @@ ${r.title_en ? `<p class="sub">${esc(clip(r.title_en, 120))}</p>` : ''}
 <h2>あらすじ</h2>
 <p>${esc(r.description)}</p>
 <p><a class="cta" href="/anime/${pid}/open">アニメップルでみんなの評価グラフを見る・レビューを書く →</a></p>
+${renderAffiliateBox()}
 ${rel.sameStudio.length ? `<h2>${esc(studioName)}の他の作品</h2>${list(rel.sameStudio)}` : ''}
 ${rel.sameYear.length ? `<h2>${esc(r.year)}年の${esc(type)}</h2>${list(rel.sameYear)}` : ''}
 ${r.description_en ? `<section class="lang-section" lang="en" id="en"><h2>Synopsis</h2><p>${esc(r.description_en)}</p></section>` : ''}`;
@@ -244,7 +271,7 @@ async function main() {
   console.log(`生成: ${rows.length}作品ページ + 一覧${hubCount}ページ + sitemap-anime.xml → ${outDir}`);
 }
 
-module.exports = { esc, publicId, typeLabel, clip, selectRows, buildRelations, renderAnimePage, renderHubPage, renderSitemap, PAGE_SIZE };
+module.exports = { esc, publicId, typeLabel, clip, selectRows, buildRelations, renderAnimePage, renderHubPage, renderSitemap, renderAffiliateBox, AFFILIATES, PAGE_SIZE };
 
 if (require.main === module) {
   main().catch(e => { console.error(e); process.exit(1); });
