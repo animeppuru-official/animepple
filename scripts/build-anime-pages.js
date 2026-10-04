@@ -138,7 +138,7 @@ ${r.description_en ? `<section lang="en" id="en"><h2>Synopsis</h2><p>${esc(r.des
 <meta property="og:url" content="${ORIGIN}${canon}">
 <meta property="og:type" content="website">
 <meta name="robots" content="index,follow">
-<style>html{background:#07150d;color:#e8f8ed;font-family:system-ui,sans-serif}body{max-width:760px;margin:0 auto;padding:24px 20px}a{color:#5ec97a}</style>
+<style>html{background:#07150d}#seo-static{opacity:0}</style>
 <script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>
 </head>
 <body>
