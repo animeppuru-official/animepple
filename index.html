@@ -2801,8 +2801,11 @@
     .af-section-label { font-size:15px; color:#dfeae3; font-weight:700; font-family:"Zen Kaku Gothic New",sans-serif; letter-spacing:normal; margin-bottom:.6rem; }
     .af-pr-note { display:flex; align-items:center; gap:6px; margin:0 0 8px; font-size:11.5px; color:var(--muted); }
     .af-pr-badge { display:inline-block; padding:0 7px; border:1px solid var(--muted); border-radius:6px; font-size:10.5px; font-weight:800; line-height:1.6; }
-    .af-pr-row { margin:8px 0 0; font-size:12px; color:var(--muted); }
-    .af-pr-row a { color:var(--brand); }
+    /* A8のコードは改変禁止。<a>の文字をそのままチップの名前にして、リンクをチップ全体に広げる */
+    .af-aff-chip { position:relative; cursor:pointer; }
+    .af-aff-chip a { font-size:13.5px; font-weight:700; color:#dfeae3; line-height:1.2; text-decoration:none; }
+    .af-aff-chip a::after { content:''; position:absolute; inset:0; }
+    .af-aff-chip img { position:absolute; }
     .af-stream-list { display:flex; flex-wrap:wrap; gap:10px; }
     .af-stream-item {
       display:inline-flex; align-items:center; gap:6px;
@@ -20279,24 +20282,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // 作品ごとの検索URLは作れない(リンクは1件ずつ手作業で発行する)ため、affUrlを持つサービスは
   // 作品検索URLではなくこのリンクをそのまま使う(renderStreamLinks)。AFFILIATEより前で宣言すること(TDZ回避)。
   const AFF_CRUNCHYROLL_URL = 'https://sovrn.co/pupk6su';
-  // [2026-10-04] A8.netで承認されたABEMAプレミアムの広告コード(テキスト素材)。A8の規約で改変禁止なので、
-  // 発行されたコード(リンク＋1x1の計測画像)をそのままの文字列で使う。承認が取り消されたら即座に外すこと。
-  const AFF_A8_ABEMA_HTML = '<a href="https://px.a8.net/svt/ejp?a8mat=4BE8KT+AL1FXU+4EKC+5YJRM" rel="nofollow">ABEMA</a>\n<img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4BE8KT+AL1FXU+4EKC+5YJRM" alt="">';
+  // [2026-10-04] A8.netで承認された日本向けアフィリエイトの広告コード(テキスト素材)。A8の規約で改変禁止なので、
+  // 発行されたコード(リンク＋1x1の計測画像)をそのままの文字列(html)で使う。承認が取り消されたら即座に外すこと。
+  // 承認されたら(dアニメストア・DMM TV等)、ここにコードを足すだけで配信サービス欄に並ぶ。
+  const AFF_A8_JP = [
+    { id:'abema', html:'<a href="https://px.a8.net/svt/ejp?a8mat=4BE8KT+AL1FXU+4EKC+5YJRM" rel="nofollow">ABEMA</a>\n<img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4BE8KT+AL1FXU+4EKC+5YJRM" alt="">' },
+  ];
   const AFFILIATE = {
     // 国別デフォルト配信サービス（Kitsuから取れない場合のフォールバック）
     // url: 審査通過後にASPアフィリエイトURLに変更
     streamByCountry: {
-      JP: [
-        { id:'danime',    icon:'▶',  name:'dアニメストア',   sub:'月440円〜',     cta:'無料で試す', url:'https://anime.dmkt-sp.jp/' },
-        { id:'unext',     icon:'🎬', name:'U-NEXT',          sub:'31日間無料',     cta:'無料で試す', url:'https://video.unext.jp/' },
-        { id:'abema',     icon:'📺', name:'ABEMA',           sub:'月960円',        cta:'無料で試す', url:'https://abema.tv/' },
-        { id:'netflix',   icon:'🎥', name:'Netflix',         sub:'高画質',         cta:'今すぐ登録', url:'https://www.netflix.com/jp/' },
-        { id:'amazon',    icon:'📦', name:'Prime Video',     sub:'月600円',        cta:'今すぐ登録', url:'https://www.amazon.co.jp/Prime-Video/' },
-        { id:'hulu',      icon:'🟢', name:'Hulu',            sub:'月1026円',       cta:'無料で試す', url:'https://www.hulu.jp/' },
-        { id:'disney',    icon:'🏰', name:'Disney+',         sub:'月990円',        cta:'今すぐ登録', url:'https://www.disneyplus.com/ja-jp/' },
-        { id:'bandai',    icon:'🎌', name:'バンダイチャンネル', sub:'月990円〜',    cta:'無料で試す', url:'https://www.b-ch.com/' },
-        { id:'niconico',  icon:'🎴', name:'ニコニコ動画',    sub:'月550円〜',      cta:'無料で試す', url:'https://www.nicovideo.jp/' },
-      ],
+      // 日本は、アフィリエイト(承認済みのA8.net=AFF_A8_JP、海外向けSovrn=Crunchyroll)だけを出す。
+      // 以前あった公式サイトへのただのリンク(dアニメストア・U-NEXT・ABEMA・Netflix・Prime Video・Hulu・Disney+・
+      // バンダイチャンネル・ニコニコ動画)は報酬にならないため、ユーザー指示(2026-10-04)で削除した。
+      JP: [],
       US: [
         { id:'crunchyroll', icon:'🍥', name:'Crunchyroll',   sub:'Largest library', cta:'Try Free', url:'https://www.crunchyroll.com/', affUrl:AFF_CRUNCHYROLL_URL },
         { id:'funimation',  icon:'🎌', name:'Funimation',    sub:'Sub & Dub',       cta:'Try Free', url:'https://www.funimation.com/' },
@@ -20517,11 +20516,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if(labelEl) labelEl.textContent = t('streamSectionFallback');
 
     // アフィリエイトリンクを含む場合は、広告であることを「PR」で明示する(ステマ規制・各ASPの規約)
-    // 日本向けはA8(ABEMA)の広告コードをそのまま、続けて海外向け(Sovrn)のCrunchyrollを英語1行で添える
+    // 日本向けは、A8の広告コード(改変しない)を他のサービスと同じ見た目のチップにして並べ、続けて
+    // 海外向け(Sovrn)のCrunchyrollを並べる。A8のコードは書き換えられないので、チップ全体を押せるよう
+    // リンクをCSSで広げ(.af-aff-chip a::after)、クリック計測はチップ側のonclickで行う
     const isJP = country === 'JP';
     const hasAff = isJP || services.some(s => s.affUrl);
-    const jpAffRow = isJP ? `<div class="af-pr-row"><span class="af-pr-text">アニメが見られる動画配信サービス: </span>${AFF_A8_ABEMA_HTML}</div><div class="af-pr-row" lang="en"><span class="af-pr-text">For viewers outside Japan: </span><a href="${AFF_CRUNCHYROLL_URL}" target="_blank" rel="noopener noreferrer sponsored">Crunchyroll</a></div>` : '';
-    const listHtml = `<div class="af-stream-list">${services.map(s=>{
+    const jpA8Chips = isJP ? AFF_A8_JP.map(a => `<div class="af-stream-item af-aff-chip" onclick="adClick('stream_${a.id}')">${a.html}</div>`).join('') : '';
+    const jpCrunchyChip = isJP ? `<a class="af-stream-item" href="${AFF_CRUNCHYROLL_URL}" target="_blank" rel="noopener noreferrer sponsored" onclick="adClick('stream_crunchyroll')" lang="en" title="For viewers outside Japan"><span class="af-stream-name">Crunchyroll</span></a>` : '';
+    const listHtml = `<div class="af-stream-list">${jpA8Chips}${jpCrunchyChip}${services.map(s=>{
       // ホームページURLではなくアニメ名で検索した状態のURLを生成
       // アフィリエイトリンク(affUrl)があるサービスは、そのリンクをそのまま使う(改変しない)
       const searchUrl = s.affUrl ? s.affUrl : (titleJa || titleEn)
@@ -20540,7 +20542,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('')}</div>`;
     const prNote = hasAff ? '<div class="af-pr-note"><span class="af-pr-badge">PR</span> <span class="af-pr-text">Includes affiliate links / アフィリエイト広告を含みます</span></div>' : '';
-    el.innerHTML = prNote + listHtml + jpAffRow;
+    el.innerHTML = prNote + listHtml;
     section.style.display = '';
   }
 
