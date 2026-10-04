@@ -976,17 +976,21 @@
     .gacha-stage-tray { position:absolute; left:0; right:0; bottom:0; height:66px; background:linear-gradient(180deg,transparent,rgba(0,0,0,.45)); display:flex; align-items:flex-end; justify-content:center; padding-bottom:12px; pointer-events:none; }
     .gacha-stage-tray-bar { width:150px; height:8px; border-radius:4px; background:rgba(240,201,74,.35); }
     .gacha-stage-idle { position:relative; z-index:5; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; padding:0 24px; }
-    /* [2026-09-30追加] 待機中の枠内に、そのシリーズのSSR以上アイコンを数秒おきに
-       スライド表示する(ユーザー指示「枠内はガチャのアイコン表示する場所にしたい」)。
-       画像を並べて重ね、.is-active が付いたものだけopacity:1にすることでフェード切替する */
-    .gacha-stage-icon-slide { position:relative; width:96px; height:96px; border-radius:20px; overflow:hidden;
-      border:2px solid rgba(240,201,74,.5); box-shadow:0 0 24px rgba(240,201,74,.35), inset 0 0 0 1px rgba(255,255,255,.08);
+    /* [2026-09-30変更] 待機中の枠内に、そのシリーズのSSR以上アイコンを大きく・横スライドで
+       表示する(ユーザー指示「アイコンはもっと大きく表示してSSR/URってアイコンの右上に表示、
+       スクロールも横にしゅんと消えて次が現れる感じ」「文字はいらない」)。キャプション文字は
+       一切出さない。各アイテムを.gacha-stage-icon-frameでラップし、transformで横スライドする:
+       通常は右外(translateX(100%))で待機→.is-activeで中央→.is-prevで左外へ抜ける */
+    .gacha-stage-icon-slide { position:relative; width:200px; height:200px; border-radius:24px; overflow:hidden;
+      border:2px solid rgba(240,201,74,.5); box-shadow:0 0 28px rgba(240,201,74,.4), inset 0 0 0 1px rgba(255,255,255,.08);
       background:rgba(0,0,0,.2); }
-    .gacha-stage-icon-slide img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-      opacity:0; transition:opacity .6s ease; }
-    .gacha-stage-icon-slide img.is-active { opacity:1; }
-    .gacha-stage-icon-slide-label { font-size:9.5px; font-weight:900; letter-spacing:.05em; color:#f0c94a;
-      text-transform:uppercase; }
+    .gacha-stage-icon-frame { position:absolute; inset:0; transform:translateX(100%);
+      transition:transform .5s cubic-bezier(.4,0,.2,1); }
+    .gacha-stage-icon-frame.is-active { transform:translateX(0); }
+    .gacha-stage-icon-frame.is-prev { transform:translateX(-100%); }
+    .gacha-stage-icon-frame img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .gacha-stage-icon-rarity { position:absolute; top:8px; right:8px; padding:3px 9px; border-radius:8px;
+      font-size:12px; font-weight:900; letter-spacing:.03em; box-shadow:0 2px 8px rgba(0,0,0,.35); }
 
     /* ── 長押し中の演出：枠そのものがコップになり、下からリンゴジュースが満ちる。
        同時にカメラ(=中身)が寄ってヴィネットで周囲が落ちる。動かすのはtransformとopacityだけ ── */
@@ -7827,6 +7831,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <button class="bnav-item" id="bnav-board" onclick="nav('board')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
     <span data-i18n="navBoard">掲示板</span>
+    <span class="bnav-badge" id="bnavBoardBadge" style="display:none;">0</span>
   </button>
   <button class="bnav-item" id="bnav-articles" onclick="nav('articles')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
@@ -7839,7 +7844,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="bnav-divider"></div>
   <button class="bnav-item" id="bnav-notifications" onclick="nav('notifications')">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-    <span style="flex:1 1 auto;" data-i18n="navNotifications">お知らせ</span>
+    <span data-i18n="navNotifications">お知らせ</span>
     <span class="bnav-badge" id="bnavNotifBadge" style="display:none;">0</span>
   </button>
   <button class="bnav-item" id="bnav-settings" onclick="nav('settings')">
@@ -7867,6 +7872,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <button class="bnav-carousel-item" id="bnavc-board" onclick="nav('board')">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         <span data-i18n="navBoard">掲示板</span>
+        <span class="bnav-badge" id="bnavcBoardBadge" style="display:none;">0</span>
       </button>
       <button class="bnav-carousel-item" id="bnavc-notifications" onclick="nav('notifications')">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
@@ -13659,10 +13665,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) { return null; }
   }
 
-  // [2026-09-30追加] 待機中の枠内に、現在のシリーズのSSR以上アイコンを数秒おきにスライド表示する
-  // (ユーザー指示「枠内はガチャのアイコン表示する場所にしたい、SSR以上のアイコンを表示して、
-  // 何秒かでスライドみたいな」)。景品の魅力を見せる目的なので、実際にガチャの抽選プールに
-  // 存在する(kind:'icon'かつimageがある)SSR/UR/LRのアイテムだけを対象にする
+  // [2026-09-30変更] 待機中の枠内に、現在のシリーズのSSR以上アイコンを大きく・横スライドで
+  // 表示する(ユーザー指示「枠内はガチャのアイコン表示する場所にしたい、SSR以上のアイコンを
+  // 表示して、何秒かでスライドみたいな」→その後「アイコンはもっと大きく表示してSSR/URって
+  // アイコンの右上に表示、スクロールも横にしゅんと消えて次が現れる感じ」「文字はいらない」と
+  // 修正指示)。景品の魅力を見せる目的なので、実際にガチャの抽選プールに存在する
+  // (kind:'icon'かつimageがある)SSR/UR/LRのアイテムだけを対象にする。キャプション文字・
+  // 「上のボタンでガチャを引く」の案内文は、アイコンが1件以上ある間は一切出さない
   let _gachaIdleSlideTimer = null;
   function setGachaStageIdle() {
     if(_gachaIdleSlideTimer) { clearInterval(_gachaIdleSlideTimer); _gachaIdleSlideTimer = null; }
@@ -13674,19 +13683,27 @@ document.addEventListener('DOMContentLoaded', () => {
       idle.innerHTML = `<span class="gacha-stage-text">${escapeHtml(t('gachaStageIdle'))}</span>`;
       return;
     }
-    idle.innerHTML = `
-      <div class="gacha-stage-icon-slide" id="gachaStageIconSlide">
-        ${highTierIcons.map((it, i) => `<img src="${escapeHtml(it.image)}" alt="" class="${i===0?'is-active':''}">`).join('')}
-      </div>
-      <span class="gacha-stage-icon-slide-label">${escapeHtml(t('gachaStageIconSlideLabel'))}</span>
-      <span class="gacha-stage-text">${escapeHtml(t('gachaStageIdle'))}</span>`;
+    idle.innerHTML = `<div class="gacha-stage-icon-slide" id="gachaStageIconSlide">
+      ${highTierIcons.map((it, i) => {
+        const m = GACHA_RARITY_META[it.tier] || GACHA_RARITY_META.N;
+        return `<div class="gacha-stage-icon-frame${i===0?' is-active':''}">
+          <img src="${escapeHtml(it.image)}" alt="">
+          <span class="gacha-stage-icon-rarity" style="background:${m.color};color:#1a1206;">${escapeHtml(it.tier)}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
     if(highTierIcons.length > 1) {
       let i = 0;
-      const imgs = idle.querySelectorAll('#gachaStageIconSlide img');
+      const frames = idle.querySelectorAll('.gacha-stage-icon-frame');
       _gachaIdleSlideTimer = setInterval(() => {
-        imgs[i].classList.remove('is-active');
-        i = (i + 1) % imgs.length;
-        imgs[i].classList.add('is-active');
+        frames[i].className = 'gacha-stage-icon-frame is-prev';
+        i = (i + 1) % frames.length;
+        frames[i].className = 'gacha-stage-icon-frame is-active';
+        // 遷移(.5s)が終わったら、抜けた枠を右外の待機位置に戻す(次に自分の番が来た時に
+        // 右から入ってこれるように。is-prevのままだと左外に留まってしまう)
+        setTimeout(() => {
+          frames.forEach((f, idx) => { if(idx !== i) f.className = 'gacha-stage-icon-frame'; });
+        }, 520);
       }, 2200);
     }
   }
@@ -21265,7 +21282,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loginRequiredAlert: { ja:'ログインが必要です。', en:'Please log in first.', ko:'로그인이 필요합니다.', 'zh-tw':'需要登入。', 'zh-cn':'需要登录。', es:'Inicia sesión primero.', fr:'Veuillez vous connecter d\'abord.', pt:'Faça login primeiro.', de:'Bitte melde dich zuerst an.', ar:'يرجى تسجيل الدخول أولاً.', th:'กรุณาเข้าสู่ระบบก่อน', id:'Silakan masuk terlebih dahulu.', ru:'Пожалуйста, сначала войдите в аккаунт.', it:'Effettua prima l\'accesso.', vi:'Vui lòng đăng nhập trước.' },
     loginRequired: { ja:'ログインが必要です', en:'Please log in', ko:'로그인이 필요합니다', 'zh-tw':'需要登入', 'zh-cn':'需要登录', es:'Inicia sesión para continuar', fr:'Veuillez vous connecter', pt:'Faça login para continuar', de:'Bitte melde dich an', ar:'يرجى تسجيل الدخول', th:'กรุณาเข้าสู่ระบบ', id:'Silakan masuk', ru:'Пожалуйста, войдите', it:'Effettua l\'accesso', vi:'Vui lòng đăng nhập' },
     gachaTitle: { ja:'ガチャガチャ', en:'Gacha', ko:'가챠', 'zh-tw':'扭蛋', 'zh-cn':'扭蛋', es:'Gacha', fr:'Gacha', pt:'Gacha', de:'Gacha', ar:'جاتشا', th:'กาชา', id:'Gacha', ru:'Гача', it:'Gacha', vi:'Gacha' },
-    gachaStageIconSlideLabel: { ja:'SSR以上で手に入る', en:'Available at SSR and above', ko:'SSR 이상으로 획득 가능', 'zh-tw':'SSR以上可獲得', 'zh-cn':'SSR以上可获得', es:'Disponible en SSR o superior', fr:'Disponible dès SSR', pt:'Disponível em SSR ou superior', de:'Ab SSR erhältlich', ar:'متوفر من SSR فأعلى', th:'ได้รับตั้งแต่ SSR ขึ้นไป', id:'Tersedia mulai SSR ke atas', ru:'Доступно от SSR и выше', it:'Disponibile da SSR in su', vi:'Có từ SSR trở lên' },
     gachaStageIdle: { ja:'上のボタンでガチャを引く', en:'Tap a button above to draw', ko:'위 버튼으로 가챠 뽑기', 'zh-tw':'點擊上方按鈕抽扭蛋', 'zh-cn':'点击上方按钮抽扭蛋', es:'Toca un botón de arriba para tirar', fr:'Appuyez sur un bouton ci-dessus pour tirer', pt:'Toque em um botão acima para sortear', de:'Tippe oben auf eine Schaltfläche zum Ziehen', ar:'اضغط على زر أعلاه لسحب الجاتشا', th:'แตะปุ่มด้านบนเพื่อสุ่มกาชา', id:'Ketuk tombol di atas untuk menarik gacha', ru:'Нажмите кнопку выше, чтобы сделать попытку', it:'Tocca un pulsante sopra per estrarre', vi:'Chạm nút phía trên để quay gacha' },
     gachaFreeBtn: { ja:'無料で引く', en:'Free draw', ko:'무료로 뽑기', 'zh-tw':'免費抽', 'zh-cn':'免费抽', es:'Tirada gratis', fr:'Tirage gratuit', pt:'Sorteio grátis', de:'Kostenlose Ziehung', ar:'سحب مجاني', th:'สุ่มฟรี', id:'Tarikan gratis', ru:'Бесплатная попытка', it:'Estrazione gratuita', vi:'Quay miễn phí' },
     gachaFreeBtnUsed: { ja:'本日は引き終わりました', en:'Already used today', ko:'오늘은 이미 뽑았어요', 'zh-tw':'今天已經抽過了', 'zh-cn':'今天已经抽过了', es:'Ya usado hoy', fr:'Déjà utilisé aujourd\'hui', pt:'Já usado hoje', de:'Heute bereits verwendet', ar:'تم الاستخدام اليوم بالفعل', th:'ใช้วันนี้ไปแล้ว', id:'Sudah digunakan hari ini', ru:'Уже использовано сегодня', it:'Già utilizzato oggi', vi:'Đã dùng hôm nay' },
@@ -26806,7 +26822,7 @@ document.addEventListener('DOMContentLoaded', () => {
     db.auth.onAuthChange(async (session) => {
       _currentUser = session?.user || null;
       if(_currentUser && await checkSuspensionGate()) return;
-      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); applyMyEquippedCustomization(); loadMyPlan(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(false, false); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; _unreadNoticeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); _currentPlan = 'free'; updateBoardSidebarAd(); }
+      if(_currentUser) { loadMyGoldAnimeIds(); ensureLoggedInUsername(); loadMyBlockedUserIds(); checkUnreadBoards(); startGlobalBoardNotifyWatch(); checkFriendRequestBadge(); startFriendRequestWatch(); applyMyEquippedCustomization(); loadMyPlan(); } else { _myGoldAnimeIds = null; window._loggedInUsername = null; _blockedUserIds = null; setBoardBadge(0); stopGlobalBoardNotifyWatch(); _friendReqBadgeCount = 0; _unreadNoticeCount = 0; renderNotifBadges(); stopFriendRequestWatch(); _currentPlan = 'free'; updateBoardSidebarAd(); }
       if(document.getElementById('page-mypage').classList.contains('active')) {
         renderMypage(currentPage === 'user' ? currentAnimeId : undefined);
       }
@@ -26851,9 +26867,9 @@ document.addEventListener('DOMContentLoaded', () => {
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>' },
     { id:'search', label:t('navSearch'), onclick:"openSearch()",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></svg>' },
-    { id:'board', label:t('navBoard'), onclick:"nav('board')",
+    { id:'board', label:t('navBoard'), onclick:"nav('board')", badgeId:'bnavcBoardBadge',
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' },
-    { id:'notifications', label:t('navNotifications'), onclick:"nav('notifications')", hasBadge:true,
+    { id:'notifications', label:t('navNotifications'), onclick:"nav('notifications')", badgeId:'bnavcNotifBadge',
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>' },
     { id:'mypage', label:t('navMypage'), onclick:"nav('mypage')",
       icon:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg>' },
@@ -26905,8 +26921,8 @@ document.addEventListener('DOMContentLoaded', () => {
           return `
             <button class="bnav-carousel-item" id="bnavc-${item.id}" onclick="${item.onclick}">
               ${item.icon}
-              <span${item.hasBadge?' style="flex:1 1 auto;"':''}>${escapeHtml(item.label)}</span>
-              ${item.hasBadge ? `<span class="bnav-badge" id="bnavcNotifBadge" style="display:none;">0</span>` : ''}
+              <span>${escapeHtml(item.label)}</span>
+              ${item.badgeId ? `<span class="bnav-badge" id="${item.badgeId}" style="display:none;">0</span>` : ''}
             </button>
           `;
         }).join('')}
@@ -26916,7 +26932,11 @@ document.addEventListener('DOMContentLoaded', () => {
       dotsWrap.innerHTML = pages.map((_, i) => `<span class="bnav-carousel-dot${i===0?' active':''}"></span>`).join('');
     }
     // バッジ・アクティブ状態など、他の場所から参照されてる状態を再適用する
+    // ([2026-09-30修正] 並べ替え後はbnavcNotifBadge/bnavcBoardBadgeとも新しいDOM要素に
+    // 作り直されるため、掲示板の未読だけでなくお知らせ側のバッジも再描画しないと、
+    // 並べ替えた直後だけ未読があっても数字が消えて見えてしまう)
     if(typeof checkUnreadBoards === 'function' && _currentUser) checkUnreadBoards();
+    if(typeof renderNotifBadges === 'function') renderNotifBadges();
   }
 
   // 長押し検知：ツールバー上でポインターを580ms以上動かさず押し続けたらカスタマイズモーダルを開く。
@@ -26989,7 +27009,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
         <div class="bnav-customize-cell" data-id="${item.id}" style="display:flex;flex-direction:column;align-items:center;gap:7px;padding:13px 5px 10px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#c3d4c9;animation-delay:${(i % 3) * .12 + Math.floor(i / 3) * .03}s;">
           <span class="bnav-cz-num">${i + 1}</span>
-          ${item.hasBadge ? '<span class="bnav-cz-badge bnav-cz-badge-slot" style="display:none;">0</span>' : ''}
+          ${item.badgeId ? '<span class="bnav-cz-badge bnav-cz-badge-slot" style="display:none;">0</span>' : ''}
           <span style="pointer-events:none;display:flex;">${item.icon}</span>
           <span style="pointer-events:none;font-size:9.5px;font-weight:700;line-height:1.2;text-align:center;">${escapeHtml(item.label)}</span>
         </div>`;
@@ -27211,11 +27231,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // ── 掲示板の未読バッジ（プッシュ通知に頼らず、アプリを開けば気付ける仕組み） ──
-  // ボトムナビの「掲示板」アイコン、および画面上部固定のベル、両方に反映する。
-  // 対象は「ベルでONにしている（通知する掲示板リスト）」ものだけ（投稿・投票しただけの掲示板は含まない）。
-  // 通知バッジ（ボトムナビ「お知らせ」）：掲示板の未読(●)と友達申請の件数(数字)を合成して出す。
-  // 友達申請が1件でもあればそちらを数字で優先表示、無ければ掲示板未読の●だけ出す。
-  let _boardHasUnreadFlag = false;
+  // ボトムナビの「掲示板」アイコンに反映する。対象は「ベルでONにしている（通知する掲示板
+  // リスト）」ものだけ（投稿・投票しただけの掲示板は含まない）。
+  // [2026-09-30修正] 以前は掲示板の未読(●)を「お知らせ」ベルのバッジに合成して出していたが、
+  // お知らせページ自体には掲示板の未読が一切表示されない(お知らせ・友達申請だけを扱う)ため、
+  // 「お知らせは既読(0件)のはずなのにバッジが消えない」という混乱を招いていた
+  // (ユーザー報告「掲示板に出るべきバッジがお知らせに出てた」)。掲示板専用のバッジ
+  // (#bnavBoardBadge/#bnavcBoardBadge)を新設し、「お知らせ」と同じ見た目・同じく
+  // 未読「件数」を数字で出す方式に統一した(●だけの表示はやめる)。
+  let _boardUnreadCount = 0;
   let _friendReqBadgeCount = 0;
   let _unreadNoticeCount = 0; // [追加] 運営からのお知らせ未読数
   function renderNotifBadges() {
@@ -27224,13 +27248,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if(!badge) return;
       const total = _friendReqBadgeCount + _unreadNoticeCount;
       if(total > 0) { badge.textContent = total; badge.style.display = ''; }
-      else if(_boardHasUnreadFlag) { badge.textContent = '●'; badge.style.display = ''; }
       else { badge.style.display = 'none'; }
     });
   }
-  function setBoardBadge(hasAny, hasUnread, unreadCount) {
-    _boardHasUnreadFlag = !!hasUnread;
-    renderNotifBadges();
+  function renderBoardBadge() {
+    ['bnavBoardBadge', 'bnavcBoardBadge'].forEach(id => {
+      const badge = document.getElementById(id);
+      if(!badge) return;
+      if(_boardUnreadCount > 0) { badge.textContent = _boardUnreadCount; badge.style.display = ''; }
+      else { badge.style.display = 'none'; }
+    });
+  }
+  function setBoardBadge(unreadCount) {
+    _boardUnreadCount = unreadCount || 0;
+    renderBoardBadge();
   }
   async function checkFriendRequestBadge() {
     if(!_currentUser || !sb) { _friendReqBadgeCount = 0; _unreadNoticeCount = 0; renderNotifBadges(); return; }
@@ -27265,17 +27296,18 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter(b => ['A','B','C','D'].includes(boardTypeBase(b.board_type)));
   }
   async function checkUnreadBoards() {
-    if(!_currentUser || !sb) { setBoardBadge(false, false); return; }
+    if(!_currentUser || !sb) { setBoardBadge(0); return; }
     try {
       const boards = await getNotifyEnabledBoards(_currentUser.id);
-      if(!boards.length) { setBoardBadge(false, false); return; }
+      if(!boards.length) { setBoardBadge(0); return; }
       const latestMap = await db.boardState.getLatestActivity(boards);
-      const hasUnread = boards.some(b=>{
+      // [2026-09-30修正] 未読の有無(真偽値)だけでなく、未読件数そのものを数える(バッジに数字で出すため)
+      const unreadCount = boards.filter(b=>{
         const key = b.anime_id+'|'+b.board_type+'|'+b.lang;
         const latest = latestMap[key];
         return latest && (!b.last_read_at || latest.created_at > b.last_read_at);
-      });
-      setBoardBadge(true, hasUnread);
+      }).length;
+      setBoardBadge(unreadCount);
     } catch(e) { console.warn('checkUnreadBoards:', e); }
   }
 
