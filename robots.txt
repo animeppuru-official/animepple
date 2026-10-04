@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://animepple.com/sitemap.xml
+Sitemap: https://animepple.com/sitemap-anime.xml
