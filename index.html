@@ -2801,6 +2801,8 @@
     .af-section-label { font-size:15px; color:#dfeae3; font-weight:700; font-family:"Zen Kaku Gothic New",sans-serif; letter-spacing:normal; margin-bottom:.6rem; }
     .af-pr-note { display:flex; align-items:center; gap:6px; margin:0 0 8px; font-size:11.5px; color:var(--muted); }
     .af-pr-badge { display:inline-block; padding:0 7px; border:1px solid var(--muted); border-radius:6px; font-size:10.5px; font-weight:800; line-height:1.6; }
+    .af-pr-row { margin:8px 0 0; font-size:12px; color:var(--muted); }
+    .af-pr-row a { color:var(--brand); }
     .af-stream-list { display:flex; flex-wrap:wrap; gap:10px; }
     .af-stream-item {
       display:inline-flex; align-items:center; gap:6px;
@@ -20277,6 +20279,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 作品ごとの検索URLは作れない(リンクは1件ずつ手作業で発行する)ため、affUrlを持つサービスは
   // 作品検索URLではなくこのリンクをそのまま使う(renderStreamLinks)。AFFILIATEより前で宣言すること(TDZ回避)。
   const AFF_CRUNCHYROLL_URL = 'https://sovrn.co/pupk6su';
+  // [2026-10-04] A8.netで承認されたABEMAプレミアムの広告コード(テキスト素材)。A8の規約で改変禁止なので、
+  // 発行されたコード(リンク＋1x1の計測画像)をそのままの文字列で使う。承認が取り消されたら即座に外すこと。
+  const AFF_A8_ABEMA_HTML = '<a href="https://px.a8.net/svt/ejp?a8mat=4BE8KT+AL1FXU+4EKC+5YJRM" rel="nofollow">ABEMA</a>\n<img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4BE8KT+AL1FXU+4EKC+5YJRM" alt="">';
   const AFFILIATE = {
     // 国別デフォルト配信サービス（Kitsuから取れない場合のフォールバック）
     // url: 審査通過後にASPアフィリエイトURLに変更
@@ -20512,8 +20517,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if(labelEl) labelEl.textContent = t('streamSectionFallback');
 
     // アフィリエイトリンクを含む場合は、広告であることを「PR」で明示する(ステマ規制・各ASPの規約)
-    const hasAff = services.some(s => s.affUrl);
-    el.innerHTML = `${hasAff ? '<div class="af-pr-note"><span class="af-pr-badge">PR</span> <span class="af-pr-text">Includes affiliate links / アフィリエイト広告を含みます</span></div>' : ''}<div class="af-stream-list">${services.map(s=>{
+    // 日本向けはA8(ABEMA)の広告コードをそのまま、続けて海外向け(Sovrn)のCrunchyrollを英語1行で添える
+    const isJP = country === 'JP';
+    const hasAff = isJP || services.some(s => s.affUrl);
+    const jpAffRow = isJP ? `<div class="af-pr-row"><span class="af-pr-text">アニメが見られる動画配信サービス: </span>${AFF_A8_ABEMA_HTML}</div><div class="af-pr-row" lang="en"><span class="af-pr-text">For viewers outside Japan: </span><a href="${AFF_CRUNCHYROLL_URL}" target="_blank" rel="noopener noreferrer sponsored">Crunchyroll</a></div>` : '';
+    const listHtml = `<div class="af-stream-list">${services.map(s=>{
       // ホームページURLではなくアニメ名で検索した状態のURLを生成
       // アフィリエイトリンク(affUrl)があるサービスは、そのリンクをそのまま使う(改変しない)
       const searchUrl = s.affUrl ? s.affUrl : (titleJa || titleEn)
@@ -20531,6 +20539,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </a>
       `;
     }).join('')}</div>`;
+    const prNote = hasAff ? '<div class="af-pr-note"><span class="af-pr-badge">PR</span> <span class="af-pr-text">Includes affiliate links / アフィリエイト広告を含みます</span></div>' : '';
+    el.innerHTML = prNote + listHtml + jpAffRow;
     section.style.display = '';
   }
 
