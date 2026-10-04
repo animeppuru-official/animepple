@@ -27225,6 +27225,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.openBnavCustomizeModal = openBnavCustomizeModal;
+  // [2026-10-04修正] 下の rebuildBnavCarousel() は内部で renderNotifBadges() を呼び、これは
+  // _friendReqBadgeCount/_unreadNoticeCount を読む。これらの let 宣言が(この直後の)掲示板バッジの節に
+  // あったため、読み込み時に「Cannot access '_friendReqBadgeCount' before initialization」(TDZ)で
+  // スクリプト全体が停止し、以降の初期化(認証・ルーティング)が一切動かなかった。
+  // let は必ず最初の呼び出しより前で宣言する。
+  let _boardUnreadCount = 0;
+  let _friendReqBadgeCount = 0;
+  let _unreadNoticeCount = 0; // [追加] 運営からのお知らせ未読数
   rebuildBnavCarousel();
   updateBnavHint();
 
@@ -27239,9 +27247,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // (ユーザー報告「掲示板に出るべきバッジがお知らせに出てた」)。掲示板専用のバッジ
   // (#bnavBoardBadge/#bnavcBoardBadge)を新設し、「お知らせ」と同じ見た目・同じく
   // 未読「件数」を数字で出す方式に統一した(●だけの表示はやめる)。
-  let _boardUnreadCount = 0;
-  let _friendReqBadgeCount = 0;
-  let _unreadNoticeCount = 0; // [追加] 運営からのお知らせ未読数
+  // (_boardUnreadCount/_friendReqBadgeCount/_unreadNoticeCount の宣言は、初回の呼び出しより前=上に移した)
   function renderNotifBadges() {
     ['bnavNotifBadge', 'bnavcNotifBadge'].forEach(id => {
       const badge = document.getElementById(id);
