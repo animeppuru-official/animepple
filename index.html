@@ -2796,6 +2796,40 @@
       }
     }
 
+    /* ══ 記事の広場 ══ */
+    .art-wrap { max-width:760px; margin:0 auto; padding:1rem 1rem 4rem; }
+    .art-head { display:flex; align-items:center; justify-content:space-between; gap:.8rem; margin-bottom:1rem; }
+    .art-page-title { margin:0; font-size:1.3rem; font-weight:900; color:var(--text); }
+    .art-list { display:flex; flex-direction:column; gap:.7rem; }
+    .art-card { display:block; text-align:left; width:100%; padding:.9rem 1rem; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.03); color:inherit; cursor:pointer; font:inherit; }
+    .art-card:hover { border-color:var(--brand); }
+    .art-card-title { font-size:1.02rem; font-weight:800; color:var(--text); margin:0 0 .3rem; }
+    .art-card-desc { margin:0 0 .4rem; font-size:.86rem; color:#b6c8bd; line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+    .art-card-meta, .art-meta { font-size:.74rem; color:var(--muted); display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; }
+    .art-badge { padding:0 .45rem; border:1px solid var(--muted); border-radius:6px; font-size:.68rem; font-weight:800; }
+    .art-draft-badge { border-color:#e0b04a; color:#e0b04a; }
+    .art-empty { color:var(--muted); text-align:center; padding:2rem 0; }
+    .art-link-btn { background:none; border:none; color:var(--brand); cursor:pointer; font:inherit; text-decoration:underline; padding:.2rem 0; }
+    .art-title { font-size:1.5rem; line-height:1.4; margin:.8rem 0 .4rem; color:var(--text); }
+    .art-body { color:#d4e2d9; line-height:1.95; font-size:1rem; overflow-wrap:anywhere; }
+    .art-body h2 { font-size:1.25rem; margin:1.8rem 0 .6rem; color:var(--text); }
+    .art-body h3 { font-size:1.08rem; margin:1.4rem 0 .5rem; color:var(--text); }
+    .art-body img { max-width:100%; height:auto; border-radius:10px; display:block; margin:.8rem auto; }
+    .art-body a { color:var(--brand); }
+    .art-body blockquote { margin:1rem 0; padding:.6rem 1rem; border-left:3px solid var(--line); color:var(--muted); }
+    .art-body ul, .art-body ol { padding-left:1.4rem; }
+    .art-ed-top { display:flex; align-items:center; gap:1rem; margin-bottom:.8rem; }
+    .art-ed-label { display:block; margin:.9rem 0 .3rem; font-size:.78rem; color:var(--muted); }
+    .art-ed-input { width:100%; padding:.6rem .7rem; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--text); font:inherit; }
+    .art-toolbar { display:flex; flex-wrap:wrap; gap:.3rem; align-items:center; padding:.45rem; border:1px solid var(--line); border-radius:10px 10px 0 0; background:rgba(255,255,255,.04); position:sticky; top:var(--hdr-h,56px); z-index:5; backdrop-filter:blur(6px); }
+    .art-toolbar button, .art-toolbar select, .art-tb-color { min-width:2rem; height:2rem; padding:0 .5rem; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.06); color:var(--text); font:inherit; font-size:.82rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+    .art-tb-color { gap:.2rem; font-weight:900; }
+    .art-tb-color input { width:1.4rem; height:1.4rem; padding:0; border:none; background:none; }
+    .art-tb-sep { width:1px; height:1.4rem; background:var(--line); margin:0 .15rem; }
+    .art-ed-body { min-height:320px; padding:.9rem 1rem; border:1px solid var(--line); border-top:none; border-radius:0 0 10px 10px; background:rgba(255,255,255,.03); outline:none; }
+    .art-ed-hint { min-height:1.2rem; font-size:.78rem; color:var(--muted); }
+    .art-ed-actions { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.6rem; }
+    .art-danger-btn { padding:.65rem 1.1rem; border-radius:12px; border:1px solid #e84a4a; background:none; color:#e84a4a; font-weight:800; cursor:pointer; margin-left:auto; }
     /* ══ AFFILIATE ══ */
     .af-section { padding:.9rem 1rem; border-bottom:1px solid var(--line); }
     .af-section-label { font-size:15px; color:#dfeae3; font-weight:700; font-family:"Zen Kaku Gothic New",sans-serif; letter-spacing:normal; margin-bottom:.6rem; }
@@ -5160,7 +5194,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div id="boardHubContent" style="padding:1rem 1rem 3rem;"></div>
 </div>
 
-<!-- 記事の広場（中身は後日実装） -->
+<!-- 記事の広場：一覧・記事本文・編集画面(管理者のみ)を、このページの中で切り替えて表示する -->
 <div class="page" id="page-articles">
   <header class="hdr">
     <div class="hdr-inner">
@@ -5170,10 +5204,72 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
   </header>
-  <div style="padding:3rem 1.2rem;text-align:center;color:var(--muted);">
-    <div style="font-size:3rem;margin-bottom:.6rem;">📰</div>
-    <h2 style="color:var(--text);margin-bottom:.4rem;" data-i18n="articlesPageTitle">記事の広場</h2>
-    <p data-i18n="comingSoonText">近日公開予定です。お楽しみに！</p>
+  <div class="art-wrap">
+    <div id="articlesListView">
+      <div class="art-head">
+        <h2 class="art-page-title" data-i18n="articlesPageTitle">記事の広場</h2>
+        <button type="button" class="btn-primary" id="articlesWriteBtn" style="display:none;" onclick="openArticleEditor(null)">✎ 記事を書く</button>
+      </div>
+      <div id="articlesDraftBox" style="display:none;"></div>
+      <div id="articlesList" class="art-list"></div>
+      <p id="articlesEmpty" class="art-empty" style="display:none;"><span data-i18n="articlesEmpty">この言語の記事はまだありません。</span> <button type="button" class="art-link-btn" id="articlesShowAllBtn" data-i18n="articlesShowAllLangs" onclick="articlesShowAllLangs()">すべての言語の記事を見る</button></p>
+    </div>
+    <article id="articleView" style="display:none;">
+      <button type="button" class="art-link-btn" onclick="nav('articles')">← <span data-i18n="articlesBackToList">記事一覧へ</span></button>
+      <h1 id="articleViewTitle" class="art-title"></h1>
+      <div id="articleViewMeta" class="art-meta"></div>
+      <div id="articleViewAdmin" style="display:none;margin:.6rem 0;"></div>
+      <div id="articleViewBody" class="art-body"></div>
+    </article>
+    <div id="articleEditor" style="display:none;">
+      <div class="art-ed-top">
+        <button type="button" class="art-link-btn" onclick="closeArticleEditor()">← 戻る</button>
+        <strong id="articleEdHeading">記事を書く</strong>
+      </div>
+      <label class="art-ed-label">記事の言語(この言語を使う人にだけ一覧に出ます。翻訳はされません)</label>
+      <select id="articleEdLang" class="art-ed-input"></select>
+      <label class="art-ed-label">タイトル</label>
+      <input id="articleEdTitle" class="art-ed-input" type="text" maxlength="150" placeholder="タイトルを入力">
+      <label class="art-ed-label">要約(検索結果やSNSに出る説明。省略すると本文の頭から作ります)</label>
+      <textarea id="articleEdDesc" class="art-ed-input" rows="2" maxlength="300"></textarea>
+      <label class="art-ed-label">本文</label>
+      <div class="art-toolbar" id="articleToolbar">
+        <button type="button" data-cmd="bold" title="太字"><b>B</b></button>
+        <button type="button" data-cmd="italic" title="斜体"><i>I</i></button>
+        <button type="button" data-cmd="underline" title="下線"><u>U</u></button>
+        <button type="button" data-cmd="strikeThrough" title="取り消し線"><s>S</s></button>
+        <span class="art-tb-sep"></span>
+        <button type="button" data-block="h2" title="大見出し">H2</button>
+        <button type="button" data-block="h3" title="小見出し">H3</button>
+        <button type="button" data-block="p" title="本文">P</button>
+        <span class="art-tb-sep"></span>
+        <select id="articleFontSize" title="文字サイズ">
+          <option value="">サイズ</option>
+          <option value="0.85em">小</option>
+          <option value="1em">標準</option>
+          <option value="1.25em">大</option>
+          <option value="1.6em">特大</option>
+          <option value="2em">最大</option>
+        </select>
+        <label class="art-tb-color" title="文字色">A<input type="color" id="articleFontColor" value="#e84a4a"></label>
+        <button type="button" data-cmd="removeFormat" title="書式をクリア">⌫</button>
+        <span class="art-tb-sep"></span>
+        <button type="button" data-cmd="justifyLeft" title="左寄せ">⇤</button>
+        <button type="button" data-cmd="justifyCenter" title="中央寄せ">≡</button>
+        <button type="button" data-cmd="insertUnorderedList" title="箇条書き">•</button>
+        <button type="button" data-cmd="insertOrderedList" title="番号つき">1.</button>
+        <button type="button" id="articleLinkBtn" title="リンク">🔗</button>
+        <button type="button" id="articleImageBtn" title="画像">🖼</button>
+        <input type="file" id="articleImageFile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;">
+      </div>
+      <div id="articleEdBody" class="art-ed-body art-body" contenteditable="true" spellcheck="true"></div>
+      <p class="art-ed-hint" id="articleEdStatus"></p>
+      <div class="art-ed-actions">
+        <button type="button" class="btn-primary" id="articleSaveDraftBtn">下書きとして保存</button>
+        <button type="button" class="btn-primary" id="articlePublishBtn">公開する</button>
+        <button type="button" class="art-danger-btn" id="articleDeleteBtn" style="display:none;">削除</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -8562,7 +8658,49 @@ document.addEventListener('DOMContentLoaded', () => {
         return { error };
       },
     },
-    // ── お問い合わせ（投稿自体はEdge Function経由。ここは管理者が読む側だけ） ──
+    // ── 記事の広場(書けるのは管理者だけ。RLSでも限定。公開済みは誰でも読める) ──
+    articles: {
+      async listPublished(lang) {
+        if(!sb) return [];
+        let q = sb.from('articles').select('id,slug,lang,title,description,published_at,author_name').eq('status', 'published').order('published_at', { ascending: false }).limit(100);
+        if(lang) q = q.eq('lang', lang);
+        const { data } = await q;
+        return data || [];
+      },
+      async listDrafts() {
+        if(!sb) return [];
+        const { data } = await sb.from('articles').select('id,slug,lang,title,description,published_at,author_name').eq('status', 'draft').order('updated_at', { ascending: false }).limit(100);
+        return data || [];
+      },
+      async getBySlug(slug) {
+        if(!sb) return null;
+        const { data } = await sb.from('articles').select('*').eq('slug', slug).maybeSingle();
+        return data || null;
+      },
+      async save(id, row) {
+        if(!sb) return { error: 'not connected' };
+        const now = new Date().toISOString();
+        const q = id
+          ? sb.from('articles').update({ ...row, updated_at: now }).eq('id', id)
+          : sb.from('articles').insert({ ...row, slug: newArticleSlug() });
+        const { data, error } = await q.select().single();
+        return { data, error: error ? (error.message || 'error') : null };
+      },
+      async remove(id) {
+        if(!sb) return { error: 'not connected' };
+        const { error } = await sb.from('articles').delete().eq('id', id);
+        return { error: error ? (error.message || 'error') : null };
+      },
+      async uploadImage(file) {
+        if(!sb || !_currentUser) return { error: 'ログインが必要です' };
+        const ext = ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' })[file.type] || 'png';
+        const path = `${_currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error } = await sb.storage.from('article-images').upload(path, file, { contentType: file.type, cacheControl: '31536000' });
+        if(error) return { error: error.message || 'upload failed' };
+        const { data } = sb.storage.from('article-images').getPublicUrl(path);
+        return { url: data.publicUrl };
+      },
+    },    // ── お問い合わせ（投稿自体はEdge Function経由。ここは管理者が読む側だけ） ──
     contactMessages: {
       async listAll() {
         if(!sb) return [];
@@ -10508,6 +10646,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const p = getAll().find(a=>a.id===animeId);
       return animeUrlPath(animeId, p ? getTitle(p) : '');
     }
+    if(page === 'articles' && animeId) return '/articles/' + animeId;
     if(page === 'reviews' && animeId) return `/anime/${publicAnimeId(animeId)}/reviews`;
     if(page === 'review' && animeId) return `/anime/${publicAnimeId(animeId)}/write-review`;
     if(page === 'board-general' && animeId) return `/anime/${publicAnimeId(animeId)}/board`;
@@ -10544,6 +10683,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     m = rel.match(/^\/anime\/([^\/]+)(?:\/.*)?$/);
     if(m) return { page:'anime', animeId: internalAnimeIdFromPublic(decodeURIComponent(m[1])) };
+
+    m = rel.match(/^\/articles\/([a-z0-9-]+)\/?$/);
+    if(m) return { page:'articles', animeId: m[1] };
 
     m = rel.match(/^\/user\/([^\/]+)\/follow\/(following|followers)(?:\/.*)?$/);
     if(m) { _followListState = { userId: decodeURIComponent(m[1]), mode: m[2] }; return { page:'follow-list', animeId: null }; }
@@ -10733,6 +10875,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const backBtn = document.getElementById('mypageBackBtn');
     if(backBtn) backBtn.style.display = (page === 'user') ? '' : 'none';
     if (page==='home')   renderHome().catch(console.error);
+    if (page==='articles') renderArticlesPage(animeId).catch(console.error);
     if (page==='anime'&&animeId)  { renderAnimePage(animeId); }
     if (page==='review'&&animeId) { initReviewPage(animeId); }
     if (page==='image-submit'&&animeId) { initImageSubmitPage(animeId); }
@@ -20660,6 +20803,322 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ════════════════════════════
+     記事の広場(記事の一覧・本文・編集)
+     - 記事は言語ごとに別々に書く(翻訳はしない)。一覧には、いま使っている言語の記事だけを出す
+     - 本文はリッチテキスト(太字・文字色・文字サイズ・画像など)。保存も表示も、必ずsanitizeArticleHtmlを通す
+     - 書けるのは管理者だけ(DB側のRLSでも管理者に限定)。画像はStorageの article-images バケット
+  ════════════════════════════ */
+  let _articlesShowAll = false;
+  let _articleCurrent = null;                      // 編集中・表示中の記事(新規はnull)
+  let _articleAdminCache = { uid: null, value: false };
+  let _articleSavedRange = null;                   // ツールバー操作で選択が外れても戻せるよう、本文内の選択範囲を覚えておく
+  let _articleEditorBound = false;
+
+  function articleImgPrefix() { return `${SUPABASE_URL}/storage/v1/object/public/article-images/`; }
+
+  // 記事の本文HTMLを、許可した要素・属性・スタイルだけに整える。保存時・表示時・貼り付け時の全てで通す。
+  // DOMParserで作った文書は「動かない」(スクリプトは実行されず、画像も読み込まれない)ので、安全に中身を調べられる
+  function sanitizeArticleHtml(html, opts) {
+    const imgPrefix = (opts && opts.imgPrefix) || '';
+    const ALLOWED = { P:1, BR:1, H2:1, H3:1, STRONG:1, B:1, EM:1, I:1, U:1, S:1, STRIKE:1, UL:1, OL:1, LI:1, A:1, IMG:1, SPAN:1, BLOCKQUOTE:1, HR:1, DIV:1 };
+    const DROP = { SCRIPT:1, STYLE:1, IFRAME:1, OBJECT:1, EMBED:1, FORM:1, INPUT:1, BUTTON:1, TEXTAREA:1, SELECT:1, LINK:1, META:1, SVG:1, MATH:1, NOSCRIPT:1, TEMPLATE:1, VIDEO:1, AUDIO:1, CANVAS:1, BASE:1, TITLE:1, HEAD:1 };
+    const cleanStyle = (styleText) => {
+      const out = [];
+      String(styleText || '').split(';').forEach(decl => {
+        const i = decl.indexOf(':');
+        if(i < 0) return;
+        const prop = decl.slice(0, i).trim().toLowerCase();
+        const val = decl.slice(i + 1).trim().toLowerCase();
+        if(prop === 'color' && /^(#[0-9a-f]{3,8}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)|[a-z]{3,20})$/.test(val)) out.push('color:' + val);
+        else if(prop === 'font-size') {
+          const m = val.match(/^(\d+(?:\.\d+)?)(px|em|rem|%)$/);
+          if(m) {
+            const n = parseFloat(m[1]);
+            const ok = m[2] === 'px' ? (n >= 10 && n <= 72) : m[2] === '%' ? (n >= 60 && n <= 400) : (n >= 0.6 && n <= 4);
+            if(ok) out.push('font-size:' + val);
+          }
+        }
+        else if(prop === 'text-align' && /^(left|center|right)$/.test(val)) out.push('text-align:' + val);
+      });
+      return out.join(';');
+    };
+    const doc = new DOMParser().parseFromString('<!doctype html><html><body>' + String(html == null ? '' : html) + '</body></html>', 'text/html');
+    const root = document.createElement('div');
+    const walk = (src, dst) => {
+      src.childNodes.forEach(node => {
+        if(node.nodeType === 3) { dst.appendChild(document.createTextNode(node.nodeValue)); return; }
+        if(node.nodeType !== 1) return;
+        const tag = node.tagName.toUpperCase();
+        if(DROP[tag]) return;
+        if(tag === 'FONT') { // 古い書式(font color)は、許可したスタイルのspanに直す
+          const span = document.createElement('span');
+          const st = cleanStyle('color:' + (node.getAttribute('color') || ''));
+          if(st) span.setAttribute('style', st);
+          walk(node, span);
+          dst.appendChild(span);
+          return;
+        }
+        if(!ALLOWED[tag]) { walk(node, dst); return; } // 許可していない要素は外して、中の文字だけ残す
+        const el = document.createElement(tag.toLowerCase());
+        if(tag === 'IMG') {
+          const imgSrc = (node.getAttribute('src') || '').trim();
+          if(!imgPrefix || !imgSrc.startsWith(imgPrefix)) return; // 自分のStorage以外の画像は入れない
+          el.setAttribute('src', imgSrc);
+          el.setAttribute('alt', (node.getAttribute('alt') || '').slice(0, 200));
+          el.setAttribute('loading', 'lazy');
+          dst.appendChild(el);
+          return;
+        }
+        if(tag === 'A') {
+          const href = (node.getAttribute('href') || '').trim();
+          if(/^(https?:\/\/|\/(?!\/)|#|mailto:)/i.test(href)) {
+            el.setAttribute('href', href);
+            if(/^https?:/i.test(href)) { el.setAttribute('target', '_blank'); el.setAttribute('rel', 'noopener noreferrer nofollow'); }
+          }
+        }
+        const st = cleanStyle(node.getAttribute('style'));
+        if(st) el.setAttribute('style', st);
+        if(tag === 'BR' || tag === 'HR') { dst.appendChild(el); return; }
+        walk(node, el);
+        dst.appendChild(el);
+      });
+    };
+    walk(doc.body, root);
+    return root.innerHTML;
+  }
+  function articlePlainText(html) {
+    return (new DOMParser().parseFromString('<!doctype html><body>' + String(html || ''), 'text/html').body.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+  function newArticleSlug() { return 'p-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  async function ensureArticleUser() {
+    if(!_currentUser && sb) {
+      try { const { data } = await sb.auth.getSession(); if(data?.session?.user) _currentUser = data.session.user; } catch(_) {}
+    }
+    return _currentUser;
+  }
+  async function isArticleAdmin() {
+    const u = await ensureArticleUser();
+    if(!u || !sb) return false;
+    if(_articleAdminCache.uid === u.id) return _articleAdminCache.value;
+    let value = false;
+    try { const p = await db.profiles.get(u.id); value = !!p?.is_admin; } catch(_) {}
+    _articleAdminCache = { uid: u.id, value };
+    return value;
+  }
+
+  function articleLangLabel(code) { const l = LANGS.find(x => x.code === code); return l ? l.native : code; }
+  function articleDateLabel(iso) { try { return new Date(iso).toLocaleDateString(currentLang); } catch(_) { return ''; } }
+  function articleCardHtml(a, isDraft) {
+    return `<button type="button" class="art-card" data-slug="${escapeHtml(a.slug)}">
+      <p class="art-card-title">${escapeHtml(a.title)}</p>
+      ${a.description ? `<p class="art-card-desc">${escapeHtml(a.description)}</p>` : ''}
+      <div class="art-card-meta">
+        ${isDraft ? '<span class="art-badge art-draft-badge">下書き</span>' : ''}
+        <span class="art-badge">${escapeHtml(articleLangLabel(a.lang))}</span>
+        ${a.published_at ? `<span>${escapeHtml(articleDateLabel(a.published_at))}</span>` : ''}
+      </div>
+    </button>`;
+  }
+
+  async function renderArticlesPage(slug) {
+    const $ = (id) => document.getElementById(id);
+    $('articleEditor').style.display = 'none';
+    if(slug) {
+      $('articlesListView').style.display = 'none';
+      $('articleView').style.display = '';
+      await renderArticleView(slug);
+      return;
+    }
+    $('articleView').style.display = 'none';
+    $('articlesListView').style.display = '';
+    document.title = t('articlesPageTitle') + ' | アニメップル';
+    const admin = await isArticleAdmin();
+    $('articlesWriteBtn').style.display = admin ? '' : 'none';
+    let rows = [];
+    try { rows = await db.articles.listPublished(_articlesShowAll ? null : currentLang); } catch(e) { console.warn('articles list failed:', e); }
+    const list = $('articlesList');
+    list.innerHTML = rows.map(a => articleCardHtml(a, false)).join('');
+    $('articlesEmpty').style.display = rows.length ? 'none' : '';
+    $('articlesShowAllBtn').style.display = _articlesShowAll ? 'none' : '';
+    const draftBox = $('articlesDraftBox');
+    if(admin) {
+      let drafts = [];
+      try { drafts = await db.articles.listDrafts(); } catch(_) {}
+      draftBox.style.display = drafts.length ? '' : 'none';
+      draftBox.innerHTML = drafts.length ? `<h3 style="margin:.2rem 0 .5rem;font-size:.9rem;color:var(--muted);">下書き(管理者だけに見えます)</h3><div class="art-list">${drafts.map(a => articleCardHtml(a, true)).join('')}</div>` : '';
+    } else {
+      draftBox.style.display = 'none';
+      draftBox.innerHTML = '';
+    }
+    document.querySelectorAll('#page-articles .art-card').forEach(btn => btn.addEventListener('click', () => nav('articles', btn.dataset.slug)));
+  }
+  function articlesShowAllLangs() { _articlesShowAll = true; renderArticlesPage(null); }
+
+  async function renderArticleView(slug) {
+    const $ = (id) => document.getElementById(id);
+    const titleEl = $('articleViewTitle'), bodyEl = $('articleViewBody'), metaEl = $('articleViewMeta'), adminEl = $('articleViewAdmin');
+    titleEl.textContent = ''; bodyEl.innerHTML = ''; metaEl.innerHTML = ''; adminEl.style.display = 'none'; adminEl.innerHTML = '';
+    let a = null;
+    try { a = await db.articles.getBySlug(slug); } catch(e) { console.warn('article load failed:', e); }
+    if(!a) { titleEl.textContent = t('articlesNotFound'); document.title = t('articlesNotFound') + ' | アニメップル'; return; }
+    _articleCurrent = a;
+    document.title = a.title + ' | アニメップル';
+    titleEl.textContent = a.title;
+    const dir = a.lang === 'ar' ? 'rtl' : 'ltr';
+    titleEl.setAttribute('lang', a.lang); titleEl.dir = dir;
+    bodyEl.setAttribute('lang', a.lang); bodyEl.dir = dir;
+    metaEl.innerHTML = `${a.status === 'draft' ? '<span class="art-badge art-draft-badge">下書き</span>' : ''}<span class="art-badge">${escapeHtml(articleLangLabel(a.lang))}</span>${a.published_at ? `<span>${escapeHtml(articleDateLabel(a.published_at))}</span>` : ''}${a.author_name ? `<span>${escapeHtml(a.author_name)}</span>` : ''}`;
+    bodyEl.innerHTML = sanitizeArticleHtml(a.body_html, { imgPrefix: articleImgPrefix() });
+    if(await isArticleAdmin()) {
+      adminEl.style.display = '';
+      adminEl.innerHTML = '<button type="button" class="btn-primary" id="articleEditBtn">✎ この記事を編集</button>';
+      document.getElementById('articleEditBtn').addEventListener('click', () => openArticleEditor(_articleCurrent));
+    }
+  }
+
+  async function openArticleEditor(article) {
+    if(!(await isArticleAdmin())) return;
+    const $ = (id) => document.getElementById(id);
+    _articleCurrent = article || null;
+    $('articlesListView').style.display = 'none';
+    $('articleView').style.display = 'none';
+    $('articleEditor').style.display = '';
+    $('articleEdHeading').textContent = article ? '記事を編集' : '記事を書く';
+    $('articleEdLang').innerHTML = LANGS.map(l => `<option value="${l.code}">${escapeHtml(l.native)}</option>`).join('');
+    $('articleEdLang').value = (article && article.lang) || currentLang;
+    $('articleEdTitle').value = article ? article.title : '';
+    $('articleEdDesc').value = article ? (article.description || '') : '';
+    $('articleEdBody').innerHTML = article ? sanitizeArticleHtml(article.body_html, { imgPrefix: articleImgPrefix() }) : '<p><br></p>';
+    $('articleEdStatus').textContent = article && article.status === 'published' ? '公開中の記事です。「公開する」で更新、「下書きとして保存」で非公開に戻せます。' : '';
+    $('articleDeleteBtn').style.display = article ? '' : 'none';
+    bindArticleEditorOnce();
+    window.scrollTo(0, 0);
+  }
+  function closeArticleEditor() {
+    if(_articleCurrent && _articleCurrent.slug) nav('articles', _articleCurrent.slug);
+    else nav('articles');
+  }
+
+  function applyArticleSpanStyle(prop, value) {
+    const sel = window.getSelection();
+    if(!sel.rangeCount || sel.isCollapsed) return false;
+    const range = sel.getRangeAt(0);
+    const span = document.createElement('span');
+    span.style.setProperty(prop, value);
+    span.appendChild(range.extractContents());
+    range.insertNode(span);
+    sel.removeAllRanges();
+    const r = document.createRange();
+    r.selectNodeContents(span);
+    sel.addRange(r);
+    return true;
+  }
+
+  function bindArticleEditorOnce() {
+    if(_articleEditorBound) return;
+    _articleEditorBound = true;
+    const $ = (id) => document.getElementById(id);
+    const body = $('articleEdBody'), toolbar = $('articleToolbar'), statusEl = $('articleEdStatus');
+    const say = (msg) => { statusEl.textContent = msg; };
+    try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch(_) {}
+    document.addEventListener('selectionchange', () => {
+      const sel = window.getSelection();
+      if(sel && sel.rangeCount && body.contains(sel.anchorNode)) _articleSavedRange = sel.getRangeAt(0).cloneRange();
+    });
+    const restore = () => {
+      body.focus();
+      if(_articleSavedRange) { const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(_articleSavedRange); }
+    };
+    toolbar.addEventListener('mousedown', (e) => { if(e.target.closest('button')) e.preventDefault(); }); // 選択範囲を外さない
+    toolbar.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      if(btn.dataset.cmd) { restore(); document.execCommand(btn.dataset.cmd, false, null); }
+      else if(btn.dataset.block) { restore(); document.execCommand('formatBlock', false, btn.dataset.block); }
+    });
+    $('articleFontSize').addEventListener('change', (e) => {
+      const v = e.target.value; e.target.value = '';
+      if(!v) return;
+      restore();
+      if(!applyArticleSpanStyle('font-size', v)) say('文字サイズを変える文章を、先に選択してください');
+    });
+    $('articleFontColor').addEventListener('change', (e) => {
+      restore();
+      if(!applyArticleSpanStyle('color', e.target.value)) say('色を変える文章を、先に選択してください');
+    });
+    $('articleLinkBtn').addEventListener('click', () => {
+      const url = (prompt('リンク先のURL(https://… または /から始まる自分のサイト内のパス)') || '').trim();
+      if(!url) return;
+      if(!/^(https?:\/\/|\/(?!\/))/i.test(url)) { say('URLは https:// または / から始めてください'); return; }
+      restore();
+      document.execCommand('createLink', false, url);
+    });
+    $('articleImageBtn').addEventListener('click', () => $('articleImageFile').click());
+    $('articleImageFile').addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if(!file) return;
+      if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) { say('PNG・JPEG・WebP・GIFの画像を選んでください'); return; }
+      if(file.size > 5 * 1024 * 1024) { say('画像は5MBまでです'); return; }
+      say('画像をアップロードしています…');
+      const res = await db.articles.uploadImage(file);
+      if(res.error) { say('画像のアップロードに失敗しました: ' + res.error); return; }
+      restore();
+      document.execCommand('insertImage', false, res.url);
+      say('画像を入れました');
+    });
+    // 貼り付けは、許可した書式だけに整えてから入れる(他のサイトからの貼り付けで余計なものが入らないように)
+    body.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const cd = e.clipboardData;
+      const html = cd && cd.getData('text/html');
+      const text = (cd && cd.getData('text/plain')) || '';
+      const clean = html ? sanitizeArticleHtml(html, { imgPrefix: articleImgPrefix() }) : escapeHtml(text).replace(/\n/g, '<br>');
+      document.execCommand('insertHTML', false, clean);
+    });
+    body.addEventListener('drop', (e) => { if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) e.preventDefault(); });
+
+    const setBusy = (busy) => { ['articleSaveDraftBtn', 'articlePublishBtn', 'articleDeleteBtn'].forEach(id => { $(id).disabled = busy; }); };
+    const save = async (status) => {
+      const title = $('articleEdTitle').value.trim();
+      const lang = $('articleEdLang').value;
+      const bodyHtml = sanitizeArticleHtml(body.innerHTML, { imgPrefix: articleImgPrefix() });
+      const text = articlePlainText(bodyHtml);
+      if(!title) { say('タイトルを入力してください'); return; }
+      if(!text && !/<img/i.test(bodyHtml)) { say('本文を入力してください'); return; }
+      if(bodyHtml.length > 190000) { say('本文が長すぎます。2つの記事に分けてください'); return; }
+      const row = { lang, title, description: ($('articleEdDesc').value.trim() || text.slice(0, 120)).slice(0, 300), body_html: bodyHtml, status };
+      if(status === 'published' && !(_articleCurrent && _articleCurrent.published_at)) row.published_at = new Date().toISOString();
+      setBusy(true); say('保存しています…');
+      const res = await db.articles.save(_articleCurrent ? _articleCurrent.id : null, row);
+      setBusy(false);
+      if(res.error || !res.data) { say('保存に失敗しました: ' + (res.error || '不明なエラー')); return; }
+      _articleCurrent = res.data;
+      $('articleDeleteBtn').style.display = '';
+      if(status === 'published') { nav('articles', res.data.slug); return; }
+      say('下書きを保存しました ✓');
+    };
+    $('articleSaveDraftBtn').addEventListener('click', () => save('draft'));
+    $('articlePublishBtn').addEventListener('click', () => save('published'));
+    $('articleDeleteBtn').addEventListener('click', async () => {
+      if(!_articleCurrent) return;
+      if(!confirm('この記事を削除しますか？ 元に戻せません。')) return;
+      setBusy(true);
+      const res = await db.articles.remove(_articleCurrent.id);
+      setBusy(false);
+      if(res.error) { say('削除に失敗しました: ' + res.error); return; }
+      _articleCurrent = null;
+      nav('articles');
+    });
+  }
+  window.openArticleEditor = openArticleEditor;
+  window.closeArticleEditor = closeArticleEditor;
+  window.articlesShowAllLangs = articlesShowAllLangs;
+  window.sanitizeArticleHtml = sanitizeArticleHtml; // テスト用(実ブラウザで安全な整形を検査する)
+  window.bindArticleEditorOnce = bindArticleEditorOnce; // テスト用(ツールバーの動作を実ブラウザで検査する。リスナーを付けるだけで、書き込みはしない)
+
+  /* ════════════════════════════
      i18n — 多言語対応
      10言語: ja / en / ko / zh-tw / zh-cn / es / fr / pt / de / ar
   ════════════════════════════ */
@@ -21781,7 +22240,10 @@ document.addEventListener('DOMContentLoaded', () => {
     reviewPostedVoted: { ja:'上質なレビュー＆価値観投票、完了しました！', en:'Quality review & value vote complete!', ko:'우수 리뷰 및 가치관 투표 완료!','zh-tw':'優質評論與價值觀投票已完成！','zh-cn':'优质评论与价值观投票已完成！',es:'¡Reseña de calidad y voto de valores completados!',fr:'Avis de qualité et vote de valeurs terminés !',pt:'Avaliação de qualidade e voto de valores concluídos!',de:'Qualitätsbewertung & Wertevotum abgeschlossen!',ar:'اكتملت المراجعة الجيدة والتصويت على القيم!',th:'รีวิวคุณภาพและการโหวตค่านิยมเสร็จสมบูรณ์!',id:'Ulasan berkualitas & voting nilai selesai!',ru:'Качественный отзыв и голосование по ценностям завершены!',it:'Recensione di qualità e voto sui valori completati!',vi:'Đã hoàn tất đánh giá chất lượng & bình chọn giá trị!' },
     noResults:  { ja:'見つかりませんでした', en:'No results found', ko:'결과 없음','zh-tw':'找不到結果','zh-cn':'未找到结果',es:'Sin resultados',fr:'Aucun résultat',pt:'Nenhum resultado',de:'Keine Ergebnisse',ar:'لا توجد نتائج',th:'ไม่พบผลลัพธ์',id:'Tidak ada hasil',ru:'Ничего не найдено',it:'Nessun risultato',vi:'Không tìm thấy kết quả' },
     noResultsSub:{ ja:'キーワード・タグ・フィルターを変えてみてください。', en:'Try changing your keywords, tags, or filters.', ko:'키워드·태그·필터를 바꿔 보세요.','zh-tw':'請嘗試更改關鍵字、標籤或篩選條件。','zh-cn':'请尝试更改关键字、标签或筛选条件。',es:'Intenta cambiar palabras clave, etiquetas o filtros.',fr:'Essayez de changer les mots-clés, tags ou filtres.',pt:'Tente mudar palavras-chave, tags ou filtros.',de:'Versuche andere Schlüsselwörter, Tags oder Filter.',ar:'جرب تغيير الكلمات المفتاحية أو الوسوم أو الفلاتر.',th:'ลองเปลี่ยนคำค้น แท็ก หรือตัวกรอง',id:'Coba ubah kata kunci, tag, atau filter.',ru:'Попробуйте изменить ключевые слова, теги или фильтры.',it:'Prova a cambiare parole chiave, tag o filtri.',vi:'Hãy thử đổi từ khóa, thẻ hoặc bộ lọc.' },
-  };
+    articlesEmpty:{ ja:'この言語の記事はまだありません。', en:'There are no articles in this language yet.', ko:'이 언어의 글이 아직 없습니다.', 'zh-tw':'此語言目前還沒有文章。', 'zh-cn':'该语言暂时还没有文章。', es:'Todavía no hay artículos en este idioma.', fr:'Il n’y a pas encore d’articles dans cette langue.', pt:'Ainda não há artigos neste idioma.', de:'In dieser Sprache gibt es noch keine Artikel.', ar:'لا توجد مقالات بهذه اللغة بعد.', th:'ยังไม่มีบทความในภาษานี้', id:'Belum ada artikel dalam bahasa ini.', ru:'Статей на этом языке пока нет.', it:'Non ci sono ancora articoli in questa lingua.', vi:'Chưa có bài viết nào bằng ngôn ngữ này.' },
+    articlesShowAllLangs:{ ja:'すべての言語の記事を見る', en:'Show articles in all languages', ko:'모든 언어의 글 보기', 'zh-tw':'查看所有語言的文章', 'zh-cn':'查看所有语言的文章', es:'Ver artículos en todos los idiomas', fr:'Voir les articles dans toutes les langues', pt:'Ver artigos em todos os idiomas', de:'Artikel in allen Sprachen anzeigen', ar:'عرض المقالات بكل اللغات', th:'ดูบทความทุกภาษา', id:'Lihat artikel di semua bahasa', ru:'Показать статьи на всех языках', it:'Mostra gli articoli in tutte le lingue', vi:'Xem bài viết ở mọi ngôn ngữ' },
+    articlesBackToList:{ ja:'記事一覧へ', en:'Back to articles', ko:'글 목록으로', 'zh-tw':'返回文章列表', 'zh-cn':'返回文章列表', es:'Volver a los artículos', fr:'Retour aux articles', pt:'Voltar aos artigos', de:'Zurück zu den Artikeln', ar:'العودة إلى المقالات', th:'กลับไปที่บทความ', id:'Kembali ke artikel', ru:'К списку статей', it:'Torna agli articoli', vi:'Quay lại danh sách bài viết' },
+    articlesNotFound:{ ja:'記事が見つかりませんでした。', en:'Article not found.', ko:'글을 찾을 수 없습니다.', 'zh-tw':'找不到這篇文章。', 'zh-cn':'找不到这篇文章。', es:'No se encontró el artículo.', fr:'Article introuvable.', pt:'Artigo não encontrado.', de:'Artikel nicht gefunden.', ar:'لم يتم العثور على المقال.', th:'ไม่พบบทความ', id:'Artikel tidak ditemukan.', ru:'Статья не найдена.', it:'Articolo non trovato.', vi:'Không tìm thấy bài viết.' },  };
 
   // ── 言語状態管理 ──────────────────────────────
   const LANG_KEY = 'animepple-lang';
