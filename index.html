@@ -5210,6 +5210,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <h2 class="art-page-title" data-i18n="articlesPageTitle">記事の広場</h2>
         <button type="button" class="btn-primary" id="articlesWriteBtn" style="display:none;" onclick="openArticleEditor(null)">✎ 記事を書く</button>
       </div>
+      <div id="articlesAdminTools" style="display:none;margin:-.4rem 0 1rem;">
+        <button type="button" class="art-link-btn" id="articlesImportBtn">公式記事(サイトの使い方・15言語)を取り込む／更新する</button>
+        <p id="articlesImportStatus" class="art-ed-hint"></p>
+      </div>
       <div id="articlesDraftBox" style="display:none;"></div>
       <div id="articlesList" class="art-list"></div>
       <p id="articlesEmpty" class="art-empty" style="display:none;"><span data-i18n="articlesEmpty">この言語の記事はまだありません。</span> <button type="button" class="art-link-btn" id="articlesShowAllBtn" data-i18n="articlesShowAllLangs" onclick="articlesShowAllLangs()">すべての言語の記事を見る</button></p>
@@ -8686,6 +8690,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, error } = await q.select().single();
         return { data, error: error ? (error.message || 'error') : null };
       },
+      // 公式記事の取り込み: 同じslugがあれば本文などを更新(公開日は変えない)、無ければ公開済みで新規登録
+      async upsertOfficial(row) {
+        if(!sb) return { error: 'not connected' };
+        const { data: found, error: findError } = await sb.from('articles').select('id').eq('slug', row.slug).maybeSingle();
+        if(findError) return { error: findError.message || 'error' };
+        const now = new Date().toISOString();
+        const q = found
+          ? sb.from('articles').update({ lang: row.lang, title: row.title, description: row.description, body_html: row.body_html, status: 'published', updated_at: now }).eq('id', found.id)
+          : sb.from('articles').insert({ ...row, status: 'published', author_name: 'アニメップル運営', published_at: now });
+        const { error } = await q;
+        return { error: error ? (error.message || 'error') : null };
+      },
       async remove(id) {
         if(!sb) return { error: 'not connected' };
         const { error } = await sb.from('articles').delete().eq('id', id);
@@ -9432,7 +9448,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       async getByIds(ids) {
         if(!sb) return [];
-        const { data } = await sb.from('anime_pages').select('id,title,title_en,image_url,meta,description,description_en,description_ko,description_zh_tw,description_zh_cn,description_es,description_fr,description_pt,description_de,description_ar,description_th,description_id,description_ru,description_it,description_vi,year,episodes,genres,categories,category_ids,studios,streaming,broadcast_start,broadcast_end').in('id', ids);
+        const { data } = await sb.from('anime_pages').select('id,title,title_en,title_romaji,image_url,meta,description,description_en,description_ko,description_zh_tw,description_zh_cn,description_es,description_fr,description_pt,description_de,description_ar,description_th,description_id,description_ru,description_it,description_vi,year,episodes,genres,categories,category_ids,studios,streaming,broadcast_start,broadcast_end').in('id', ids);
         return data || [];
       },
       async getAllTitles() {
@@ -9442,7 +9458,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let from = 0;
         const pageSize = 1000;
         while (true) {
-          const { data, error } = await sb.from('anime_pages').select('id,title,title_en').range(from, from + pageSize - 1);
+          const { data, error } = await sb.from('anime_pages').select('id,title,title_en,title_romaji').range(from, from + pageSize - 1);
           if (error) { console.warn('getAllTitles error:', error); break; }
           if (!data || !data.length) break;
           all = all.concat(data);
@@ -9458,7 +9474,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 読み込むたびにバラバラになり「ソートが変わる」ように見える不具合の原因だったため、
         // idの昇順で固定し、常に同じ順序を返すようにする
         const { data, count } = await sb.from('anime_pages')
-          .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year', { count: 'exact' })
+          .select('id,title,title_en,title_romaji,image_url,meta,genres,categories,category_ids,year', { count: 'exact' })
           .order('id', { ascending: true })
           .limit(limit||1000);
         return { items: data||[], count: count||0 };
@@ -9473,7 +9489,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!count) return null;
         const offset = Math.floor(Math.random() * count);
         const { data } = await sb.from('anime_pages')
-          .select('id,title,title_en,image_url,meta,year')
+          .select('id,title,title_en,title_romaji,image_url,meta,year')
           .range(offset, offset);
         return (data && data[0]) || null;
       },
@@ -9497,7 +9513,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const rows = await Promise.all([...offsets].map(offset =>
           sb.from('anime_pages')
-            .select('id,title,title_en,image_url,meta,year')
+            .select('id,title,title_en,title_romaji,image_url,meta,year')
             .ilike('meta', metaValue)
             .range(offset, offset)
             .then(({ data }) => (data && data[0]) || null)
@@ -9514,7 +9530,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for(let i=0; i<ids.length; i+=CHUNK) {
           const chunk = ids.slice(i, i+CHUNK);
           const { data, error } = await sb.from('anime_pages')
-            .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year')
+            .select('id,title,title_en,title_romaji,image_url,meta,genres,categories,category_ids,year')
             .in('id', chunk);
           if(error) { console.warn('getByIdsLight error:', error); continue; }
           all.push(...(data||[]));
@@ -9527,7 +9543,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!sb) return { items:[], count:0 };
         // [修正] order()が無いと行の順序が呼ぶたびに変わりうるため、idの昇順で固定する
         const { data, count } = await sb.from('anime_pages')
-          .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year', { count: 'exact' })
+          .select('id,title,title_en,title_romaji,image_url,meta,genres,categories,category_ids,year', { count: 'exact' })
           .eq('year', String(year))
           .order('id', { ascending: true })
           .limit(limit||2000);
@@ -9537,7 +9553,7 @@ document.addEventListener('DOMContentLoaded', () => {
       async getByYearRange(yearFrom, yearTo, limit) {
         if(!sb) return { items:[], count:0 };
         let q = sb.from('anime_pages')
-          .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year', { count: 'exact' });
+          .select('id,title,title_en,title_romaji,image_url,meta,genres,categories,category_ids,year', { count: 'exact' });
         if(yearFrom) q = q.gte('year', String(yearFrom));
         if(yearTo) q = q.lte('year', String(yearTo));
         // [修正] order()が無いと行の順序が呼ぶたびに変わりうるため、idの昇順で固定する。
@@ -9555,7 +9571,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const [y, m] = yearMonth.split('-').map(Number);
         const nextMonth = m === 12 ? `${y+1}-01-01` : `${y}-${String(m+1).padStart(2,'0')}-01`;
         const { data, count } = await sb.from('anime_pages')
-          .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year,broadcast_start', { count: 'exact' })
+          .select('id,title,title_en,title_romaji,image_url,meta,genres,categories,category_ids,year,broadcast_start', { count: 'exact' })
           .gte('broadcast_start', from)
           .lt('broadcast_start', nextMonth)
           .limit(limit||500);
@@ -9569,7 +9585,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageSize = 1000;
         while (true) {
           const { data, error } = await sb.from('anime_pages')
-            .select('id,title,title_en,image_url,meta,genres,categories,category_ids,year')
+            .select('id,title,title_en,title_romaji,image_url,meta,genres,categories,category_ids,year')
             .range(from, from + pageSize - 1);
           if (error) { console.warn('getAllForSearch error:', error); break; }
           if (!data || !data.length) break;
@@ -9582,8 +9598,8 @@ document.addEventListener('DOMContentLoaded', () => {
       async search(query, limit) {
         if(!sb || !query) return [];
         const { data } = await sb.from('anime_pages')
-          .select('id,title,title_en,image_url,meta,genres')
-          .or(`title.ilike.%${query}%,title_en.ilike.%${query}%`)
+          .select('id,title,title_en,title_romaji,image_url,meta,genres')
+          .or(`title.ilike.%${query}%,title_en.ilike.%${query}%,title_romaji.ilike.%${query}%`)
           .limit(limit||20);
         return data || [];
       },
@@ -11486,6 +11502,7 @@ document.addEventListener('DOMContentLoaded', () => {
           kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
           title: p.title || p.title_en || '',
           titleEn: p.title_en || p.title || '',
+          titleRomaji: cleanRomaji(p.title_romaji),
           meta: p.meta || '',
           image: p.image_url || '',
           year: p.year || '',
@@ -11516,6 +11533,7 @@ document.addEventListener('DOMContentLoaded', () => {
           kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
           title: p.title || p.title_en || '',
           titleEn: p.title_en || p.title || '',
+          titleRomaji: cleanRomaji(p.title_romaji),
           meta: p.meta || '',
           image: p.image_url || '',
           year: p.year || '',
@@ -11573,6 +11591,7 @@ document.addEventListener('DOMContentLoaded', () => {
           kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
           title: p.title || p.title_en || '',
           titleEn: p.title_en || p.title || '',
+          titleRomaji: cleanRomaji(p.title_romaji),
           meta: p.meta || '',
           image: p.image_url || '',
           year: p.year || '',
@@ -12969,6 +12988,7 @@ document.addEventListener('DOMContentLoaded', () => {
         kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
         title: p.title || p.title_en || '',
         titleEn: p.title_en || p.title || '',
+        titleRomaji: cleanRomaji(p.title_romaji),
         meta: p.meta || '',
         image: p.image_url || '',
         year: p.year || '',
@@ -13119,10 +13139,16 @@ document.addEventListener('DOMContentLoaded', () => {
      ANIME PAGE
   ════════════════════════════ */
   // 言語設定に応じてタイトルを返す
+  // ローマ字タイトルの整形: 全角の中黒(・)は区切りの空白にし、余分な空白をつめる
+  function cleanRomaji(s) {
+    return String(s == null ? '' : s).replace(/[・･]/g, ' ').replace(/゜/g, '').replace(/\s+/g, ' ').trim();
+  }
+  // 言語設定に応じてタイトルを返す。日本語は日本語タイトル。日本語以外の全ての言語は、ローマ字タイトル
+  // (title_romaji)を表示する(ユーザー指示 2026-10-05)。ローマ字が無い作品だけ、英語タイトル→日本語タイトルの順で代用する
   function getTitle(page) {
     if (!page) return '';
     if (currentLang === 'ja') return page.title || page.titleEn || '';
-    return page.titleEn || page.title || '';
+    return page.titleRomaji || page.titleEn || page.title || '';
   }
 
   /* ════════════════════════════
@@ -13808,6 +13834,7 @@ document.addEventListener('DOMContentLoaded', () => {
             kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-', '') : null,
             title: p.title || p.title_en || '',
             titleEn: p.title_en || p.title || '',
+            titleRomaji: cleanRomaji(p.title_romaji),
             image: p.image_url || '',
             meta: p.meta || '',
             year: p.year || '',
@@ -15070,6 +15097,7 @@ document.addEventListener('DOMContentLoaded', () => {
         kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
         title: p.title || p.title_en || '',
         titleEn: p.title_en || p.title || '',
+        titleRomaji: cleanRomaji(p.title_romaji),
         meta: p.meta || '',
         image: p.image_url || '',
         description: '', // 検索結果には含まれないフィールド。背景フェッチで埋まる
@@ -15096,6 +15124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
             title: p.title || p.title_en || '',
             titleEn: p.title_en || p.title || '',
+            titleRomaji: cleanRomaji(p.title_romaji),
             meta: p.meta || '',
             image: p.image_url || '',
             description: p.description || '',
@@ -15165,6 +15194,7 @@ document.addEventListener('DOMContentLoaded', () => {
             kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
             title: p.title || p.title_en || '',
             titleEn: p.title_en || p.title || '',
+            titleRomaji: cleanRomaji(p.title_romaji),
             meta: p.meta || '',
             image: p.image_url || '',
             description: p.description || '',
@@ -17293,7 +17323,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(missingIds.length && DB_MODE === 'supabase' && sb) {
       try {
         const fetched = await db.animePages.getByIds(missingIds);
-        fetched.forEach(p=>{ pageMap[p.id] = { id:p.id, title:p.title, titleEn:p.title_en }; });
+        fetched.forEach(p=>{ pageMap[p.id] = { id:p.id, title:p.title, titleEn:p.title_en, titleRomaji:cleanRomaji(p.title_romaji) }; });
       } catch(e) { console.warn('resolveAnimeTitleMap:', e); }
     }
     return pageMap;
@@ -19647,7 +19677,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageMap = {};
     all.forEach(p=>{ pageMap[p.id]=p; });
     (fetched||[]).forEach(p=>{
-      pageMap[p.id] = { id:p.id, title:p.title||p.title_en||'', titleEn:p.title_en||p.title||'', meta:p.meta||'', image:p.image_url||'', year:p.year||'' };
+      pageMap[p.id] = { id:p.id, title:p.title||p.title_en||'', titleEn:p.title_en||p.title||'', titleRomaji:cleanRomaji(p.title_romaji), meta:p.meta||'', image:p.image_url||'', year:p.year||'' };
     });
     const items = ids.map(i=>pageMap[i]).filter(Boolean);
     if(_cachedValueProfile) _cachedValueProfile.items = items;
@@ -20024,6 +20054,7 @@ document.addEventListener('DOMContentLoaded', () => {
           kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
           title: p.title || p.title_en || '',
           titleEn: p.title_en || p.title || '',
+          titleRomaji: cleanRomaji(p.title_romaji),
           meta: p.meta || '', image: p.image_url || '',
           year: p.year || '', episodes: p.episodes || '',
         };
@@ -20090,10 +20121,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function relScore(anime,q){
     if(!q) return 0;
     const hay=`${anime.title} ${anime.meta} ${(anime.features||[]).join(' ')} ${anime.description}`.toLowerCase();
-    if((anime.title||'').toLowerCase().includes(q)||(anime.titleEn||'').toLowerCase().includes(q)) return 100;
+    if((anime.title||'').toLowerCase().includes(q)||(anime.titleEn||'').toLowerCase().includes(q)||(anime.titleRomaji||'').toLowerCase().includes(q)) return 100;
     if(hay.includes(q)) return 50;
     // タイポ・表記ゆれのあいまい一致（完全一致より低いスコア）
-    const titleHay = `${anime.title||''} ${anime.titleEn||''}`.toLowerCase();
+    const titleHay = `${anime.title||''} ${anime.titleEn||''} ${anime.titleRomaji||''}`.toLowerCase();
     if(fuzzyIncludes(titleHay, q)) return 40;
     if(fuzzyIncludes(hay, q)) return 20;
     return 0;
@@ -20181,6 +20212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             kitsuId: p.id.startsWith('kitsu-') ? p.id.replace('kitsu-','') : null,
             title: p.title || p.title_en || '',
             titleEn: p.title_en || p.title || '',
+            titleRomaji: cleanRomaji(p.title_romaji),
             meta: p.meta || '',
             image: p.image_url || '',
             genres: p.genres || [],
@@ -20200,7 +20232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if(hasSrProfile()) await ensureSearchMasterGraphCache();
 
-    if(q) list=list.filter(a=>fuzzyIncludes(`${a.title} ${a.titleEn||''} ${a.meta} ${(a.features||[]).join(' ')} ${a.description}`.toLowerCase(), q));
+    if(q) list=list.filter(a=>fuzzyIncludes(`${a.title} ${a.titleEn||''} ${a.titleRomaji||''} ${a.meta} ${(a.features||[]).join(' ')} ${a.description}`.toLowerCase(), q));
 
     // 年代で絞る（開始年・終了年のどちらか片方だけでも可）
     if(srSearchState.eraFrom || srSearchState.eraTo) {
@@ -20719,7 +20751,7 @@ document.addEventListener('DOMContentLoaded', () => {
            onclick="adClick('goods_amazon_${cat.key}')">
           <span class="af-goods-card-thumb">${cat.icon}</span>
           <div class="af-goods-card-body">
-            <h3 class="af-goods-card-name">${escapeHtml(titleJa || titleEn)} ${escapeHtml(label)}</h3>
+            <h3 class="af-goods-card-name">${escapeHtml(getTitle(page) || titleJa || titleEn)} ${escapeHtml(label)}</h3>
             <p class="af-goods-card-price">${escapeHtml(t('goodsAmazonCta'))}</p>
           </div>
         </a>
@@ -20813,6 +20845,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let _articleAdminCache = { uid: null, value: false };
   let _articleSavedRange = null;                   // ツールバー操作で選択が外れても戻せるよう、本文内の選択範囲を覚えておく
   let _articleEditorBound = false;
+  let _articleImportBound = false;
 
   // 記事に入れてよい画像の置き場: ①管理画面から上げた画像(Supabase Storage) ②サイト内の画像フォルダ(/article-img/。GitHubに置く画像)
   function articleImgPrefix() { return [`${SUPABASE_URL}/storage/v1/object/public/article-images/`, 'https://animepple.com/article-img/']; }
@@ -20936,6 +20969,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.title = t('articlesPageTitle') + ' | アニメップル';
     const admin = await isArticleAdmin();
     $('articlesWriteBtn').style.display = admin ? '' : 'none';
+    $('articlesAdminTools').style.display = admin ? '' : 'none';
+    if(admin && !_articleImportBound) { _articleImportBound = true; $('articlesImportBtn').addEventListener('click', importOfficialArticles); }
     let rows = [];
     try { rows = await db.articles.listPublished(_articlesShowAll ? null : currentLang); } catch(e) { console.warn('articles list failed:', e); }
     const list = $('articlesList');
@@ -20955,6 +20990,34 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('#page-articles .art-card').forEach(btn => btn.addEventListener('click', () => nav('articles', btn.dataset.slug)));
   }
   function articlesShowAllLangs() { _articlesShowAll = true; renderArticlesPage(null); }
+
+  // 公式記事(サイトの使い方 4本×15言語)を、サイトに置いた /official-articles/all.json から読み、
+  // articlesテーブルへ登録・更新する(同じslugは上書き)。管理者だけが実行できる(DBのRLSでも管理者に限定)
+  async function importOfficialArticles() {
+    const $ = (id) => document.getElementById(id);
+    const btn = $('articlesImportBtn'), statusEl = $('articlesImportStatus');
+    if(!(await isArticleAdmin())) return;
+    let list;
+    try {
+      const res = await fetch('/official-articles/all.json', { cache: 'no-store' });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      list = await res.json();
+    } catch(e) { statusEl.textContent = '公式記事のデータを読み込めませんでした: ' + e.message; return; }
+    if(!confirm(`公式記事 ${list.length} 本を取り込みます。同じ記事(同じslug)は上書きされます。よろしいですか？`)) return;
+    btn.disabled = true;
+    let done = 0, failed = 0, firstError = '';
+    for(const a of list) {
+      statusEl.textContent = `取り込み中… ${done + failed}/${list.length}`;
+      const res = await db.articles.upsertOfficial({
+        slug: a.slug, lang: a.lang, title: a.title, description: a.description,
+        body_html: sanitizeArticleHtml(a.body_html, { imgPrefix: articleImgPrefix() }),
+      });
+      if(res.error) { failed++; if(!firstError) firstError = `${a.slug}: ${res.error}`; } else done++;
+    }
+    btn.disabled = false;
+    statusEl.textContent = failed ? `${done} 本を取り込み、${failed} 本が失敗しました(最初のエラー: ${firstError})` : `${done} 本を取り込みました ✓`;
+    renderArticlesPage(null);
+  }
 
   async function renderArticleView(slug) {
     const $ = (id) => document.getElementById(id);
@@ -23211,7 +23274,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { items: dbPages } = await db.animePages.getAllForSearch();
         const existingIds = new Set(list.map(a=>a.id));
         const dbItems = (dbPages||[]).filter(p=>!existingIds.has(p.id)).map(p=>({
-          id: p.id, title: p.title||p.title_en||'', titleEn: p.title_en||p.title||'', meta: p.meta||'',
+          id: p.id, title: p.title||p.title_en||'', titleEn: p.title_en||p.title||'', titleRomaji: cleanRomaji(p.title_romaji), meta: p.meta||'',
         }));
         list = [...list, ...dbItems];
       } catch(e) { console.warn('contact anime candidates fetch:', e); }
@@ -23236,7 +23299,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _contactAnimeSearchDebounce = setTimeout(async () => {
         const candidates = await getContactAnimeCandidates();
         const results = candidates
-          .filter(a => fuzzyIncludes(`${a.title||''} ${a.titleEn||''} ${a.meta||''}`.toLowerCase(), q))
+          .filter(a => fuzzyIncludes(`${a.title||''} ${a.titleEn||''} ${a.titleRomaji||''} ${a.meta||''}`.toLowerCase(), q))
           .slice(0, 8);
         if(!results.length) { suggestions.style.display = ''; suggestions.innerHTML = `<p style="padding:.6rem .7rem;margin:0;font-size:.8rem;color:var(--muted);">${escapeHtml(t('noResults'))}</p>`; return; }
         suggestions.innerHTML = results.map(a => `
@@ -23834,7 +23897,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadPartnerAnimeTitles() {
     try {
       if(!sb) return;
-      const { data: titles } = await sb.from('anime_pages').select('id,title,title_en,image_url,genres,studios,year');
+      const { data: titles } = await sb.from('anime_pages').select('id,title,title_en,title_romaji,image_url,genres,studios,year');
       _partnerTitleToId = {};
       _partnerAnimeMeta = {};
       const dl = document.getElementById('partnerAnimeDatalist');
