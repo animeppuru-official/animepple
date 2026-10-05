@@ -2822,6 +2822,26 @@
     .art-actions { display:flex; align-items:center; gap:.9rem; margin:.5rem 0 .6rem; }
     .art-like-btn { display:inline-flex; align-items:center; gap:.3rem; padding:.4rem .9rem; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--text); font:inherit; font-weight:800; cursor:pointer; }
     .art-like-btn.liked { border-color:#e84a4a; color:#e84a4a; }
+    .art-body img { max-width:100%; height:auto; border-radius:8px; }
+    .art-body details { margin:.8rem 0; border:1px solid var(--line); border-radius:10px; padding:.2rem .9rem; background:rgba(255,255,255,.03); }
+    .art-body details > summary { cursor:pointer; font-weight:800; padding:.5rem 0; color:var(--text); }
+    .art-body details[open] > summary { border-bottom:1px solid var(--line); margin-bottom:.5rem; }
+    .art-toc { margin:1rem 0; padding:.8rem 1rem; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.04); }
+    .art-toc-title { margin:0 0 .4rem; font-weight:900; color:var(--text); }
+    .art-toc ol { margin:0; padding-left:1.4rem; }
+    .art-toc li { margin:.2rem 0; }
+    .art-toc li.art-toc-h3 { margin-left:1rem; font-size:.92em; list-style:circle; }
+    .art-toc a { color:var(--brand); text-decoration:none; }
+    .art-toc a:hover { text-decoration:underline; }
+    .art-ed-wrap { position:relative; }
+    .art-ed-body img { cursor:grab; }
+    .art-ed-body img.art-img-sel { outline:2px solid var(--brand); outline-offset:2px; }
+    .art-ed-body div[data-toc] { margin:.8rem 0; padding:.6rem .9rem; border:1px dashed var(--brand); border-radius:10px; color:var(--muted); user-select:none; }
+    .art-ed-body div[data-toc]::before { content:"☰ " attr(data-label); font-weight:800; }
+    .art-img-tools { position:absolute; z-index:6; display:flex; gap:.25rem; padding:.25rem; background:rgba(12,32,21,.96); border:1px solid var(--line); border-radius:10px; }
+    .art-img-tools button { min-width:2rem; height:1.9rem; padding:0 .45rem; border:1px solid var(--line); border-radius:7px; background:rgba(255,255,255,.07); color:var(--text); font:inherit; font-size:.76rem; cursor:pointer; }
+    .art-img-handle { position:absolute; z-index:6; width:18px; height:18px; border-radius:50%; background:var(--brand); border:2px solid #fff; cursor:nwse-resize; touch-action:none; }
+    .art-toolbar button.art-tb-locked { opacity:.45; }
     .art-link-btn { background:none; border:none; color:var(--brand); cursor:pointer; font:inherit; text-decoration:underline; padding:.2rem 0; }
     .art-title { font-size:1.5rem; line-height:1.4; margin:.8rem 0 .4rem; color:var(--text); }
     .art-body { color:#d4e2d9; line-height:1.95; font-size:1rem; overflow-wrap:anywhere; }
@@ -5221,7 +5241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div id="articlesListView">
       <div class="art-head">
         <h2 class="art-page-title" data-i18n="articlesPageTitle">記事の広場</h2>
-        <button type="button" class="btn-primary" id="articlesWriteBtn" style="display:none;" onclick="openArticleEditor(null)">✎ 記事を書く</button>
+        <button type="button" class="btn-primary" id="articlesWriteBtn" style="display:none;" onclick="openArticleEditor(null)" data-i18n="articlesWrite">✎ 記事を書く</button>
       </div>
       <div class="art-tabs" id="articlesTabs" role="tablist">
         <button type="button" class="art-tab active" role="tab" data-cat="official" data-i18n="articlesTabOfficial">公式</button>
@@ -5254,20 +5274,22 @@ document.addEventListener('DOMContentLoaded', () => {
         <button type="button" class="art-link-btn" onclick="closeArticleEditor()">← 戻る</button>
         <strong id="articleEdHeading">記事を書く</strong>
       </div>
-      <label class="art-ed-label">記事の言語(この言語を使う人にだけ一覧に出ます。翻訳はされません)</label>
+      <label class="art-ed-label" data-i18n="articlesLblLang">記事の言語(この言語を使う人にだけ一覧に出ます。翻訳はされません)</label>
       <select id="articleEdLang" class="art-ed-input"></select>
-      <label class="art-ed-label">カテゴリ(記事の広場のどのタブに出すか)</label>
-      <select id="articleEdCategory" class="art-ed-input">
-        <option value="official">公式</option>
-        <option value="general">一般</option>
-        <option value="novel">小説</option>
-        <option value="manga">漫画</option>
-      </select>
-      <label class="art-ed-label">タイトル</label>
+      <div id="articleEdCategoryWrap">
+        <label class="art-ed-label">カテゴリ(記事の広場のどのタブに出すか。管理者だけが選べます)</label>
+        <select id="articleEdCategory" class="art-ed-input">
+          <option value="official">公式</option>
+          <option value="general">一般</option>
+          <option value="novel">小説</option>
+          <option value="manga">漫画</option>
+        </select>
+      </div>
+      <label class="art-ed-label" data-i18n="articlesLblTitle">タイトル</label>
       <input id="articleEdTitle" class="art-ed-input" type="text" maxlength="150" placeholder="タイトルを入力">
-      <label class="art-ed-label">要約(検索結果やSNSに出る説明。省略すると本文の頭から作ります)</label>
+      <label class="art-ed-label" data-i18n="articlesLblDesc">要約(検索結果やSNSに出る説明。省略すると本文の頭から作ります)</label>
       <textarea id="articleEdDesc" class="art-ed-input" rows="2" maxlength="300"></textarea>
-      <label class="art-ed-label">本文</label>
+      <label class="art-ed-label" data-i18n="articlesLblBody">本文</label>
       <div class="art-toolbar" id="articleToolbar">
         <button type="button" data-cmd="bold" title="太字"><b>B</b></button>
         <button type="button" data-cmd="italic" title="斜体"><i>I</i></button>
@@ -5293,16 +5315,26 @@ document.addEventListener('DOMContentLoaded', () => {
         <button type="button" data-cmd="justifyCenter" title="中央寄せ">≡</button>
         <button type="button" data-cmd="insertUnorderedList" title="箇条書き">•</button>
         <button type="button" data-cmd="insertOrderedList" title="番号つき">1.</button>
+        <button type="button" id="articleTocBtn" title="目次">☰</button>
+        <button type="button" id="articleDetailsBtn" title="折りたたみ">▸</button>
         <button type="button" id="articleLinkBtn" title="リンク">🔗</button>
         <button type="button" id="articleImageBtn" title="画像">🖼</button>
         <input type="file" id="articleImageFile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;">
       </div>
-      <div id="articleEdBody" class="art-ed-body art-body" contenteditable="true" spellcheck="true"></div>
+      <div id="articleEdWrap" class="art-ed-wrap">
+        <div id="articleEdBody" class="art-ed-body art-body" contenteditable="true" spellcheck="true"></div>
+        <div id="articleImgTools" class="art-img-tools" style="display:none;">
+          <button type="button" data-w="25">25%</button><button type="button" data-w="50">50%</button><button type="button" data-w="75">75%</button><button type="button" data-w="100">100%</button>
+          <button type="button" data-move="up" title="↑">↑</button><button type="button" data-move="down" title="↓">↓</button>
+          <button type="button" data-act="remove" title="🗑">🗑</button>
+        </div>
+        <div id="articleImgHandle" class="art-img-handle" style="display:none;"></div>
+      </div>
       <p class="art-ed-hint" id="articleEdStatus"></p>
       <div class="art-ed-actions">
-        <button type="button" class="btn-primary" id="articleSaveDraftBtn">下書きとして保存</button>
-        <button type="button" class="btn-primary" id="articlePublishBtn">公開する</button>
-        <button type="button" class="art-danger-btn" id="articleDeleteBtn" style="display:none;">削除</button>
+        <button type="button" class="btn-primary" id="articleSaveDraftBtn" data-i18n="articlesSaveDraft">下書きとして保存</button>
+        <button type="button" class="btn-primary" id="articlePublishBtn" data-i18n="articlesPublish">公開する</button>
+        <button type="button" class="art-danger-btn" id="articleDeleteBtn" style="display:none;" data-i18n="articlesDelete">削除</button>
       </div>
     </div>
   </div>
@@ -20908,7 +20940,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // DOMParserで作った文書は「動かない」(スクリプトは実行されず、画像も読み込まれない)ので、安全に中身を調べられる
   function sanitizeArticleHtml(html, opts) {
     const imgPrefixes = [].concat((opts && opts.imgPrefix) || []).filter(Boolean); // 許可する画像URLの先頭(文字列でも配列でもよい)
-    const ALLOWED = { P:1, BR:1, H2:1, H3:1, STRONG:1, B:1, EM:1, I:1, U:1, S:1, STRIKE:1, UL:1, OL:1, LI:1, A:1, IMG:1, SPAN:1, BLOCKQUOTE:1, HR:1, DIV:1 };
+    const ALLOWED = { P:1, BR:1, H2:1, H3:1, STRONG:1, B:1, EM:1, I:1, U:1, S:1, STRIKE:1, UL:1, OL:1, LI:1, A:1, IMG:1, SPAN:1, BLOCKQUOTE:1, HR:1, DIV:1, DETAILS:1, SUMMARY:1 };
     const DROP = { SCRIPT:1, STYLE:1, IFRAME:1, OBJECT:1, EMBED:1, FORM:1, INPUT:1, BUTTON:1, TEXTAREA:1, SELECT:1, LINK:1, META:1, SVG:1, MATH:1, NOSCRIPT:1, TEMPLATE:1, VIDEO:1, AUDIO:1, CANVAS:1, BASE:1, TITLE:1, HEAD:1 };
     const cleanStyle = (styleText) => {
       const out = [];
@@ -20954,6 +20986,14 @@ document.addEventListener('DOMContentLoaded', () => {
           el.setAttribute('src', imgSrc);
           el.setAttribute('alt', (node.getAttribute('alt') || '').slice(0, 200));
           el.setAttribute('loading', 'lazy');
+          // 画像の大きさは、本文の幅に対する割合(5〜100%)だけ許可する(画面の大きさが変わっても、はみ出さない)
+          const wm = /(?:^|;)\s*width\s*:\s*(\d{1,3}(?:\.\d+)?)%\s*(?:;|$)/i.exec(node.getAttribute('style') || '');
+          if(wm) el.setAttribute('style', 'width:' + Math.min(100, Math.max(5, Math.round(parseFloat(wm[1])))) + '%');
+          dst.appendChild(el);
+          return;
+        }
+        if(tag === 'DIV' && node.getAttribute('data-toc') === '1') { // 目次の差し込み位置(中身は表示時に自動で作る)
+          el.setAttribute('data-toc', '1');
           dst.appendChild(el);
           return;
         }
@@ -20984,6 +21024,17 @@ document.addEventListener('DOMContentLoaded', () => {
       try { const { data } = await sb.auth.getSession(); if(data?.session?.user) _currentUser = data.session.user; } catch(_) {}
     }
     return _currentUser;
+  }
+  // 記事の権限: 管理者は全カテゴリ・画像OK。ログインした人は「一般」を書ける。画像を入れられるのは、クリエイターズ(と管理者)だけ
+  let _articlePermCache = { uid: null, loggedIn: false, admin: false, images: false };
+  async function articlePerm(fresh) {
+    const u = await ensureArticleUser();
+    if(!u || !sb) return { uid: null, loggedIn: false, admin: false, images: false };
+    if(!fresh && _articlePermCache.uid === u.id) return _articlePermCache;
+    let admin = false, creators = false;
+    try { const p = await db.profiles.get(u.id); admin = !!p?.is_admin; creators = p?.plan === 'creators'; } catch(_) {}
+    _articlePermCache = { uid: u.id, loggedIn: true, admin, images: admin || creators };
+    return _articlePermCache;
   }
   async function isArticleAdmin() {
     const u = await ensureArticleUser();
@@ -21049,8 +21100,10 @@ document.addEventListener('DOMContentLoaded', () => {
     $('articleView').style.display = 'none';
     $('articlesListView').style.display = '';
     document.title = t('articlesPageTitle') + ' | アニメップル';
-    const admin = await isArticleAdmin();
-    $('articlesWriteBtn').style.display = admin ? '' : 'none';
+    const perm = await articlePerm();
+    const admin = perm.admin;
+    // 記事を書けるのは、「一般」タブはログインした誰でも(未ログインならログイン画面へ)、公式・小説・漫画は管理者だけ
+    $('articlesWriteBtn').style.display = (admin || _articlesTab === 'general') ? '' : 'none';
     $('articlesAdminTools').style.display = admin ? '' : 'none';
     if(admin && !_articleImportBound) { _articleImportBound = true; $('articlesImportBtn').addEventListener('click', importOfficialArticles); }
     document.querySelectorAll('#articlesTabs .art-tab').forEach(btn => {
@@ -21075,12 +21128,13 @@ document.addEventListener('DOMContentLoaded', () => {
     $('articlesEmpty').style.display = rows.length ? 'none' : '';
     $('articlesShowAllBtn').style.display = _articlesShowAll ? 'none' : '';
     const draftBox = $('articlesDraftBox');
-    if(admin) {
+    if(perm.loggedIn) { // 下書きは、書いた本人(と管理者)にだけ見える(DBのRLSで絞られる)
       let drafts = [];
       try { drafts = await db.articles.listDrafts(); } catch(_) {}
+      drafts = drafts.filter(a => a.category === _articlesTab);
       draftBox.style.display = drafts.length ? '' : 'none';
       const draftAuthors = await articleAuthorMapFor(drafts);
-      draftBox.innerHTML = drafts.length ? `<h3 style="margin:.2rem 0 .5rem;font-size:.9rem;color:var(--muted);">下書き(管理者だけに見えます)</h3><div class="art-list">${drafts.map(a => articleCardHtml(a, true, draftAuthors)).join('')}</div>` : '';
+      draftBox.innerHTML = drafts.length ? `<h3 style="margin:.2rem 0 .5rem;font-size:.9rem;color:var(--muted);">${escapeHtml(t('articlesDrafts'))}</h3><div class="art-list">${drafts.map(a => articleCardHtml(a, true, draftAuthors)).join('')}</div>` : '';
     } else {
       draftBox.style.display = 'none';
       draftBox.innerHTML = '';
@@ -21141,11 +21195,61 @@ document.addEventListener('DOMContentLoaded', () => {
     $('articleViewCount').title = t('articlesViews');
     renderArticleLike(a, await db.articles.hasLiked(a.id));
     bindArticleLikeOnce();
-    if(await isArticleAdmin()) {
+    renderArticleToc(bodyEl);
+    const perm = await articlePerm();
+    if(perm.admin || (perm.loggedIn && a.category === 'general' && a.author_id === perm.uid)) { // 管理者か、一般記事を書いた本人
       adminEl.style.display = '';
       adminEl.innerHTML = '<button type="button" class="btn-primary" id="articleEditBtn">✎ この記事を編集</button>';
       document.getElementById('articleEditBtn').addEventListener('click', () => openArticleEditor(_articleCurrent));
     }
+  }
+
+  // 目次: 本文に目次の差し込み位置(<div data-toc="1">)があれば、大見出し・小見出しから目次を作る。
+  // 見出しが無ければ差し込み位置ごと消す。目次の項目を押すと、その見出しまでスクロールする
+  function renderArticleToc(root) {
+    const slots = root.querySelectorAll('div[data-toc="1"]');
+    if(!slots.length) return;
+    const heads = Array.from(root.querySelectorAll('h2, h3'));
+    slots.forEach((slot, i) => {
+      if(i > 0 || !heads.length) { slot.remove(); return; }
+      const items = heads.map((h, n) => {
+        if(!h.id) h.id = 'art-h-' + (n + 1);
+        return `<li class="art-toc-${h.tagName.toLowerCase()}"><a href="#${h.id}" data-target="${h.id}">${escapeHtml(h.textContent.trim())}</a></li>`;
+      }).join('');
+      slot.className = 'art-toc';
+      slot.innerHTML = `<p class="art-toc-title">${escapeHtml(t('articlesToc'))}</p><ol>${items}</ol>`;
+      slot.addEventListener('click', (e) => {
+        const a = e.target.closest('a[data-target]');
+        if(!a) return;
+        e.preventDefault();
+        const target = document.getElementById(a.dataset.target);
+        if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  let _articleEditPerm = null;                     // 編集画面を開いた時点の権限(admin / images)
+  function hideArticleImgTools() {
+    const tools = document.getElementById('articleImgTools'), handle = document.getElementById('articleImgHandle');
+    if(tools) tools.style.display = 'none';
+    if(handle) handle.style.display = 'none';
+    document.querySelectorAll('#articleEdBody img.art-img-sel').forEach(x => x.classList.remove('art-img-sel'));
+  }
+  // 画像を、本文の中で1つ上(dir=-1)・1つ下(dir=1)の段落へ動かす。文章の途中にある画像は、まず自分だけの段落に出す
+  function moveArticleImage(body, img, dir, after) {
+    let blk = img;
+    while(blk.parentNode && blk.parentNode !== body) blk = blk.parentNode;
+    const onlyImg = blk === img || (!blk.textContent.trim() && blk.querySelectorAll('img').length === 1);
+    if(!onlyImg) {
+      const p = document.createElement('p');
+      p.appendChild(img);
+      blk.parentNode.insertBefore(p, dir < 0 ? blk : blk.nextSibling);
+    } else {
+      const sib = dir < 0 ? blk.previousElementSibling : blk.nextElementSibling;
+      if(!sib) return;
+      body.insertBefore(blk, dir < 0 ? sib : sib.nextSibling);
+    }
+    if(after) after();
   }
 
   // 閲覧数は、同じブラウザで同じ記事を開き直しても1回だけ数える(タブを閉じるまで)
@@ -21184,20 +21288,39 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function openArticleEditor(article) {
-    if(!(await isArticleAdmin())) return;
+    const perm = await articlePerm(true);
+    if(!perm.loggedIn) { showAuthModal('login'); return; }
+    // 管理者は全カテゴリ。一般ユーザーは「一般」の、新規と自分の記事だけ(DBのRLSでも同じ制限)
+    if(!perm.admin && !(!article || (article.category === 'general' && article.author_id === perm.uid))) return;
+    if(!perm.admin && !article && _articlesTab !== 'general') return;
     const $ = (id) => document.getElementById(id);
+    _articleEditPerm = perm;
+    $('articleEdCategoryWrap').style.display = perm.admin ? '' : 'none';
+    $('articleImageBtn').classList.toggle('art-tb-locked', !perm.images);
+    $('articleImageBtn').title = perm.images ? '画像' : '🔒 ' + t('articlesImageCreatorsOnly');
+    $('articleTocBtn').title = t('articlesTocInsert');
+    $('articleDetailsBtn').title = t('articlesFoldInsert');
+    $('articleImgTools').querySelector('[data-move="up"]').title = t('articlesImgMoveUp');
+    $('articleImgTools').querySelector('[data-move="down"]').title = t('articlesImgMoveDown');
+    $('articleImgTools').querySelector('[data-act="remove"]').title = t('articlesImgRemove');
     _articleCurrent = article || null;
     $('articlesListView').style.display = 'none';
     $('articleView').style.display = 'none';
     $('articleEditor').style.display = '';
-    $('articleEdHeading').textContent = article ? '記事を編集' : '記事を書く';
+    $('articleEdHeading').textContent = article ? t('articlesEditHeading') : t('articlesWriteHeading');
     $('articleEdLang').innerHTML = LANGS.map(l => `<option value="${l.code}">${escapeHtml(l.native)}</option>`).join('');
     $('articleEdLang').value = (article && article.lang) || currentLang;
-    $('articleEdCategory').value = (article && article.category) || _articlesTab;
+    $('articleEdCategory').value = (article && article.category) || (perm.admin ? _articlesTab : 'general');
     $('articleEdTitle').value = article ? article.title : '';
     $('articleEdDesc').value = article ? (article.description || '') : '';
-    $('articleEdBody').innerHTML = article ? sanitizeArticleHtml(article.body_html, { imgPrefix: articleImgPrefix() }) : '<p><br></p>';
-    $('articleEdStatus').textContent = article && article.status === 'published' ? '公開中の記事です。「公開する」で更新、「下書きとして保存」で非公開に戻せます。' : '';
+    const loaded = article ? sanitizeArticleHtml(article.body_html, { imgPrefix: perm.images ? articleImgPrefix() : [] }) : '<p><br></p>';
+    $('articleEdBody').innerHTML = loaded;
+    _articleSavedRange = null; // 前の記事の選択範囲(もう無い場所)に、目次や画像が入らないようにする
+    $('articleEdBody').querySelectorAll('details').forEach(d => d.setAttribute('open', '')); // 編集中は、折りたたみの中身も見えるようにする(保存時に外れる)
+    $('articleEdBody').querySelectorAll('div[data-toc]').forEach(d => { d.setAttribute('data-label', t('articlesToc')); d.setAttribute('contenteditable', 'false'); });
+    hideArticleImgTools();
+    const hadImages = article && /<img/i.test(article.body_html || '') && !/<img/i.test(loaded);
+    $('articleEdStatus').textContent = hadImages ? t('articlesImageCreatorsOnly') : (article && article.status === 'published' ? '公開中の記事です。「公開する」で更新、「下書きとして保存」で非公開に戻せます。' : '');
     $('articleDeleteBtn').style.display = article ? '' : 'none';
     bindArticleEditorOnce();
     window.scrollTo(0, 0);
@@ -21261,11 +21384,88 @@ document.addEventListener('DOMContentLoaded', () => {
       restore();
       document.execCommand('createLink', false, url);
     });
-    $('articleImageBtn').addEventListener('click', () => $('articleImageFile').click());
+    // 画像を入れられるのは、クリエイターズ(と管理者)だけ。それ以外の人には案内を出す(DBのRLS・Storageの権限でも同じ制限)
+    const canImages = () => !!(_articleEditPerm && _articleEditPerm.images);
+    const edImgPrefix = () => canImages() ? articleImgPrefix() : [];
+    $('articleImageBtn').addEventListener('click', () => {
+      if(!canImages()) { say(t('articlesImageCreatorsOnly')); if(confirm(t('articlesImageCreatorsConfirm'))) nav('settings-plan'); return; }
+      $('articleImageFile').click();
+    });
+    // ブロック(目次・折りたたみ)を、いまの位置に入れる。見出し・箇条書きの中は入れられないので、その直後に入れる
+    const insertBlockHtml = (html) => {
+      restore();
+      const sel = window.getSelection();
+      if(sel.rangeCount) {
+        let node = sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentNode);
+        const host = node && node.closest ? node.closest('h2, h3, li, blockquote') : null;
+        if(host && body.contains(host)) {
+          const top = host.closest('ul, ol') || host;
+          const r = document.createRange();
+          r.setStartAfter(top); r.collapse(true);
+          sel.removeAllRanges(); sel.addRange(r);
+        }
+      }
+      document.execCommand('insertHTML', false, html);
+    };
+    $('articleTocBtn').addEventListener('click', () => {
+      if(body.querySelector('div[data-toc]')) { say(t('articlesTocExists')); return; }
+      insertBlockHtml(`<div data-toc="1" data-label="${escapeHtml(t('articlesToc'))}" contenteditable="false"></div><p><br></p>`);
+    });
+    $('articleDetailsBtn').addEventListener('click', () => {
+      insertBlockHtml(`<details open><summary>${escapeHtml(t('articlesFoldTitle'))}</summary><p>${escapeHtml(t('articlesFoldBody'))}</p></details><p><br></p>`);
+    });
+    body.addEventListener('click', (e) => { if(e.target.closest('summary')) e.preventDefault(); }); // 編集中は、押しても閉じない(文字を直せるように)
+
+    // 画像の大きさ変更(右下の取っ手をドラッグ／25・50・75・100%)・位置の移動(ドラッグ／↑↓)・削除。大きさは本文の幅に対する%で保存する
+    const imgTools = $('articleImgTools'), imgHandle = $('articleImgHandle'), wrap = $('articleEdWrap');
+    let selImg = null;
+    const placeImgTools = () => {
+      if(!selImg || !body.contains(selImg)) { hideArticleImgTools(); return; }
+      const w = wrap.getBoundingClientRect(), r = selImg.getBoundingClientRect();
+      imgHandle.style.display = ''; imgTools.style.display = '';
+      imgHandle.style.left = (r.right - w.left - 9) + 'px';
+      imgHandle.style.top = (r.bottom - w.top - 9) + 'px';
+      imgTools.style.left = Math.max(0, r.left - w.left) + 'px';
+      imgTools.style.top = Math.max(0, r.top - w.top - 38) + 'px';
+    };
+    const selectImg = (img) => {
+      body.querySelectorAll('img.art-img-sel').forEach(x => x.classList.remove('art-img-sel'));
+      selImg = img;
+      if(img) { img.classList.add('art-img-sel'); placeImgTools(); } else hideArticleImgTools();
+    };
+    body.addEventListener('click', (e) => { selectImg(e.target.tagName === 'IMG' ? e.target : null); });
+    window.addEventListener('resize', placeImgTools);
+    body.addEventListener('dragend', () => setTimeout(placeImgTools, 0));
+    body.addEventListener('dragstart', (e) => { if(e.target && e.target.tagName === 'IMG') hideArticleImgTools(); });
+    body.addEventListener('input', () => { if(selImg) placeImgTools(); });
+    const setImgWidth = (pct) => { if(selImg) { selImg.style.width = Math.min(100, Math.max(5, Math.round(pct))) + '%'; placeImgTools(); } };
+    imgTools.addEventListener('mousedown', (e) => { if(e.target.closest('button')) e.preventDefault(); });
+    imgTools.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if(!b || !selImg) return;
+      if(b.dataset.w) setImgWidth(Number(b.dataset.w));
+      else if(b.dataset.act === 'remove') {
+        const blk = selImg.parentNode === body ? selImg : selImg.closest('p');
+        selImg.remove();
+        if(blk && blk !== selImg && blk.parentNode === body && !blk.textContent.trim() && !blk.querySelector('img,br')) blk.remove();
+        hideArticleImgTools(); selImg = null;
+      } else if(b.dataset.move) moveArticleImage(body, selImg, b.dataset.move === 'up' ? -1 : 1, placeImgTools);
+    });
+    imgHandle.addEventListener('pointerdown', (e) => {
+      if(!selImg) return;
+      e.preventDefault();
+      imgHandle.setPointerCapture(e.pointerId);
+      const startX = e.clientX, startW = selImg.getBoundingClientRect().width;
+      const cs = getComputedStyle(body), contentW = body.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const onMove = (ev) => setImgWidth((startW + (ev.clientX - startX)) / contentW * 100);
+      const onUp = () => { imgHandle.removeEventListener('pointermove', onMove); imgHandle.removeEventListener('pointerup', onUp); imgHandle.removeEventListener('pointercancel', onUp); };
+      imgHandle.addEventListener('pointermove', onMove); imgHandle.addEventListener('pointerup', onUp); imgHandle.addEventListener('pointercancel', onUp);
+    });
     $('articleImageFile').addEventListener('change', async (e) => {
       const file = e.target.files && e.target.files[0];
       e.target.value = '';
       if(!file) return;
+      if(!canImages()) { say(t('articlesImageCreatorsOnly')); return; }
       if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) { say('PNG・JPEG・WebP・GIFの画像を選んでください'); return; }
       if(file.size > 5 * 1024 * 1024) { say('画像は5MBまでです'); return; }
       say('画像をアップロードしています…');
@@ -21281,7 +21481,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cd = e.clipboardData;
       const html = cd && cd.getData('text/html');
       const text = (cd && cd.getData('text/plain')) || '';
-      const clean = html ? sanitizeArticleHtml(html, { imgPrefix: articleImgPrefix() }) : escapeHtml(text).replace(/\n/g, '<br>');
+      const clean = html ? sanitizeArticleHtml(html, { imgPrefix: edImgPrefix() }) : escapeHtml(text).replace(/\n/g, '<br>');
       document.execCommand('insertHTML', false, clean);
     });
     body.addEventListener('drop', (e) => { if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) e.preventDefault(); });
@@ -21290,17 +21490,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const save = async (status) => {
       const title = $('articleEdTitle').value.trim();
       const lang = $('articleEdLang').value;
-      const bodyHtml = sanitizeArticleHtml(body.innerHTML, { imgPrefix: articleImgPrefix() });
+      const perm = await articlePerm(true); // 画像の権限は、保存の直前にもう一度確認する(プランが変わっていても反映)
+      _articleEditPerm = perm;
+      const bodyHtml = sanitizeArticleHtml(body.innerHTML, { imgPrefix: perm.images ? articleImgPrefix() : [] });
       const text = articlePlainText(bodyHtml);
       if(!title) { say('タイトルを入力してください'); return; }
       if(!text && !/<img/i.test(bodyHtml)) { say('本文を入力してください'); return; }
       if(bodyHtml.length > 190000) { say('本文が長すぎます。2つの記事に分けてください'); return; }
-      const category = $('articleEdCategory').value;
+      const category = perm.admin ? $('articleEdCategory').value : 'general'; // 一般ユーザーは「一般」だけ
       const row = { lang, category, title, description: ($('articleEdDesc').value.trim() || text.slice(0, 120)).slice(0, 300), body_html: bodyHtml, status };
       if(status === 'published' && !(_articleCurrent && _articleCurrent.published_at)) row.published_at = new Date().toISOString();
       setBusy(true); say('保存しています…');
       const res = await db.articles.save(_articleCurrent ? _articleCurrent.id : null, row);
       setBusy(false);
+      if(res.error && /article_rate_limit/.test(res.error)) { say(t('articlesRateLimit')); return; }
       if(res.error || !res.data) { say('保存に失敗しました: ' + (res.error || '不明なエラー')); return; }
       _articleCurrent = res.data;
       $('articleDeleteBtn').style.display = '';
@@ -21321,6 +21524,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   window.articleCardHtml = articleCardHtml; // テスト用(カードの表示を実ブラウザで検査する)
+  window.renderArticleToc = renderArticleToc; // テスト用(目次の生成を実ブラウザで検査する)
+  window.moveArticleImage = moveArticleImage; // テスト用(画像の移動を実ブラウザで検査する)
   window.openArticleEditor = openArticleEditor;
   window.closeArticleEditor = closeArticleEditor;
   window.articlesShowAllLangs = articlesShowAllLangs;
@@ -22458,6 +22663,29 @@ document.addEventListener('DOMContentLoaded', () => {
     articlesLikes:{ ja:'いいね', en:'Likes', ko:'좋아요', 'zh-tw':'喜歡', 'zh-cn':'喜欢', es:'Me gusta', fr:'J’aime', pt:'Curtidas', de:'Gefällt mir', ar:'إعجابات', th:'ถูกใจ', id:'Suka', ru:'Нравится', it:'Mi piace', vi:'Lượt thích' },
     articlesViews:{ ja:'閲覧数(PV)', en:'Views', ko:'조회수', 'zh-tw':'瀏覽數', 'zh-cn':'浏览量', es:'Vistas', fr:'Vues', pt:'Visualizações', de:'Aufrufe', ar:'المشاهدات', th:'จำนวนการดู', id:'Dilihat', ru:'Просмотры', it:'Visualizzazioni', vi:'Lượt xem' },
     articlesOfficialAuthor:{ ja:'アニメップル運営', en:'Animepple Team', ko:'Animepple 운영팀', 'zh-tw':'Animepple 營運團隊', 'zh-cn':'Animepple 运营团队', es:'Equipo de Animepple', fr:'Équipe Animepple', pt:'Equipe Animepple', de:'Animepple-Team', ar:'فريق Animepple', th:'ทีมงาน Animepple', id:'Tim Animepple', ru:'Команда Animepple', it:'Team Animepple', vi:'Đội ngũ Animepple' },
+    articlesWrite:{ ja:'✎ 記事を書く', en:'✎ Write an article', ko:'✎ 글 쓰기', 'zh-tw':'✎ 撰寫文章', 'zh-cn':'✎ 写文章', es:'✎ Escribir un artículo', fr:'✎ Écrire un article', pt:'✎ Escrever um artigo', de:'✎ Artikel schreiben', ar:'✎ اكتب مقالًا', th:'✎ เขียนบทความ', id:'✎ Tulis artikel', ru:'✎ Написать статью', it:'✎ Scrivi un articolo', vi:'✎ Viết bài' },
+    articlesSaveDraft:{ ja:'下書きとして保存', en:'Save as draft', ko:'임시 저장', 'zh-tw':'儲存為草稿', 'zh-cn':'保存为草稿', es:'Guardar como borrador', fr:'Enregistrer comme brouillon', pt:'Salvar como rascunho', de:'Als Entwurf speichern', ar:'حفظ كمسودة', th:'บันทึกเป็นฉบับร่าง', id:'Simpan sebagai draf', ru:'Сохранить как черновик', it:'Salva come bozza', vi:'Lưu bản nháp' },
+    articlesPublish:{ ja:'公開する', en:'Publish', ko:'공개하기', 'zh-tw':'發佈', 'zh-cn':'发布', es:'Publicar', fr:'Publier', pt:'Publicar', de:'Veröffentlichen', ar:'نشر', th:'เผยแพร่', id:'Terbitkan', ru:'Опубликовать', it:'Pubblica', vi:'Đăng bài' },
+    articlesDelete:{ ja:'削除', en:'Delete', ko:'삭제', 'zh-tw':'刪除', 'zh-cn':'删除', es:'Eliminar', fr:'Supprimer', pt:'Excluir', de:'Löschen', ar:'حذف', th:'ลบ', id:'Hapus', ru:'Удалить', it:'Elimina', vi:'Xóa' },
+    articlesLblLang:{ ja:'記事の言語(この言語を使う人にだけ一覧に出ます。翻訳はされません)', en:'Article language (shown only to people using this language; it is not translated)', ko:'글 언어(이 언어를 쓰는 사람에게만 목록에 표시됩니다. 번역되지 않습니다)', 'zh-tw':'文章語言（只會顯示給使用此語言的人，不會自動翻譯）', 'zh-cn':'文章语言（只会显示给使用该语言的人，不会自动翻译）', es:'Idioma del artículo (solo se muestra a quienes usan este idioma; no se traduce)', fr:'Langue de l’article (affiché uniquement aux personnes utilisant cette langue ; non traduit)', pt:'Idioma do artigo (exibido apenas para quem usa este idioma; não é traduzido)', de:'Sprache des Artikels (wird nur Personen mit dieser Sprache angezeigt; keine Übersetzung)', ar:'لغة المقال (تظهر فقط لمن يستخدم هذه اللغة، ولا تتم ترجمته)', th:'ภาษาของบทความ (แสดงเฉพาะผู้ใช้ภาษานี้ และจะไม่ถูกแปล)', id:'Bahasa artikel (hanya ditampilkan kepada pengguna bahasa ini; tidak diterjemahkan)', ru:'Язык статьи (показывается только тем, кто использует этот язык; не переводится)', it:'Lingua dell’articolo (mostrato solo a chi usa questa lingua; non viene tradotto)', vi:'Ngôn ngữ bài viết (chỉ hiển thị cho người dùng ngôn ngữ này; không được dịch)' },
+    articlesLblTitle:{ ja:'タイトル', en:'Title', ko:'제목', 'zh-tw':'標題', 'zh-cn':'标题', es:'Título', fr:'Titre', pt:'Título', de:'Titel', ar:'العنوان', th:'ชื่อเรื่อง', id:'Judul', ru:'Заголовок', it:'Titolo', vi:'Tiêu đề' },
+    articlesLblDesc:{ ja:'要約(検索結果やSNSに出る説明。省略すると本文の頭から作ります)', en:'Summary (description shown in search results and social media; if left blank, it is taken from the start of the text)', ko:'요약(검색 결과와 SNS에 표시되는 설명. 비워 두면 본문 앞부분으로 만듭니다)', 'zh-tw':'摘要（顯示於搜尋結果與社群媒體的說明；留空則取自內文開頭）', 'zh-cn':'摘要（显示在搜索结果和社交媒体上的说明；留空则取自正文开头）', es:'Resumen (descripción que aparece en buscadores y redes; si se deja vacío, se toma del inicio del texto)', fr:'Résumé (description affichée dans les résultats de recherche et les réseaux ; si vide, elle vient du début du texte)', pt:'Resumo (descrição exibida em buscas e redes sociais; se vazio, vem do início do texto)', de:'Zusammenfassung (Beschreibung in Suchergebnissen und sozialen Medien; leer = Textanfang)', ar:'ملخص (الوصف الذي يظهر في نتائج البحث ووسائل التواصل؛ إن تُرك فارغًا يؤخذ من بداية النص)', th:'สรุป (คำอธิบายที่แสดงในผลการค้นหาและโซเชียล หากเว้นว่างจะนำจากต้นเนื้อหา)', id:'Ringkasan (deskripsi di hasil pencarian dan media sosial; jika kosong, diambil dari awal teks)', ru:'Краткое описание (показывается в поиске и соцсетях; если пусто, берётся из начала текста)', it:'Riepilogo (descrizione mostrata nei risultati di ricerca e sui social; se vuoto, parte dall’inizio del testo)', vi:'Tóm tắt (mô tả hiển thị trong kết quả tìm kiếm và mạng xã hội; để trống sẽ lấy từ đầu bài)' },
+    articlesLblBody:{ ja:'本文', en:'Body', ko:'본문', 'zh-tw':'內文', 'zh-cn':'正文', es:'Contenido', fr:'Contenu', pt:'Conteúdo', de:'Inhalt', ar:'المحتوى', th:'เนื้อหา', id:'Isi', ru:'Текст', it:'Testo', vi:'Nội dung' },
+    articlesWriteHeading:{ ja:'記事を書く', en:'Write an article', ko:'글 쓰기', 'zh-tw':'撰寫文章', 'zh-cn':'写文章', es:'Escribir un artículo', fr:'Écrire un article', pt:'Escrever um artigo', de:'Artikel schreiben', ar:'اكتب مقالًا', th:'เขียนบทความ', id:'Tulis artikel', ru:'Написать статью', it:'Scrivi un articolo', vi:'Viết bài' },
+    articlesEditHeading:{ ja:'記事を編集', en:'Edit article', ko:'글 수정', 'zh-tw':'編輯文章', 'zh-cn':'编辑文章', es:'Editar artículo', fr:'Modifier l’article', pt:'Editar artigo', de:'Artikel bearbeiten', ar:'تعديل المقال', th:'แก้ไขบทความ', id:'Edit artikel', ru:'Редактировать статью', it:'Modifica articolo', vi:'Chỉnh sửa bài' },
+    articlesDrafts:{ ja:'下書き(書いた本人と運営だけに見えます)', en:'Drafts (visible only to the author and the team)', ko:'임시 저장 글(작성자와 운영팀에게만 보입니다)', 'zh-tw':'草稿（僅作者與營運團隊可見）', 'zh-cn':'草稿（仅作者和运营团队可见）', es:'Borradores (solo visibles para el autor y el equipo)', fr:'Brouillons (visibles uniquement par l’auteur et l’équipe)', pt:'Rascunhos (visíveis apenas para o autor e a equipe)', de:'Entwürfe (nur für Autor und Team sichtbar)', ar:'المسودات (تظهر للكاتب والفريق فقط)', th:'ฉบับร่าง (มองเห็นเฉพาะผู้เขียนและทีมงาน)', id:'Draf (hanya terlihat oleh penulis dan tim)', ru:'Черновики (видны только автору и команде)', it:'Bozze (visibili solo all’autore e al team)', vi:'Bản nháp (chỉ tác giả và đội ngũ nhìn thấy)' },
+    articlesToc:{ ja:'目次', en:'Contents', ko:'목차', 'zh-tw':'目錄', 'zh-cn':'目录', es:'Índice', fr:'Sommaire', pt:'Sumário', de:'Inhalt', ar:'المحتويات', th:'สารบัญ', id:'Daftar isi', ru:'Содержание', it:'Indice', vi:'Mục lục' },
+    articlesTocInsert:{ ja:'目次を入れる(見出しから自動で作ります)', en:'Insert table of contents (built automatically from headings)', ko:'목차 넣기(제목에서 자동으로 만듭니다)', 'zh-tw':'插入目錄（依標題自動產生）', 'zh-cn':'插入目录（根据标题自动生成）', es:'Insertar índice (se crea automáticamente con los títulos)', fr:'Insérer un sommaire (créé automatiquement à partir des titres)', pt:'Inserir sumário (criado automaticamente a partir dos títulos)', de:'Inhaltsverzeichnis einfügen (automatisch aus den Überschriften)', ar:'إدراج فهرس (يُنشأ تلقائيًا من العناوين)', th:'แทรกสารบัญ (สร้างอัตโนมัติจากหัวข้อ)', id:'Sisipkan daftar isi (dibuat otomatis dari judul)', ru:'Вставить оглавление (создаётся автоматически из заголовков)', it:'Inserisci indice (creato automaticamente dai titoli)', vi:'Chèn mục lục (tự động tạo từ tiêu đề)' },
+    articlesTocExists:{ ja:'目次はすでに入っています', en:'A table of contents is already inserted', ko:'목차가 이미 들어 있습니다', 'zh-tw':'已經插入目錄了', 'zh-cn':'已经插入目录了', es:'Ya hay un índice insertado', fr:'Un sommaire est déjà inséré', pt:'O sumário já foi inserido', de:'Ein Inhaltsverzeichnis ist bereits eingefügt', ar:'تم إدراج فهرس بالفعل', th:'แทรกสารบัญไว้แล้ว', id:'Daftar isi sudah disisipkan', ru:'Оглавление уже вставлено', it:'L’indice è già inserito', vi:'Đã chèn mục lục rồi' },
+    articlesFoldInsert:{ ja:'折りたたみ(矢印で開閉する隠し文)を入れる', en:'Insert a collapsible section (opens and closes with an arrow)', ko:'접기 영역 넣기(화살표로 열고 닫음)', 'zh-tw':'插入摺疊區塊（以箭頭展開／收合）', 'zh-cn':'插入折叠区块（用箭头展开／收起）', es:'Insertar sección plegable (se abre y cierra con una flecha)', fr:'Insérer une section repliable (s’ouvre et se ferme avec une flèche)', pt:'Inserir seção recolhível (abre e fecha com uma seta)', de:'Einklappbaren Bereich einfügen (mit Pfeil auf- und zuklappen)', ar:'إدراج قسم قابل للطي (يُفتح ويُغلق بسهم)', th:'แทรกส่วนพับเก็บ (เปิด/ปิดด้วยลูกศร)', id:'Sisipkan bagian lipat (buka/tutup dengan panah)', ru:'Вставить сворачиваемый блок (открывается стрелкой)', it:'Inserisci sezione comprimibile (si apre e chiude con una freccia)', vi:'Chèn phần thu gọn (mở/đóng bằng mũi tên)' },
+    articlesFoldTitle:{ ja:'見出し(押すと開閉します)', en:'Heading (tap to open or close)', ko:'제목(누르면 열고 닫힙니다)', 'zh-tw':'標題（點擊展開／收合）', 'zh-cn':'标题（点击展开／收起）', es:'Título (toca para abrir o cerrar)', fr:'Titre (appuyez pour ouvrir ou fermer)', pt:'Título (toque para abrir ou fechar)', de:'Überschrift (antippen zum Öffnen oder Schließen)', ar:'عنوان (اضغط للفتح أو الإغلاق)', th:'หัวข้อ (แตะเพื่อเปิด/ปิด)', id:'Judul (ketuk untuk membuka atau menutup)', ru:'Заголовок (нажмите, чтобы открыть или закрыть)', it:'Titolo (tocca per aprire o chiudere)', vi:'Tiêu đề (chạm để mở hoặc đóng)' },
+    articlesFoldBody:{ ja:'ここに隠したい内容を書きます', en:'Write the content you want to hide here', ko:'숨기고 싶은 내용을 여기에 쓰세요', 'zh-tw':'在這裡寫下想隱藏的內容', 'zh-cn':'在这里写下想隐藏的内容', es:'Escribe aquí el contenido que quieres ocultar', fr:'Écrivez ici le contenu à masquer', pt:'Escreva aqui o conteúdo que deseja ocultar', de:'Hier den Inhalt eintragen, der versteckt werden soll', ar:'اكتب هنا المحتوى الذي تريد إخفاءه', th:'เขียนเนื้อหาที่ต้องการซ่อนที่นี่', id:'Tulis isi yang ingin disembunyikan di sini', ru:'Напишите здесь содержимое, которое нужно скрыть', it:'Scrivi qui il contenuto da nascondere', vi:'Viết nội dung muốn ẩn ở đây' },
+    articlesImageCreatorsOnly:{ ja:'画像を入れられるのは、クリエイターズプランの方だけです。', en:'Only Creators plan members can add images.', ko:'이미지는 크리에이터스 플랜 회원만 넣을 수 있습니다.', 'zh-tw':'只有創作者方案的會員可以插入圖片。', 'zh-cn':'只有创作者方案的会员可以插入图片。', es:'Solo los miembros del plan Creators pueden añadir imágenes.', fr:'Seuls les membres du forfait Creators peuvent ajouter des images.', pt:'Somente membros do plano Creators podem adicionar imagens.', de:'Nur Mitglieder des Creators-Plans können Bilder hinzufügen.', ar:'يمكن لأعضاء خطة Creators فقط إضافة الصور.', th:'เฉพาะสมาชิกแผน Creators เท่านั้นที่เพิ่มรูปภาพได้', id:'Hanya anggota paket Creators yang dapat menambahkan gambar.', ru:'Добавлять изображения могут только участники плана Creators.', it:'Solo i membri del piano Creators possono aggiungere immagini.', vi:'Chỉ thành viên gói Creators mới có thể thêm hình ảnh.' },
+    articlesImageCreatorsConfirm:{ ja:'画像はクリエイターズプランで使えます。プランの画面を開きますか？', en:'Images are available on the Creators plan. Open the plans page?', ko:'이미지는 크리에이터스 플랜에서 사용할 수 있습니다. 플랜 화면을 열까요?', 'zh-tw':'圖片可在創作者方案中使用。要開啟方案頁面嗎？', 'zh-cn':'图片可在创作者方案中使用。要打开方案页面吗？', es:'Las imágenes están disponibles en el plan Creators. ¿Abrir la página de planes?', fr:'Les images sont disponibles avec le forfait Creators. Ouvrir la page des forfaits ?', pt:'As imagens estão disponíveis no plano Creators. Abrir a página de planos?', de:'Bilder sind im Creators-Plan verfügbar. Seite mit den Plänen öffnen?', ar:'الصور متاحة في خطة Creators. هل تريد فتح صفحة الخطط؟', th:'รูปภาพใช้ได้ในแผน Creators ต้องการเปิดหน้าแผนหรือไม่', id:'Gambar tersedia di paket Creators. Buka halaman paket?', ru:'Изображения доступны в плане Creators. Открыть страницу планов?', it:'Le immagini sono disponibili nel piano Creators. Aprire la pagina dei piani?', vi:'Hình ảnh có trong gói Creators. Mở trang các gói?' },
+    articlesImgMoveUp:{ ja:'画像を上へ', en:'Move image up', ko:'이미지를 위로', 'zh-tw':'圖片上移', 'zh-cn':'图片上移', es:'Subir imagen', fr:'Monter l’image', pt:'Mover imagem para cima', de:'Bild nach oben', ar:'نقل الصورة لأعلى', th:'ย้ายรูปขึ้น', id:'Pindahkan gambar ke atas', ru:'Переместить изображение вверх', it:'Sposta immagine su', vi:'Chuyển ảnh lên' },
+    articlesImgMoveDown:{ ja:'画像を下へ', en:'Move image down', ko:'이미지를 아래로', 'zh-tw':'圖片下移', 'zh-cn':'图片下移', es:'Bajar imagen', fr:'Descendre l’image', pt:'Mover imagem para baixo', de:'Bild nach unten', ar:'نقل الصورة لأسفل', th:'ย้ายรูปลง', id:'Pindahkan gambar ke bawah', ru:'Переместить изображение вниз', it:'Sposta immagine giù', vi:'Chuyển ảnh xuống' },
+    articlesImgRemove:{ ja:'画像を削除', en:'Remove image', ko:'이미지 삭제', 'zh-tw':'刪除圖片', 'zh-cn':'删除图片', es:'Quitar imagen', fr:'Supprimer l’image', pt:'Remover imagem', de:'Bild entfernen', ar:'إزالة الصورة', th:'ลบรูปภาพ', id:'Hapus gambar', ru:'Удалить изображение', it:'Rimuovi immagine', vi:'Xóa ảnh' },
+    articlesRateLimit:{ ja:'1日に書ける記事の数の上限に達しました。明日もう一度お試しください。', en:'You have reached the daily limit for new articles. Please try again tomorrow.', ko:'하루에 쓸 수 있는 글 수의 한도에 도달했습니다. 내일 다시 시도해 주세요.', 'zh-tw':'已達到每日可撰寫文章數的上限，請明天再試。', 'zh-cn':'已达到每日可撰写文章数的上限，请明天再试。', es:'Has alcanzado el límite diario de artículos nuevos. Inténtalo de nuevo mañana.', fr:'Vous avez atteint la limite quotidienne de nouveaux articles. Réessayez demain.', pt:'Você atingiu o limite diário de novos artigos. Tente novamente amanhã.', de:'Das Tageslimit für neue Artikel ist erreicht. Bitte versuche es morgen erneut.', ar:'لقد بلغت الحد اليومي للمقالات الجديدة. حاول مرة أخرى غدًا.', th:'คุณเขียนบทความครบจำนวนสูงสุดต่อวันแล้ว โปรดลองใหม่พรุ่งนี้', id:'Anda telah mencapai batas artikel baru per hari. Coba lagi besok.', ru:'Достигнут дневной лимит новых статей. Попробуйте завтра.', it:'Hai raggiunto il limite giornaliero di nuovi articoli. Riprova domani.', vi:'Bạn đã đạt giới hạn số bài viết mới mỗi ngày. Vui lòng thử lại vào ngày mai.' },
     articlesBackToList:{ ja:'記事一覧へ', en:'Back to articles', ko:'글 목록으로', 'zh-tw':'返回文章列表', 'zh-cn':'返回文章列表', es:'Volver a los artículos', fr:'Retour aux articles', pt:'Voltar aos artigos', de:'Zurück zu den Artikeln', ar:'العودة إلى المقالات', th:'กลับไปที่บทความ', id:'Kembali ke artikel', ru:'К списку статей', it:'Torna agli articoli', vi:'Quay lại danh sách bài viết' },
     articlesNotFound:{ ja:'記事が見つかりませんでした。', en:'Article not found.', ko:'글을 찾을 수 없습니다.', 'zh-tw':'找不到這篇文章。', 'zh-cn':'找不到这篇文章。', es:'No se encontró el artículo.', fr:'Article introuvable.', pt:'Artigo não encontrado.', de:'Artikel nicht gefunden.', ar:'لم يتم العثور على المقال.', th:'ไม่พบบทความ', id:'Artikel tidak ditemukan.', ru:'Статья не найдена.', it:'Articolo non trovato.', vi:'Không tìm thấy bài viết.' },  };
 
