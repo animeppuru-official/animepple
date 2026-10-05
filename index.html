@@ -20846,69 +20846,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  // 日本向け: 楽天市場の関連商品(作品名だけで検索した1位の1件)。Amazonはアソシエイト未加入でリンクに収益IDが付かないため、日本は楽天を出す。
+  // 日本向け: 楽天市場の「関連商品」1枚(作品名だけで検索した楽天市場の検索結果ページへ、楽天アフィリエイトのリンクで移動する)。
+  // Amazonはアソシエイト未加入でリンクに収益IDが付かないため、日本は楽天を出す。APIは使わない(商品が無い・回数制限の心配がない)。
   // 国が分からない(位置情報の同意なし)場合は、日本語の画面なら日本向けとして扱う
+  const RAKUTEN_AFFILIATE_ID = '5839a407.54ffb8b3.5839a408.b714e9eb'; // 楽天アフィリエイトのID(リンクに入る公開の値で、秘密ではない)
   function isJapanGoodsAudience() {
     const country = geoStore.getCountry();
     return country === 'JP' || (!country && currentLang === 'ja');
   }
-  // 楽天の商品ページ・画像のURLだけを許可する(APIの応答に想定外のURLが混ざっても、リンクにしない)
-  function isRakutenUrl(u, imageOnly) {
-    try {
-      const x = new URL(u);
-      if(x.protocol !== 'https:') return false;
-      return imageOnly ? /(^|\.)image\.rakuten\.co\.jp$/.test(x.hostname) : /(^|\.)rakuten\.co\.jp$/.test(x.hostname);
-    } catch(_) { return false; }
+  // 楽天市場の検索結果ページ(作品名で検索)への、楽天アフィリエイトのリンク
+  function buildRakutenSearchHref(title) {
+    const target = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(title)}/`;
+    return `https://hb.afl.rakuten.co.jp/hgc/${RAKUTEN_AFFILIATE_ID}/?pc=${encodeURIComponent(target)}&link_type=text&ut=eyJwYWdlIjoidXJsIiwidHlwZSI6InRleHQiLCJjb2wiOjF9`; // 楽天の「リンク作成」が出す形と同じ
   }
-  function buildRakutenRelatedHtml(items) {
-    return (items || []).filter(it => it && it.itemName && isRakutenUrl(it.itemUrl, false)).slice(0, 1).map(it => `
-        <a class="af-goods-card" href="${escapeHtml(it.itemUrl)}" target="_blank" rel="noopener noreferrer sponsored nofollow"
+  function buildRakutenRelatedHtml(page) {
+    const title = ((page && (page.title || page.titleEn)) || '').trim();
+    if(!title) return '';
+    return `
+        <a class="af-goods-card" href="${escapeHtml(buildRakutenSearchHref(title))}" target="_blank" rel="noopener noreferrer sponsored nofollow"
            onclick="adClick('goods_rakuten_related')">
-          <span class="af-goods-card-thumb" style="padding:0;overflow:hidden;">${isRakutenUrl(it.imageUrl, true) ? `<img src="${escapeHtml(it.imageUrl)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;">` : '🛍'}</span>
+          <span class="af-goods-card-thumb">🛍</span>
           <div class="af-goods-card-body">
-            <h3 class="af-goods-card-name">${escapeHtml(it.itemName)}</h3>
+            <h3 class="af-goods-card-name">${escapeHtml(getTitle(page) || title)} ${escapeHtml(t('goodsRelatedLabel'))}</h3>
             <p class="af-goods-card-price">${escapeHtml(t('goodsRakutenCta'))}</p>
           </div>
-        </a>`).join('');
-  }
-  const _rakutenRelatedCache = {};
-  let _goodsRenderToken = 0;
-  async function fetchRakutenRelated(title) {
-    if(_rakutenRelatedCache[title]) return _rakutenRelatedCache[title];
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/fetch-rakuten-image?mode=related&title=${encodeURIComponent(title)}`);
-    const data = await res.json();
-    if(!res.ok || data.error) throw new Error('rakuten ' + res.status);
-    const items = data.found && Array.isArray(data.items) ? data.items : [];
-    return (_rakutenRelatedCache[title] = items);
+        </a>`;
   }
 
-  async function renderGoodsLinks(page) {
+  function renderGoodsLinks(page) {
     const el = document.getElementById('afGoodsLinks');
     const section = document.getElementById('afGoodsSection');
     if(!el||!section||!page) return;
-    const token = ++_goodsRenderToken;
-    const showAmazon = () => {
-      el.innerHTML = `<div class="af-goods-grid" id="afGoodsGrid">${buildGoodsCardsHtml(page)}</div>`;
-      section.style.display = '';
-      setupGoodsAutoScroll();
-    };
-    // 日本向け: 楽天の関連商品(作品名だけで検索)。見つからない・失敗した時は、従来のAmazon検索リンクを出す
-    const title = (page.title || page.titleEn || '').trim();
-    if(isJapanGoodsAudience() && title && !(page.id || '').startsWith('test-anime-')) {
-      el.innerHTML = ''; section.style.display = 'none';
-      let html = '';
-      try { html = buildRakutenRelatedHtml(await fetchRakutenRelated(title)); } catch(e) { console.warn('rakuten related failed:', e); }
-      if(token !== _goodsRenderToken) return; // 別の作品に移っていたら、古い結果は出さない
-      if(html) {
-        el.innerHTML = '<div class="af-pr-note"><span class="af-pr-badge">PR</span> <span class="af-pr-text">アフィリエイト広告を含みます</span></div>' + `<div class="af-goods-grid" id="afGoodsGrid">${html}</div>`;
-        section.style.display = '';
-        setupGoodsAutoScroll();
-        return;
-      }
-    }
-    showAmazon();
-  }
 
+    // 日本向けは楽天の関連商品1枚。日本以外・テスト用作品は、従来のAmazon検索リンク
+    const rakuten = isJapanGoodsAudience() && !(page.id || '').startsWith('test-anime-') ? buildRakutenRelatedHtml(page) : '';
+    if(rakuten) {
+      el.innerHTML = '<div class="af-pr-note"><span class="af-pr-badge">PR</span> <span class="af-pr-text">アフィリエイト広告を含みます</span></div>' + `<div class="af-goods-grid" id="afGoodsGrid">${rakuten}</div>`;
+    } else {
+      el.innerHTML = `<div class="af-goods-grid" id="afGoodsGrid">${buildGoodsCardsHtml(page)}</div>`;
+    }
+    section.style.display = '';
+    setupGoodsAutoScroll();
+  }
   // スマホ幅：グッズカルーセルを5秒ごとに自動で次のカードへ進める。
   // 手動でスワイプ/スクロールした場合は、そこから5秒操作が無かったら自動送りを再開する。
   let _goodsAutoScrollTimer = null;
@@ -21563,6 +21542,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.renderArticlesPage = renderArticlesPage; // テスト用(ロックの表示を実ブラウザで検査する)
   window.buildRakutenRelatedHtml = buildRakutenRelatedHtml; // テスト用(楽天の関連商品カードを実ブラウザで検査する)
+  window.buildRakutenSearchHref = buildRakutenSearchHref; // テスト用(楽天アフィリエイトのリンクの形を検査する)
   window.articleCardHtml = articleCardHtml; // テスト用(カードの表示を実ブラウザで検査する)
   window.renderArticleToc = renderArticleToc; // テスト用(目次の生成を実ブラウザで検査する)
   window.moveArticleImage = moveArticleImage; // テスト用(画像の移動を実ブラウザで検査する)
@@ -22590,6 +22570,7 @@ document.addEventListener('DOMContentLoaded', () => {
     aiPredictedBadge:{ ja:'🤖 AI予測',en:'🤖 AI predicted',ko:'🤖 AI 예측','zh-tw':'🤖 AI預測','zh-cn':'🤖 AI预测',es:'🤖 Predicción IA',fr:'🤖 Prédiction IA',pt:'🤖 Previsão IA',de:'🤖 KI-Vorhersage',ar:'🤖 تنبؤ الذكاء الاصطناعي',th:'🤖 คาดการณ์โดย AI',id:'🤖 Prediksi AI',ru:'🤖 Прогноз ИИ',it:'🤖 Previsione IA',vi:'🤖 Dự đoán AI' },
     goodsSection: { ja:'🛍 グッズ・関連商品',en:'🛍 Merchandise',ko:'🛍 굿즈・관련 상품','zh-tw':'🛍 周邊商品','zh-cn':'🛍 周边商品',es:'🛍 Merchandising',fr:'🛍 Produits dérivés',pt:'🛍 Mercadoria',de:'🛍 Merchandise',ar:'🛍 البضائع',th:'🛍 สินค้า',id:'🛍 Merchandise',ru:'🛍 Товары',it:'🛍 Merchandise',vi:'🛍 Hàng hóa' },
     goodsAmazonCta: { ja:'Amazonで見る →', en:'View on Amazon →', ko:'Amazon에서 보기 →', 'zh-tw':'在 Amazon 上查看 →', 'zh-cn':'在 Amazon 上查看 →', es:'Ver en Amazon →', fr:'Voir sur Amazon →', pt:'Ver na Amazon →', de:'Auf Amazon ansehen →', ar:'عرض على Amazon ←', th:'ดูบน Amazon →', id:'Lihat di Amazon →', ru:'Смотреть на Amazon →', it:'Vedi su Amazon →', vi:'Xem trên Amazon →' },
+    goodsRelatedLabel: { ja:'関連商品', en:'Related items', ko:'관련 상품', 'zh-tw':'相關商品', 'zh-cn':'相关商品', es:'Productos relacionados', fr:'Produits associés', pt:'Produtos relacionados', de:'Verwandte Produkte', ar:'منتجات ذات صلة', th:'สินค้าที่เกี่ยวข้อง', id:'Produk terkait', ru:'Связанные товары', it:'Prodotti correlati', vi:'Sản phẩm liên quan' },
     goodsRakutenCta: { ja:'楽天市場で見る →', en:'View on Rakuten →', ko:'라쿠텐에서 보기 →', 'zh-tw':'在樂天市場查看 →', 'zh-cn':'在乐天市场查看 →', es:'Ver en Rakuten →', fr:'Voir sur Rakuten →', pt:'Ver na Rakuten →', de:'Auf Rakuten ansehen →', ar:'عرض على Rakuten ←', th:'ดูบน Rakuten →', id:'Lihat di Rakuten →', ru:'Смотреть на Rakuten →', it:'Vedi su Rakuten →', vi:'Xem trên Rakuten →' },
     reviewCommentEmpty:{ ja:'コメントはありません', en:'No comment', ko:'댓글이 없습니다', 'zh-tw':'沒有留言', 'zh-cn':'没有留言', es:'Sin comentarios', fr:'Aucun commentaire', pt:'Sem comentários', de:'Kein Kommentar', ar:'لا يوجد تعليق', th:'ไม่มีความคิดเห็น', id:'Tidak ada komentar', ru:'Нет комментария', it:'Nessun commento', vi:'Không có bình luận' },
     goodsSeeItem: { ja:'商品を見る',en:'View items',ko:'상품 보기','zh-tw':'查看商品','zh-cn':'查看商品',es:'Ver productos',fr:'Voir les produits',pt:'Ver produtos',de:'Produkte ansehen',ar:'عرض المنتجات',th:'ดูสินค้า',id:'Lihat item',ru:'Смотреть товары',it:'Vedi articoli',vi:'Xem sản phẩm' },
