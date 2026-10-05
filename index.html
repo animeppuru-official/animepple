@@ -20814,12 +20814,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let _articleSavedRange = null;                   // ツールバー操作で選択が外れても戻せるよう、本文内の選択範囲を覚えておく
   let _articleEditorBound = false;
 
-  function articleImgPrefix() { return `${SUPABASE_URL}/storage/v1/object/public/article-images/`; }
+  // 記事に入れてよい画像の置き場: ①管理画面から上げた画像(Supabase Storage) ②サイト内の画像フォルダ(/article-img/。GitHubに置く画像)
+  function articleImgPrefix() { return [`${SUPABASE_URL}/storage/v1/object/public/article-images/`, 'https://animepple.com/article-img/']; }
 
   // 記事の本文HTMLを、許可した要素・属性・スタイルだけに整える。保存時・表示時・貼り付け時の全てで通す。
   // DOMParserで作った文書は「動かない」(スクリプトは実行されず、画像も読み込まれない)ので、安全に中身を調べられる
   function sanitizeArticleHtml(html, opts) {
-    const imgPrefix = (opts && opts.imgPrefix) || '';
+    const imgPrefixes = [].concat((opts && opts.imgPrefix) || []).filter(Boolean); // 許可する画像URLの先頭(文字列でも配列でもよい)
     const ALLOWED = { P:1, BR:1, H2:1, H3:1, STRONG:1, B:1, EM:1, I:1, U:1, S:1, STRIKE:1, UL:1, OL:1, LI:1, A:1, IMG:1, SPAN:1, BLOCKQUOTE:1, HR:1, DIV:1 };
     const DROP = { SCRIPT:1, STYLE:1, IFRAME:1, OBJECT:1, EMBED:1, FORM:1, INPUT:1, BUTTON:1, TEXTAREA:1, SELECT:1, LINK:1, META:1, SVG:1, MATH:1, NOSCRIPT:1, TEMPLATE:1, VIDEO:1, AUDIO:1, CANVAS:1, BASE:1, TITLE:1, HEAD:1 };
     const cleanStyle = (styleText) => {
@@ -20862,7 +20863,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const el = document.createElement(tag.toLowerCase());
         if(tag === 'IMG') {
           const imgSrc = (node.getAttribute('src') || '').trim();
-          if(!imgPrefix || !imgSrc.startsWith(imgPrefix)) return; // 自分のStorage以外の画像は入れない
+          if(!imgPrefixes.some(p => imgSrc.startsWith(p))) return; // 自分のStorage・自分のサイトの画像フォルダ以外の画像は入れない
           el.setAttribute('src', imgSrc);
           el.setAttribute('alt', (node.getAttribute('alt') || '').slice(0, 200));
           el.setAttribute('loading', 'lazy');
