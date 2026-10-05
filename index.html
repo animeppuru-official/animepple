@@ -2821,6 +2821,9 @@
     .art-stat { display:inline-flex; align-items:center; gap:.2rem; font-size:.78rem; color:var(--muted); }
     .art-actions { display:flex; align-items:center; gap:.9rem; margin:.5rem 0 .6rem; }
     .art-like-btn { display:inline-flex; align-items:center; gap:.3rem; padding:.4rem .9rem; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--text); font:inherit; font-weight:800; cursor:pointer; }
+    .art-tab-locked { opacity:.65; }
+    .art-tab-locked::before { content:"🔒 "; }
+    .art-locked-note { margin:.2rem 0 1rem; padding:1.2rem 1rem; border:1px dashed var(--line); border-radius:12px; color:var(--muted); text-align:center; font-weight:700; }
     .art-like-btn.liked { border-color:#e84a4a; color:#e84a4a; }
     .art-body img { max-width:100%; height:auto; border-radius:8px; }
     .art-body details { margin:.8rem 0; border:1px solid var(--line); border-radius:10px; padding:.2rem .9rem; background:rgba(255,255,255,.03); }
@@ -5249,6 +5252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <button type="button" class="art-tab" role="tab" data-cat="novel" data-i18n="articlesTabNovel">小説</button>
         <button type="button" class="art-tab" role="tab" data-cat="manga" data-i18n="articlesTabManga">漫画</button>
       </div>
+      <p id="articlesLockedNote" class="art-locked-note" style="display:none;">🔒 <span data-i18n="articlesLockedNote">準備中です。一般・小説・漫画は、クリエイターズの公開と同時に始まります。</span></p>
       <div id="articlesAdminTools" style="display:none;margin:-.4rem 0 1rem;">
         <button type="button" class="art-link-btn" id="articlesImportBtn">公式記事(サイトの使い方・15言語)を取り込む／更新する</button>
         <p id="articlesImportStatus" class="art-ed-hint"></p>
@@ -21027,6 +21031,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   // 記事の権限: 管理者は全カテゴリ・画像OK。ログインした人は「一般」を書ける。画像を入れられるのは、クリエイターズ(と管理者)だけ
   let _articlePermCache = { uid: null, loggedIn: false, admin: false, images: false };
+  // 一般・小説・漫画のタブは、クリエイターズの解禁(release_stage='creators_open')まで、管理者以外はロック。公式は常に公開
+  function articleTabLocked(cat, perm) {
+    return cat !== 'official' && isCreatorsLocked() && !(perm && perm.admin);
+  }
   async function articlePerm(fresh) {
     const u = await ensureArticleUser();
     if(!u || !sb) return { uid: null, loggedIn: false, admin: false, images: false };
@@ -21102,13 +21110,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.title = t('articlesPageTitle') + ' | アニメップル';
     const perm = await articlePerm();
     const admin = perm.admin;
-    // 記事を書けるのは、「一般」タブはログインした誰でも(未ログインならログイン画面へ)、公式・小説・漫画は管理者だけ
-    $('articlesWriteBtn').style.display = (admin || _articlesTab === 'general') ? '' : 'none';
-    $('articlesAdminTools').style.display = admin ? '' : 'none';
-    if(admin && !_articleImportBound) { _articleImportBound = true; $('articlesImportBtn').addEventListener('click', importOfficialArticles); }
+    // 一般・小説・漫画は、クリエイターズの解禁(release_stage='creators_open')と同時に公開する。それまではロック(管理者は準備のため通す)
+    const locked = articleTabLocked(_articlesTab, perm);
     document.querySelectorAll('#articlesTabs .art-tab').forEach(btn => {
       const on = btn.dataset.cat === _articlesTab;
       btn.classList.toggle('active', on);
+      btn.classList.toggle('art-tab-locked', articleTabLocked(btn.dataset.cat, perm));
       btn.setAttribute('aria-selected', on ? 'true' : 'false');
     });
     if(!_articlesTabsBound) {
@@ -21120,7 +21127,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderArticlesPage(null);
       });
     }
-    let rows = [];
+    $('articlesLockedNote').style.display = locked ? '' : 'none';
+    $('articlesAdminTools').style.display = admin ? '' : 'none';
+    if(admin && !_articleImportBound) { _articleImportBound = true; $('articlesImportBtn').addEventListener('click', importOfficialArticles); }
+    // 記事を書けるのは、「一般」タブはログインした誰でも(未ログインならログイン画面へ)、公式・小説・漫画は管理者だけ
+    $('articlesWriteBtn').style.display = (!locked && (admin || _articlesTab === 'general')) ? '' : 'none';
+    if(locked) { // ロック中は、記事も下書きも出さない
+      $('articlesList').innerHTML = '';
+      $('articlesEmpty').style.display = 'none';
+      $('articlesDraftBox').style.display = 'none';
+      return;
+    }    let rows = [];
     try { rows = await db.articles.listPublished(_articlesShowAll ? null : currentLang, _articlesTab); } catch(e) { console.warn('articles list failed:', e); }
     const authorMap = await articleAuthorMapFor(rows);
     const list = $('articlesList');
@@ -21290,6 +21307,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function openArticleEditor(article) {
     const perm = await articlePerm(true);
     if(!perm.loggedIn) { showAuthModal('login'); return; }
+    if(articleTabLocked(article ? article.category : _articlesTab, perm)) return; // 解禁前は、管理者以外は書けない
     // 管理者は全カテゴリ。一般ユーザーは「一般」の、新規と自分の記事だけ(DBのRLSでも同じ制限)
     if(!perm.admin && !(!article || (article.category === 'general' && article.author_id === perm.uid))) return;
     if(!perm.admin && !article && _articlesTab !== 'general') return;
@@ -21523,6 +21541,7 @@ document.addEventListener('DOMContentLoaded', () => {
       nav('articles');
     });
   }
+  window.renderArticlesPage = renderArticlesPage; // テスト用(ロックの表示を実ブラウザで検査する)
   window.articleCardHtml = articleCardHtml; // テスト用(カードの表示を実ブラウザで検査する)
   window.renderArticleToc = renderArticleToc; // テスト用(目次の生成を実ブラウザで検査する)
   window.moveArticleImage = moveArticleImage; // テスト用(画像の移動を実ブラウザで検査する)
@@ -22686,6 +22705,7 @@ document.addEventListener('DOMContentLoaded', () => {
     articlesImgMoveDown:{ ja:'画像を下へ', en:'Move image down', ko:'이미지를 아래로', 'zh-tw':'圖片下移', 'zh-cn':'图片下移', es:'Bajar imagen', fr:'Descendre l’image', pt:'Mover imagem para baixo', de:'Bild nach unten', ar:'نقل الصورة لأسفل', th:'ย้ายรูปลง', id:'Pindahkan gambar ke bawah', ru:'Переместить изображение вниз', it:'Sposta immagine giù', vi:'Chuyển ảnh xuống' },
     articlesImgRemove:{ ja:'画像を削除', en:'Remove image', ko:'이미지 삭제', 'zh-tw':'刪除圖片', 'zh-cn':'删除图片', es:'Quitar imagen', fr:'Supprimer l’image', pt:'Remover imagem', de:'Bild entfernen', ar:'إزالة الصورة', th:'ลบรูปภาพ', id:'Hapus gambar', ru:'Удалить изображение', it:'Rimuovi immagine', vi:'Xóa ảnh' },
     articlesRateLimit:{ ja:'1日に書ける記事の数の上限に達しました。明日もう一度お試しください。', en:'You have reached the daily limit for new articles. Please try again tomorrow.', ko:'하루에 쓸 수 있는 글 수의 한도에 도달했습니다. 내일 다시 시도해 주세요.', 'zh-tw':'已達到每日可撰寫文章數的上限，請明天再試。', 'zh-cn':'已达到每日可撰写文章数的上限，请明天再试。', es:'Has alcanzado el límite diario de artículos nuevos. Inténtalo de nuevo mañana.', fr:'Vous avez atteint la limite quotidienne de nouveaux articles. Réessayez demain.', pt:'Você atingiu o limite diário de novos artigos. Tente novamente amanhã.', de:'Das Tageslimit für neue Artikel ist erreicht. Bitte versuche es morgen erneut.', ar:'لقد بلغت الحد اليومي للمقالات الجديدة. حاول مرة أخرى غدًا.', th:'คุณเขียนบทความครบจำนวนสูงสุดต่อวันแล้ว โปรดลองใหม่พรุ่งนี้', id:'Anda telah mencapai batas artikel baru per hari. Coba lagi besok.', ru:'Достигнут дневной лимит новых статей. Попробуйте завтра.', it:'Hai raggiunto il limite giornaliero di nuovi articoli. Riprova domani.', vi:'Bạn đã đạt giới hạn số bài viết mới mỗi ngày. Vui lòng thử lại vào ngày mai.' },
+    articlesLockedNote:{ ja:'準備中です。一般・小説・漫画は、クリエイターズの公開と同時に始まります。', en:'Coming soon. General, Novels and Manga will open together with the Creators plan.', ko:'준비 중입니다. 일반·소설·만화는 크리에이터스 공개와 함께 시작됩니다.', 'zh-tw':'準備中。一般、小說、漫畫將與創作者方案同時開放。', 'zh-cn':'准备中。一般、小说、漫画将与创作者方案同时开放。', es:'Próximamente. General, Novelas y Manga se abrirán junto con el plan Creators.', fr:'Bientôt disponible. Général, Romans et Manga ouvriront en même temps que le forfait Creators.', pt:'Em breve. Geral, Romances e Mangá abrirão junto com o plano Creators.', de:'Demnächst verfügbar. Allgemein, Romane und Manga starten zusammen mit dem Creators-Plan.', ar:'قريبًا. ستُفتح الأقسام العام والروايات والمانغا مع إطلاق خطة Creators.', th:'เร็วๆ นี้ หมวดทั่วไป นิยาย และมังงะ จะเปิดพร้อมกับแผน Creators', id:'Segera hadir. Umum, Novel, dan Manga akan dibuka bersamaan dengan paket Creators.', ru:'Скоро. Разделы «Общие», «Романы» и «Манга» откроются вместе с планом Creators.', it:'Prossimamente. Generali, Romanzi e Manga apriranno insieme al piano Creators.', vi:'Sắp ra mắt. Mục Chung, Tiểu thuyết và Manga sẽ mở cùng lúc với gói Creators.' },
     articlesBackToList:{ ja:'記事一覧へ', en:'Back to articles', ko:'글 목록으로', 'zh-tw':'返回文章列表', 'zh-cn':'返回文章列表', es:'Volver a los artículos', fr:'Retour aux articles', pt:'Voltar aos artigos', de:'Zurück zu den Artikeln', ar:'العودة إلى المقالات', th:'กลับไปที่บทความ', id:'Kembali ke artikel', ru:'К списку статей', it:'Torna agli articoli', vi:'Quay lại danh sách bài viết' },
     articlesNotFound:{ ja:'記事が見つかりませんでした。', en:'Article not found.', ko:'글을 찾을 수 없습니다.', 'zh-tw':'找不到這篇文章。', 'zh-cn':'找不到这篇文章。', es:'No se encontró el artículo.', fr:'Article introuvable.', pt:'Artigo não encontrado.', de:'Artikel nicht gefunden.', ar:'لم يتم العثور على المقال.', th:'ไม่พบบทความ', id:'Artikel tidak ditemukan.', ru:'Статья не найдена.', it:'Articolo non trovato.', vi:'Không tìm thấy bài viết.' },  };
 
