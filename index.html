@@ -20819,7 +20819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // [2026-09-23修正] PA-API未導入のため、実際の商品名・価格・画像URL・星評価は取得できない。
     // 以前はここに架空の固定価格(¥5,478等)を表示していたが、実データではない数値を
     // 本物の値のように見せるのはユーザーに誤解を与えるため廃止した(ユーザー指示)。
-    // 価格の代わりに、実データ連携済みの楽天リンク(renderRakutenBluray、「楽天市場で見る →」)
+    // 価格の代わりに、実データ連携済みの楽天リンク(日本向けはrenderGoodsLinksが楽天の関連商品を出す、「楽天市場で見る →」)
     // と同じ「◯◯で見る →」という誠実な検索導線の文言に統一した。
     // PA-API導入後は、この4カテゴリを実際の検索結果1件目（商品名・価格・画像URL・星評価）に差し替える。
     const categories = [
@@ -20846,15 +20846,67 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  function renderGoodsLinks(page) {
+  // 日本向け: 楽天市場の関連商品(作品名だけで検索した1位の1件)。Amazonはアソシエイト未加入でリンクに収益IDが付かないため、日本は楽天を出す。
+  // 国が分からない(位置情報の同意なし)場合は、日本語の画面なら日本向けとして扱う
+  function isJapanGoodsAudience() {
+    const country = geoStore.getCountry();
+    return country === 'JP' || (!country && currentLang === 'ja');
+  }
+  // 楽天の商品ページ・画像のURLだけを許可する(APIの応答に想定外のURLが混ざっても、リンクにしない)
+  function isRakutenUrl(u, imageOnly) {
+    try {
+      const x = new URL(u);
+      if(x.protocol !== 'https:') return false;
+      return imageOnly ? /(^|\.)image\.rakuten\.co\.jp$/.test(x.hostname) : /(^|\.)rakuten\.co\.jp$/.test(x.hostname);
+    } catch(_) { return false; }
+  }
+  function buildRakutenRelatedHtml(items) {
+    return (items || []).filter(it => it && it.itemName && isRakutenUrl(it.itemUrl, false)).slice(0, 1).map(it => `
+        <a class="af-goods-card" href="${escapeHtml(it.itemUrl)}" target="_blank" rel="noopener noreferrer sponsored nofollow"
+           onclick="adClick('goods_rakuten_related')">
+          <span class="af-goods-card-thumb" style="padding:0;overflow:hidden;">${isRakutenUrl(it.imageUrl, true) ? `<img src="${escapeHtml(it.imageUrl)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;">` : '🛍'}</span>
+          <div class="af-goods-card-body">
+            <h3 class="af-goods-card-name">${escapeHtml(it.itemName)}</h3>
+            <p class="af-goods-card-price">${escapeHtml(t('goodsRakutenCta'))}</p>
+          </div>
+        </a>`).join('');
+  }
+  const _rakutenRelatedCache = {};
+  let _goodsRenderToken = 0;
+  async function fetchRakutenRelated(title) {
+    if(_rakutenRelatedCache[title]) return _rakutenRelatedCache[title];
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/fetch-rakuten-image?mode=related&title=${encodeURIComponent(title)}`);
+    const data = await res.json();
+    if(!res.ok || data.error) throw new Error('rakuten ' + res.status);
+    const items = data.found && Array.isArray(data.items) ? data.items : [];
+    return (_rakutenRelatedCache[title] = items);
+  }
+
+  async function renderGoodsLinks(page) {
     const el = document.getElementById('afGoodsLinks');
     const section = document.getElementById('afGoodsSection');
     if(!el||!section||!page) return;
-
-    const items = buildGoodsCardsHtml(page);
-    el.innerHTML = `<div class="af-goods-grid" id="afGoodsGrid">${items}</div>`;
-    section.style.display = '';
-    setupGoodsAutoScroll();
+    const token = ++_goodsRenderToken;
+    const showAmazon = () => {
+      el.innerHTML = `<div class="af-goods-grid" id="afGoodsGrid">${buildGoodsCardsHtml(page)}</div>`;
+      section.style.display = '';
+      setupGoodsAutoScroll();
+    };
+    // 日本向け: 楽天の関連商品(作品名だけで検索)。見つからない・失敗した時は、従来のAmazon検索リンクを出す
+    const title = (page.title || page.titleEn || '').trim();
+    if(isJapanGoodsAudience() && title && !(page.id || '').startsWith('test-anime-')) {
+      el.innerHTML = ''; section.style.display = 'none';
+      let html = '';
+      try { html = buildRakutenRelatedHtml(await fetchRakutenRelated(title)); } catch(e) { console.warn('rakuten related failed:', e); }
+      if(token !== _goodsRenderToken) return; // 別の作品に移っていたら、古い結果は出さない
+      if(html) {
+        el.innerHTML = '<div class="af-pr-note"><span class="af-pr-badge">PR</span> <span class="af-pr-text">アフィリエイト広告を含みます</span></div>' + `<div class="af-goods-grid" id="afGoodsGrid">${html}</div>`;
+        section.style.display = '';
+        setupGoodsAutoScroll();
+        return;
+      }
+    }
+    showAmazon();
   }
 
   // スマホ幅：グッズカルーセルを5秒ごとに自動で次のカードへ進める。
@@ -20887,38 +20939,6 @@ document.addEventListener('DOMContentLoaded', () => {
         _goodsAutoScrollTimer = setInterval(advance, 5000);
       }, 5000);
     }, { passive: true });
-  }
-
-  // 楽天商品検索APIでBlu-rayを検索し、商品ページへのリンクを表示（規約上必須のリンク併設）
-  async function renderRakutenBluray(page) {
-    const section = document.getElementById('afRakutenSection');
-    const el = document.getElementById('afRakutenLink');
-    if(!section || !el || !page) return;
-    if((page.id || '').startsWith('test-anime-')) { section.style.display = 'none'; return; }
-    const title = page.title || page.titleEn || '';
-    if(!title) return;
-    try {
-      const res = await fetch(`https://ofbjfiuayfhdkgertxyo.supabase.co/functions/v1/fetch-rakuten-image?title=${encodeURIComponent(title)}`);
-      const data = await res.json();
-      if(!res.ok || data.error) { console.error('renderRakutenBluray API error:', res.status, data); section.style.display = 'none'; return; }
-      if(!data.found) { section.style.display = 'none'; return; }
-      el.innerHTML = `
-        <a class="af-goods-card" href="${escapeHtml(data.itemUrl)}" target="_blank" rel="noopener noreferrer sponsored"
-           onclick="adClick('goods_rakuten_bluray')">
-          <span class="af-goods-card-thumb" style="padding:0;overflow:hidden;">
-            <img src="${escapeHtml(data.imageUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;">
-          </span>
-          <div class="af-goods-card-body">
-            <h3 class="af-goods-card-name">${escapeHtml(data.itemName)}</h3>
-            <p class="af-goods-card-price">${escapeHtml(t('goodsRakutenCta'))}</p>
-          </div>
-        </a>
-      `;
-      section.style.display = '';
-    } catch(e) {
-      console.error('renderRakutenBluray failed:', e);
-      section.style.display = 'none';
-    }
   }
 
   /* ════════════════════════════
@@ -21542,6 +21562,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   window.renderArticlesPage = renderArticlesPage; // テスト用(ロックの表示を実ブラウザで検査する)
+  window.buildRakutenRelatedHtml = buildRakutenRelatedHtml; // テスト用(楽天の関連商品カードを実ブラウザで検査する)
   window.articleCardHtml = articleCardHtml; // テスト用(カードの表示を実ブラウザで検査する)
   window.renderArticleToc = renderArticleToc; // テスト用(目次の生成を実ブラウザで検査する)
   window.moveArticleImage = moveArticleImage; // テスト用(画像の移動を実ブラウザで検査する)
