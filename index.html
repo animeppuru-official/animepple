@@ -2809,6 +2809,19 @@
     .art-badge { padding:0 .45rem; border:1px solid var(--muted); border-radius:6px; font-size:.68rem; font-weight:800; }
     .art-draft-badge { border-color:#e0b04a; color:#e0b04a; }
     .art-empty { color:var(--muted); text-align:center; padding:2rem 0; }
+    .art-tabs { display:flex; gap:.4rem; margin:0 0 1rem; border-bottom:1px solid var(--line); overflow-x:auto; }
+    .art-tab { flex:1 1 0; min-width:4.2rem; padding:.6rem .5rem; background:none; border:none; border-bottom:3px solid transparent; color:var(--muted); font:inherit; font-weight:800; cursor:pointer; white-space:nowrap; }
+    .art-tab.active { color:var(--text); border-bottom-color:var(--brand); }
+    .art-author { display:flex; align-items:center; gap:.5rem; margin:.2rem 0 .4rem; font-size:.82rem; color:#b6c8bd; font-weight:700; }
+    .art-card .art-author { margin:.1rem 0 .35rem; font-size:.76rem; }
+    .art-avatar { width:26px; height:26px; border-radius:50%; overflow:hidden; background:#5ec97a; color:#0c2015; display:inline-flex; align-items:center; justify-content:center; font-weight:900; font-size:.8rem; flex-shrink:0; }
+    .art-card .art-avatar { width:20px; height:20px; font-size:.68rem; }
+    .art-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+    .art-author-link { background:none; border:none; padding:0; color:inherit; font:inherit; font-weight:800; cursor:pointer; text-decoration:underline; }
+    .art-stat { display:inline-flex; align-items:center; gap:.2rem; font-size:.78rem; color:var(--muted); }
+    .art-actions { display:flex; align-items:center; gap:.9rem; margin:.5rem 0 .6rem; }
+    .art-like-btn { display:inline-flex; align-items:center; gap:.3rem; padding:.4rem .9rem; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--text); font:inherit; font-weight:800; cursor:pointer; }
+    .art-like-btn.liked { border-color:#e84a4a; color:#e84a4a; }
     .art-link-btn { background:none; border:none; color:var(--brand); cursor:pointer; font:inherit; text-decoration:underline; padding:.2rem 0; }
     .art-title { font-size:1.5rem; line-height:1.4; margin:.8rem 0 .4rem; color:var(--text); }
     .art-body { color:#d4e2d9; line-height:1.95; font-size:1rem; overflow-wrap:anywhere; }
@@ -5210,6 +5223,12 @@ document.addEventListener('DOMContentLoaded', () => {
         <h2 class="art-page-title" data-i18n="articlesPageTitle">記事の広場</h2>
         <button type="button" class="btn-primary" id="articlesWriteBtn" style="display:none;" onclick="openArticleEditor(null)">✎ 記事を書く</button>
       </div>
+      <div class="art-tabs" id="articlesTabs" role="tablist">
+        <button type="button" class="art-tab active" role="tab" data-cat="official" data-i18n="articlesTabOfficial">公式</button>
+        <button type="button" class="art-tab" role="tab" data-cat="general" data-i18n="articlesTabGeneral">一般</button>
+        <button type="button" class="art-tab" role="tab" data-cat="novel" data-i18n="articlesTabNovel">小説</button>
+        <button type="button" class="art-tab" role="tab" data-cat="manga" data-i18n="articlesTabManga">漫画</button>
+      </div>
       <div id="articlesAdminTools" style="display:none;margin:-.4rem 0 1rem;">
         <button type="button" class="art-link-btn" id="articlesImportBtn">公式記事(サイトの使い方・15言語)を取り込む／更新する</button>
         <p id="articlesImportStatus" class="art-ed-hint"></p>
@@ -5221,7 +5240,12 @@ document.addEventListener('DOMContentLoaded', () => {
     <article id="articleView" style="display:none;">
       <button type="button" class="art-link-btn" onclick="nav('articles')">← <span data-i18n="articlesBackToList">記事一覧へ</span></button>
       <h1 id="articleViewTitle" class="art-title"></h1>
+      <div id="articleViewAuthor" class="art-author"></div>
       <div id="articleViewMeta" class="art-meta"></div>
+      <div class="art-actions">
+        <button type="button" class="art-like-btn" id="articleLikeBtn" aria-pressed="false"><span id="articleLikeIcon">♡</span> <span id="articleLikeCount">0</span></button>
+        <span class="art-stat" id="articleViewCount" title=""></span>
+      </div>
       <div id="articleViewAdmin" style="display:none;margin:.6rem 0;"></div>
       <div id="articleViewBody" class="art-body"></div>
     </article>
@@ -5232,6 +5256,13 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <label class="art-ed-label">記事の言語(この言語を使う人にだけ一覧に出ます。翻訳はされません)</label>
       <select id="articleEdLang" class="art-ed-input"></select>
+      <label class="art-ed-label">カテゴリ(記事の広場のどのタブに出すか)</label>
+      <select id="articleEdCategory" class="art-ed-input">
+        <option value="official">公式</option>
+        <option value="general">一般</option>
+        <option value="novel">小説</option>
+        <option value="manga">漫画</option>
+      </select>
       <label class="art-ed-label">タイトル</label>
       <input id="articleEdTitle" class="art-ed-input" type="text" maxlength="150" placeholder="タイトルを入力">
       <label class="art-ed-label">要約(検索結果やSNSに出る説明。省略すると本文の頭から作ります)</label>
@@ -8664,16 +8695,36 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     // ── 記事の広場(書けるのは管理者だけ。RLSでも限定。公開済みは誰でも読める) ──
     articles: {
-      async listPublished(lang) {
+      async listPublished(lang, category) {
         if(!sb) return [];
-        let q = sb.from('articles').select('id,slug,lang,title,description,published_at,author_name').eq('status', 'published').order('published_at', { ascending: false }).limit(100);
+        let q = sb.from('articles').select('id,slug,lang,category,title,description,published_at,author_id,author_name,like_count,view_count').eq('status', 'published').order('published_at', { ascending: false }).limit(100);
         if(lang) q = q.eq('lang', lang);
+        if(category) q = q.eq('category', category);
         const { data } = await q;
         return data || [];
       },
+      // いいね・閲覧数(PV)。いいねはログインが必要(article_likesはRLSで自分の行だけ)。
+      // 閲覧数はRPC(increment_article_view)で+1する(テーブルは直接書き換えさせない)
+      async hasLiked(articleId) {
+        if(!sb || !_currentUser) return false;
+        const { data } = await sb.from('article_likes').select('article_id').eq('article_id', articleId).eq('user_id', _currentUser.id).maybeSingle();
+        return !!data;
+      },
+      async setLike(articleId, on) {
+        if(!sb || !_currentUser) return { error: 'login' };
+        const q = on
+          ? sb.from('article_likes').insert({ article_id: articleId })
+          : sb.from('article_likes').delete().eq('article_id', articleId).eq('user_id', _currentUser.id);
+        const { error } = await q;
+        return { error: error ? (error.message || 'error') : null };
+      },
+      async countView(slug) {
+        if(!sb) return;
+        try { await sb.rpc('increment_article_view', { p_slug: slug }); } catch(_) {}
+      },
       async listDrafts() {
         if(!sb) return [];
-        const { data } = await sb.from('articles').select('id,slug,lang,title,description,published_at,author_name').eq('status', 'draft').order('updated_at', { ascending: false }).limit(100);
+        const { data } = await sb.from('articles').select('id,slug,lang,category,title,description,published_at,author_id,author_name,like_count,view_count').eq('status', 'draft').order('updated_at', { ascending: false }).limit(100);
         return data || [];
       },
       async getBySlug(slug) {
@@ -8697,8 +8748,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if(findError) return { error: findError.message || 'error' };
         const now = new Date().toISOString();
         const q = found
-          ? sb.from('articles').update({ lang: row.lang, title: row.title, description: row.description, body_html: row.body_html, status: 'published', updated_at: now }).eq('id', found.id)
-          : sb.from('articles').insert({ ...row, status: 'published', author_name: 'アニメップル運営', published_at: now });
+          ? sb.from('articles').update({ lang: row.lang, title: row.title, description: row.description, body_html: row.body_html, category: 'official', status: 'published', updated_at: now }).eq('id', found.id)
+          : sb.from('articles').insert({ ...row, category: 'official', status: 'published', author_name: 'アニメップル運営', published_at: now });
         const { error } = await q;
         return { error: error ? (error.message || 'error') : null };
       },
@@ -20841,6 +20892,9 @@ document.addEventListener('DOMContentLoaded', () => {
      - 書けるのは管理者だけ(DB側のRLSでも管理者に限定)。画像はStorageの article-images バケット
   ════════════════════════════ */
   let _articlesShowAll = false;
+  let _articlesTab = 'official';                   // 記事の広場のタブ: official / general / novel / manga
+  let _articlesTabsBound = false;
+  let _articleLikeBound = false;
   let _articleCurrent = null;                      // 編集中・表示中の記事(新規はnull)
   let _articleAdminCache = { uid: null, value: false };
   let _articleSavedRange = null;                   // ツールバー操作で選択が外れても戻せるよう、本文内の選択範囲を覚えておく
@@ -20943,16 +20997,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function articleLangLabel(code) { const l = LANGS.find(x => x.code === code); return l ? l.native : code; }
   function articleDateLabel(iso) { try { return new Date(iso).toLocaleDateString(currentLang); } catch(_) { return ''; } }
-  function articleCardHtml(a, isDraft) {
+  // 作成者の表示名とアイコン。アカウントがある記事はprofiles_publicの名前・アイコン、
+  // 運営の公式記事(author_idなし)は「アニメップル運営」と丸いロゴ
+  function articleAuthorInfo(a, authorMap) {
+    const p = a.author_id && authorMap ? authorMap[a.author_id] : null;
+    const official = !a.author_id && (a.category === 'official' || a.author_name === 'アニメップル運営');
+    const name = official ? t('articlesOfficialAuthor') : ((p && p.username) || a.author_name || '');
+    return { id: a.author_id || null, name, avatarUrl: p && p.avatar_url || null, initial: official ? 'A' : (name.slice(0, 1) || '?') };
+  }
+  function articleAuthorHtml(a, authorMap, linked) {
+    const info = articleAuthorInfo(a, authorMap);
+    if(!info.name) return '';
+    const avatar = `<span class="art-avatar">${info.avatarUrl ? `<img src="${escapeHtml(info.avatarUrl)}" alt="">` : escapeHtml(info.initial)}</span>`;
+    const nameHtml = linked && info.id ? `<button type="button" class="art-author-link" onclick="nav('user','${escapeHtml(info.id)}')">${escapeHtml(info.name)}</button>` : `<span>${escapeHtml(info.name)}</span>`;
+    return `${avatar}${nameHtml}`;
+  }
+  function articleStatsHtml(a) {
+    return `<span class="art-stat art-stat-like" title="${escapeHtml(t('articlesLikes'))}">♥ ${Number(a.like_count) || 0}</span><span class="art-stat art-stat-view" title="${escapeHtml(t('articlesViews'))}">👁 ${Number(a.view_count) || 0}</span>`;
+  }
+  function articleCardHtml(a, isDraft, authorMap) {
+    const author = articleAuthorHtml(a, authorMap, false);
     return `<button type="button" class="art-card" data-slug="${escapeHtml(a.slug)}">
       <p class="art-card-title">${escapeHtml(a.title)}</p>
       ${a.description ? `<p class="art-card-desc">${escapeHtml(a.description)}</p>` : ''}
+      ${author ? `<div class="art-author">${author}</div>` : ''}
       <div class="art-card-meta">
         ${isDraft ? '<span class="art-badge art-draft-badge">下書き</span>' : ''}
         <span class="art-badge">${escapeHtml(articleLangLabel(a.lang))}</span>
         ${a.published_at ? `<span>${escapeHtml(articleDateLabel(a.published_at))}</span>` : ''}
+        ${articleStatsHtml(a)}
       </div>
     </button>`;
+  }
+  async function articleAuthorMapFor(rows) {
+    const ids = [...new Set(rows.map(a => a.author_id).filter(Boolean))];
+    const map = {};
+    if(!ids.length) return map;
+    try { (await db.profiles.getByIds(ids)).forEach(p => { map[p.id] = p; }); } catch(_) {}
+    return map;
   }
 
   async function renderArticlesPage(slug) {
@@ -20971,10 +21053,25 @@ document.addEventListener('DOMContentLoaded', () => {
     $('articlesWriteBtn').style.display = admin ? '' : 'none';
     $('articlesAdminTools').style.display = admin ? '' : 'none';
     if(admin && !_articleImportBound) { _articleImportBound = true; $('articlesImportBtn').addEventListener('click', importOfficialArticles); }
+    document.querySelectorAll('#articlesTabs .art-tab').forEach(btn => {
+      const on = btn.dataset.cat === _articlesTab;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    if(!_articlesTabsBound) {
+      _articlesTabsBound = true;
+      $('articlesTabs').addEventListener('click', (e) => {
+        const btn = e.target.closest('.art-tab');
+        if(!btn || btn.dataset.cat === _articlesTab) return;
+        _articlesTab = btn.dataset.cat;
+        renderArticlesPage(null);
+      });
+    }
     let rows = [];
-    try { rows = await db.articles.listPublished(_articlesShowAll ? null : currentLang); } catch(e) { console.warn('articles list failed:', e); }
+    try { rows = await db.articles.listPublished(_articlesShowAll ? null : currentLang, _articlesTab); } catch(e) { console.warn('articles list failed:', e); }
+    const authorMap = await articleAuthorMapFor(rows);
     const list = $('articlesList');
-    list.innerHTML = rows.map(a => articleCardHtml(a, false)).join('');
+    list.innerHTML = rows.map(a => articleCardHtml(a, false, authorMap)).join('');
     $('articlesEmpty').style.display = rows.length ? 'none' : '';
     $('articlesShowAllBtn').style.display = _articlesShowAll ? 'none' : '';
     const draftBox = $('articlesDraftBox');
@@ -20982,7 +21079,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let drafts = [];
       try { drafts = await db.articles.listDrafts(); } catch(_) {}
       draftBox.style.display = drafts.length ? '' : 'none';
-      draftBox.innerHTML = drafts.length ? `<h3 style="margin:.2rem 0 .5rem;font-size:.9rem;color:var(--muted);">下書き(管理者だけに見えます)</h3><div class="art-list">${drafts.map(a => articleCardHtml(a, true)).join('')}</div>` : '';
+      const draftAuthors = await articleAuthorMapFor(drafts);
+      draftBox.innerHTML = drafts.length ? `<h3 style="margin:.2rem 0 .5rem;font-size:.9rem;color:var(--muted);">下書き(管理者だけに見えます)</h3><div class="art-list">${drafts.map(a => articleCardHtml(a, true, draftAuthors)).join('')}</div>` : '';
     } else {
       draftBox.style.display = 'none';
       draftBox.innerHTML = '';
@@ -21032,13 +21130,57 @@ document.addEventListener('DOMContentLoaded', () => {
     const dir = a.lang === 'ar' ? 'rtl' : 'ltr';
     titleEl.setAttribute('lang', a.lang); titleEl.dir = dir;
     bodyEl.setAttribute('lang', a.lang); bodyEl.dir = dir;
-    metaEl.innerHTML = `${a.status === 'draft' ? '<span class="art-badge art-draft-badge">下書き</span>' : ''}<span class="art-badge">${escapeHtml(articleLangLabel(a.lang))}</span>${a.published_at ? `<span>${escapeHtml(articleDateLabel(a.published_at))}</span>` : ''}${a.author_name ? `<span>${escapeHtml(a.author_name)}</span>` : ''}`;
+    metaEl.innerHTML = `${a.status === 'draft' ? '<span class="art-badge art-draft-badge">下書き</span>' : ''}<span class="art-badge">${escapeHtml(articleLangLabel(a.lang))}</span>${a.published_at ? `<span>${escapeHtml(articleDateLabel(a.published_at))}</span>` : ''}`;
     bodyEl.innerHTML = sanitizeArticleHtml(a.body_html, { imgPrefix: articleImgPrefix() });
+    // 作成者(アカウント名・アイコン)・いいね・閲覧数(PV)
+    const authorMap = await articleAuthorMapFor([a]);
+    $('articleViewAuthor').innerHTML = articleAuthorHtml(a, authorMap, true);
+    let views = Number(a.view_count) || 0;
+    if(a.status === 'published' && !articleViewCounted(a.slug)) { views += 1; db.articles.countView(a.slug); }
+    $('articleViewCount').textContent = `👁 ${views}`;
+    $('articleViewCount').title = t('articlesViews');
+    renderArticleLike(a, await db.articles.hasLiked(a.id));
+    bindArticleLikeOnce();
     if(await isArticleAdmin()) {
       adminEl.style.display = '';
       adminEl.innerHTML = '<button type="button" class="btn-primary" id="articleEditBtn">✎ この記事を編集</button>';
       document.getElementById('articleEditBtn').addEventListener('click', () => openArticleEditor(_articleCurrent));
     }
+  }
+
+  // 閲覧数は、同じブラウザで同じ記事を開き直しても1回だけ数える(タブを閉じるまで)
+  function articleViewCounted(slug) {
+    const key = 'artView:' + slug;
+    try { if(sessionStorage.getItem(key)) return true; sessionStorage.setItem(key, '1'); } catch(_) {}
+    return false;
+  }
+  function renderArticleLike(a, liked) {
+    const $ = (id) => document.getElementById(id);
+    const btn = $('articleLikeBtn');
+    btn.classList.toggle('liked', !!liked);
+    btn.setAttribute('aria-pressed', liked ? 'true' : 'false');
+    btn.title = t('articlesLikes');
+    btn.dataset.articleId = a.id;
+    btn.dataset.count = String(Number(a.like_count) || 0);
+    $('articleLikeIcon').textContent = liked ? '♥' : '♡';
+    $('articleLikeCount').textContent = btn.dataset.count;
+  }
+  function bindArticleLikeOnce() {
+    if(_articleLikeBound) return;
+    _articleLikeBound = true;
+    document.getElementById('articleLikeBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('articleLikeBtn');
+      if(!_articleCurrent || btn.dataset.busy) return;
+      await ensureArticleUser();
+      if(!_currentUser) { showAuthModal('login'); return; }
+      const wasLiked = btn.classList.contains('liked');
+      btn.dataset.busy = '1';
+      const res = await db.articles.setLike(_articleCurrent.id, !wasLiked);
+      delete btn.dataset.busy;
+      if(res.error) { console.warn('like failed:', res.error); return; }
+      const count = Math.max(0, (Number(btn.dataset.count) || 0) + (wasLiked ? -1 : 1));
+      renderArticleLike({ id: _articleCurrent.id, like_count: count }, !wasLiked);
+    });
   }
 
   async function openArticleEditor(article) {
@@ -21051,6 +21193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('articleEdHeading').textContent = article ? '記事を編集' : '記事を書く';
     $('articleEdLang').innerHTML = LANGS.map(l => `<option value="${l.code}">${escapeHtml(l.native)}</option>`).join('');
     $('articleEdLang').value = (article && article.lang) || currentLang;
+    $('articleEdCategory').value = (article && article.category) || _articlesTab;
     $('articleEdTitle').value = article ? article.title : '';
     $('articleEdDesc').value = article ? (article.description || '') : '';
     $('articleEdBody').innerHTML = article ? sanitizeArticleHtml(article.body_html, { imgPrefix: articleImgPrefix() }) : '<p><br></p>';
@@ -21152,7 +21295,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if(!title) { say('タイトルを入力してください'); return; }
       if(!text && !/<img/i.test(bodyHtml)) { say('本文を入力してください'); return; }
       if(bodyHtml.length > 190000) { say('本文が長すぎます。2つの記事に分けてください'); return; }
-      const row = { lang, title, description: ($('articleEdDesc').value.trim() || text.slice(0, 120)).slice(0, 300), body_html: bodyHtml, status };
+      const category = $('articleEdCategory').value;
+      const row = { lang, category, title, description: ($('articleEdDesc').value.trim() || text.slice(0, 120)).slice(0, 300), body_html: bodyHtml, status };
       if(status === 'published' && !(_articleCurrent && _articleCurrent.published_at)) row.published_at = new Date().toISOString();
       setBusy(true); say('保存しています…');
       const res = await db.articles.save(_articleCurrent ? _articleCurrent.id : null, row);
@@ -21176,6 +21320,7 @@ document.addEventListener('DOMContentLoaded', () => {
       nav('articles');
     });
   }
+  window.articleCardHtml = articleCardHtml; // テスト用(カードの表示を実ブラウザで検査する)
   window.openArticleEditor = openArticleEditor;
   window.closeArticleEditor = closeArticleEditor;
   window.articlesShowAllLangs = articlesShowAllLangs;
@@ -22306,6 +22451,13 @@ document.addEventListener('DOMContentLoaded', () => {
     noResultsSub:{ ja:'キーワード・タグ・フィルターを変えてみてください。', en:'Try changing your keywords, tags, or filters.', ko:'키워드·태그·필터를 바꿔 보세요.','zh-tw':'請嘗試更改關鍵字、標籤或篩選條件。','zh-cn':'请尝试更改关键字、标签或筛选条件。',es:'Intenta cambiar palabras clave, etiquetas o filtros.',fr:'Essayez de changer les mots-clés, tags ou filtres.',pt:'Tente mudar palavras-chave, tags ou filtros.',de:'Versuche andere Schlüsselwörter, Tags oder Filter.',ar:'جرب تغيير الكلمات المفتاحية أو الوسوم أو الفلاتر.',th:'ลองเปลี่ยนคำค้น แท็ก หรือตัวกรอง',id:'Coba ubah kata kunci, tag, atau filter.',ru:'Попробуйте изменить ключевые слова, теги или фильтры.',it:'Prova a cambiare parole chiave, tag o filtri.',vi:'Hãy thử đổi từ khóa, thẻ hoặc bộ lọc.' },
     articlesEmpty:{ ja:'この言語の記事はまだありません。', en:'There are no articles in this language yet.', ko:'이 언어의 글이 아직 없습니다.', 'zh-tw':'此語言目前還沒有文章。', 'zh-cn':'该语言暂时还没有文章。', es:'Todavía no hay artículos en este idioma.', fr:'Il n’y a pas encore d’articles dans cette langue.', pt:'Ainda não há artigos neste idioma.', de:'In dieser Sprache gibt es noch keine Artikel.', ar:'لا توجد مقالات بهذه اللغة بعد.', th:'ยังไม่มีบทความในภาษานี้', id:'Belum ada artikel dalam bahasa ini.', ru:'Статей на этом языке пока нет.', it:'Non ci sono ancora articoli in questa lingua.', vi:'Chưa có bài viết nào bằng ngôn ngữ này.' },
     articlesShowAllLangs:{ ja:'すべての言語の記事を見る', en:'Show articles in all languages', ko:'모든 언어의 글 보기', 'zh-tw':'查看所有語言的文章', 'zh-cn':'查看所有语言的文章', es:'Ver artículos en todos los idiomas', fr:'Voir les articles dans toutes les langues', pt:'Ver artigos em todos os idiomas', de:'Artikel in allen Sprachen anzeigen', ar:'عرض المقالات بكل اللغات', th:'ดูบทความทุกภาษา', id:'Lihat artikel di semua bahasa', ru:'Показать статьи на всех языках', it:'Mostra gli articoli in tutte le lingue', vi:'Xem bài viết ở mọi ngôn ngữ' },
+    articlesTabOfficial:{ ja:'公式', en:'Official', ko:'공식', 'zh-tw':'官方', 'zh-cn':'官方', es:'Oficial', fr:'Officiel', pt:'Oficial', de:'Offiziell', ar:'رسمي', th:'ทางการ', id:'Resmi', ru:'Официальные', it:'Ufficiali', vi:'Chính thức' },
+    articlesTabGeneral:{ ja:'一般', en:'General', ko:'일반', 'zh-tw':'一般', 'zh-cn':'一般', es:'General', fr:'Général', pt:'Geral', de:'Allgemein', ar:'عام', th:'ทั่วไป', id:'Umum', ru:'Общие', it:'Generali', vi:'Chung' },
+    articlesTabNovel:{ ja:'小説', en:'Novels', ko:'소설', 'zh-tw':'小說', 'zh-cn':'小说', es:'Novelas', fr:'Romans', pt:'Romances', de:'Romane', ar:'روايات', th:'นิยาย', id:'Novel', ru:'Романы', it:'Romanzi', vi:'Tiểu thuyết' },
+    articlesTabManga:{ ja:'漫画', en:'Manga', ko:'만화', 'zh-tw':'漫畫', 'zh-cn':'漫画', es:'Manga', fr:'Manga', pt:'Mangá', de:'Manga', ar:'مانغا', th:'มังงะ', id:'Manga', ru:'Манга', it:'Manga', vi:'Manga' },
+    articlesLikes:{ ja:'いいね', en:'Likes', ko:'좋아요', 'zh-tw':'喜歡', 'zh-cn':'喜欢', es:'Me gusta', fr:'J’aime', pt:'Curtidas', de:'Gefällt mir', ar:'إعجابات', th:'ถูกใจ', id:'Suka', ru:'Нравится', it:'Mi piace', vi:'Lượt thích' },
+    articlesViews:{ ja:'閲覧数(PV)', en:'Views', ko:'조회수', 'zh-tw':'瀏覽數', 'zh-cn':'浏览量', es:'Vistas', fr:'Vues', pt:'Visualizações', de:'Aufrufe', ar:'المشاهدات', th:'จำนวนการดู', id:'Dilihat', ru:'Просмотры', it:'Visualizzazioni', vi:'Lượt xem' },
+    articlesOfficialAuthor:{ ja:'アニメップル運営', en:'Animepple Team', ko:'Animepple 운영팀', 'zh-tw':'Animepple 營運團隊', 'zh-cn':'Animepple 运营团队', es:'Equipo de Animepple', fr:'Équipe Animepple', pt:'Equipe Animepple', de:'Animepple-Team', ar:'فريق Animepple', th:'ทีมงาน Animepple', id:'Tim Animepple', ru:'Команда Animepple', it:'Team Animepple', vi:'Đội ngũ Animepple' },
     articlesBackToList:{ ja:'記事一覧へ', en:'Back to articles', ko:'글 목록으로', 'zh-tw':'返回文章列表', 'zh-cn':'返回文章列表', es:'Volver a los artículos', fr:'Retour aux articles', pt:'Voltar aos artigos', de:'Zurück zu den Artikeln', ar:'العودة إلى المقالات', th:'กลับไปที่บทความ', id:'Kembali ke artikel', ru:'К списку статей', it:'Torna agli articoli', vi:'Quay lại danh sách bài viết' },
     articlesNotFound:{ ja:'記事が見つかりませんでした。', en:'Article not found.', ko:'글을 찾을 수 없습니다.', 'zh-tw':'找不到這篇文章。', 'zh-cn':'找不到这篇文章。', es:'No se encontró el artículo.', fr:'Article introuvable.', pt:'Artigo não encontrado.', de:'Artikel nicht gefunden.', ar:'لم يتم العثور على المقال.', th:'ไม่พบบทความ', id:'Artikel tidak ditemukan.', ru:'Статья не найдена.', it:'Articolo non trovato.', vi:'Không tìm thấy bài viết.' },  };
 
