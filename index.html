@@ -20873,20 +20873,68 @@ document.addEventListener('DOMContentLoaded', () => {
         </a>`;
   }
 
+  // 楽天の商品ページ・画像のURLだけを許可する(APIの応答に想定外のURLが混ざっても、リンクにしない)
+  function isRakutenUrl(u, imageOnly) {
+    try {
+      const x = new URL(u);
+      if(x.protocol !== 'https:') return false;
+      return imageOnly ? /(^|\.)image\.rakuten\.co\.jp$/.test(x.hostname) : /(^|\.)rakuten\.co\.jp$/.test(x.hostname);
+    } catch(_) { return false; }
+  }
+  // 商品の写真つきカード(楽天の商品1件)。押すと、その商品の楽天ページへ、自分のアフィリエイトIDのリンクで行く。写真は保存せず、表示のたびに楽天から取る
+  function buildRakutenPhotoCardHtml(item) {
+    if(!item || !item.itemName || !isRakutenUrl(item.itemUrl, false) || !isRakutenUrl(item.imageUrl, true)) return '';
+    const href = `https://hb.afl.rakuten.co.jp/hgc/${RAKUTEN_AFFILIATE_ID}/?pc=${encodeURIComponent(item.itemUrl)}&link_type=text&ut=eyJwYWdlIjoidXJsIiwidHlwZSI6InRleHQiLCJjb2wiOjF9`;
+    return `
+        <a class="af-goods-card af-goods-card-photo" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer sponsored nofollow"
+           onclick="adClick('goods_rakuten_photo')">
+          <span class="af-goods-card-thumb" style="width:64px;height:64px;flex:0 0 64px;padding:0;overflow:hidden;"><img src="${escapeHtml(item.imageUrl)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;"></span>
+          <div class="af-goods-card-body">
+            <h3 class="af-goods-card-name">${escapeHtml(item.itemName)}</h3>
+            <p class="af-goods-card-price">${escapeHtml(t('goodsRakutenCta'))}</p>
+          </div>
+        </a>`;
+  }
+  const _rakutenItemCache = {};
+  let _goodsRenderToken = 0;
+  // 作品名(+Blu-ray)で楽天市場を探した1件(Edge Function fetch-rakuten-image)。見つからない・失敗はnull
+  async function fetchRakutenItem(title) {
+    if(title in _rakutenItemCache) return _rakutenItemCache[title];
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/fetch-rakuten-image?title=${encodeURIComponent(title)}`);
+    const data = await res.json();
+    if(!res.ok || data.error) throw new Error('rakuten ' + res.status);
+    return (_rakutenItemCache[title] = data.found ? { itemName: data.itemName, itemUrl: data.itemUrl, imageUrl: data.imageUrl } : null);
+  }
+
   function renderGoodsLinks(page) {
     const el = document.getElementById('afGoodsLinks');
     const section = document.getElementById('afGoodsSection');
     if(!el||!section||!page) return;
+    const token = ++_goodsRenderToken;
+    const prNote = '<div class="af-pr-note"><span class="af-pr-badge">PR</span> <span class="af-pr-text">アフィリエイト広告を含みます</span></div>';
 
-    // 日本向けは楽天の関連商品1枚。日本以外・テスト用作品は、従来のAmazon検索リンク
-    const rakuten = isJapanGoodsAudience() && !(page.id || '').startsWith('test-anime-') ? buildRakutenRelatedHtml(page) : '';
+    // 日本向けは楽天。まず「関連商品」(検索結果ページへ)のカードを出し、商品の写真が取れたら写真つきのカードに差し替える。
+    // 日本以外・テスト用作品は、従来のAmazon検索リンク
+    const isJp = isJapanGoodsAudience() && !(page.id || '').startsWith('test-anime-');
+    const rakuten = isJp ? buildRakutenRelatedHtml(page) : '';
     if(rakuten) {
-      el.innerHTML = '<div class="af-pr-note"><span class="af-pr-badge">PR</span> <span class="af-pr-text">アフィリエイト広告を含みます</span></div>' + `<div class="af-goods-grid" id="afGoodsGrid">${rakuten}</div>`;
+      el.innerHTML = prNote + `<div class="af-goods-grid" id="afGoodsGrid">${rakuten}</div>`;
     } else {
       el.innerHTML = `<div class="af-goods-grid" id="afGoodsGrid">${buildGoodsCardsHtml(page)}</div>`;
     }
     section.style.display = '';
     setupGoodsAutoScroll();
+
+    const title = ((page.title || page.titleEn) || '').trim();
+    if(rakuten && title) {
+      fetchRakutenItem(title).then(item => {
+        if(token !== _goodsRenderToken) return; // 別の作品に移っていたら、古い結果は出さない
+        const photo = buildRakutenPhotoCardHtml(item);
+        if(!photo) return;
+        el.innerHTML = prNote + `<div class="af-goods-grid" id="afGoodsGrid">${photo}</div>`;
+        setupGoodsAutoScroll();
+      }).catch(e => console.warn('rakuten item failed:', e));
+    }
   }
   // スマホ幅：グッズカルーセルを5秒ごとに自動で次のカードへ進める。
   // 手動でスワイプ/スクロールした場合は、そこから5秒操作が無かったら自動送りを再開する。
@@ -21543,6 +21591,8 @@ document.addEventListener('DOMContentLoaded', () => {
   window.renderArticlesPage = renderArticlesPage; // テスト用(ロックの表示を実ブラウザで検査する)
   window.buildRakutenRelatedHtml = buildRakutenRelatedHtml; // テスト用(楽天の関連商品カードを実ブラウザで検査する)
   window.buildRakutenSearchHref = buildRakutenSearchHref; // テスト用(楽天アフィリエイトのリンクの形を検査する)
+  window.buildRakutenPhotoCardHtml = buildRakutenPhotoCardHtml; // テスト用(商品写真つきカードを実ブラウザで検査する)
+  window.renderGoodsLinks = renderGoodsLinks; // テスト用(カードの差し替えを実ブラウザで検査する)
   window.articleCardHtml = articleCardHtml; // テスト用(カードの表示を実ブラウザで検査する)
   window.renderArticleToc = renderArticleToc; // テスト用(目次の生成を実ブラウザで検査する)
   window.moveArticleImage = moveArticleImage; // テスト用(画像の移動を実ブラウザで検査する)
