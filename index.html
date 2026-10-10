@@ -5,7 +5,7 @@
   <!-- Google AdSense サイト所有権確認用 -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2190088532520045"
      crossorigin="anonymous"></script>
-  <!-- Paddle（コインパック・サブスクリプション・投げ銭の決済） -->
+  <!-- Paddle（チケットパック・サブスクリプション・バッジ購入の決済） -->
   <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
   <!-- GitHub Pages用SPAルーティング復元：404.htmlが保存したリダイレクト先URLを、実際のURLとして復元する -->
   <script>
@@ -19,6 +19,7 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>アニメップル｜グラフでアニメの好みをドンピシャ検索</title>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"アニメップル","alternateName":"Animepple","url":"https://animepple.com/","inLanguage":["ja","en","ko","zh-TW","zh-CN","es","fr","pt","de","ar","th","id","ru","it","vi"],"description":"みんなのレビューグラフでアニメの雰囲気・特徴を可視化し、好みにドンピシャな作品を見つけられるアニメ発見サービス"}</script>
   <meta name="description" content="アニメップルは、みんなのレビューグラフでアニメの雰囲気・特徴を可視化し、自分の好みにドンピシャな作品を見つけられるアニメコミュニティです。" />
 
   <!-- OGP -->
@@ -75,7 +76,7 @@
 
     /* ── PAGES ── */
     .page { display:none; min-height:100vh; padding-bottom:5rem; }
-    /* [追加] ベータ版：ガチャ・プラン・コインショップページのロック表示 */
+    /* [追加] ベータ版：ガチャ・プラン・チケットショップページのロック表示 */
     .page.beta-locked { position:relative; }
     .page.beta-locked > *:not(.beta-lock-overlay) { filter:grayscale(1) brightness(.55); pointer-events:none; user-select:none; }
     .beta-lock-overlay { position:absolute; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
@@ -689,7 +690,7 @@
     .gacha-hold-btn-coin, .gacha-hold-btn-coin10 { height:62px; border-radius:13px; width:100%; }
     .gacha-hold-btn-coin { flex:1 1 0; min-width:0; border:1px solid rgba(240,201,74,.35); background:rgba(240,201,74,.08); color:#f0c94a;
       box-shadow:0 10px 22px -14px rgba(240,201,74,.55); }
-    /* [2026-09-21強化] コイン購入導線の「特別感」が薄いという指摘への対応。
+    /* [2026-09-21強化] チケット購入導線の「特別感」が薄いという指摘への対応。
        10連ボタンだけ一段強いゴールドのグラデーション・光彩(box-shadow)・上を這うシャインの
        アニメーションを付け、有償の目玉メニューだと一目で伝わるようにした。 */
     .gacha-hold-btn-coin10 { border:1px solid rgba(240,201,74,.7);
@@ -720,8 +721,8 @@
     .gacha-coin-tag { position:absolute; top:-8px; left:50%; transform:translateX(-50%); z-index:2; font-size:9.5px;
       font-weight:900; padding:2px 8px; border-radius:8px; background:#f0c94a; color:#0e2416; white-space:nowrap; }
 
-    /* [2026-09-28削除] コインアイコン(.coin-dot、旧apple_coin_128.png)は、コイン(貯蔵型の
-       通貨)からガチャチケット(1回分の利用権の直接購入)への変更に伴い、表示上の「コイン」概念
+    /* [2026-09-28削除] チケットアイコン(.coin-dot、旧apple_coin_128.png)は、チケット(貯蔵型の
+       通貨)からガチャチケット(1回分の利用権の直接購入)への変更に伴い、表示上の「チケット」概念
        ごと廃止した。.coin-dot-lg/.coin-dot-xlも合わせて削除(いずれも参照箇所が無くなったため)。
        画像自体はサーバーに残っているが、index.html側からは一切参照しない */
     .coin-balance { display:flex; align-items:center; gap:7px; margin:0 0 1rem;
@@ -3877,7 +3878,7 @@
 
   </style>
   <!-- Supabase JS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3" integrity="sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+" crossorigin="anonymous"></script>
   <!-- Cloudflare Turnstile（bot対策・SPAなので明示的レンダリングを使用） -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -4322,10 +4323,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <span style="margin:0 .4rem;">·</span>
       <button class="legal-link" onclick="openLegal('tokushoho')" data-i18n="legalTokushoho">特定商取引法に基づく表記</button>
       <span style="margin:0 .4rem;">·</span>
-      <!-- [2026-09-28削除] 「コイン(貯蔵型の汎用ポイント)」から「ガチャチケット(1回分の利用権を
-           直接購入)」に変更したことに伴い、資金決済法上の自家型前払式支払手段には該当しなくなった
-           ため、このリンクを削除した。LEGAL_CONTENT.shikin自体は万一のため残してあるが、
-           どこからも参照されていない(openLegal('shikin')は呼ばれない) -->
+      <!-- [2026-09-28削除] 旧フッターの法定表示リンクを削除(資金決済法の下書きは2026-10-10に削除済み。docs/legal-drafts/ に保管) -->
       <button class="legal-link" onclick="nav('contact')" data-i18n="footerContact">お問い合わせ</button>
     </div>
     <div data-i18n="footerCopyright">© アニメップル · All rights reserved.</div>
@@ -4520,7 +4518,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="board-chat-head" style="position:sticky;top:52px;z-index:20;background:var(--board-panel-bg,var(--bg));border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem .6rem;">
       <div style="display:flex;align-items:center;gap:10px;">
         <button type="button" class="board-chat-head-back-btn" onclick="navBack()" aria-label="戻る" data-i18n-aria="ariaBack">←</button>
-        <img id="boardGeneralPageThumb" src="" style="width:34px;height:34px;border-radius:8px;object-fit:cover;flex:0 0 34px;background:#1d3225;">
+        <img id="boardGeneralPageThumb" src="" alt="" style="width:34px;height:34px;border-radius:8px;object-fit:cover;flex:0 0 34px;background:#1d3225;">
         <div style="flex:1 1 auto;min-width:0;">
           <h2 id="boardGeneralPageTitle" style="margin:0 0 2px;font-size:1rem;color:#eaf6ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></h2>
           <p id="boardGeneralPageSub" style="margin:0;font-size:10.5px;color:#e8c463;"></p>
@@ -4549,7 +4547,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="board-chat-head" style="position:sticky;top:52px;z-index:20;background:var(--board-panel-bg,var(--bg));border-bottom:1px solid rgba(255,255,255,.07);padding:.75rem 1rem 0;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
         <button type="button" class="board-chat-head-back-btn" onclick="navBack()" aria-label="戻る" data-i18n-aria="ariaBack">←</button>
-        <img id="boardValuePageThumb" src="" style="width:34px;height:34px;border-radius:8px;object-fit:cover;flex:0 0 34px;background:#1d3225;">
+        <img id="boardValuePageThumb" src="" alt="" style="width:34px;height:34px;border-radius:8px;object-fit:cover;flex:0 0 34px;background:#1d3225;">
         <div style="flex:1 1 auto;min-width:0;">
           <h2 id="boardValuePageTitle" style="margin:0 0 2px;font-size:1rem;color:#eaf6ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></h2>
           <p id="boardValuePageSub" style="margin:0;font-size:10.5px;color:#e8c463;"></p>
@@ -4679,7 +4677,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <div id="imageSubmitPreviewWrap" style="display:none;margin-bottom:14px;">
-      <img id="imageSubmitPreview" style="width:100%;max-width:240px;display:block;margin:0 auto;border-radius:10px;border:1px solid var(--line,#2a3830);">
+      <img id="imageSubmitPreview" alt="" style="width:100%;max-width:240px;display:block;margin:0 auto;border-radius:10px;border:1px solid var(--line,#2a3830);">
     </div>
 
     <label for="imageSubmitFileInput" style="display:flex;align-items:center;justify-content:center;height:48px;border-radius:11px;border:1px solid var(--line,#2a3830);background:var(--card2,#141c19);color:#dfeae3;font-size:.85rem;font-weight:700;cursor:pointer;margin-bottom:12px;">
@@ -4813,19 +4811,19 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="gacha-lead" data-i18n="gachaLead">1日1回無料。広告を見るとあと3回引けます。</p>
           <!-- [2026-09-21再デザイン] 以前は小さい1行テキストだけで存在感が薄かった(ユーザー指摘：
                「小さくポツンと書かれてるだけ」)。枠付きのカードにし、無償/有償それぞれに
-               大きめのコインアイコン・数字を持たせて見やすくした -->
-          <!-- [2026-09-28変更] コインアイコン(coin-dot)を廃止(チケット枚数の直接表示に変更したため) -->
+               大きめのチケットアイコン・数字を持たせて見やすくした -->
+          <!-- [2026-09-28変更] チケットアイコン(coin-dot)を廃止(チケット枚数の直接表示に変更したため) -->
           <div class="gacha-coin-breakdown" id="gachaCoinBreakdown">
             <div class="gacha-coin-breakdown-stat">
               <div class="gacha-coin-breakdown-text">
-                <span class="gacha-coin-breakdown-label" data-i18n="gachaCoinFreeLabel">無償</span>
+                <span class="gacha-coin-breakdown-label" data-i18n="gachaCoinFreeLabel">無料チケット</span>
                 <b id="gachaCoinFreeVal" class="gacha-coin-breakdown-val">0</b>
               </div>
             </div>
             <div class="gacha-coin-breakdown-divider"></div>
             <div class="gacha-coin-breakdown-stat is-paid">
               <div class="gacha-coin-breakdown-text">
-                <span class="gacha-coin-breakdown-label" data-i18n="gachaCoinPaidLabel">有償</span>
+                <span class="gacha-coin-breakdown-label" data-i18n="gachaCoinPaidLabel">購入チケット</span>
                 <b id="gachaCoinPaidVal" class="gacha-coin-breakdown-val">0</b>
               </div>
             </div>
@@ -4838,7 +4836,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
       </div>
 
-      <!-- デイリークエスト・ショップ（コイン）の入り口。ガチャと同じ通貨（コイン）を扱う機能なのでここに置く -->
+      <!-- デイリークエスト・ショップ（チケット）の入り口。ガチャと同じ通貨（チケット）を扱う機能なのでここに置く -->
       <div class="gacha-quest-shop-row" style="display:flex;gap:9px;margin-bottom:14px;">
         <button type="button" id="gachaDailyQuestBtn" class="gacha-entry-card gacha-entry-quest" onclick="nav('daily-quest')">
           <span class="gacha-entry-ico">
@@ -4896,7 +4894,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="gacha-stage-tray"><span class="gacha-stage-tray-bar"></span></span>
       </div>
 
-      <!-- 無料→広告は同じ枠に出し分け。その下にコイン消費の1回引き・10連。
+      <!-- 無料→広告は同じ枠に出し分け。その下にチケット消費の1回引き・10連。
            [2026-09-21修正] どのボタンもタップした瞬間には引かず、まず#gachaConfirmOverlayで
            「ガチャを引く？」の確認ポップを開く(openGachaConfirm)。ポップ内の「引く」ボタンを
            タップすると通常演出つきで抽選、3秒長押しすると演出を飛ばして即結果を出す -->
@@ -4905,7 +4903,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="gacha-hold-fill"></span>
           <span class="gacha-hold-body"><span data-i18n="gachaFreeBtn">無料で引く</span></span>
         </button>
-        <!-- [2026-09-28変更] コイン(coin-dot、貯蔵型の枚数表示)からチケット枚数の直接表示に変更。
+        <!-- [2026-09-28変更] チケット(coin-dot、貯蔵型の枚数表示)からチケット枚数の直接表示に変更。
              アイコンは廃止し、枚数の単位も「◯枚」に統一した -->
         <div class="gacha-coin-row">
           <button type="button" id="gachaCoinBtn" class="gacha-hold-btn gacha-hold-btn-coin">
@@ -5807,7 +5805,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<!-- コインショップ -->
+<!-- チケットショップ -->
 <div class="page mypage-page-wrap" id="page-coin-shop">
   <header class="hdr">
     <div class="hdr-inner">
@@ -5821,14 +5819,14 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
   </header>
-  <!-- [2026-09-28変更] 「コイン(貯める通貨)を買ってガチャに使う」から「ガチャチケット(N回分の
+  <!-- [2026-09-28変更] 「チケット(貯める通貨)を買ってガチャに使う」から「ガチャチケット(N回分の
        抽選権)を直接買う」に変更。決済代行事業者(Paddle)の規約で「Virtual currency or stored
-       value」が明示的に禁止対象になっており(コイン=ストアクレジット的な汎用の貯蔵型残高と
+       value」が明示的に禁止対象になっており(チケット=ストアクレジット的な汎用の貯蔵型残高と
        見なされうる)、審査時にドメイン全体を「Personal Websites/Social Networking」
        「Other/Donations」として却下された。チケットは「ガチャ1回分の利用権をN個直接購入」
        という単発の役務提供の対価であり、汎用通貨の積み立てではないことを明確にするため、
-       表示上は「コイン◯枚」を一切出さず「チケット◯枚」「残りN回」のみで統一する。
-       内部のDB実装(coin_transactions等)は変更していない(1チケット=内部的には旧コイン100枚分の
+       表示上は「チケット◯枚」を一切出さず「チケット◯枚」「残りN回」のみで統一する。
+       内部のDB実装(coin_transactions等)は変更していない(1チケット=内部的には旧チケット100枚分の
        扱いのまま、GACHA_COIN_COST等の定数名もそのまま)。ユーザー向けの見え方だけを変える対応。 -->
   <div style="padding:1.1rem;">
     <div class="cs-head">
@@ -5838,7 +5836,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <!-- 残高。[2026-09-28変更] チケット枚数=そのままガチャの残り回数なので、
-         (旧)コイン数と(旧)換算後の回数を並べて出す必要が無くなり、1箇所にまとめた -->
+         (旧)チケット数と(旧)換算後の回数を並べて出す必要が無くなり、1箇所にまとめた -->
     <div class="cs-balance">
       <div class="cs-balance-top">
         <div class="cs-balance-left">
@@ -5962,12 +5960,12 @@ document.addEventListener('DOMContentLoaded', () => {
       </button>
       <button class="settings-row" onclick="nav('settings-history')">
         <span class="settings-row-icon" style="background:rgba(154,171,163,.12);color:#b9cabf;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
-        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsHistoryTitle">購入・ガチャ履歴</span><span class="settings-row-sub" data-i18n="settingsHistorySub">コインの増減、ガチャの結果</span></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsHistoryTitle">購入・ガチャ履歴</span><span class="settings-row-sub" data-i18n="settingsHistorySub">チケットの増減、ガチャの結果</span></span>
         <span class="settings-row-arrow">›</span>
       </button>
       <button class="settings-row" onclick="nav('tip')">
         <span class="settings-row-icon" style="background:rgba(232,74,74,.12);color:#f0a3a3;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsSupport">開発を応援する</span><span class="settings-row-sub" data-i18n="settingsSupportSub">投げ銭でアニメップルを支援</span></span>
+        <span class="settings-row-body"><span class="settings-row-title" data-i18n="settingsSupport">開発を応援する</span><span class="settings-row-sub" data-i18n="settingsSupportSub">サポーターバッジでアニメップルを応援</span></span>
         <span class="settings-row-arrow">›</span>
       </button>
       <button class="settings-row" onclick="nav('settings-about')">
@@ -6240,7 +6238,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<!-- 投げ銭（開発を応援する） -->
+<!-- バッジ購入（開発を応援する） -->
 <div class="page mypage-page-wrap" id="page-tip">
   <header class="hdr">
     <div class="hdr-inner">
@@ -6348,7 +6346,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div style="padding:1.1rem;">
     <h2 style="font-size:1rem;color:#dff0e6;margin:0 0 1rem;">🧾 <span data-i18n="settingsHistoryTitle">購入・ガチャ履歴</span></h2>
     <div style="display:flex;gap:8px;margin-bottom:1rem;">
-      <button type="button" class="history-tab-btn is-active" data-tab="coin" data-i18n="settingsHistoryTabCoin" style="flex:1;height:38px;border-radius:10px;border:1px solid rgba(92,201,142,.4);background:rgba(92,201,142,.14);color:#9be3bd;font-size:12.5px;font-weight:800;cursor:pointer;">コイン</button>
+      <button type="button" class="history-tab-btn is-active" data-tab="coin" data-i18n="settingsHistoryTabCoin" style="flex:1;height:38px;border-radius:10px;border:1px solid rgba(92,201,142,.4);background:rgba(92,201,142,.14);color:#9be3bd;font-size:12.5px;font-weight:800;cursor:pointer;">チケット</button>
       <button type="button" class="history-tab-btn" data-tab="gacha" data-i18n="settingsHistoryTabGacha" style="flex:1;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#b6c8bd;font-size:12.5px;font-weight:800;cursor:pointer;">ガチャ</button>
     </div>
     <div id="historyList"></div>
@@ -6704,7 +6702,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <!-- [2026-09-18追加] サーバー側(Edge Function)監視。今までブラウザ側JSエラーしか
-         見えておらず、支払いは成立したのにコイン/プラン/投げ銭の反映に失敗したケース等が
+         見えておらず、支払いは成立したのにチケット/プラン/バッジ購入の反映に失敗したケース等が
          console.warn/errorにしか出ておらず気づけなかった(paddle-webhook/
          create-tip-transaction内)。事前にSupabaseで下記を実行しておくこと:
            alter table error_logs add column if not exists source text not null default 'client';
@@ -6712,7 +6710,7 @@ document.addEventListener('DOMContentLoaded', () => {
          その上でsupabase functions deploy paddle-webhook / create-tip-transaction が必要 -->
     <div class="admin-section">
       <h3 class="admin-section-title">💳 決済まわりのサーバーエラー</h3>
-      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">Paddle Webhook・投げ銭作成など、支払いは成立したのに反映に失敗したケース。0件以外は至急確認してください</p>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">Paddle Webhook・バッジ購入など、支払いは成立したのに反映に失敗したケース。0件以外は至急確認してください</p>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.75rem;">
         <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiServerErrors24h">—</div><div class="admin-kpi-label">直近24時間のエラー件数</div></div>
         <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiServerErrors7d">—</div><div class="admin-kpi-label">直近7日間のエラー件数</div></div>
@@ -6869,7 +6867,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="admin-group-header">収益・エンゲージメント</div>
 
     <!-- [2026-09-18追加]「収益タブなのにお金の情報が一切無い」との指摘への対応。
-         プラン別契約者数・MRR概算・投げ銭・コイン経済の実データを追加。
+         プラン別契約者数・MRR概算・バッジ購入・チケット経済の実データを追加。
          事前にSupabaseで下記のRPCを作成しておくこと:
            create or replace function get_tips_revenue_summary()
            returns table(total_all_time_jpy bigint, total_30d_jpy bigint, count_30d bigint)
@@ -6889,7 +6887,7 @@ document.addEventListener('DOMContentLoaded', () => {
            grant execute on function get_total_coin_balance() to authenticated; -->
     <div class="admin-section">
       <h3 class="admin-section-title">💴 プラン契約状況・MRR概算</h3>
-      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">無料/＋/クリエイターズの契約者数と、月額料金だけから見た概算の月次経常収益(コインパック・投げ銭は含まない)</p>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">無料/＋/クリエイターズの契約者数と、月額料金だけから見た概算の月次経常収益(チケットパック・バッジ購入は含まない)</p>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.75rem;">
         <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiPlanFree">—</div><div class="admin-kpi-label">無料プラン</div></div>
         <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiPlanPlus">—</div><div class="admin-kpi-label">アニメップル＋（¥500/月）</div></div>
@@ -6898,9 +6896,9 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
 
-    <!-- 投げ銭 -->
+    <!-- バッジ購入 -->
     <div class="admin-section">
-      <h3 class="admin-section-title">💝 投げ銭</h3>
+      <h3 class="admin-section-title">💝 サポーターバッジ購入</h3>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.75rem;">
         <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiTipsTotal">—</div><div class="admin-kpi-label">累計金額</div></div>
         <div class="admin-kpi"><div class="admin-kpi-val" id="adminKpiTips30d">—</div><div class="admin-kpi-label">直近30日（件数）</div></div>
@@ -6908,8 +6906,8 @@ document.addEventListener('DOMContentLoaded', () => {
       <div id="adminRecentTips"></div>
     </div>
 
-    <!-- コイン経済 -->
-    <!-- [2026-09-18訂正] コインは購入(有償)だけでなくデイリークエスト報酬(無償)でも
+    <!-- チケット経済 -->
+    <!-- [2026-09-18訂正] チケットは購入(有償)だけでなくデイリークエスト報酬(無償)でも
          入手できるため、残高合計を単独で出すと収益額と誤解されかねない(ユーザー指摘)。
          「有償/無償の累計発行内訳」を必ず併記し、収益に含まれるのは購入分だけだと
          分かるようにする。事前にSupabaseで下記のRPCを作成しておくこと:
@@ -6923,15 +6921,15 @@ document.addEventListener('DOMContentLoaded', () => {
            $$;
            grant execute on function get_coin_issuance_by_reason() to authenticated; -->
     <div class="admin-section">
-      <h3 class="admin-section-title">🪙 コイン経済</h3>
-      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">コインは購入(有償)だけでなくデイリークエスト報酬(無償)でも入手できるため、下の残高合計はその両方が混ざった数値で、収益額そのものではない(収益に含まれるのは「購入」分だけ)</p>
-      <div class="admin-kpi" style="margin-bottom:.75rem;"><div class="admin-kpi-val" id="adminKpiCoinBalance">—</div><div class="admin-kpi-label">未消費コイン残高合計(有償+無償の合算)</div></div>
+      <h3 class="admin-section-title">🎟 チケット経済</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin:0 0 .6rem;">チケットは購入分だけでなくデイリークエスト報酬(無料分)でも入手できるため、下の残高合計はその両方が混ざった数値で、収益額そのものではない(収益に含まれるのは「購入」分だけ)</p>
+      <div class="admin-kpi" style="margin-bottom:.75rem;"><div class="admin-kpi-val" id="adminKpiCoinBalance">—</div><div class="admin-kpi-label">未消費チケット残高合計(購入分+無料分の合算)</div></div>
       <!-- [2026-09-19追加] 資金決済法対応: 有償(購入)分だけの未消費残高。基準日(3/31・9/30)時点で
            1,000万円を超えると供託等の届出義務が発生する(animepple_legal_survey.md 2.2節参照)。
            このKPIはあくまで「今この瞬間の参考値」であり、実際の届出判定は基準日時点の値・
            税理士の確認をもって行うこと。 -->
-      <div class="admin-kpi" id="adminKpiPaidCoinBalanceCard" style="margin-bottom:.75rem;"><div class="admin-kpi-val" id="adminKpiPaidCoinBalance">—</div><div class="admin-kpi-label">うち有償(購入)分の未消費残高【資金決済法】<br>基準日(3/31・9/30)に1,000万円超で届出・供託義務</div></div>
-      <p style="font-size:.7rem;color:#8db5a0;font-weight:700;margin:0 0 .3rem;">累計発行内訳(有償/無償の内訳)</p>
+      <div class="admin-kpi" id="adminKpiPaidCoinBalanceCard" style="margin-bottom:.75rem;"><div class="admin-kpi-val" id="adminKpiPaidCoinBalance">—</div><div class="admin-kpi-label">うち購入分の未消費残高(会計用)</div></div>
+      <p style="font-size:.7rem;color:#8db5a0;font-weight:700;margin:0 0 .3rem;">累計発行内訳(購入分/無料分の内訳)</p>
       <div id="adminCoinIssuanceBreakdown"></div>
     </div>
 
@@ -7204,7 +7202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="conclusion-hero-score" id="sentimentConclusionScore">—</div>
           </div>
           <div class="anime-hero">
-            <img id="sentimentHeroImg" src="https://placehold.co/128x176/182036/8894b0?text=A" alt="" />
+            <img id="sentimentHeroImg" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='176'%3E%3Crect width='128' height='176' fill='%23182036'/%3E%3Ctext x='64' y='98' font-family='sans-serif' font-size='56' text-anchor='middle' fill='%238894b0'%3EA%3C/text%3E%3C/svg%3E" alt="" />
             <div>
               <div class="h-name" id="sentimentHeroName">テストアニメA</div>
               <div class="h-meta" id="sentimentHeroMeta">アクション / ファンタジー · 2024年 · Studio X</div>
@@ -7791,7 +7789,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div id="mypageValueInlineBody"></div>
       </div>
     </div>
-    <!-- 開発を応援する（投げ銭への導線） -->
+    <!-- 開発を応援する（バッジ購入への導線） -->
     <div class="mypage-section mypage-owner-only">
       <button onclick="nav('tip')" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px;border-radius:14px;border:1px solid rgba(232,74,74,.25);background:rgba(232,74,74,.06);color:inherit;font:inherit;text-align:left;cursor:pointer;">
         <span style="flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:rgba(232,74,74,.12);display:flex;align-items:center;justify-content:center;">
@@ -7799,7 +7797,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </span>
         <span style="flex:1 1 auto;">
           <span style="display:block;font-weight:800;font-size:.88rem;color:#dfeae3;" data-i18n="settingsSupport">開発を応援する</span>
-          <span style="display:block;font-size:.76rem;color:var(--muted,#9ab);" data-i18n="settingsSupportSub">投げ銭でアニメップルを支援</span>
+          <span style="display:block;font-size:.76rem;color:var(--muted,#9ab);" data-i18n="settingsSupportSub">サポーターバッジでアニメップルを応援</span>
         </span>
         <span style="flex:0 0 auto;color:var(--muted,#9ab);font-size:1.1rem;">›</span>
       </button>
@@ -8147,6 +8145,15 @@ document.addEventListener('DOMContentLoaded', () => {
      SUPABASE 設定
      切り替え: mode を 'supabase' に変更するだけ
   ════════════════════════════ */
+  // [2026-10-10 セキュリティ巡回] 他の人のアイコン画像のアドレスは、アプリが保存する形(data:image/…のBase64)か、
+  // 自分のSupabase Storageのものだけ表示する。外部のアドレスを自分のアイコンに設定して、その人の投稿を見た全員の
+  // IPアドレス等を自分のサーバーに送らせる(閲覧者の追跡)ことを防ぐ。それ以外は「アイコンなし」として扱う
+  function safeAvatarUrl(u) {
+    if(typeof u !== 'string' || !u) return null;
+    if(/^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(u)) return u;
+    if(u.startsWith('https://ofbjfiuayfhdkgertxyo.supabase.co/storage/v1/object/public/')) return u;
+    return null;
+  }
   const DB_MODE = 'supabase'; // 'local' | 'supabase'
   const SUPABASE_URL  = 'https://ofbjfiuayfhdkgertxyo.supabase.co';
 
@@ -8385,12 +8392,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // 表示するのが目的の景品のため)。要SQL実行: profiles_publicビューにsupport_tier列を追加
         // (alter view/再作成が必要。詳細は下のprofiles_publicビュー定義コメント参照)
         const { data } = await sb.from('profiles_public').select('username,bio,favorite_genres,avatar_url,gender,age_group,country_code,show_friends_count,is_admin,plan,support_tier').eq('id', userId).single();
+        if(data) data.avatar_url = safeAvatarUrl(data.avatar_url);
         return data;
       },
       async getByIds(userIds) {
         if(!sb || !userIds || !userIds.length) return [];
         const { data } = await sb.from('profiles_public').select('id,username,avatar_url,is_admin').in('id', userIds);
-        return data || [];
+        return (data || []).map(p => ({ ...p, avatar_url: safeAvatarUrl(p.avatar_url) }));
       },
       async getUsername(userId) {
         if(!sb) return null;
@@ -9684,9 +9692,13 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       async search(query, limit) {
         if(!sb || !query) return [];
+        // [2026-10-10 セキュリティ巡回] 検索語がそのまま検索条件の文字列に入っており、「,」「)」等を含む語で条件を足せた
+        // (例: "x%,description.neq." で全件、"a,b)" でエラー)。検索条件の区切りになる文字を空白に置き換えてから使う
+        const safeQuery = String(query).replace(/[,()*%\\"]/g, ' ').replace(/\s+/g, ' ').trim();
+        if(!safeQuery) return [];
         const { data } = await sb.from('anime_pages')
           .select('id,title,title_en,title_romaji,image_url,meta,genres')
-          .or(`title.ilike.%${query}%,title_en.ilike.%${query}%,title_romaji.ilike.%${query}%`)
+          .or(`title.ilike.%${safeQuery}%,title_en.ilike.%${safeQuery}%,title_romaji.ilike.%${safeQuery}%`)
           .limit(limit||20);
         return data || [];
       },
@@ -10790,14 +10802,16 @@ document.addEventListener('DOMContentLoaded', () => {
     m = rel.match(/^\/articles\/([a-z0-9-]+)\/?$/);
     if(m) return { page:'articles', animeId: m[1] };
 
-    m = rel.match(/^\/user\/([^\/]+)\/follow\/(following|followers)(?:\/.*)?$/);
-    if(m) { _followListState = { userId: decodeURIComponent(m[1]), mode: m[2] }; return { page:'follow-list', animeId: null }; }
+    // [2026-10-10 セキュリティ巡回] ユーザーIDはDBへの検索条件(.or(`…eq.${id}…`))に文字列で組み込まれるため、
+    // URLから来る値は必ずUUIDの形(16進数とハイフンだけ)に限る(「,」「(」等を入れて検索条件を足す注入を防ぐ)
+    m = rel.match(/^\/user\/([0-9a-fA-F-]{36})\/follow\/(following|followers)(?:\/.*)?$/);
+    if(m) { _followListState = { userId: m[1], mode: m[2] }; return { page:'follow-list', animeId: null }; }
 
-    m = rel.match(/^\/user\/([^\/]+)(?:\/.*)?$/);
-    if(m) return { page:'user', animeId: decodeURIComponent(m[1]) };
+    m = rel.match(/^\/user\/([0-9a-fA-F-]{36})(?:\/.*)?$/);
+    if(m) return { page:'user', animeId: m[1] };
 
-    m = rel.match(/^\/dm\/([^\/]+)(?:\/.*)?$/);
-    if(m) return { page:'dm', animeId: decodeURIComponent(m[1]) };
+    m = rel.match(/^\/dm\/([0-9a-fA-F-]{36})(?:\/.*)?$/);
+    if(m) return { page:'dm', animeId: m[1] };
 
     if(STATIC_PATH_TO_PAGE[rel] !== undefined) return { page: STATIC_PATH_TO_PAGE[rel], animeId: null };
     return null;
@@ -15390,7 +15404,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(page.studios&&page.studios.length){
         extra += `<div style="margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
           <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelStudio')}</span>
-          ${page.studios.map(s=>`<span style="font-size:.78rem;color:#c8e6d4;">${s}</span>`).join('<span style="color:var(--muted)">・</span>')}
+          ${page.studios.map(s=>`<span style="font-size:.78rem;color:#c8e6d4;">${escapeHtml(s)}</span>`).join('<span style="color:var(--muted)">・</span>')}
         </div>`;
       }
       // 配信
@@ -15398,8 +15412,8 @@ document.addEventListener('DOMContentLoaded', () => {
         extra += `<div style="display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;">
           <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${t('labelStream')}</span>
           ${page.streaming.map(s=>s.url
-            ?`<a href="${s.url}" target="_blank" rel="noopener" style="font-size:.78rem;color:var(--brand);text-decoration:underline;">${s.name}</a>`
-            :`<span style="font-size:.78rem;color:#c8e6d4;">${s.name}</span>`
+            ?`<a href="${escapeHtml(/^https?:\/\//i.test(s.url) ? s.url : '#')}" target="_blank" rel="noopener noreferrer" style="font-size:.78rem;color:var(--brand);text-decoration:underline;">${escapeHtml(s.name)}</a>`
+            :`<span style="font-size:.78rem;color:#c8e6d4;">${escapeHtml(s.name)}</span>`
           ).join('<span style="color:var(--muted)">・</span>')}
         </div>`;
       }
@@ -20190,17 +20204,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return dp[n];
   }
   // 完全一致していなくても、近い部分文字列があれば true を返す（短すぎるクエリは誤マッチ防止のため対象外）
+  // [2026-10-10 巡回で発見・修正] 以前は「全ての開始位置×全ての長さ」で編集距離を計算しており、22文字の検索語で
+  // 一致する作品が無いと、8,440作品の走査で約35秒、300文字の貼り付けなら事実上無限に、画面が固まった(通常の
+  // 「ローマ字で8文字」でも約5秒)。部分文字列への近似一致を1回の走査で求める方法(Sellersのアルゴリズム。計算量は
+  // 文章の長さ×検索語の長さ)に置き換えた。結果は以前と同じ(距離maxDist以内の部分文字列があるか)。
+  // 40文字を超える検索語は、完全一致(上のincludes)だけにして、あいまい一致は行わない。
   function fuzzyIncludes(haystack, query) {
     if (!query) return false;
     if (haystack.includes(query)) return true;
-    const qLen = query.length;
-    if (qLen < 3) return false;
-    const maxDist = qLen <= 4 ? 1 : Math.floor(qLen / 4) + 1;
-    for (let start = 0; start <= haystack.length - Math.max(1, qLen - maxDist); start++) {
-      for (let len = qLen - maxDist; len <= qLen + maxDist; len++) {
-        if (len < 1 || start + len > haystack.length) continue;
-        if (levenshtein(haystack.substr(start, len), query) <= maxDist) return true;
+    const m = query.length;
+    if (m < 3 || m > 40) return false;
+    const maxDist = m <= 4 ? 1 : Math.floor(m / 4) + 1;
+    const n = haystack.length;
+    if (n + maxDist < m) return false;
+    const col = new Array(m + 1);
+    for (let i = 0; i <= m; i++) col[i] = i; // col[i] = 検索語の先頭i文字と、ここまでのどこかから始まる部分文字列との最小の編集距離
+    for (let j = 0; j < n; j++) {
+      const hc = haystack[j];
+      let prevDiag = 0; // col[0]は常に0(どこから始めてもよい)
+      for (let i = 1; i <= m; i++) {
+        const above = col[i];
+        col[i] = query[i - 1] === hc ? prevDiag : 1 + Math.min(prevDiag, above, col[i - 1]);
+        prevDiag = above;
       }
+      if (col[m] <= maxDist) return true;
     }
     return false;
   }
@@ -21869,8 +21896,8 @@ document.addEventListener('DOMContentLoaded', () => {
     skinNameYozora:{ ja:'夜空', en:'Night Sky', ko:'밤하늘', 'zh-tw':'夜空', 'zh-cn':'夜空', es:'Cielo nocturno', fr:'Ciel nocturne', pt:'Céu noturno', de:'Nachthimmel', ar:'سماء الليل', th:'ท้องฟ้ายามค่ำคืน', id:'Langit Malam', ru:'Ночное небо', it:'Cielo notturno', vi:'Bầu trời đêm' },
     ownedSkinCount: { ja:n=>`${n}種`, en:n=>`${n} types`, ko:n=>`${n}종`, 'zh-tw':n=>`${n}種`, 'zh-cn':n=>`${n}种`, es:n=>`${n} tipos`, fr:n=>`${n} types`, pt:n=>`${n} tipos`, de:n=>`${n} Arten`, ar:n=>`${n} أنواع`, th:n=>`${n} แบบ`, id:n=>`${n} jenis`, ru:n=>`${n} видов`, it:n=>`${n} tipi`, vi:n=>`${n} loại` },
     coinShopBtn:{ ja:'ショップ', en:'Shop', ko:'상점', 'zh-tw':'商店', 'zh-cn':'商店', es:'Tienda', fr:'Boutique', pt:'Loja', de:'Shop', ar:'المتجر', th:'ร้านค้า', id:'Toko', ru:'Магазин', it:'Negozio', vi:'Cửa hàng' },
-    gachaCoinBtn:{ ja:'コイン{n}枚で引く', en:'Draw for {n} coins', ko:'코인 {n}개로 뽑기', 'zh-tw':'花{n}枚硬幣抽一次', 'zh-cn':'花{n}枚硬币抽一次', es:'Tirar por {n} monedas', fr:'Tirer pour {n} pièces', pt:'Puxar por {n} moedas', de:'Für {n} Münzen ziehen', ar:'اسحب مقابل {n} عملة', th:'สุ่มด้วยเหรียญ {n} เหรียญ', id:'Tarik dengan {n} koin', ru:'Тянуть за {n} монет', it:'Estrai per {n} monete', vi:'Quay với {n} xu' },
-    gachaCoin10Btn:{ ja:'コイン{n}枚で10連', en:'10-pull for {n} coins', ko:'코인 {n}개로 10연차', 'zh-tw':'花{n}枚硬幣抽10次', 'zh-cn':'花{n}枚硬币抽10次', es:'Tirada x10 por {n} monedas', fr:'Tirage x10 pour {n} pièces', pt:'Puxada x10 por {n} moedas', de:'10er-Ziehung für {n} Münzen', ar:'سحب 10 مقابل {n} عملة', th:'สุ่ม 10 ครั้งด้วยเหรียญ {n} เหรียญ', id:'Tarik 10x dengan {n} koin', ru:'10 попыток за {n} монет', it:'Estrazione x10 per {n} monete', vi:'Quay 10 lần với {n} xu' },
+    gachaCoinBtn:{ ja:'チケット{n}枚で引く', en:'Draw with {n} tickets', ko:'티켓 {n}장으로 뽑기', 'zh-tw':'用{n}張票券抽一次', 'zh-cn':'用{n}张票券抽一次', es:'Tirar con {n} entradas', fr:'Tirer avec {n} billets', pt:'Puxar com {n} bilhetes', de:'Mit {n} Tickets ziehen', ar:'اسحب مقابل {n} تذاكر', th:'สุ่มด้วยตั๋ว {n} ใบ', id:'Tarik dengan {n} tiket', ru:'Тянуть за {n} билетов', it:'Estrai con {n} biglietti', vi:'Quay với {n} vé' },
+    gachaCoin10Btn:{ ja:'チケット{n}枚で10連', en:'10-pull with {n} tickets', ko:'티켓 {n}장으로 10연차', 'zh-tw':'用{n}張票券抽10次', 'zh-cn':'用{n}张票券抽10次', es:'Tirada x10 con {n} entradas', fr:'Tirage x10 avec {n} billets', pt:'Puxada x10 com {n} bilhetes', de:'10er-Ziehung mit {n} Tickets', ar:'سحب 10 مقابل {n} تذاكر', th:'สุ่ม 10 ครั้งด้วยตั๋ว {n} ใบ', id:'Tarik 10x dengan {n} tiket', ru:'10 попыток за {n} билетов', it:'Estrazione x10 con {n} biglietti', vi:'Quay 10 lần với {n} vé' },
     gachaHoldLabel:{ ja:'3秒長押しでガチャを引く', en:'Hold for 3 seconds to draw', ko:'3초간 길게 눌러서 뽑기', 'zh-tw':'長按3秒進行抽獎', 'zh-cn':'长按3秒进行抽奖', es:'Mantén presionado 3 segundos para tirar', fr:'Maintenez 3 secondes pour tirer', pt:'Segure por 3 segundos para puxar', de:'3 Sekunden halten zum Ziehen', ar:'اضغط مطولاً لمدة 3 ثوانٍ للسحب', th:'กดค้าง 3 วินาทีเพื่อสุ่ม', id:'Tahan 3 detik untuk menarik', ru:'Удерживайте 3 секунды, чтобы вытянуть', it:'Tieni premuto per 3 secondi per estrarre', vi:'Giữ 3 giây để quay' },
     gachaTicketUnit: { ja:'枚', en:'tickets', ko:'장', 'zh-tw':'張', 'zh-cn':'张', es:'entradas', fr:'billets', pt:'bilhetes', de:'Tickets', ar:'تذاكر', th:'ใบ', id:'tiket', ru:'билетов', it:'biglietti', vi:'vé' },
     gachaCoinInsufficientAlert:{ ja:'チケットが足りません', en:'Not enough tickets', ko:'코인이 부족합니다', 'zh-tw':'硬幣不足', 'zh-cn':'硬币不足', es:'No tienes suficientes monedas', fr:'Pièces insuffisantes', pt:'Moedas insuficientes', de:'Nicht genug Münzen', ar:'العملات غير كافية', th:'เหรียญไม่เพียงพอ', id:'Koin tidak cukup', ru:'Недостаточно монет', it:'Monete insufficienti', vi:'Không đủ xu' },
@@ -22049,7 +22076,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFailedGeneric:{ ja:'読み込みに失敗しました', en:'Failed to load', ko:'불러오기에 실패했습니다', 'zh-tw':'載入失敗', 'zh-cn':'加载失败', es:'Error al cargar', fr:'Échec du chargement', pt:'Falha ao carregar', de:'Laden fehlgeschlagen', ar:'فشل التحميل', th:'โหลดไม่สำเร็จ', id:'Gagal memuat', ru:'Не удалось загрузить', it:'Caricamento non riuscito', vi:'Tải không thành công' },
     moreTitlesComingNote:{ ja:'作品が増えると表示されます', en:'This will appear as more titles are added', ko:'작품이 늘어나면 표시됩니다', 'zh-tw':'作品增加後會顯示', 'zh-cn':'作品增加后会显示', es:'Aparecerá cuando haya más títulos', fr:'Apparaîtra avec plus de titres', pt:'Aparecerá conforme mais títulos forem adicionados', de:'Erscheint, sobald mehr Titel hinzukommen', ar:'سيظهر عند إضافة المزيد من الأعمال', th:'จะแสดงเมื่อมีผลงานเพิ่มขึ้น', id:'Akan muncul saat judul bertambah', ru:'Появится по мере добавления тайтлов', it:'Apparirà con più titoli', vi:'Sẽ hiện khi có thêm tựa phim' },
     settingsHistorySub:{ ja:'チケットの増減、ガチャの結果', en:'Ticket changes and gacha results', ko:'코인 증감 및 가챠 결과', 'zh-tw':'金幣增減、轉蛋結果', 'zh-cn':'金币增减、扭蛋结果', es:'Cambios de monedas y resultados de gacha', fr:'Variations de pièces et résultats gacha', pt:'Mudanças de moedas e resultados de gacha', de:'Münzänderungen und Gacha-Ergebnisse', ar:'تغييرات العملات ونتائج الجاتشا', th:'การเปลี่ยนแปลงเหรียญและผลกาชา', id:'Perubahan koin dan hasil gacha', ru:'Изменения монет и результаты гача', it:'Variazioni di monete e risultati gacha', vi:'Thay đổi xu và kết quả gacha' },
-    settingsHistoryTabCoin:{ ja:'チケット', en:'Tickets', ko:'코인', 'zh-tw':'金幣', 'zh-cn':'金币', es:'Monedas', fr:'Pièces', pt:'Moedas', de:'Münzen', ar:'العملات', th:'เหรียญ', id:'Koin', ru:'Монеты', it:'Monete', vi:'Xu' },
+    settingsHistoryTabCoin:{ ja:'チケット', en:'Tickets', ko:'티켓', 'zh-tw':'票券', 'zh-cn':'票券', es:'Entradas', fr:'Billets', pt:'Bilhetes', de:'Tickets', ar:'التذاكر', th:'ตั๋ว', id:'Tiket', ru:'Билеты', it:'Biglietti', vi:'Vé' },
     settingsHistoryTabGacha:{ ja:'ガチャ', en:'Gacha', ko:'가챠', 'zh-tw':'轉蛋', 'zh-cn':'扭蛋', es:'Gacha', fr:'Gacha', pt:'Gacha', de:'Gacha', ar:'الجاتشا', th:'กาชา', id:'Gacha', ru:'Гача', it:'Gacha', vi:'Gacha' },
     historyEmpty:{ ja:'まだ履歴がありません', en:'No history yet', ko:'아직 기록이 없습니다', 'zh-tw':'目前尚無紀錄', 'zh-cn':'目前暂无记录', es:'Aún no hay historial', fr:'Pas encore d\'historique', pt:'Ainda não há histórico', de:'Noch kein Verlauf', ar:'لا يوجد سجل بعد', th:'ยังไม่มีประวัติ', id:'Belum ada riwayat', ru:'Пока нет истории', it:'Nessuna cronologia ancora', vi:'Chưa có lịch sử' },
     historyReasonDailyQuest:{ ja:'デイリークエスト報酬', en:'Daily quest reward', ko:'데일리 퀘스트 보상', 'zh-tw':'每日任務獎勵', 'zh-cn':'每日任务奖励', es:'Recompensa de misión diaria', fr:'Récompense de quête quotidienne', pt:'Recompensa de missão diária', de:'Belohnung für tägliche Quest', ar:'مكافأة المهمة اليومية', th:'รางวัลเควสต์ประจำวัน', id:'Hadiah misi harian', ru:'Награда за ежедневное задание', it:'Ricompensa missione giornaliera', vi:'Phần thưởng nhiệm vụ hằng ngày' },
@@ -22151,7 +22178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     planFaqA4: { ja:'クレジットカードに対応予定です。詳細は公開時にお知らせします。', en:'Credit cards are planned. Details at launch.', ko:'신용카드를 지원할 예정입니다. 자세한 내용은 공개 시 안내해 드립니다.', 'zh-tw':'預計支援信用卡。詳情將於正式上線時公告。', 'zh-cn':'预计支持信用卡。详情将于正式上线时公告。', es:'Se admitirán tarjetas de crédito. Los detalles se anunciarán en el lanzamiento.', fr:'Les cartes bancaires seront prises en charge. Détails à venir au lancement.', pt:'Cartões de crédito estão planejados. Detalhes serão divulgados no lançamento.', de:'Kreditkarten sind geplant. Details folgen zum Start.', ar:'من المخطط دعم بطاقات الائتمان. سيتم الإعلان عن التفاصيل عند الإطلاق.', th:'วางแผนรองรับบัตรเครดิต รายละเอียดจะแจ้งอีกครั้งเมื่อเปิดใช้งาน', id:'Kartu kredit direncanakan didukung. Detail akan diumumkan saat peluncuran.', ru:'Планируется поддержка кредитных карт. Подробности будут объявлены при запуске.', it:'Sono previste le carte di credito. I dettagli saranno comunicati al lancio.', vi:'Dự kiến hỗ trợ thẻ tín dụng. Chi tiết sẽ được thông báo khi ra mắt.' },
     settingsPlanSub: { ja:'アニメップル+・クリエイタープラン', en:'Animepple+ & Creator plan', ko:'애니메플+・크리에이터 플랜', 'zh-tw':'Animepple+・創作者方案', 'zh-cn':'Animepple+・创作者方案', es:'Animepple+ y plan Creator', fr:'Animepple+ et offre Creator', pt:'Animepple+ e plano Creator', de:'Animepple+ & Creator-Plan', ar:'Animepple+ وخطة Creator', th:'Animepple+・แผน Creator', id:'Animepple+ & paket Creator', ru:'Animepple+ и план Creator', it:'Animepple+ e piano Creator', vi:'Animepple+ và gói Creator' },
     settingsSupport: { ja:'開発を応援する', en:'Support development', ko:'개발 응원하기', 'zh-tw':'支持開發', 'zh-cn':'支持开发', es:'Apoyar el desarrollo', fr:'Soutenir le développement', pt:'Apoiar o desenvolvimento', de:'Entwicklung unterstützen', ar:'دعم التطوير', th:'สนับสนุนการพัฒนา', id:'Dukung pengembangan', ru:'Поддержать разработку', it:'Sostieni lo sviluppo', vi:'Ủng hộ phát triển' },
-    settingsSupportSub: { ja:'投げ銭でアニメップルを支援', en:'Send a tip to support us', ko:'후원금으로 애니메플을 응원하세요', 'zh-tw':'透過小額贊助支持Animepple', 'zh-cn':'通过打赏支持Animepple', es:'Apoya a Animepple con una propina', fr:'Soutenez Animepple avec un pourboire', pt:'Apoie o Animepple com uma gorjeta', de:'Unterstütze Animepple mit einem Trinkgeld', ar:'ادعم Animepple بإكرامية', th:'สนับสนุน Animepple ด้วยการให้ทิป', id:'Dukung Animepple dengan tip', ru:'Поддержите Animepple чаевыми', it:'Sostieni Animepple con una mancia', vi:'Ủng hộ Animepple bằng tiền tip' },
+    settingsSupportSub: { ja:'サポーターバッジでアニメップルを応援', en:'Get a supporter badge to support us', ko:'서포터 배지로 애니메플을 응원하세요', 'zh-tw':'以支持者徽章支持Animepple', 'zh-cn':'以支持者徽章支持Animepple', es:'Apoya a Animepple con una insignia de seguidor', fr:'Soutenez Animepple avec un badge de supporter', pt:'Apoie o Animepple com um selo de apoiador', de:'Unterstütze Animepple mit einem Unterstützer-Badge', ar:'ادعم Animepple بشارة داعم', th:'สนับสนุน Animepple ด้วยป้ายผู้สนับสนุน', id:'Dukung Animepple dengan lencana pendukung', ru:'Поддержите Animepple значком поддержки', it:'Sostieni Animepple con un badge sostenitore', vi:'Ủng hộ Animepple bằng huy hiệu người ủng hộ' },
     planComingSoonNote: { ja:'サブスクプランは近日公開予定です。公開までしばらくお待ちください。', en:'Subscription plans are coming soon.', ko:'구독 플랜은 곧 공개될 예정입니다. 공개까지 잠시만 기다려 주세요.', 'zh-tw':'訂閱方案即將推出，請稍候。', 'zh-cn':'订阅方案即将推出，请稍候。', es:'Los planes de suscripción estarán disponibles pronto. Un poco de paciencia.', fr:'Les offres d\'abonnement arrivent bientôt. Merci de patienter.', pt:'Os planos de assinatura estarão disponíveis em breve. Aguarde um pouco.', de:'Abo-Pläne sind bald verfügbar. Bitte habe noch etwas Geduld.', ar:'خطط الاشتراك قادمة قريبًا. يرجى الانتظار قليلًا.', th:'แผนสมาชิกกำลังจะเปิดให้ใช้งานเร็วๆ นี้ กรุณารอสักครู่', id:'Paket langganan akan segera hadir. Mohon tunggu sebentar lagi.', ru:'Планы подписки скоро появятся. Пожалуйста, подождите немного.', it:'I piani in abbonamento arriveranno presto. Attendi ancora un po\'.', vi:'Các gói đăng ký sắp ra mắt. Vui lòng chờ thêm một chút.' },
     planFreeTitle: { ja:'無料プラン', en:'Free plan', ko:'무료 플랜', 'zh-tw':'免費方案', 'zh-cn':'免费方案', es:'Plan gratuito', fr:'Offre gratuite', pt:'Plano gratuito', de:'Kostenloser Plan', ar:'الخطة المجانية', th:'แผนฟรี', id:'Paket gratis', ru:'Бесплатный план', it:'Piano gratuito', vi:'Gói miễn phí' },
     planFreeDesc: { ja:'現在利用中のプランです', en:'Your current plan', ko:'현재 이용 중인 플랜입니다', 'zh-tw':'這是您目前使用的方案', 'zh-cn':'这是您目前使用的方案', es:'Este es tu plan actual', fr:'Votre offre actuelle', pt:'Este é o seu plano atual', de:'Dein aktueller Plan', ar:'هذه خطتك الحالية', th:'นี่คือแผนที่คุณใช้อยู่ในปัจจุบัน', id:'Ini adalah paket yang sedang Anda gunakan', ru:'Это ваш текущий план', it:'Questo è il tuo piano attuale', vi:'Đây là gói bạn đang sử dụng' },
@@ -22266,8 +22293,8 @@ document.addEventListener('DOMContentLoaded', () => {
     gachaConfirmFreeBody: { ja:'無料で1日1回引けます。', en:'One free draw per day.', ko:'무료로 하루에 한 번 뽑을 수 있습니다.', 'zh-tw':'每天可免費抽1次。', 'zh-cn':'每天可免费抽1次。', es:'Una tirada gratis al día.', fr:'Un tirage gratuit par jour.', pt:'Um sorteio grátis por dia.', de:'Eine kostenlose Ziehung pro Tag.', ar:'سحب مجاني واحد يوميًا.', th:'สุ่มฟรีวันละ 1 ครั้ง', id:'Satu tarikan gratis per hari.', ru:'Одна бесплатная попытка в день.', it:'Un\'estrazione gratuita al giorno.', vi:'Miễn phí 1 lượt mỗi ngày.' },
     gachaConfirmAdBody: { ja:'広告を見て引きます。30秒の広告を見ると1回引けます。', en:'Watch a 30s ad for one draw.', ko:'광고를 보고 뽑습니다. 30초 광고를 보면 1회 뽑을 수 있습니다.', 'zh-tw':'看廣告抽獎。觀看30秒廣告即可抽1次。', 'zh-cn':'看广告抽奖。观看30秒广告即可抽1次。', es:'Mira un anuncio de 30 segundos para tirar una vez.', fr:'Regardez une pub de 30 s pour tirer une fois.', pt:'Assista a um anúncio de 30s para um sorteio.', de:'Schau eine 30-Sekunden-Werbung für eine Ziehung.', ar:'شاهد إعلانًا لمدة 30 ثانية للحصول على سحب واحد.', th:'ดูโฆษณาเพื่อสุ่ม ดูโฆษณา 30 วินาทีเพื่อรับสิทธิ์สุ่ม 1 ครั้ง', id:'Tonton iklan untuk menarik. Tonton iklan 30 detik untuk 1 tarikan.', ru:'Посмотрите рекламу для попытки. 30-секундная реклама даёт 1 попытку.', it:'Guarda un annuncio per estrarre. Un annuncio di 30s ti dà un\'estrazione.', vi:'Xem quảng cáo để quay. Xem quảng cáo 30 giây để được quay 1 lượt.' },
     gachaConfirmFreeAgainBody: { ja:'＋プラン以上は広告なしで、そのまま無料で引けます。', en:'Animepple+ and above can draw again for free, no ad needed.', ko:'+플랜 이상은 광고 없이 그대로 무료로 뽑을 수 있습니다.', 'zh-tw':'＋方案以上無需看廣告，可直接免費再抽。', 'zh-cn':'＋方案以上无需看广告，可直接免费再抽。', es:'Con Animepple+ o superior puedes volver a tirar gratis sin anuncio.', fr:'Avec Animepple+ ou plus, vous pouvez retirer gratuitement, sans pub.', pt:'Com Animepple+ ou superior, você pode sortear novamente de graça, sem anúncio.', de:'Mit Animepple+ oder höher kannst du ohne Werbung erneut kostenlos ziehen.', ar:'مع Animepple+ فما فوق، يمكنك السحب مجددًا مجانًا دون إعلان.', th:'หากมีแผน+ ขึ้นไป สามารถสุ่มฟรีได้เลยโดยไม่ต้องดูโฆษณา', id:'Dengan Animepple+ ke atas, Anda bisa menarik lagi secara gratis tanpa iklan.', ru:'С Animepple+ и выше можно тянуть снова бесплатно, без рекламы.', it:'Con Animepple+ e superiori puoi estrarre di nuovo gratis, senza pubblicità.', vi:'Với gói + trở lên, bạn có thể quay tiếp miễn phí mà không cần xem quảng cáo.' },
-    gachaConfirmCoinBody: { ja:'{cost}枚を消費して引きます\n所持: {balance}枚 → 消費後: {after}枚', en:'Spend {cost} coins to draw\nBalance: {balance} → After: {after}', ko:'{cost}개를 사용해 뽑습니다\n보유: {balance}개 → 사용 후: {after}개', 'zh-tw':'消費{cost}枚抽獎\n持有：{balance}枚 → 消費後：{after}枚', 'zh-cn':'消费{cost}枚抽奖\n持有：{balance}枚 → 消费后：{after}枚', es:'Gasta {cost} monedas para tirar\nSaldo: {balance} → Después: {after}', fr:'Dépensez {cost} pièces pour tirer\nSolde : {balance} → Après : {after}', pt:'Gaste {cost} moedas para sortear\nSaldo: {balance} → Depois: {after}', de:'Gib {cost} Münzen für eine Ziehung aus\nGuthaben: {balance} → Danach: {after}', ar:'أنفق {cost} عملة للسحب\nالرصيد: {balance} ← بعد الإنفاق: {after}', th:'ใช้ {cost} เหรียญเพื่อสุ่ม\nคงเหลือ: {balance} → หลังใช้: {after}', id:'Gunakan {cost} koin untuk menarik\nSaldo: {balance} → Setelah: {after}', ru:'Потратьте {cost} монет для попытки\nБаланс: {balance} → После: {after}', it:'Spendi {cost} monete per estrarre\nSaldo: {balance} → Dopo: {after}', vi:'Dùng {cost} xu để quay\nSố dư: {balance} → Sau khi dùng: {after}' },
-    gachaConfirmCoinBodyLoading: { ja:'{cost}枚を消費して引きます', en:'Spend {cost} coins to draw', ko:'{cost}개를 사용해 뽑습니다', 'zh-tw':'消費{cost}枚抽獎', 'zh-cn':'消费{cost}枚抽奖', es:'Gasta {cost} monedas para tirar', fr:'Dépensez {cost} pièces pour tirer', pt:'Gaste {cost} moedas para sortear', de:'Gib {cost} Münzen für eine Ziehung aus', ar:'أنفق {cost} عملة للسحب', th:'ใช้ {cost} เหรียญเพื่อสุ่ม', id:'Gunakan {cost} koin untuk menarik', ru:'Потратьте {cost} монет для попытки', it:'Spendi {cost} monete per estrarre', vi:'Dùng {cost} xu để quay' },
+    gachaConfirmCoinBody:{ ja:'{cost}枚を消費して引きます\n所持: {balance}枚 → 消費後: {after}枚', en:'Use {cost} tickets to draw\nOwned: {balance} → After: {after}', ko:'티켓 {cost}장을 사용해 뽑습니다\n보유: {balance}장 → 사용 후: {after}장', 'zh-tw':'將使用{cost}張票券抽取\n持有：{balance}張 → 使用後：{after}張', 'zh-cn':'将使用{cost}张票券抽取\n持有：{balance}张 → 使用后：{after}张', es:'Usa {cost} entradas para tirar\nTienes: {balance} → Después: {after}', fr:'Utiliser {cost} billets pour tirer\nPossédés : {balance} → Après : {after}', pt:'Usar {cost} bilhetes para puxar\nVocê tem: {balance} → Depois: {after}', de:'{cost} Tickets einsetzen, um zu ziehen\nBesitz: {balance} → Danach: {after}', ar:'استخدام {cost} تذاكر للسحب\nلديك: {balance} ← بعد الاستخدام: {after}', th:'ใช้ตั๋ว {cost} ใบเพื่อสุ่ม\nที่มี: {balance} → หลังใช้: {after}', id:'Gunakan {cost} tiket untuk menarik\nDimiliki: {balance} → Setelah: {after}', ru:'Потратить {cost} билетов на попытку\nИмеется: {balance} → Останется: {after}', it:'Usa {cost} biglietti per estrarre\nPosseduti: {balance} → Dopo: {after}', vi:'Dùng {cost} vé để quay\nĐang có: {balance} → Sau khi dùng: {after}' },
+    gachaConfirmCoinBodyLoading:{ ja:'{cost}枚を消費して引きます', en:'Use {cost} tickets to draw', ko:'티켓 {cost}장을 사용해 뽑습니다', 'zh-tw':'將使用{cost}張票券抽取', 'zh-cn':'将使用{cost}张票券抽取', es:'Usa {cost} entradas para tirar', fr:'Utiliser {cost} billets pour tirer', pt:'Usar {cost} bilhetes para puxar', de:'{cost} Tickets einsetzen, um zu ziehen', ar:'استخدام {cost} تذاكر للسحب', th:'ใช้ตั๋ว {cost} ใบเพื่อสุ่ม', id:'Gunakan {cost} tiket untuk menarik', ru:'Потратить {cost} билетов на попытку', it:'Usa {cost} biglietti per estrarre', vi:'Dùng {cost} vé để quay' },
     gachaAnimeHistoryTitle: { ja:'出た作品の履歴', en:'History of anime drawn', ko:'나온 작품 기록', 'zh-tw':'抽中作品紀錄', 'zh-cn':'抽中作品记录', es:'Historial de anime obtenido', fr:'Historique des animes obtenus', pt:'Histórico de animes sorteados', de:'Verlauf der gezogenen Anime', ar:'سجل الأنمي التي ظهرت', th:'ประวัติผลงานที่สุ่มได้', id:'Riwayat anime yang didapat', ru:'История выпавших тайтлов', it:'Cronologia degli anime ottenuti', vi:'Lịch sử anime đã nhận được' },
     gachaAnimeHistorySeeAll: { ja:'すべて見る', en:'See all', ko:'전체 보기', 'zh-tw':'查看全部', 'zh-cn':'查看全部', es:'Ver todo', fr:'Tout voir', pt:'Ver tudo', de:'Alle ansehen', ar:'عرض الكل', th:'ดูทั้งหมด', id:'Lihat semua', ru:'Смотреть все', it:'Vedi tutto', vi:'Xem tất cả' },
     gachaPoolTitle: { ja:'出るもの', en:'What you can get', ko:'나올 수 있는 것', 'zh-tw':'可能獲得', 'zh-cn':'可能获得', es:'Lo que puedes obtener', fr:'Ce que vous pouvez obtenir', pt:'O que você pode ganhar', de:'Was du bekommen kannst', ar:'ما يمكنك الحصول عليه', th:'สิ่งที่จะได้รับ', id:'Yang bisa Anda dapatkan', ru:'Что можно получить', it:'Cosa puoi ottenere', vi:'Những gì bạn có thể nhận' },
@@ -22310,7 +22337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     coinShopPacksLabel: { ja:'チケットを買う', en:'Buy tickets', ko:'코인 구매', 'zh-tw':'購買代幣', 'zh-cn':'购买代币', es:'Comprar monedas', fr:'Acheter des pièces', pt:'Comprar moedas', de:'Münzen kaufen', ar:'شراء العملات', th:'ซื้อเหรียญ', id:'Beli koin', ru:'Купить монеты', it:'Acquista monete', vi:'Mua xu' },
     coinShopDrawsUnit: { ja:'ガチャ{n}回分', en:'{n} draws', ko:'가챠 {n}회분', 'zh-tw':'扭蛋{n}次份', 'zh-cn':'扭蛋{n}次份', es:'{n} tiradas', fr:'{n} tirages', pt:'{n} sorteios', de:'{n} Ziehungen', ar:'{n} سحوبات', th:'สุ่ม {n} ครั้ง', id:'{n} tarikan', ru:'{n} попыток', it:'{n} estrazioni', vi:'{n} lượt quay' },
     coinShopLead: { ja:'ガチャチケットを購入できます。1枚＝ガチャ1回分の利用権です。', en:'Buy Gacha Tickets directly. 1 ticket = the right to one gacha draw.', ko:'코인은 가챠에 사용할 수 있습니다. 많이 구매할수록 보너스가 늘어납니다.', 'zh-tw':'代幣可用於扭蛋。購買數量越多，紅利越多。', 'zh-cn':'代币可用于扭蛋。购买数量越多，赠送越多。', es:'Las monedas se usan para el gacha. Los paquetes más grandes dan más bonificación.', fr:'Les pièces servent pour le gacha. Plus le pack est grand, plus le bonus est important.', pt:'As moedas são usadas para o gacha. Pacotes maiores dão bônus maiores.', de:'Münzen werden für den Gacha verwendet. Größere Pakete bringen größere Boni.', ar:'تُستخدم العملات في الجاتشا. الحزم الأكبر تمنح مكافآت أكبر.', th:'เหรียญใช้สำหรับกาชา ยิ่งซื้อแพ็กใหญ่ยิ่งได้โบนัสมาก', id:'Koin digunakan untuk gacha. Paket lebih besar memberi bonus lebih besar.', ru:'Монеты используются для гачи. Чем больше пакет, тем больше бонус.', it:'Le monete si usano per il gacha. Pacchetti più grandi danno bonus maggiori.', vi:'Xu dùng để quay gacha. Mua gói càng lớn thì bonus càng nhiều.' },
-    questPageLead: { ja:'1日1つ。達成するとコインを受け取れます。', en:'One per day. Complete it to claim coins.', ko:'하루에 1개. 달성하면 코인을 받을 수 있습니다.', 'zh-tw':'每天1個。達成後可獲得代幣。', 'zh-cn':'每天1个。达成后可获得代币。', es:'Una al día. Complétala para recibir monedas.', fr:'Une par jour. Terminez-la pour recevoir des pièces.', pt:'Uma por dia. Complete para receber moedas.', de:'Eine pro Tag. Erfülle sie, um Münzen zu erhalten.', ar:'واحدة يوميًا. أكملها للحصول على العملات.', th:'วันละ 1 ภารกิจ ทำสำเร็จเพื่อรับเหรียญ', id:'Satu per hari. Selesaikan untuk mendapatkan koin.', ru:'Одно задание в день. Выполните, чтобы получить монеты.', it:'Una al giorno. Completala per ricevere monete.', vi:'Mỗi ngày 1 nhiệm vụ. Hoàn thành để nhận xu.' },
+    questPageLead:{ ja:'1日1つ。達成するとチケットを受け取れます。', en:'One per day. Complete it to claim tickets.', ko:'하루 1개. 달성하면 티켓을 받을 수 있어요.', 'zh-tw':'每天一個。完成後可領取票券。', 'zh-cn':'每天一个。完成后可领取票券。', es:'Una al día. Complétala para recibir entradas.', fr:'Une par jour. Terminez-la pour recevoir des billets.', pt:'Uma por dia. Conclua para receber bilhetes.', de:'Eine pro Tag. Schließe sie ab, um Tickets zu erhalten.', ar:'مهمة واحدة يوميًا. أكملها لتحصل على تذاكر.', th:'วันละ 1 ภารกิจ ทำสำเร็จแล้วรับตั๋วได้', id:'Satu per hari. Selesaikan untuk mendapatkan tiket.', ru:'Одно в день. Выполните, чтобы получить билеты.', it:'Una al giorno. Completala per ricevere biglietti.', vi:'Mỗi ngày một nhiệm vụ. Hoàn thành để nhận vé.' },
     customizeLead: { ja:'部位ごとに選べます。選んだものはすぐ反映されます。', en:'Choose per slot. Your pick applies right away.', ko:'부위별로 선택할 수 있어요. 선택한 항목은 바로 반영됩니다.', 'zh-tw':'可依部位選擇。選好後會立即套用。', 'zh-cn':'可按部位选择。选好后会立即生效。', es:'Elige por parte. Tu selección se aplica al instante.', fr:'Choisissez par emplacement. Votre choix s\'applique immédiatement.', pt:'Escolha por parte. Sua escolha é aplicada na hora.', de:'Wähle pro Bereich. Deine Auswahl wird sofort übernommen.', ar:'اختر لكل جزء. يتم تطبيق اختيارك فورًا.', th:'เลือกได้ตามส่วนต่างๆ สิ่งที่เลือกจะมีผลทันที', id:'Pilih per bagian. Pilihan Anda langsung diterapkan.', ru:'Выбирайте по частям. Выбор применяется сразу.', it:'Scegli per parte. La tua scelta si applica subito.', vi:'Chọn theo từng phần. Lựa chọn của bạn được áp dụng ngay lập tức.' },
     customizePreviewLabel: { ja:'プレビュー', en:'Preview', ko:'미리보기', 'zh-tw':'預覽', 'zh-cn':'预览', es:'Vista previa', fr:'Aperçu', pt:'Pré-visualização', de:'Vorschau', ar:'معاينة', th:'ตัวอย่าง', id:'Pratinjau', ru:'Предпросмотр', it:'Anteprima', vi:'Xem trước' },
     customizeOwnedLabel: { ja:'持っているもの', en:'Owned', ko:'보유 중인 것', 'zh-tw':'擁有的項目', 'zh-cn':'拥有的项目', es:'Que tienes', fr:'Possédés', pt:'Que você tem', de:'Im Besitz', ar:'ما تملكه', th:'สิ่งที่มี', id:'Yang dimiliki', ru:'В наличии', it:'In tuo possesso', vi:'Đang sở hữu' },
@@ -22327,7 +22354,7 @@ document.addEventListener('DOMContentLoaded', () => {
     questStep2Action: { ja:'シェアする', en:'Share', ko:'공유하기', 'zh-tw':'分享', 'zh-cn':'分享', es:'Compartir', fr:'Partager', pt:'Compartilhar', de:'Teilen', ar:'مشاركة', th:'แชร์', id:'Bagikan', ru:'Поделиться', it:'Condividi', vi:'Chia sẻ' },
     questToGacha: { ja:'ガチャガチャへ', en:'Go to gacha', ko:'가챠로 가기', 'zh-tw':'前往扭蛋', 'zh-cn':'前往扭蛋', es:'Ir al gacha', fr:'Aller au Gacha', pt:'Ir para o gacha', de:'Zum Gacha', ar:'الذهاب إلى الغاتشا', th:'ไปที่กาชา', id:'Ke gacha', ru:'К гаче', it:'Vai al Gacha', vi:'Đến Gacha' },
     coinShopDrawsSuffix: { ja:'枚', en:'tickets', ko:'회 뽑기 가능', 'zh-tw':'次可抽', 'zh-cn':'次可抽', es:'tiradas disponibles', fr:'tirages disponibles', pt:'sorteios disponíveis', de:'Ziehungen verfügbar', ar:'سحوبات متاحة', th:'ครั้งที่สุ่มได้', id:'kali tarikan tersedia', ru:'попыток доступно', it:'estrazioni disponibili', vi:'lượt quay khả dụng' },
-    coinShopPacksHint: { ja:'枚数はすべて、端数の出ない「ガチャ○回分」で購入できます', en:'Every pack is an exact whole number of gacha draws — no leftover balance', ko:'보너스 포함 수량입니다', 'zh-tw':'已包含獎勵枚數', 'zh-cn':'已包含奖励枚数', es:'Incluye el bono', fr:'Bonus inclus', pt:'Bônus incluído', de:'Bonus enthalten', ar:'يشمل المكافأة', th:'รวมโบนัสแล้ว', id:'Sudah termasuk bonus', ru:'С учётом бонуса', it:'Bonus incluso', vi:'Đã gồm thưởng' },
+    coinShopPacksHint: { ja:'枚数はすべて、端数の出ない「ガチャ○回分」で購入できます', en:'Every pack is an exact whole number of gacha draws — no leftover balance', ko:'모든 팩은 가챠 횟수로 딱 떨어지는 수량입니다 — 남는 수량이 없습니다', 'zh-tw':'所有方案皆為整數次抽取，不留零頭', 'zh-cn':'所有套餐均为整数次抽取，不留零头', es:'Cada paquete equivale a un número exacto de tiradas, sin sobrantes', fr:'Chaque pack correspond à un nombre entier de tirages, sans reste', pt:'Cada pacote equivale a um número exato de sorteios, sem sobras', de:'Jedes Paket entspricht einer ganzen Zahl an Ziehungen – ohne Rest', ar:'كل حزمة تعادل عددًا صحيحًا من السحبات، دون أي باقٍ', th:'ทุกแพ็กเป็นจำนวนครั้งที่สุ่มแบบเต็ม ไม่มีเศษเหลือ', id:'Setiap paket setara jumlah tarikan bulat, tanpa sisa', ru:'Каждый набор — целое число попыток, без остатка', it:'Ogni pacchetto corrisponde a un numero intero di estrazioni, senza resti', vi:'Mỗi gói tương ứng một số lượt quay nguyên vẹn, không dư' },
     coinShopPerDraw: { ja:'1回あたり{n}円', en:'¥{n} per draw', ko:'1회당 {n}엔', 'zh-tw':'每次{n}日圓', 'zh-cn':'每次{n}日元', es:'¥{n} por tirada', fr:'{n} ¥ par tirage', pt:'¥{n} por sorteio', de:'{n} ¥ pro Ziehung', ar:'{n} ين لكل سحب', th:'{n} เยนต่อครั้ง', id:'¥{n} per tarikan', ru:'{n} ¥ за попытку', it:'¥{n} per estrazione', vi:'{n} yên mỗi lượt' },
     coinShopLegalLabel: { ja:'お支払いについて', en:'About payment', ko:'결제에 대하여', 'zh-tw':'關於付款', 'zh-cn':'关于付款', es:'Sobre el pago', fr:'À propos du paiement', pt:'Sobre o pagamento', de:'Über die Zahlung', ar:'حول الدفع', th:'เกี่ยวกับการชำระเงิน', id:'Tentang pembayaran', ru:'Об оплате', it:'Informazioni sul pagamento', vi:'Về thanh toán' },
     coinShopLegalBody: { ja:'価格は日本円の税込表示です。海外からの購入は決済時点のレートで現地通貨に自動換算されます。チケットはガチャの抽選以外には利用できず、他者への譲渡・現金への払い戻しはできません。未使用分の払い戻しはできません。', en:'Prices include Japanese tax. Overseas purchases are converted at the rate at checkout. Tickets can only be used to draw the gacha, cannot be transferred to another person or refunded for cash, and unused tickets are non-refundable.', ko:'가격은 일본 소비세 포함 금액입니다. 해외 구매는 결제 시점의 환율로 현지 통화로 자동 환산됩니다. 코인의 유효기간은 없습니다. 미사용분은 환불되지 않습니다.', 'zh-tw':'價格已含日本消費稅。海外購買將依結帳時的匯率自動換算為當地貨幣。金幣沒有使用期限。未使用部分無法退款。', 'zh-cn':'价格已含日本消费税。海外购买将按结账时的汇率自动换算为当地货币。金币没有使用期限。未使用部分无法退款。', es:'Los precios incluyen impuestos japoneses. Las compras desde el extranjero se convierten a la moneda local con la tasa vigente al pagar. Las monedas no caducan. Las monedas no usadas no son reembolsables.', fr:'Les prix incluent la taxe japonaise. Les achats depuis l\'étranger sont convertis dans la devise locale au taux en vigueur lors du paiement. Les pièces n\'expirent pas. Les pièces non utilisées ne sont pas remboursables.', pt:'Os preços incluem impostos japoneses. Compras do exterior são convertidas para a moeda local pela taxa no momento do pagamento. As moedas não expiram. Moedas não usadas não são reembolsáveis.', de:'Die Preise enthalten die japanische Steuer. Käufe aus dem Ausland werden zum Kurs bei der Zahlung in die Landeswährung umgerechnet. Münzen verfallen nicht. Nicht verwendete Münzen werden nicht erstattet.', ar:'الأسعار شاملة الضريبة اليابانية. تُحوَّل المشتريات من الخارج إلى العملة المحلية بسعر الصرف وقت الدفع. لا تنتهي صلاحية العملات. لا يمكن استرداد العملات غير المستخدمة.', th:'ราคารวมภาษีของญี่ปุ่นแล้ว การซื้อจากต่างประเทศจะถูกแปลงเป็นสกุลเงินท้องถิ่นตามอัตราแลกเปลี่ยน ณ เวลาชำระเงิน เหรียญไม่มีวันหมดอายุ ไม่สามารถขอคืนเงินสำหรับเหรียญที่ยังไม่ได้ใช้', id:'Harga sudah termasuk pajak Jepang. Pembelian dari luar negeri dikonversi ke mata uang lokal sesuai kurs saat checkout. Koin tidak kedaluwarsa. Koin yang belum digunakan tidak dapat dikembalikan.', ru:'Цены указаны с учётом японского налога. Покупки из-за рубежа конвертируются в местную валюту по курсу на момент оплаты. Монеты не имеют срока действия. Неиспользованные монеты не подлежат возврату.', it:'I prezzi includono le tasse giapponesi. Gli acquisti dall\'estero vengono convertiti nella valuta locale al tasso al momento del pagamento. Le monete non scadono. Le monete non utilizzate non sono rimborsabili.', vi:'Giá đã bao gồm thuế Nhật Bản. Giao dịch mua từ nước ngoài được quy đổi sang tiền tệ địa phương theo tỷ giá tại thời điểm thanh toán. Xu không có hạn sử dụng. Xu chưa dùng không được hoàn lại.' },
@@ -22338,9 +22365,10 @@ document.addEventListener('DOMContentLoaded', () => {
     coinShopTagBest: { ja:'最もお得', en:'Best value', ko:'최고 혜택', 'zh-tw':'最划算', 'zh-cn':'最划算', es:'Mejor precio', fr:'Meilleure offre', pt:'Melhor custo-benefício', de:'Bestes Angebot', ar:'أفضل قيمة', th:'คุ้มค่าที่สุด', id:'Nilai terbaik', ru:'Самое выгодное', it:'Miglior valore', vi:'Giá trị nhất' },
     gachaSeriesHint: { ja:'横スクロールで追加分が並びます', en:'Scroll sideways for more', ko:'옆으로 스크롤하면 더 볼 수 있어요', 'zh-tw':'左右滑動查看更多', 'zh-cn':'左右滑动查看更多', es:'Desliza hacia los lados para ver más', fr:'Faites défiler latéralement pour en voir plus', pt:'Deslize lateralmente para ver mais', de:'Seitlich scrollen für mehr', ar:'مرر أفقيًا لمزيد', th:'เลื่อนด้านข้างเพื่อดูเพิ่มเติม', id:'Geser ke samping untuk lebih banyak', ru:'Прокрутите вбок, чтобы увидеть больше', it:'Scorri lateralmente per altro', vi:'Vuốt ngang để xem thêm' },
     gachaShopSubFrom: { ja:'から', en:'+', ko:'부터', 'zh-tw':'起', 'zh-cn':'起', es:'desde', fr:'à partir de', pt:'a partir de', de:'ab', ar:'من', th:'เริ่มต้น', id:'mulai dari', ru:'от', it:'da', vi:'từ' },
-    gachaShopSubBonus: { ja:'ボーナス最大{n}%', en:'up to +{n}% bonus', ko:'최대 보너스 {n}%', 'zh-tw':'最高獎勵{n}%', 'zh-cn':'最高奖励{n}%', es:'bono de hasta +{n}%', fr:'bonus jusqu\'à +{n}%', pt:'bônus de até +{n}%', de:'bis zu +{n}% Bonus', ar:'مكافأة تصل إلى +{n}٪', th:'โบนัสสูงสุด +{n}%', id:'bonus hingga +{n}%', ru:'бонус до +{n}%', it:'bonus fino a +{n}%', vi:'thưởng lên đến +{n}%' },
-    gachaCoinFreeLabel: { ja:'無償', en:'Free', ko:'무료', 'zh-tw':'免費', 'zh-cn':'免费', es:'Gratis', fr:'Gratuit', pt:'Grátis', de:'Kostenlos', ar:'مجاني', th:'ฟรี', id:'Gratis', ru:'Бесплатно', it:'Gratis', vi:'Miễn phí' },
-    gachaCoinPaidLabel: { ja:'有償', en:'Paid', ko:'유료', 'zh-tw':'付費', 'zh-cn':'付费', es:'De pago', fr:'Payant', pt:'Pago', de:'Bezahlt', ar:'مدفوع', th:'ซื้อ', id:'Berbayar', ru:'Платно', it:'A pagamento', vi:'Trả phí' },
+    gachaShopSubBonus: { ja:'まとめ買いで最大{n}%お得', en:'save up to {n}% on bundles', ko:'묶음 구매로 최대 {n}% 절약', 'zh-tw':'套組最高省{n}%', 'zh-cn':'套装最高省{n}%', es:'ahorra hasta un {n}% en paquetes', fr:'jusqu\'à {n}% d\'économie sur les packs', pt:'economize até {n}% em pacotes', de:'bis zu {n}% sparen bei Paketen', ar:'وفّر حتى {n}٪ عند شراء الحزم', th:'ซื้อแพ็กประหยัดสูงสุด {n}%', id:'hemat hingga {n}% untuk paket', ru:'экономия до {n}% на наборах', it:'risparmia fino al {n}% sui pacchetti', vi:'tiết kiệm đến {n}% khi mua gói' },
+    coinPackSave: { ja:'{n}%お得', en:'Save {n}%', ko:'{n}% 절약', 'zh-tw':'省{n}%', 'zh-cn':'省{n}%', es:'Ahorra {n}%', fr:'-{n}%', pt:'Economize {n}%', de:'{n}% sparen', ar:'وفّر {n}٪', th:'ประหยัด {n}%', id:'Hemat {n}%', ru:'Скидка {n}%', it:'Risparmia {n}%', vi:'Tiết kiệm {n}%' },
+    gachaCoinFreeLabel: { ja:'無料チケット', en:'Free tickets', ko:'무료 티켓', 'zh-tw':'免費票券', 'zh-cn':'免费票券', es:'Entradas gratis', fr:'Billets gratuits', pt:'Bilhetes grátis', de:'Gratis-Tickets', ar:'تذاكر مجانية', th:'ตั๋วฟรี', id:'Tiket gratis', ru:'Бесплатные билеты', it:'Biglietti gratis', vi:'Vé miễn phí' },
+    gachaCoinPaidLabel: { ja:'購入チケット', en:'Purchased tickets', ko:'구매 티켓', 'zh-tw':'購買票券', 'zh-cn':'购买票券', es:'Entradas compradas', fr:'Billets achetés', pt:'Bilhetes comprados', de:'Gekaufte Tickets', ar:'تذاكر مشتراة', th:'ตั๋วที่ซื้อ', id:'Tiket dibeli', ru:'Купленные билеты', it:'Biglietti acquistati', vi:'Vé đã mua' },
     gachaQuestSubReady: { ja:'達成 ・ 受け取れます', en:'Done ・ ready to claim', ko:'달성 ・ 수령 가능', 'zh-tw':'已達成 ・ 可領取', 'zh-cn':'已达成 ・ 可领取', es:'Completado ・ listo para reclamar', fr:'Terminé ・ prêt à réclamer', pt:'Concluído ・ pronto para resgatar', de:'Erledigt ・ bereit zum Abholen', ar:'مكتمل ・ جاهز للاستلام', th:'สำเร็จ ・ รับได้เลย', id:'Selesai ・ siap diklaim', ru:'Выполнено ・ можно забрать', it:'Completato ・ pronto per il ritiro', vi:'Hoàn thành ・ sẵn sàng nhận' },
     gachaQuestSubOpen: { ja:'0 / 1 達成', en:'0 / 1 done', ko:'0 / 1 달성', 'zh-tw':'0 / 1 已達成', 'zh-cn':'0 / 1 已达成', es:'0 / 1 completado', fr:'0 / 1 terminé', pt:'0 / 1 concluído', de:'0 / 1 erledigt', ar:'0 / 1 مكتمل', th:'0 / 1 สำเร็จ', id:'0 / 1 selesai', ru:'0 / 1 выполнено', it:'0 / 1 completato', vi:'0 / 1 hoàn thành' },
     gachaProbTitle: { ja:'確率と景品一覧', en:'Odds & prize list', ko:'확률 및 아이템 목록', 'zh-tw':'機率與獎品清單', 'zh-cn':'概率与奖品清单', es:'Probabilidades y premios', fr:'Probabilités et lots', pt:'Probabilidades e prêmios', de:'Chancen & Preisliste', ar:'الاحتمالات وقائمة الجوائز', th:'อัตราความน่าจะเป็นและรายการรางวัล', id:'Peluang & daftar hadiah', ru:'Шансы и список призов', it:'Probabilità e lista premi', vi:'Tỷ lệ & danh sách phần thưởng' },
@@ -23525,78 +23553,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <h3>System Requirements</h3>
         <p>We recommend using the latest version of a major web browser such as Google Chrome, Safari, or Microsoft Edge.</p>
-      `
-    },
-    shikin: {
-      title: '資金決済法に基づく表示',
-      titleEn: 'Notice Based on the Payment Services Act',
-      body: `
-        <p class="legal-date">最終更新: 2026年9月</p>
-        <p style="background:rgba(255,193,7,.12);border:1px solid rgba(255,193,7,.4);border-radius:8px;padding:.7rem .9rem;font-size:.8rem;color:#ffdd88;">
-          このページは下書きです。【　】内は運営者情報に差し替えたうえで、内容を専門家に確認してもらってから公開してください。
-          未使用残高が基準日（毎年3月31日・9月30日）時点で1,000万円を超える場合、資金決済法に基づく供託等の届出義務が発生します。該当する可能性がある場合は必ず専門家にご相談ください。
-        </p>
-
-        <h3>本サービスにおける「コイン」について</h3>
-        <p>本サービス内で購入・付与される「コイン」は、資金決済法上の自家型前払式支払手段に該当します。以下のとおり表示します。</p>
-
-        <h3>前払式支払手段の発行者</h3>
-        <p>【運営者の氏名または名称を記入】</p>
-
-        <h3>利用可能な範囲</h3>
-        <p>本サービス（アニメップル）内でのガチャ利用等にのみご利用いただけます。他サービスでの利用、現金・預金への払い戻し、他アカウントへの譲渡はできません。</p>
-
-        <h3>利用可能金額</h3>
-        <p>コインパックは120円〜24,000円の8種類でご購入いただけます（購入画面に一覧表示）。1回のご購入における上限額は設けておりませんが、未成年の方は保護者の同意を得たうえで、ご家庭で無理のない範囲でご利用ください。</p>
-
-        <h3>有効期限</h3>
-        <p>コインに有効期限はありません。</p>
-
-        <h3>未使用残高の確認方法</h3>
-        <p>マイページのコインショップ画面にて、いつでも現在の残高をご確認いただけます。</p>
-
-        <h3>ご利用上の注意</h3>
-        <p>コインは本サービス内でのみ利用可能な仮想的なポイントであり、預金・電子マネーではありません。運営者の判断により、事前の告知のうえコインの仕様・利用可能範囲を変更し、または本機能自体を終了することがあります（詳細は利用規約第9条・第10条をご覧ください）。</p>
-
-        <h3>約款について</h3>
-        <p>コインの購入・利用に関する詳細な条件は、本表示に加え<button type="button" onclick="closeLegal();openLegal('terms')" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">利用規約</button>（第9条）が適用されます。</p>
-
-        <h3>苦情・相談窓口</h3>
-        <p>お問い合わせフォーム（<button type="button" onclick="closeLegal();nav('contact')" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">こちら</button>）よりご連絡ください。</p>
-      `,
-      body_en: `
-        <p class="legal-date">Last updated: September 2026</p>
-        <p style="background:rgba(255,193,7,.12);border:1px solid rgba(255,193,7,.4);border-radius:8px;padding:.7rem .9rem;font-size:.8rem;color:#ffdd88;">
-          This page is a draft. Please replace the information in brackets [ ] with the operator's actual information, and have the content reviewed by a professional before publication.
-          If the unused balance exceeds 10 million yen as of a reference date (March 31 or September 30 each year), a filing obligation for a security deposit, etc., under the Payment Services Act arises. If this may apply to you, please be sure to consult a professional.
-        </p>
-
-        <h3>About "Coins" on This Service</h3>
-        <p>"Coins" purchased or granted within this Service fall under "in-house prepaid payment instruments" as defined by the Payment Services Act. They are disclosed as follows.</p>
-
-        <h3>Issuer of the Prepaid Payment Instrument</h3>
-        <p>[Enter the operator's name]</p>
-
-        <h3>Scope of Use</h3>
-        <p>Usable only for Gacha and other functions within this Service (Animepple). Cannot be used with other services, refunded for cash or deposited into a bank account, or transferred to another account.</p>
-
-        <h3>Amount Available for Use</h3>
-        <p>Coin Packs are available for purchase in 8 denominations ranging from ¥120 to ¥24,000 (listed on the purchase screen). There is no upper limit on the amount for a single purchase, but minors should obtain parental consent and use the Service within a reasonable range for their household.</p>
-
-        <h3>Validity Period</h3>
-        <p>Coins do not expire.</p>
-
-        <h3>How to Check Your Unused Balance</h3>
-        <p>You can check your current balance at any time on the Coin Shop screen in My Page.</p>
-
-        <h3>Usage Precautions</h3>
-        <p>Coins are virtual points usable only within this Service, and are not a deposit or electronic money. The operator may, upon prior notice, change the specifications or scope of use of coins, or discontinue this feature entirely (see Articles 9 and 10 of the Terms of Service for details).</p>
-
-        <h3>Terms and Conditions</h3>
-        <p>Detailed conditions regarding the purchase and use of coins are also subject to the <button type="button" onclick="closeLegal();openLegal('terms')" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">Terms of Service</button> (Article 9), in addition to this notice.</p>
-
-        <h3>Complaints &amp; Consultation</h3>
-        <p>Please contact us via the contact form (<button type="button" onclick="closeLegal();nav('contact')" style="color:var(--brand);text-decoration:underline;background:none;border:none;padding:0;font:inherit;cursor:pointer;">here</button>).</p>
       `
     }
   };
@@ -25910,7 +25866,7 @@ document.addEventListener('DOMContentLoaded', () => {
       function openCopyrightReplyGmail(email, animeTitle) {
         const subject = encodeURIComponent(`「${animeTitle}」の画像削除について`);
         const body = encodeURIComponent(`ご連絡ありがとうございます。\n\nご指摘いただきました「${animeTitle}」の画像につきまして、確認の上、削除いたしました。\nこの度はご不便・ご迷惑をおかけしましたことを深くお詫び申し上げます。\n\n今後このようなことがないよう努めてまいります。`);
-        window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${subject}&body=${body}&authuser=sapotoforamu@gmail.com`, '_blank');
+        window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${subject}&body=${body}`, '_blank');
       }
       el.querySelectorAll('.admin-copyright-delete-btn').forEach(btn=>{
         btn.onclick = async () => {
@@ -26686,7 +26642,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const recentTipsEl = document.getElementById('adminRecentTips');
       if(recentTipsEl) {
         if(!recentTips.length) {
-          recentTipsEl.innerHTML = `<p style="color:var(--muted);font-size:.82rem;">まだ投げ銭はありません</p>`;
+          recentTipsEl.innerHTML = `<p style="color:var(--muted);font-size:.82rem;">まだバッジ購入はありません</p>`;
         } else {
           recentTipsEl.innerHTML = recentTips.map(tp => `
             <div style="display:flex;justify-content:space-between;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:.5rem .7rem;margin-bottom:.4rem;">
@@ -29816,7 +29772,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="cs-pack-best-tag">${escapeHtml(t('coinShopTagBest'))}</span>
           <span class="cs-pack-best-amount">
             <b>${escapeHtml(t('coinShopDrawsUnit').replace('{n}', best.draws.toLocaleString()))}</b>
-            <span class="cs-bonus">+${best.bonusPct}%</span>
+            <span class="cs-bonus">${escapeHtml(t('coinPackSave').replace('{n}', best.bonusPct))}</span>
           </span>
           <span class="cs-pack-best-note">${escapeHtml(t('coinShopPerDraw').replace('{n}', perDraw(best).toLocaleString()))}</span>
         </span>
@@ -29828,7 +29784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ${p.popular ? `<span class="cs-pack-tag">${escapeHtml(t('coinShopTagPopular'))}</span>` : ''}
         <span class="cs-pack-amount"><b>${escapeHtml(t('coinShopDrawsUnit').replace('{n}', p.draws.toLocaleString()))}</b></span>
         <span class="cs-pack-meta">
-          ${p.bonusPct ? `<span class="cs-bonus">+${p.bonusPct}%</span>` : ''}
+          ${p.bonusPct ? `<span class="cs-bonus">${escapeHtml(t('coinPackSave').replace('{n}', p.bonusPct))}</span>` : ''}
           <span class="cs-draws">${escapeHtml(t('coinShopPerDraw').replace('{n}', perDraw(p).toLocaleString()))}</span>
         </span>
         <span class="cs-pack-price">¥${p.priceJpy.toLocaleString()}</span>
