@@ -2193,6 +2193,7 @@
     /* ── ANIME PAGE（Claude Design案の実測値をそのまま使用） ── */
     .anime-thumb-hero { width:100%; aspect-ratio:16/9; background:linear-gradient(140deg,#2a5e3c,#163523); display:grid; place-items:center; color:var(--muted); font-size:.85rem; }
     .anime-thumb-hero img { width:100%; height:100%; object-fit:cover; display:block; }
+    .anime-thumb-hero .no-image-picture { display:block; width:100%; height:100%; }
     .anime-info { padding:1rem 1rem .8rem; }
     .anime-info h1 { margin:0 0 10px; font-size:1.4rem; font-weight:900; font-family:"Zen Kaku Gothic New",sans-serif; letter-spacing:.01em; line-height:1.15; }
     .anime-meta-text { color:#82968a; font-size:13.5px; margin:0 0 .6rem; }
@@ -12881,8 +12882,15 @@ document.addEventListener('DOMContentLoaded', () => {
      HOME PAGE
   ════════════════════════════ */
   // 画像未設定時のプレースホルダー（URL参照。カード/PC作品ページ/スマホ作品ページで専用画像を出し分け）
+  // [2026-10-14] 文字「画像未設定」だけだったのを、ユーザー提供のりんごキャラの画像に差し替えた。
+  // カード(縦長2:3) = /no-image/card.jpg、作品ページの大きい画像(16:9)は、PC = /no-image/pc.jpg・スマホ(767px以下) = /no-image/mobile.jpg。
+  // altには従来の「画像未設定」の翻訳(noImage)をそのまま使う(15言語)。
   function noImagePlaceholderHtml(variant) {
-    return `<span class="no-image-text">${t('noImage')}</span>`;
+    const alt = escapeHtml(t('noImage'));
+    if(variant === 'responsive') {
+      return `<picture class="no-image-picture"><source media="(max-width:767px)" srcset="/no-image/mobile.jpg"><img src="/no-image/pc.jpg" alt="${alt}" decoding="async" /></picture>`;
+    }
+    return `<img class="no-image-img" src="/no-image/card.jpg" alt="${alt}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;" />`;
   }
 
   function thumbHtml(item) {
