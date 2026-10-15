@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: サイトが200を返すか確認
         run: |
-          URL="https://animeppuru-official.github.io/animepple/"
+          URL="https://animepple.com/"
           STATUS=$(curl -s -o /tmp/response.html -w "%{http_code}" "$URL")
           echo "HTTPステータス: $STATUS"
           if [ "$STATUS" -ne 200 ]; then
