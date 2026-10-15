@@ -6421,15 +6421,14 @@ document.addEventListener('DOMContentLoaded', () => {
       <ul>
         <li>法令に基づく場合</li>
         <li>本人の同意がある場合</li>
-        <li>業務委託先への提供（守秘義務あり）: データベース・認証(Supabase)、bot対策(Cloudflare Turnstile)、翻訳(DeepL API)、お問い合わせメール送信(Resend)、IPアドレスに基づく国・地域の判定(ipapi.co、ipwho.is。これらのサービスにはアクセス元のIPアドレスが送信されます)</li>
+        <li>業務委託先への提供（守秘義務あり）: データベース・認証(Supabase)、bot対策(Cloudflare Turnstile)、翻訳(DeepL API)、お問い合わせメール送信(Resend)</li>
       </ul>
-      <p>国・地域の判定は、分析目的のクッキーに同意した場合のみ行われます。</p>
+      <p>国・地域の判定は、本サービスのCDN(Cloudflare)が接続元のIPアドレスから行い、外部の判定サービスへIPアドレスを送信することはありません。この判定は、分析または広告(マーケティング)のクッキーに同意した場合のみ利用されます。</p>
       <p>なお、個人を特定できない形に匿名化・統計化した情報（例：作品ごとの評価傾向の集計データ、タグ・検索キーワードの集計傾向、国別・言語別の利用統計など）については、個人情報に該当しないものとして、サービス改善・調査研究・提携先への提供（有償の場合を含む）に利用する場合があります。この匿名化データの提供にあたっては、コメント本文・ユーザー名・ユーザーIDは一切含まれず、サンプル数が少ない（3件未満の）データも公開しません。</p>
       <p style="margin-top:1rem;">電気通信事業法に基づき、利用者の端末情報等を外部に送信する場合の送信先・内容・目的を以下のとおり公表します。</p>
       <table class="pp-table">
         <tr><th>送信先</th><th>送信される情報</th><th>送信先での利用目的</th></tr>
         <tr><td>Cloudflare, Inc.（Webアナリティクス、bot対策 Turnstile）</td><td>アクセス状況（閲覧ページ・端末情報等）、bot判定に必要な情報</td><td>アクセス解析、不正アクセス・spam対策</td></tr>
-        <tr><td>ipapi.co / ipwho.is</td><td>IPアドレス</td><td>アクセス元の国・地域の判定（本サービスへの結果返送のみに利用、分析同意時のみ送信）</td></tr>
         <tr><td>株式会社ファンコミュニケーションズ（A8.net）および各広告主</td><td>広告の識別情報、アクセス日時、ブラウザ等の端末情報、広告クリックの有無</td><td>アフィリエイト広告の表示および成果（申込み）の計測</td></tr>
         <tr><td>忍者ツールズ株式会社（忍者AdMax）および連携する広告会社</td><td>広告の識別情報、IPアドレス、アクセス日時、ブラウザ等の端末情報、広告クリックの有無</td><td>バナー広告の配信と効果の計測（日本からのアクセスで、マーケティングのクッキーに同意した場合のみ）</td></tr>
         <tr><td>DeepL SE</td><td>翻訳対象のタグ・テキスト</td><td>多言語翻訳の生成</td></tr>
@@ -6523,15 +6522,14 @@ document.addEventListener('DOMContentLoaded', () => {
       <ul>
         <li>Where required by law</li>
         <li>Where the individual has given consent</li>
-        <li>Disclosure to subcontractors (bound by confidentiality obligations): database and authentication (Supabase), bot protection (Cloudflare Turnstile), translation (DeepL API), sending inquiry emails (Resend), and country/region detection based on IP address (ipapi.co, ipwho.is — your source IP address is sent to these services)</li>
+        <li>Disclosure to subcontractors (bound by confidentiality obligations): database and authentication (Supabase), bot protection (Cloudflare Turnstile), translation (DeepL API), and sending inquiry emails (Resend)</li>
       </ul>
-      <p>Country/region detection is performed only if you have consented to analytics cookies.</p>
+      <p>Country/region detection is performed by this Service's CDN (Cloudflare) from the connecting IP address; your IP address is not sent to any external detection service. The result is used only if you have consented to analytics or advertising (marketing) cookies.</p>
       <p>In addition, information that has been anonymized and aggregated so that individuals cannot be identified (e.g., aggregate rating trend data per title, aggregate trends in tags/search keywords, usage statistics by country/language) is not treated as personal information, and may be used for service improvement, research, or provision to partners (including for a fee). When providing this anonymized data, we never include comment text, usernames, or user IDs, and we do not publish data with a small sample size (fewer than 3 entries).</p>
       <p style="margin-top:1rem;">In accordance with the Telecommunications Business Act, we disclose the recipients, content, and purposes of any transmission of user device information to external parties, as follows.</p>
       <table class="pp-table">
         <tr><th>Recipient</th><th>Information Sent</th><th>Purpose at Recipient</th></tr>
         <tr><td>Cloudflare, Inc. (web analytics, bot protection Turnstile)</td><td>Access status (pages viewed, device information, etc.), information needed for bot detection</td><td>Access analytics, fraud and spam prevention</td></tr>
-        <tr><td>ipapi.co / ipwho.is</td><td>IP address</td><td>Determining the country/region of origin (used only to return a result to this Service; sent only with analytics consent)</td></tr>
         <tr><td>FanCommunications, Inc. (A8.net) and each advertiser</td><td>Ad identifier, access date/time, device information such as the browser, whether an ad was clicked</td><td>Displaying affiliate ads and measuring results (applications)</td></tr>
         <tr><td>Ninja Tools Inc. (Ninja AdMax) and its advertising partners</td><td>Ad identifier, IP address, access date/time, device information such as the browser, whether an ad was clicked</td><td>Delivering banner ads and measuring results (only for visitors from Japan who consented to marketing cookies)</td></tr>
         <tr><td>DeepL SE</td><td>Tags and text to be translated</td><td>Generating multilingual translations</td></tr>
@@ -11241,27 +11239,20 @@ document.addEventListener('DOMContentLoaded', () => {
           _country = cached.code; return _country;
         }
       } catch{}
-      // 1. ipapi.co で取得（商用無料枠：月1000req）
+      // 1. 自分のサイトのエッジ(CloudflareのWorker /_geo)に聞く。Cloudflareが接続元IPから判定した国コード(CF-IPCountry)を
+      //    返すだけで、外部の判定サービスへIPアドレスは送らない。
+      //    [2026-10-15] 以前の ipapi.co / ipwho.is はCSPでブロックされて動いておらず(常に言語からの推定になっていた)、
+      //    IPアドレスを第三者へ送る点でもプライバシー上よくなかったため、これに置き換えた。
       try {
-        const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
+        const res = await fetch('/_geo', { signal: AbortSignal.timeout(3000), cache: 'no-store' });
         const json = await res.json();
-        if(json.country_code && json.country_code.length===2) {
-          _country = json.country_code;
+        if(json && /^[A-Z]{2}$/.test(json.country || '') && json.country !== 'XX') {
+          _country = json.country;
           localStorage.setItem(CACHE_KEY, JSON.stringify({code:_country, ts:Date.now()}));
           return _country;
         }
       } catch{}
-      // 2. フォールバックAPI: ipwho.is（1が失敗/レート制限時の予備）
-      try {
-        const res2 = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(3000) });
-        const json2 = await res2.json();
-        if(json2.success !== false && json2.country_code && json2.country_code.length===2) {
-          _country = json2.country_code;
-          localStorage.setItem(CACHE_KEY, JSON.stringify({code:_country, ts:Date.now()}));
-          return _country;
-        }
-      } catch{}
-      // 3. フォールバック: navigator.language から推定（精度低・最終手段）
+      // 2. フォールバック: navigator.language から推定（精度低・最終手段）
       const lang = navigator.language || '';
       const map = {
         ja:'JP', en:'US', ko:'KR', zh:'CN', fr:'FR', de:'DE', es:'ES', pt:'BR', ar:'SA',
