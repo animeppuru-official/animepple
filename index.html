@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -2147,6 +2147,8 @@
     /* 本番時はこのクラスのdisplay:noneを外してAdSenseコードを挿入 */
     .ad-wrap { margin:.2rem 1rem 0; }
     .ad-label { font-size:.58rem; color:#3a6a4a; text-align:right; margin-bottom:.1rem; letter-spacing:.04em; text-transform:uppercase; }
+    .ninja-ad-slot { display:flex; justify-content:center; min-height:250px; }
+    .ninja-ad-frame { border:0; width:300px; height:250px; max-width:100%; background:transparent; }
     /* バナー型（ヒーロー下・横長） */
     .ad-banner {
       width:100%; border-radius:8px;
@@ -4272,18 +4274,6 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="carousel-dots" id="seasonDots"></div>
   </div>
 
-  <div class="ad-wrap" id="adHomeBanner">
-    <div class="ad-label">AD</div>
-    <div class="ad-banner" onclick="adClick('streaming_top')">
-      <div class="ad-banner-logo">▶️</div>
-      <div class="ad-banner-body">
-        <div class="ad-banner-title">dアニメストア</div>
-        <div class="ad-banner-sub">4,000作品以上が月440円〜 無料トライアルあり</div>
-      </div>
-      <div class="ad-banner-cta">無料で試す</div>
-    </div>
-  </div>
-
   <section class="sec" style="margin-top:.3rem;">
     <div class="sec-head">
       <div class="sec-head-left">
@@ -4303,16 +4293,11 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
   <!-- ▼▼▼ 広告②：コンテンツ間矩形 ▼▼▼
        本番: この div ごと AdSenseコードに置換 -->
-  <div class="ad-wrap" id="adHomeMid">
+  <!-- [2026-10-15] リンク先の無い見せかけの広告(dアニメストア・U-NEXT)を、本物の広告(忍者AdMax 300x250)に差し替えた。
+       日本のアクセスで、マーケティングのクッキーに同意した人にだけ表示する(mountNinjaAds)。 -->
+  <div class="ad-wrap" id="adHomeMid" data-ninja-ad="home" style="display:none;">
     <div class="ad-label">AD</div>
-    <div class="ad-rect" onclick="adClick('streaming_mid')">
-      <div class="ad-rect-inner">
-        <div class="ad-rect-badge">🎬 PR</div>
-        <div class="ad-rect-title">U-NEXT — 31日間無料トライアル</div>
-        <div class="ad-rect-sub">アニメ・映画・漫画が見放題。今すぐ試せます。</div>
-        <div class="ad-rect-cta">無料で試す</div>
-      </div>
-    </div>
+    <div class="ninja-ad-slot"></div>
   </div>
   <footer class="footer">
     <div style="margin-bottom:.5rem;">
@@ -6427,6 +6412,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </table>
       <p>クッキー設定はいつでも変更できます。<button onclick="reopenCookieConsent()" style="background:none;border:none;color:var(--brand);text-decoration:underline;cursor:pointer;font:inherit;">クッキー設定を変更する</button></p>
       <p>本サービスは、A8.net（株式会社ファンコミュニケーションズ）などのアフィリエイトサービスを利用して、動画配信サービス等の広告（「PR」と表示）を掲載しています。広告の表示時・広告リンクのクリック時、および広告先での申込み時には、成果の計測のためにクッキー等が利用され、広告配信事業者へ利用者のアクセス情報（広告の識別情報・IPアドレス・アクセス日時・ブラウザ等の端末情報）が送信されます。氏名・メールアドレスなど、本サービスが保有する個人情報が広告配信事業者へ送信されることはありません。</p>
+      <p>また、バナー広告の配信に、忍者AdMax（忍者ツールズ株式会社）を利用しています。同社および同社と連携する広告会社が、広告の配信・効果測定のためにクッキー等を使用し、広告の識別情報・IPアドレス・アクセス日時・ブラウザ等の端末情報を取得することがあります。この広告は、日本からのアクセスで、かつ「マーケティング」のクッキーに同意した場合にだけ表示され、同意しない場合は読み込まれません。広告は、本サービス本体とは分離された枠の中で表示され、本サービスのログイン情報やクッキーには触れません。同意はいつでも、クッキー設定から変更できます。</p>
     </section>
 
     <section class="pp-section">
@@ -6445,6 +6431,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr><td>Cloudflare, Inc.（Webアナリティクス、bot対策 Turnstile）</td><td>アクセス状況（閲覧ページ・端末情報等）、bot判定に必要な情報</td><td>アクセス解析、不正アクセス・spam対策</td></tr>
         <tr><td>ipapi.co / ipwho.is</td><td>IPアドレス</td><td>アクセス元の国・地域の判定（本サービスへの結果返送のみに利用、分析同意時のみ送信）</td></tr>
         <tr><td>株式会社ファンコミュニケーションズ（A8.net）および各広告主</td><td>広告の識別情報、アクセス日時、ブラウザ等の端末情報、広告クリックの有無</td><td>アフィリエイト広告の表示および成果（申込み）の計測</td></tr>
+        <tr><td>忍者ツールズ株式会社（忍者AdMax）および連携する広告会社</td><td>広告の識別情報、IPアドレス、アクセス日時、ブラウザ等の端末情報、広告クリックの有無</td><td>バナー広告の配信と効果の計測（日本からのアクセスで、マーケティングのクッキーに同意した場合のみ）</td></tr>
         <tr><td>DeepL SE</td><td>翻訳対象のタグ・テキスト</td><td>多言語翻訳の生成</td></tr>
       </table>
       <p style="font-size:.75rem;color:var(--muted);">今後、広告配信サービス（Google AdSense等）を導入する場合は、本表を更新のうえ改めて公表します。</p>
@@ -6527,6 +6514,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </table>
       <p>You can change your cookie settings at any time. <button onclick="reopenCookieConsent()" style="background:none;border:none;color:var(--brand);text-decoration:underline;cursor:pointer;font:inherit;">Change cookie settings</button></p>
       <p>This Service displays advertisements for video streaming services and similar (labeled "PR") through affiliate services such as A8.net (FanCommunications, Inc.). When an advertisement is displayed, when an ad link is clicked, and when an application is made on the advertiser's site, cookies and similar technologies are used to measure results, and access information (an ad identifier, IP address, access date/time, and device information such as the browser) is sent to the ad delivery provider. Personal information held by this Service, such as your name or email address, is never sent to ad delivery providers.</p>
+      <p>This Service also uses Ninja AdMax (Ninja Tools Inc.) to deliver banner advertisements. Ninja Tools and the advertising companies it works with may use cookies and similar technologies to deliver and measure ads, and may obtain an ad identifier, IP address, access date/time, and device information such as the browser. These ads are shown only to visitors from Japan who have consented to "marketing" cookies, and are not loaded otherwise. Ads are displayed in a frame isolated from this Service and cannot access your login information or this Service's cookies. You can change your consent at any time in the cookie settings.</p>
     </section>
 
     <section class="pp-section">
@@ -6545,6 +6533,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr><td>Cloudflare, Inc. (web analytics, bot protection Turnstile)</td><td>Access status (pages viewed, device information, etc.), information needed for bot detection</td><td>Access analytics, fraud and spam prevention</td></tr>
         <tr><td>ipapi.co / ipwho.is</td><td>IP address</td><td>Determining the country/region of origin (used only to return a result to this Service; sent only with analytics consent)</td></tr>
         <tr><td>FanCommunications, Inc. (A8.net) and each advertiser</td><td>Ad identifier, access date/time, device information such as the browser, whether an ad was clicked</td><td>Displaying affiliate ads and measuring results (applications)</td></tr>
+        <tr><td>Ninja Tools Inc. (Ninja AdMax) and its advertising partners</td><td>Ad identifier, IP address, access date/time, device information such as the browser, whether an ad was clicked</td><td>Delivering banner ads and measuring results (only for visitors from Japan who consented to marketing cookies)</td></tr>
         <tr><td>DeepL SE</td><td>Tags and text to be translated</td><td>Generating multilingual translations</td></tr>
       </table>
       <p style="font-size:.75rem;color:var(--muted);">Should we introduce an advertising delivery service (such as Google AdSense) in the future, we will update this table and disclose it again.</p>
@@ -20709,6 +20698,37 @@ document.addEventListener('DOMContentLoaded', () => {
     db.adClicks.insert(slotId, typeof currentAnimeId!=='undefined' ? currentAnimeId : null);
   }
 
+  /* ════════════════════════════
+     忍者AdMax(バナー広告 300x250) — [2026-10-15追加]
+     表示する条件: ①国が日本 ②マーケティングのクッキーに同意した ③(有料プランでは .plan-hides-ads が枠ごと隠す)
+     広告タグは、本体のページに直接は貼らない。/ad-frame/pc.html・sp.html という別ページに置き、sandbox付き
+     (allow-same-origin無し)のiframeで開く。広告側のコードが、ログイン情報・クッキー・localStorageに触れないようにするため。
+     新しい枠を足すときは、data-ninja-ad を付けた .ad-wrap の中に .ninja-ad-slot を置くだけ。
+  ════════════════════════════ */
+  const NINJA_AD_COUNTRIES = ['JP'];
+  async function mountNinjaAds() {
+    const wraps = document.querySelectorAll('[data-ninja-ad]');
+    if(!wraps.length) return;
+    let ok = canUseMarketing();
+    if(ok) {
+      const c = await geoStore.detectCountry().catch(() => null);
+      ok = NINJA_AD_COUNTRIES.includes(c);
+    }
+    const kind = window.matchMedia('(max-width: 767px)').matches ? 'sp' : 'pc';
+    wraps.forEach(w => {
+      const slot = w.querySelector('.ninja-ad-slot');
+      if(!slot) return;
+      if(!ok) { slot.innerHTML = ''; slot.dataset.kind = ''; w.style.display = 'none'; return; }
+      if(slot.dataset.kind !== kind) {
+        slot.dataset.kind = kind;
+        slot.innerHTML = `<iframe class="ninja-ad-frame" src="/ad-frame/${kind}.html" width="300" height="250" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" loading="lazy" referrerpolicy="no-referrer" scrolling="no" title="advertisement"></iframe>`;
+      }
+      w.style.display = '';
+    });
+  }
+  window.mountNinjaAds = mountNinjaAds;
+  window.addEventListener('load', () => { mountNinjaAds(); });
+
   // 現在の言語に対応する description_xx 列名を返す（無ければnull＝原文表示のみ）
   function descriptionColumnForLang(lang) {
     const map = {
@@ -27486,6 +27506,7 @@ document.addEventListener('DOMContentLoaded', () => {
     await db.cookieConsents.insert(record);
     document.getElementById('cookieBanner').style.display = 'none';
     closeCookieSettings();
+    mountNinjaAds(); // 同意の内容が変わったら、広告枠を出す/消す
   }
 
   function cookieAcceptAll() { saveCookieConsent(true, true); }
@@ -30104,4 +30125,5 @@ document.addEventListener('DOMContentLoaded', () => {
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"a125a6f456314355b35a4871ce8ff05c","r":1,"spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
+
 
