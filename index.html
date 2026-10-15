@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -2147,8 +2147,10 @@
     /* 本番時はこのクラスのdisplay:noneを外してAdSenseコードを挿入 */
     .ad-wrap { margin:.2rem 1rem 0; }
     .ad-label { font-size:.58rem; color:#3a6a4a; text-align:right; margin-bottom:.1rem; letter-spacing:.04em; text-transform:uppercase; }
-    .ninja-ad-slot { display:flex; justify-content:center; min-height:250px; }
-    .ninja-ad-frame { border:0; width:300px; height:250px; max-width:100%; background:transparent; }
+    .ninja-ad-slot { display:flex; justify-content:center; }
+    .ninja-ad-frame { border:0; max-width:100%; background:transparent; }
+    .ninja-ad-frame.ninja-ad-pc { width:728px; height:90px; }   /* PC: 横長 728x90 */
+    .ninja-ad-frame.ninja-ad-sp { width:320px; height:100px; }  /* スマホ: 横長 320x100(狭い画面ではmax-widthで縮む) */
     /* バナー型（ヒーロー下・横長） */
     .ad-banner {
       width:100%; border-radius:8px;
@@ -20690,7 +20692,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ════════════════════════════
-     忍者AdMax(バナー広告 300x250) — [2026-10-15追加]
+     忍者AdMax(バナー広告 PC 728x90 / スマホ 320x100) — [2026-10-15追加]
      表示する条件: ①国が日本 ②マーケティングのクッキーに同意した ③(有料プランでは .plan-hides-ads が枠ごと隠す)
      広告タグは、本体のページに直接は貼らない。/ad-frame/pc.html・sp.html という別ページに置き、sandbox付き
      (allow-same-origin無し)のiframeで開く。広告側のコードが、ログイン情報・クッキー・localStorageに触れないようにするため。
@@ -20712,7 +20714,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if(!ok) { slot.innerHTML = ''; slot.dataset.kind = ''; w.style.display = 'none'; return; }
       if(slot.dataset.kind !== kind) {
         slot.dataset.kind = kind;
-        slot.innerHTML = `<iframe class="ninja-ad-frame" src="/ad-frame/${kind}.html" width="300" height="250" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" loading="lazy" referrerpolicy="no-referrer" scrolling="no" title="advertisement"></iframe>`;
+        const [fw, fh] = kind === 'pc' ? [728, 90] : [320, 100]; // PC=横長728x90、スマホ=横長320x100
+        slot.innerHTML = `<iframe class="ninja-ad-frame ninja-ad-${kind}" src="/ad-frame/${kind}.html" width="${fw}" height="${fh}" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" loading="lazy" referrerpolicy="no-referrer" scrolling="no" title="advertisement"></iframe>`;
       }
       w.style.display = w.dataset.adState === 'empty' ? 'none' : ''; // 広告が空だった枠は、隠したままにする
     });
