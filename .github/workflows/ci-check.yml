@@ -22,7 +22,7 @@ jobs:
           import re, sys
           with open('index.html', encoding='utf-8') as f:
               content = f.read()
-          scripts = re.findall(r'<script(?:(?!src=)[^>])*>(.*?)</script>', content, re.DOTALL)
+          scripts = re.findall(r'<script(?![^>]*(?:src=|application/ld\+json))[^>]*>(.*?)</script>', content, re.DOTALL)
           if not scripts:
               print("警告: <script>ブロックが見つかりませんでした")
               sys.exit(1)
