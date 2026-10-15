@@ -20694,11 +20694,14 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ════════════════════════════
      忍者AdMax(バナー広告 PC 728x90 / スマホ 320x100) — [2026-10-15追加]
      表示する条件: ①国が日本 ②マーケティングのクッキーに同意した ③(有料プランでは .plan-hides-ads が枠ごと隠す)
-     広告タグは、本体のページに直接は貼らない。/ad-frame/pc.html・sp.html という別ページに置き、sandbox付き
-     (allow-same-origin無し)のiframeで開く。広告側のコードが、ログイン情報・クッキー・localStorageに触れないようにするため。
+     広告タグは、本体のページに直接は貼らない。別ドメイン(https://ads.animepple.com/pc.html・sp.html。Worker ads-frame)に置いたページを、iframeで開く。
+     オリジン(ドメイン)が本体と違うので、ブラウザの仕組みにより、広告側のコードは本体のログイン情報・クッキー・localStorageに触れない(AdSenseと同じ作り)。
+     iframeにはsandboxも付ける(allow-same-originは、広告ドメイン自身のオリジンを保つためだけ。top遷移・フォーム送信は不可)。
+     ※本体と同じドメインに置いて、allow-same-origin無しのsandboxに閉じ込めると、広告が自分でiframeを作って書き込めず、表示されない(実測)。
      新しい枠を足すときは、data-ninja-ad を付けた .ad-wrap の中に .ninja-ad-slot を置くだけ。
   ════════════════════════════ */
   const NINJA_AD_COUNTRIES = ['JP'];
+  const NINJA_AD_ORIGIN = 'https://ads.animepple.com'; // 広告ページの置き場所(本体とは別のオリジン)
   async function mountNinjaAds() {
     const wraps = document.querySelectorAll('[data-ninja-ad]');
     if(!wraps.length) return;
@@ -20715,15 +20718,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if(slot.dataset.kind !== kind) {
         slot.dataset.kind = kind;
         const [fw, fh] = kind === 'pc' ? [728, 90] : [320, 100]; // PC=横長728x90、スマホ=横長320x100
-        slot.innerHTML = `<iframe class="ninja-ad-frame ninja-ad-${kind}" src="/ad-frame/${kind}.html" width="${fw}" height="${fh}" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" loading="lazy" scrolling="no" title="advertisement"></iframe>`;
+        slot.innerHTML = `<iframe class="ninja-ad-frame ninja-ad-${kind}" src="${NINJA_AD_ORIGIN}/${kind}.html" width="${fw}" height="${fh}" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" loading="lazy" scrolling="no" title="advertisement"></iframe>`;
       }
       w.style.display = w.dataset.adState === 'empty' ? 'none' : ''; // 広告が空だった枠は、隠したままにする
     });
   }
-  // 広告ページ(/ad-frame/)が「広告が出た/空だった」を知らせてくる。自分が作ったiframeからの知らせだけを受け付ける。
+  // 広告ページ(ads.animepple.com)が「広告が出た/空だった」を知らせてくる。自分が作ったiframeからの知らせだけを受け付ける。
   // 空(広告の在庫が無い)の時は、白い四角が残らないよう、枠ごと隠す。
   window.addEventListener('message', e => {
     const d = e.data;
+    if(e.origin !== NINJA_AD_ORIGIN) return; // 広告ページ以外からの知らせは無視
     if(!d || (d.type !== 'ninja-ad-empty' && d.type !== 'ninja-ad-filled')) return;
     document.querySelectorAll('[data-ninja-ad]').forEach(w => {
       const fr = w.querySelector('iframe.ninja-ad-frame');
