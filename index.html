@@ -20715,7 +20715,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(slot.dataset.kind !== kind) {
         slot.dataset.kind = kind;
         const [fw, fh] = kind === 'pc' ? [728, 90] : [320, 100]; // PC=横長728x90、スマホ=横長320x100
-        slot.innerHTML = `<iframe class="ninja-ad-frame ninja-ad-${kind}" src="/ad-frame/${kind}.html" width="${fw}" height="${fh}" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" loading="lazy" referrerpolicy="no-referrer" scrolling="no" title="advertisement"></iframe>`;
+        slot.innerHTML = `<iframe class="ninja-ad-frame ninja-ad-${kind}" src="/ad-frame/${kind}.html" width="${fw}" height="${fh}" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" loading="lazy" scrolling="no" title="advertisement"></iframe>`;
       }
       w.style.display = w.dataset.adState === 'empty' ? 'none' : ''; // 広告が空だった枠は、隠したままにする
     });
