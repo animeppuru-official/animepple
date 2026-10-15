@@ -1,17 +1,28 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<meta name="color-scheme" content="dark">
 <title>広告</title>
 <!-- 忍者AdMax(スマホ用・300x250)の広告タグ。サイト本体のページとは別の、このページの中だけで広告を読み込む(本体はsandbox付きiframeで開く)。
      ※スマホ用のタグが発行されたら、下のsrcをそのタグのURLに差し替える。それまでは、PC用と同じタグを使う(同じ300x250)。 -->
-<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}</style>
+<style>:root{color-scheme:dark}html,body{margin:0;padding:0;background:transparent;overflow:hidden}</style>
 </head>
 <body>
 <!-- admax -->
 <script src="https://adm.shinobi.jp/s/ed3bc96eddf4a926e085fc9767e8c2ba"></script>
 <!-- admax -->
-</body>
+<!-- 広告が実際に表示されたかを、4秒後と9秒後に調べて、親のページへ知らせる(空なら、親が枠ごと隠す)。通信はしない。 -->
+<script>
+(function () {
+  function check() {
+    var filled = !!document.body.querySelector('iframe,img,ins,a,canvas,video,object,embed');
+    try { parent.postMessage({ type: filled ? 'ninja-ad-filled' : 'ninja-ad-empty' }, '*'); } catch (e) {}
+  }
+  setTimeout(check, 4000); setTimeout(check, 9000);
+})();
+</script></body>
 </html>
+

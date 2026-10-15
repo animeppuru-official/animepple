@@ -20714,9 +20714,21 @@ document.addEventListener('DOMContentLoaded', () => {
         slot.dataset.kind = kind;
         slot.innerHTML = `<iframe class="ninja-ad-frame" src="/ad-frame/${kind}.html" width="300" height="250" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" loading="lazy" referrerpolicy="no-referrer" scrolling="no" title="advertisement"></iframe>`;
       }
-      w.style.display = '';
+      w.style.display = w.dataset.adState === 'empty' ? 'none' : ''; // 広告が空だった枠は、隠したままにする
     });
   }
+  // 広告ページ(/ad-frame/)が「広告が出た/空だった」を知らせてくる。自分が作ったiframeからの知らせだけを受け付ける。
+  // 空(広告の在庫が無い)の時は、白い四角が残らないよう、枠ごと隠す。
+  window.addEventListener('message', e => {
+    const d = e.data;
+    if(!d || (d.type !== 'ninja-ad-empty' && d.type !== 'ninja-ad-filled')) return;
+    document.querySelectorAll('[data-ninja-ad]').forEach(w => {
+      const fr = w.querySelector('iframe.ninja-ad-frame');
+      if(!fr || fr.contentWindow !== e.source) return;
+      w.dataset.adState = d.type === 'ninja-ad-empty' ? 'empty' : 'filled';
+      if(d.type === 'ninja-ad-empty') w.style.display = 'none';
+    });
+  });
   window.mountNinjaAds = mountNinjaAds;
   window.addEventListener('load', () => { mountNinjaAds(); });
 
